@@ -159,5 +159,39 @@ class Numbers(unittest.TestCase):
         self.assertEqual(new[0]['change'], 'new')
 
 
+class Tables(unittest.TestCase):
+    def rows(self, r):
+        return sorted((i['metric'], i.get('basis') or '', i['period'], i['lo'], i['hi']) for i in r['items'])
+
+    def test_gaap_and_non_gaap_columns(self):
+        # Micron: the period on its own line, then a GAAP and a non-GAAP column heading; revenue the same in both
+        r = G.read(['Business Outlook', 'The following table presents Micron’s guidance for the fourth quarter of 2026:', 'FQ4-26',
+                    'GAAP (1) Outlook', 'Non-GAAP (2) Outlook', 'Revenue', '$50.0 billion ± $1.0 billion $50.0 billion ± $1.0 billion',
+                    'Gross margin', 'Approximately 86% Approximately 86%', 'Operating expenses', 'Approximately $1.86 billion Approximately $1.65 billion'])
+        rows = self.rows(r)
+        self.assertIn(('opex', 'GAAP', 'Q4 FY2026', 1.86e9, 1.86e9), rows)
+        self.assertIn(('opex', 'non-GAAP', 'Q4 FY2026', 1.65e9, 1.65e9), rows)
+        self.assertIn(('revenue', '', 'Q4 FY2026', 49e9, 51e9), rows)
+        # Intel: one header line names the quarter and both bases; "($B)" scales the row
+        r = G.read(['Business Outlook', 'Q4 2026 GAAP Non-GAAP', 'Revenue ($B) $15.0 - $16.0', 'Gross margin 37.1% 38.0%',
+                    'Earnings (loss) per share attributable to Intel—diluted $(0.07) $0.30'])
+        rows = self.rows(r)
+        self.assertIn(('revenue', '', 'Q4 2026', 15e9, 16e9), rows)
+        self.assertIn(('gross_margin', 'non-GAAP', 'Q4 2026', 38.0, 38.0), rows)
+        self.assertIn(('eps', 'GAAP', 'Q4 2026', -0.07, -0.07), rows)
+
+    def test_fiscal_quarter_with_dash(self):
+        self.assertEqual(G.period('FQ1-27 GAAP Outlook', None), 'Q1 FY2027')
+
+    def test_a_definition_in_passing_is_not_guided(self):
+        r = G.read(['• Core Adjusted EBITDA, which is Adjusted EBITDA less lease revenues, is expected to be between $37.35 billion and $37.45 billion.'])
+        self.assertEqual([i['metric'] for i in r['items']], ['ebitda'])
+
+    def test_a_release_that_names_no_year(self):
+        # "Q3 Results …" and bullets naming no period: the year of the filing; not passed on as the release's own naming
+        r = G.read(['Q3 Results Demonstrate Growth', 'Raising Guidance', '• Effective tax rate is now expected to be between 24% and 25%.'], filed='2026-10-28')
+        self.assertEqual((r['items'][0]['period'], r['reported']), ('FY2026', None))
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -217,7 +217,7 @@ def sentences(paras, n=2, limit=420):
 
 
 WIRE = re.compile(r'/PRNewswire/|\((?:GLOBE NEWSWIRE|BUSINESS WIRE|ACCESSWIRE|ACCESS Newswire|Newsfile Corp\.?|EQS[- ]Newswire|PRNewswire|'
-                  r'MARKETWIRE|Canada NewsWire|CNW)\)|^[A-Z][A-Za-z .,\'&-]{2,50}\s*[,–—-]+\s*\(?[A-Z][a-z]{2,8}\.?\s+\d{1,2},\s+\d{4}\)?\s*[–—-]+|'
+                  r'MARKETWIRE|Canada NewsWire|CNW)\)|^[A-Z][A-Za-z .,\'&-]{2,50}\s*(?:[,–—-]+\s*\(?|\()[A-Z][a-z]{2,8}\.?\s+\d{1,2},\s+\d{4}\)?\s*[–—-]+|'
                   r'\b(today|this morning) (announced|reported|reports|announces)\b')
 CONTACT = re.compile(r'(?i)@|\bcontacts?\b|\binvestor relations\b|\bmedia\b:|\(\d{3}\)\s?\d{3}|\d{3}[-.]\d{3}[-.]\d{4}|^exhibit|^ex-\d|'
                      r'for immediate release|^(press|news) release$|^page \d|\b\d{5}(-\d{4})?\s*$|'
@@ -235,7 +235,7 @@ HEADVERB = re.compile(r'(?i)\b(announc|report|appoint|nam|complet|receiv|launch|
 def dateline(paras):
     """Index of the release's dateline paragraph ("SAN JOSE, Calif., Oct. 16, 2026 (GLOBE NEWSWIRE) -- …"), or None
     when the exhibit is not a press release."""
-    for i, p in enumerate(paras[:25]):
+    for i, p in enumerate(paras[:60]):              # highlights can come first: Cisco's dateline is its 37th paragraph
         if WIRE.search(p):
             return i
     return None
@@ -307,7 +307,7 @@ def parse_8k(txt, accession, folder):
             topics.append(name)
     if 'ceo' in topics or 'cfo' in topics:
         topics = [t for t in topics if t != 'director']
-    gr = G.read(full) if is_release else {'label': None, 'quote': '', 'tags': [], 'items': []}
+    gr = G.read(full, filed=h.get('filed')) if is_release else {'label': None, 'quote': '', 'tags': [], 'items': []}
     g, gq = gr['label'], gr['quote']
     if g and 'guidance' not in topics:
         topics.insert(0 if g in ('raised', 'lowered', 'withdrawn') else len(topics), 'guidance')
@@ -328,6 +328,7 @@ def parse_8k(txt, accession, folder):
             'period': h['period'], 'cik': (company.get('cik') or '').lstrip('0'), 'company': company.get('name', ''),
             'items': items, 'code': code or '', 'topics': topics, 'guidance': g, 'guidance_quote': (gq or '')[:300],
             **({'guidance_tags': gr['tags']} if gr['tags'] else {}),
+            **({'guidance_reported': gr.get('reported')} if gr.get('reported') and gr['items'] else {}),
             **({'guidance_items': [dict(it, quote=(it.get('quote') or '')[:220]) for it in gr['items'][:30]]} if gr['items'] else {}),
             'headline': headline(rel, line)[:200] if is_release else '', 'quote': quote, 'quote_src': src, 'score': score}
 
@@ -369,7 +370,7 @@ def parse_daily_index(text):
     return out
 
 
-PARSER = 6          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
+PARSER = 7          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
                     # 6: the guided period no longer taken from a comparison base (guidance.py VERSION 2)
 
 
@@ -564,6 +565,7 @@ def guidance_by_ticker(root, today=None, days=120):
         items = G.diff(top['guidance_items'], earlier)
         tags = G.tags_of(items, top.get('guidance_tags') or [])
         out[t] = {'filed': top.get('filed'), 'accession': top.get('accession'), 'url': top.get('url'), 'form': top.get('form'),
+                  **({'reported': top['guidance_reported']} if top.get('guidance_reported') else {}),
                   'headline': top.get('headline'), 'label': G._primary(tags), 'tags': tags, 'phrase': G.phrase(tags),
                   'quote': top.get('guidance_quote') or '', 'items': items,
                   'earlier': [{'filed': x.get('filed'), 'label': x.get('guidance'), 'tags': x.get('guidance_tags') or []} for x in rows[1:4]]}

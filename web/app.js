@@ -829,9 +829,16 @@
       bindRows(body);
       return;
     }
-    let holdersP = null;                                        // one read of holders/<ticker>.json for both guidance views
-    const holdersGuidance = () => holdersP || (holdersP = fetch(`disclosures/data/holders/${encodeURIComponent(ticker)}.json`).then((r) => (r.ok ? r.json() : null))
-      .then((h) => (h && (h.guidance || h.guidance_history) ? { g: h.guidance || null, hist: h.guidance_history || null } : null)).catch(() => null));
+    // one read of the guidance for both guidance views: the earnings releases (holders/<ticker>.json) and the 10-Q / 10-K
+    // MD&A outlook (data/outlook/<cik>.json) — a company that guides in either counts (web/guidance.js sources)
+    let holdersP = null;
+    const getJ = (u) => fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const holdersGuidance = () => holdersP || (holdersP = Promise.all([getJ(`disclosures/data/holders/${encodeURIComponent(ticker)}.json`), getJ(`data/outlook/${p.cik}.json`)])
+      .then(([h, ol]) => {
+        const g = (h && h.guidance) || null, hist = (h && h.guidance_history) || null;
+        const all = window.FFGuidance.sources ? window.FFGuidance.sources(hist, ol, g) : hist;
+        return g || all ? { g, hist: all, outlook: ol } : null;
+      }));
     const ui = chartUI(q, {
       company: S.dec(p.name), form: q.form, label: q.label, docUrl: q.doc_url,
       slug: `${(ticker || p.cik)}-${q.label}`.replace(/\s+/g, '-'),

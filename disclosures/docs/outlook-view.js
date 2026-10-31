@@ -23,16 +23,11 @@
     '5.03': 'bylaws', '5.07': 'shareholder vote', '7.01': 'Reg FD', '8.01': 'other events' };
   const fdate = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1]} ${+m[3]}, ${m[1]}` : (s || ''); };
 
-  // the releases' guidance plus the MD&A's guided figures for what no release guided (same metric, basis, unit and period)
-  function merge(history, outlook) {
-    const rels = ((history && history.releases) || []).slice();
-    const have = new Set();
-    rels.forEach((r) => (r.items || []).forEach((it) => have.add([it.metric, it.basis || '', it.unit, it.period].join('|'))));
-    ((outlook && outlook.docs) || []).filter((d) => d.kind === 'mdna' && (d.items || []).length).forEach((d) => {
-      const items = d.items.filter((it) => !have.has([it.metric, it.basis || '', it.unit, it.period].join('|')));
-      if (items.length) rels.push({ filed: d.filed, accession: d.accn, url: d.url, label: null, tags: [], items, src: d.form });
-    });
-    return rels.length ? { releases: rels, complete: !!(history && history.complete) } : null;
+  // the releases' guidance and the 10-Q / 10-K MD&A outlook's guided figures, one list (web/guidance.js sources: a filing that
+  // only repeats a release of the weeks before is left out; anything else it guides counts)
+  function merge(history, outlook, latest) {
+    const G = global.FFGuidance || (typeof require === 'function' ? require('../../web/guidance.js') : null);
+    return G && G.sources ? G.sources(history, outlook, latest) : null;
   }
   // one number for a company: periods met or beaten over periods judged, across metrics
   function hitRate(rec) {
@@ -164,7 +159,7 @@
     if ((o.here && !o.here()) || !el.isConnected) return;
     const docs = (ol && ol.docs) || [];
     const mdna = docs.filter((d) => d.kind === 'mdna'), rel = docs.filter((d) => d.kind === 'release');
-    const merged = merge(h && h.guidance_history, ol);
+    const merged = merge(h && h.guidance_history, ol, h && h.guidance);
     const rec = G && merged ? G.record(merged, comp || {}) : null;
     const hr = hitRate(rec);
     const g = h && h.guidance;
@@ -181,7 +176,7 @@
     parts.push(latestGuidance(g, G));
     if (rec && G && G.recordHTML) {
       const html = G.recordHTML(rec, esc);
-      if (html) parts.push(`<div class="olv-card"><div class="guide-record">${html}</div>${merged.releases.some((r) => r.src) ? '<p class="muted">Includes figures guided in the 10-Q / 10-K MD&A for periods no earnings release guided.</p>' : ''}</div>`);
+      if (html) parts.push(`<div class="olv-card"><div class="guide-record">${html}</div>${merged.releases.some((r) => r.src && r.src !== '8-K') ? '<p class="muted">Includes the outlook of the 10-Q / 10-K MD&amp;A: figures it guided that no earnings release of the weeks before had given.</p>' : ''}</div>`);
       const drawn = (G.pathHTML ? G.pathHTML(rec, esc) : '') + (G.landingHTML ? G.landingHTML(rec, esc) : '');
       if (drawn) parts.push(`<div class="olv-card"><h3>The guidance record, drawn</h3>${drawn}</div>`);
     }

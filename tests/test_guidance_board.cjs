@@ -7,7 +7,8 @@ const path = require('path');
 const OV = require('../disclosures/docs/outlook-view.js');
 const { board } = require('../scripts/guidance_board.cjs');
 
-// merge: the MD&A's guided figures join only where no release guided the same metric, basis, unit and period
+// merge (web/guidance.js sources): the 10-Q / 10-K MD&A outlook counts as guidance too; a figure it only repeats from a
+// release of the three weeks before is left out
 const hist = { releases: [{ filed: '2026-07-30', url: 'r', items: [{ metric: 'revenue', basis: '', unit: 'usd', period: 'FY2026', lo: 1, hi: 2 }] }], complete: true };
 const ol = { docs: [
   { kind: 'mdna', form: '10-Q', filed: '2026-08-05', accn: 'A', url: 'q', items: [
@@ -16,8 +17,14 @@ const ol = { docs: [
   { kind: 'release', form: '8-K', filed: '2026-07-30', accn: 'R', items: [{ metric: 'tax_rate', unit: 'pct', period: 'FY2026', lo: 20, hi: 21 }] }] };
 const m = OV.merge(hist, ol);
 assert.strictEqual(m.releases.length, 2);
-assert.deepStrictEqual(m.releases[1].items.map((x) => x.metric), ['capex']);
-assert.strictEqual(m.releases[1].src, '10-Q');
+assert.deepStrictEqual(m.releases[0].items.map((x) => x.metric), ['capex'], 'newest first; the repeated revenue left out');
+assert.strictEqual(m.releases[0].src, '10-Q');
+assert.strictEqual(m.releases[1].src, '8-K');
+// a company that guides only in its 10-Q outlook, and a 10-Q that updates a release's range: both count
+const upd = OV.merge(hist, { docs: [{ kind: 'mdna', form: '10-Q', filed: '2026-08-05', accn: 'A', items: [{ metric: 'revenue', unit: 'usd', period: 'FY2026', lo: 1.2, hi: 2 }] }] });
+assert.deepStrictEqual(upd.releases[0].items.map((x) => x.lo), [1.2]);
+const late = OV.merge(hist, { docs: [{ kind: 'mdna', form: '10-Q', filed: '2026-11-05', accn: 'B', items: [{ metric: 'revenue', unit: 'usd', period: 'FY2026', lo: 1, hi: 2 }] }] });
+assert.strictEqual(late.releases.length, 2, 'repeated months later: a reaffirmation of its own');
 assert.strictEqual(m.complete, true);
 assert.strictEqual(OV.merge(null, null), null);
 assert.strictEqual(OV.merge(null, ol).releases.length, 1);

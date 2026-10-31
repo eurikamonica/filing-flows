@@ -64,7 +64,8 @@ def release_of(row):
     if not items:
         return None
     return {'accession': row['accession'], 'filed': row.get('filed'), 'url': row.get('url'), 'label': row.get('guidance'),
-            'tags': row.get('guidance_tags') or [], 'items': items, 'gv': int(row.get('gv') or 1)}
+            'tags': row.get('guidance_tags') or [], 'items': items, 'gv': int(row.get('gv') or 1),
+            **({'reported': row['guidance_reported']} if row.get('guidance_reported') else {})}
 
 
 def add(doc, rel):
@@ -278,7 +279,7 @@ def publish(root, keep=12):
         t = tickers.get(str((doc or {}).get('cik') or '').lstrip('0'))
         if not t or not doc.get('releases'):
             continue
-        out[t] = {'releases': [{k: r.get(k) for k in ('filed', 'accession', 'url', 'label', 'tags', 'items')} for r in doc['releases'][:keep]],
+        out[t] = {'releases': [{k: r.get(k) for k in ('filed', 'accession', 'url', 'label', 'tags', 'items', 'reported') if k != 'reported' or r.get(k)} for r in doc['releases'][:keep]],
                   'complete': bool((doc.get('backfill') or {}).get('done'))}
     return out
 

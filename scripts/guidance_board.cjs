@@ -37,7 +37,7 @@ function board(site) {
     if (!co.ticker || !co.cik) continue;
     const h = readJSON(path.join(holdersDir, `${co.ticker}.json`));
     const ol = readJSON(path.join(site, 'data', 'outlook', `${co.cik}.json`));
-    const merged = OV.merge(h && h.guidance_history, ol);
+    const merged = OV.merge(h && h.guidance_history, ol, h && h.guidance);
     const mdnas = ((ol && ol.docs) || []).filter((d) => d.kind === 'mdna');
     const latestDoc = mdnas[0], prevDoc = mdnas[1];
     const g = h && h.guidance;

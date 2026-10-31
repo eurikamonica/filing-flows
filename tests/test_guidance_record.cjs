@@ -114,5 +114,22 @@ const land = FG.landingHTML(rec);
 assert.ok(land.includes('<svg class="gr-land"') && /The company lands around the middle|guides conservatively|optimistic/.test(land), land);
 assert.ok(/held to a reported one \(6\)/.test(land), 'six figures held to their results');
 assert.strictEqual(FG.pathHTML(null), '');
+
+// the site's fiscal years against the company's own: Home Depot names a year by its start ("fiscal 2026" ends Feb 2027,
+// the site's FY27); a release says which quarter it reports, so the offset is read from it — else from the dates
+const hdP = { quarters: [], years: [], periods: { q: [{ end: '2026-05-03', q: 1, fy: 2027 }, { end: '2026-08-02', q: 2, fy: 2027 }, { end: '2026-02-01', q: 4, fy: 2026 }],
+  fy: [{ end: '2026-02-01', fy: 2026 }] } };
+const PP = { allq: hdP.periods.q, ally: hdP.periods.fy, q: [], y: [] };
+assert.strictEqual(FG.yearOffset({ filed: '2026-08-18', reported: [2026, 2, false] }, PP), 1, 'reports its Q2 fiscal 2026: the site calls it Q2 FY27');
+assert.deepStrictEqual(FG.resolve('FY2026', '2026-08-18', PP, 1), { kind: 'fy', fy: 2027, q: null, end: null });
+assert.strictEqual(FG.resolve('FY2026', '2026-08-18', PP, null).fy, 2027, 'without the offset: the site year 2026 ended half a year before the guide');
+assert.strictEqual(FG.resolve('FY2026', '2026-02-24', PP, 1).fy, 2027, 'the Q4 release guiding the new year: from the offset');
+assert.strictEqual(FG.yearOffset({ filed: '2026-08-18', reported: [2026, 3, false] }, PP), null, 'quarters that do not agree: no offset');
+assert.deepStrictEqual(FG.resolve('Q@2026-08-01', '2026-05-20', PP, null), { kind: 'q', fy: 2027, q: 2, end: '2026-08-02' }, 'a quarter named by the day it ends');
+// a guide far from the reported figures (a segment's revenue, a base year) is left out of the record
+const odd = { releases: [{ filed: '2026-07-29', url: 'x', items: [it('revenue', '', 'Q3 2026', 'usd', 1.0 * B, 1.1 * B)] }] };
+const ro = FG.record(odd, company);
+assert.ok(!ro.metrics.length && ro.dropped === 1, 'revenue guided at a tenth of what was reported: a misread');
+assert.ok(FG.plausible('revenue', 'usd', 10.5e9, 11e9) && !FG.plausible('revenue', 'usd', 2.5e9, 23e9) && !FG.plausible('tax_rate', 'pct', 99));
 assert.strictEqual(FG.record({ releases: [] }, company), null);
 console.log('guidance record: ok');

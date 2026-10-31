@@ -86,6 +86,8 @@
   }
   // a guidance period ("Q3 FY2027", "Q4 2026", "FY2026") → {q, y, fiscal}
   function parsePeriod(p) {
+    const d = /^(Q|FY)@(\d{4}-\d{2}-\d{2})$/.exec(p || '');        // a period named by the day it ends (guidance.py PER_DATE)
+    if (d) return { q: d[1] === 'Q' ? 0 : null, y: +d[2].slice(0, 4), at: d[2] };
     const m = /^Q([1-4]) (FY)?(\d{4})$/.exec(p || '');
     if (m) return { q: +m[1], y: +m[3], fiscal: !!m[2] };
     const f = /^FY(\d{4})$/.exec(p || '');
@@ -468,6 +470,29 @@
     return out;
   }
 
+  // ---------- every source of guidance, one list ----------
+  // The earnings releases (8-K) and the outlook of the 10-Q / 10-K MD&A (pipeline/outlook.py guided_items): a company that
+  // guides in either counts. A filing's figure that only repeats what a release said in the three weeks before (the 10-Q
+  // filed a few days after the earnings release) is left out; anything else it guides — a period, a metric or a range the
+  // releases did not give, or an update — is a guide of its own, dated the filing's day.
+  // history: holders → guidance_history; outlook: data/outlook/<cik>.json; latest: holders → guidance (the latest release)
+  function sources(history, outlook, latest) {
+    const byAcc = new Map();
+    [latest].concat((history && history.releases) || []).forEach((r) => {
+      if (r && r.filed && (r.items || []).length && !byAcc.has(r.accession || r.filed)) byAcc.set(r.accession || r.filed, Object.assign({ src: '8-K' }, r));
+    });
+    const rels = [...byAcc.values()];
+    const key = (it) => [it.metric, it.basis || '', it.unit, it.period].join('|');
+    const days = (a, b) => (Date.parse(a) - Date.parse(b)) / 864e5;
+    ((outlook && outlook.docs) || []).filter((d) => d.kind === 'mdna' && (d.items || []).length && d.filed && !byAcc.has(d.accn)).forEach((d) => {
+      const items = d.items.filter((it) => !rels.some((r) => r.src === '8-K' && days(d.filed, r.filed) >= 0 && days(d.filed, r.filed) <= 21 &&
+        (r.items || []).some((x) => key(x) === key(it) && Math.abs(x.lo - it.lo) <= 1e-6 * Math.max(1, Math.abs(x.lo)) && Math.abs(x.hi - it.hi) <= 1e-6 * Math.max(1, Math.abs(x.hi)))));
+      if (items.length) rels.push({ filed: d.filed, accession: d.accn, url: d.url, label: null, tags: [], items, src: d.form || '10-Q' });
+    });
+    rels.sort((a, b) => (a.filed < b.filed ? 1 : -1));
+    return rels.length ? { releases: rels, complete: !!(history && history.complete) } : null;
+  }
+
   // ---------- the reported period against its guidance ("vs guidance" on the quarter's or the year's own Sankey) ----------
   // spec: a reported quarter or fiscal year (the site's spec); src: {g: the latest guidance, hist: guidance_history}
   // (holders/<TICKER>.json); opts: {company, name}. The guide the period is held to is the last release on file, filed by
@@ -479,18 +504,17 @@
   function versus(spec, src, opts) {
     const o = opts || {}, company = o.company || {};
     if (!spec || !spec.nodes || !spec.end) return { error: 'No reported period.' };
-    const byAcc = new Map();
-    [src && src.g].concat((src && src.hist && src.hist.releases) || []).forEach((r) => {
-      if (r && r.filed && (r.items || []).length && !byAcc.has(r.accession || r.filed)) byAcc.set(r.accession || r.filed, r);
-    });
-    const rels = [...byAcc.values()].sort((a, b) => (a.filed < b.filed ? 1 : -1));
+    const all = sources(src && src.hist, src && src.outlook, src && src.g);
+    const rels = all ? all.releases : [];
     if (!rels.length) return { error: 'No guidance on file for this company.' };
     const isFy = spec.period === 'fy';
     const P = periodsOf(company);
-    const here = (period, filed) => { const per = periodFor(period, filed, P); return !!per && per.end === spec.end && per.kind === (isFy ? 'fy' : 'q'); };
+    let off = null;
+    const here = (period, filed) => { const per = periodFor(period, filed, P, off); return !!per && per.end === spec.end && per.kind === (isFy ? 'fy' : 'q'); };
     let rel = null, items = null, tp = null;
     for (const r of rels) {
       if (r.filed > spec.end) continue;                    // given after the period ended: a result, not a guide
+      off = yearOffset(r, P);
       const its = usable(r).filter((it) => here(it.period, r.filed));
       const rev = its.find((it) => it.metric === 'revenue' && it.unit === 'usd' && it.basis !== 'non-GAAP');
       if (rev) {
@@ -507,6 +531,14 @@
     const G = guides(items, tp, null);
     const R = G.revenue && G.revenue.at({}), R0 = (base.nodes.find((n) => n.id === 'revenue') || {}).v;
     if (!(R > 0) || !(R0 > 0) || R < R0 * 0.4 || R > R0 * 2.5) return { error: 'The guided revenue does not match the scale of the reported revenue; not drawn.' };
+    // a guided line far from the same line in the base period is a misread: not drawn as guided
+    const B0 = new Map(base.nodes.map((n) => [n.id, +n.v]));
+    Object.keys(G).forEach((id) => {
+      if (id === 'revenue' || !(B0.get(id) > 0)) return;
+      const v = G[id].at({ revenue: R, pretax: B0.get('pretax') });
+      const r = v / B0.get(id);
+      if (!(r >= 0.33 && r <= 3)) delete G[id];
+    });
     const PJ = project(base, G);
     if (!PJ) return { error: 'This chart has no revenue node to project.' };
     const { F, LV, guided } = PJ;
@@ -603,11 +635,11 @@
     return Object.assign({}, spec, {
       nodes, links,
       compare_g: {
-        vs: `guidance (${when})`, release: rel.filed, url: rel.url || null, period: tp,
+        vs: `guidance (${when}${rel.src && rel.src !== '8-K' ? ', ' + rel.src : ''})`, release: rel.filed, url: rel.url || null, period: tp, src: rel.src || '8-K',
         heading: `${dec(spec.label)} vs guidance`,
         title: `${name ? name + ': ' : ''}${dec(spec.label)} vs guidance`,
         bullets: bullets.slice(0, 6),
-        footer: `Compared with the guidance in the earnings release of ${when}${rel.url ? '' : ''} (the last release on file before ${dec(spec.label)} ended): ` +
+        footer: `Compared with the guidance in the ${rel.src && rel.src !== '8-K' ? `${rel.src} (its MD&A outlook)` : 'earnings release'} of ${when} (the last guidance on file before ${dec(spec.label)} ended): ` +
           `band and bar = as reported; guidance is drawn on the top edge of each band (vs the previous quarter or a year earlier keep the bottom edge): above guidance, the band grows past the guided figure on its top edge — that growth in violet dots on a violet tint, the guided amount below it in the band's own colour; short of guidance, a dense-dot area with a dashed outline above the band (what was guided beyond what was reported); ` +
           `the bracket beside a bar spans the guided range. Lines compared: those the guidance fixes — guided GAAP or basis-free figures, and lines that follow from them alone ` +
           `(guided margins × guided revenue); every other line is drawn plain. ◆ teal = better than guided (higher revenue or profit, lower costs), orange = worse, grey = within the range.`,
@@ -649,17 +681,66 @@
       allq: per.q || [], ally: per.fy || [],
     };
   }
-  // a guided period ("Q3 FY2027", "Q4 2025", "FY2026") → the site's period it was about
-  function periodFor(period, filed, P) {
+  const dayDiff = (a, b) => (Date.parse(a) - Date.parse(b)) / 864e5;
+  // The site numbers fiscal years by the calendar year they end in; companies do not all: Home Depot's and Lowe's "fiscal
+  // 2026" ends in early 2027 (the site's FY27), Johnson & Johnson's 2026 ends on January 3, 2027. The offset from a
+  // release: the quarter it reports (its own words, guidance.py read → reported) is the site's last quarter ended before
+  // it was filed. null when the release does not say or the quarters do not agree.
+  function yearOffset(rel, P) {
+    const rp = rel && rel.reported;
+    if (!rp || !rp[0] || !rel.filed) return null;
+    const last = P.allq.filter((x) => x.end && x.end < rel.filed && dayDiff(rel.filed, x.end) < 120).sort((a, b) => (a.end < b.end ? 1 : -1))[0];
+    if (!last || !last.fy || (rp[1] && last.q && rp[1] !== last.q)) return null;
+    return last.fy - rp[0];
+  }
+  // a guided period ("Q3 FY2027", "Q4 2025", "FY2026", "Q@2026-09-27") in the site's numbering: {kind, fy, q, end}
+  // (end when the site knows the period, reported or not). Without the release's offset: a guide is about a period not
+  // over when it was given, so a label whose period (in the site's numbering) ended over 75 days before is the next year's
+  function resolve(period, filed, P, off) {
     const p = parsePeriod(period);
     if (!p) return null;
-    if (p.q === null) return P.y.find((x) => x.fy === p.y) || null;
-    const direct = P.q.find((x) => x.q === p.q && x.fy === p.y);
-    if (direct) return direct;
-    // the release's own next quarter (a fiscal-year company that wrote a calendar quarter, or the other way round)
-    const before = P.allq.filter((x) => x.end < filed).sort((a, b) => (a.end < b.end ? 1 : -1))[0];
-    const next = before && P.allq.filter((x) => x.end > before.end).sort((a, b) => (a.end < b.end ? -1 : 1))[0];
-    return next && next.q === p.q ? P.q.find((x) => x.end === next.end) || null : null;
+    const kind = p.q === null ? 'fy' : 'q', list = kind === 'fy' ? P.ally : P.allq;
+    if (p.at) {
+      const x = list.find((z) => z.end && Math.abs(dayDiff(z.end, p.at)) <= 12);
+      if (x) return { kind, fy: x.fy, q: x.q || null, end: x.end };
+      // a period not on the site yet ("the quarter ending December 27, 2026"): counted on from the last one it has
+      const last = list.filter((z) => z.end && z.fy && (kind === 'fy' || z.q)).sort((a, b) => (a.end < b.end ? 1 : -1))[0];
+      if (last && kind === 'q') {
+        const n = Math.round(dayDiff(p.at, last.end) / 91.3);
+        if (n > 0 && n <= 8) { let q = last.q + n, fy = last.fy; while (q > 4) { q -= 4; fy += 1; } return { kind, fy, q, end: p.at }; }
+      }
+      if (last && kind === 'fy') {
+        const n = Math.round(dayDiff(p.at, last.end) / 365.25);
+        if (n > 0 && n <= 3) return { kind, fy: last.fy + n, q: null, end: p.at };
+      }
+      return { kind, fy: null, q: null, end: p.at };
+    }
+    let fy = p.y + (off || 0);
+    const find = (y) => list.find((z) => z.fy === y && (kind === 'fy' || z.q === p.q));
+    if (off == null) {
+      const same = find(fy);
+      if (same && same.end && filed && dayDiff(filed, same.end) > 75) fy += 1;
+    }
+    const x = find(fy);
+    return { kind, fy, q: kind === 'q' ? p.q : null, end: x ? x.end : null };
+  }
+  // … and the site's period with its figures (a spec), or null when the site has not reported it
+  function siteFor(res, P) {
+    if (!res) return null;
+    if (res.fy == null) return (res.kind === 'fy' ? P.y : P.q).find((x) => x.end === res.end) || null;
+    return (res.kind === 'fy' ? P.y : P.q).find((x) => x.fy === res.fy && (res.kind === 'fy' || x.q === res.q)) || null;
+  }
+  function periodFor(period, filed, P, off) {
+    return siteFor(resolve(period, filed, P, off), P);
+  }
+  // a guided figure far from what the company reports is a misread (a segment's figure, a base year, a change read as a
+  // level): [low, high] multiples of the reference allowed per metric
+  const SCALE_OK = { revenue: [0.5, 2.0], gross_profit: [0.33, 3], operating_income: [0.2, 5], net_income: [0.2, 5], opex: [0.33, 3], other_income: [0.05, 20] };
+  function plausible(metric, unit, v, ref) {
+    if (unit === 'pct') return metric === 'tax_rate' ? v > -30 && v < 60 : v > -100 && v <= 100;
+    if (unit !== 'usd' || !(ref > 0) || !SCALE_OK[metric]) return true;
+    const r = Math.abs(v) / ref, [a, b] = SCALE_OK[metric];
+    return r >= a && r <= b;
   }
   function cmpRange(cur, old) {
     const scale = Math.max(Math.abs(old.lo), Math.abs(old.hi), Math.abs(cur.lo), Math.abs(cur.hi), 1e-9), eps = scale * 0.002;
@@ -683,28 +764,42 @@
     const rels = ((history && history.releases) || []).filter((r) => r && r.filed).slice().sort((a, b) => (a.filed < b.filed ? -1 : 1));
     if (!rels.length) return null;
     const P = periodsOf(company || {});
-    // every guide of a metric (basis, unit) for a period, oldest first
+    // the latest figure the site has of a metric, a quarter's or a year's: what a guide with no result yet is checked against
+    const latestOf = (metric, kind) => { const xs = (kind === 'fy' ? P.y : P.q).slice().sort((a, b) => (a.end < b.end ? 1 : -1)); for (const x of xs) { const v = reported(metric, x.spec); if (v != null) return Math.abs(v); } return null; };
+    // every guide of a metric (basis, unit) for a period of the site, oldest first; each release's periods read in the
+    // site's numbering (yearOffset), so "fiscal 2026" of a company that names years by their start lands on the site's FY27
     const series = new Map();
-    rels.forEach((r) => (r.items || []).forEach((it, i, all) => {
-      if (it.lo == null || !it.period || it.period === 'long-term' || it.scope || !['usd', 'pct', 'ps'].includes(it.unit)) return;
-      // a rate or cost with no basis next to the same metric with one ("in the mid-70s" beside the GAAP and
-      // non-GAAP margins): a remark, not a guide of its own
-      if (!it.basis && it.metric !== 'revenue' && all.some((x) => x.metric === it.metric && x.basis)) return;
-      const k = [it.metric, it.basis || '', it.unit, it.period].join('|');
-      if (!series.has(k)) series.set(k, { metric: it.metric, basis: it.basis || '', unit: it.unit, period: it.period, guides: [] });
-      const sr = series.get(k);
-      if (sr.guides.some((x) => x.filed === r.filed)) return;
-      sr.guides.push({ filed: r.filed, url: r.url, lo: it.lo, hi: it.hi, approx: it.approx, bound: it.bound, said: it.said });
-    }));
+    let dropped = 0;
+    rels.forEach((r) => {
+      const off = yearOffset(r, P);
+      (r.items || []).forEach((it, i, all) => {
+        if (it.lo == null || !it.period || it.period === 'long-term' || it.scope || !['usd', 'pct', 'ps'].includes(it.unit)) return;
+        // a rate or cost with no basis next to the same metric with one ("in the mid-70s" beside the GAAP and
+        // non-GAAP margins): a remark, not a guide of its own
+        if (!it.basis && it.metric !== 'revenue' && all.some((x) => x.metric === it.metric && x.basis)) return;
+        const res = resolve(it.period, r.filed, P, off);
+        if (!res) return;
+        const pk = res.fy != null ? `${res.kind}:${res.fy}:${res.q || ''}` : `${res.kind}@${res.end}`;
+        const k = [it.metric, it.basis || '', it.unit, pk].join('|');
+        if (!series.has(k)) series.set(k, { metric: it.metric, basis: it.basis || '', unit: it.unit, period: it.period, res, guides: [] });
+        const sr = series.get(k);
+        if (sr.guides.some((x) => x.filed === r.filed)) return;
+        sr.guides.push({ filed: r.filed, url: r.url, lo: it.lo, hi: it.hi, approx: it.approx, bound: it.bound, said: it.said, src: r.src });
+      });
+    });
     const rows = [];
     series.forEach((sr) => {
-      const per = periodFor(sr.period, sr.guides[0].filed, P);
+      const per = siteFor(sr.res, P);
       // a figure for a period already reported is a result quoted in a later release, not guidance; so is one given
       // after the period ended (the site knows every period's end, also of quarters whose figures it no longer keeps)
       if (per && per.filed) sr.guides = sr.guides.filter((x) => x.filed < per.filed);
-      const pp = parsePeriod(sr.period);
-      const ended = pp && (pp.q === null ? P.ally.find((x) => x.fy === pp.y) : P.allq.find((x) => x.q === pp.q && x.fy === pp.y));
-      if (ended && ended.end) sr.guides = sr.guides.filter((x) => x.filed <= ended.end);
+      if (sr.res.end) sr.guides = sr.guides.filter((x) => x.filed <= sr.res.end);
+      // and a figure far from what the company reports (for that period, else its latest) is a misread: left out
+      const actual0 = per ? reported(sr.metric, per.spec) : null;
+      const ref = actual0 != null ? Math.abs(actual0) : latestOf(sr.metric, sr.res.kind);
+      const n0 = sr.guides.length;
+      sr.guides = sr.guides.filter((x) => plausible(sr.metric, sr.unit, (x.lo + x.hi) / 2, ref));
+      dropped += n0 - sr.guides.length;
       if (!sr.guides.length) return;
       sr.guides.forEach((gd, i) => {
         if (i) Object.assign(gd, cmpRange(gd, sr.guides[i - 1]));
@@ -760,19 +855,24 @@
     const lastFiled = [...P.q, ...P.y].map((x) => x.filed || '').sort().pop() || '';
     const lastQ = P.q.filter((x) => x.q && x.fy).sort((a, b) => (a.end < b.end ? 1 : -1))[0];
     const fiscalStyle = P.q.some((x) => /FY\d{2}$/.test(x.label || ''));
-    const later = (period) => {                     // a period after the latest one on the site
-      const p = parsePeriod(period);
-      if (!p || !lastQ) return null;
-      return p.q === null ? p.y > lastQ.fy || (p.y === lastQ.fy && lastQ.q < 4) : p.y > lastQ.fy || (p.y === lastQ.fy && p.q > lastQ.q);
+    const later = (res) => {                        // a period after the latest one on the site (in the site's numbering)
+      if (!res || !lastQ || res.fy == null) return res && res.end && lastQ ? res.end > lastQ.end : null;
+      return res.kind === 'fy' ? res.fy > lastQ.fy || (res.fy === lastQ.fy && lastQ.q < 4) : res.fy > lastQ.fy || (res.fy === lastQ.fy && res.q > lastQ.q);
+    };
+    // the label in the site's own words, so a guided year shows as the site names it (Home Depot's fiscal 2026: FY27)
+    const siteLabel = (res, fallback) => {
+      if (!res || res.fy == null) return fallback;
+      const yy = String(res.fy).slice(-2);
+      return res.kind === 'fy' ? (fiscalStyle ? `FY${yy}` : `FY${res.fy}`) : (fiscalStyle ? `Q${res.q} FY${yy}` : `Q${res.q} ${res.fy}`);
     };
     metrics.forEach((m) => m.rows.forEach((r) => {
       if (!r.site) {
-        const l = later(r.period);
+        const l = later(r.res);
         r.pending = l === null ? (r.guides[r.guides.length - 1].filed || '') >= lastFiled : l;
       }
-      r.label = r.site ? r.site.label : fiscalStyle ? r.period.replace(/FY(\d{2})(\d{2})$/, 'FY$2') : r.period.replace(/ FY(\d{4})$/, ' $1');
+      r.label = r.site ? r.site.label : siteLabel(r.res, r.period);
     }));
-    return { metrics, releases: rels.length, since: rels[0].filed, latest: rels[rels.length - 1].filed, said, complete: !!(history && history.complete) };
+    return { metrics, releases: rels.length, since: rels[0].filed, latest: rels[rels.length - 1].filed, said, dropped, complete: !!(history && history.complete) };
   }
 
   const OUT = { above: 'above the range', within: 'within the range', below: 'below the range', met: 'met' };
@@ -992,7 +1092,7 @@
     return track + '<p class="empty">Not guided: the line keeps its share of its parent from the period on file, so the chart adds up. It is an assumption, not a figure the company gave.</p>';
   }
 
-  const api = { future, versus, pathHTML, landingHTML, landingBins, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
+  const api = { future, versus, sources, resolve, yearOffset, plausible, pathHTML, landingHTML, landingBins, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.FFGuidance = api;
 })(typeof window !== 'undefined' ? window : globalThis);

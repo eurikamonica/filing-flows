@@ -20,8 +20,15 @@ src}, change, range, ends, quote}. Fixed rules, no model: a sentence it cannot r
 """
 import re
 
-VERSION = 2                   # bump when read() changes: the releases kept (app/guidance_history.py) are read again
+VERSION = 3                   # bump when read() changes: the releases kept (app/guidance_history.py) are read again
                               # 2: a comparison base ("compared with … fourth quarter 2025") no longer dates the guide
+                              # 3: the audit of the largest companies' releases — the base figures a guide is built on
+                              #    ("based on the following Q3 FY26 figures") are not guides; a short heading or table
+                              #    header names the section's period ("Third quarter", "Consolidated metric Q3 FY27", "For
+                              #    the third quarter of 2026, we expect:"); a quarter ending on a date; tables of versions
+                              #    ("Original … As of … As of …", "Unchanged"); "$X for Q3 and $Y for FY27"; "raises …
+                              #    by $200M, $300M in CC" are changes; a product's or business's revenue ("AI server
+                              #    revenue") is not the company's; rows of results (this year, last year, % change) skipped
 
 # ------------------------------------------------------------------ change words
 NOUN = r'(?:guidance|outlook|forecasts?|financial (?:targets?|framework)|targets?|expectations?|projections?|guidance ranges?|range)'
@@ -177,6 +184,13 @@ def values(text, table=False, scale=1.0, lead=''):
             t['neg'] = True
     toks = [t for t in toks if not t['year'] and not (t['plain'] and not table and t['num'] < 1000
                                                      and not re.match(r'\s*(?:-|–|to)\s*\$?\d', full[t['end']:t['end'] + 6]))]
+    # not figures: the day of a date ("July 29, 2026"), "Table 1", "Note 3", footnote marks ("EPS (Diluted) 2,4 / Mid-point")
+    toks = [t for t in toks if not (t['plain'] and (
+        re.search(r'(?i)\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s*$', full[max(0, t['start'] - 12):t['start']])
+        or re.search(r'(?i)\b(?:table|note|item|exhibit|schedule|footnote|page)\s*$', full[max(0, t['start'] - 12):t['start']])
+        or re.search(r'(?i)(?:\bq|\bh|\bfy|\bcy|\bfq)\s?$', full[max(0, t['start'] - 3):t['start']]) or re.match(r'(?i)q\b', full[t['end']:t['end'] + 2])
+        or (t['num'] < 10 and re.match(r'\s*(?:,\s*\d\b|/)', full[t['end']:t['end'] + 4]))
+        or (t['num'] < 10 and re.search(r',\s*$', full[max(0, t['start'] - 3):t['start']]) and re.search(r'\b\d\s*,\s*$', full[max(0, t['start'] - 5):t['start']]))))]
     out, i = [], 0
     while i < len(toks):
         a = toks[i]
@@ -231,8 +245,13 @@ def values(text, table=False, scale=1.0, lead=''):
             x['growth'] = True
         if (re.search(r'(?i)\bby\s*(?:approximately |about |roughly |an additional |another )?$', pre) and
                 re.search(rf'(?i)\b(?:{V["raised"]}|{V["lowered"]}|increase|decrease|reduction|improvement)\b[^.;$]{{0,140}}$', full[max(0, x['start'] - 160):x['start']])) or \
-                re.search(r'(?i)\b(?:increase|decrease|reduction|improvement|raise|cut|lift|change)\s+of\s*(?:approximately |about |roughly )?$', pre):
+                re.search(r'(?i)\b(?:increase|decrease|reduction|improvement|raise|cut|lift|change)\s+of\s*(?:approximately |about |roughly )?$', pre) or \
+                re.search(r'(?i)\b(?:down|up|lower|higher)\s+(?:by\s+)?(?:approximately|about|roughly|nearly|some)\s*$', pre):
             x['delta'] = True
+            x.pop('growth', None)
+        prevx = out[out.index(x) - 1] if out.index(x) > 0 else None
+        if prevx is not None and prevx.get('delta') and re.fullmatch(r'\s*(?:,|or|and|/)\s*', full[prevx['end']:x['start']]):
+            x['delta'] = True                         # "raises … by $200M, $300M in constant currency"
             x.pop('growth', None)
         if (PRIOR_PRE.search(pre) and not CURRENT_PRE.search(pre)) or re.match(r'(?i)\s*\)?\s*\(?(?:previously|prior)\b', post):
             x['prior'] = True
@@ -268,7 +287,7 @@ METRICS = [
     ('net_interest_margin', 'Net interest margin', r'net interest margins?'),
     ('tax_rate', 'Tax rate', r'(?:effective |adjusted |non-gaap |gaap )*(?:income )?tax rates?'),
     ('ffo_ps', 'FFO per share', r'\b(?:core |normalized |adjusted |nareit )?a?ffo(?:aa| as adjusted)?(?: attributable to [\w ,&]{0,50}?)?(?: per (?:diluted )?(?:common )?share)'),
-    ('eps', 'EPS', r'(?:earnings|net income|net earnings|income|loss|eps) per (?:diluted |basic |common |fully diluted )*share|\b(?:diluted )?eps\b|per diluted share|\bearnings guidance'),
+    ('eps', 'EPS', r'(?:earnings|net income|net earnings|income|loss|eps)(?: \(loss\))? per (?:diluted |basic |common |fully diluted )*share(?: attributable to [\w ,&.]{0,40}?(?:\W{1,3}diluted)?)?|\b(?:diluted )?eps\b|per diluted share|\bearnings guidance'),
     ('ebitda', 'EBITDA', r'\bebitda(?:re)?\b'),
     ('fcf', 'Free cash flow', r'free cash flows?'),
     ('ocf', 'Operating cash flow', r'operating cash flows?|cash flows? from operati(?:ons|ng activities)|cash provided by operating activities'),
@@ -291,9 +310,18 @@ PCT = {'gross_margin', 'ebitda_margin', 'operating_margin', 'net_interest_margin
 PS = {'eps', 'ffo_ps'}
 # words that may stand between a business line's name and its metric without being a name themselves
 # ("Full-Year 2026 Total Revenue", "Q4 Consolidated Net Sales"); a verb or any other lower-case word ends the scan
+# words before "revenue" that keep it the company's own: verbs, articles, time and basis words
+PRODUCT_OK = {'of', 'in', 'for', 'and', 'or', 'with', 'to', 'that', 'expects', 'expect', 'expected', 'see', 'sees', 'guides', 'guide', 'guided',
+              'anticipates', 'anticipate', 'projects', 'project', 'targets', 'target', 'forecasts', 'forecast', 'estimates', 'estimate',
+              'is', 'are', 'be', 'will', 'a', 'an', 'this', 'that', 'record', 'total', 'overall', 'half', 'second-half', 'first-half',
+              'month', 'months', 'period', 'year-over-year', 'yearly', 'sequential', 'sequentially', 'quarter’s', 'year’s', 'all',
+              'ended', 'ending', 'to-date', 'ytd', 'combined', 'group', 'aggregate', 'expected', 'approximately', 'our', 'its'}
 MOD_WORDS = {'total', 'net', 'consolidated', 'gaap', 'non-gaap', 'adjusted', 'full', 'year', 'full-year', 'fiscal', 'quarter', 'first',
              'second', 'third', 'fourth', 'annual', 'reported', 'operating', 'core', 'comparable', 'non', 'calendar', 'fy', 'diluted',
              'gross', 'quarterly', 'the', 'its', 'our', 'their', 'company', 'company’s', "company's", 'consolidated'}
+
+
+ASIDE = re.compile(r'(?i),\s*(?:which|that) (?:is|are|represents?|excludes?|includes?|reflects?) [^,;$%\d]{3,80},|\((?:defined as|which is|i\.e\.,?) [^)$%\d]{3,80}\)')
 
 
 def mentions(text):
@@ -303,6 +331,10 @@ def mentions(text):
         for m in rx.finditer(text):
             spans.append((m.start(), m.end(), k, name, m.group(0)))
     spans.sort(key=lambda s: (s[0], -(s[1] - s[0])))
+    # a definition in passing ("Core Adjusted EBITDA, which is Adjusted EBITDA less lease revenues, is expected …"): the
+    # metrics it names are not guided
+    asides = [(m.start(), m.end()) for m in ASIDE.finditer(text)]
+    spans = [s for s in spans if not any(a < s[0] and s[1] <= b for a, b in asides)]
     out = []
     for s in spans:
         if out and s[0] < out[-1][1]:
@@ -323,7 +355,7 @@ def basis(text):
 
 
 ORD = {'first': 1, 'second': 2, 'third': 3, 'fourth': 4, '1st': 1, '2nd': 2, '3rd': 3, '4th': 4}
-PER_Q = re.compile(r"(?i)\b(?:(?P<w>first|second|third|fourth|1st|2nd|3rd|4th)[- ]quarter|q(?P<n>[1-4])(?!\s+(?:Holdings|Inc|Corp|Corporation|Group|Ltd|LLC|Technologies|Systems|Capital)\b)|(?P<n2>[1-4])q)(?:\s+of)?(?:\s+(?P<f>fiscal(?: year)?|fy))?\s*['’]?"
+PER_Q = re.compile(r"(?i)\b(?:(?P<f0>fiscal\s+)?(?P<w>first|second|third|fourth|1st|2nd|3rd|4th)[- ]quarter|(?P<f1>f)?q(?P<n>[1-4])(?!\s+(?:Holdings|Inc|Corp|Corporation|Group|Ltd|LLC|Technologies|Systems|Capital)\b)|(?P<n2>[1-4])q)(?:\s+of)?(?:\s+(?P<f>fiscal(?: year)?|fy))?(?:(?<=\d)-(?=\d{2}(?:\d{2})?\b)|\s*['’]?)"
                    r"(?P<y>\d{4}|\d{2}(?!\d|%|\.\d|\s*(?:million|billion|percent)))?\b")
 PER_FY = re.compile(r"(?i)\b(?:(?P<w>full[- ]year|fiscal(?: year)?|fy|calendar(?: year)?|annual|year)(?:\s+of)?\s*['’]?(?P<y>\d{4}|\d{2}(?!\d|%|\.\d))\b|"
                     r"(?P<fy0>full[- ]year|fiscal year|for the year|annual|year[- ]end))")
@@ -332,7 +364,7 @@ LONG = re.compile(r'(?i)\blong[- ]term\b|\bmulti-?year\b|\bthrough (?:fiscal )?2
 BASE = re.compile(r'(?i)(?:from|over|versus|vs\.?|compared (?:to|with)|than|relative to|since|ended|ending)\s+(?:the\s+)?(?:(?:full|fiscal)[- ]?(?:year\s+)?)?$')
 # a comparison base a few words back: "compared with $25.0 billion in fourth quarter 2025", "versus 12% in fiscal 2025" —
 # the period of the figure it is compared with, not of the guided one
-CMP = re.compile(r'(?i)\b(?:compared (?:to|with)|as compared|versus|vs\.?|relative to|up from|down from|year[- ]ago|prior[- ]year|last year)\b(?:[^.;:!?]|(?<=\d)\.(?=\d)){0,48}$')
+CMP = re.compile(r'(?i)\b(?:compared (?:to|with)|as compared|versus|vs\.?|relative to|up from|down from|year[- ]ago|prior[- ]year|last year|(?:from )?a base of|base year)\b(?:[^.;:!?]|(?<=\d)\.(?=\d)){0,48}$')
 
 
 def _yr(y):
@@ -342,17 +374,38 @@ def _yr(y):
     return y + 2000 if y < 100 else y
 
 
+MONTHS = {m: i + 1 for i, m in enumerate(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'])}
+PER_DATE = re.compile(r"(?i)\b(?P<k>(?:fiscal |full[- ])?(?:quarter|year|three months|twelve months))\s+(?:ending|ended|that ends|to end)\s+(?:on\s+)?"
+                      r"(?P<m>jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+"
+                      r"(?P<d>\d{1,2}),?\s+(?P<y>20\d\d)")
+
+
+def _date_period(m):
+    """'Q@2026-09-27' / 'FY@2027-01-31': a period named by the day it ends (record() finds it by that day)."""
+    k = m.group('k').lower()
+    day = f"{m.group('y')}-{MONTHS[m.group('m')[:3].lower()]:02d}-{int(m.group('d')):02d}"
+    return ('FY@' if 'year' in k or 'twelve' in k else 'Q@') + day
+
+
 def _periods(text):
-    """[(start, 'Q4 2026' | 'FY2026' | 'FY' | 'long-term')] named in a text, comparison bases left out ("growth over 2025")."""
+    """[(start, 'Q4 2026' | 'FY2026' | 'FY' | 'Q@2026-09-27' | 'long-term')] named in a text, comparison bases left out
+    ("growth over 2025")."""
     out = []
+    dated = [(m.start(), m.end(), _date_period(m)) for m in PER_DATE.finditer(text)]
+    for a, b, per in dated:
+        if not CMP.search(text[max(0, a - 60):a]):
+            out.append((a, per))
     cmp_ = lambda m: CMP.search(text[max(0, m.start() - 60):m.start()])
-    taken = [(m.start(), m.end()) for m in PER_Q.finditer(text)]
+    taken = [(m.start(), m.end()) for m in PER_Q.finditer(text)] + [(a, b) for a, b, _ in dated]
     for m in PER_Q.finditer(text):
+        if any(a <= m.start() < b for a, b, _ in dated):
+            continue
         n = ORD.get((m.group('w') or '').lower()) or int(m.group('n') or m.group('n2'))
         y = _yr(m.group('y'))
         if (y and BASE.search(text[max(0, m.start() - 24):m.start()])) or cmp_(m):
             continue                                   # "growth over the fourth quarter of 2025", "compared with … Q4 2025"
-        out.append((m.start(), f"Q{n} {'FY' if m.group('f') else ''}{y}" if y else f'Q{n}' + (' FY' if m.group('f') else '')))
+        fis = m.group('f') or m.group('f0') or m.group('f1')
+        out.append((m.start(), f"Q{n} {'FY' if fis else ''}{y}" if y else f'Q{n}' + (' FY' if fis else '')))
     for m in PER_FY.finditer(text):
         if any(a <= m.start() < b for a, b in taken):
             continue
@@ -414,8 +467,6 @@ def period_near(clause, pre, sentence, default=None):
             pre = ''
     for text, pick in ((head, 0), (pre, -1), (tail, 0), (sentence, 0)):
         ps = _periods(text)
-        if text is tail:
-            ps = [x for x in ps if re.search(r'\d{4}', x[1]) or x[1] == 'long-term']
         if ps:
             p = ps[pick][1]
             if p == 'long-term':
@@ -432,11 +483,20 @@ def _sentences(p):
     return [s for s in re.split(r'(?<=[.!?;])\s+(?=[A-Z(“"•·◦▪])|\s+(?=[•·◦▪]\s)', p) if s.strip()]
 
 
+# a result held to its guidance ("roughly 200 basis points above guidance midpoint", "at the high end of our guidance range")
+GUIDE_CMP = re.compile(r'(?i)\b(?:above|below|exceed\w*|beat|ahead of|in line with|within|versus|vs\.?|compared (?:to|with)|top of|'
+                       r'(?:the )?(?:high|low|upper|lower|top|bottom)[- ]end of)\s+(?:the |our |its )?(?:high end of )?(?:prior |previous |original |raised )?'
+                       r'(?:guidance|outlook|expectations?)(?:\s+(?:range|midpoint))?')
+# the figures a guide is built on, not a guide: "guidance is based on the following Q3 FY26 figures: Net sales: $177.8 billion"
+BASEFIG = re.compile(r'(?i)\bbased on the following\b|\b(?:is|are) based on (?:the )?(?:Q[1-4]|fiscal|FY|full[- ]year|prior[- ]year)\b[^.;]{0,40}\b(?:figures|results)\b|'
+                     r'\bbaseline (?:of|figures?|results?)\b|\bfrom (?:an?|our|the) (?:higher |lower |new )?(?:earnings )?baseline\b')
+# a row of results in a table: this year, last year and the change ("Net revenue $24,181 $22,726 6.4%")
+RESULT_ROW = re.compile(r'(?i)\$?\(?\d[\d,]*(?:\.\d+)?\)?\s+\$?\(?\d[\d,]*(?:\.\d+)?\)?\s+\(?-?\d+(?:\.\d+)?\s?%\)?')
 FORWARD = re.compile(r'(?i)\b(?:expect\w*|anticipat\w*|guidance|outlook|forecast\w*|project(?:s|ed|ing|ions?)|targets?|guid(?:e|es|ed|ing)|'
                      r'sees|estimates?|plans? to|is likely|range of|for the (?:full )?(?:fiscal )?year|fourth quarter|next quarter)\b')
 PAST = re.compile(r'(?i)\b(?:was|were|totaled|came in at|reported|delivered|achieved|grew|generated|posted|recorded)\b')
 HEAD = re.compile(r'(?i)(?:outlook|guidance|forecast|expectations|financial targets)\b')
-STOP_HEAD = re.compile(r'(?i)^(?:forward[- ]looking|about |conference call|webcast|earnings call|non-gaap|use of non|reconciliation|contacts?\b|investor|media|'
+STOP_HEAD = re.compile(r'(?i)^(?:forward[- ]looking|about |conference call|webcast|earnings call|non-gaap(?!\s*(?:\(\d+\)\s*)?(?:outlook|guidance|estimates?))|use of non|reconciliation|contacts?\b|investor|media|'
                        r'safe harbor|cautionary|condensed|consolidated (?:statements|balance)|balance sheet|cash flow|dividend|share repurchase|'
                        r'(?:third|second|first|fourth) quarter (?:\d{4} )?(?:highlights|results|financial)|highlights|recent|business update|segment results)')
 
@@ -444,6 +504,14 @@ STOP_HEAD = re.compile(r'(?i)^(?:forward[- ]looking|about |conference call|webca
 def _section_scale(p):
     m = re.search(r'(?i)\(?\s*(?:\$|dollars|amounts)?\s*in (millions|billions|thousands)', p)
     return {'millions': 1e6, 'billions': 1e9, 'thousands': 1e3}[m.group(1).lower()] if m else None
+
+
+def _row_scale(p):
+    m = re.search(r'\(\s*(?:US)?\$\s*(B|M|K|bn|mm|billions?|millions?|thousands?)\s*\)|\(\s*in (billions|millions|thousands)\s*\)', p, re.I)
+    if not m:
+        return None
+    t = (m.group(1) or m.group(2)).lower()
+    return 1e9 if t[0] == 'b' else 1e6 if t[0] == 'm' else 1e3
 
 
 def _clauses(s, spans):
@@ -467,7 +535,14 @@ def _scope(s, sp):
     # a name in capitals right before the metric ("Data Center revenue", "Employer Services revenue"); the scan stops at
     # the first other word: a verb or a lower-case word ("AMD expects revenue", "Hayward now expects net sales" are the
     # company's own), a possessive ("AMD's revenue") or the start of the sentence
-    for w in reversed(re.findall(r"[\w&'’.-]+", pre)[-4:]):
+    words_ = re.findall(r"[\w&'’.-]+", pre)
+    if sp[2] == 'revenue' and words_:
+        last = words_[-1]
+        lw = last.lower().strip('.')
+        if (lw not in MOD_WORDS and lw not in PRODUCT_OK and not VERB_ANY.fullmatch(last) and not re.match(r'^(?:\d{2,4}|fy\d*|q[1-4]|\(?\d\)?|h[12])$', lw)
+                and re.match(r'^[a-z][a-z-]+$', last) and not re.search(r"['’]s$", last)):
+            return 'segment'                          # "AI server revenue", "subscription revenue", "non-handset revenues"
+    for w in reversed(words_[-4:]):
         lw = w.lower().strip('.')
         if lw in MOD_WORDS or re.match(r'^(?:\d{2,4}|fy\d*|q[1-4]|\(?\d\)?)$', lw):
             continue
@@ -499,6 +574,19 @@ def _verb_before(s, pos, found):
     return got
 
 
+OTHER_NOUN = re.compile(r'(?i)^\s*(?:of|related to|associated with|attributable to|in connection with|tied to)\s+(?!(?:the |our |its )?(?:revenue|sales|net sales|'
+                        r'growth|guidance|outlook|range|midpoint|total|consolidated|gaap|non-gaap|adjusted|fiscal|full|first|second|third|fourth|q[1-4]|20\d\d|approximately))')
+PAST_VALUE = re.compile(r'(?i)^\s*,?\s*(?:an? )?(?:increased|decreased|grew|declined|rose|fell|was|were)\b')
+
+
+def _own(full, v):
+    """False when the figure describes something else than the metric of its clause, or reports a result (full: the text
+    the figure's positions count in — the sentence up to the clause and the clause)."""
+    e = v.get('end')
+    post = full[e:e + 70] if isinstance(e, int) else ''
+    return not (OTHER_NOUN.match(post) or PAST_VALUE.match(post))
+
+
 def _items_of(s, ctx, said, ends, table=False, scale=1.0, columns=None, carry=None):
     """The guided figures of one sentence (or table row)."""
     spans = mentions(s)
@@ -510,14 +598,15 @@ def _items_of(s, ctx, said, ends, table=False, scale=1.0, columns=None, carry=No
     pm_all = _tok(TOK.match(s, pm_all.end())) if pm_all and TOK.match(s, pm_all.end()) else None
     for sp, clause, pre in _clauses(s, spans):
         k, name, word = sp[2], sp[3], sp[4]
-        vals = values(clause, table=table, scale=1.0 if k in PS else scale, lead=s[:sp[0]])
+        rs = _row_scale(clause[:40]) if table or columns else None    # "Revenue ($B) $15.0 - $16.0"
+        vals = values(clause, table=table, scale=1.0 if k in PS else (rs or scale), lead=s[:sp[0]])
         if pm_all:
             for v in vals:
                 v.setdefault('pm', (pm_all['num'], pm_all['unit']))
-        vals = [_apply_pm(v) for v in vals]
+        vals = [_apply_pm(v) for v in vals if _own(s[:sp[0]] + clause, v)]
         b = basis(pre[-40:] + ' ' + word) or basis(clause[:60]) or ctx.get('basis', '')
         both = re.search(r'(?i)\bGAAP and non-GAAP\b', s[max(0, sp[0] - 60):sp[1] + 20])
-        per = period_near(clause, s[max(0, sp[0] - 90):sp[0]], s, ctx.get('period'))
+        per = period_near(clause, s[:sp[0]], s, ctx.get('period'))      # all of the sentence before the metric: a window cut a period in half
         if k in MONEY and any(v.get('ps') for v in vals):
             # "net income of $736 million to $743 million, or $21.28 to $21.48 per diluted share": both figures
             psv = values(clause, table=table, scale=1.0, lead=s[:sp[0]])
@@ -534,6 +623,39 @@ def _items_of(s, ctx, said, ends, table=False, scale=1.0, columns=None, carry=No
         sc = _scope(s, sp) if k in MONEY else ''
         own = _verb_before(s, sp[0], said) if said else set()
         w = own or set(said or ())
+        if columns and columns[0] == 'versions':
+            # one cell per version: "Unchanged" repeats the one to its left; the last is current, the one before the prior
+            cells = []
+            for seg in re.split(r'(?i)\bunchanged\b', clause):
+                vs = [_apply_pm(v) for v in values(seg, table=table, scale=1.0 if k in PS else scale)]
+                if cells or vs:
+                    cells.extend(vs[:1])
+                cells.append(None)
+            cells = cells[:-1]
+            seq = []
+            for c in cells:
+                seq.append(c if c is not None else (seq[-1] if seq else None))
+            seq = [c for c in seq if c is not None]
+            if not seq:
+                continue
+            cur_v, prev_v = seq[-1], seq[-2] if len(seq) > 1 else None
+            item = _item(k, name, b, per, cur_v, dict(prev_v, prior=True) if prev_v else None, w, ends, s, sc, table)
+            if item:
+                out.append(item)
+            continue
+        if columns and vals and all(str(c).startswith('basis:') for c in columns):
+            # a GAAP column and a non-GAAP column; one figure for both (revenue): the row's own basis
+            vals = [v for v in vals if not v.get('growth') and not v.get('delta')]
+            if len(vals) == 1:
+                item = _item(k, name, b, per, vals[0], None, w, ends, s, sc, table)
+                if item:
+                    out.append(item)
+            elif len(vals) == len(columns):
+                for c, v in zip(columns, vals):
+                    item = _item(k, name, c[6:], per, v, None, w, ends, s, sc, table)
+                    if item:
+                        out.append(item)
+            continue
         if columns and vals:
             vals = [v for v in vals if not v.get('growth') and not v.get('delta') and v['unit'] in ('usd', 'num', 'pct')]
             if len(vals) != len(columns):
@@ -567,6 +689,20 @@ def _items_of(s, ctx, said, ends, table=False, scale=1.0, columns=None, carry=No
                 if it:
                     out.append(it)
             continue
+        if (len(cur) == 2 and cur[0]['unit'] == cur[1]['unit'] and not cur[0].get('growth') and not cur[1].get('growth')
+                and all(isinstance(c.get('end'), int) and isinstance(c.get('start'), int) for c in cur)):
+            # positions count in the sentence (values() read the clause after the sentence's start)
+            after = [s[cur[0]['end']:cur[1]['start']], s[cur[1]['end']:cur[1]['end'] + 40]]
+            pers = [_periods(a) for a in after]
+            if pers[0] and pers[1] and pers[0][0][1] != pers[1][0][1]:
+                dated = [x for _, x in _periods(s) if re.search(r'\d{4}', x)]
+                for v, ps_ in zip(cur, pers):
+                    pv_ = ps_[0][1]
+                    pv_ = pv_ if re.search(r'\d{4}', pv_) else _merge(pv_, next((d for d in dated if d != pv_), None) or ctx.get('period'))
+                    it = _item(k, name, b, pv_, v, None, w, ends, s, sc, table)
+                    if it:
+                        out.append(it)
+                continue
         main = cur[0]
         # a growth rate first ("growth of 5% to 7%, or $X to $Y"): the amount is the guided figure, the rate its growth
         if main.get('growth') and len(cur) > 1 and not cur[1].get('growth'):
@@ -660,9 +796,25 @@ def _primary(tags):
     return next((t for t in PRIORITY if t in tags), None)
 
 
+VERSION_COL = re.compile(r'(?i)\b(?:as of|original(?:ly)?(?: from| as of)?|updated|revised|issued)\s+(?:[a-z]{3,9}\.? \d{1,2},? \d{4}|\d{1,2}[./-]\d{1,2}[./-]\d{2,4})')
+
+
 def _columns(p):
-    """An outlook table's header: ['prior', 'current'] (or with a quarter column) when it says so."""
+    """An outlook table's header: ['prior', 'current'] (or with a quarter column) when it says so; a table of versions
+    ("Original from 2.19.2026 · As of 5.21.2026 · As of 8.20.2026"): ['versions', n] — the last column current, the one
+    before it the prior, "Unchanged" repeating the column to its left."""
     low = p.lower()
+    vs = VERSION_COL.findall(p)
+    if len(vs) >= 2:
+        return ['versions', len(vs)]
+    pers = []
+    for _, x in _periods(p):
+        if x != 'long-term' and x not in pers and re.search(r'\d{4}', x):
+            pers.append(x)
+    if len(pers) >= 2 and not values(p) and len(p) <= 160:
+        return pers
+    if re.search(r'(?<![-\w])GAAP\b.*\bnon-?GAAP\b', p, re.I) and not values(p) and len(p) <= 80:
+        return ['basis:GAAP', 'basis:non-GAAP']                # "Q4 2026 GAAP Non-GAAP"
     asof = re.findall(r'as of [a-z]{3,9}\.? \d{1,2},? \d{4}', low)
     if len(asof) == 2:
         return ['prior', 'current']
@@ -677,8 +829,10 @@ def _columns(p):
     return None
 
 
-def _reported(paras):
-    """(year, quarter, fiscal) of the results a release reports ("third quarter 2026 results"), or None."""
+def _reported(paras, filed=None):
+    """(year, quarter, fiscal) of the results a release reports ("third quarter 2026 results"), or None. A quarter named
+    without its year ("Q3 Results Demonstrate …") takes the year of the filing date (the calendar quarter just ended)."""
+    bare = None
     for p in paras:
         if not re.search(r'(?i)\b(?:results?|reports?|reported|announces?|earnings)\b', p):
             continue
@@ -686,10 +840,15 @@ def _reported(paras):
         if m and m.group('y'):
             n = ORD.get((m.group('w') or '').lower()) or int(m.group('n') or m.group('n2'))
             return (_yr(m.group('y')), n, bool(m.group('f')))
+        if m and bare is None and not (m.group('f') or m.group('f0') or m.group('f1')) and re.search(r'(?i)\bresults?\b', p):
+            bare = ORD.get((m.group('w') or '').lower()) or int(m.group('n') or m.group('n2'))
         # "fourth quarter and full year 2023 results", "fourth quarter and fiscal 2026 results"
         m = re.search(r'(?i)\b(first|second|third|fourth)[- ]quarter and (?:the )?(?:full[- ]year|fiscal(?: year)?|full fiscal year|year[- ]end)\s*(?:of\s+)?(?:fiscal\s+)?(20\d\d)\b', p)
         if m:
             return (int(m.group(2)), ORD[m.group(1).lower()], bool(re.search(r'(?i)fiscal', m.group(0))))
+    if bare and filed and re.match(r'^\d{4}-\d{2}', filed):
+        y, mo = int(filed[:4]), int(filed[5:7])
+        return (y if 3 * bare <= mo else y - 1, bare, False)
     return None
 
 
@@ -705,13 +864,16 @@ def _past(per, reported):
     return bool(m) and (int(m.group(1)) < y or int(m.group(1)) == y and q == 4)
 
 
-def read(paras, limit=1500):
+def read(paras, limit=1500, filed=None):
     """The release's guidance: {'label', 'tags', 'quote', 'items'}; label is the release's main change (withdrawn, mixed,
     raised, lowered, narrowed, widened, initiated, reaffirmed, updated) or None."""
     tags, quotes, items = set(), {}, []
     section = None                     # {'period', 'basis', 'scale', 'columns', 'left'}
     carry = None
     reported = _reported(paras[:12])
+    # no year named for the quarter reported: the filing date's calendar year, used only to date figures that name no
+    # period at all (a fiscal company's own year naming may differ, so it is neither used for quarters nor passed on)
+    guess = None if reported else _reported(paras[:12], filed)
     for p in paras[:limit]:
         p = p.strip()
         if not p or re.search(r'(?i)forward[- ]looking statements|safe harbor|cautionary (?:note|statement)', p[:140]) and len(p) > 160:
@@ -720,11 +882,42 @@ def read(paras, limit=1500):
         if section and (STOP_HEAD.search(p) and short or section['left'] <= 0):
             section = None
         heading = (short and HEAD.search(p) and not BOILER.search(p) and not re.search(r'(?i)non-gaap|reconcil|forward-looking', p)
-                   and not values(p) and not p.endswith('.') and not p.lstrip().startswith(('•', '·', '◦', '▪', '-', '–'))
+                   and not values(p) and not p.endswith('.') and (not p.lstrip().startswith(('•', '·', '◦', '▪', '-', '–')) or p.rstrip().endswith(':'))
                    and (p.rstrip().endswith(':') or not VERB_ANY.search(p))
                    and not re.search(r'(?i)\b(?:results?|reports?|reported|announces?|highlights|delivers?|posts?)\b', p))
+        if section:
+            section['seq'] = section.get('seq', 0) + 1
+        if heading and section and section.get('head_seq') == section.get('seq', 0) - 1 and len(p) <= 70:
+            # under a table's first column title, the next title ("Guidance Full Year FY27") or a bare "Guidance": still
+            # the header, not a new section
+            pp = period(p, None)
+            if pp and pp != 'long-term':
+                pp = pp if re.search(r'\d{4}', pp) else _merge(pp, section.get('period')) or pp
+                heads = section.setdefault('heads', [section['period']] if section.get('period') else [])
+                if pp not in heads:
+                    heads.append(pp)
+                    section['columns'] = list(heads) if len(heads) > 1 else None
+                    section['period'] = heads[0]
+            bb = basis(p)
+            if bb:                                     # "FQ1-27 GAAP Outlook" then "Non-GAAP Outlook": a column each
+                bs = section.setdefault('bases', [])
+                if bb not in bs:
+                    bs.append(bb)
+                if len(bs) > 1 and not section.get('heads', [None])[1:]:
+                    section['columns'] = ['basis:' + x for x in bs]
+            section['head_seq'] = section['seq']
+            continue
         if heading:
-            section = {'period': period(p, None), 'basis': basis(p), 'scale': _section_scale(p) or 1.0, 'columns': None, 'left': 45}
+            pp0 = period(p, None)
+            # a heading right after a line that named the period ("… guidance for the first quarter of 2027:" then the
+            # table's title "FQ1-27 GAAP Outlook"): the period carries on
+            if not pp0 and section and section.get('head_seq') is not None and section.get('head_seq') >= section.get('seq', 0) - 1:
+                pp0 = section.get('period')
+            section = {'period': pp0, 'basis': basis(p), 'scale': _section_scale(p) or 1.0, 'columns': None, 'left': 45, 'seq': 0,
+                       'head_seq': 0 if period(p, None) else None, 'bases': [basis(p)] if basis(p) else []}
+            hc = _columns(p)
+            if hc:
+                section['columns'] = hc
             carry = None
         elif section:
             section['left'] -= 1
@@ -734,7 +927,36 @@ def read(paras, limit=1500):
             cols = _columns(p)
             if cols and not values(p):
                 section['columns'] = cols
+                pp = period(p, None) if cols[0].startswith('basis:') else None
+                if pp and pp != 'long-term':           # "Q4 2026 GAAP Non-GAAP": the table's period too
+                    section['period'] = pp if re.search(r'\d{4}', pp) else _merge(pp, section.get('period')) or pp
                 continue
+            if len(p) <= 40 and not values(p) and section.get('head_seq') == section['seq'] - 1 and basis(p) and not period(p, None):
+                bs = section.setdefault('bases', [])
+                if basis(p) not in bs:
+                    bs.append(basis(p))
+                if len(bs) > 1:
+                    section['columns'] = ['basis:' + x for x in bs]
+                section['head_seq'] = section['seq']
+                continue
+            # a short heading or a table header that names a period: the section's period from here on ("Third quarter",
+            # "Fiscal year 2027", "Consolidated metric Q3 FY27", "For the third quarter of 2026, we expect:"); two of them in a
+            # row ("Q3 FY27 Guidance", "Full Year FY27 Guidance") are the columns of the table that follows
+            if len(p) <= 120 and not values(p) and not BASEFIG.search(p) and (p.rstrip().endswith(':') or len(p) <= 70):
+                pp = period(p, None)
+                if pp and pp != 'long-term':
+                    pp = pp if re.search(r'\d{4}', pp) else _merge(pp, section.get('period')) or pp
+                    heads = section.get('heads') or []
+                    if heads and section.get('head_seq') == section['seq'] - 1 and pp not in heads and not p.rstrip().endswith(':'):
+                        heads.append(pp)
+                        section['columns'] = list(heads)
+                    else:
+                        heads = [pp]
+                        section['period'] = pp
+                        if not p.rstrip().endswith(':'):
+                            section['columns'] = None
+                    section['heads'], section['head_seq'] = heads, section['seq']
+                    continue
         for s in _sentences(p):
             if len(s) > 600:
                 continue
@@ -745,14 +967,23 @@ def read(paras, limit=1500):
                     quotes.setdefault(t, []).append(s)
             if BOILER.search(s) or NOT_CHANGE.search(s) and not w:
                 continue
+            if BASEFIG.search(s):
+                continue
+            if re.search(r'(?i)\b(?:three|six|nine|twelve) months ended\b|\byear ended\b|\bquarter ended\b', s) and not re.search(r'(?i)\b(?:expect|anticipat|guidance|outlook|forecast|project|will)\w*', s):
+                continue
             in_table = bool(section) and (len(s) < 160 or s.lstrip().startswith(('•', '·', '◦', '▪')))
+            if in_table and RESULT_ROW.search(s) and not re.search(r'(?i)\bto\b|–|—|\+/-|±|approximately|about|range|between|increase|decrease|flat', s):
+                continue
             if not in_table and not FORWARD.search(s) and not w:
                 continue
-            if PAST.search(s) and not w and not re.search(r'(?i)\b(?:expect|anticipat|guidance|outlook|forecast|project)', s):
+            if PAST.search(s) and not w and not re.search(r'(?i)\b(?:expect|anticipat|guidance|outlook|forecast|project)', GUIDE_CMP.sub('', s)):
                 continue
             ctx = {'period': (section or {}).get('period'), 'basis': (section or {}).get('basis', '')}
             got = _items_of(s, ctx, w, e, table=in_table, scale=(section or {}).get('scale', 1.0),
                             columns=(section or {}).get('columns') if in_table else None, carry=carry if in_table else None)
+            if in_table and not FORWARD.search(s):        # a bare table row: no period is assumed for it
+                for it in got:
+                    it['_tbl'] = True
             items.extend(got)
             sp = mentions(s)
             if in_table and sp and not values(s, table=True):
@@ -769,8 +1000,8 @@ def read(paras, limit=1500):
                 n = int(m.group(1))
                 it['period'] = f"Q{n} {'FY' if (m.group(2) or rfis) else ''}{ry + 1 if n < rq else ry}"
     years = [int(m.group(1)) for it in items for m in [re.match(r'^FY(\d{4})$', it.get('period') or '')] if m]
-    if not years and reported:
-        years = [reported[0] + (1 if reported[1] == 4 else 0)]
+    if not years and (reported or guess):
+        years = [(reported or guess)[0] + (1 if (reported or guess)[1] == 4 else 0)]
     if years:
         y = max(set(years), key=lambda v: (years.count(v), -v))
         for it in items:
@@ -778,6 +1009,12 @@ def read(paras, limit=1500):
                 it['period'] = f'FY{y}'
             elif re.match(r'^Q[1-4]( FY)?$', it.get('period') or ''):
                 it['period'] = _merge(it['period'], f'FY{y}' if ' FY' in it['period'] else str(y))
+    # one style per year: when the release names a fiscal quarter of a year ("Q3 FY27"), its other quarters of that year are too
+    fisc = {m.group(1) for it in items for m in [re.match(r'^Q[1-4] FY(\d{4})$', it.get('period') or '')] if m}
+    for it in items:
+        m = re.match(r'^Q([1-4]) (\d{4})$', it.get('period') or '')
+        if m and m.group(2) in fisc:
+            it['period'] = f'Q{m.group(1)} FY{m.group(2)}'
     named = [it['period'] for it in items if it.get('period') and it.get('lo') is not None and it['period'] != 'long-term'
              and not _past(it['period'], reported)]          # a figure with no period of its own: the release's main guided period
     if named:
@@ -786,6 +1023,14 @@ def read(paras, limit=1500):
             if not it.get('period'):
                 it['period'] = common
                 it['period_assumed'] = True
+    if not named and (reported or guess):          # nothing names a period: the year the release reports in ("Updated 2026 guidance")
+        y = (reported or guess)[0] + (1 if (reported or guess)[1] == 4 else 0)
+        for it in items:
+            if not it.get('period') and not it.get('_tbl'):
+                it['period'] = f'FY{y}'
+                it['period_assumed'] = True
+    for it in items:
+        it.pop('_tbl', None)
     items = [it for it in items if not _past(it.get('period'), reported)]
     items = dedupe(items)
     for it in items:
@@ -798,7 +1043,8 @@ def read(paras, limit=1500):
     pick = lambda xs: next((x for x in xs if re.search(r'\d', x) and re.search(r'\$|%', x)), xs[0]) if xs else ''
     quote = pick(quotes.get(label) or (quotes.get('raised', []) + quotes.get('lowered', []) if label == 'mixed' else [])
                  or next((quotes[t] for t in PRIORITY if quotes.get(t)), []))
-    return {'label': label, 'tags': [t for t in PRIORITY if t in tags], 'quote': quote, 'items': items[:40]}
+    return {'label': label, 'tags': [t for t in PRIORITY if t in tags], 'quote': quote, 'items': items[:40],
+            'reported': list(reported) if reported else None}   # the period whose results the release reports, in the company's own naming
 
 
 def key(it):
