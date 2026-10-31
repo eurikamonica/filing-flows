@@ -51,8 +51,8 @@ class Flow(unittest.TestCase):
                 A.module = orig
                 del os.environ['EDINET_API_KEY']
             self.assertEqual(st['jp']['read'], 2)
-            st2 = A.collect(d, markets=['kr'], minutes=1, http=object())          # no DART key: skipped, not an error
-            self.assertIn('skipped', st2['kr'])
+            st2 = A.collect(d, markets=['jp'], minutes=1, http=object())          # no EDINET key: skipped, not an error
+            self.assertIn('skipped', st2['jp'])
             u = Path(d) / 'u.json'
             u.write_text(json.dumps({'companies': UNI}))
             b = A.build(d, u)

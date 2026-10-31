@@ -5,8 +5,8 @@
 #
 # Japan and Korea need free API keys, added as repository secrets (Settings → Secrets and variables → Actions):
 #   EDINET_API_KEY  — https://api.edinet-fsa.go.jp/WEEE0090.aspx (APIキー発行: sign up with an email and phone number, then issue the key)
-#   DART_API_KEY    — https://opendart.fss.or.kr (인증키 신청 / API key application: sign up, the key is issued by email)
-# Without them those two markets are skipped; Taiwan and Hong Kong need no key.
+#   DART_API_KEY    — https://opendart.fss.or.kr (인증키 신청; optional: without it Korea is read from the public DART viewer, more slowly)
+# Without EDINET_API_KEY Japan is skipped; Taiwan, Hong Kong (and Korea, more slowly) need no key.
 # Kept on the branch "research-asia" (one commit, force-pushed); scan.yml publishes public/ at disclosures/data/research/asia/.
 name: Research — Asia customers & suppliers
 on:

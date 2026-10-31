@@ -40,6 +40,7 @@ from core import now, read_json, write_json  # noqa: E402
 
 MARKETS = ('jp', 'kr', 'tw', 'hk')
 KEYS = {'jp': 'EDINET_API_KEY', 'kr': 'DART_API_KEY'}
+NEED_KEY = {'jp'}                      # Korea reads the public DART viewer without a key (slower); with one, OpenDART
 NAMES = {'jp': 'Japan', 'kr': 'Korea', 'tw': 'Taiwan', 'hk': 'Hong Kong'}
 FIRST_DAYS = 420                       # the first run lists a little over a year: every company's latest annual report
 # US dollars per unit, approximate 2025 averages (Federal Reserve H.10): amounts are shown in both currencies
@@ -268,7 +269,7 @@ def collect(root, markets=MARKETS, minutes=40, http=None, today=None):
     today = today or dt.date.today()
     state = read_json(root / 'cache' / 'state.json', {}) or {}
     stats = {}
-    live = [mk for mk in markets if not KEYS.get(mk) or os.environ.get(KEYS[mk])]
+    live = [mk for mk in markets if mk not in NEED_KEY or os.environ.get(KEYS[mk])]
     for mk in markets:
         if mk not in live:
             stats[mk] = {'skipped': f'no {KEYS[mk]} (free key: see the workflow file)'}
