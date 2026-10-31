@@ -3011,6 +3011,2992 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2026-01-01_2026-06-30",
+        "label": "H1 2026",
+        "start": "2026-01-01",
+        "end": "2026-06-30",
+        "months": 6,
+        "vs": "H1 2025",
+        "vs_key": "2025-01-01_2025-06-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "H1 2025",
+          "title": "NOCOPI TECHNOLOGIES INC/MD/ H1 2026 vs H1 2025: what changed",
+          "bullets": [
+            "Revenue rose $512K versus H1 2025, but operating profit fell $471K: costs grew by more than sales.",
+            "The largest single swing was Cost of revenue, +$429K (+115%).",
+            "Operating cash flow fell $158K to $297K, while net earnings fell $501K to \u2212$534K."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-16",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html",
+        "kind": "loss",
+        "title": "NOCOPI TECHNOLOGIES INC/MD/ H1 2026 earnings &amp; cash flow",
+        "subtitle": "Six months ended Jun 30, 2026 \u00b7 GAAP \u00b7 Y/Y vs. H1 2025",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 16, 2026), read from the inline XBRL tags of its financial statements. Six months ended Jun 30, 2026 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with H1 2025; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 1350712.0,
+            "y": 839000.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$1.4M"
+              ],
+              [
+                "mut",
+                "Y/Y +61%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$512K",
+            "source": "Inline XBRL tag Revenues in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 195005.0,
+            "y": 225200.0,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$195K \u00b7 9.4% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221213%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$30K \u00b7 scale +0.20 \u00b7 mix \u22120.23"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 534227.0,
+            "y": 33100.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$534K \u00b7 26% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +1514%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$501K \u00b7 scale +0.03 \u00b7 mix +0.47",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 2079944.0,
+            "y": 1097300.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$2.1M \u00b7 154% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +90%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.0M \u00b7 scale +0.67 \u00b7 mix +0.31"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 2079944.0,
+            "y": 1097300.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$2.1M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +90%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $729K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.0M \u00b7 scale +1.0 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 802731.0,
+            "y": 373800.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$803K \u00b7 39% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +115%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$429K \u00b7 scale +0.33 \u00b7 mix +0.09",
+            "source": "Inline XBRL tag CostOfGoodsAndServicesSold in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 104100.0,
+            "y": 88200.0,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$104K \u00b7 5.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +18%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$16K \u00b7 scale +0.08 \u00b7 mix \u22120.06",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 163592.0,
+            "y": 148300.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$164K \u00b7 7.9% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +10%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$15K \u00b7 scale +0.13 \u00b7 mix \u22120.12",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 331095.0,
+            "y": 136300.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$331K \u00b7 16% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +143%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$195K \u00b7 scale +0.12 \u00b7 mix +0.07",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 678426.0,
+            "y": 350700.0,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$678K \u00b7 33% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +93%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$328K \u00b7 scale +0.31 \u00b7 mix +0.01"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 831496.0,
+            "y": 488400.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$831K \u00b7 62% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +70%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$343K \u00b7 scale +0.30 \u00b7 mix +0.05"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 69700.0,
+            "y": 47600.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$70K \u00b7 8.4% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +46%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$22K \u00b7 scale +0.03 \u00b7 mix \u22120.01",
+            "source": "Inline XBRL tag AllocatedShareBasedCompensationExpense in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 761796.0,
+            "y": 440800.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$762K \u00b7 92% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +73%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$321K \u00b7 scale +0.31 \u00b7 mix +0.01"
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 534227.0,
+            "y": 33100.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$534K \u00b7 64% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +1514%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$501K \u00b7 scale +0.02 \u00b7 mix +0.48",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "ocf",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash flow",
+            "pos": "above",
+            "v": 297269.0,
+            "y": 455300.0,
+            "lines": [
+              [
+                "ocf",
+                "Operating cash flow"
+              ],
+              [
+                "val",
+                "$297K \u00b7 22% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221235%"
+              ],
+              [
+                "mut",
+                "36% of cash sources"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$158K \u00b7 scale +0.28 \u00b7 mix \u22120.44",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "fcf",
+            "col": 7,
+            "color": "profit",
+            "name": "Free cash flow (OCF \u2212 capex)",
+            "pos": "right",
+            "v": 283669.0,
+            "y": 455300.0,
+            "lines": [
+              [
+                "name",
+                "Free cash flow (OCF \u2212 capex)"
+              ],
+              [
+                "val",
+                "$284K \u00b7 95% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u221238%"
+              ],
+              [
+                "mut",
+                "FCF margin 21%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$172K \u00b7 scale \u22120.16 \u00b7 mix \u22120.01"
+          },
+          {
+            "id": "capex",
+            "col": 7,
+            "color": "cost",
+            "name": "Capital expenditures",
+            "pos": "right",
+            "v": 13600.0,
+            "y": -0.0,
+            "lines": [
+              [
+                "name",
+                "Capital expenditures"
+              ],
+              [
+                "val",
+                "$14K \u00b7 4.6% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$14K \u00b7 scale \u00b10.00 \u00b7 mix +0.01"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 1350712.0,
+            "y": 839000.0,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 195005.0,
+            "y": 225200.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 534227.0,
+            "y": 33100.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 2079944.0,
+            "y": 1097300.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 802731.0,
+            "y": 373800.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 104100.0,
+            "y": 88200.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 163592.0,
+            "y": 148300.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 331095.0,
+            "y": 136300.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 678426.0,
+            "y": 350700.0,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 69700.0,
+            "y": 47600.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 761796.0,
+            "y": 440800.0,
+            "color": "profit"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 534227.0,
+            "y": 33100.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "ocf",
+            "v": 297269.0,
+            "y": 455300.0,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "fcf",
+            "v": 283669.0,
+            "y": 455300.0,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "capex",
+            "v": 13600.0,
+            "y": -0.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "NOCOPI TECHNOLOGIES INC/MD/ \u00b7 S-1 filed Oct 16, 2026 \u00b7 Six months ended Jun 30, 2026",
+          "doc": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html"
+        },
+        "analysis": [
+          "Revenue was $1.4M in H1 2026, up 61% year over year.",
+          "Gross margin was 40.6%, down 14.9 points from H1 2025. Operating costs exceeded revenue by $729K, an operating margin of -54.0%. Operating expenses grew 77% against revenue growth of 61%. The fastest-growing cost line was General & admin (+143%). The period ended with a net loss of $534K. Non-operating items added $195K, -37% of pre-tax earnings, so the bottom line overstates operating performance.",
+          "Operating cash flow was $297K (down 35% year over year). Non-cash charges added back $70K of share-based compensation. Working capital and other items added $762K. Capital expenditures of $14K left free cash flow of $284K."
+        ],
+        "headline": {
+          "revenue": 1350712.0,
+          "rev_fmt": "$1.4M",
+          "yoy": 60.99070321811681,
+          "oi": -729232.0,
+          "oi_fmt": "\u2212$729K",
+          "om": -53.988711139014086,
+          "ni": -534227.0,
+          "ni_fmt": "\u2212$534K",
+          "nm": -39.551510610700134,
+          "ocf": 297269.0,
+          "ocf_fmt": "$297K",
+          "fcf": 283669.0,
+          "fcf_fmt": "$284K",
+          "prior": {
+            "revenue": 839000.0,
+            "oi": -258300.0,
+            "ni": -33100.0,
+            "ocf": 455300.0
+          }
+        }
+      },
+      {
+        "key": "2026-04-01_2026-06-30",
+        "label": "Q2 2026",
+        "start": "2026-04-01",
+        "end": "2026-06-30",
+        "months": 3,
+        "vs": "Q2 2025",
+        "vs_key": "2025-04-01_2025-06-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "Q2 2025",
+          "title": "NOCOPI TECHNOLOGIES INC/MD/ Q2 2026 vs Q2 2025: what changed",
+          "bullets": [
+            "Revenue rose $601K versus Q2 2025, but operating profit fell $395K: costs grew by more than sales.",
+            "The largest single swing was Cost of revenue, +$435K (+258%)."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-16",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html",
+        "kind": "loss",
+        "title": "NOCOPI TECHNOLOGIES INC/MD/ Q2 2026 earnings &amp; cash flow",
+        "subtitle": "Three months ended Jun 30, 2026 \u00b7 GAAP \u00b7 Y/Y vs. Q2 2025",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 16, 2026), read from the inline XBRL tags of its financial statements. Three months ended Jun 30, 2026 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with Q2 2025; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 961012.0,
+            "y": 360000.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$1.0M"
+              ],
+              [
+                "mut",
+                "Y/Y +167%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$601K",
+            "source": "Inline XBRL tag Revenues in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 95805.0,
+            "y": 113900.0,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$96K \u00b7 6.3% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221216%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$18K \u00b7 scale +0.21 \u00b7 mix \u22120.23"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 471927.0,
+            "y": 58600.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$472K \u00b7 31% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +705%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$413K \u00b7 scale +0.11 \u00b7 mix +0.30",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 1528744.0,
+            "y": 532500.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$1.5M \u00b7 159% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +187%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.0M \u00b7 scale +0.89 \u00b7 mix +0.11"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 1528744.0,
+            "y": 532500.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$1.5M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +187%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $568K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.0M \u00b7 scale +1.0 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 603631.0,
+            "y": 168500.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$604K \u00b7 39% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +258%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$435K \u00b7 scale +0.32 \u00b7 mix +0.12",
+            "source": "Inline XBRL tag CostOfGoodsAndServicesSold in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 48300.0,
+            "y": 43200.0,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$48K \u00b7 3.2% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +12%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5K \u00b7 scale +0.08 \u00b7 mix \u22120.08",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 89092.0,
+            "y": 57300.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$89K \u00b7 5.8% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +55%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$32K \u00b7 scale +0.11 \u00b7 mix \u22120.08",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 236695.0,
+            "y": 65300.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$237K \u00b7 15% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +262%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$171K \u00b7 scale +0.12 \u00b7 mix +0.05",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 551026.0,
+            "y": 198200.0,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$551K \u00b7 36% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +178%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$353K \u00b7 scale +0.37 \u00b7 mix \u22120.02"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 961012.0,
+            "y": 360000.0,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 95805.0,
+            "y": 113900.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 471927.0,
+            "y": 58600.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 1528744.0,
+            "y": 532500.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 603631.0,
+            "y": 168500.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 48300.0,
+            "y": 43200.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 89092.0,
+            "y": 57300.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 236695.0,
+            "y": 65300.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 551026.0,
+            "y": 198200.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "NOCOPI TECHNOLOGIES INC/MD/ \u00b7 S-1 filed Oct 16, 2026 \u00b7 Three months ended Jun 30, 2026",
+          "doc": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html"
+        },
+        "analysis": [
+          "Revenue was $1.0M in Q2 2026, up 167% year over year.",
+          "Gross margin was 37.2%, down 16.0 points from Q2 2025. Operating costs exceeded revenue by $568K, an operating margin of -59.1%. Operating expenses grew 154% against revenue growth of 167%. The fastest-growing cost line was General & admin (+262%). The period ended with a net loss of $472K. Non-operating items added $96K, -20% of pre-tax earnings, so the bottom line overstates operating performance."
+        ],
+        "headline": {
+          "revenue": 961012.0,
+          "rev_fmt": "$1.0M",
+          "yoy": 166.9477777777778,
+          "oi": -567732.0,
+          "oi_fmt": "\u2212$568K",
+          "om": -59.07647355079854,
+          "ni": -471927.0,
+          "ni_fmt": "\u2212$472K",
+          "nm": -49.1072952262823,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 360000.0,
+            "oi": -172500.0,
+            "ni": -58600.0,
+            "ocf": null
+          }
+        }
+      },
+      {
+        "key": "2025-01-01_2025-12-31",
+        "label": "FY 2025",
+        "start": "2025-01-01",
+        "end": "2025-12-31",
+        "months": 12,
+        "vs": "FY 2024",
+        "vs_key": "2024-01-01_2024-12-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY 2024",
+          "title": "NOCOPI TECHNOLOGIES INC/MD/ FY 2025 vs FY 2024: what changed",
+          "bullets": [
+            "Revenue fell $624K versus FY 2024; operating profit rose $2.7M.",
+            "The largest single swing was General & admin, \u2212$2.9M (\u221276%).",
+            "Operating cash flow rose $119K to $714K, while net earnings rose $2.5M to \u2212$155K."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-16",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html",
+        "kind": "loss",
+        "title": "NOCOPI TECHNOLOGIES INC/MD/ FY 2025 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2025 \u00b7 GAAP \u00b7 Y/Y vs. FY 2024",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 16, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2025. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY 2024; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 1493800.0,
+            "y": 2117800.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$1.5M"
+              ],
+              [
+                "mut",
+                "Y/Y \u221229%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$624K",
+            "source": "Inline XBRL tag Revenues in the S-1, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 446500.0,
+            "y": 621400.0,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$446K \u00b7 21% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221228%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$175K \u00b7 scale \u22120.38 \u00b7 mix +0.21"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 154900.0,
+            "y": 2678900.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$155K \u00b7 7.4% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221294%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.5M \u00b7 scale \u22121.6 \u00b7 mix \u22120.88",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 2095200.0,
+            "y": 5418100.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$2.1M \u00b7 140% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221261%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$3.3M \u00b7 scale \u22121.6 \u00b7 mix \u22121.7"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 2095200.0,
+            "y": 5418100.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$2.1M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221261%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $601K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$3.3M \u00b7 scale \u22123.3 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 680400.0,
+            "y": 1017500.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$680K \u00b7 32% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221233%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$337K \u00b7 scale \u22120.62 \u00b7 mix +0.29",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 179900.0,
+            "y": 178200.0,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$180K \u00b7 8.6% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +1%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2K \u00b7 scale \u22120.11 \u00b7 mix +0.11",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 282600.0,
+            "y": 322400.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$283K \u00b7 13% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221212%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$40K \u00b7 scale \u22120.20 \u00b7 mix +0.16",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 952300.0,
+            "y": 3900000.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 45% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221276%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.9M \u00b7 scale \u22122.4 \u00b7 mix \u22120.56",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 868800.0,
+            "y": 3273700.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$869K \u00b7 58% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221273%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.4M \u00b7 scale \u22121.0 \u00b7 mix \u22121.4"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 126000.0,
+            "y": 2732500.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$126K \u00b7 15% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221295%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.6M \u00b7 scale \u22122.0 \u00b7 mix \u22120.60",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 742800.0,
+            "y": 541200.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$743K \u00b7 85% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +37%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$202K \u00b7 scale \u22120.40 \u00b7 mix +0.60"
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 154900.0,
+            "y": 2678900.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$155K \u00b7 18% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221294%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.5M \u00b7 scale \u22122.0 \u00b7 mix \u22120.56",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "ocf",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash flow",
+            "pos": "right",
+            "v": 713900.0,
+            "y": 594800.0,
+            "lines": [
+              [
+                "ocf",
+                "Operating cash flow"
+              ],
+              [
+                "val",
+                "$714K \u00b7 48% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +20%"
+              ],
+              [
+                "mut",
+                "82% of cash sources"
+              ]
+            ],
+            "cmp_y": "\u0394 +$119K \u00b7 scale \u22120.18 \u00b7 mix +0.29",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Dec 31, 2025."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 1493800.0,
+            "y": 2117800.0,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 446500.0,
+            "y": 621400.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 154900.0,
+            "y": 2678900.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 2095200.0,
+            "y": 5418100.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 680400.0,
+            "y": 1017500.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 179900.0,
+            "y": 178200.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 282600.0,
+            "y": 322400.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 952300.0,
+            "y": 3900000.0,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 126000.0,
+            "y": 2732500.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 742800.0,
+            "y": 541200.0,
+            "color": "profit"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 154900.0,
+            "y": 2678900.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "ocf",
+            "v": 713900.0,
+            "y": 594800.0,
+            "color": "profit"
+          }
+        ],
+        "cite": {
+          "text": "NOCOPI TECHNOLOGIES INC/MD/ \u00b7 S-1 filed Oct 16, 2026 \u00b7 Fiscal year ended Dec 31, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html"
+        },
+        "analysis": [
+          "Revenue was $1.5M in FY 2025, down 29% year over year.",
+          "Gross margin was 54.5%, up 2.5 points from FY 2024. Operating costs exceeded revenue by $601K, an operating margin of -40.3%. Operating expenses fell 68% while revenue changed -29%. The year ended with a net loss of $155K. Non-operating items added $446K, -288% of pre-tax earnings, so the bottom line overstates operating performance.",
+          "Operating cash flow was $714K (up 20% year over year). Non-cash charges added back $126K of share-based compensation. Working capital and other items added $743K."
+        ],
+        "headline": {
+          "revenue": 1493800.0,
+          "rev_fmt": "$1.5M",
+          "yoy": -29.46453867220701,
+          "oi": -601400.0,
+          "oi_fmt": "\u2212$601K",
+          "om": -40.25974025974026,
+          "ni": -154900.0,
+          "ni_fmt": "\u2212$155K",
+          "nm": -10.369527379836658,
+          "ocf": 713900.0,
+          "ocf_fmt": "$714K",
+          "fcf": 713900.0,
+          "fcf_fmt": "$714K",
+          "prior": {
+            "revenue": 2117800.0,
+            "oi": -3300300.0,
+            "ni": -2678900.0,
+            "ocf": 594800.0
+          }
+        }
+      },
+      {
+        "key": "2025-01-01_2025-06-30",
+        "label": "H1 2025",
+        "start": "2025-01-01",
+        "end": "2025-06-30",
+        "months": 6,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-16",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html",
+        "kind": "loss",
+        "title": "NOCOPI TECHNOLOGIES INC/MD/ H1 2025 earnings &amp; cash flow",
+        "subtitle": "Six months ended Jun 30, 2025 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 16, 2026), read from the inline XBRL tags of its financial statements. Six months ended Jun 30, 2025 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 839000.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$839K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 225200.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$225K \u00b7 21% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 33100.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$33K \u00b7 3.0% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 1097300.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 131% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 1097300.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $258K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 373800.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$374K \u00b7 34% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfGoodsAndServicesSold in the S-1, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 88200.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$88K \u00b7 8.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 148300.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$148K \u00b7 14% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 136300.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$136K \u00b7 12% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 350700.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$351K \u00b7 32% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 488400.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$488K \u00b7 58% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 47600.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$48K \u00b7 9.7% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag AllocatedShareBasedCompensationExpense in the S-1, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 440800.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$441K \u00b7 90% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 33100.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$33K \u00b7 6.8% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "ocf",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash flow",
+            "pos": "right",
+            "v": 455300.0,
+            "y": null,
+            "lines": [
+              [
+                "ocf",
+                "Operating cash flow"
+              ],
+              [
+                "val",
+                "$455K \u00b7 54% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "93% of cash sources"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, six months ended Jun 30, 2025."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 839000.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 225200.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 33100.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 1097300.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 373800.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 88200.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 148300.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 136300.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 350700.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 47600.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 440800.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 33100.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "ocf",
+            "v": 455300.0,
+            "y": null,
+            "color": "profit"
+          }
+        ],
+        "cite": {
+          "text": "NOCOPI TECHNOLOGIES INC/MD/ \u00b7 S-1 filed Oct 16, 2026 \u00b7 Six months ended Jun 30, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html"
+        },
+        "analysis": [
+          "Revenue was $839K in H1 2025.",
+          "Gross margin was 55.4%. Operating costs exceeded revenue by $258K, an operating margin of -30.8%. The period ended with a net loss of $33K. Non-operating items added $225K, -680% of pre-tax earnings, so the bottom line overstates operating performance.",
+          "Operating cash flow was $455K. Non-cash charges added back $48K of share-based compensation. Working capital and other items added $441K."
+        ],
+        "headline": {
+          "revenue": 839000.0,
+          "rev_fmt": "$839K",
+          "yoy": null,
+          "oi": -258300.0,
+          "oi_fmt": "\u2212$258K",
+          "om": -30.78665077473182,
+          "ni": -33100.0,
+          "ni_fmt": "\u2212$33K",
+          "nm": -3.945172824791418,
+          "ocf": 455300.0,
+          "ocf_fmt": "$455K",
+          "fcf": 455300.0,
+          "fcf_fmt": "$455K",
+          "prior": null
+        }
+      },
+      {
+        "key": "2025-04-01_2025-06-30",
+        "label": "Q2 2025",
+        "start": "2025-04-01",
+        "end": "2025-06-30",
+        "months": 3,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-16",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html",
+        "kind": "loss",
+        "title": "NOCOPI TECHNOLOGIES INC/MD/ Q2 2025 earnings &amp; cash flow",
+        "subtitle": "Three months ended Jun 30, 2025 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 16, 2026), read from the inline XBRL tags of its financial statements. Three months ended Jun 30, 2025 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 360000.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$360K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 113900.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$114K \u00b7 21% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 58600.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$59K \u00b7 11% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 532500.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$532K \u00b7 148% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 532500.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$532K \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $172K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 168500.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$168K \u00b7 32% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfGoodsAndServicesSold in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 43200.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$43K \u00b7 8.1% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 57300.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$57K \u00b7 11% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 65300.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$65K \u00b7 12% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 198200.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$198K \u00b7 37% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 360000.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 113900.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 58600.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 532500.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 168500.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 43200.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 57300.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 65300.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 198200.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "NOCOPI TECHNOLOGIES INC/MD/ \u00b7 S-1 filed Oct 16, 2026 \u00b7 Three months ended Jun 30, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html"
+        },
+        "analysis": [
+          "Revenue was $360K in Q2 2025.",
+          "Gross margin was 53.2%. Operating costs exceeded revenue by $172K, an operating margin of -47.9%. The period ended with a net loss of $59K. Non-operating items added $114K, -194% of pre-tax earnings, so the bottom line overstates operating performance."
+        ],
+        "headline": {
+          "revenue": 360000.0,
+          "rev_fmt": "$360K",
+          "yoy": null,
+          "oi": -172500.0,
+          "oi_fmt": "\u2212$172K",
+          "om": -47.91666666666667,
+          "ni": -58600.0,
+          "ni_fmt": "\u2212$59K",
+          "nm": -16.27777777777778,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2024-01-01_2024-12-31",
+        "label": "FY 2024",
+        "start": "2024-01-01",
+        "end": "2024-12-31",
+        "months": 12,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-16",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html",
+        "kind": "loss",
+        "title": "NOCOPI TECHNOLOGIES INC/MD/ FY 2024 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2024 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 16, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2024. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 2117800.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$2.1M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 621400.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$621K \u00b7 11% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 2678900.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$2.7M \u00b7 49% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 5418100.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$5.4M \u00b7 256% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 5418100.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$5.4M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $3.3M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 1017500.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 19% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 178200.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$178K \u00b7 3.3% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 322400.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$322K \u00b7 6.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 3900000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$3.9M \u00b7 72% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 3273700.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$3.3M \u00b7 155% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 2732500.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$2.7M \u00b7 83% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 541200.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$541K \u00b7 17% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 2678900.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$2.7M \u00b7 82% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "ocf",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash flow",
+            "pos": "above",
+            "v": 594800.0,
+            "y": null,
+            "lines": [
+              [
+                "ocf",
+                "Operating cash flow"
+              ],
+              [
+                "val",
+                "$595K \u00b7 28% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "18% of cash sources"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "fcf",
+            "col": 7,
+            "color": "profit",
+            "name": "Free cash flow (OCF \u2212 capex)",
+            "pos": "right",
+            "v": 584900.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Free cash flow (OCF \u2212 capex)"
+              ],
+              [
+                "val",
+                "$585K \u00b7 98% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "FCF margin 28%"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "capex",
+            "col": 7,
+            "color": "cost",
+            "name": "Capital expenditures",
+            "pos": "right",
+            "v": 9900.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Capital expenditures"
+              ],
+              [
+                "val",
+                "$10K \u00b7 1.7% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 2117800.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 621400.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 2678900.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 5418100.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 1017500.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 178200.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 322400.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 3900000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 2732500.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 541200.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 2678900.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "ocf",
+            "v": 594800.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "fcf",
+            "v": 584900.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "capex",
+            "v": 9900.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "NOCOPI TECHNOLOGIES INC/MD/ \u00b7 S-1 filed Oct 16, 2026 \u00b7 Fiscal year ended Dec 31, 2024",
+          "doc": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/nnup_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/888981/000107997326001368/0001079973-26-001368-index.html"
+        },
+        "analysis": [
+          "Revenue was $2.1M in FY 2024.",
+          "Gross margin was 52.0%. Operating costs exceeded revenue by $3.3M, an operating margin of -155.8%. The year ended with a net loss of $2.7M. Non-operating items added $621K, -23% of pre-tax earnings, so the bottom line overstates operating performance.",
+          "Operating cash flow was $595K. Non-cash charges added back $2.7M of share-based compensation. Working capital and other items added $541K. Capital expenditures of $10K left free cash flow of $585K."
+        ],
+        "headline": {
+          "revenue": 2117800.0,
+          "rev_fmt": "$2.1M",
+          "yoy": null,
+          "oi": -3300300.0,
+          "oi_fmt": "\u2212$3.3M",
+          "om": -155.83624516007177,
+          "ni": -2678900.0,
+          "ni_fmt": "\u2212$2.7M",
+          "nm": -126.49447539899896,
+          "ocf": 594800.0,
+          "ocf_fmt": "$595K",
+          "fcf": 584900.0,
+          "fcf_fmt": "$585K",
+          "prior": null
+        }
+      }
+    ],
+    "default": "2026-01-01_2026-06-30"
+  },
   "filings": [
     {
       "accession": "9999999995-26-003376",
@@ -3082,7 +6068,7 @@
     "classification": "resale_language_identified"
   },
   "lifecycle": "EFFECT",
-  "generated_at": "2026-10-31T04:49:59+00:00",
+  "generated_at": "2026-10-31T05:03:15+00:00",
   "scan": {
     "state": "needs_review",
     "last_attempt": "2026-10-29T21:55:40+00:00",

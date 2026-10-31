@@ -4815,6 +4815,2844 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2025-10-01_2026-06-30",
+        "label": "9M to Jun 2026",
+        "start": "2025-10-01",
+        "end": "2026-06-30",
+        "months": 9,
+        "vs": "9M to Jun 2025",
+        "vs_key": "2024-10-01_2025-06-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "9M to Jun 2025",
+          "title": "MOBIX LABS, INC 9M to Jun 2026 vs 9M to Jun 2025: what changed",
+          "bullets": [
+            "Revenue fell $4.4M versus 9M to Jun 2025; operating profit rose $8.2M.",
+            "The largest single swing was non-operating items, down $10.6M to \u2212$10.5M.",
+            "Operating cash flow fell $9.1M to \u2212$14.7M, while net earnings fell $2.4M to \u2212$32.8M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-30",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html",
+        "kind": "loss",
+        "title": "MOBIX LABS, INC 9M to Jun 2026 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Jun 30, 2026 \u00b7 GAAP \u00b7 Y/Y vs. 9M to Jun 2025",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 30, 2026), read from the inline XBRL tags of its financial statements. Nine months ended Jun 30, 2026 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with 9M to Jun 2025; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 3634000.0,
+            "y": 8030000.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$3.6M"
+              ],
+              [
+                "mut",
+                "Y/Y \u221255%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$4.4M",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerExcludingAssessedTax in the S-1, nine months ended Jun 30, 2026."
+          },
+          {
+            "id": "taxben",
+            "col": 0,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 18000.0,
+            "y": 9000.0,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$18K \u00b7 0.0% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +100%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9K \u00b7 scale \u22120.00 \u00b7 mix +0.01"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 32773000.0,
+            "y": 30402000.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$32.8M \u00b7 90% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +8%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.4M \u00b7 scale \u22121.7 \u00b7 mix +4.1",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Jun 30, 2026."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 36425000.0,
+            "y": 38558000.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$36.4M \u00b7 1002% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u22126%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.1M \u00b7 scale \u221221.1 \u00b7 mix +19.0"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 25912000.0,
+            "y": 38558000.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$25.9M \u00b7 71% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221233%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $22.3M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$12.6M \u00b7 scale \u22122.1 \u00b7 mix \u221210.5"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 10513000.0,
+            "y": -117000.0,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$10.5M \u00b7 29% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$10.6M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 2767000.0,
+            "y": 3974000.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$2.8M \u00b7 11% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221230%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1.2M \u00b7 scale \u22121.3 \u00b7 mix +0.10",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, nine months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 1281000.0,
+            "y": 1816000.0,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$1.3M \u00b7 4.9% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221229%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$535K \u00b7 scale \u22120.60 \u00b7 mix +0.06",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, nine months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:sga",
+            "col": 3,
+            "color": "cost",
+            "name": "SG&amp;A",
+            "pos": "right",
+            "v": 21864000.0,
+            "y": 32043000.0,
+            "lines": [
+              [
+                "name",
+                "SG&amp;A"
+              ],
+              [
+                "val",
+                "$21.9M \u00b7 84% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221232%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$10.2M \u00b7 scale \u221210.5 \u00b7 mix +0.33",
+            "source": "Inline XBRL tag SellingGeneralAndAdministrativeExpense in the S-1, nine months ended Jun 30, 2026."
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 32773000.0,
+            "y": 30402000.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$32.8M \u00b7 902% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +8%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.4M \u00b7 scale \u221216.6 \u00b7 mix +19.0"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 9941000.0,
+            "y": 20256000.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$9.9M \u00b7 30% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221251%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$10.3M \u00b7 scale +1.6 \u00b7 mix \u221211.9",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, nine months ended Jun 30, 2026."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 8113000.0,
+            "y": 4546000.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$8.1M \u00b7 25% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +78%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$3.6M \u00b7 scale +0.35 \u00b7 mix +3.2"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 14719000.0,
+            "y": 5600000.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$14.7M \u00b7 45% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +163%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9.1M \u00b7 scale +0.44 \u00b7 mix +8.7",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, nine months ended Jun 30, 2026."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 32773000.0,
+            "y": 30402000.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$32.8M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +8%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.4M \u00b7 scale +2.4 \u00b7 mix \u00b10.00",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Jun 30, 2026."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 3634000.0,
+            "y": 8030000.0,
+            "color": "rev"
+          },
+          {
+            "s": "taxben",
+            "t": "total",
+            "v": 18000.0,
+            "y": 9000.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 32773000.0,
+            "y": 30402000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 25912000.0,
+            "y": 38558000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 10513000.0,
+            "y": -117000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 2767000.0,
+            "y": 3974000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 1281000.0,
+            "y": 1816000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sga",
+            "v": 21864000.0,
+            "y": 32043000.0,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 9941000.0,
+            "y": 20256000.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 8113000.0,
+            "y": 4546000.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 14719000.0,
+            "y": 5600000.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 32773000.0,
+            "y": 30402000.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MOBIX LABS, INC \u00b7 S-1 filed Oct 30, 2026 \u00b7 Nine months ended Jun 30, 2026",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html"
+        },
+        "analysis": [
+          "Revenue was $3.6M in 9M to Jun 2026, down 55% year over year.",
+          "Gross margin was 23.9%, down 26.7 points from 9M to Jun 2025. Operating costs exceeded revenue by $22.3M, an operating margin of -613.0%. Operating expenses fell 33% while revenue changed -55%. The period ended with a net loss of $32.8M.",
+          "Operating cash flow was \u2212$14.7M. Non-cash charges added back $9.9M of share-based compensation. Working capital and other items added $8.1M. Capital expenditures of $9K exceeded it, leaving free cash flow of \u2212$14.7M."
+        ],
+        "headline": {
+          "revenue": 3634000.0,
+          "rev_fmt": "$3.6M",
+          "yoy": -54.744707347447076,
+          "oi": -22278000.0,
+          "oi_fmt": "\u2212$22.3M",
+          "om": -613.0434782608695,
+          "ni": -32773000.0,
+          "ni_fmt": "\u2212$32.8M",
+          "nm": -901.8436984039627,
+          "ocf": -14719000.0,
+          "ocf_fmt": "\u2212$14.7M",
+          "fcf": -14728000.0,
+          "fcf_fmt": "\u2212$14.7M",
+          "prior": {
+            "revenue": 8030000.0,
+            "oi": -30528000.0,
+            "ni": -30402000.0,
+            "ocf": -5600000.0
+          }
+        }
+      },
+      {
+        "key": "2026-04-01_2026-06-30",
+        "label": "Q2 2026",
+        "start": "2026-04-01",
+        "end": "2026-06-30",
+        "months": 3,
+        "vs": "Q2 2025",
+        "vs_key": "2025-04-01_2025-06-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "Q2 2025",
+          "title": "MOBIX LABS, INC Q2 2026 vs Q2 2025: what changed",
+          "bullets": [
+            "Revenue fell $1.6M versus Q2 2025; operating profit rose $716K.",
+            "The largest single swing was non-operating items, down $9.2M to \u2212$9.4M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-30",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html",
+        "kind": "loss",
+        "title": "MOBIX LABS, INC Q2 2026 earnings &amp; cash flow",
+        "subtitle": "Three months ended Jun 30, 2026 \u00b7 GAAP \u00b7 Y/Y vs. Q2 2025",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 30, 2026), read from the inline XBRL tags of its financial statements. Three months ended Jun 30, 2026 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with Q2 2025; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 789000.0,
+            "y": 2350000.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$789K"
+              ],
+              [
+                "mut",
+                "Y/Y \u221266%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1.6M",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerExcludingAssessedTax in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 16795000.0,
+            "y": 8272000.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$16.8M \u00b7 96% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +103%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$8.5M \u00b7 scale +5.4 \u00b7 mix +3.1",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 17584000.0,
+            "y": 10624000.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$17.6M \u00b7 2229% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +66%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$7.0M \u00b7 scale \u22127.1 \u00b7 mix +14.0"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 8143000.0,
+            "y": 10420000.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$8.1M \u00b7 46% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221222%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $7.4M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.3M \u00b7 scale +6.8 \u00b7 mix \u22129.1"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 9438000.0,
+            "y": 204000.0,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$9.4M \u00b7 54% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +4526%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9.2M \u00b7 scale +0.13 \u00b7 mix +9.1"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 3000.0,
+            "y": -2000.0,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$3K \u00b7 0.0% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5K \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 687000.0,
+            "y": 1001000.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$687K \u00b7 8.4% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221231%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$314K \u00b7 scale \u22120.22 \u00b7 mix \u22120.10",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 411000.0,
+            "y": 486000.0,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$411K \u00b7 5.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221215%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$75K \u00b7 scale \u22120.11 \u00b7 mix +0.03",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "I:sga",
+            "col": 3,
+            "color": "cost",
+            "name": "SG&amp;A",
+            "pos": "right",
+            "v": 7045000.0,
+            "y": 8208000.0,
+            "lines": [
+              [
+                "name",
+                "SG&amp;A"
+              ],
+              [
+                "val",
+                "$7.0M \u00b7 87% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221214%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1.2M \u00b7 scale \u22121.8 \u00b7 mix +0.63",
+            "source": "Inline XBRL tag SellingGeneralAndAdministrativeExpense in the S-1, three months ended Jun 30, 2026."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 789000.0,
+            "y": 2350000.0,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 16795000.0,
+            "y": 8272000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 8143000.0,
+            "y": 10420000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 9438000.0,
+            "y": 204000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 3000.0,
+            "y": -2000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 687000.0,
+            "y": 1001000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 411000.0,
+            "y": 486000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sga",
+            "v": 7045000.0,
+            "y": 8208000.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MOBIX LABS, INC \u00b7 S-1 filed Oct 30, 2026 \u00b7 Three months ended Jun 30, 2026",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html"
+        },
+        "analysis": [
+          "Revenue was $789K in Q2 2026, down 66% year over year.",
+          "Gross margin was 12.9%, down 44.5 points from Q2 2025. Operating costs exceeded revenue by $7.4M, an operating margin of -932.1%. Operating expenses fell 21% while revenue changed -66%. The period ended with a net loss of $16.8M. Net interest and other expense of $9.4M was the main reason."
+        ],
+        "headline": {
+          "revenue": 789000.0,
+          "rev_fmt": "$789K",
+          "yoy": -66.42553191489363,
+          "oi": -7354000.0,
+          "oi_fmt": "\u2212$7.4M",
+          "om": -932.0659062103928,
+          "ni": -16795000.0,
+          "ni_fmt": "\u2212$16.8M",
+          "nm": -2128.6438529784537,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 2350000.0,
+            "oi": -8070000.0,
+            "ni": -8272000.0,
+            "ocf": null
+          }
+        }
+      },
+      {
+        "key": "2024-10-01_2025-09-30",
+        "label": "FY to Sep 2025",
+        "start": "2024-10-01",
+        "end": "2025-09-30",
+        "months": 12,
+        "vs": "FY to Sep 2024",
+        "vs_key": "2023-10-01_2024-09-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY to Sep 2024",
+          "title": "MOBIX LABS, INC FY to Sep 2025 vs FY to Sep 2024: what changed",
+          "bullets": [
+            "Revenue rose $3.5M versus FY to Sep 2024 and the operating result improved by $8.7M, 251% of the added revenue.",
+            "The largest single swing was non-operating items, down $32.4M to \u2212$8.4M.",
+            "Operating cash flow rose $8.3M to \u2212$10.1M, while net earnings fell $26.1M to \u2212$46.1M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-30",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html",
+        "kind": "loss",
+        "title": "MOBIX LABS, INC FY to Sep 2025 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Sep 30, 2025 \u00b7 GAAP \u00b7 Y/Y vs. FY to Sep 2024",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 30, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Sep 30, 2025. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY to Sep 2024; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 9912000.0,
+            "y": 6442000.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$9.9M"
+              ],
+              [
+                "mut",
+                "Y/Y +54%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$3.5M",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerExcludingAssessedTax in the S-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 46131000.0,
+            "y": 20034000.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$46.1M \u00b7 82% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +130%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$26.1M \u00b7 scale +1.2 \u00b7 mix +24.9",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 56043000.0,
+            "y": 52837000.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$56.0M \u00b7 565% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +6%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$3.2M \u00b7 scale +28.5 \u00b7 mix \u221225.3"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 47605000.0,
+            "y": 52837000.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$47.6M \u00b7 85% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221210%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $37.7M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$5.2M \u00b7 scale +3.2 \u00b7 mix \u22128.4"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 8431000.0,
+            "y": -23932000.0,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$8.4M \u00b7 15% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$32.4M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 7000.0,
+            "y": -2429000.0,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$7K \u00b7 0.0% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.4M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the S-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 4905000.0,
+            "y": 3890000.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$4.9M \u00b7 10% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +26%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.0M \u00b7 scale \u22120.39 \u00b7 mix +1.4",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 2419000.0,
+            "y": 5779000.0,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$2.4M \u00b7 5.1% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221258%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$3.4M \u00b7 scale \u22120.57 \u00b7 mix \u22122.8",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "I:sga",
+            "col": 3,
+            "color": "cost",
+            "name": "SG&amp;A",
+            "pos": "right",
+            "v": 39556000.0,
+            "y": 41835000.0,
+            "lines": [
+              [
+                "name",
+                "SG&amp;A"
+              ],
+              [
+                "val",
+                "$39.6M \u00b7 83% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u22125%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.3M \u00b7 scale \u22124.1 \u00b7 mix +1.9",
+            "source": "Inline XBRL tag SellingGeneralAndAdministrativeExpense in the S-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 725000.0,
+            "y": 1333000.0,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$725K \u00b7 1.5% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221246%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$608K \u00b7 scale \u22120.13 \u00b7 mix \u22120.48"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 46131000.0,
+            "y": 20034000.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$46.1M \u00b7 465% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +130%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$26.1M \u00b7 scale +10.8 \u00b7 mix +15.3"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 25619000.0,
+            "y": 21383000.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$25.6M \u00b7 56% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +20%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$4.2M \u00b7 scale +27.9 \u00b7 mix \u221223.6",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 10399000.0,
+            "y": -19737000.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$10.4M \u00b7 23% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$30.1M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 10113000.0,
+            "y": 18388000.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$10.1M \u00b7 22% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221245%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$8.3M \u00b7 scale +24.0 \u00b7 mix \u221232.2",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 46131000.0,
+            "y": 20034000.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$46.1M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +130%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$26.1M \u00b7 scale +26.1 \u00b7 mix \u00b10.00",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Sep 30, 2025."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 9912000.0,
+            "y": 6442000.0,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 46131000.0,
+            "y": 20034000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 47605000.0,
+            "y": 52837000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 8431000.0,
+            "y": -23932000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 7000.0,
+            "y": -2429000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 4905000.0,
+            "y": 3890000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 2419000.0,
+            "y": 5779000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sga",
+            "v": 39556000.0,
+            "y": 41835000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 725000.0,
+            "y": 1333000.0,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 25619000.0,
+            "y": 21383000.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 10399000.0,
+            "y": -19737000.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 10113000.0,
+            "y": 18388000.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 46131000.0,
+            "y": 20034000.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MOBIX LABS, INC \u00b7 S-1 filed Oct 30, 2026 \u00b7 Fiscal year ended Sep 30, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html"
+        },
+        "analysis": [
+          "Revenue was $9.9M in FY to Sep 2025, up 54% year over year.",
+          "Gross margin was 50.5%, up 10.9 points from FY to Sep 2024. Operating costs exceeded revenue by $37.7M, an operating margin of -380.3%. Operating expenses fell 13% while revenue changed +54%. The year ended with a net loss of $46.1M.",
+          "Operating cash flow was \u2212$10.1M. Non-cash charges added back $25.6M of share-based compensation. Working capital and other items added $10.4M. Capital expenditures of $26K exceeded it, leaving free cash flow of \u2212$10.1M."
+        ],
+        "headline": {
+          "revenue": 9912000.0,
+          "rev_fmt": "$9.9M",
+          "yoy": 53.86525923626202,
+          "oi": -37693000.0,
+          "oi_fmt": "\u2212$37.7M",
+          "om": -380.27643260694106,
+          "ni": -46131000.0,
+          "ni_fmt": "\u2212$46.1M",
+          "nm": -465.405569007264,
+          "ocf": -10113000.0,
+          "ocf_fmt": "\u2212$10.1M",
+          "fcf": -10139000.0,
+          "fcf_fmt": "\u2212$10.1M",
+          "prior": {
+            "revenue": 6442000.0,
+            "oi": -46395000.0,
+            "ni": -20034000.0,
+            "ocf": -18388000.0
+          }
+        }
+      },
+      {
+        "key": "2024-10-01_2025-06-30",
+        "label": "9M to Jun 2025",
+        "start": "2024-10-01",
+        "end": "2025-06-30",
+        "months": 9,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-30",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html",
+        "kind": "loss",
+        "title": "MOBIX LABS, INC 9M to Jun 2025 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Jun 30, 2025 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 30, 2026), read from the inline XBRL tags of its financial statements. Nine months ended Jun 30, 2025 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 8030000.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$8.0M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerExcludingAssessedTax in the S-1, nine months ended Jun 30, 2025."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 117000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$117K \u00b7 0.3% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "taxben",
+            "col": 0,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 9000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$9K \u00b7 0.0% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 30402000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$30.4M \u00b7 79% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Jun 30, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 38558000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$38.6M \u00b7 480% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 38558000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$38.6M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $30.5M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 3974000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$4.0M \u00b7 10% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, nine months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 1816000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$1.8M \u00b7 4.7% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, nine months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:sga",
+            "col": 3,
+            "color": "cost",
+            "name": "SG&amp;A",
+            "pos": "right",
+            "v": 32043000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "SG&amp;A"
+              ],
+              [
+                "val",
+                "$32.0M \u00b7 83% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingGeneralAndAdministrativeExpense in the S-1, nine months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 725000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$725K \u00b7 1.9% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 30402000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$30.4M \u00b7 379% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 20256000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$20.3M \u00b7 67% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, nine months ended Jun 30, 2025."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 4546000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$4.5M \u00b7 15% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 5600000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$5.6M \u00b7 18% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, nine months ended Jun 30, 2025."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 30402000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$30.4M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Jun 30, 2025."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 8030000.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 117000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "taxben",
+            "t": "total",
+            "v": 9000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 30402000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 38558000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 3974000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 1816000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sga",
+            "v": 32043000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 725000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 20256000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 4546000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 5600000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 30402000.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MOBIX LABS, INC \u00b7 S-1 filed Oct 30, 2026 \u00b7 Nine months ended Jun 30, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html"
+        },
+        "analysis": [
+          "Revenue was $8.0M in 9M to Jun 2025.",
+          "Gross margin was 50.5%. Operating costs exceeded revenue by $30.5M, an operating margin of -380.2%. The period ended with a net loss of $30.4M.",
+          "Operating cash flow was \u2212$5.6M. Non-cash charges added back $20.3M of share-based compensation. Working capital and other items added $4.5M. Capital expenditures of $16K exceeded it, leaving free cash flow of \u2212$5.6M."
+        ],
+        "headline": {
+          "revenue": 8030000.0,
+          "rev_fmt": "$8.0M",
+          "yoy": null,
+          "oi": -30528000.0,
+          "oi_fmt": "\u2212$30.5M",
+          "om": -380.17434620174345,
+          "ni": -30402000.0,
+          "ni_fmt": "\u2212$30.4M",
+          "nm": -378.6052303860523,
+          "ocf": -5600000.0,
+          "ocf_fmt": "\u2212$5.6M",
+          "fcf": -5616000.0,
+          "fcf_fmt": "\u2212$5.6M",
+          "prior": null
+        }
+      },
+      {
+        "key": "2025-04-01_2025-06-30",
+        "label": "Q2 2025",
+        "start": "2025-04-01",
+        "end": "2025-06-30",
+        "months": 3,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-30",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html",
+        "kind": "loss",
+        "title": "MOBIX LABS, INC Q2 2025 earnings &amp; cash flow",
+        "subtitle": "Three months ended Jun 30, 2025 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 30, 2026), read from the inline XBRL tags of its financial statements. Three months ended Jun 30, 2025 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 2350000.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$2.4M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerExcludingAssessedTax in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "taxben",
+            "col": 0,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 2000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$2K \u00b7 0.0% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 8272000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$8.3M \u00b7 78% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 10624000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$10.6M \u00b7 452% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 10420000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$10.4M \u00b7 98% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $8.1M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 204000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$204K \u00b7 1.9% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 1001000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 9.6% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 486000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$486K \u00b7 4.7% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:sga",
+            "col": 3,
+            "color": "cost",
+            "name": "SG&amp;A",
+            "pos": "right",
+            "v": 8208000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "SG&amp;A"
+              ],
+              [
+                "val",
+                "$8.2M \u00b7 79% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingGeneralAndAdministrativeExpense in the S-1, three months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 725000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$725K \u00b7 7.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 2350000.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "taxben",
+            "t": "total",
+            "v": 2000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 8272000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 10420000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 204000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 1001000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 486000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sga",
+            "v": 8208000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 725000.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MOBIX LABS, INC \u00b7 S-1 filed Oct 30, 2026 \u00b7 Three months ended Jun 30, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html"
+        },
+        "analysis": [
+          "Revenue was $2.4M in Q2 2025.",
+          "Gross margin was 57.4%. Operating costs exceeded revenue by $8.1M, an operating margin of -343.4%. The period ended with a net loss of $8.3M."
+        ],
+        "headline": {
+          "revenue": 2350000.0,
+          "rev_fmt": "$2.4M",
+          "yoy": null,
+          "oi": -8070000.0,
+          "oi_fmt": "\u2212$8.1M",
+          "om": -343.40425531914894,
+          "ni": -8272000.0,
+          "ni_fmt": "\u2212$8.3M",
+          "nm": -352.0,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2023-10-01_2024-09-30",
+        "label": "FY to Sep 2024",
+        "start": "2023-10-01",
+        "end": "2024-09-30",
+        "months": 12,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2026-10-30",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html",
+        "kind": "loss",
+        "title": "MOBIX LABS, INC FY to Sep 2024 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Sep 30, 2024 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Oct 30, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Sep 30, 2024. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 6442000.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$6.4M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerExcludingAssessedTax in the S-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 23932000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$23.9M \u00b7 45% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "taxben",
+            "col": 0,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 2429000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$2.4M \u00b7 4.6% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 20034000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$20.0M \u00b7 38% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 52837000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$52.8M \u00b7 820% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 52837000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$52.8M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $46.4M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 3890000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$3.9M \u00b7 7.4% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 5779000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$5.8M \u00b7 11% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "I:sga",
+            "col": 3,
+            "color": "cost",
+            "name": "SG&amp;A",
+            "pos": "right",
+            "v": 41835000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "SG&amp;A"
+              ],
+              [
+                "val",
+                "$41.8M \u00b7 79% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingGeneralAndAdministrativeExpense in the S-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 1333000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$1.3M \u00b7 2.5% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 39771000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$39.8M \u00b7 617% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 21383000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$21.4M \u00b7 54% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 18388000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$18.4M \u00b7 46% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 20034000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$20.0M \u00b7 50% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 19737000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$19.7M \u00b7 50% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 6442000.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 23932000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "taxben",
+            "t": "total",
+            "v": 2429000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 20034000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 52837000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 3890000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 5779000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sga",
+            "v": 41835000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 1333000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 21383000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 18388000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 20034000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 19737000.0,
+            "y": null,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "MOBIX LABS, INC \u00b7 S-1 filed Oct 30, 2026 \u00b7 Fiscal year ended Sep 30, 2024",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/forms-1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1855467/000149315226049479/0001493152-26-049479-index.html"
+        },
+        "analysis": [
+          "Revenue was $6.4M in FY to Sep 2024.",
+          "Gross margin was 39.6%. Operating costs exceeded revenue by $46.4M, an operating margin of -720.2%. The year ended with a net loss of $20.0M. Non-operating items added $23.9M, -107% of pre-tax earnings, so the bottom line overstates operating performance.",
+          "Operating cash flow was \u2212$18.4M. Non-cash charges added back $21.4M of share-based compensation. Working capital and other items used $19.7M. Capital expenditures of $44K exceeded it, leaving free cash flow of \u2212$18.4M."
+        ],
+        "headline": {
+          "revenue": 6442000.0,
+          "rev_fmt": "$6.4M",
+          "yoy": null,
+          "oi": -46395000.0,
+          "oi_fmt": "\u2212$46.4M",
+          "om": -720.1955914312325,
+          "ni": -20034000.0,
+          "ni_fmt": "\u2212$20.0M",
+          "nm": -310.99037565973305,
+          "ocf": -18388000.0,
+          "ocf_fmt": "\u2212$18.4M",
+          "fcf": -18432000.0,
+          "fcf_fmt": "\u2212$18.4M",
+          "prior": null
+        }
+      }
+    ],
+    "default": "2025-10-01_2026-06-30"
+  },
   "filings": [
     {
       "accession": "0001493152-26-049479",
@@ -5991,7 +8829,7 @@
     "classification": "registration_unclassified"
   },
   "lifecycle": null,
-  "generated_at": "2026-10-31T04:49:59+00:00",
+  "generated_at": "2026-10-31T05:03:15+00:00",
   "scan": {
     "state": "parsed",
     "last_attempt": "2026-10-30T21:48:45+00:00",

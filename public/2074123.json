@@ -3110,6 +3110,1604 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2025-01-01_2025-12-31",
+        "label": "FY 2025",
+        "start": "2025-01-01",
+        "end": "2025-12-31",
+        "months": 12,
+        "vs": "FY 2024",
+        "vs_key": "2024-01-01_2024-12-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY 2024",
+          "title": "CCH Holdings Ltd FY 2025 vs FY 2024: what changed",
+          "bullets": [
+            "Revenue rose $674K versus FY 2024, but operating profit fell $3.7M: costs grew by more than sales.",
+            "The largest single swing was Cost of revenue, +$1.2M (+19%).",
+            "Operating cash flow fell $230K to \u2212$528K, while net earnings fell $3.6M to \u2212$2.7M."
+          ]
+        },
+        "preliminary": false,
+        "form": "F-1/A",
+        "filed": "2026-09-21",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/ea0306090-f1a3_cchhold.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/0001213900-26-101735-index.html",
+        "kind": "loss",
+        "title": "CCH Holdings Ltd FY 2025 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2025 \u00b7 GAAP \u00b7 Y/Y vs. FY 2024",
+        "footer": [
+          "Source: the company\u2019s registration statement (F-1/A filed Sep 21, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2025. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY 2024; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 9589671.0,
+            "y": 8915344.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$9.6M"
+              ],
+              [
+                "mut",
+                "Y/Y +8%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$674K",
+            "source": "Inline XBRL tag Revenues in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 2681330.0,
+            "y": -913401.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$2.7M \u00b7 22% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$3.6M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 12271001.0,
+            "y": 8915344.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$12.3M \u00b7 128% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +38%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$3.4M \u00b7 scale +0.67 \u00b7 mix +2.7"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 11948811.0,
+            "y": 7580203.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$11.9M \u00b7 97% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +58%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $2.4M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$4.4M \u00b7 scale +2.9 \u00b7 mix +1.5"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 180212.0,
+            "y": 53948.0,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$180K \u00b7 1.5% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +234%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$126K \u00b7 scale +0.02 \u00b7 mix +0.11"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 141978.0,
+            "y": 367792.0,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$142K \u00b7 1.2% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221261%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$226K \u00b7 scale +0.14 \u00b7 mix \u22120.36",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 7739702.0,
+            "y": 6509083.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$7.7M \u00b7 65% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +19%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.2M \u00b7 scale +3.8 \u00b7 mix \u22122.5",
+            "source": "Inline XBRL tag CostOfRevenue in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 257497.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$257K \u00b7 2.2% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 3826066.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$3.8M \u00b7 32% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 125546.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$126K \u00b7 1.1% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 3105582.0,
+            "y": 567076.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$3.1M \u00b7 32% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +448%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.5M \u00b7 scale +0.04 \u00b7 mix +2.5"
+          },
+          {
+            "id": "da",
+            "col": 4,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 262655.0,
+            "y": 269346.0,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$263K \u00b7 8.5% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u22122%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$7K \u00b7 scale +1.2 \u00b7 mix \u22121.2",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 2315089.0,
+            "y": 0.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$2.3M \u00b7 75% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.3M \u00b7 scale \u00b10.00 \u00b7 mix +2.3",
+            "source": "Inline XBRL tag ShareBasedCompensation in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 527838.0,
+            "y": 297730.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$528K \u00b7 17% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +77%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$230K \u00b7 scale +1.3 \u00b7 mix \u22121.1",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 2681330.0,
+            "y": -913401.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$2.7M \u00b7 86% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$3.6M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1/A, fiscal year ended Dec 31, 2025."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 424252.0,
+            "y": 1480477.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$424K \u00b7 14% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221271%"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1.1M \u00b7 scale +6.6 \u00b7 mix \u22127.7"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 9589671.0,
+            "y": 8915344.0,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 2681330.0,
+            "y": -913401.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 11948811.0,
+            "y": 7580203.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 180212.0,
+            "y": 53948.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 141978.0,
+            "y": 367792.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 7739702.0,
+            "y": 6509083.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 257497.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 3826066.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 125546.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 262655.0,
+            "y": 269346.0,
+            "color": "profit"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 2315089.0,
+            "y": 0.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 527838.0,
+            "y": 297730.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 2681330.0,
+            "y": -913401.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 424252.0,
+            "y": 1480477.0,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "CCH Holdings Ltd \u00b7 F-1/A filed Sep 21, 2026 \u00b7 Fiscal year ended Dec 31, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/ea0306090-f1a3_cchhold.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/0001213900-26-101735-index.html"
+        },
+        "analysis": [
+          "Revenue was $9.6M in FY 2025, up 8% year over year.",
+          "Gross margin was 19.3%, down 7.7 points from FY 2024. Operating costs exceeded revenue by $2.4M, an operating margin of -24.6%. Operating expenses grew 293% against revenue growth of 8%. The year ended with a net loss of $2.7M.",
+          "Operating cash flow was \u2212$528K. Non-cash charges added back $263K of depreciation and amortization and $2.3M of share-based compensation. Working capital and other items used $424K. Capital expenditures of $227K exceeded it, leaving free cash flow of \u2212$755K."
+        ],
+        "headline": {
+          "revenue": 9589671.0,
+          "rev_fmt": "$9.6M",
+          "yoy": 7.5636677620067205,
+          "oi": -2359140.0,
+          "oi_fmt": "\u2212$2.4M",
+          "om": -24.600843970559573,
+          "ni": -2681330.0,
+          "ni_fmt": "\u2212$2.7M",
+          "nm": -27.96060469644892,
+          "ocf": -527838.0,
+          "ocf_fmt": "\u2212$528K",
+          "fcf": -755301.0,
+          "fcf_fmt": "\u2212$755K",
+          "prior": {
+            "revenue": 8915344.0,
+            "oi": 1335141.0,
+            "ni": 913401.0,
+            "ocf": -297730.0
+          }
+        }
+      },
+      {
+        "key": "2024-01-01_2024-12-31",
+        "label": "FY 2024",
+        "start": "2024-01-01",
+        "end": "2024-12-31",
+        "months": 12,
+        "vs": "FY 2023",
+        "vs_key": "2023-01-01_2023-12-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY 2023",
+          "title": "CCH Holdings Ltd FY 2024 vs FY 2023: what changed",
+          "bullets": [
+            "Revenue fell $860K versus FY 2023; operating profit rose $570K.",
+            "The largest single swing was Cost of revenue, \u2212$1.1M (\u221214%).",
+            "Operating cash flow fell $325K to \u2212$298K, while net earnings rose $545K to $913K."
+          ]
+        },
+        "preliminary": false,
+        "form": "F-1/A",
+        "filed": "2026-09-21",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/ea0306090-f1a3_cchhold.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/0001213900-26-101735-index.html",
+        "kind": "profit",
+        "title": "CCH Holdings Ltd FY 2024 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2024 \u00b7 GAAP \u00b7 Y/Y vs. FY 2023",
+        "footer": [
+          "Source: the company\u2019s registration statement (F-1/A filed Sep 21, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2024. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY 2023; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 8915344.0,
+            "y": 9775038.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$8.9M"
+              ],
+              [
+                "mut",
+                "Y/Y \u22129%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$860K",
+            "source": "Inline XBRL tag Revenues in the F-1/A, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "gp",
+            "col": 1,
+            "color": "profit",
+            "name": "Gross profit",
+            "pos": "above",
+            "v": 2406261.0,
+            "y": 2209479.0,
+            "lines": [
+              [
+                "name",
+                "Gross profit"
+              ],
+              [
+                "val",
+                "$2.4M \u00b7 27% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +9%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$197K \u00b7 scale \u22120.19 \u00b7 mix +0.39"
+          },
+          {
+            "id": "cor",
+            "col": 1,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 6509083.0,
+            "y": 7565559.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$6.5M \u00b7 73% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221214%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1.1M \u00b7 scale \u22120.67 \u00b7 mix \u22120.39"
+          },
+          {
+            "id": "oi",
+            "col": 2,
+            "color": "profit",
+            "name": "Operating profit",
+            "pos": "above",
+            "v": 1335141.0,
+            "y": 765152.0,
+            "lines": [
+              [
+                "name",
+                "Operating profit"
+              ],
+              [
+                "val",
+                "$1.3M \u00b7 55% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y +74%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$570K \u00b7 scale +0.07 \u00b7 mix +0.50",
+            "source": "Inline XBRL tag OperatingIncomeLoss in the F-1/A, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "opex",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "below",
+            "v": 1071120.0,
+            "y": 1444327.0,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 45% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u221226%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$373K \u00b7 scale +0.13 \u00b7 mix \u22120.50"
+          },
+          {
+            "id": "pretax",
+            "col": 3,
+            "color": "profit",
+            "name": "Pre-tax earnings",
+            "pos": "above",
+            "v": 1281193.0,
+            "y": 684468.0,
+            "lines": [
+              [
+                "name",
+                "Pre-tax earnings"
+              ],
+              [
+                "val",
+                "$1.3M \u00b7 14% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +87%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$597K \u00b7 scale \u22120.06 \u00b7 mix +0.66",
+            "source": "Inline XBRL tag IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest in the F-1/A, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "nonop_out",
+            "col": 3,
+            "color": "cost",
+            "name": "Other expense, net",
+            "pos": "right",
+            "v": 53948.0,
+            "y": 80684.0,
+            "lines": [
+              [
+                "name",
+                "Other expense, net"
+              ],
+              [
+                "val",
+                "$54K \u00b7 4.0% of operating profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u221233%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$27K \u00b7 scale +0.06 \u00b7 mix \u22120.09"
+          },
+          {
+            "id": "net",
+            "col": 4,
+            "color": "profit",
+            "name": "Net earnings",
+            "pos": "above_left",
+            "v": 913401.0,
+            "y": 368614.0,
+            "lines": [
+              [
+                "name",
+                "Net earnings"
+              ],
+              [
+                "val",
+                "$913K \u00b7 71% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y +148%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$545K \u00b7 scale +0.32 \u00b7 mix +0.22",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1/A, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "tax",
+            "col": 4,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "below_right",
+            "v": 367792.0,
+            "y": 315854.0,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$368K \u00b7 29% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y +16%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$52K \u00b7 scale +0.28 \u00b7 mix \u22120.22",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the F-1/A, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "bridge",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 1480477.0,
+            "y": 666704.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$1.5M \u00b7 17% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +122%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$814K \u00b7 scale \u22120.06 \u00b7 mix +0.87"
+          },
+          {
+            "id": "da",
+            "col": 5,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 269346.0,
+            "y": 325518.0,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$269K \u00b7 18% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221217%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$56K \u00b7 scale +0.40 \u00b7 mix \u22120.45",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the F-1/A, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "burn",
+            "col": 5,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 297730.0,
+            "y": -27428.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$298K \u00b7 20% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$325K \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the F-1/A, fiscal year ended Dec 31, 2024."
+          },
+          {
+            "id": "wc_out",
+            "col": 7,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 1480477.0,
+            "y": 666704.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$1.5M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +122%"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 +$814K \u00b7 scale +0.81 \u00b7 mix \u00b10.00"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "gp",
+            "v": 2406261.0,
+            "y": 2209479.0,
+            "color": "profit"
+          },
+          {
+            "s": "revenue",
+            "t": "cor",
+            "v": 6509083.0,
+            "y": 7565559.0,
+            "color": "cost"
+          },
+          {
+            "s": "gp",
+            "t": "oi",
+            "v": 1335141.0,
+            "y": 765152.0,
+            "color": "profit"
+          },
+          {
+            "s": "gp",
+            "t": "opex",
+            "v": 1071120.0,
+            "y": 1444327.0,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "nonop_out",
+            "v": 53948.0,
+            "y": 80684.0,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "pretax",
+            "v": 1281193.0,
+            "y": 684468.0,
+            "color": "profit"
+          },
+          {
+            "s": "pretax",
+            "t": "net",
+            "v": 913401.0,
+            "y": 368614.0,
+            "color": "profit"
+          },
+          {
+            "s": "pretax",
+            "t": "tax",
+            "v": 367792.0,
+            "y": 315854.0,
+            "color": "cost"
+          },
+          {
+            "s": "net",
+            "t": "bridge",
+            "v": 913401.0,
+            "y": 368614.0,
+            "color": "profit"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 269346.0,
+            "y": 325518.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 297730.0,
+            "y": -27428.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 1480477.0,
+            "y": 666704.0,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "CCH Holdings Ltd \u00b7 F-1/A filed Sep 21, 2026 \u00b7 Fiscal year ended Dec 31, 2024",
+          "doc": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/ea0306090-f1a3_cchhold.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/0001213900-26-101735-index.html"
+        },
+        "analysis": [
+          "Revenue was $8.9M in FY 2024, down 9% year over year.",
+          "Gross margin was 27.0%, up 4.4 points from FY 2023. Operating profit was $1.3M, a 15.0% margin (up 7.1 points year over year). Operating expenses fell 26% while revenue changed -9%. Net earnings were $913K, up 148% year over year. The effective tax rate was 28.7%.",
+          "Operating cash flow was \u2212$298K. Non-cash charges added back $269K of depreciation and amortization. Working capital and other items used $1.5M. Capital expenditures of $81K exceeded it, leaving free cash flow of \u2212$378K."
+        ],
+        "headline": {
+          "revenue": 8915344.0,
+          "rev_fmt": "$8.9M",
+          "yoy": -8.794789339949372,
+          "oi": 1335141.0,
+          "oi_fmt": "$1.3M",
+          "om": 14.975765377084722,
+          "ni": 913401.0,
+          "ni_fmt": "$913K",
+          "nm": 10.245269279570143,
+          "ocf": -297730.0,
+          "ocf_fmt": "\u2212$298K",
+          "fcf": -378399.0,
+          "fcf_fmt": "\u2212$378K",
+          "prior": {
+            "revenue": 9775038.0,
+            "oi": 765152.0,
+            "ni": 368614.0,
+            "ocf": 27428.0
+          }
+        }
+      },
+      {
+        "key": "2023-01-01_2023-12-31",
+        "label": "FY 2023",
+        "start": "2023-01-01",
+        "end": "2023-12-31",
+        "months": 12,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "F-1/A",
+        "filed": "2026-09-21",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/ea0306090-f1a3_cchhold.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/0001213900-26-101735-index.html",
+        "kind": "profit",
+        "title": "CCH Holdings Ltd FY 2023 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2023 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (F-1/A filed Sep 21, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2023. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 9775038.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$9.8M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the F-1/A, fiscal year ended Dec 31, 2023."
+          },
+          {
+            "id": "gp",
+            "col": 1,
+            "color": "profit",
+            "name": "Gross profit",
+            "pos": "above",
+            "v": 2209479.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Gross profit"
+              ],
+              [
+                "val",
+                "$2.2M \u00b7 23% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "cor",
+            "col": 1,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 7565559.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$7.6M \u00b7 77% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "oi",
+            "col": 2,
+            "color": "profit",
+            "name": "Operating profit",
+            "pos": "above",
+            "v": 765152.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating profit"
+              ],
+              [
+                "val",
+                "$765K \u00b7 35% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag OperatingIncomeLoss in the F-1/A, fiscal year ended Dec 31, 2023."
+          },
+          {
+            "id": "opex",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "below",
+            "v": 1444327.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$1.4M \u00b7 65% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "pretax",
+            "col": 3,
+            "color": "profit",
+            "name": "Pre-tax earnings",
+            "pos": "above",
+            "v": 684468.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Pre-tax earnings"
+              ],
+              [
+                "val",
+                "$684K \u00b7 7.0% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest in the F-1/A, fiscal year ended Dec 31, 2023."
+          },
+          {
+            "id": "nonop_out",
+            "col": 3,
+            "color": "cost",
+            "name": "Other expense, net",
+            "pos": "right",
+            "v": 80684.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other expense, net"
+              ],
+              [
+                "val",
+                "$81K \u00b7 11% of operating profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "net",
+            "col": 4,
+            "color": "profit",
+            "name": "Net earnings",
+            "pos": "above_left",
+            "v": 368614.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net earnings"
+              ],
+              [
+                "val",
+                "$369K \u00b7 54% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1/A, fiscal year ended Dec 31, 2023."
+          },
+          {
+            "id": "tax",
+            "col": 4,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "below_right",
+            "v": 315854.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$316K \u00b7 46% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the F-1/A, fiscal year ended Dec 31, 2023."
+          },
+          {
+            "id": "bridge",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 694132.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$694K \u00b7 7.1% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "da",
+            "col": 5,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 325518.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$326K \u00b7 47% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the F-1/A, fiscal year ended Dec 31, 2023."
+          },
+          {
+            "id": "wc_out",
+            "col": 7,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 666704.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$667K \u00b7 96% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "ocf",
+            "col": 7,
+            "color": "profit",
+            "name": "Operating cash flow",
+            "pos": "above",
+            "v": 27428.0,
+            "y": null,
+            "lines": [
+              [
+                "ocf",
+                "Operating cash flow"
+              ],
+              [
+                "val",
+                "$27K \u00b7 0.3% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "4.0% of cash sources"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the F-1/A, fiscal year ended Dec 31, 2023."
+          },
+          {
+            "id": "capex",
+            "col": 8,
+            "color": "cost",
+            "name": "Capital expenditures",
+            "pos": "right",
+            "v": 761306.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Capital expenditures"
+              ],
+              [
+                "val",
+                "$761K \u00b7 2776% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "$734K more than operating cash flow"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "fcf_neg",
+            "col": 7,
+            "color": "cost",
+            "name": "Negative free cash flow (OCF \u2212 capex)",
+            "pos": "below",
+            "v": 733878.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Negative free cash flow (OCF \u2212 capex)"
+              ],
+              [
+                "val",
+                "$734K \u00b7 96% of capex"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "paid from cash or financing"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the gap"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "gp",
+            "v": 2209479.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "revenue",
+            "t": "cor",
+            "v": 7565559.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "gp",
+            "t": "oi",
+            "v": 765152.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "gp",
+            "t": "opex",
+            "v": 1444327.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "nonop_out",
+            "v": 80684.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "pretax",
+            "v": 684468.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "pretax",
+            "t": "net",
+            "v": 368614.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "pretax",
+            "t": "tax",
+            "v": 315854.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "net",
+            "t": "bridge",
+            "v": 368614.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 325518.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 666704.0,
+            "y": null,
+            "color": "noncash"
+          },
+          {
+            "s": "bridge",
+            "t": "ocf",
+            "v": 27428.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "capex",
+            "v": 27428.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "fcf_neg",
+            "t": "capex",
+            "v": 733878.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "CCH Holdings Ltd \u00b7 F-1/A filed Sep 21, 2026 \u00b7 Fiscal year ended Dec 31, 2023",
+          "doc": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/ea0306090-f1a3_cchhold.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/2074123/000121390026101735/0001213900-26-101735-index.html"
+        },
+        "analysis": [
+          "Revenue was $9.8M in FY 2023.",
+          "Gross margin was 22.6%. Operating profit was $765K, a 7.8% margin. Net earnings were $369K. The effective tax rate was 46.1%.",
+          "Operating cash flow was $27K, 7% of net earnings. Non-cash charges added back $326K of depreciation and amortization. Working capital and other items used $667K. Capital expenditures of $761K exceeded it, leaving free cash flow of \u2212$734K."
+        ],
+        "headline": {
+          "revenue": 9775038.0,
+          "rev_fmt": "$9.8M",
+          "yoy": null,
+          "oi": 765152.0,
+          "oi_fmt": "$765K",
+          "om": 7.827611514144498,
+          "ni": 368614.0,
+          "ni_fmt": "$369K",
+          "nm": 3.770972552740971,
+          "ocf": 27428.0,
+          "ocf_fmt": "$27K",
+          "fcf": -733878.0,
+          "fcf_fmt": "\u2212$734K",
+          "prior": null
+        }
+      }
+    ],
+    "default": "2025-01-01_2025-12-31"
+  },
   "filings": [
     {
       "accession": "9999999995-26-003097",
@@ -3317,7 +4915,7 @@
     "classification": "registration_unclassified"
   },
   "lifecycle": "EFFECT",
-  "generated_at": "2026-10-31T04:49:59+00:00",
+  "generated_at": "2026-10-31T05:03:15+00:00",
   "scan": {
     "state": "parsed",
     "last_attempt": "2026-10-30T11:59:07+00:00",

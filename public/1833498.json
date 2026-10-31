@@ -2038,6 +2038,1584 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2023-01-01_2023-09-30",
+        "label": "9M 2023",
+        "start": "2023-01-01",
+        "end": "2023-09-30",
+        "months": 9,
+        "vs": "9M 2022",
+        "vs_key": "2022-01-01_2022-09-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "9M 2022",
+          "title": "Spectral AI, Inc. 9M 2023 vs 9M 2022: what changed",
+          "bullets": [
+            "Revenue fell $6.5M versus 9M 2022; operating profit fell $9.2M.",
+            "The largest single swing was non-operating items, down $7.0M to \u2212$7.2M.",
+            "Operating cash flow fell $10.0M to \u2212$10.9M, while net earnings fell $16.1M to \u2212$17.3M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-05",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/fs12023_spectralaiinc.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/0001213900-24-001552-index.html",
+        "kind": "loss",
+        "title": "Spectral AI, Inc. 9M 2023 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Sep 30, 2023 \u00b7 GAAP \u00b7 Y/Y vs. 9M 2022",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 5, 2024), read from the inline XBRL tags of its financial statements. Nine months ended Sep 30, 2023 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with 9M 2022; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 12769000.0,
+            "y": 19272000.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$12.8M"
+              ],
+              [
+                "mut",
+                "Y/Y \u221234%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$6.5M",
+            "source": "Inline XBRL tag Revenues in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 17308000.0,
+            "y": 1173000.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$17.3M \u00b7 58% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +1376%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$16.1M \u00b7 scale +0.55 \u00b7 mix +15.6",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 30077000.0,
+            "y": 20445000.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$30.1M \u00b7 236% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +47%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9.6M \u00b7 scale \u22126.9 \u00b7 mix +16.5"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 22824000.0,
+            "y": 20150000.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$22.8M \u00b7 76% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +13%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $10.1M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.7M \u00b7 scale +9.5 \u00b7 mix \u22126.8"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 7221000.0,
+            "y": 204000.0,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$7.2M \u00b7 24% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +3440%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$7.0M \u00b7 scale +0.10 \u00b7 mix +6.9"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 32000.0,
+            "y": 91000.0,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$32K \u00b7 0.1% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221265%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$59K \u00b7 scale +0.04 \u00b7 mix \u22120.10",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 7325000.0,
+            "y": 10943000.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$7.3M \u00b7 32% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221233%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$3.6M \u00b7 scale +1.5 \u00b7 mix \u22125.1",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "right",
+            "v": 15499000.0,
+            "y": 9207000.0,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$15.5M \u00b7 68% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +68%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$6.3M \u00b7 scale +1.2 \u00b7 mix +5.1"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 17308000.0,
+            "y": 1173000.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$17.3M \u00b7 136% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +1376%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$16.1M \u00b7 scale \u22120.40 \u00b7 mix +16.5"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 975000.0,
+            "y": 874000.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 5.6% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +12%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$101K \u00b7 scale +12.0 \u00b7 mix \u221211.9",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 5468000.0,
+            "y": -564000.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$5.5M \u00b7 32% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$6.0M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 10865000.0,
+            "y": 863000.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$10.9M \u00b7 63% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +1159%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$10.0M \u00b7 scale +11.9 \u00b7 mix \u22121.9",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 17308000.0,
+            "y": 1173000.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$17.3M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +1376%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$16.1M \u00b7 scale +16.1 \u00b7 mix \u00b10.00",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2023."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 12769000.0,
+            "y": 19272000.0,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 17308000.0,
+            "y": 1173000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 22824000.0,
+            "y": 20150000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 7221000.0,
+            "y": 204000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 32000.0,
+            "y": 91000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 7325000.0,
+            "y": 10943000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:opex",
+            "v": 15499000.0,
+            "y": 9207000.0,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 975000.0,
+            "y": 874000.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 5468000.0,
+            "y": -564000.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 10865000.0,
+            "y": 863000.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 17308000.0,
+            "y": 1173000.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "Spectral AI, Inc. \u00b7 S-1 filed Jan 5, 2024 \u00b7 Nine months ended Sep 30, 2023",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/fs12023_spectralaiinc.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/0001213900-24-001552-index.html"
+        },
+        "analysis": [
+          "Revenue was $12.8M in 9M 2023, down 34% year over year.",
+          "Gross margin was 42.6%, down 0.6 points from 9M 2022. Operating costs exceeded revenue by $10.1M, an operating margin of -78.7%. Operating expenses grew 68% against revenue growth of -34%. The period ended with a net loss of $17.3M.",
+          "Operating cash flow was \u2212$10.9M. Non-cash charges added back $1.0M of share-based compensation. Working capital and other items added $5.5M."
+        ],
+        "headline": {
+          "revenue": 12769000.0,
+          "rev_fmt": "$12.8M",
+          "yoy": -33.743254462432546,
+          "oi": -10055000.0,
+          "oi_fmt": "\u2212$10.1M",
+          "om": -78.74539901323519,
+          "ni": -17308000.0,
+          "ni_fmt": "\u2212$17.3M",
+          "nm": -135.5470279583366,
+          "ocf": -10865000.0,
+          "ocf_fmt": "\u2212$10.9M",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 19272000.0,
+            "oi": -878000.0,
+            "ni": -1173000.0,
+            "ocf": -863000.0
+          }
+        }
+      },
+      {
+        "key": "2023-07-01_2023-09-30",
+        "label": "Q3 2023",
+        "start": "2023-07-01",
+        "end": "2023-09-30",
+        "months": 3,
+        "vs": "Q3 2022",
+        "vs_key": "2022-07-01_2022-09-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "Q3 2022",
+          "title": "Spectral AI, Inc. Q3 2023 vs Q3 2022: what changed",
+          "bullets": [
+            "Revenue fell $3.6M versus Q3 2022; operating profit fell $3.9M.",
+            "The largest single swing was non-operating items, down $6.5M to \u2212$6.5M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-05",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/fs12023_spectralaiinc.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/0001213900-24-001552-index.html",
+        "kind": "loss",
+        "title": "Spectral AI, Inc. Q3 2023 earnings &amp; cash flow",
+        "subtitle": "Three months ended Sep 30, 2023 \u00b7 GAAP \u00b7 Y/Y vs. Q3 2022",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 5, 2024), read from the inline XBRL tags of its financial statements. Three months ended Sep 30, 2023 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with Q3 2022; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 3440000.0,
+            "y": 7038000.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$3.4M"
+              ],
+              [
+                "mut",
+                "Y/Y \u221251%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$3.6M",
+            "source": "Inline XBRL tag Revenues in the S-1, three months ended Sep 30, 2023."
+          },
+          {
+            "id": "taxben",
+            "col": 0,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 54000.0,
+            "y": -85000.0,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$54K \u00b7 0.4% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$139K \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 10629000.0,
+            "y": 380000.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$10.6M \u00b7 75% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +2697%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$10.2M \u00b7 scale +0.34 \u00b7 mix +9.9",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, three months ended Sep 30, 2023."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 14123000.0,
+            "y": 7418000.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$14.1M \u00b7 411% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +90%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$6.7M \u00b7 scale \u22123.8 \u00b7 mix +10.5"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 7606000.0,
+            "y": 7289000.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$7.6M \u00b7 54% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +4%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $4.2M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$317K \u00b7 scale +6.6 \u00b7 mix \u22126.3"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 6517000.0,
+            "y": 44000.0,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$6.5M \u00b7 46% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +14711%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$6.5M \u00b7 scale +0.04 \u00b7 mix +6.4"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 1968000.0,
+            "y": 3811000.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$2.0M \u00b7 26% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221248%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1.8M \u00b7 scale +0.17 \u00b7 mix \u22122.0",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, three months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "right",
+            "v": 5638000.0,
+            "y": 3478000.0,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$5.6M \u00b7 74% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +62%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.2M \u00b7 scale +0.15 \u00b7 mix +2.0"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 3440000.0,
+            "y": 7038000.0,
+            "color": "rev"
+          },
+          {
+            "s": "taxben",
+            "t": "total",
+            "v": 54000.0,
+            "y": -85000.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 10629000.0,
+            "y": 380000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 7606000.0,
+            "y": 7289000.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 6517000.0,
+            "y": 44000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 1968000.0,
+            "y": 3811000.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:opex",
+            "v": 5638000.0,
+            "y": 3478000.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "Spectral AI, Inc. \u00b7 S-1 filed Jan 5, 2024 \u00b7 Three months ended Sep 30, 2023",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/fs12023_spectralaiinc.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/0001213900-24-001552-index.html"
+        },
+        "analysis": [
+          "Revenue was $3.4M in Q3 2023, down 51% year over year.",
+          "Gross margin was 42.8%, down 3.1 points from Q3 2022. Operating costs exceeded revenue by $4.2M, an operating margin of -121.1%. Operating expenses grew 62% against revenue growth of -51%. The period ended with a net loss of $10.6M. Net interest and other expense of $6.5M was the main reason."
+        ],
+        "headline": {
+          "revenue": 3440000.0,
+          "rev_fmt": "$3.4M",
+          "yoy": -51.12247797669794,
+          "oi": -4166000.0,
+          "oi_fmt": "\u2212$4.2M",
+          "om": -121.1046511627907,
+          "ni": -10629000.0,
+          "ni_fmt": "\u2212$10.6M",
+          "nm": -308.9825581395349,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 7038000.0,
+            "oi": -251000.0,
+            "ni": -380000.0,
+            "ocf": null
+          }
+        }
+      },
+      {
+        "key": "2022-01-01_2022-09-30",
+        "label": "9M 2022",
+        "start": "2022-01-01",
+        "end": "2022-09-30",
+        "months": 9,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-05",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/fs12023_spectralaiinc.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/0001213900-24-001552-index.html",
+        "kind": "loss",
+        "title": "Spectral AI, Inc. 9M 2022 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Sep 30, 2022 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 5, 2024), read from the inline XBRL tags of its financial statements. Nine months ended Sep 30, 2022 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 19272000.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$19.3M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 1173000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$1.2M \u00b7 5.7% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 20445000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$20.4M \u00b7 106% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 20150000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$20.1M \u00b7 99% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $878K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 204000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$204K \u00b7 1.0% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 91000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$91K \u00b7 0.4% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 10943000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$10.9M \u00b7 54% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "right",
+            "v": 9207000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$9.2M \u00b7 46% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 1737000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$1.7M \u00b7 9.0% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 874000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$874K \u00b7 50% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 863000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$863K \u00b7 50% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 1173000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$1.2M \u00b7 68% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 564000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$564K \u00b7 32% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 19272000.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 1173000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 20150000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 204000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 91000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 10943000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:opex",
+            "v": 9207000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 874000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 863000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 1173000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 564000.0,
+            "y": null,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "Spectral AI, Inc. \u00b7 S-1 filed Jan 5, 2024 \u00b7 Nine months ended Sep 30, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/fs12023_spectralaiinc.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/0001213900-24-001552-index.html"
+        },
+        "analysis": [
+          "Revenue was $19.3M in 9M 2022.",
+          "Gross margin was 43.2%. Operating costs exceeded revenue by $878K, an operating margin of -4.6%. The period ended with a net loss of $1.2M.",
+          "Operating cash flow was \u2212$863K. Non-cash charges added back $874K of share-based compensation. Working capital and other items used $564K."
+        ],
+        "headline": {
+          "revenue": 19272000.0,
+          "rev_fmt": "$19.3M",
+          "yoy": null,
+          "oi": -878000.0,
+          "oi_fmt": "\u2212$878K",
+          "om": -4.555832295558323,
+          "ni": -1173000.0,
+          "ni_fmt": "\u2212$1.2M",
+          "nm": -6.0865504358655045,
+          "ocf": -863000.0,
+          "ocf_fmt": "\u2212$863K",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2022-07-01_2022-09-30",
+        "label": "Q3 2022",
+        "start": "2022-07-01",
+        "end": "2022-09-30",
+        "months": 3,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-05",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/fs12023_spectralaiinc.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/0001213900-24-001552-index.html",
+        "kind": "loss",
+        "title": "Spectral AI, Inc. Q3 2022 earnings &amp; cash flow",
+        "subtitle": "Three months ended Sep 30, 2022 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 5, 2024), read from the inline XBRL tags of its financial statements. Three months ended Sep 30, 2022 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 7038000.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$7.0M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 380000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$380K \u00b7 5.1% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 7418000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$7.4M \u00b7 105% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 7289000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$7.3M \u00b7 98% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $251K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "nonop_out",
+            "col": 2,
+            "color": "cost",
+            "name": "Interest &amp; other, net",
+            "pos": "right",
+            "v": 44000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Interest &amp; other, net"
+              ],
+              [
+                "val",
+                "$44K \u00b7 0.6% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 85000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$85K \u00b7 1.1% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 3811000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$3.8M \u00b7 52% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "right",
+            "v": 3478000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$3.5M \u00b7 48% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 7038000.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 380000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 7289000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "nonop_out",
+            "v": 44000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 85000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 3811000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:opex",
+            "v": 3478000.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "Spectral AI, Inc. \u00b7 S-1 filed Jan 5, 2024 \u00b7 Three months ended Sep 30, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/fs12023_spectralaiinc.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1833498/000121390024001552/0001213900-24-001552-index.html"
+        },
+        "analysis": [
+          "Revenue was $7.0M in Q3 2022.",
+          "Gross margin was 45.9%. Operating costs exceeded revenue by $251K, an operating margin of -3.6%. The period ended with a net loss of $380K."
+        ],
+        "headline": {
+          "revenue": 7038000.0,
+          "rev_fmt": "$7.0M",
+          "yoy": null,
+          "oi": -251000.0,
+          "oi_fmt": "\u2212$251K",
+          "om": -3.5663540778630294,
+          "ni": -380000.0,
+          "ni_fmt": "\u2212$380K",
+          "nm": -5.399261153736857,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      }
+    ],
+    "default": "2023-01-01_2023-09-30"
+  },
   "filings": [
     {
       "accession": "0001213900-25-101648",
@@ -2381,7 +3959,7 @@
     "classification": "unclassified"
   },
   "lifecycle": null,
-  "generated_at": "2026-10-31T04:49:59+00:00",
+  "generated_at": "2026-10-31T05:03:15+00:00",
   "scan": {
     "state": "queued",
     "last_attempt": null,

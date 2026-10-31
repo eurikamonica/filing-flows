@@ -1132,6 +1132,318 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2026-05-01_2026-07-31",
+        "label": "3M to Jul 2026",
+        "start": "2026-05-01",
+        "end": "2026-07-31",
+        "months": 3,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1/A",
+        "filed": "2026-10-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/youmi-20261002_s1a5.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/0001520138-26-000404-index.html",
+        "kind": "loss",
+        "title": "Youmi Inc. 3M to Jul 2026 earnings &amp; cash flow",
+        "subtitle": "Three months ended Jul 31, 2026 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1/A filed Oct 2, 2026), read from the inline XBRL tags of its financial statements. Three months ended Jul 31, 2026 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 723.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$1K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1/A, three months ended Jul 31, 2026."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 192293.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$192K \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, three months ended Jul 31, 2026."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 193016.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$193K \u00b7 26697% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "right",
+            "v": 193016.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$193K \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $192K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 192293.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$192K \u00b7 26597% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 122277.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$122K \u00b7 64% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 70016.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$70K \u00b7 36% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1/A, three months ended Jul 31, 2026."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 192293.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$192K \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, three months ended Jul 31, 2026."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 723.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 192293.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 193016.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 122277.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 70016.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 192293.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "Youmi Inc. \u00b7 S-1/A filed Oct 2, 2026 \u00b7 Three months ended Jul 31, 2026",
+          "doc": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/youmi-20261002_s1a5.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/0001520138-26-000404-index.html"
+        },
+        "analysis": [
+          "Revenue was $1K in 3M to Jul 2026.",
+          "Operating costs exceeded revenue by $192K, an operating margin of -26596.5%. The period ended with a net loss of $192K.",
+          "Operating cash flow was \u2212$70K. Working capital and other items added $122K."
+        ],
+        "headline": {
+          "revenue": 723.0,
+          "rev_fmt": "$1K",
+          "yoy": null,
+          "oi": -192293.0,
+          "oi_fmt": "\u2212$192K",
+          "om": -26596.542185338865,
+          "ni": -192293.0,
+          "ni_fmt": "\u2212$192K",
+          "nm": -26596.542185338865,
+          "ocf": -70016.0,
+          "ocf_fmt": "\u2212$70K",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      }
+    ],
+    "default": "2026-05-01_2026-07-31"
+  },
   "filings": [
     {
       "accession": "9999999995-26-003197",
@@ -1271,7 +1583,7 @@
     "classification": "resale_language_identified"
   },
   "lifecycle": "EFFECT",
-  "generated_at": "2026-10-31T04:49:59+00:00",
+  "generated_at": "2026-10-31T05:03:15+00:00",
   "scan": {
     "state": "parsed",
     "last_attempt": "2026-10-28T12:18:42+00:00",

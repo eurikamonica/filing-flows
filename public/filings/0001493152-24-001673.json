@@ -1598,6 +1598,814 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2022-01-01_2022-12-31",
+        "label": "FY 2022",
+        "start": "2022-01-01",
+        "end": "2022-12-31",
+        "months": 12,
+        "vs": "FY 2021",
+        "vs_key": "2021-01-01_2021-12-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY 2021",
+          "title": "SIMSON WELLNESS TECH CORP. FY 2022 vs FY 2021: what changed",
+          "bullets": [
+            "Revenue fell $5K versus FY 2021; operating profit fell $152K.",
+            "The largest single swing was income tax, lower by $9K.",
+            "Operating cash flow fell $734K to \u2212$785K, while net earnings fell $143K to \u2212$209K."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-08",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1912838/000149315224001673/forms-1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1912838/000149315224001673/0001493152-24-001673-index.html",
+        "kind": "loss",
+        "title": "SIMSON WELLNESS TECH CORP. FY 2022 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2022 \u00b7 GAAP \u00b7 Y/Y vs. FY 2021",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 8, 2024), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2022. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY 2021; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 3239.0,
+            "y": 8137.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$3K"
+              ],
+              [
+                "mut",
+                "Y/Y \u221260%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$5K",
+            "source": "Inline XBRL tag Revenues in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "taxben",
+            "col": 0,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 4053.0,
+            "y": -4796.0,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$4K \u00b7 1.9% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9K \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 208700.0,
+            "y": 65280.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$209K \u00b7 97% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +220%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$143K \u00b7 scale +0.13 \u00b7 mix +0.02",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 215992.0,
+            "y": 73417.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$216K \u00b7 6668% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +194%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$143K \u00b7 scale \u22120.04 \u00b7 mix +0.19"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 215992.0,
+            "y": 68621.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$216K \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +215%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $213K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$147K \u00b7 scale +0.13 \u00b7 mix +0.01"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 0.0,
+            "y": 0.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$0K \u00b7 0.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 \u00b1$0K \u00b7 scale \u00b10.00 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "right",
+            "v": 215992.0,
+            "y": 68621.0,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$216K \u00b7 100% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +215%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$147K \u00b7 scale +0.15 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 785170.0,
+            "y": 50696.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$785K \u00b7 24241% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +1449%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$734K \u00b7 scale \u22120.03 \u00b7 mix +0.76"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 785170.0,
+            "y": 50696.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$785K \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +1449%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$734K \u00b7 scale +0.73 \u00b7 mix \u00b10.00",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 208700.0,
+            "y": 65280.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$209K \u00b7 27% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +220%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$143K \u00b7 scale +0.95 \u00b7 mix \u22120.80",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 576470.0,
+            "y": -14584.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$576K \u00b7 73% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 +$591K \u00b7 scale/mix n/m"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 3239.0,
+            "y": 8137.0,
+            "color": "rev"
+          },
+          {
+            "s": "taxben",
+            "t": "total",
+            "v": 4053.0,
+            "y": -4796.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 208700.0,
+            "y": 65280.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 215992.0,
+            "y": 68621.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:opex",
+            "v": 215992.0,
+            "y": 68621.0,
+            "color": "cost"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 785170.0,
+            "y": 50696.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 208700.0,
+            "y": 65280.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 576470.0,
+            "y": -14584.0,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "SIMSON WELLNESS TECH CORP. \u00b7 S-1 filed Jan 8, 2024 \u00b7 Fiscal year ended Dec 31, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1912838/000149315224001673/forms-1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1912838/000149315224001673/0001493152-24-001673-index.html"
+        },
+        "analysis": [
+          "Revenue was $3K in FY 2022, down 60% year over year.",
+          "Gross margin was 100.0%, unchanged from FY 2021. Operating costs exceeded revenue by $213K, an operating margin of -6568.5%. Operating expenses grew 215% against revenue growth of -60%. The year ended with a net loss of $209K.",
+          "Operating cash flow was \u2212$785K. Working capital and other items used $576K."
+        ],
+        "headline": {
+          "revenue": 3239.0,
+          "rev_fmt": "$3K",
+          "yoy": -60.19417475728155,
+          "oi": -212753.0,
+          "oi_fmt": "\u2212$213K",
+          "om": -6568.4779252855815,
+          "ni": -208700.0,
+          "ni_fmt": "\u2212$209K",
+          "nm": -6443.346711948132,
+          "ocf": -785170.0,
+          "ocf_fmt": "\u2212$785K",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 8137.0,
+            "oi": -60484.0,
+            "ni": -65280.0,
+            "ocf": -50696.0
+          }
+        }
+      },
+      {
+        "key": "2021-01-01_2021-12-31",
+        "label": "FY 2021",
+        "start": "2021-01-01",
+        "end": "2021-12-31",
+        "months": 12,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-08",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1912838/000149315224001673/forms-1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1912838/000149315224001673/0001493152-24-001673-index.html",
+        "kind": "loss",
+        "title": "SIMSON WELLNESS TECH CORP. FY 2021 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2021 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 8, 2024), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2021. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 8137.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$8K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 65280.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$65K \u00b7 89% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 73417.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$73K \u00b7 902% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 68621.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$69K \u00b7 93% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $60K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 4796.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$5K \u00b7 6.5% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 0.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$0K \u00b7 0.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "right",
+            "v": 68621.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$69K \u00b7 100% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 65280.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$65K \u00b7 802% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 14584.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$15K \u00b7 22% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 50696.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$51K \u00b7 78% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 65280.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$65K \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2021."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 8137.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 65280.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 68621.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 4796.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:opex",
+            "v": 68621.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 14584.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 50696.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 65280.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "SIMSON WELLNESS TECH CORP. \u00b7 S-1 filed Jan 8, 2024 \u00b7 Fiscal year ended Dec 31, 2021",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1912838/000149315224001673/forms-1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1912838/000149315224001673/0001493152-24-001673-index.html"
+        },
+        "analysis": [
+          "Revenue was $8K in FY 2021.",
+          "Gross margin was 100.0%. Operating costs exceeded revenue by $60K, an operating margin of -743.3%. The year ended with a net loss of $65K.",
+          "Operating cash flow was \u2212$51K. Working capital and other items added $15K."
+        ],
+        "headline": {
+          "revenue": 8137.0,
+          "rev_fmt": "$8K",
+          "yoy": null,
+          "oi": -60484.0,
+          "oi_fmt": "\u2212$60K",
+          "om": -743.3206341403466,
+          "ni": -65280.0,
+          "ni_fmt": "\u2212$65K",
+          "nm": -802.2612756544181,
+          "ocf": -50696.0,
+          "ocf_fmt": "\u2212$51K",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      }
+    ],
+    "default": "2022-01-01_2022-12-31"
+  },
   "filings": [
     {
       "accession": "0001493152-24-001673",
@@ -1634,5 +2442,5 @@
     "error": null,
     "classification": "registration_unclassified"
   },
-  "generated_at": "2026-10-31T04:49:59+00:00"
+  "generated_at": "2026-10-31T05:03:15+00:00"
 }

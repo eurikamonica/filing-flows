@@ -1721,6 +1721,1279 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2026-01-01_2026-06-30",
+        "label": "H1 2026",
+        "start": "2026-01-01",
+        "end": "2026-06-30",
+        "months": 6,
+        "vs": "H1 2025",
+        "vs_key": "2025-01-01_2025-06-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "H1 2025",
+          "title": "KiNRG, Inc. H1 2026 vs H1 2025: what changed",
+          "bullets": [
+            "Revenue rose $286.3M versus H1 2025 and the operating result improved by $17.3M, 6% of the added revenue.",
+            "The largest single swing was non-operating items, down $3.4M to \u2212$3.4M.",
+            "Operating cash flow rose $107.8M to $107.7M, while net earnings rose $16.7M to $15.9M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1/A",
+        "filed": "2026-09-15",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/ea0304622-s1a1_kinrg.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/0001213900-26-099804-index.html",
+        "kind": "profit",
+        "title": "KiNRG, Inc. H1 2026 earnings &amp; cash flow",
+        "subtitle": "Six months ended Jun 30, 2026 \u00b7 GAAP \u00b7 Y/Y vs. H1 2025",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1/A filed Sep 15, 2026), read from the inline XBRL tags of its financial statements. Six months ended Jun 30, 2026 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with H1 2025; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 369170248.0,
+            "y": 82846589.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$369.2M"
+              ],
+              [
+                "mut",
+                "Y/Y +346%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$286.3M",
+            "source": "Inline XBRL tag Revenues in the S-1/A, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "gp",
+            "col": 1,
+            "color": "profit",
+            "name": "Gross profit",
+            "pos": "above",
+            "v": 22115418.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Gross profit"
+              ],
+              [
+                "val",
+                "$22.1M \u00b7 6.0% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "cor",
+            "col": 1,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 347054830.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$347.1M \u00b7 94% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "oi",
+            "col": 2,
+            "color": "profit",
+            "name": "Operating profit",
+            "pos": "above",
+            "v": 16804242.0,
+            "y": -455925.0,
+            "lines": [
+              [
+                "name",
+                "Operating profit"
+              ],
+              [
+                "val",
+                "$16.8M \u00b7 76% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$17.3M",
+            "source": "Inline XBRL tag OperatingIncomeLoss in the S-1/A, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "opex",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "below",
+            "v": 5311176.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$5.3M \u00b7 24% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "pretax",
+            "col": 3,
+            "color": "profit",
+            "name": "Pre-tax earnings",
+            "pos": "above",
+            "v": 13431517.0,
+            "y": -472473.0,
+            "lines": [
+              [
+                "name",
+                "Pre-tax earnings"
+              ],
+              [
+                "val",
+                "$13.4M \u00b7 3.6% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$13.9M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest in the S-1/A, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "nonop_out",
+            "col": 3,
+            "color": "cost",
+            "name": "Other expense, net",
+            "pos": "right",
+            "v": 3372725.0,
+            "y": 16548.0,
+            "lines": [
+              [
+                "name",
+                "Other expense, net"
+              ],
+              [
+                "val",
+                "$3.4M \u00b7 20% of operating profit"
+              ],
+              [
+                "mut",
+                "Y/Y +20281%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$3.4M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "taxben",
+            "col": 3,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 2504851.0,
+            "y": -317123.0,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$2.5M \u00b7 16% of net earnings"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2.8M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "net",
+            "col": 4,
+            "color": "profit",
+            "name": "Net earnings",
+            "pos": "above_left",
+            "v": 15936368.0,
+            "y": -789596.0,
+            "lines": [
+              [
+                "name",
+                "Net earnings"
+              ],
+              [
+                "val",
+                "$15.9M \u00b7 119% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$16.7M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "sbc",
+            "col": 5,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 14180.0,
+            "y": 69586.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$14K \u00b7 0.0% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u221280%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$55K \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1/A, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "wc_in",
+            "col": 5,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 91731857.0,
+            "y": 578562.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$91.7M \u00b7 85% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y +15755%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$91.2M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "ocf",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash flow",
+            "pos": "above",
+            "v": 107682405.0,
+            "y": -141448.0,
+            "lines": [
+              [
+                "ocf",
+                "Operating cash flow"
+              ],
+              [
+                "val",
+                "$107.7M \u00b7 29% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "676% of net earnings"
+              ]
+            ],
+            "cmp_y": "\u0394 +$107.8M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1/A, six months ended Jun 30, 2026."
+          },
+          {
+            "id": "fcf",
+            "col": 7,
+            "color": "profit",
+            "name": "Free cash flow (OCF \u2212 capex)",
+            "pos": "right",
+            "v": 107656289.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Free cash flow (OCF \u2212 capex)"
+              ],
+              [
+                "val",
+                "$107.7M \u00b7 100% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "FCF margin 29%"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "capex",
+            "col": 7,
+            "color": "cost",
+            "name": "Capital expenditures",
+            "pos": "right",
+            "v": 26116.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Capital expenditures"
+              ],
+              [
+                "val",
+                "$26K \u00b7 0.0% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "gp",
+            "v": 22115418.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "revenue",
+            "t": "cor",
+            "v": 347054830.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "gp",
+            "t": "oi",
+            "v": 16804242.0,
+            "y": -455925.0,
+            "color": "profit"
+          },
+          {
+            "s": "gp",
+            "t": "opex",
+            "v": 5311176.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "nonop_out",
+            "v": 3372725.0,
+            "y": 16548.0,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "pretax",
+            "v": 13431517.0,
+            "y": -472473.0,
+            "color": "profit"
+          },
+          {
+            "s": "pretax",
+            "t": "net",
+            "v": 13431517.0,
+            "y": -472473.0,
+            "color": "profit"
+          },
+          {
+            "s": "taxben",
+            "t": "net",
+            "v": 2504851.0,
+            "y": -317123.0,
+            "color": "profit"
+          },
+          {
+            "s": "net",
+            "t": "ocf",
+            "v": 15936368.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "sbc",
+            "t": "ocf",
+            "v": 14180.0,
+            "y": 69586.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "ocf",
+            "v": 91731857.0,
+            "y": 578562.0,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "fcf",
+            "v": 107656289.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "capex",
+            "v": 26116.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "KiNRG, Inc. \u00b7 S-1/A filed Sep 15, 2026 \u00b7 Six months ended Jun 30, 2026",
+          "doc": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/ea0304622-s1a1_kinrg.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/0001213900-26-099804-index.html"
+        },
+        "analysis": [
+          "Revenue was $369.2M in H1 2026, up 346% year over year.",
+          "Gross margin was 6.0%. Operating profit was $16.8M, a 4.6% margin (up 5.1 points year over year). Net earnings were $15.9M. The effective tax rate was -18.6%.",
+          "Operating cash flow was $107.7M, 676% of net earnings. Non-cash charges added back $14K of share-based compensation. Working capital and other items added $91.7M. Capital expenditures of $26K left free cash flow of $107.7M."
+        ],
+        "headline": {
+          "revenue": 369170248.0,
+          "rev_fmt": "$369.2M",
+          "yoy": 345.60705812522946,
+          "oi": 16804242.0,
+          "oi_fmt": "$16.8M",
+          "om": 4.551894983693269,
+          "ni": 15936368.0,
+          "ni_fmt": "$15.9M",
+          "nm": 4.316807241736338,
+          "ocf": 107682405.0,
+          "ocf_fmt": "$107.7M",
+          "fcf": 107656289.0,
+          "fcf_fmt": "$107.7M",
+          "prior": {
+            "revenue": 82846589.0,
+            "oi": -455925.0,
+            "ni": -789596.0,
+            "ocf": -141448.0
+          }
+        }
+      },
+      {
+        "key": "2026-04-01_2026-06-30",
+        "label": "Q2 2026",
+        "start": "2026-04-01",
+        "end": "2026-06-30",
+        "months": 3,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1/A",
+        "filed": "2026-09-15",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/ea0304622-s1a1_kinrg.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/0001213900-26-099804-index.html",
+        "kind": "profit",
+        "title": "KiNRG, Inc. Q2 2026 earnings &amp; cash flow",
+        "subtitle": "Three months ended Jun 30, 2026 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1/A filed Sep 15, 2026), read from the inline XBRL tags of its financial statements. Three months ended Jun 30, 2026 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 369170248.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$369.2M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1/A, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "gp",
+            "col": 1,
+            "color": "profit",
+            "name": "Gross profit",
+            "pos": "above",
+            "v": 22115418.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Gross profit"
+              ],
+              [
+                "val",
+                "$22.1M \u00b7 6.0% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "cor",
+            "col": 1,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 347054830.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$347.1M \u00b7 94% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "oi",
+            "col": 2,
+            "color": "profit",
+            "name": "Operating profit",
+            "pos": "above",
+            "v": 17136630.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating profit"
+              ],
+              [
+                "val",
+                "$17.1M \u00b7 77% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag OperatingIncomeLoss in the S-1/A, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "opex",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "below",
+            "v": 4978788.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$5.0M \u00b7 23% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "pretax",
+            "col": 3,
+            "color": "profit",
+            "name": "Pre-tax earnings",
+            "pos": "above",
+            "v": 13766905.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Pre-tax earnings"
+              ],
+              [
+                "val",
+                "$13.8M \u00b7 3.7% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest in the S-1/A, three months ended Jun 30, 2026."
+          },
+          {
+            "id": "nonop_out",
+            "col": 3,
+            "color": "cost",
+            "name": "Other expense, net",
+            "pos": "right",
+            "v": 3369725.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other expense, net"
+              ],
+              [
+                "val",
+                "$3.4M \u00b7 20% of operating profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "taxben",
+            "col": 3,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 2504851.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$2.5M \u00b7 15% of net earnings"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "net",
+            "col": 4,
+            "color": "profit",
+            "name": "Net earnings",
+            "pos": "right",
+            "v": 16271756.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net earnings"
+              ],
+              [
+                "val",
+                "$16.3M \u00b7 118% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "gp",
+            "v": 22115418.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "revenue",
+            "t": "cor",
+            "v": 347054830.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "gp",
+            "t": "oi",
+            "v": 17136630.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "gp",
+            "t": "opex",
+            "v": 4978788.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "nonop_out",
+            "v": 3369725.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "pretax",
+            "v": 13766905.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "pretax",
+            "t": "net",
+            "v": 13766905.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "taxben",
+            "t": "net",
+            "v": 2504851.0,
+            "y": null,
+            "color": "profit"
+          }
+        ],
+        "cite": {
+          "text": "KiNRG, Inc. \u00b7 S-1/A filed Sep 15, 2026 \u00b7 Three months ended Jun 30, 2026",
+          "doc": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/ea0304622-s1a1_kinrg.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/0001213900-26-099804-index.html"
+        },
+        "analysis": [
+          "Revenue was $369.2M in Q2 2026.",
+          "Gross margin was 6.0%. Operating profit was $17.1M, a 4.6% margin. Net earnings were $16.3M. The effective tax rate was -18.2%."
+        ],
+        "headline": {
+          "revenue": 369170248.0,
+          "rev_fmt": "$369.2M",
+          "yoy": null,
+          "oi": 17136630.0,
+          "oi_fmt": "$17.1M",
+          "om": 4.6419314917273615,
+          "ni": 16271756.0,
+          "ni_fmt": "$16.3M",
+          "nm": 4.407656382970494,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2025-01-01_2025-06-30",
+        "label": "H1 2025",
+        "start": "2025-01-01",
+        "end": "2025-06-30",
+        "months": 6,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1/A",
+        "filed": "2026-09-15",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/ea0304622-s1a1_kinrg.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/0001213900-26-099804-index.html",
+        "kind": "loss",
+        "title": "KiNRG, Inc. H1 2025 earnings &amp; cash flow",
+        "subtitle": "Six months ended Jun 30, 2025 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1/A filed Sep 15, 2026), read from the inline XBRL tags of its financial statements. Six months ended Jun 30, 2025 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 82846589.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$82.8M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerIncludingAssessedTax in the S-1/A, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 789596.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$790K \u00b7 0.9% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 83636185.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$83.6M \u00b7 101% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 83302514.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$83.3M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $456K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 317123.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$317K \u00b7 0.4% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:sga",
+            "col": 3,
+            "color": "cost",
+            "name": "SG&amp;A",
+            "pos": "right",
+            "v": 455925.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "SG&amp;A"
+              ],
+              [
+                "val",
+                "$456K \u00b7 0.5% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingGeneralAndAdministrativeExpense in the S-1/A, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 82846589.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$82.8M \u00b7 99% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 789596.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$790K \u00b7 1.0% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 69586.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$70K \u00b7 8.8% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1/A, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 578562.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$579K \u00b7 73% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 141448.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$141K \u00b7 18% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1/A, six months ended Jun 30, 2025."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 789596.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$790K \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 82846589.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 789596.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 83302514.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 317123.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sga",
+            "v": 455925.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 82846589.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 69586.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 578562.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 141448.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 789596.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "KiNRG, Inc. \u00b7 S-1/A filed Sep 15, 2026 \u00b7 Six months ended Jun 30, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/ea0304622-s1a1_kinrg.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/95572/000121390026099804/0001213900-26-099804-index.html"
+        },
+        "analysis": [
+          "Revenue was $82.8M in H1 2025.",
+          "Operating costs exceeded revenue by $456K, an operating margin of -0.6%. The period ended with a net loss of $790K.",
+          "Operating cash flow was \u2212$141K. Non-cash charges added back $70K of share-based compensation. Working capital and other items added $579K."
+        ],
+        "headline": {
+          "revenue": 82846589.0,
+          "rev_fmt": "$82.8M",
+          "yoy": null,
+          "oi": -455925.0,
+          "oi_fmt": "\u2212$456K",
+          "om": -0.5503244074418079,
+          "ni": -789596.0,
+          "ni_fmt": "\u2212$790K",
+          "nm": -0.9530820876644662,
+          "ocf": -141448.0,
+          "ocf_fmt": "\u2212$141K",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      }
+    ],
+    "default": "2026-01-01_2026-06-30"
+  },
   "filings": [
     {
       "accession": "0001213900-26-109090",
@@ -1842,5 +3115,5 @@
     "error": null,
     "classification": "registration_unclassified"
   },
-  "generated_at": "2026-10-31T04:49:59+00:00"
+  "generated_at": "2026-10-31T05:03:15+00:00"
 }

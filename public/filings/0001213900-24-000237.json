@@ -3032,6 +3032,2495 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2023-01-01_2023-09-30",
+        "label": "9M 2023",
+        "start": "2023-01-01",
+        "end": "2023-09-30",
+        "months": 9,
+        "vs": "9M 2022",
+        "vs_key": "2022-01-01_2022-09-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "9M 2022",
+          "title": "MESO NUMISMATICS, INC. 9M 2023 vs 9M 2022: what changed",
+          "bullets": [
+            "Revenue rose $830K versus 9M 2022, but operating profit fell $5.0M: costs grew by more than sales.",
+            "The largest single swing was Other operating costs, +$5.4M (+121%).",
+            "Operating cash flow rose $675K to \u2212$390K, while net earnings fell $5.0M to \u2212$9.6M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html",
+        "kind": "loss",
+        "title": "MESO NUMISMATICS, INC. 9M 2023 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Sep 30, 2023 \u00b7 GAAP \u00b7 Y/Y vs. 9M 2022",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Nine months ended Sep 30, 2023 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with 9M 2022; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 1794385.0,
+            "y": 963967.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$1.8M"
+              ],
+              [
+                "mut",
+                "Y/Y +86%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$830K",
+            "source": "Inline XBRL tag Revenues in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 9557629.0,
+            "y": 4514412.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$9.6M \u00b7 84% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +112%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5.0M \u00b7 scale +4.8 \u00b7 mix +0.20",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 11352014.0,
+            "y": 5478379.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$11.4M \u00b7 633% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +107%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5.9M \u00b7 scale +4.7 \u00b7 mix +1.2"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 11352014.0,
+            "y": 5478379.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$11.4M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +107%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $9.6M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5.9M \u00b7 scale +5.9 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 553466.0,
+            "y": 445814.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$553K \u00b7 4.9% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +24%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$108K \u00b7 scale +0.48 \u00b7 mix \u22120.37",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 349675.0,
+            "y": 216389.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$350K \u00b7 3.1% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +62%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$133K \u00b7 scale +0.23 \u00b7 mix \u22120.10",
+            "source": "Inline XBRL tag MarketingAndAdvertisingExpense in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 557527.0,
+            "y": 339532.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$558K \u00b7 4.9% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +64%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$218K \u00b7 scale +0.36 \u00b7 mix \u22120.15",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 9891346.0,
+            "y": 4476644.0,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$9.9M \u00b7 87% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +121%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5.4M \u00b7 scale +4.8 \u00b7 mix +0.62"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 9557629.0,
+            "y": 4514412.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$9.6M \u00b7 533% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +112%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5.0M \u00b7 scale +3.9 \u00b7 mix +1.2"
+          },
+          {
+            "id": "da",
+            "col": 4,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 213170.0,
+            "y": 101584.0,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$213K \u00b7 2.2% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +110%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$112K \u00b7 scale +0.11 \u00b7 mix \u22120.00",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 8954659.0,
+            "y": 3348122.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$9.0M \u00b7 94% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +167%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5.6M \u00b7 scale +3.7 \u00b7 mix +1.9"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 389800.0,
+            "y": 1064706.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$390K \u00b7 4.1% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221263%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$675K \u00b7 scale +1.2 \u00b7 mix \u22121.9",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, nine months ended Sep 30, 2023."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 9557629.0,
+            "y": 4514412.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$9.6M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +112%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5.0M \u00b7 scale +5.0 \u00b7 mix \u00b10.00",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2023."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 1794385.0,
+            "y": 963967.0,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 9557629.0,
+            "y": 4514412.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 11352014.0,
+            "y": 5478379.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 553466.0,
+            "y": 445814.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 349675.0,
+            "y": 216389.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 557527.0,
+            "y": 339532.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 9891346.0,
+            "y": 4476644.0,
+            "color": "cost"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 213170.0,
+            "y": 101584.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 8954659.0,
+            "y": 3348122.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 389800.0,
+            "y": 1064706.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 9557629.0,
+            "y": 4514412.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MESO NUMISMATICS, INC. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Nine months ended Sep 30, 2023",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html"
+        },
+        "analysis": [
+          "Revenue was $1.8M in 9M 2023, up 86% year over year.",
+          "Gross margin was 69.2%, up 15.4 points from 9M 2022. Operating costs exceeded revenue by $9.6M, an operating margin of -532.6%. Operating expenses grew 115% against revenue growth of 86%. The fastest-growing cost line was Other operating costs (+121%). The period ended with a net loss of $9.6M.",
+          "Operating cash flow was \u2212$390K. Non-cash charges added back $213K of depreciation and amortization. Working capital and other items added $9.0M. Capital expenditures of $102K exceeded it, leaving free cash flow of \u2212$491K."
+        ],
+        "headline": {
+          "revenue": 1794385.0,
+          "rev_fmt": "$1.8M",
+          "yoy": 86.14589503582593,
+          "oi": -9557629.0,
+          "oi_fmt": "\u2212$9.6M",
+          "om": -532.6409326872439,
+          "ni": -9557629.0,
+          "ni_fmt": "\u2212$9.6M",
+          "nm": -532.6409326872439,
+          "ocf": -389800.0,
+          "ocf_fmt": "\u2212$390K",
+          "fcf": -491394.0,
+          "fcf_fmt": "\u2212$491K",
+          "prior": {
+            "revenue": 963967.0,
+            "oi": -4514412.0,
+            "ni": -4514412.0,
+            "ocf": -1064706.0
+          }
+        }
+      },
+      {
+        "key": "2023-07-01_2023-09-30",
+        "label": "Q3 2023",
+        "start": "2023-07-01",
+        "end": "2023-09-30",
+        "months": 3,
+        "vs": "Q3 2022",
+        "vs_key": "2022-07-01_2022-09-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "Q3 2022",
+          "title": "MESO NUMISMATICS, INC. Q3 2023 vs Q3 2022: what changed",
+          "bullets": [
+            "Revenue rose $279K versus Q3 2022, but operating profit fell $4.5M: costs grew by more than sales.",
+            "The largest single swing was Other operating costs, +$4.6M (+327%)."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html",
+        "kind": "loss",
+        "title": "MESO NUMISMATICS, INC. Q3 2023 earnings &amp; cash flow",
+        "subtitle": "Three months ended Sep 30, 2023 \u00b7 GAAP \u00b7 Y/Y vs. Q3 2022",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Three months ended Sep 30, 2023 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with Q3 2022; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 646828.0,
+            "y": 367697.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$647K"
+              ],
+              [
+                "mut",
+                "Y/Y +76%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$279K",
+            "source": "Inline XBRL tag Revenues in the S-1, three months ended Sep 30, 2023."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 5857159.0,
+            "y": 1344383.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$5.9M \u00b7 90% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +336%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$4.5M \u00b7 scale +3.8 \u00b7 mix +0.75",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, three months ended Sep 30, 2023."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 6503987.0,
+            "y": 1712080.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$6.5M \u00b7 1006% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +280%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$4.8M \u00b7 scale +1.3 \u00b7 mix +3.5"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 6503987.0,
+            "y": 1712080.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$6.5M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +280%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $5.9M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$4.8M \u00b7 scale +4.8 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 196534.0,
+            "y": 102778.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$197K \u00b7 3.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +91%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$94K \u00b7 scale +0.29 \u00b7 mix \u22120.19",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, three months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 93227.0,
+            "y": 80892.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$93K \u00b7 1.4% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +15%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$12K \u00b7 scale +0.23 \u00b7 mix \u22120.21",
+            "source": "Inline XBRL tag MarketingAndAdvertisingExpense in the S-1, three months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 147084.0,
+            "y": 107638.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$147K \u00b7 2.3% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +37%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$39K \u00b7 scale +0.30 \u00b7 mix \u22120.26",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, three months ended Sep 30, 2023."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 6067142.0,
+            "y": 1420772.0,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$6.1M \u00b7 93% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +327%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$4.6M \u00b7 scale +4.0 \u00b7 mix +0.67"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 646828.0,
+            "y": 367697.0,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 5857159.0,
+            "y": 1344383.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 6503987.0,
+            "y": 1712080.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 196534.0,
+            "y": 102778.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 93227.0,
+            "y": 80892.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 147084.0,
+            "y": 107638.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 6067142.0,
+            "y": 1420772.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MESO NUMISMATICS, INC. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Three months ended Sep 30, 2023",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html"
+        },
+        "analysis": [
+          "Revenue was $647K in Q3 2023, up 76% year over year.",
+          "Gross margin was 69.6%, down 2.4 points from Q3 2022. Operating costs exceeded revenue by $5.9M, an operating margin of -905.5%. Operating expenses grew 292% against revenue growth of 76%. The fastest-growing cost line was Other operating costs (+327%). The period ended with a net loss of $5.9M."
+        ],
+        "headline": {
+          "revenue": 646828.0,
+          "rev_fmt": "$647K",
+          "yoy": 75.91331993462008,
+          "oi": -5857159.0,
+          "oi_fmt": "\u2212$5.9M",
+          "om": -905.5203237955068,
+          "ni": -5857159.0,
+          "ni_fmt": "\u2212$5.9M",
+          "nm": -905.5203237955068,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 367697.0,
+            "oi": -1344383.0,
+            "ni": -1344383.0,
+            "ocf": null
+          }
+        }
+      },
+      {
+        "key": "2022-01-01_2022-12-31",
+        "label": "FY 2022",
+        "start": "2022-01-01",
+        "end": "2022-12-31",
+        "months": 12,
+        "vs": "FY 2021",
+        "vs_key": "2021-01-01_2021-12-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY 2021",
+          "title": "MESO NUMISMATICS, INC. FY 2022 vs FY 2021: what changed",
+          "bullets": [
+            "Revenue rose $1.1M versus FY 2021 and the operating result improved by $6.2M, 570% of the added revenue.",
+            "The largest single swing was income tax, lower by $1.2M.",
+            "Operating cash flow rose $8.8M to \u2212$1.1M, while net earnings rose $7.4M to \u2212$5.5M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html",
+        "kind": "loss",
+        "title": "MESO NUMISMATICS, INC. FY 2022 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2022 \u00b7 GAAP \u00b7 Y/Y vs. FY 2021",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2022. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY 2021; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 1530223.0,
+            "y": 437887.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$1.5M"
+              ],
+              [
+                "mut",
+                "Y/Y +249%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.1M",
+            "source": "Inline XBRL tag Revenues in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "taxben",
+            "col": 0,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 1156433.0,
+            "y": -0.0,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$1.2M \u00b7 14% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.2M \u00b7 scale \u00b10.00 \u00b7 mix +1.2"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 5506822.0,
+            "y": 12884480.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$5.5M \u00b7 67% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221257%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$7.4M \u00b7 scale \u22125.0 \u00b7 mix \u22122.4",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 8193478.0,
+            "y": 13322367.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$8.2M \u00b7 535% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221238%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$5.1M \u00b7 scale +33.2 \u00b7 mix \u221238.4"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 8193478.0,
+            "y": 13322367.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$8.2M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221238%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $6.7M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$5.1M \u00b7 scale \u22125.1 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 653256.0,
+            "y": 287750.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$653K \u00b7 8.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +127%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$366K \u00b7 scale \u22120.11 \u00b7 mix +0.48",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "I:opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "right",
+            "v": 7540222.0,
+            "y": 13034617.0,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$7.5M \u00b7 92% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221242%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$5.5M \u00b7 scale \u22125.0 \u00b7 mix \u22120.48"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 5506822.0,
+            "y": 12884480.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$5.5M \u00b7 360% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221257%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$7.4M \u00b7 scale +32.1 \u00b7 mix \u221239.5"
+          },
+          {
+            "id": "da",
+            "col": 4,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 152739.0,
+            "y": 40858.0,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$153K \u00b7 2.8% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +274%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$112K \u00b7 scale \u22120.02 \u00b7 mix +0.14",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 4239947.0,
+            "y": 2964958.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$4.2M \u00b7 77% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +43%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.3M \u00b7 scale \u22121.7 \u00b7 mix +3.0"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 1114136.0,
+            "y": 9878664.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 20% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221289%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$8.8M \u00b7 scale \u22125.7 \u00b7 mix \u22123.1",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 5506822.0,
+            "y": 12884480.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$5.5M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221257%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$7.4M \u00b7 scale \u22127.4 \u00b7 mix \u00b10.00",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2022."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 1530223.0,
+            "y": 437887.0,
+            "color": "rev"
+          },
+          {
+            "s": "taxben",
+            "t": "total",
+            "v": 1156433.0,
+            "y": -0.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 5506822.0,
+            "y": 12884480.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 8193478.0,
+            "y": 13322367.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 653256.0,
+            "y": 287750.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:opex",
+            "v": 7540222.0,
+            "y": 13034617.0,
+            "color": "cost"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 152739.0,
+            "y": 40858.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 4239947.0,
+            "y": 2964958.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 1114136.0,
+            "y": 9878664.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 5506822.0,
+            "y": 12884480.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MESO NUMISMATICS, INC. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Fiscal year ended Dec 31, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html"
+        },
+        "analysis": [
+          "Revenue was $1.5M in FY 2022, up 249% year over year.",
+          "Gross margin was 57.3%, up 23.0 points from FY 2021. Operating costs exceeded revenue by $6.7M, an operating margin of -435.4%. Operating expenses fell 42% while revenue changed +249%. The year ended with a net loss of $5.5M.",
+          "Operating cash flow was \u2212$1.1M. Non-cash charges added back $153K of depreciation and amortization. Working capital and other items added $4.2M. Capital expenditures of $198K exceeded it, leaving free cash flow of \u2212$1.3M."
+        ],
+        "headline": {
+          "revenue": 1530223.0,
+          "rev_fmt": "$1.5M",
+          "yoy": 249.45613822744224,
+          "oi": -6663255.0,
+          "oi_fmt": "\u2212$6.7M",
+          "om": -435.44339615859917,
+          "ni": -5506822.0,
+          "ni_fmt": "\u2212$5.5M",
+          "nm": -359.87055481455974,
+          "ocf": -1114136.0,
+          "ocf_fmt": "\u2212$1.1M",
+          "fcf": -1312564.0,
+          "fcf_fmt": "\u2212$1.3M",
+          "prior": {
+            "revenue": 437887.0,
+            "oi": -12884480.0,
+            "ni": -12884480.0,
+            "ocf": -9878664.0
+          }
+        }
+      },
+      {
+        "key": "2022-01-01_2022-09-30",
+        "label": "9M 2022",
+        "start": "2022-01-01",
+        "end": "2022-09-30",
+        "months": 9,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html",
+        "kind": "loss",
+        "title": "MESO NUMISMATICS, INC. 9M 2022 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Sep 30, 2022 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Nine months ended Sep 30, 2022 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 963967.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$1.0M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 4514412.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$4.5M \u00b7 82% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 5478379.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$5.5M \u00b7 568% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 5478379.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$5.5M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $4.5M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 445814.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$446K \u00b7 8.1% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 216389.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$216K \u00b7 3.9% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag MarketingAndAdvertisingExpense in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 339532.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$340K \u00b7 6.2% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 4476644.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$4.5M \u00b7 82% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 4514412.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$4.5M \u00b7 468% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "da",
+            "col": 4,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 101584.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$102K \u00b7 2.3% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 3348122.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$3.3M \u00b7 74% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 1064706.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 24% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 4514412.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$4.5M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2022."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 963967.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 4514412.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 5478379.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 445814.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 216389.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 339532.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 4476644.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 101584.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 3348122.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 1064706.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 4514412.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MESO NUMISMATICS, INC. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Nine months ended Sep 30, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html"
+        },
+        "analysis": [
+          "Revenue was $1.0M in 9M 2022.",
+          "Gross margin was 53.8%. Operating costs exceeded revenue by $4.5M, an operating margin of -468.3%. The period ended with a net loss of $4.5M.",
+          "Operating cash flow was \u2212$1.1M. Non-cash charges added back $102K of depreciation and amortization. Working capital and other items added $3.3M. Capital expenditures of $130K exceeded it, leaving free cash flow of \u2212$1.2M."
+        ],
+        "headline": {
+          "revenue": 963967.0,
+          "rev_fmt": "$1.0M",
+          "yoy": null,
+          "oi": -4514412.0,
+          "oi_fmt": "\u2212$4.5M",
+          "om": -468.3160315653959,
+          "ni": -4514412.0,
+          "ni_fmt": "\u2212$4.5M",
+          "nm": -468.3160315653959,
+          "ocf": -1064706.0,
+          "ocf_fmt": "\u2212$1.1M",
+          "fcf": -1194607.0,
+          "fcf_fmt": "\u2212$1.2M",
+          "prior": null
+        }
+      },
+      {
+        "key": "2022-07-01_2022-09-30",
+        "label": "Q3 2022",
+        "start": "2022-07-01",
+        "end": "2022-09-30",
+        "months": 3,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html",
+        "kind": "loss",
+        "title": "MESO NUMISMATICS, INC. Q3 2022 earnings &amp; cash flow",
+        "subtitle": "Three months ended Sep 30, 2022 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Three months ended Sep 30, 2022 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 367697.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$368K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 1344383.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$1.3M \u00b7 79% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 1712080.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$1.7M \u00b7 466% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 1712080.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$1.7M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $1.3M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 102778.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$103K \u00b7 6.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 80892.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$81K \u00b7 4.7% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag MarketingAndAdvertisingExpense in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 107638.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$108K \u00b7 6.3% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, three months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 1420772.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$1.4M \u00b7 83% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 367697.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 1344383.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 1712080.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 102778.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 80892.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 107638.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 1420772.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MESO NUMISMATICS, INC. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Three months ended Sep 30, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html"
+        },
+        "analysis": [
+          "Revenue was $368K in Q3 2022.",
+          "Gross margin was 72.0%. Operating costs exceeded revenue by $1.3M, an operating margin of -365.6%. The period ended with a net loss of $1.3M."
+        ],
+        "headline": {
+          "revenue": 367697.0,
+          "rev_fmt": "$368K",
+          "yoy": null,
+          "oi": -1344383.0,
+          "oi_fmt": "\u2212$1.3M",
+          "om": -365.62250983826357,
+          "ni": -1344383.0,
+          "ni_fmt": "\u2212$1.3M",
+          "nm": -365.62250983826357,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2021-01-01_2021-12-31",
+        "label": "FY 2021",
+        "start": "2021-01-01",
+        "end": "2021-12-31",
+        "months": 12,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html",
+        "kind": "loss",
+        "title": "MESO NUMISMATICS, INC. FY 2021 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2021 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2021. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 437887.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$438K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 12884480.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$12.9M \u00b7 97% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 13322367.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$13.3M \u00b7 3042% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 13322367.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$13.3M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $12.9M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 287750.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$288K \u00b7 2.2% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 133451.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$133K \u00b7 1.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag MarketingAndAdvertisingExpense in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 149374.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$149K \u00b7 1.1% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 12751792.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$12.8M \u00b7 96% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 12884480.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$12.9M \u00b7 2942% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "da",
+            "col": 4,
+            "color": "profit",
+            "name": "Depreciation",
+            "pos": "left",
+            "v": 40858.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Depreciation"
+              ],
+              [
+                "val",
+                "$41K \u00b7 0.3% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 2964958.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$3.0M \u00b7 23% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 9878664.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$9.9M \u00b7 77% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 12884480.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$12.9M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2021."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 437887.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 12884480.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 13322367.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 287750.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 133451.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 149374.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 12751792.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 40858.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 2964958.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 9878664.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 12884480.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "MESO NUMISMATICS, INC. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Fiscal year ended Dec 31, 2021",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/ea190955-s1_meso.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1760026/000121390024000237/0001213900-24-000237-index.html"
+        },
+        "analysis": [
+          "Revenue was $438K in FY 2021.",
+          "Gross margin was 34.3%. Operating costs exceeded revenue by $12.9M, an operating margin of -2942.4%. The year ended with a net loss of $12.9M.",
+          "Operating cash flow was \u2212$9.9M. Non-cash charges added back $41K of depreciation. Working capital and other items added $3.0M."
+        ],
+        "headline": {
+          "revenue": 437887.0,
+          "rev_fmt": "$438K",
+          "yoy": null,
+          "oi": -12884480.0,
+          "oi_fmt": "\u2212$12.9M",
+          "om": -2942.421218259505,
+          "ni": -12884480.0,
+          "ni_fmt": "\u2212$12.9M",
+          "nm": -2942.421218259505,
+          "ocf": -9878664.0,
+          "ocf_fmt": "\u2212$9.9M",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      }
+    ],
+    "default": "2023-01-01_2023-09-30"
+  },
   "filings": [
     {
       "accession": "9999999995-25-002050",
@@ -3119,5 +5608,5 @@
     "error": null,
     "classification": "registration_unclassified"
   },
-  "generated_at": "2026-10-31T04:49:59+00:00"
+  "generated_at": "2026-10-31T05:03:15+00:00"
 }

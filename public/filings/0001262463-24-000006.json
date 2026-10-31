@@ -4135,6 +4135,1676 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2022-11-01_2023-07-31",
+        "label": "9M to Jul 2023",
+        "start": "2022-11-01",
+        "end": "2023-07-31",
+        "months": 9,
+        "vs": "9M to Jul 2022",
+        "vs_key": "2021-11-01_2022-07-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "9M to Jul 2022",
+          "title": "HNO International, Inc. 9M to Jul 2023 vs 9M to Jul 2022: what changed",
+          "bullets": [
+            "Revenue fell $21K versus 9M to Jul 2022; operating profit fell $169K.",
+            "The largest single swing was Other operating costs, +$141K (+17%).",
+            "Operating cash flow fell $69K to \u2212$898K, while net earnings fell $169K to \u2212$1.0M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1/A",
+        "filed": "2024-01-08",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/hnoifs1a2.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/0001262463-24-000006-index.html",
+        "kind": "loss",
+        "title": "HNO International, Inc. 9M to Jul 2023 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Jul 31, 2023 \u00b7 GAAP \u00b7 Y/Y vs. 9M to Jul 2022",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1/A filed Jan 8, 2024), read from the inline XBRL tags of its financial statements. Nine months ended Jul 31, 2023 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with 9M to Jul 2022; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 13000.0,
+            "y": 34450.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$13K"
+              ],
+              [
+                "mut",
+                "Y/Y \u221262%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$21K",
+            "source": "Inline XBRL tag Revenues in the S-1/A, nine months ended Jul 31, 2023."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 962028.0,
+            "y": 792883.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 99% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +21%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$169K \u00b7 scale +0.14 \u00b7 mix +0.03",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, nine months ended Jul 31, 2023."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 975028.0,
+            "y": 827333.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 7500% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +18%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$148K \u00b7 scale \u22120.52 \u00b7 mix +0.66"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 975028.0,
+            "y": 827333.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +18%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $1.0M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$148K \u00b7 scale +0.15 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 5884.0,
+            "y": 0.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$6K \u00b7 0.6% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$6K \u00b7 scale \u00b10.00 \u00b7 mix +0.01"
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 3000.0,
+            "y": 4250.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$3K \u00b7 0.3% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221229%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1K \u00b7 scale +0.00 \u00b7 mix \u22120.00",
+            "source": "Inline XBRL tag MarketingAndAdvertisingExpense in the S-1/A, nine months ended Jul 31, 2023."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 14528.0,
+            "y": 12593.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$15K \u00b7 1.5% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +15%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2K \u00b7 scale +0.00 \u00b7 mix \u22120.00",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1/A, nine months ended Jul 31, 2023."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 951616.0,
+            "y": 810490.0,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 98% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +17%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$141K \u00b7 scale +0.14 \u00b7 mix \u22120.00"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 962028.0,
+            "y": 792883.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 7400% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +21%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$169K \u00b7 scale \u22120.49 \u00b7 mix +0.66"
+          },
+          {
+            "id": "da",
+            "col": 4,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 20450.0,
+            "y": 0.0,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$20K \u00b7 2.1% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$20K \u00b7 scale \u00b10.00 \u00b7 mix +0.02",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the S-1/A, nine months ended Jul 31, 2023."
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 2025.0,
+            "y": 0.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$2K \u00b7 0.2% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$2K \u00b7 scale \u00b10.00 \u00b7 mix +0.00",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1/A, nine months ended Jul 31, 2023."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 41988.0,
+            "y": -36122.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$42K \u00b7 4.4% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$78K \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 897565.0,
+            "y": 829005.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$898K \u00b7 93% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +8%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$69K \u00b7 scale +0.18 \u00b7 mix \u22120.11",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1/A, nine months ended Jul 31, 2023."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 962028.0,
+            "y": 792883.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +21%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$169K \u00b7 scale +0.17 \u00b7 mix \u00b10.00",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, nine months ended Jul 31, 2023."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 13000.0,
+            "y": 34450.0,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 962028.0,
+            "y": 792883.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 975028.0,
+            "y": 827333.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 5884.0,
+            "y": 0.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 3000.0,
+            "y": 4250.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 14528.0,
+            "y": 12593.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 951616.0,
+            "y": 810490.0,
+            "color": "cost"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 20450.0,
+            "y": 0.0,
+            "color": "profit"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 2025.0,
+            "y": 0.0,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 41988.0,
+            "y": -36122.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 897565.0,
+            "y": 829005.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 962028.0,
+            "y": 792883.0,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "HNO International, Inc. \u00b7 S-1/A filed Jan 8, 2024 \u00b7 Nine months ended Jul 31, 2023",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/hnoifs1a2.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/0001262463-24-000006-index.html"
+        },
+        "analysis": [
+          "Revenue was $13K in 9M to Jul 2023, down 62% year over year.",
+          "Gross margin was 54.7%, down 45.3 points from 9M to Jul 2022. Operating costs exceeded revenue by $1.0M, an operating margin of -7400.2%. Operating expenses grew 17% against revenue growth of -62%. The fastest-growing cost line was Other operating costs (+17%). The period ended with a net loss of $1.0M.",
+          "Operating cash flow was \u2212$898K. Non-cash charges added back $20K of depreciation and amortization and $2K of share-based compensation."
+        ],
+        "headline": {
+          "revenue": 13000.0,
+          "rev_fmt": "$13K",
+          "yoy": -62.264150943396224,
+          "oi": -962028.0,
+          "oi_fmt": "\u2212$1.0M",
+          "om": -7400.215384615384,
+          "ni": -962028.0,
+          "ni_fmt": "\u2212$1.0M",
+          "nm": -7400.215384615384,
+          "ocf": -897565.0,
+          "ocf_fmt": "\u2212$898K",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 34450.0,
+            "oi": -792883.0,
+            "ni": -792883.0,
+            "ocf": -829005.0
+          }
+        }
+      },
+      {
+        "key": "2023-05-01_2023-07-31",
+        "label": "3M to Jul 2023",
+        "start": "2023-05-01",
+        "end": "2023-07-31",
+        "months": 3,
+        "vs": "3M to Jul 2022",
+        "vs_key": "2022-05-01_2022-07-31",
+        "error": "No chart: revenue is zero or missing, or net income is missing."
+      },
+      {
+        "key": "2021-11-01_2022-10-31",
+        "label": "FY to Oct 2022",
+        "start": "2021-11-01",
+        "end": "2022-10-31",
+        "months": 12,
+        "vs": "FY to Oct 2021",
+        "vs_key": "2020-11-01_2021-10-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1/A",
+        "filed": "2024-01-08",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/hnoifs1a2.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/0001262463-24-000006-index.html",
+        "kind": "loss",
+        "title": "HNO International, Inc. FY to Oct 2022 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Oct 31, 2022 \u00b7 GAAP \u00b7 Y/Y vs. FY to Oct 2021",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1/A filed Jan 8, 2024), read from the inline XBRL tags of its financial statements. Fiscal year ended Oct 31, 2022. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY to Oct 2021; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 34450.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$34K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1/A, fiscal year ended Oct 31, 2022."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 1071309.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 97% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, fiscal year ended Oct 31, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 1105759.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 3210% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 1105759.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $1.1M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 27692.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$28K \u00b7 2.5% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the S-1/A, fiscal year ended Oct 31, 2022."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 4250.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$4K \u00b7 0.4% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag MarketingAndAdvertisingExpense in the S-1/A, fiscal year ended Oct 31, 2022."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 31027.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$31K \u00b7 2.8% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1/A, fiscal year ended Oct 31, 2022."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 1042790.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$1.0M \u00b7 94% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 1121708.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 3256% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 1121708.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1/A, fiscal year ended Oct 31, 2022."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 1071309.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 96% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, fiscal year ended Oct 31, 2022."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 50399.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$50K \u00b7 4.5% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 34450.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 1071309.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 1105759.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 27692.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 4250.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 31027.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 1042790.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 1121708.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 1071309.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 50399.0,
+            "y": null,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "HNO International, Inc. \u00b7 S-1/A filed Jan 8, 2024 \u00b7 Fiscal year ended Oct 31, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/hnoifs1a2.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/0001262463-24-000006-index.html"
+        },
+        "analysis": [
+          "Revenue was $34K in FY to Oct 2022.",
+          "Gross margin was 19.6%. Operating costs exceeded revenue by $1.1M, an operating margin of -3109.8%. The year ended with a net loss of $1.1M.",
+          "Operating cash flow was \u2212$1.1M."
+        ],
+        "headline": {
+          "revenue": 34450.0,
+          "rev_fmt": "$34K",
+          "yoy": null,
+          "oi": -1071309.0,
+          "oi_fmt": "\u2212$1.1M",
+          "om": -3109.7503628447025,
+          "ni": -1071309.0,
+          "ni_fmt": "\u2212$1.1M",
+          "nm": -3109.7503628447025,
+          "ocf": -1121708.0,
+          "ocf_fmt": "\u2212$1.1M",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2021-11-01_2022-07-31",
+        "label": "9M to Jul 2022",
+        "start": "2021-11-01",
+        "end": "2022-07-31",
+        "months": 9,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1/A",
+        "filed": "2024-01-08",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/hnoifs1a2.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/0001262463-24-000006-index.html",
+        "kind": "loss",
+        "title": "HNO International, Inc. 9M to Jul 2022 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Jul 31, 2022 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1/A filed Jan 8, 2024), read from the inline XBRL tags of its financial statements. Nine months ended Jul 31, 2022 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 34450.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$34K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1/A, nine months ended Jul 31, 2022."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 792883.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$793K \u00b7 96% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, nine months ended Jul 31, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 827333.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$827K \u00b7 2402% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 827333.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$827K \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $793K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 0.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$0K \u00b7 0.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 4250.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$4K \u00b7 0.5% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag MarketingAndAdvertisingExpense in the S-1/A, nine months ended Jul 31, 2022."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 12593.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$13K \u00b7 1.5% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1/A, nine months ended Jul 31, 2022."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 810490.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$810K \u00b7 98% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 829005.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$829K \u00b7 2406% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 829005.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$829K \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1/A, nine months ended Jul 31, 2022."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 792883.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$793K \u00b7 96% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, nine months ended Jul 31, 2022."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 36122.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$36K \u00b7 4.4% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 34450.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 792883.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 827333.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 4250.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 12593.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 810490.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 829005.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 792883.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 36122.0,
+            "y": null,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "HNO International, Inc. \u00b7 S-1/A filed Jan 8, 2024 \u00b7 Nine months ended Jul 31, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/hnoifs1a2.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/0001262463-24-000006-index.html"
+        },
+        "analysis": [
+          "Revenue was $34K in 9M to Jul 2022.",
+          "Gross margin was 100.0%. Operating costs exceeded revenue by $793K, an operating margin of -2301.5%. The period ended with a net loss of $793K.",
+          "Operating cash flow was \u2212$829K."
+        ],
+        "headline": {
+          "revenue": 34450.0,
+          "rev_fmt": "$34K",
+          "yoy": null,
+          "oi": -792883.0,
+          "oi_fmt": "\u2212$793K",
+          "om": -2301.5471698113206,
+          "ni": -792883.0,
+          "ni_fmt": "\u2212$793K",
+          "nm": -2301.5471698113206,
+          "ocf": -829005.0,
+          "ocf_fmt": "\u2212$829K",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2022-05-01_2022-07-31",
+        "label": "3M to Jul 2022",
+        "start": "2022-05-01",
+        "end": "2022-07-31",
+        "months": 3,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1/A",
+        "filed": "2024-01-08",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/hnoifs1a2.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/0001262463-24-000006-index.html",
+        "kind": "loss",
+        "title": "HNO International, Inc. 3M to Jul 2022 earnings &amp; cash flow",
+        "subtitle": "Three months ended Jul 31, 2022 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1/A filed Jan 8, 2024), read from the inline XBRL tags of its financial statements. Three months ended Jul 31, 2022 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 17225.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$17K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the S-1/A, three months ended Jul 31, 2022."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 370531.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$371K \u00b7 96% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1/A, three months ended Jul 31, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 387756.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$388K \u00b7 2251% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 387756.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$388K \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $371K (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 0.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$0K \u00b7 0.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 8806.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$9K \u00b7 2.3% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1/A, three months ended Jul 31, 2022."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 378950.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$379K \u00b7 98% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 17225.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 370531.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 387756.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 8806.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 378950.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "HNO International, Inc. \u00b7 S-1/A filed Jan 8, 2024 \u00b7 Three months ended Jul 31, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/hnoifs1a2.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1342916/000126246324000006/0001262463-24-000006-index.html"
+        },
+        "analysis": [
+          "Revenue was $17K in 3M to Jul 2022.",
+          "Gross margin was 100.0%. Operating costs exceeded revenue by $371K, an operating margin of -2151.1%. The period ended with a net loss of $371K."
+        ],
+        "headline": {
+          "revenue": 17225.0,
+          "rev_fmt": "$17K",
+          "yoy": null,
+          "oi": -370531.0,
+          "oi_fmt": "\u2212$371K",
+          "om": -2151.123367198839,
+          "ni": -370531.0,
+          "ni_fmt": "\u2212$371K",
+          "nm": -2151.123367198839,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2020-11-01_2021-10-31",
+        "label": "FY to Oct 2021",
+        "start": "2020-11-01",
+        "end": "2021-10-31",
+        "months": 12,
+        "vs": null,
+        "vs_key": null,
+        "error": "No chart: revenue is zero or missing, or net income is missing."
+      }
+    ],
+    "default": "2022-11-01_2023-07-31"
+  },
   "filings": [
     {
       "accession": "9999999995-26-003141",
@@ -4307,5 +5977,5 @@
     "error": null,
     "classification": "unclassified"
   },
-  "generated_at": "2026-10-31T04:49:59+00:00"
+  "generated_at": "2026-10-31T05:03:15+00:00"
 }

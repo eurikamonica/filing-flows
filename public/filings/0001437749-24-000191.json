@@ -2508,6 +2508,1266 @@
   ],
   "analysis_state": "parsed",
   "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2023-01-01_2023-09-30",
+        "label": "9M 2023",
+        "start": "2023-01-01",
+        "end": "2023-09-30",
+        "months": 9,
+        "vs": "9M 2022",
+        "vs_key": "2022-01-01_2022-09-30",
+        "error": "No chart: revenue is zero or missing, or net income is missing."
+      },
+      {
+        "key": "2023-07-01_2023-09-30",
+        "label": "Q3 2023",
+        "start": "2023-07-01",
+        "end": "2023-09-30",
+        "months": 3,
+        "vs": "Q3 2022",
+        "vs_key": "2022-07-01_2022-09-30",
+        "error": "No chart: revenue is zero or missing, or net income is missing."
+      },
+      {
+        "key": "2022-01-01_2022-12-31",
+        "label": "FY 2022",
+        "start": "2022-01-01",
+        "end": "2022-12-31",
+        "months": 12,
+        "vs": "FY 2021",
+        "vs_key": "2021-01-01_2021-12-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY 2021",
+          "title": "GeoVax Labs, Inc. FY 2022 vs FY 2021: what changed",
+          "bullets": [
+            "Revenue fell $304K versus FY 2021; operating profit rose $4.7M.",
+            "The largest single swing was Research & development, \u2212$6.4M (\u221241%).",
+            "Operating cash flow fell $7.8M to \u2212$19.0M, while net earnings rose $4.5M to \u2212$14.0M."
+          ]
+        },
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/govx20231222_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/0001437749-24-000191-index.html",
+        "kind": "loss",
+        "title": "GeoVax Labs, Inc. FY 2022 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2022 \u00b7 GAAP \u00b7 Y/Y vs. FY 2021",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2022. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY 2021; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 81526.0,
+            "y": 385501.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$82K"
+              ],
+              [
+                "mut",
+                "Y/Y \u221279%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$304K",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerIncludingAssessedTax in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 7439.0,
+            "y": 175506.0,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$7K \u00b7 0.1% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221296%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$168K \u00b7 scale \u22120.05 \u00b7 mix \u22120.12"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 14021125.0,
+            "y": 18570317.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$14.0M \u00b7 99% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221224%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$4.5M \u00b7 scale \u22124.9 \u00b7 mix +0.32",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 14110090.0,
+            "y": 19131324.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$14.1M \u00b7 17307% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221226%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$5.0M \u00b7 scale \u221215.1 \u00b7 mix +10.1"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 14110090.0,
+            "y": 19131324.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$14.1M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221226%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $14.0M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$5.0M \u00b7 scale \u22125.0 \u00b7 mix \u00b10.00"
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 9123479.0,
+            "y": 15554171.0,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$9.1M \u00b7 65% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221241%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$6.4M \u00b7 scale \u22124.1 \u00b7 mix \u22122.3",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 4986611.0,
+            "y": 3577153.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$5.0M \u00b7 35% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +39%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.4M \u00b7 scale \u22120.94 \u00b7 mix +2.3",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 19988566.0,
+            "y": 11604928.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$20.0M \u00b7 24518% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +72%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$8.4M \u00b7 scale \u22129.2 \u00b7 mix +17.5"
+          },
+          {
+            "id": "da",
+            "col": 4,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 56284.0,
+            "y": 38521.0,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$56K \u00b7 0.3% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +46%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$18K \u00b7 scale +0.03 \u00b7 mix \u22120.01",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 902074.0,
+            "y": 369987.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$902K \u00b7 4.5% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +144%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$532K \u00b7 scale +0.27 \u00b7 mix +0.26",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 19030208.0,
+            "y": 11196420.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$19.0M \u00b7 95% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +70%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$7.8M \u00b7 scale +8.1 \u00b7 mix \u22120.25",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 14021125.0,
+            "y": 18570317.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$14.0M \u00b7 70% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221224%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$4.5M \u00b7 scale +13.4 \u00b7 mix \u221218.0",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 5967441.0,
+            "y": -6965389.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$6.0M \u00b7 30% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 +$12.9M \u00b7 scale/mix n/m"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 81526.0,
+            "y": 385501.0,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 7439.0,
+            "y": 175506.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 14021125.0,
+            "y": 18570317.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 14110090.0,
+            "y": 19131324.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 9123479.0,
+            "y": 15554171.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 4986611.0,
+            "y": 3577153.0,
+            "color": "cost"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 56284.0,
+            "y": 38521.0,
+            "color": "profit"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 902074.0,
+            "y": 369987.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 19030208.0,
+            "y": 11196420.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 14021125.0,
+            "y": 18570317.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 5967441.0,
+            "y": -6965389.0,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "GeoVax Labs, Inc. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Fiscal year ended Dec 31, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/govx20231222_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/0001437749-24-000191-index.html"
+        },
+        "analysis": [
+          "Revenue was $82K in FY 2022, down 79% year over year.",
+          "Operating costs exceeded revenue by $14.0M, an operating margin of -17207.5%. Total costs fell 26% while revenue changed -79%. The fastest-growing cost line was General & admin (+39%). The year ended with a net loss of $14.0M.",
+          "Operating cash flow was \u2212$19.0M. Non-cash charges added back $56K of depreciation and amortization and $902K of share-based compensation. Working capital and other items used $6.0M. Capital expenditures of $134K exceeded it, leaving free cash flow of \u2212$19.2M."
+        ],
+        "headline": {
+          "revenue": 81526.0,
+          "rev_fmt": "$82K",
+          "yoy": -78.85193553324116,
+          "oi": -14028564.0,
+          "oi_fmt": "\u2212$14.0M",
+          "om": -17207.47246277261,
+          "ni": -14021125.0,
+          "ni_fmt": "\u2212$14.0M",
+          "nm": -17198.347766356743,
+          "ocf": -19030208.0,
+          "ocf_fmt": "\u2212$19.0M",
+          "fcf": -19164466.0,
+          "fcf_fmt": "\u2212$19.2M",
+          "prior": {
+            "revenue": 385501.0,
+            "oi": -18745823.0,
+            "ni": -18570317.0,
+            "ocf": -11196420.0
+          }
+        }
+      },
+      {
+        "key": "2022-01-01_2022-09-30",
+        "label": "9M 2022",
+        "start": "2022-01-01",
+        "end": "2022-09-30",
+        "months": 9,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/govx20231222_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/0001437749-24-000191-index.html",
+        "kind": "loss",
+        "title": "GeoVax Labs, Inc. 9M 2022 earnings &amp; cash flow",
+        "subtitle": "Nine months ended Sep 30, 2022 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Nine months ended Sep 30, 2022 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 81526.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$82K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerIncludingAssessedTax in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 3747.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$4K \u00b7 0.0% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 8637316.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$8.6M \u00b7 99% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 8722589.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$8.7M \u00b7 10699% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 8722589.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$8.7M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $8.6M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 5358917.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$5.4M \u00b7 61% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 3363672.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$3.4M \u00b7 39% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, nine months ended Sep 30, 2022."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 81526.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 3747.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 8637316.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 8722589.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 5358917.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 3363672.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "GeoVax Labs, Inc. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Nine months ended Sep 30, 2022",
+          "doc": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/govx20231222_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/0001437749-24-000191-index.html"
+        },
+        "analysis": [
+          "Revenue was $82K in 9M 2022.",
+          "Operating costs exceeded revenue by $8.6M, an operating margin of -10599.1%. The period ended with a net loss of $8.6M."
+        ],
+        "headline": {
+          "revenue": 81526.0,
+          "rev_fmt": "$82K",
+          "yoy": null,
+          "oi": -8641063.0,
+          "oi_fmt": "\u2212$8.6M",
+          "om": -10599.149964428525,
+          "ni": -8637316.0,
+          "ni_fmt": "\u2212$8.6M",
+          "nm": -10594.553884650295,
+          "ocf": null,
+          "ocf_fmt": null,
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2022-07-01_2022-09-30",
+        "label": "Q3 2022",
+        "start": "2022-07-01",
+        "end": "2022-09-30",
+        "months": 3,
+        "vs": null,
+        "vs_key": null,
+        "error": "No chart: revenue is zero or missing, or net income is missing."
+      },
+      {
+        "key": "2021-01-01_2021-12-31",
+        "label": "FY 2021",
+        "start": "2021-01-01",
+        "end": "2021-12-31",
+        "months": 12,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "S-1",
+        "filed": "2024-01-02",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/govx20231222_s1.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/0001437749-24-000191-index.html",
+        "kind": "loss",
+        "title": "GeoVax Labs, Inc. FY 2021 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Dec 31, 2021 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (S-1 filed Jan 2, 2024), read from the inline XBRL tags of its financial statements. Fiscal year ended Dec 31, 2021. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 385501.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$386K"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag RevenueFromContractWithCustomerIncludingAssessedTax in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "nonop_in",
+            "col": 0,
+            "color": "profit",
+            "name": "Other income, net",
+            "pos": "left",
+            "v": 175506.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other income, net"
+              ],
+              [
+                "val",
+                "$176K \u00b7 0.9% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 18570317.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$18.6M \u00b7 97% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 19131324.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$19.1M \u00b7 4963% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 19131324.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$19.1M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $18.7M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "I:rd",
+            "col": 3,
+            "color": "cost",
+            "name": "Research &amp; development",
+            "pos": "right",
+            "v": 15554171.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Research &amp; development"
+              ],
+              [
+                "val",
+                "$15.6M \u00b7 81% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ResearchAndDevelopmentExpense in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 3577153.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$3.6M \u00b7 19% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 18570317.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$18.6M \u00b7 4817% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "da",
+            "col": 4,
+            "color": "profit",
+            "name": "Depreciation &amp; amortization",
+            "pos": "left",
+            "v": 38521.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Depreciation &amp; amortization"
+              ],
+              [
+                "val",
+                "$39K \u00b7 0.2% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag DepreciationDepletionAndAmortization in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 369987.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$370K \u00b7 2.0% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ShareBasedCompensation in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 6965389.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$7.0M \u00b7 38% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 11196420.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$11.2M \u00b7 60% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 18570317.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$18.6M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the S-1, fiscal year ended Dec 31, 2021."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 385501.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "nonop_in",
+            "t": "total",
+            "v": 175506.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 18570317.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 19131324.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:rd",
+            "v": 15554171.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 3577153.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "da",
+            "t": "bridge",
+            "v": 38521.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 369987.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 6965389.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 11196420.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 18570317.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "GeoVax Labs, Inc. \u00b7 S-1 filed Jan 2, 2024 \u00b7 Fiscal year ended Dec 31, 2021",
+          "doc": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/govx20231222_s1.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/0001437749-24-000191-index.html"
+        },
+        "analysis": [
+          "Revenue was $386K in FY 2021.",
+          "Operating costs exceeded revenue by $18.7M, an operating margin of -4862.7%. The year ended with a net loss of $18.6M.",
+          "Operating cash flow was \u2212$11.2M. Non-cash charges added back $39K of depreciation and amortization and $370K of share-based compensation. Working capital and other items added $7.0M. Capital expenditures of $48K exceeded it, leaving free cash flow of \u2212$11.2M."
+        ],
+        "headline": {
+          "revenue": 385501.0,
+          "rev_fmt": "$386K",
+          "yoy": null,
+          "oi": -18745823.0,
+          "oi_fmt": "\u2212$18.7M",
+          "om": -4862.717087634014,
+          "ni": -18570317.0,
+          "ni_fmt": "\u2212$18.6M",
+          "nm": -4817.190357482859,
+          "ocf": -11196420.0,
+          "ocf_fmt": "\u2212$11.2M",
+          "fcf": -11244138.0,
+          "fcf_fmt": "\u2212$11.2M",
+          "prior": null
+        }
+      }
+    ],
+    "default": "2022-01-01_2022-12-31"
+  },
   "filings": [
     {
       "accession": "9999999995-26-003048",
@@ -3921,5 +5181,5 @@
     "error": null,
     "classification": "registration_unclassified"
   },
-  "generated_at": "2026-10-31T04:49:59+00:00"
+  "generated_at": "2026-10-31T05:03:15+00:00"
 }
