@@ -345,6 +345,11 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/seo_topics.py --site _site
+      - name: History pages for search engines (c/<slug>/<quarter>/, <quarter>-vs-<quarter>/ Q/Q and Y/Y, metric history, guidance-history/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_history.py --site _site
       - name: Daily pages for search engines (daily/ insider buying and selling, Congress trades, guidance, takeover rumors, earnings calendar, 13D stakes)
         continue-on-error: true
         env:

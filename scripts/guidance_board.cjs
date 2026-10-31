@@ -16,6 +16,18 @@ const OV = require('../disclosures/docs/outlook-view.js');
 
 function readJSON(p) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return null; } }
 
+// each company's record, compact, for its search page (scripts/seo_history.py → c/<slug>/guidance-history/)
+function compact(rec) {
+  return { releases: rec.releases, since: rec.since, latest: rec.latest, said: rec.said,
+    metrics: rec.metrics.filter((m) => m.rows.length).slice(0, 8).map((m) => ({ name: m.name, metric: m.metric, basis: m.basis, unit: m.unit, hits: m.hits, moves: m.moves,
+      rows: m.rows.slice(0, 12).map((r) => ({ label: r.label, period: r.period, actual: r.actual == null ? null : r.actual, outcome: r.outcome || null,
+        vsMid: r.vsMid == null ? null : Math.round(r.vsMid * 100) / 100, pending: !!r.pending,
+        guides: r.guides.map((g) => ({ filed: g.filed, lo: g.lo, hi: g.hi, approx: !!g.approx, bound: g.bound || null, change: g.change || null, range: g.range || null })) })) })) };
+}
+
+let recordsDir = null;
+const records = {};
+
 function board(site) {
   const ix = readJSON(path.join(site, 'data', 'index.json')) || {};
   const holdersDir = path.join(site, 'disclosures', 'data', 'holders');
@@ -37,6 +49,7 @@ function board(site) {
         const rec = G.record(merged, comp || {});
         hr = OV.hitRate(rec);
         said = rec && rec.said;
+        if (rec && rec.metrics.length && recordsDir) records[co.cik] = compact(rec);
       } catch (e) { /* a record that cannot be read is left out */ }
     }
     const c = (latestDoc && latestDoc.counts) || {};
@@ -56,7 +69,11 @@ function board(site) {
 if (require.main === module) {
   const i = process.argv.indexOf('--site');
   const site = i > 0 ? process.argv[i + 1] : '_site';
+  recordsDir = path.join(site, 'data', 'guidance-record');
   const out = board(site);
+  fs.mkdirSync(recordsDir, { recursive: true });
+  for (const [cik, r] of Object.entries(records)) fs.writeFileSync(path.join(recordsDir, `${cik}.json`), JSON.stringify(r));
+  console.log(`guidance records: ${Object.keys(records).length} companies`);
   const dest = path.join(site, 'disclosures', 'data', 'market', 'guidance-board.json');
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   fs.writeFileSync(dest, JSON.stringify(out));
