@@ -150,6 +150,40 @@ class Build(unittest.TestCase):
 
 
 class Pieces(unittest.TestCase):
+    def test_notes_against_last_year(self):
+        """Each note against the same note in last year's 10-K: sentences added, gone, the same with new figures, reworded;
+        a note new this year and a note gone; the change score."""
+        cur = [('n1', 'Inventories', 'Inventories rose with demand for our data center products during the year. '
+                                     'Inventory reserves were $45 million at year end, compared with $30 million a year earlier. '
+                                     'We entered into new purchase commitments with three suppliers for advanced packaging capacity.'),
+               ('n2', 'Product Warranty', 'Changes in the warranty accrual follow shipments of our systems to customers each quarter.'),
+               ('n3', 'Segment Information', 'We report two segments, Compute and Networking, based on how our chief decision maker reviews results.'),
+               ('n4', 'Restructuring', 'In the fourth quarter we began a restructuring plan to reduce our workforce by about five percent.')]
+        prev = [('Inventories', 'Inventories rose with demand for our data center products during the year. '
+                                'Inventory reserves were $30 million at year end, compared with $22 million a year earlier. '
+                                'Obsolete inventory was written off in the second quarter after a product transition ended.'),
+                ('Product Warranties', 'Changes in the warranty accrual follow shipments of our systems to customers each quarter.'),
+                ('Segment Information', 'We report two segments, Compute and Networking, based on how the chief decision maker reviews the results.'),
+                ('Discontinued Operations', 'The sale of the legacy business closed in the first quarter of the year before.')]
+        y = N.note_changes(cur, prev)
+        inv = y['notes']['n1']
+        self.assertEqual((inv['n_added'], inv['n_removed'], inv['n_updated']), (1, 1, 1))
+        self.assertIn('purchase commitments', inv['added'][0])
+        self.assertIn('written off', inv['removed'][0])
+        self.assertIn('$30 million', inv['updated'][0][0])
+        self.assertIn('$45 million', inv['updated'][0][1])
+        self.assertEqual(y['notes']['n2']['score'], 0.0, 'retitled (Warranties → Warranty), unchanged')
+        self.assertEqual((y['notes']['n3']['n_updated'], y['notes']['n3']['n_added']), (1, 0), 'reworded, not new')
+        self.assertTrue(y['notes']['n4']['new'])
+        self.assertEqual(y['gone'], ['Discontinued Operations'])
+        self.assertGreater(inv['score'], y['notes']['n3']['score'])
+        # in the build: last year's notes in, the yoy block out
+        doc = N.build(synthetic(), {'ticker': 'TST', 'cik': 1, 'accession': 'x'},
+                      {'prev_notes': {'notes': [('Inventories (Notes)', 'Inventories fell with demand across the whole of the product line.')], 'meta': {'fy': 'FY2024'}}})
+        self.assertEqual(doc['yoy']['prev'], {'fy': 'FY2024'})
+        self.assertEqual(doc['yoy']['new_notes'], 2, 'warranty and segments: no such note last year')
+        self.assertNotIn('yoy', N.build(synthetic(), {'ticker': 'TST', 'cik': 1, 'accession': 'x'}), 'no last year on file: no block')
+
     def test_norm_title(self):
         self.assertEqual(N.norm_title('Investments (Narrative) (Details)'), 'investments')
         self.assertEqual(N.norm_title('Note 4 — Debt (Notes)'), 'debt')

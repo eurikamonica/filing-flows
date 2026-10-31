@@ -65,6 +65,12 @@
 .nv .nv-check{border-bottom:1px solid var(--line,#e8e6e0);padding:6px 0}.nv .nv-check>summary::-webkit-details-marker{display:none}.nv .nv-check:last-child{border-bottom:0}.nv .nv-check .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .nv .nv-check .st{font-weight:700;min-width:18px}.nv .nv-formula{font-size:.82rem;margin:4px 0 0 26px;display:grid;grid-template-columns:auto 1fr;gap:1px 12px;max-width:640px}
 .nv .nv-formula .v{text-align:right;font-variant-numeric:tabular-nums}.nv .nv-formula .eq{border-top:1px solid var(--line,#ccc);padding-top:2px}
+.nv .nv-yoy-row{display:grid;grid-template-columns:minmax(120px,240px) 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line,#e4e7ec);cursor:pointer}
+.nv .nv-yoy-row .bar{height:12px;border-radius:3px;background:linear-gradient(90deg,#2563eb var(--a),#d9480f var(--a) var(--b),#b7791f var(--b) var(--c),transparent var(--c));min-width:2px}
+.nv .nv-yoy-row .ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.86rem}.nv .nv-yoy-row .n{font-size:.75rem;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nv .nv-diff{margin:4px 0;padding:0;list-style:none}.nv .nv-diff li{padding:4px 8px;margin:3px 0;border-radius:4px;font-size:.86rem;line-height:1.45}
+.nv .nv-diff li.add{background:color-mix(in srgb,#2563eb 9%,transparent);border-left:3px solid #2563eb}.nv .nv-diff li.del{background:color-mix(in srgb,#d9480f 8%,transparent);border-left:3px solid #d9480f;text-decoration:line-through;text-decoration-color:color-mix(in srgb,#d9480f 55%,transparent)}
+.nv .nv-diff li.upd{background:color-mix(in srgb,#b7791f 9%,transparent);border-left:3px solid #b7791f}.nv .nv-diff li.upd .was{display:block;opacity:.65;font-size:.8rem}.nv .nv-diff mark{background:color-mix(in srgb,#b7791f 30%,transparent);color:inherit;border-radius:2px;padding:0 1px}
 .nv .nv-flash{animation:nvflash 1.6s ease-out}@keyframes nvflash{0%{box-shadow:0 0 0 3px var(--accent,#17734a)}100%{box-shadow:0 0 0 0 transparent}}
 .nv .nv-map svg{width:100%;max-width:860px;height:auto}.nv .nv-map .lk{fill:none;stroke:var(--line,#ccc);stroke-width:1.2;opacity:.9}.nv .nv-map .lk.on{stroke:var(--accent,#17734a);stroke-width:2.2;opacity:1}
 .nv .nv-map .nd{cursor:pointer}.nv .nv-map .nd rect{fill:var(--surface,#fff);stroke:var(--line,#ccc)}.nv .nv-map .nd.on rect{stroke:var(--accent,#17734a);stroke-width:2}
@@ -243,7 +249,8 @@ ${c.explain ? `<p class="muted" style="margin:4px 0 0 26px;font-size:.8rem">${es
 <p class="muted">${esc(d.form || '10-K')} for ${esc(d.fy || '')} (year ended ${esc(d.fy_end || '')}), filed ${esc(d.filed || '')} · <a href="${esc(d.url || '#')}" target="_blank" rel="noopener">the filing on EDGAR ↗</a></p>
 <div class="nv-pills"><span class="nv-pill">${d.notes.length} notes</span><span class="nv-pill">${d.notes.reduce((a, n) => a + n.tables.length, 0)} detail tables</span><span class="nv-pill">${S.all || d.checks.length} checks</span><span class="nv-pill nv-ok">✓ ${S.tie || 0} tie</span>${S.round ? `<span class="nv-pill nv-round">≈ ${S.round} within rounding</span>` : ''}${S.info ? `<span class="nv-pill nv-info">Δ ${S.info} explained</span>` : ''}${S.gap ? `<span class="nv-pill nv-bad">✗ ${S.gap} do not tie</span>` : ''}</div>
 <p class="muted" style="font-size:.8rem">Every number is the company's own XBRL. Each check recomputes a total, a roll-forward or a tie across statements and notes from those facts; ✓ means it agrees to the rounding the filing uses.</p></div>`;
-    const seg = `<div class="nv-seg">${[['read', 'Read & map'], ['statements', 'Statements'], ['notes', 'Notes'], ['checks', 'Checks (勾稽)'], ['io', 'Inputs & outputs (投入产出)']].map(([k, l]) => `<button data-nv-tab="${k}" aria-pressed="${st.tab === k}">${l}</button>`).join('')}</div>`;
+    const Y = d.yoy && d.yoy.notes ? d.yoy : null;
+    const seg = `<div class="nv-seg">${[['read', 'Read & map'], ['statements', 'Statements'], ['notes', 'Notes'], ['changes', 'Changes vs last year (年度变化)'], ['checks', 'Checks (勾稽)'], ['io', 'Inputs & outputs (投入产出)']].filter(([k]) => k !== 'changes' || Y).map(([k, l]) => `<button data-nv-tab="${k}" aria-pressed="${st.tab === k}">${l}</button>`).join('')}</div>`;
     el.innerHTML = `<div class="nv">${head}${seg}<div class="nv-pane"></div></div>`;
     const pane = el.querySelector('.nv-pane');
 
@@ -274,7 +281,9 @@ ${c.explain ? `<p class="muted" style="margin:4px 0 0 26px;font-size:.8rem">${es
       const cs = n.checks.map((i) => checkById[i]).filter(Boolean);
       const cnt = (s) => cs.filter((c) => c.status === s).length;
       const badge = cs.length ? `<span class="nv-pill"><span class="nv-ok">✓ ${cnt('tie')}</span>${cnt('round') ? ` <span class="nv-round">≈ ${cnt('round')}</span>` : ''}${cnt('info') ? ` <span class="nv-info">Δ ${cnt('info')}</span>` : ''}${cnt('gap') ? ` <span class="nv-bad">✗ ${cnt('gap')}</span>` : ''}</span>` : '';
-      return `<details class="nv-note" id="nv-${n.id}" data-nv-nid="${n.id}" ${st.focus === n.id ? 'open' : ''}><summary><span class="nv-num">${esc(n.num != null ? 'Note ' + n.num : '—')}</span><span class="nv-ttl">${esc(n.title)}</span><span class="muted">${n.tables.length} table${n.tables.length === 1 ? '' : 's'}</span>${badge}</summary><div class="nv-body" data-nv-body="${n.id}"></div></details>`;
+      const yv = Y && Y.notes[n.id];
+      const ch = yv ? (yv.new ? '<span class="nv-pill" style="color:#2563eb">new this year</span>' : (yv.score || 0) >= 0.15 ? `<span class="nv-pill" style="color:#b7791f">changed ${Math.round(100 * yv.score)}%</span>` : '') : '';
+      return `<details class="nv-note" id="nv-${n.id}" data-nv-nid="${n.id}" ${st.focus === n.id ? 'open' : ''}><summary><span class="nv-num">${esc(n.num != null ? 'Note ' + n.num : '—')}</span><span class="nv-ttl">${esc(n.title)}</span><span class="muted">${n.tables.length} table${n.tables.length === 1 ? '' : 's'}</span>${badge}${ch}</summary><div class="nv-body" data-nv-body="${n.id}"></div></details>`;
     }
     function noteBody(n) {
       const R = d.read && d.read.notes && d.read.notes[n.id];
@@ -282,6 +291,8 @@ ${c.explain ? `<p class="muted" style="margin:4px 0 0 26px;font-size:.8rem">${es
       let out = '';
       if (R) out += `<div class="nv-read">${esc(R)}</div>`;
       if (n.analysis.length) out += `<ul class="nv-an">${n.analysis.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>`;
+      const yv = Y && Y.notes[n.id];
+      if (yv && (yv.new || (yv.score || 0) > 0)) out += `<details${(yv.score || 0) >= 0.15 ? ' open' : ''}><summary class="muted" style="cursor:pointer">What changed since ${esc((Y.prev || {}).fy || 'last year')}${yv.new ? ' — a new note' : ` — ${Math.round(100 * (yv.score || 0))}% of the text`}</summary>${diffHTML(yv, 6)}</details>`;
       const charts = n.tables.flatMap((t) => t.charts.filter((c) => c.type !== 'figures').map((c) => ({ c, t })));
       if (charts.length) out += `<div class="nv-grid">${charts.map((x) => chartHTML(x.c)).join('')}</div>`;
       if (n.tables.length) out += `<details><summary class="muted" style="cursor:pointer">The ${n.tables.length} table${n.tables.length > 1 ? 's' : ''} as filed</summary>${n.tables.map((t) => `<h4>${esc(t.title)}</h4>${t.charts.filter((c) => c.type === 'figures').map(chartHTML).join('')}${tableHTML(t.table, { maxCols: 10 })}`).join('')}</details>`;
@@ -292,6 +303,36 @@ ${c.explain ? `<p class="muted" style="margin:4px 0 0 26px;font-size:.8rem">${es
       return out || '<p class="muted">Text only — no figures tagged in this note.</p>';
     }
     function paneNotes() { return d.notes.map(noteHTML).join(''); }
+    // what each note says this year that it did not last year: figures picked out where only they changed
+    const markNums = (o, n_) => {
+      const a = o.match(/\$?\(?\d[\d,.]*\)?%?/g) || [];
+      return esc(n_).replace(/\$?\(?\d[\d,.]*\)?%?/g, (m) => (a.includes(m) ? m : `<mark>${m}</mark>`));
+    };
+    function diffHTML(v, max) {
+      if (!v) return '';
+      if (v.new) return `<p class="muted">New this year — no such note in last year's report.</p><ul class="nv-diff">${(v.added || []).slice(0, max).map((x) => `<li class="add">${esc(x)}</li>`).join('')}</ul>`;
+      const li = [];
+      (v.added || []).slice(0, max).forEach((x) => li.push(`<li class="add">${esc(x)}</li>`));
+      (v.updated || []).slice(0, max).forEach(([o, n_]) => li.push(`<li class="upd">${markNums(o, n_)}<span class="was">was: ${esc(o)}</span></li>`));
+      (v.removed || []).slice(0, max).forEach((x) => li.push(`<li class="del">${esc(x)}</li>`));
+      const more = (v.n_added || 0) + (v.n_updated || 0) + (v.n_removed || 0) - li.length;
+      return li.length ? `<ul class="nv-diff">${li.join('')}</ul>${more > 0 ? `<p class="muted" style="font-size:.78rem">${more} more not listed.</p>` : ''}` : '<p class="muted">Unchanged from last year.</p>';
+    }
+    function paneChanges() {
+      const prev = Y.prev || {};
+      const rows = d.notes.map((n) => [n, Y.notes[n.id]]).filter(([, v]) => v).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
+      const bar = (v) => {
+        const tot = (v.n_added || 0) + (v.n_removed || 0) + (v.n_updated || 0) || 1, w = Math.round(100 * Math.min(1, v.score || 0));
+        const a = v.new ? w : Math.round(w * (v.n_added || 0) / tot), b = v.new ? w : a + Math.round(w * (v.n_removed || 0) / tot);
+        return `<div class="bar" style="--a:${a}%;--b:${b}%;--c:${w}%"></div>`;
+      };
+      const list = rows.map(([n, v]) => `<div class="nv-yoy-row" data-nv-yoy="${n.id}"><span class="ttl">${esc(noteLabel(n.id))} · ${esc(n.title)}</span>${bar(v)}<span class="n">${v.new ? 'new' : `+${v.n_added || 0} · ~${v.n_updated || 0} · −${v.n_removed || 0}`}</span></div><div class="nv-yoy-body" data-nv-yoy-body="${n.id}" hidden></div>`).join('');
+      const changed = rows.filter(([, v]) => (v.score || 0) >= 0.15);
+      return `<div class="nv-card"><h3>What the notes changed since ${esc(prev.fy || 'last year')} <span class="muted">${esc(prev.form || '10-K')} filed ${esc(prev.filed || '')}</span></h3>
+<p class="muted">Each note against the same note in last year's annual report, sentence by sentence: <span style="color:#2563eb">■</span> added, <span style="color:#d9480f">■</span> no longer there, <span style="color:#b7791f">■</span> the same statement with new figures or reworded. The bar is the share of the note's text that is new or gone; click a note for its sentences.</p>
+<div class="nv-pills"><span class="nv-pill">${changed.length} notes changed by 15% or more</span>${Y.new_notes ? `<span class="nv-pill">${Y.new_notes} new note${Y.new_notes === 1 ? '' : 's'}</span>` : ''}${(Y.gone || []).length ? `<span class="nv-pill">${Y.gone.length} gone: ${esc(Y.gone.slice(0, 4).join(' · '))}${Y.gone.length > 4 ? ' …' : ''}</span>` : ''}</div>
+${list}</div>`;
+    }
     function paneChecks() {
       const sc = st.scope || '', ss = st.status || '';
       const list = d.checks.filter((c) => (!sc || c.scope === sc) && (!ss || c.status === ss));
@@ -303,7 +344,16 @@ ${list.slice(0, 400).map((c) => checkHTML(c, noteLabel)).join('') || '<p class="
     }
     function show() {
       el.querySelectorAll('[data-nv-tab]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.nvTab === st.tab)));
-      pane.innerHTML = st.tab === 'statements' ? paneStatements() : st.tab === 'notes' ? paneNotes() : st.tab === 'checks' ? paneChecks() : st.tab === 'io' ? ioHTML(d.io, noteLabel) : paneRead();
+      pane.innerHTML = st.tab === 'statements' ? paneStatements() : st.tab === 'notes' ? paneNotes() : st.tab === 'checks' ? paneChecks() : st.tab === 'io' ? ioHTML(d.io, noteLabel)
+        : st.tab === 'changes' && Y ? paneChanges() : paneRead();
+      if (st.tab === 'changes') {
+        pane.querySelectorAll('[data-nv-yoy]').forEach((row) => row.addEventListener('click', () => {
+          const b = pane.querySelector(`[data-nv-yoy-body="${row.dataset.nvYoy}"]`);
+          if (!b) return;
+          if (!b.dataset.done) { b.dataset.done = 1; b.innerHTML = diffHTML(Y.notes[row.dataset.nvYoy], 12); }
+          b.hidden = !b.hidden;
+        }));
+      }
       if (st.tab === 'notes') {
         pane.querySelectorAll('details.nv-note').forEach((det) => {
           const fill = () => { const b = det.querySelector('[data-nv-body]'); if (b && !b.dataset.done) { b.dataset.done = 1; b.innerHTML = noteBody(noteById[det.dataset.nvNid]); } };

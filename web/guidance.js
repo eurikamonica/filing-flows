@@ -608,7 +608,7 @@
         title: `${name ? name + ': ' : ''}${dec(spec.label)} vs guidance`,
         bullets: bullets.slice(0, 6),
         footer: `Compared with the guidance in the earnings release of ${when}${rel.url ? '' : ''} (the last release on file before ${dec(spec.label)} ended): ` +
-          `band and bar = as reported; guidance is drawn on the top edge of each band (vs the previous quarter or a year earlier keep the bottom edge): dense dots over the top of a band = above guidance (the part beyond the guided midpoint); a dense-dot area with a dashed outline above a band = below guidance (what was guided beyond what was reported); ` +
+          `band and bar = as reported; guidance is drawn on the top edge of each band (vs the previous quarter or a year earlier keep the bottom edge): above guidance, the band grows past the guided figure on its top edge — that growth in violet dots on a violet tint, the guided amount below it in the band's own colour; short of guidance, a dense-dot area with a dashed outline above the band (what was guided beyond what was reported); ` +
           `the bracket beside a bar spans the guided range. Lines compared: those the guidance fixes — guided GAAP or basis-free figures, and lines that follow from them alone ` +
           `(guided margins × guided revenue); every other line is drawn plain. ◆ teal = better than guided (higher revenue or profit, lower costs), orange = worse, grey = within the range.`,
       },

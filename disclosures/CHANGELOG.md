@@ -1,5 +1,25 @@
 # Changelog
 
+## Notes: what each note changed against last year's annual report (年度变化)
+
+notes.py (VERSION 5) reads the previous annual report's notes too and compares each note with the same note a year
+earlier (matched by title, retitled and plural titles included), sentence by sentence: added, no longer there, the same
+statement with new figures, reworded; notes new this year and notes gone; a change score per note (the share of its
+text new or gone; table rows left out). Notes & ties gets a "Changes vs last year" tab — a change map, every note as a
+bar of what was added, updated and dropped, its sentences one click away, new figures highlighted — and each note a
+"What changed" section and a badge. The index gains notes_changed and notes_new. Every company is rebuilt, largest
+first.
+
+## Guidance: dated right, every large company found, the record drawn; outlook topics and filing-by-filing map
+
+guidance.py (VERSION 2): a comparison base ("compared with … fourth quarter 2025") no longer dates the guide — Amazon's
+whole record sat a year early. guidance_history.py re-reads the releases kept from an older reader, discovers the
+companies not on file from their latest earnings release (largest first: off-season reporters such as NVIDIA were never
+found) and back-fills the largest first. The Outlook & guidance view draws the record (each period's guides release
+after release and the reported dot; where results landed in their ranges, right = better) and the outlook filing by
+filing (MD&A topics × filings with tone and new statements); pipeline/outlook.py adds the supply & capacity and economy
+& markets topics, keeps four MD&As per company and compares an older one caught up later in order.
+
 ## Inputs & outputs (投入产出): every company's 10-K as one producer of an input-output table
 
 `app/io_table.py`, built by notes.py with each company's notes (Notes & ties → a company → Inputs & outputs; the company

@@ -28,6 +28,9 @@ For one filing (app/xbrl_filing.py reads it):
   analysis  per note, sentences written by rules from the numbers: growth, the largest parts and movers, ratios that
             matter for the note (days of inventory, receivables, warranty and stock compensation against revenue,
             commitments against cost of revenue, the effective tax rate, customer concentration), checks that do not tie
+  yoy       what each note says this year that it did not last year, against the previous annual report's notes: the
+            sentences added, the ones no longer there, the ones that say the same with new figures; notes new this year
+            and notes gone; a change score per note (the share of its text that is new or gone)
 
   python notes.py one --cik 1045810 --out <dir> [--ticker NVDA]          one company's latest 10-K
   python notes.py collect --root <branch> --site-index <index.json> --minutes 40     the site's companies, largest first
@@ -1163,6 +1166,94 @@ def ratios(FL):
 
 
 # ------------------------------------------------------------------ build
+# ------------------------------------------------------------------ the notes against last year's
+SENT_SPLIT = re.compile(r'(?<=[.!?;])\s+(?=[A-Z“"(•])|\n+')
+
+
+def note_sentences(text):
+    """The sentences of a note's text (the table rows and headings of a text block left out: too short, or mostly figures)."""
+    out = []
+    for s_ in SENT_SPLIT.split(text or ''):
+        s_ = re.sub(r'\s+', ' ', s_).strip()
+        if 30 <= len(s_) <= 2000 and s_.count('|') < 2 and len(re.findall(r'[A-Za-z]{3,}', s_)) >= 5:   # not a table row
+            out.append(s_)
+    return out
+
+
+def _shape(s_):
+    """A sentence with its figures and dates taken out: the same shape with other numbers = the same statement updated."""
+    return re.sub(r'\s+', ' ', re.sub(r'\$?\(?\d[\d,.]*\)?%?', '#', s_.lower())).strip()
+
+
+def _words(s_):
+    return {w for w in re.findall(r'[a-z]{3,}', s_.lower())}
+
+
+def note_texts(FL):
+    """[(title, full text)] of a filing's notes, in their order."""
+    _, notes = classify_reports(FL)
+    out = []
+    for n in notes:
+        r = n['report']
+        tb = [nd['c'] for nd in FL.F['pre'].get(r['role'], []) if nd['c'].endswith('TextBlock')]
+        out.append((title_of(FL, r), plain(FL.text(tb[0])) if tb else ''))
+    return out
+
+
+def note_changes(cur, prev, keep=8):
+    """cur: [(note id, title, text)] this year; prev: [(title, text)] last year → {notes: {id: change}, gone: [titles]}.
+    A note is matched by its title (the same words, else most of them); its sentences by their text, then by their shape
+    with the figures taken out (updated: the same statement with new figures), then by most of their words (reworded)."""
+    left = {norm_title(t): (t, x) for t, x in prev}
+    out, used_titles = {}, set()
+    for nid, title, text in cur:
+        k = norm_title(title)
+        hit = k if k in left and k not in used_titles else None
+        if not hit:                                    # retitled: the unmatched title sharing most of its words (plurals as one)
+            stem = lambda t: {re.sub(r'(?<=[a-z]{3})s$', '', re.sub(r'ies$', 'y', w)) for w in t.split()}
+            wa = stem(k)
+            best = max(((len(wa & stem(k2)) / max(1, len(wa | stem(k2))), k2) for k2 in left if k2 not in used_titles), default=(0, None))
+            hit = best[1] if best[0] >= 0.5 else None
+        if not hit:
+            a = note_sentences(text)
+            out[nid] = {'new': True, 'score': 1.0, 'n_added': len(a), 'added': [x[:400] for x in a[:keep]]}
+            continue
+        used_titles.add(hit)
+        a, b = note_sentences(text), note_sentences(left[hit][1])
+        rest_b = list(b)
+        exact = set(b)
+        added, updated = [], []
+        for x in a:
+            if x in exact and x in rest_b:
+                rest_b.remove(x)
+                continue
+            sh = _shape(x)
+            same = next((y for y in rest_b if _shape(y) == sh), None)
+            if same is not None:
+                rest_b.remove(same)
+                updated.append([same, x])
+                continue
+            added.append(x)
+        # reworded: an added sentence sharing most of its words with one gone
+        for x in list(added):
+            wx = _words(x)
+            best = max(((len(wx & _words(y)) / max(1, len(wx | _words(y))), y) for y in rest_b), default=(0, None))
+            if best[0] >= 0.6:
+                rest_b.remove(best[1])
+                added.remove(x)
+                updated.append([best[1], x])
+        removed = rest_b
+        total = sum(len(x) for x in a) or 1
+        score = (sum(len(x) for x in added) + 0.6 * sum(len(x) for x in removed) + 0.25 * sum(len(x[1]) for x in updated)) / total
+        if not a and not b:
+            score = 0.0
+        out[nid] = {'score': round(min(1.0, score), 3), 'n_added': len(added), 'n_removed': len(removed), 'n_updated': len(updated),
+                    'added': [x[:400] for x in added[:keep]], 'removed': [x[:400] for x in removed[:keep]],
+                    'updated': [[o[:400], n_[:400]] for o, n_ in updated[:keep]]}
+    gone = [t for k, (t, _) in left.items() if k not in used_titles]
+    return {'notes': out, 'gone': gone[:20]}
+
+
 def build(FL, meta, extra=None):
     statements, notes = classify_reports(FL)
     report_of_role = {r['role']: r['r'] for r in FL.reports}
@@ -1225,11 +1316,13 @@ def build(FL, meta, extra=None):
     # notes
     rat = ratios(FL)
     note_out = []
+    full_texts = []
     for n in notes:
         r = n['report']
         title = title_of(FL, r)
         tb = [nd['c'] for nd in FL.F['pre'].get(r['role'], []) if nd['c'].endswith('TextBlock')]
         txt = FL.text(tb[0]) if tb else None
+        full_texts.append((n['id'], title, plain(txt) if txt else ''))
         tables = []
         concepts = set()
         for d in n['details']:
@@ -1279,7 +1372,16 @@ def build(FL, meta, extra=None):
         io = io_table.build_io(FL, meta, concept_notes, extra.get('sic'), extra.get('employees'))
     except Exception as exc:                       # never stops the notes
         io = {'error': f'{type(exc).__name__}: {str(exc)[:160]}'}
-    doc = {**meta, 'fy': FL.fy_label(0), 'fy_end': FL.fy[1] if FL.fy else None, 'io': io, 'periods': {'cur': FL.dur(0), 'prev': FL.dur(1), 'end': FL.inst(0), 'end_prev': FL.inst(1)},
+    yoy = None
+    prev = extra.get('prev_notes')
+    if prev and prev.get('notes'):
+        try:                                       # the notes against last year's (never stops the build)
+            yoy = {**note_changes(full_texts, prev['notes']), 'prev': prev.get('meta') or {}}
+            yoy['changed'] = sum(1 for v in yoy['notes'].values() if v.get('score', 0) >= 0.15)
+            yoy['new_notes'] = sum(1 for v in yoy['notes'].values() if v.get('new'))
+        except Exception as exc:
+            yoy = {'error': f'{type(exc).__name__}: {str(exc)[:160]}'}
+    doc = {**meta, 'fy': FL.fy_label(0), 'fy_end': FL.fy[1] if FL.fy else None, 'io': io, **({'yoy': yoy} if yoy else {}), 'periods': {'cur': FL.dur(0), 'prev': FL.dur(1), 'end': FL.inst(0), 'end_prev': FL.inst(1)},
            'statements': st_out, 'notes': note_out, 'checks': [slim_check(ch, FL) for ch in K.items if ch['id'] in keep_ids], 'summary': summary, 'read': read,
            'built_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')}
     return doc
@@ -1354,14 +1456,20 @@ ANNUAL = ('10-K', '20-F', '40-F', '10-KT')
 
 
 def latest_10k(cik, ua, forms=ANNUAL):
-    """The latest annual report with XBRL (amendments left out: they rarely carry the full notes)."""
+    """The latest annual report with XBRL (amendments left out: they rarely carry the full notes), and the one before it
+    ('prior', for what the notes changed)."""
     sub = json.loads(http_get(f'https://data.sec.gov/submissions/CIK{int(cik):010d}.json', ua))
     r = sub['filings']['recent']
+    found = []
     for i, f in enumerate(r['form']):
-        if f in forms and (r.get('isXBRL') or [1] * len(r['form']))[i]:
-            return {'accession': r['accessionNumber'][i], 'filed': r['filingDate'][i], 'period': r['reportDate'][i], 'form': f,
-                    'doc': r['primaryDocument'][i], 'name': sub.get('name'), 'tickers': sub.get('tickers') or []}
-    return None
+        if f in forms and (r.get('isXBRL') or [1] * len(r['form']))[i] and not any(x['period'] == r['reportDate'][i] for x in found):
+            found.append({'accession': r['accessionNumber'][i], 'filed': r['filingDate'][i], 'period': r['reportDate'][i], 'form': f,
+                          'doc': r['primaryDocument'][i], 'name': sub.get('name'), 'tickers': sub.get('tickers') or []})
+            if len(found) == 2:
+                break
+    if not found:
+        return None
+    return {**found[0], 'prior': found[1] if len(found) > 1 else None}
 
 
 def crdr_of(meta_links_path, xsd_path=None):
@@ -1396,6 +1504,17 @@ def run_one(cik, folder, ua, ticker=None, sleep=0.12, info=None, extra=None):
     meta = {'ticker': ticker or (info['tickers'][0] if info['tickers'] else None), 'cik': int(cik), 'name': info['name'], 'form': info['form'],
             'accession': info['accession'], 'filed': info['filed'], 'period': info['period'],
             'url': f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{info['accession'].replace('-', '')}/{info['doc']}"}
+    extra = dict(extra or {})
+    pr = info.get('prior')
+    if pr and 'prev_notes' not in extra:
+        try:                                           # last year's notes, for what changed (a failure leaves it out)
+            pp = X.fetch(cik, pr['accession'], Path(folder).parent / pr['accession'], ua, sleep=sleep)
+            if 'instance' in pp and 'summary' in pp:
+                PF = Filing(X.load(pp), {})
+                extra['prev_notes'] = {'notes': note_texts(PF), 'meta': {'accession': pr['accession'], 'filed': pr['filed'], 'period': pr['period'],
+                                                                          'form': pr['form'], 'fy': PF.fy_label(0)}}
+        except Exception as exc:
+            print(f"  last year's notes not read ({type(exc).__name__}: {str(exc)[:100]})", flush=True)
     return build(FL, meta, extra)
 
 
@@ -1406,9 +1525,10 @@ def _too_long(*_):
     raise TimeoutError(f'over {PER_COMPANY_SECONDS} s')
 
 
-VERSION = 4                                            # raise when the checks change: every company is read again, after new ones
+VERSION = 5                                            # raise when the checks change: every company is read again, after new ones
+                                                       # 5: what the notes changed against last year's annual report (yoy)
 INDEX_FIELDS = ['ticker', 'name', 'cik', 'form', 'fy', 'fy_end', 'filed', 'notes', 'tables', 'checks', 'tie', 'round', 'info', 'gap', 'revenue',
-                'va_share', 'labor_share', 'inter_share']
+                'va_share', 'labor_share', 'inter_share', 'notes_changed', 'notes_new']
 
 
 def employee_counts(path):
@@ -1495,7 +1615,8 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
             s_.update(cik=int(c['cik']), accession=doc['accession'], filed=doc['filed'], checked=now.isoformat(timespec='seconds'), v=VERSION,
                       row=[t, doc.get('name'), int(c['cik']), doc.get('form'), doc.get('fy'), doc.get('fy_end'), doc.get('filed'), len(doc['notes']),
                            sum(len(n['tables']) for n in doc['notes']), sm.get('all', len(doc['checks'])), sm.get('tie', 0), sm.get('round', 0), sm.get('info', 0), sm.get('gap', 0),
-                           c.get('revenue')] + [((doc.get('io') or {}).get('ratios') or {}).get(k) for k in ('va_share', 'labor_share', 'inter_share')])
+                           c.get('revenue')] + [((doc.get('io') or {}).get('ratios') or {}).get(k) for k in ('va_share', 'labor_share', 'inter_share')] +
+                      [(doc.get('yoy') or {}).get('changed'), (doc.get('yoy') or {}).get('new_notes')])
             done += 1
             print(f"{t}: {len(doc['notes'])} notes, {sm.get('all', 0)} checks, {sm.get('gap', 0)} do not tie ({time.time() - t1:.0f} s)", flush=True)
         except Exception as exc:                          # one company never stops the batch

@@ -62,6 +62,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // the guidance comparison: dense dots in the guidance violet (the colour of guided lines in the guidance view)
   const DOT = '#4b34b8', DOT_GAP = 3.8, DOT_R = 1.2;
+  const GTINT = '#e3dcfa';             // above guidance: the band grown past the guided figure, a violet tint under the dots
   const DOT_ROW = DOT_GAP * 0.87;
   // dot centres on one staggered lattice for the whole chart (so neighbouring areas line up), inside a shape: a band
   // (s.curve = [x0, a0, x1, a1, th]: only the rows between its edges, column by column) or a box; drawn clipped to it
@@ -538,9 +539,9 @@
       } else {
         shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, A0, g.x1, A1, Math.max(l.th, 0.8)), fill: pal.flow, band: true }, cls));
       }
-      if (l.gIn > 0.05) {                          // above guidance: dense dots over the top of the band
-        const th = Math.min(Math.max(l.gIn, 0.6), l.th);
-        shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, A0, g.x1, A1, th), fill: 'none', dots: DOT, curve: [g.x0, A0, g.x1, A1, th], band: true }, cls));
+      if (l.gIn > 0.05) {                          // above guidance: the band's growth past the guided figure, on top of it
+        const th = Math.min(Math.max(l.gIn, 0.6), l.th);   // (below it, the guided amount in the band's own colour)
+        shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, A0, g.x1, A1, th), fill: GTINT, dots: DOT, curve: [g.x0, A0, g.x1, A1, th], band: true }, cls));
       }
       if (l.gTop > 0.3) {                          // below guidance: what was guided beyond the result, dotted, above the band
         shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, l.gTop), fill: 'none', dots: DOT, outline: true, band: true, ghost: true,
@@ -561,11 +562,15 @@
       const lost = (fut ? PALETTE[baseRole(n.color)] || pal : pal).node;     // a decrease is hatched in the line's own colour
       const lostRect = (y, h) => ({ t: 'rect', x: n.x, y, w: NW, h, fill: 'none', hatch: lost, group: n.id });
       const shortRect = (y, h) => ({ t: 'rect', x: n.x, y, w: NW, h, fill: 'none', dots: DOT, outline: true, group: n.id });
-      if ((ghosts || gmode) && side.length && (side.some((l) => l.ghost > 0.3 || l.gTop > 0.3) || n.h - sideSum > 0.5)) {
+      if ((ghosts || gmode) && side.length && (side.some((l) => l.ghost > 0.3 || l.gTop > 0.3 || l.gIn > 0.05) || n.h - sideSum > 0.5)) {
         side.forEach((l) => {
           const y0 = n.top + l[off];
           if (l.gTop > 0.3) shapes.push(shortRect(y0, l.gTop));
           shapes.push({ t: 'rect', x: n.x, y: y0 + l.gTop, w: NW, h: Math.max(l.th, 0.8), fill: pal.node, group: n.id });
+          if (l.gIn > 0.05) {                      // the bar grown past the guided figure, on top
+            const h = Math.min(Math.max(l.gIn, 0.6), l.th);
+            shapes.push({ t: 'rect', x: n.x, y: y0 + l.gTop, w: NW, h, fill: GTINT, dots: DOT, group: n.id });
+          }
           if (l.ghost > 0.3) shapes.push(lostRect(y0 + l.gTop + l.th, l.ghost));
         });
         if (n.h - sideSum > 0.5 && ghosts) shapes.push(lostRect(n.top + sideSum, n.h - sideSum));
@@ -661,7 +666,7 @@
       }
     }
     if (gmode) {                       // vs guidance, on the top edge: dense dots, the bracket of the guided range, the ◆ colours
-      [['gstrip', 'Dots on top = above guidance'], ['gghost', 'Dotted, dashed outline above = below guidance'], ['gbracket', 'Bracket = guided range'],
+      [['gstrip', 'Violet dots on top = grown past guidance'], ['gghost', 'Dotted, dashed outline above = short of guidance'], ['gbracket', 'Bracket = guided range'],
         ['cup', '◆ better than guided'], ['cdn', '◆ worse than guided']]
         .forEach(([k, t]) => lgItems.push({ k, t, w: 22 + measure(t, 14, 400) }));
     }
@@ -714,7 +719,7 @@
         shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', hatch: LP.hatch || LP.node });
       } else if (it.k === 'gstrip') {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE.profit.flow, r: 3 });
-        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 7, fill: 'none', dots: DOT });
+        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 7, fill: GTINT, dots: DOT });
       } else if (it.k === 'gghost') {
         shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', dots: DOT, outline: true });
       } else if (it.k === 'gbracket') {
