@@ -364,6 +364,16 @@ jobs:
           python scripts/seo_compare.py --site _site
           python scripts/seo_zh.py --site _site
           python scripts/seo_intl.py --site _site
+      - name: Crawlable pages for the hub's views (disclosures/<view>/) and one page per material 8-K (events/<…>/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_hub.py --site _site --store store
+      - name: Cash-flow pages per company (c/<slug>/cash-flow/) and capital spending & supply chain per industry (gamma/<sic>/supply-chain/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_cashflow.py --site _site
       - name: One sitemap index (sitemap-index.xml) listing every sitemap in robots.txt
         continue-on-error: true
         run: python scripts/sitemap_index.py --site _site
