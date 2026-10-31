@@ -1104,7 +1104,7 @@
     ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-opportunity'], ['x-odds']]],
-    ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders']]],
+    ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders'], ['x-investments']]],
     ['Relationships & model', [['links', 'Customers, suppliers & model'], ['invest', 'Investments'], ['shock', 'Shock panel'], ['x-outside']]],
   ];
   function tabGroups() {

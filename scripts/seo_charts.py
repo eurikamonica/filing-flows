@@ -89,7 +89,8 @@ def live(cik, ticker, sic, sector, chains, images, depth=2):
     slots = [('flowlab', 'Where each $1 goes', ''), ('asia', 'Named in Asian annual reports', '')]
     if ticker:
         slots += [('hub:rotation', 'Rotation against the market and its industry (RRG)', ''), ('hub:quality', 'Earnings quality', ''),
-                  ('hub:fairvalue', 'Fair value by method', ''), ('hub:outlook', 'Outlook & guidance', '')]
+                  ('hub:fairvalue', 'Fair value by method', ''), ('hub:outlook', 'Outlook & guidance', ''),
+                  ('hub:investments', 'Investments: gains and what it bought', '')]
     if sic:
         slots.append(('industry', 'Its industry’s money flow (input-output)', ''))
     s = ''.join(f"<section class='seo-live' data-kind='{_e(k)}' data-cik='{_e(cik)}' data-ticker='{_e(ticker)}' data-sic='{_e(sic)}' data-sector='{_e(sector)}'>"

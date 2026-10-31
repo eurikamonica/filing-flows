@@ -44,7 +44,7 @@
         const c = await getCompany(d.cik);
         const h = el.querySelector('h2');
         el.innerHTML = ''; if (h) el.appendChild(h); el.appendChild(body);
-        await V.render(body, { cik: +d.cik, ticker: d.ticker, company: c, here: live, hub: BASE + 'disclosures/' });
+        await V.render(body, { cik: +d.cik, ticker: d.ticker, company: c, here: live, hub: BASE + 'disclosures/', quiet: true });
         if (!body.textContent.trim()) gone(el);
       }
     } catch (e) { gone(el); }
