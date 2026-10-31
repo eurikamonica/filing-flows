@@ -14,6 +14,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -57,7 +58,8 @@ def jobs(site):
     try:
         ix = get_json(site + "data/chains/index.json")
         for ch in ix.get("chains") or []:
-            out.append((f"chain-{ch['id']}", ver((ix.get("generated") or "")[:10], ch.get("asof")), "chain", ch["id"]))
+            out.append((f"chain-{ch['id']}", ver((ix.get("generated") or "")[:10], ch.get("asof")), "chain", ch["id"],
+                        f"{ch['id']}-money-flow-sankey"))
     except Exception as e:
         print(f"::warning::chains not listed for pictures: {e}")
     ix = get_json(site + "data/index.json")
@@ -68,8 +70,15 @@ def jobs(site):
             latest[r["cik"]] = r
     usd = [r for r in latest.values() if (r.get("currency") or "USD") == "USD"]
     for r in sorted(usd, key=lambda r: -(r.get("revenue") or 0))[:TOP_COMPANIES]:
-        out.append((f"c-{r['cik']}", ver(r.get("label"), r.get("filed"), r.get("form")), "company", r["cik"]))
+        out.append((f"c-{r['cik']}", ver(r.get("label"), r.get("filed"), r.get("form")), "company", r["cik"], fname(r)))
     return out
+
+
+def fname(r):
+    """a file name that says what the picture is, for image search: nvda-revenue-breakdown-sankey (the page's slug)"""
+    s = (r.get("ticker") or "").lower().replace(".", "-")
+    s = s if re.fullmatch(r"[a-z0-9-]{1,12}", s) else f"cik-{r['cik']}"
+    return f"{s}-revenue-breakdown-sankey"
 
 
 def draw(page, site, kind, ident):
@@ -99,7 +108,14 @@ def run(site, out, base, limit=PER_RUN, budget_s=900):
     except (OSError, ValueError):
         manifest = {}
     images = manifest.get("images") or {}
-    todo = [j for j in jobs(site) if (images.get(j[0]) or {}).get("v") != j[1]]
+    all_jobs = jobs(site)
+    for key, v, kind, ident, name in all_jobs:              # a picture drawn under an older name: renamed, not redrawn
+        old = images.get(key) or {}
+        want = f"{name}.jpg"
+        if old.get("file") and old["file"] != want and os.path.exists(os.path.join(out, old["file"])):
+            os.replace(os.path.join(out, old["file"]), os.path.join(out, want))
+            images[key] = dict(old, file=want)
+    todo = [j for j in all_jobs if (images.get(j[0]) or {}).get("v") != j[1]]
     print(f"{len(todo)} pictures to draw")
     t0, done, failed = time.time(), 0, 0
     with sync_playwright() as pw:
@@ -110,7 +126,7 @@ def run(site, out, base, limit=PER_RUN, budget_s=900):
         page = browser.new_page()
         page.goto(site + "index.html#method")
         page.wait_for_function("window.Sankey && window.FFChains && document.fonts")
-        for key, v, kind, ident in todo[:limit]:
+        for key, v, kind, ident, name in todo[:limit]:
             if time.time() - t0 > budget_s:
                 break
             try:
@@ -121,9 +137,12 @@ def run(site, out, base, limit=PER_RUN, budget_s=900):
                 continue
             if not jpg:
                 continue
-            with open(os.path.join(out, f"{key}.jpg"), "wb") as f:
+            with open(os.path.join(out, f"{name}.jpg"), "wb") as f:
                 f.write(jpg)
-            images[key] = {"file": f"{key}.jpg", "v": v}
+            old = (images.get(key) or {}).get("file")
+            if old and old != f"{name}.jpg" and os.path.exists(os.path.join(out, old)):
+                os.remove(os.path.join(out, old))
+            images[key] = {"file": f"{name}.jpg", "v": v}
             done += 1
         browser.close()
     manifest = {"base": base.rstrip("/"), "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "images": images}

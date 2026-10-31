@@ -27,7 +27,8 @@ def _e(s):
 def static(c, r, peers_all, money):
     """The drawn charts, as one HTML string ('' when there is nothing to draw)."""
     p = c.get('profile') or {}
-    name = p.get('name') or r.get('name') or ''
+    import seo                                             # imported here: seo imports this module
+    name = seo.display_name(p.get('name') or r.get('name') or '')
     out = []
     qs8 = [x for x in (c.get('quarters') or [])[:9] if (x.get('headline') or {}).get('revenue')]
     gr = []

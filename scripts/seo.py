@@ -17,6 +17,7 @@ import html
 import json
 import os
 import re
+from urllib.parse import quote
 from xml.sax.saxutils import escape as xesc
 
 e = lambda s: html.escape(str(s if s is not None else ""), quote=True)
@@ -28,6 +29,7 @@ def display_name(name):
     if name.upper() == name:
         name = " ".join(w if (w.upper() in KEEP_UPPER or re.search(r"\d", w)) else w.capitalize() for w in name.split())
     name = re.sub(r",?\s+(?:&\s+)?(Inc|Corp|Corporation|Co|Ltd|Plc|Holdings|Group)\.?$", "", name)
+    name = re.sub(r"\s+Com$", "", name)                          # "AMAZON COM INC" → Amazon, not "Amazon Com"
     return re.sub(r"\bJpmorgan\b", "JPMorgan", name).rstrip(" &,")
 
 
@@ -83,7 +85,7 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
     ld = f'<script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False)}</script>' if jsonld else ""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{e(title)}</title><meta name="description" content="{e(desc)}"><link rel="canonical" href="{e(canonical)}">
+<title>{e(title)}</title><meta name="description" content="{e(desc)}"><meta name="robots" content="max-image-preview:large, max-snippet:-1, max-video-preview:-1"><link rel="canonical" href="{e(canonical)}">
 <meta property="og:type" content="article"><meta property="og:site_name" content="Filing Flows"><meta property="og:title" content="{e(title)}">
 <meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{e(canonical)}"><meta property="og:image" content="{e(image)}">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@FilingFlow"><meta name="twitter:title" content="{e(title)}"><meta name="twitter:description" content="{e(desc)}"><meta name="twitter:image" content="{e(image)}">
@@ -97,6 +99,24 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 </body></html>"""
 
 
+def fit(title, site=" | Filing Flows", width=62):
+    """the site name only when the title still fits in a search result (about 60 characters); Google shows the
+    site's name beside the result anyway"""
+    return title + site if len(title) + len(site) <= width else title
+
+
+def segments(q):
+    """[(segment, revenue)] the lines that flow straight into revenue (or into a group that does), largest first"""
+    nodes = {n.get("id"): n for n in q.get("nodes") or []}
+    into = {l.get("t") for l in q.get("links") or []}
+    out = []
+    for l in q.get("links") or []:
+        s = nodes.get(l.get("s")) or {}
+        if l.get("t") == "revenue" and l.get("v") and s.get("name"):
+            out.append((s["name"], l["v"]))
+    return sorted(out, key=lambda x: -x[1])
+
+
 def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all_rows=None, chains=None, images=None):
     p, quarters = c["profile"], c.get("quarters") or []
     q = quarters[0] if quarters else {}
@@ -106,13 +126,14 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     form = q.get("form") or ""
     status = " (preliminary, from the earnings release)" if form == "8-K" else ""
     words = period_words(q.get("label"))
-    title = f"{who} {words} results ({q.get('label', '')} earnings): revenue {h.get('rev_fmt') or money(h.get('revenue'))}" + (
-        f", {pct(h.get('yoy'))} Y/Y" if h.get("yoy") is not None else "") + " | Filing Flows"
-    desc = (f"{name}'s {q.get('label', '')} {form} filed {fdate(q.get('filed'))}{status}: revenue {h.get('rev_fmt') or money(h.get('revenue'))}"
-            + (f" ({pct(h.get('yoy'))} Y/Y)" if h.get("yoy") is not None else "")
-            + (f", operating margin {pct(h.get('om'), False)}" if h.get("om") is not None else "")
+    revs = h.get('rev_fmt') or money(h.get('revenue'))
+    title = fit(f"{who} {q.get('label', '')} Earnings: Revenue Breakdown {revs}" + (f" ({pct(h.get('yoy'))})" if h.get("yoy") is not None else ""))
+    segs = segments(q)
+    desc = (f"{name} made {revs} in {q.get('label', '')}" + (f" ({pct(h.get('yoy'))} Y/Y)" if h.get("yoy") is not None else "")
+            + (": " + ", ".join(f"{n} {money(v)}" for n, v in segs[:3]) if len(segs) >= 2 else "")
+            + (f". Operating margin {pct(h.get('om'), False)}" if h.get("om") is not None else "")
             + (f", net earnings {h.get('ni_fmt') or money(h.get('ni'))}" if h.get("ni") is not None else "")
-            + ". Income statement and cash flow as a Sankey diagram, read from the SEC filing.")
+            + f". See where every dollar goes — costs, profit and cash — as a Sankey from the {form} filed {fdate(q.get('filed'))}{status}.")
     url = f"{base}/c/{slug_for(ix_entry)}/"
     app = "../" * depth + f"#c-{p['cik']}"
     rows = "".join(
@@ -149,6 +170,11 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
         ("Revenue", h.get("rev_fmt") or money(h.get("revenue"))), ("Year over year", pct(h.get("yoy"))),
         ("Operating margin", pct(h.get("om"), False)), ("Net earnings", h.get("ni_fmt") or money(h.get("ni"))),
         ("Operating cash flow", money(h.get("ocf")))))
+    tweet = f"{who} {q.get('label', '')} revenue breakdown"
+    alt = f"{name} {q.get('label', '')} revenue breakdown: Sankey diagram of revenue" + (f" ({', '.join(n for n, _ in segs[:4])})" if segs else "") + ", costs, profit and cash flow"
+    share = (f"<figure class='seo-share'><a href='{e(image)}'><img src='{e(image)}' alt='{e(alt)}' width='1200' height='630' loading='lazy'></a>"
+             f"<figcaption>{e(name)} {e(q.get('label', ''))} revenue breakdown — free to share with a link to this page. "
+             f"<a href='https://x.com/intent/tweet?text={quote(tweet)}&amp;url={quote(url)}' rel='noopener'>Share on X</a></figcaption></figure>") if image else ""
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../../sector/{e(p.get('sector') or 'other')}/">{e(sector_name)}</a> › {e(who)}</p>
 <h1>{e(who)} reports {e(words)} results</h1>
 <p class="muted">{e(q.get('label', ''))} earnings · {e(form)} filed {e(fdate(q.get('filed')))}</p>
@@ -160,6 +186,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
 <noscript><p class="muted">The Sankey needs JavaScript; the figures are in the table below.</p></noscript>
 <p><a class="seo-cta" href="{e(app)}">Open the interactive Sankey →</a> <span class="muted">click any line for what the company wrote about it, compare Y/Y and Q/Q, export as PNG or PDF</span></p>
 <script src="../../sankey.js"></script><script src="../../seo-quarter.js" defer></script>
+{share}
 {f'<h2 id="changed">What changed this quarter</h2><div class="seo-note">{analysis}</div>' if analysis else ''}
 <h2 id="history">Quarterly history</h2>
 {charts}
@@ -171,6 +198,8 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
 <p class="muted">Source: <a href="{e(q.get('index_url') or q.get('doc_url') or '')}" rel="nofollow">{e(name)} {e(form)} on SEC EDGAR</a> · CIK {e(p['cik'])} · {e(p.get('industry') or '')}</p>"""
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Corporation", "name": name, "tickerSymbol": t or None, "url": url},
+        *([{"@type": "ImageObject", "contentUrl": image, "name": alt, "width": 1200, "height": 630, "creditText": "Filing Flows",
+            "creator": {"@type": "Organization", "name": "Filing Flows"}, "copyrightNotice": "Filing Flows — free to share with a link"}] if image else []),
         {"@type": "BreadcrumbList", "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Filing Flows", "item": base + "/"},
             {"@type": "ListItem", "position": 2, "name": sector_name, "item": f"{base}/sector/{p.get('sector') or 'other'}/"},
@@ -450,7 +479,7 @@ def write_pages(data_dir, out_dir, base):
     by_industry = {}
     for r in latest.values():
         by_industry.setdefault(r.get("sic") or r.get("industry"), []).append(r)
-    urls, n = [(base + "/", None)], 0
+    urls, n, pics = [(base + "/", None)], 0, {}
     for cik, r in latest.items():
         try:
             c = json.load(open(os.path.join(data_dir, "c", f"{cik}.json"), encoding="utf-8"))
@@ -463,6 +492,8 @@ def write_pages(data_dir, out_dir, base):
         os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
         urls.append((url, r.get("filed")))
+        if images.get(f"c-{cik}"):
+            pics[url] = images[f"c-{cik}"]
         n += 1
     az = sorted(latest.values(), key=lambda x: display_name(x.get("name")).lower())
     os.makedirs(os.path.join(out_dir, "c"), exist_ok=True)
@@ -485,9 +516,11 @@ def write_pages(data_dir, out_dir, base):
     urls += chain_pages(data_dir, out_dir, base, images)
     urls += gamma_pages(data_dir, out_dir, base, {slug_for(r) for r in latest.values()}, images)
     urls += model_page(data_dir, out_dir, base)
-    sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for u, mod in urls:
-        sm.append(f"<url><loc>{xesc(u)}</loc>" + (f"<lastmod>{xesc(str(mod)[:10])}</lastmod>" if mod else "") + "</url>")
+    sm = ['<?xml version="1.0" encoding="UTF-8"?>',
+          '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
+    for u, mod in urls:                              # each company's Sankey picture, for image search
+        sm.append(f"<url><loc>{xesc(u)}</loc>" + (f"<lastmod>{xesc(str(mod)[:10])}</lastmod>" if mod else "")
+                  + (f"<image:image><image:loc>{xesc(pics[u])}</image:loc></image:image>" if u in pics else "") + "</url>")
     sm.append("</urlset>")
     open(os.path.join(out_dir, "sitemap.xml"), "w", encoding="utf-8").write("\n".join(sm))
     open(os.path.join(out_dir, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nSitemap: {base}/sitemap.xml\n")

@@ -367,51 +367,105 @@ def revenue(co, c):
             'desc': lead[:300], 'body': body, 'qa': qa, 'modified': (q.get('filed') or '')[:10] or None}
 
 
-def earnings_date(co, er, c, cons):
+def earnings_date(co, er, c, cons, today=None):
+    """c/<slug>/earnings-date/: one URL for the company's earnings, all year round. Before a report it is the preview
+    (date, what analysts expect, the model's odds, the options' implied move, what to watch in the last quarter's
+    lines); for ten days after a report it leads with the result against the estimate; then it turns to the next date.
+    Search engines index it ahead of the report, so it is there when people search on the day."""
     if not er or not er.get('report_date'):
         return None
+    today = today or dt.date.today()
     name, t = co['who_name'], co['ticker']
     cs = er.get('consensus') or {}
     d = er['report_date']
     try:
-        days = (dt.date.fromisoformat(d) - dt.date.today()).days
+        days = (dt.date.fromisoformat(d) - today).days
     except ValueError:
         return None
     when = fdate(d) + (' (estimated)' if er.get('date_estimated') else '')
     q = ((c or {}).get('quarters') or [{}])[0]
     h = q.get('headline') or {}
+    hist = [x for x in er.get('history') or [] if x.get('reported')]
+    last = hist[-1] if hist else None
+    since = (today - dt.date.fromisoformat(last['reported'])).days if last else None
+    just = last is not None and since is not None and 0 <= since <= 10 and last.get('act') is not None and last.get('est') is not None
+    beat = (cons or {}).get('beat_rate', er.get('beat_rate'))
+    p = (er.get('model') or {}).get('p')
+    mv = (er.get('implied') or {}).get('move')
+    revs = h.get('rev_fmt') or money(h.get('revenue'))
+    segs = seo.segments(q) if q.get('nodes') else []
+    lead = ''
+    if just:
+        verb = 'beat' if last['act'] > last['est'] else 'missed' if last['act'] < last['est'] else 'matched'
+        lead = (f"{name} ({t}) reported on {fdate(last['reported'])} and {verb} the EPS estimate: ${last['act']:.2f} against ${last['est']:.2f}"
+                + (f" ({100 * last['surprise']:+.1f}%)" if last.get('surprise') is not None else '')
+                + (f". Revenue was {revs} for {q.get('label')}" + (f", {pc(h.get('yoy'))} year over year" if h.get('yoy') is not None else '') if h.get('revenue') else '')
+                + (f". The stock moved {100 * last['move']:+.1f}% on the report" if last.get('move') is not None else '') + '. ')
+        title = f"{name} ({t}) Earnings {verb.capitalize()}: EPS ${last['act']:.2f} vs ${last['est']:.2f}, Revenue {revs}"
+        h1 = f"{name} ({t}) earnings: {verb} the estimate"
     if days >= 0:
-        lead = (f"{name} ({t}) is expected to report earnings on {when}" + (f", in {days} days" if days else ', today')
-                + (f", for the quarter ending {fdate(er.get('quarter'))}" if er.get('quarter') else '') + '.')
+        lead += (f"{name} ({t}) {'reports next' if just else 'is expected to report earnings'} on {when}" + (f", in {days} days" if days else ', today')
+                 + (f", for the quarter ending {fdate(er.get('quarter'))}" if er.get('quarter') else '') + '.')
         if cs.get('eps') is not None:
             lead += (f" Analysts expect EPS of ${cs['eps']:.2f}"
                      + (f" (${cs['eps_low']:.2f} to ${cs['eps_high']:.2f}, {cs['n']:.0f} estimates)" if cs.get('eps_low') is not None and cs.get('n') else '')
                      + (f" on revenue of {money(cs['rev'])}" if cs.get('rev') else '')
                      + ((f", against ${cs['year_ago_eps']:.2f}" + (f" and {money(cs['year_ago_rev'])}" if cs.get('year_ago_rev') else '') + ' a year ago')
                         if cs.get('year_ago_eps') is not None else '') + '.')
-    else:
-        lead = (f"{name} ({t}) last reported on {fdate(d)}"
-                + (f": revenue {h.get('rev_fmt') or money(h.get('revenue'))} for the {seo.period_words(q.get('label'))}" if h.get('revenue') else '')
-                + '. The next date is not set yet.')
-    beat = (cons or {}).get('beat_rate')
-    p = (er.get('model') or {}).get('p')
+        if not just:
+            title = f"{name} ({t}) Earnings {fdate(d)[:-6]}: What to Expect" + (f" (EPS Est. ${cs['eps']:.2f})" if cs.get('eps') is not None else '')
+            h1 = f"{name} ({t}) earnings on {fdate(d)}: what to expect"
+    elif not just:
+        lead = (f"{name} ({t}) last reported on {fdate(last['reported'] if last else d)}"
+                + (f": revenue {revs} for the {seo.period_words(q.get('label'))}" if h.get('revenue') else '') + '. The next date is not set yet.')
+        title, h1 = f"{name} ({t}) earnings: latest results and next report date", f"{name} ({t}) earnings"
     if beat is not None:
         lead += f" It beat the EPS estimate in {round(100 * beat)}% of the quarters on record"
-        lead += f"; Filing Flows' model gives it a {round(100 * p)}% chance of beating this time." if p is not None and days >= 0 else '.'
-    qa = [(f"When does {t} report earnings?", lead.split('. ')[0].rstrip('.') + '.')]
+        lead += f"; Filing Flows' model gives it a {round(100 * p)}% chance of beating next time." if p is not None and days >= 0 else '.'
+    if mv and days >= 0:
+        lead += f" Options imply a move of about ±{100 * mv:.1f}% on the report."
+    qa = [(f"When does {t} report earnings?", (f"{name} is expected to report on {when}." if days >= 0 else 'The next date is not set yet.'))]
+    if just:
+        qa.insert(0, (f"Did {name} beat earnings?", lead.split('. ')[0].rstrip('.') + '.'))
     if cs.get('eps') is not None and days >= 0:
         qa.append((f"What are analysts expecting from {name}?", f"EPS of ${cs['eps']:.2f}" + (f" and revenue of {money(cs['rev'])}" if cs.get('rev') else '') + ' for the quarter.'))
     if beat is not None:
         qa.append((f"Does {name} usually beat earnings?", f"It beat the consensus EPS estimate in {round(100 * beat)}% of the quarters on record."))
     tiles = ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
-        ('Report date', when), ('Days to go', str(days) if days >= 0 else '—'), ('EPS estimate', f"${cs['eps']:.2f}" if cs.get('eps') is not None and days >= 0 else '—'),
-        ('Revenue estimate', money(cs.get('rev')) if cs.get('rev') and days >= 0 else '—'), ('Beat rate', f"{round(100 * beat)}%" if beat is not None else '—')))
-    last = (f"<h2>The last report</h2><p>{e(name)} reported revenue of {e(h.get('rev_fmt') or money(h.get('revenue')))} for the {e(seo.period_words(q.get('label')))}"
-            + (f" ({e(pc(h.get('yoy')))} Y/Y)" if h.get('yoy') is not None else '') + (f", net earnings {e(h.get('ni_fmt') or money(h.get('ni')))}" if h.get('ni') is not None else '')
-            + ". <a href='../revenue/'>How it makes money →</a></p>") if h.get('revenue') else ''
-    body = f"<p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>{last}"
-    return {'title': f"{name} ({t}) earnings date {d[:4]}: next report {fdate(d)}, EPS estimate", 'h1': f"{name} ({t}) next earnings date",
-            'desc': lead[:300], 'body': body, 'qa': qa}
+        ('Last result', (f"{'+' if last['act'] >= last['est'] else '−'}{abs(100 * (last.get('surprise') or 0)):.1f}% vs estimate") if just else None),
+        ('Report date', when if days >= 0 else None), ('Days to go', str(days) if days >= 0 else None),
+        ('EPS estimate', f"${cs['eps']:.2f}" if cs.get('eps') is not None and days >= 0 else None),
+        ('Revenue estimate', money(cs.get('rev')) if cs.get('rev') and days >= 0 else None), ('Beat rate', f"{round(100 * beat)}%" if beat is not None else None),
+        ('Implied move', f"±{100 * mv:.1f}%" if mv and days >= 0 else None)) if v)
+    charts = ''
+    hh = [x for x in hist[-8:] if x.get('est') is not None and x.get('act') is not None]
+    if len(hh) >= 3:
+        charts += SV.duo([(fdate(x['reported'])[:3] + ' ' + x['reported'][2:4], x['est'], x['act']) for x in hh], ('Estimate', 'Reported'), lambda v: f"${v:.2f}",
+                         f"{name}: EPS against the estimate, last {len(hh)} reports")
+    mm = [x for x in hist[-8:] if x.get('move') is not None]
+    if len(mm) >= 3:
+        charts += SV.diverging([(fdate(x['reported']), 100 * x['move']) for x in reversed(mm)], lambda v: f"{v:+.1f}%", f"{t}: the stock's move on each report", n=8)
+    watch = ''
+    if days >= 0 and q.get('nodes'):
+        grow = []
+        for n in q.get('nodes') or []:
+            if n.get('color') == 'rev' and n.get('v') and n.get('y'):
+                grow.append((n.get('name'), n['v'], (n['v'] / n['y'] - 1) * 100))
+        grow = sorted(grow, key=lambda g: -g[1])[:6]
+        if grow:
+            watch = (f"<h2>What to watch</h2><p>Last quarter ({e(q.get('label'))}) the lines that make up revenue grew like this; the report shows whether the trend holds:</p>"
+                     + SV.diverging([(g[0], g[2]) for g in grow], lambda v: f"{v:+.0f}%", f"{name}: revenue lines, growth year over year, {q.get('label')}", n=6))
+            ours = er.get('ours') or {}
+            if ours.get('eps') is not None and cs.get('eps') is not None:
+                watch += (f"<p>Filing Flows' own estimate from the SEC figures — the same quarter last year times recent growth — is EPS ${ours['eps']:.2f}"
+                          + (f" on revenue of {money(ours['rev'])}" if ours.get('rev') else '') + f", against the analysts' ${cs['eps']:.2f}.</p>")
+    lastq = (f"<h2>The last report</h2><p>{e(name)} reported revenue of {e(revs)} for the {e(seo.period_words(q.get('label')))}"
+             + (f" ({e(pc(h.get('yoy')))} Y/Y)" if h.get('yoy') is not None else '') + (f", net earnings {e(h.get('ni_fmt') or money(h.get('ni')))}" if h.get('ni') is not None else '')
+             + (": " + ', '.join(f"{e(n)} {e(money(v))}" for n, v in segs[:4]) if len(segs) >= 2 else '')
+             + ". <a href='../revenue/'>How it makes money →</a> · <a href='../'>Every quarter →</a></p>") if h.get('revenue') else ''
+    body = f"<p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>{watch}{lastq}" + (f"<div class='seo-grid'>{charts}</div>" if charts else '')
+    mod = (last['reported'] if just else None) or (today - dt.timedelta(days=today.weekday())).isoformat()
+    return {'title': title, 'h1': h1, 'desc': lead[:300], 'body': body, 'qa': qa, 'modified': mod}
 
 
 # ---------------------------------------------------------------- write
@@ -431,6 +485,7 @@ def write(site, base, limit=None):
     d0 = dt.date.today()
     week = (d0 - dt.timedelta(days=d0.weekday())).isoformat()      # most topics change daily in small ways: dated by the week
     urls, counts = [], {t: 0 for t, _, _ in TOPICS}
+    images = seo.og_images(base)
     order = sorted(latest.values(), key=lambda r: -(r.get('revenue') or 0))[:limit]
     for r in order:
         cik, slug, t = r['cik'], slug_for(r), (r.get('ticker') or '')
@@ -467,7 +522,7 @@ def write(site, base, limit=None):
                     f"<p><a class='seo-cta' href='../../../#c-{cik}{('-' + app) if app else ''}'>Open the interactive view →</a></p>"
                     f"<p class='muted'>Updated {e(fdate(today))}. Read automatically from SEC filings and public data; errors are possible. Not investment advice.</p>")
             mod = p.get('modified') or week
-            doc = seo.page(f"{p['title']} | Filing Flows", p['desc'], url, body, 3, base + '/og.png', ld_for(co['who_name'], t, url, crumbs, p['qa'], mod))
+            doc = seo.page(seo.fit(p['title']), p['desc'], url, body, 3, images.get(f"c-{cik}") or base + '/og.png', ld_for(co['who_name'], t, url, crumbs, p['qa'], mod))
             d = os.path.join(site, 'c', slug, topic)
             os.makedirs(d, exist_ok=True)
             with open(os.path.join(d, 'index.html'), 'w', encoding='utf-8') as f:
