@@ -207,6 +207,32 @@
   // chart (web/guidance.js versus finds the main lines by the same ids)
   const FLOW_BASE = window.FF_FLOW_BASE || 'https://raw.githubusercontent.com/eurikamonica/filing-flows/flowdetail-history/public/';
   const flowDocs = new Map();
+  // what the notes already commit at the period's end (flowdetail.py forward), beside the guidance: contracted revenue not
+  // yet recognized and the share due within a year, the buyback authorization left, commitments and payments due
+  function forwardHTML(f, nodes, fy) {
+    if (!f) return '';
+    const rev = ((nodes || []).find((n) => n.id === 'revenue') || {}).v;
+    const year = rev > 0 ? rev * (fy ? 1 : 4) : null;           // a year of revenue at this period's pace
+    const pc = (x) => (x < 0.095 ? (x * 100).toFixed(1) : Math.round(x * 100));
+    const rows = [];
+    if (f.rpo) {
+      let x = money(f.rpo);
+      if (f.rpo_12m) x += ` · ${Math.round(f.rpo_12m_pct * 100)}% (${money(f.rpo_12m)}) expected within twelve months${year ? `, ${pc(f.rpo_12m / year)}% of a year of revenue at this ${fy ? 'year' : 'quarter'}’s pace` : ''}`;
+      rows.push(['Contracted revenue not yet recognized', x]);
+    }
+    if (f.buyback) rows.push(['Share buyback authorization left', money(f.buyback)]);
+    if (f.purchase_1y || f.purchase) rows.push(['Purchase commitments', [f.purchase_1y ? `${money(f.purchase_1y)} within a year` : '', f.purchase ? `${money(f.purchase)} in all` : ''].filter(Boolean).join(' · ')]);
+    if (f.debt_1y) rows.push(['Debt due within a year', money(f.debt_1y)]);
+    if (f.lease_1y) rows.push(['Lease payments due within a year', money(f.lease_1y)]);
+    if (f.amort_rest || f.amort_12m) rows.push(['Amortization of acquired intangibles still to come', f.amort_rest ? `${money(f.amort_rest)} in the rest of this fiscal year` : `${money(f.amort_12m)} in the next twelve months`]);
+    if (f.restructuring_left) rows.push(['Restructuring costs still expected', money(f.restructuring_left)]);
+    if (f.pension) rows.push(['Pension contributions expected', money(f.pension)]);
+    if (!rows.length) return '';
+    return `<div class="prose df-forward"><h3>Already committed — from the notes</h3>
+      <p class="muted">What the filing’s notes fix for the periods ahead, at the balance sheet date: read beside the company’s guidance (◆ Guidance on the chart).</p>
+      <dl class="facts">${rows.map(([k, v]) => `<dt>${t(k)}</dt><dd>${t(v)}</dd>`).join('')}</dl></div>`;
+  }
+
   function detailFlow(o) {
     const sec = document.createElement('section');
     sec.className = 'section detail-flow';
@@ -246,6 +272,8 @@
         };
         const body = $('.df-body', sec);
         body.innerHTML = '';
+        const fwd = forwardHTML(dp.forward, dp.nodes, o.fy);
+        if (fwd) setTimeout(() => body.insertAdjacentHTML('beforeend', fwd), 0);
         body.appendChild(chartUI(spec, {
           company: name, form: spec.form, label: o.q.label, docUrl: dp.url, cik: o.p.cik, detail: true,
           slug: `${o.ticker}-${o.q.label}-detailed`.replace(/\s+/g, '-'),

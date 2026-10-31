@@ -143,6 +143,29 @@ class Structure(unittest.TestCase):
         self.assertNotIn(G + 'NonoperatingIncomeExpense', F['J'])
 
 
+class Forward(unittest.TestCase):
+    def test_what_the_notes_commit(self):
+        T = 'us-gaap:RevenueRemainingPerformanceObligationExpectedTimingOfSatisfactionStartDateAxis'
+        ctx = {'I': {'i': '2026-03-31', 'dims': {}}, 'T1': {'i': '2026-03-31', 'dims': {T: 'typed:2026-04-01'}},
+               'T2': {'i': '2026-03-31', 'dims': {T: 'typed:2027-04-01'}},
+               'P1': {'i': '2026-03-31', 'dims': {'srt:ShareRepurchaseProgramAxis': 'x:P2024Member'}},
+               'P2': {'i': '2026-03-31', 'dims': {'srt:ShareRepurchaseProgramAxis': 'x:P2026Member'}}}
+        f = lambda c, v, cx, u='USD': {'c': c, 'v': v, 'ctx': cx, 'u': u, 'd': '-6', 'id': None}
+        facts = [f(G + 'RevenueRemainingPerformanceObligation', 500e9, 'I'),
+                 f(G + 'RevenueRemainingPerformanceObligationPercentage', 0.4, 'T1', 'pure'),
+                 f(G + 'RevenueRemainingPerformanceObligationPercentage', 0.3, 'T2', 'pure'),
+                 {'c': G + 'RevenueRemainingPerformanceObligationExpectedTimingOfSatisfactionPeriod1', 'v': 'P12M', 'ctx': 'T1', 'u': None, 'd': None, 'id': None},
+                 f(G + 'StockRepurchaseProgramRemainingAuthorizedRepurchaseAmount1', 10e9, 'P1'),
+                 f(G + 'StockRepurchaseProgramRemainingAuthorizedRepurchaseAmount1', 30e9, 'P2'),
+                 f(G + 'RestructuringAndRelatedCostExpectedCost1', 2e9, 'I'), f(G + 'RestructuringAndRelatedCostCostIncurredToDate1', 1.5e9, 'I')]
+        FL = N.Filing({'reports': [], 'contexts': ctx, 'units': {}, 'facts': facts, 'labels': {}, 'pre': {}, 'cal': {}, 'def': {}, 'roles': {}})
+        out = D.forward(FL, '2026-03-31')
+        self.assertEqual(out['rpo'], 500e9)
+        self.assertAlmostEqual(out['rpo_12m'], 200e9)                    # 40% within twelve months
+        self.assertEqual(out['buyback'], 40e9)                           # the programs' sum
+        self.assertEqual(out['restructuring_left'], 0.5e9)
+
+
 class Helpers(unittest.TestCase):
     def test_tidy(self):
         self.assertEqual(D.tidy('Increase (Decrease) in Accounts Receivable'), 'Accounts receivable')

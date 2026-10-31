@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import xbrl_filing as X
 import notes as N
 
-VERSION = 1
+VERSION = 2                  # 2: what the notes already commit (forward figures) with each period
 FOLD = 0.003                 # parts under 0.3% of revenue are summed into "Other …" (per junction and side)
 MAX_PARTS = 9                # at most this many parts per side of a junction; the smallest beyond it are summed too
 NOTE_DEPTH = 2               # a line split by a note, its parts by another note: this many levels at most
@@ -470,7 +470,12 @@ def read_filing(FL):
     for k in keys:
         c, dims = parse_key(k)
         labels[k] = ('Other (outside the split)' if k.startswith('gap:') else FL.label(dims[-1][1]) if dims else tidy(FL.label(c, 'terse')))
+    try:
+        fwd = forward(FL, P['cur'][2])
+    except Exception:                                    # a note read badly never stops the chart
+        fwd = {}
     return {'periods': {k: (list(v[1:]) if isinstance(v, tuple) else v) for k, v in P.items()}, 'J': {t: j['kids'] for t, j in T.J.items()},
+            'forward': fwd,
             'via': {t: j['via'] for t, j in T.J.items()}, 'labels': labels, 'vals': vals, 'root': rk, 'cash_root': cash_root,
             'cash_ni': getattr(T, 'cash_ni', None), 'axis': axis}
 
@@ -519,6 +524,66 @@ def _under(J, top, k):
                 seen.add(x)
                 todo.append(x)
     return False
+
+
+# what the notes already commit for the periods ahead, at the balance sheet date (shown beside the guidance)
+FORWARD = [
+    ('rpo', ['RevenueRemainingPerformanceObligation']),
+    ('buyback', ['StockRepurchaseProgramRemainingAuthorizedRepurchaseAmount1']),
+    ('purchase_1y', ['UnrecordedUnconditionalPurchaseObligationBalanceOnFirstAnniversary', 'PurchaseObligationDueInNextTwelveMonths',
+                     'UnrecordedUnconditionalPurchaseObligationDueWithinOneYear']),
+    ('purchase', ['UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount', 'PurchaseObligation']),
+    ('debt_1y', ['LongTermDebtCurrent', 'DebtCurrent']),
+    ('amort_rest', ['FiniteLivedIntangibleAssetsAmortizationExpenseRemainderOfFiscalYear']),
+    ('amort_12m', ['FiniteLivedIntangibleAssetsAmortizationExpenseNextTwelveMonths']),
+    ('lease_1y', ['LesseeOperatingLeaseLiabilityPaymentsDueNextTwelveMonths', 'LesseeOperatingLeaseLiabilityPaymentsRemainderOfFiscalYear']),
+    ('restructuring_expected', ['RestructuringAndRelatedCostExpectedCost1']),
+    ('restructuring_to_date', ['RestructuringAndRelatedCostCostIncurredToDate1']),
+    ('pension', ['DefinedBenefitPlanExpectedFutureEmployerContributionsRemainderOfFiscalYear',
+                 'DefinedBenefitPlanExpectedFutureEmployerContributionsNextFiscalYear']),
+]
+RPO_TIMING = 'us-gaap:RevenueRemainingPerformanceObligationExpectedTimingOfSatisfactionStartDateAxis'
+
+
+def forward(FL, end):
+    """{key: amount} of what the notes already commit at the balance sheet date: contracted revenue not yet recognized (and
+    the share expected within twelve months), the buyback authorization left, purchase commitments, debt and lease payments
+    due within a year, amortization still to come, restructuring costs still expected, pension contributions."""
+    at = ('i', end)
+    out = {}
+    for key, locs in FORWARD:
+        for loc in locs:
+            for c in FL.by_local.get(loc, []):
+                v = FL.v(c, at)
+                if v is None:                     # only by program or plan: their sum
+                    vs = [x for (cc, pk, dims), (x, _, _) in FL.num.items() if cc == c and pk == at and len(dims) == 1
+                          and re.search(r'(?i)RepurchaseProgram|Plan', dims[0][0])]
+                    v = sum(vs) if vs else None
+                if v is not None:
+                    out[key] = v
+                    break
+            if key in out:
+                break
+    if 'restructuring_expected' in out:
+        left = out.pop('restructuring_expected') - out.pop('restructuring_to_date', 0)
+        if left > 0:
+            out['restructuring_left'] = left
+    out.pop('restructuring_to_date', None)
+    if 'rpo' in out:                              # the share expected within twelve months
+        e1 = (_d(end) + dt.timedelta(days=1)).isoformat()
+        for f in FL.by_c.get('us-gaap:RevenueRemainingPerformanceObligationPercentage', []):
+            cx = FL.ctx[f['ctx']]
+            d = cx['dims']
+            if cx.get('i') != end or set(d) != {RPO_TIMING} or not isinstance(f['v'], float):
+                continue
+            start = d[RPO_TIMING].replace('typed:', '')
+            per = next((g['v'] for g in FL.by_c.get('us-gaap:RevenueRemainingPerformanceObligationExpectedTimingOfSatisfactionPeriod1', [])
+                        if g['ctx'] == f['ctx']), None)
+            if start[:10] <= e1 and per in ('P12M', 'P1Y'):
+                out['rpo_12m'] = out['rpo'] * f['v']
+                out['rpo_12m_pct'] = f['v']
+                break
+    return out
 
 
 def _skeleton(T, FL, isr, rk, p):
@@ -981,7 +1046,7 @@ def _period(q, nodes, links, prevq, annual=False):
     return {'end': q['end'], 'start': q.get('start'), 'period': 'fy' if annual else 'q', 'fq': None if annual else q['fq'],
             'form': m.get('form'), 'accession': m.get('accession'), 'filed': m.get('filed'), 'url': m.get('url'),
             'q_end': prevq['end'] if prevq else None, 'has_y': any(n.get('y') is not None for n in nodes),
-            'cash': bool(F.get('cash_root')) and (annual or q.get('cash', False)), 'axis': F.get('axis'),
+            'cash': bool(F.get('cash_root')) and (annual or q.get('cash', False)), 'axis': F.get('axis'), 'forward': F.get('forward') or None,
             'nodes': nodes, 'links': links}
 
 
