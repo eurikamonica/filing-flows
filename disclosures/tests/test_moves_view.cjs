@@ -138,10 +138,50 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   const vals = Float64Array.from({ length: 2000 }, () => normal()).sort();
   const D = V.kde(vals, -6, 6, 241);
   near(D.ys.reduce((a, y) => a + y, 0) * (12 / 240), 1, 'the density integrates to one', 0.01);
-  ok(V.PANELS.map((p) => p[0]).join() === 'now,1,5,10,21,back,high', 'the panels a picture can hold');
+  ok(V.PANELS.map((p) => p[0]).join() === 'now,1,5,10,21,back,high,vol', 'the panels a picture can hold');
 }
 
-// 6. the hub tab from an index file
+// 6. volatility: realized, a stock ranked by its own volatility, a similar-volatility filter, an index judged by the S&P 500
+{
+  const rets = [];
+  for (let i = 0; i < 700; i++) rets.push((i > 600 ? 0.03 : 0.01) * normal());
+  const A = Object.assign(V.decode(doc(rets).doc), { last: 50 });
+  const rv = V.realized(A.r, 21);
+  const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / (a.length - 1)); };
+  near(rv[700], sd(Array.from(A.r).slice(679, 700)) * Math.sqrt(252), 'realized volatility of the last 21 days', 1e-9);
+  ok(Number.isNaN(rv[20]) && Number.isFinite(rv[21]), '21 returns before the first');
+  const R = V.analyze(A, { w: 1, measure: 'rv', mode: 'latest', band: 2.5 });
+  near(R.value, rv[700], 'ranked by its own volatility', 1e-12);
+  ok(R.at > 85 && R.rec === undefined && R.fvol && R.fvol.sim, 'a volatile stretch ranks high; no recovery for a level; the month after measured');
+  const st = { w: 1, measure: 'raw', mode: 'latest', band: 10 };
+  const Any = V.analyze(A, st), Sim = V.analyze(A, Object.assign({}, st, { vreg: 'similar' }));
+  ok(Number.isFinite(Sim.reg) && Sim.h[1].all.n < Any.h[1].all.n && Sim.h[1].all.n > 0, 'similar volatility: fewer days, every one from a like stretch');
+  // a volatility index: its level, and the S&P 500's returns on the same days
+  const lv = [], sp = [];
+  for (let i = 0; i < 500; i++) { lv.push(0.05 * normal()); sp.push(0.0005 + 0.01 * normal()); }
+  const VX = Object.assign(V.decode(doc(lv).doc), { last: 20 }), SP = Object.assign(V.decode(doc(sp).doc), { name: 'S&P 500 index' });
+  const L = V.analyze(VX, { w: 1, measure: 'level', mode: 'latest', band: 5 }, null, SP);
+  const cv = V.cum(VX.r), cs = V.cum(SP.r), sorted = Float64Array.from(cv).sort();
+  near(L.at, V.pctOf(sorted, cv[500]), 'the level ranked among every day');
+  ok(L.out === 'S&P 500 index' && L.rec === undefined && L.fvol === undefined, 'judged by the S&P 500; no recovery, no volatility of the index');
+  const f = []; for (let j = 0; j < 500; j++) if (L.sim[j] && j + 21 <= 500) f.push(Math.expm1(cs[j + 21] - cs[j]));
+  ok(L.h[21].sim.n === f.length, 'the S&P 500 a month after each day at a like level');
+  const W = V.analyze(VX, { w: 1, measure: 'level', mode: 'whatif', whatif: 40, band: 5 }, null, SP);
+  near(W.value, Math.log(40 / 20) + cv[500], 'a what-if level', 1e-12);
+  ok(!V.canDraw({ volIdx: true, rec: null }, 'vol') && !V.canDraw({ rec: null }, 'back') && V.canDraw({ rec: {} }, 'high') && V.canDraw({}, 'now'), 'a picture holds only the panels that apply');
+  // the VIX beside a market with a shorter history: ranked in the VIX's own whole history, as on the VIX's page
+  const vx = []; for (let i = 0; i < 600; i++) vx.push((i < 300 ? 0.06 : 0.01) * normal());
+  const VX2 = Object.assign(V.decode(doc(vx).doc), { last: 19 });
+  const mk = []; for (let i = 0; i < 299; i++) mk.push(0.01 * normal());
+  const MK = Object.assign(V.decode(doc(mk, VX2.days[301]).doc), { last: 100 });
+  const VD = V.volData({ A: MK, t: -1, vix: VX2 });
+  const cvx = V.cum(VX2.r), lvAll = Float64Array.from(cvx, (c) => 19 * Math.exp(c - cvx[600]) / 100).sort();
+  near(VD.vixNow, 0.19, 'the VIX on the latest day', 1e-12);
+  near(VD.vixPct, V.pctOf(lvAll, 0.19), "the VIX ranked among all its days, not only the market's", 1e-12);
+  ok(VD.vixSince === VX2.days[0] && MK.days[MK.days.length - 1] === VX2.days[600], 'since its first day');
+}
+
+// 7. the hub tab from an index file
 {
   const fields = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members', 'as_of', 'd0', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every', 'last_as', 'move5', 'pct5', 'move21', 'pct21',
     'sim1', 'sim5', 'sim21', 'ext1', 'ext5', 'ext21', 'all1', 'all5', 'all21'];
@@ -167,5 +207,50 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   H.movesDeepLink('SIC-3674'); ok(state.mvv === 'industries' && state.mvk === 'SIC-3674', 'deep link to an industry');
   H.movesDeepLink('nvda'); ok(state.mvv === 'one' && state.mvt === 'NVDA', 'deep link to a company');
   H.movesDeepLink('XLK'); ok(state.mvv === 'market' && state.mvk === 'XLK', 'deep link to a sector');
+}
+
+// 8. older days counting less: the weighted percentile, days like it, what followed and how long it took, against a
+// plain reference written here; equal weights give back the unweighted numbers exactly
+{
+  const s = Float64Array.from({ length: 301 }, () => normal()).sort(), ones = new Float64Array(301).fill(1), cw = Float64Array.from({ length: 302 }, (_, i) => i);
+  const Q = V.wquant(s, ones);
+  ok([0, 5, 25, 50, 75, 95, 100, 37.3].every((q) => Math.abs(Q(q) - V.quantile(s, q)) < 1e-12), 'equal weights: the plain quantiles');
+  ok([s[0], s[150], 0.1, s[300]].every((v) => Math.abs(V.pctW(s, cw, v) - V.pctOf(s, v)) < 1e-12), 'equal weights: the plain mid-rank percentile');
+  const one = V.stats(Float64Array.from(s), new Uint8Array(301).fill(1), 1), oneW = V.stats(Float64Array.from(s), new Uint8Array(301).fill(1), 1, ones);
+  ok(Math.abs(one.median - oneW.median) < 1e-12 && Math.abs(one.up - oneW.up) < 1e-12 && Math.abs(one.sd - oneW.sd) < 1e-12 && Math.abs(oneW.neff - 301) < 1e-9, 'equal weights: the plain summary');
+  // a weighted Kaplan–Meier worked by hand: weights 1, 2, 1, 1
+  const K = V.km([2, 3, 5, 5], [true, false, true, true], [1, 2, 1, 1]);
+  ok(Math.abs(K.by(2) - 0.2) < 1e-12 && Math.abs(K.by(4) - 0.2) < 1e-12 && K.by(5) === 1 && K.median === 5 && K.n === 4, 'a weighted Kaplan–Meier');
+  // a calm recent stretch after a wild one: with older days counting less, a −2.5% day is rarer
+  const rets = [];
+  for (let i = 0; i < 1500; i++) rets.push((i < 750 ? 0.03 : 0.008) * normal());
+  rets.push(-0.025);
+  const A = V.decode(doc(rets, '2015-01-05').doc);
+  const o = { w: 1, measure: 'raw', mode: 'latest', band: 5, hl: 1 }, R = V.analyze(A, o), R0 = V.analyze(A, Object.assign({}, o, { hl: 0 }));
+  const N = A.days.length - 1, c = V.cum(A.r), ref = Date.parse(A.days[N]);
+  const wt = A.days.map((d) => Math.pow(0.5, Math.abs(ref - Date.parse(d)) / (365.25 * 864e5)));
+  const x = (j) => c[j] - c[j - 1], v = x(N);
+  let W = 0, Wb = 0; for (let j = 1; j <= N; j++) { W += wt[j]; if (x(j) < v) Wb += wt[j]; else if (x(j) === v) Wb += wt[j] / 2; }
+  near(R.at, 100 * Wb / W, 'the weighted percentile', 1e-9);
+  ok(R.at < R0.at && R.hl === 1 && Number.isFinite(R0.at) && R0.hl === undefined, 'rarer against the calm recent years than against all of them');
+  const pw = (val) => { let b = 0; for (let j = 1; j <= N; j++) { if (x(j) < val) b += wt[j]; else if (x(j) === val) b += wt[j] / 2; } return 100 * b / W; };
+  let simOk = true; const sim = [];
+  for (let j = 1; j < N; j++) { const inn = Math.abs(pw(x(j)) - R.at) <= 5; if (inn !== !!R.sim[j]) simOk = false; if (inn) sim.push(j); }
+  ok(simOk && sim.length > 20, 'days like it: within ±5 points of weighted percentile');
+  let a = 0, b = 0, up = 0; const f = [];
+  for (const j of sim) if (j + 21 <= N) { const r = Math.expm1(c[j + 21] - c[j]); a += wt[j]; b += wt[j] * wt[j]; if (r > 0) up += wt[j]; f.push([r, wt[j]]); }
+  const S = R.h[21].sim;
+  near(S.up, up / a, 'the weighted share that rose a month later', 1e-12);
+  near(S.neff, a * a / b, 'how many days of full weight they are worth', 1e-9);
+  f.sort((p, q) => p[0] - q[0]);                                     // the weighted median by hand: half the weight on each side
+  let acc = 0, below = 0; for (const [r, ww] of f) { if (r < S.median) below += ww; acc += ww; }
+  ok(Math.abs(below / acc - 0.5) < 0.5 * Math.max(...f.map((p) => p[1])) / acc + 1e-9, 'the weighted median splits the weight in half');
+  let Wf = 0; for (let j = 1; j <= N; j++) if (R.side > 0 ? pw(x(j)) >= R.at - 1e-9 : pw(x(j)) <= R.at + 1e-9) Wf += wt[j];   // the day itself included
+  near(R.every, W / Wf, 'a fall this large or larger: 1 in (all the weight ÷ the weight of such days)', 1e-9);
+  ok(R.rec && R.rec.sim.back.n === R0.rec.sim.back.n || R.rec.sim.back.n > 0, 'how long it took, weighted');
+  const D = V.kde(Float64Array.from(S.s), -0.5, 0.5, 401, S.sw);
+  near(D.ys.reduce((p, q) => p + q, 0) * (1 / 400), 1, 'the weighted density integrates to one', 0.02);
+  const Same = V.analyze(A, Object.assign({}, o, { hl: 0 }));
+  ok(Same.at === R0.at && Same.h[21].sim.median === R0.h[21].sim.median && Same.sw === undefined, 'half-life 0: every day the same, as before');
 }
 console.log(`moves view: ${n} checks passed`);

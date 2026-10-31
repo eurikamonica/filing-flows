@@ -5,7 +5,8 @@
 # historical simulation, factor model, Cholesky, t-copula, DCC-GARCH), analogs and correlated-asset historical simulation,
 # rule-based price action with its pooled out-of-sample evidence, portfolios of 13F managers and officials, and the
 # weekly ledger of frozen forecasts. Then public/moves/ (app/moves.py, the Move odds): each asset's daily returns, the
-# latest moves and their percentiles; the style ETFs and the market indices' daily history since 1970 are collected for it.
+# latest moves and their percentiles; for it the style ETFs, the market indices (the S&P 500 since 1928) and the volatility
+# indices (VIX since 1990 …) are collected, and every company's older daily bars once (paths.py long, cache/long/).
 # Kept on the branch "research-paths" (one commit, force-pushed); scan.yml publishes public/ at
 # disclosures/data/research/paths/.
 name: Research — price paths & patterns
@@ -61,6 +62,13 @@ jobs:
         timeout-minutes: 60
         run: |
           python disclosures/app/paths.py collect --root pth --universe _research-valuation/public/index.json --minutes "${{ inputs.minutes || '30' }}"
+      - name: Older daily bars for the move odds (cache/long/, each ticker once)
+        # every company's and ETF's daily bars before the ten years collected above, from its first trading day (1962 for
+        # the oldest), and an index's before the date it was first collected from: fetched once per ticker, about 800 a
+        # day until all are in, then nothing to do
+        continue-on-error: true
+        timeout-minutes: 20
+        run: python disclosures/app/paths.py long --root pth --universe _research-valuation/public/index.json --minutes 15
       - name: Build public/
         if: ${{ inputs.build != 'false' }}
         timeout-minutes: 150
@@ -81,7 +89,8 @@ jobs:
           cd pth
           [ -d cache ] || exit 0
           printf '%s\n' '# research-paths (data only)' '' 'Daily bars (cache/ohlc/: a .base file per ticker that changes only when a dividend or split restates' \
-            'history, and the recent months), the frozen weekly forecasts (cache/ledger/) and the files the site publishes (public/),' \
+            'history, and the recent months), the older daily returns of the move odds (cache/long/, each ticker once), the frozen' \
+            'weekly forecasts (cache/ledger/) and the files the site publishes (public/),' \
             'kept by .github/workflows/research-paths.yml on main. Force-pushed as a single commit.' > README.md
           git add -A
           git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "paths $(date -u +%Y-%m-%dT%H:%MZ)" || true

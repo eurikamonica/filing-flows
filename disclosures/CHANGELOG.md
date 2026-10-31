@@ -22,6 +22,21 @@ waiting count for as long as they were watched), with what the day looked at sti
 weeks (10 trading days). A picture to share: pick any of Now (the bell of every move with the day marked), the next
 day, 1 week, 2 weeks, 1 month, climb back and new high, and the view draws them into one PNG (title, panels, footer,
 the Filing Flows mark) to preview, download or copy.
+More history and volatility: paths.py long fetches every company's and ETF's daily bars before the ten years on file,
+once (from 1962 for the oldest; joined by their returns, so later dividends and splits do not matter; an index first
+collected from a later date gets its earlier years the same way); the S&P 500 index goes back to 1928, the Nasdaq to
+1971; the volatility indices are collected (VIX, VIX9D, VIX3M, VVIX, VXN, SKEW, OVX, GVZ,
+and the VIX term structure, VIX ÷ VIX3M). The view adds a volatility section (one-month realized volatility over the
+whole history and its rank, the VIX beside the market's), "its volatility" as a measure, "volatility then: similar" (only
+days that came in a like stretch), the volatility of the month after, and a volatility panel for the picture; a
+volatility index is ranked by its level and judged by what the S&P 500 did next. The hub adds the volatility cards and a
+volatility column in the stocks table.
+Older days counting less: "Older days count" — the same, or a day's weight halving every 10, 5 or 2 years or every year
+away from the day looked at. Everything is then weighted (the percentile as the share of weight below the move, the
+days like it within the band of weighted percentiles, the medians, shares and ranges of what followed, a weighted
+Kaplan–Meier, the volatility after), with how many days of full weight the weights are worth ((Σw)² / Σw²) and the
+unweighted figures beside them: the dashed lines on the charts and the picture, older dots fainter over time. Worked
+out in the browser only; the hub's summary counts every day the same.
 
 ## Notes: what each note changed against last year's annual report (年度变化)
 
