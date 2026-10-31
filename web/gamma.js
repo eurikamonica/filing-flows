@@ -247,6 +247,29 @@
     draw();
   }
 
+  // Move odds of the industry (the Disclosure Hub's moves-view.js on its equal-weighted SIC composite; the SIC major group
+  // when fewer than five of its companies have daily prices on file)
+  var loaded={};
+  function loadScript(src){
+    return loaded[src]||(loaded[src]=new Promise(function(ok,bad){var s=document.createElement('script');s.src=src;s.onload=ok;
+      s.onerror=function(){delete loaded[src];bad(new Error(src+' did not load'));};document.head.appendChild(s);}));
+  }
+  async function moveOdds(sic,here){
+    var sec=document.getElementById('gamma-moves');if(!sec||typeof fetch!=='function')return;
+    var keys=['SIC-'+sic,'SIC-'+sic.slice(0,2)];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var r=await fetch('disclosures/data/research/paths/moves/a/'+keys[i]+'.json',{cache:'no-cache'});
+        if(!r.ok)continue;
+        await loadScript('disclosures/moves-view.js');
+        if(!here()||!global.MovesView)return;
+        sec.hidden=false;
+        if(i)document.getElementById('gamma-moves-note').textContent='Fewer than five of its companies have daily prices on file: its SIC major group ('+sic.slice(0,2)+') instead';
+        await global.MovesView.render(document.getElementById('gamma-moves-body'),{key:keys[i],hub:'disclosures/',here:here});
+        return;
+      }catch(e){/* no move odds for this industry */}
+    }
+  }
   async function industry(app,sic,ctx) {
     var here=ctx.live();
     ctx.setNav('gamma');
@@ -272,6 +295,8 @@
       '<section class="section"><div class="section-head"><h2>Company growth & lifecycle</h2><span class="muted">Stage labels are rule-based diagnostics, not HMM estimates</span></div>'+
       '<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Quarter end</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Q/Q</th><th>Stage</th></tr></thead><tbody id="gamma-companies"></tbody></table></div></section>'+
       '<section class="section" id="gamma-model" hidden></section>'+
+      '<section class="section" id="gamma-moves" hidden><div class="section-head"><h2>Move odds</h2>'+
+      '<span class="muted" id="gamma-moves-note">How rare the industry\'s latest move is in its own history, and what followed moves like it</span></div><div id="gamma-moves-body"></div></section>'+
       '<section class="section"><div class="section-head"><h2>Estimated money flow (BEA input-output)</h2>'+
       '<span class="muted">Every number an estimate at industry-average precision</span></div><div id="gamma-io"></div></section>'+
       '<section class="section"><div class="section-head"><h2>Money flow lab <span class="fl-beta">Beta</span></h2>'+
@@ -285,6 +310,7 @@
       '<p>Peer percentile is empirical and does not give the likelihood of meeting expected revenue. Each company contributes several correlated observations to historical pooled samples.</p>'+
       '<p>Relationships are customers and suppliers a company names in its annual report (a sentence such as “Walmart accounted for 16% of net sales”, a customer table, or XBRL concentration facts), matched to SEC registrants by exact name. Money Flow widths are the stated share × the supplier’s revenue for that year. Companies disclose customers above about 10% of revenue, so coverage is partial: a missing link means not disclosed or not matched, not the absence of a relationship.</p></details>';
     if(global.FFModel)global.FFModel.industry(document.getElementById('gamma-model'),sic);
+    moveOdds(String(d.sic||sic),here);
     var get=function(id){return document.getElementById(id);};
     function matching(m) {
       var stage=get('gstage').value, size=get('gsize').value, rev=+m.revenue_usd;
