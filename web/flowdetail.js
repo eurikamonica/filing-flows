@@ -30,6 +30,9 @@
     icf: ['NetCashProvidedByUsedInInvestingActivities', 'NetCashProvidedByUsedInInvestingActivitiesContinuingOperations'],
     fincf: ['NetCashProvidedByUsedInFinancingActivities', 'NetCashProvidedByUsedInFinancingActivitiesContinuingOperations'],
     capex: ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets'],
+    da: ['DepreciationDepletionAndAmortization', 'DepreciationAmortizationAndAccretionNet', 'DepreciationAndAmortization', 'Depreciation'],
+    sbc: ['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense', 'ShareBasedPaymentArrangementNoncashExpense'],
+    interest: ['InterestExpense', 'InterestExpenseNonoperating', 'InterestExpenseDebt', 'InterestExpenseNet'],
     cash_chg: ['CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect',
       'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseExcludingExchangeRateEffect',
       'CashAndCashEquivalentsPeriodIncreaseDecrease', 'CashPeriodIncreaseDecrease'],
@@ -39,7 +42,7 @@
   const NAMES = { revenue: 'Revenue', gp: 'Gross profit', oi: 'Operating profit', pretax: 'Pre-tax earnings', net: 'Net earnings',
     ocf: 'Operating cash flow', icf: 'Investing activities', fincf: 'Financing activities', tax: 'Income tax', cor: 'Cost of revenue',
     opex: 'Operating expenses' };
-  const SHORT = { revenue: 'revenue', gp: 'gross profit', opex: 'opex', costs: 'costs', oi: 'operating profit', pretax: 'pre-tax', net: 'net earnings',
+  const SHORT = { fcf: 'free cash flow', capex: 'capital spending', da: 'D&A', sbc: 'stock pay', interest: 'interest expense', revenue: 'revenue', gp: 'gross profit', opex: 'opex', costs: 'costs', oi: 'operating profit', pretax: 'pre-tax', net: 'net earnings',
     ocf: 'OCF', cor: 'cost of revenue', tax: 'income tax', nonop: 'other income', icf: 'investing', fincf: 'financing', cash_chg: 'cash' };
   const AXIS_WORD = { 'srt:ProductOrServiceAxis': 'Products', 'us-gaap:StatementBusinessSegmentsAxis': 'Segments', 'srt:StatementGeographicalAxis': 'Regions' };
   const CHAIN = new Set(['revenue', 'gp', 'oi', 'pretax', 'net', 'ocf', 'costs', 'opex']);
@@ -305,7 +308,10 @@
     const toggles = new Map();                              // node id → '+' (closed, can open) | '−' (open, can close)
     keys.forEach((k) => {
       const m = mainOf(k);
-      const i = m && ![...ids.values()].includes(m) ? m : (k.includes('~') ? 'o:' : 'k:') + k;
+      // the main lines keep the standard chart's ids (the guidance finds them by id); free cash flow and capital spending
+      // by use too
+      const mm = m || (k === '#cat:fcf' ? 'fcf' : k === '#cat:capex' ? 'capex' : null);
+      const i = mm && ![...ids.values()].includes(mm) ? mm : (k.includes('~') ? 'o:' : 'k:') + k;
       ids.set(k, i);
       const name = nameOf(k);
       const short = name.length <= 56 ? name : name.slice(0, 54).replace(/\s+\S*$/, '').replace(/[,;:–-]$/, '') + ' …';
@@ -370,11 +376,237 @@
     };
   }
 
+  // ---------- what the company says ahead (pipeline/outlook.py: the MD&A's and the earnings release's statements) ----------
+  // each statement goes to the line it names (a segment, a cost line …), else to the line of its topic
+  const TOPIC_LINES = { demand: ['revenue'], backlog: ['revenue'], ai: ['revenue'], products: ['revenue'], macro: ['revenue'], margin: ['gp', 'oi'],
+    costs: ['opex', 'costs', 'cor'], supply: ['cor', 'costs'], capex: ['capex'], returns: ['#cat:buyback', '#cat:dividend'], financing: ['#cat:debt'],
+    tax: ['tax'], people: ['opex', 'costs'], deals: ['#cat:acq'], regulation: [], other: [] };
+  const GENERIC = /^(revenue|other|net|total|cost|costs|expenses?|income|operating|profit|gross profit|operating profit|net earnings|pre-tax earnings)$/i;
+  function outlookOn(ol, sp) {
+    const out = new Map();
+    if (!ol || !ol.docs || !sp) return out;
+    const docs = [ol.docs.find((d) => d.kind === 'mdna'), ol.docs.find((d) => d.kind === 'release')].filter(Boolean);
+    const named = sp.nodes.map((n) => [n, dec(n.full || n.name).replace(/\s*·.*$/, '').replace(/\s*\(.*\)$/, '').trim()])
+      .filter(([n, nm]) => nm.length >= 4 && !GENERIC.test(nm) && !/^Other \(/.test(nm) && !n.id.startsWith('o:'))
+      .sort((a, b) => b[1].length - a[1].length);
+    const byKey = new Map(sp.nodes.map((n) => [n.key, n])), byId = new Map(sp.nodes.map((n) => [n.id, n]));
+    docs.forEach((d) => (d.statements || []).forEach((x) => {
+      if (!x || !x.t || x.status === 'dropped') return;
+      const low = x.t.toLowerCase();
+      let n = (named.find(([, nm]) => low.includes(nm.toLowerCase())) || [])[0];
+      if (!n) { const ids = TOPIC_LINES[x.topic] || []; for (const id of ids) { n = byId.get(id) || byKey.get(id); if (n) break; } }
+      if (!n) return;
+      if (!out.has(n.id)) out.set(n.id, []);
+      out.get(n.id).push({ t: x.t, tone: x.tone, hedge: x.hedge, status: x.status, when: x.when, src: d.kind === 'mdna' ? `${d.form} MD&A` : 'earnings release', filed: d.filed });
+    }));
+    return out;
+  }
+
   // the lines that moved most (the comparison's notes under the chart)
   function movers(sp, attr) {
     const unit = Math.max(...sp.nodes.map((n) => n.v || 0)) >= 1e9 ? 'B' : 'M';
     return sp.nodes.filter((n) => n[attr] != null && n.v != null && n.id !== 'revenue').sort((a, b) => Math.abs(b.v - b[attr]) - Math.abs(a.v - a[attr])).slice(0, 4)
       .map((n) => { const d = n.v - n[attr]; return `${dec(n.name)}: ${money(n.v, unit)}, ${d >= 0 ? '+' : '−'}${money(Math.abs(d), unit)} (${pct(n.v, n[attr])})`; });
+  }
+
+  // the guidance to draw the next period from: the latest release's items and, for the same periods, the figures of a newer
+  // 10-Q / 10-K outlook (it restates or updates them)
+  function guidanceDoc(src) {
+    if (!src) return null;
+    const g = src.g ? Object.assign({}, src.g, { items: (src.g.items || []).slice() }) : null;
+    const newer = ((src.hist && src.hist.releases) || []).filter((r) => r.src && r.src !== '8-K' && (!g || !g.filed || r.filed >= g.filed));
+    if (!g && !newer.length) return null;
+    const out = g || { items: [], filed: newer[0].filed, label: null };
+    newer.slice().reverse().forEach((r) => (r.items || []).forEach((it) => {
+      const k = `${it.metric}|${it.basis || ''}|${it.period}`;
+      out.items = out.items.filter((x) => `${x.metric}|${x.basis || ''}|${x.period}` !== k);
+      out.items.push(Object.assign({}, it, { src: r.src }));
+    }));
+    return out;
+  }
+
+  // a fourth quarter guided for revenue while a cash line is guided only for the year (Amazon: capital spending for 2026):
+  // the year's figure less the three quarters reported, read from this company's own quarters on the canvas
+  function impliedQ4(g, base, company) {
+    const FG = global.FFGuidance;
+    if (!FG || !FG.target) return g;
+    const tg = FG.target(g, base, company);
+    const m = tg && /^Q4 (?:FY)?(\d{4})$/.exec(tg.period || '');
+    if (!m) return g;
+    const fyLabel = `FY${m[1]}`;
+    const qs = (company._doc || []).filter((p) => p.u && p.fq >= 1 && p.fq <= 3).sort((a, b) => (a.end < b.end ? 1 : -1)).slice(0, 3);
+    if (qs.length !== 3 || new Set(qs.map((p) => p.fq)).size !== 3) return g;
+    const lineOf = (p, metric) => {
+      const now = p.u.now || {}, keys = Object.keys(now);
+      if (metric === 'capex') return now['#cat:capex'] != null ? -now['#cat:capex'] : (now[keys.find((k) => mainOf(k) === 'capex')] || null);
+      if (metric === 'ocf') return now[keys.find((k) => mainOf(k) === 'ocf')] || null;
+      if (metric === 'fcf') return now['#cat:fcf'] != null ? now['#cat:fcf'] : null;
+      if (metric === 'da') return now[keys.find((k) => mainOf(k) === 'da' && k.startsWith('cf>'))] || null;
+      if (metric === 'sbc') return now[keys.find((k) => mainOf(k) === 'sbc' && k.startsWith('cf>'))] || null;
+      return null;
+    };
+    const items = g.items.slice();
+    ['capex', 'ocf', 'fcf', 'da', 'sbc'].forEach((metric) => {
+      if (items.some((it) => it.metric === metric && it.period === tg.period)) return;
+      const fy = items.find((it) => it.metric === metric && it.unit === 'usd' && it.period === fyLabel && it.lo != null);
+      if (!fy) return;
+      const done = qs.map((p) => lineOf(p, metric));
+      if (done.some((v) => v == null)) return;
+      const ytd = done.reduce((a, b) => a + b, 0);
+      const lo = fy.lo - ytd, hi = (fy.hi == null ? fy.lo : fy.hi) - ytd;
+      if (!(hi > 0)) return;
+      items.push(Object.assign({}, fy, { period: tg.period, lo, hi, approx: fy.approx, ends: `implied: ${fyLabel} guidance less three quarters` }));
+    });
+    return Object.assign({}, g, { items });
+  }
+
+  // ---------- the next period as guided, in this detail ----------
+  // web/guidance.js projects the drawn chart (the guided lines at their midpoints, every other line at its share of its
+  // parent). Here that projection becomes values for every line of the period (a line not drawn moves with the drawn line it
+  // sits in), the cash lines the company guided are set (capital spending, operating and free cash flow, D&A, stock-based
+  // pay), every total is summed again and the flows are built anew: free cash flow can turn from a gap into a surplus, and
+  // the cash drawn or added is what the other lines leave.
+  function guidedValues(u, o, sp0, r, items, period) {
+    const S = structure(u, o);
+    const J = S.J, now = u.now || {};
+    const rv = new Map(r.nodes.map((n) => [n.id, +n.v]));
+    const rho = new Map();
+    sp0.nodes.forEach((n) => {
+      const k = sp0.keys.get(n.id);
+      if (k && n.v > 0) rho.set(k, rv.has(n.id) ? rv.get(n.id) / n.v : 0);
+    });
+    Object.entries(S.alias).forEach(([a, b]) => { if (rho.has(b) && !rho.has(a)) rho.set(a, rho.get(b)); });
+    if (u.cash_ni && u.cash_ni !== u.root && rho.has(u.root) && !rho.has(u.cash_ni)) rho.set(u.cash_ni, rho.get(u.root));
+    const parent = new Map();
+    Object.entries(J).forEach(([t, kids]) => kids.forEach(([k]) => { if (!parent.has(k)) parent.set(k, t); }));
+    // the cash lines stay as in the period on file unless guided (net earnings come in as projected; the cash drawn or added
+    // is the balance)
+    const cashLine = (k) => (k.startsWith('cf>') || k.startsWith('#cat:')) && k !== u.cash_ni;
+    const ratio = (k, d) => (cashLine(k) ? 1 : rho.has(k) ? rho.get(k) : (d || 0) < 24 && parent.has(k) ? ratio(parent.get(k), (d || 0) + 1) : 1);
+    const vals = {};
+    Object.keys(now).forEach((k) => { vals[k] = now[k] * ratio(k); });
+    Object.entries(u.of || {}).forEach(([k, d]) => [d.sbc, d.amort].forEach((x) => {
+      if (x && now[x] != null && !parent.has(x) && !rho.has(x)) vals[x] = now[x] * ratio(k);
+    }));
+    const R0 = Math.max(0, ...sp0.nodes.map((n) => +n.v || 0));
+    // every total that added up in the filing is summed again (what it did not itemize moves with it)
+    function resum() {
+      const done = new Set(), busy = new Set();
+      const go = (t) => {
+        if (done.has(t) || busy.has(t) || !J[t]) return;
+        busy.add(t);
+        J[t].forEach(([k]) => go(k));
+        busy.delete(t); done.add(t);
+        if (now[t] == null) return;
+        const kids = J[t].filter(([k]) => now[k] != null);
+        if (!kids.length) return;
+        const s0 = kids.reduce((a, [k, w]) => a + w * now[k], 0);
+        const tol = Math.max(Math.abs(now[t]) * 0.002, (R0 >= 1e9 ? 0.6e6 : 600) * (kids.length + 1));
+        if (Math.abs(s0 - now[t]) > tol) return;
+        vals[t] = kids.reduce((a, [k, w]) => a + w * (vals[k] || 0), 0) + (now[t] - s0) * ratio(t);
+      };
+      Object.keys(J).forEach(go);
+      if (u.cash_ni && u.cash_ni !== u.root && now[u.cash_ni] != null && now[u.root] != null) vals[u.cash_ni] = vals[u.root] + (now[u.cash_ni] - now[u.root]);
+    }
+    resum();
+    resum();
+    const pick = (m) => {
+      const xs = (items || []).filter((it) => it.metric === m && it.period === period && it.unit === 'usd' && it.lo != null && it.basis !== 'non-GAAP');
+      return xs.find((x) => x.basis === 'GAAP') || xs.find((x) => !x.basis) || null;
+    };
+    const midOf = (it) => (it.lo + (it.hi == null ? it.lo : it.hi)) / 2;
+    const keyOf = (m) => Object.keys(now).find((k) => k.startsWith('cf>') && mainOf(k) === m && now[k] != null);
+    const guided = {};
+    const sgn = (x) => (x < 0 ? -1 : 1);
+    ['da', 'sbc'].forEach((m) => {
+      const it = pick(m), k = keyOf(m);
+      if (it && k && midOf(it) > 0) { vals[k] = sgn(now[k]) * midOf(it); guided[k] = it; }
+    });
+    resum();
+    // capital spending: the group by use (net of what sales of equipment bring in), else the purchases line
+    const catKids = (u.cash_uses && u.cash_uses.J && u.cash_uses.J['#cat:capex']) || null;
+    const capKey = keyOf('capex');
+    const capNow = () => {
+      if (catKids) return -catKids.reduce((a, [k, w]) => a + w * (vals[k] || 0), 0);
+      return capKey ? Math.abs(vals[capKey]) : null;
+    };
+    const setCapex = (C, it) => {
+      if (!(C > 0)) return false;
+      if (catKids) {
+        const net0 = -catKids.reduce((a, [k, w]) => a + w * (now[k] || 0), 0);
+        if (!(net0 > 0)) return false;
+        catKids.forEach(([k]) => { if (now[k] != null) vals[k] = now[k] * C / net0; });
+        guided['#cat:capex'] = it;
+        if (capKey) guided[capKey] = it;
+      } else if (capKey) { vals[capKey] = sgn(now[capKey]) * C; guided[capKey] = it; } else return false;
+      return true;
+    };
+    const ocfKey = keyOf('ocf');
+    const setOcf = (O, it) => {
+      if (!ocfKey || !J[ocfKey] || O == null) return false;
+      const skip = new Set([u.cash_ni, u.root, ...Object.keys(guided)]);
+      const adj = J[ocfKey].filter(([k]) => !skip.has(k) && vals[k] != null && vals[k] !== 0);
+      const A = adj.reduce((a, [k, w]) => a + Math.abs(w * vals[k]), 0);
+      const delta = O - vals[ocfKey];
+      if (A > 0) adj.forEach(([k, w]) => { vals[k] += delta * Math.abs(w * vals[k]) / A / w; });
+      resum();
+      vals[ocfKey] = O;
+      if (it) guided[ocfKey] = it;
+      return true;
+    };
+    const itC = pick('capex'), itO = pick('ocf'), itF = pick('fcf');
+    if (itC) setCapex(midOf(itC), itC);
+    resum();
+    if (itO) setOcf(midOf(itO), itO);
+    else if (itF && capNow() != null) setOcf(midOf(itF) + capNow(), null);
+    resum();
+    if (itF && itO && !itC) setCapex(midOf(itO) - midOf(itF), null);
+    resum();
+    if (itF) guided['#cat:fcf'] = itF;
+    return { vals, guided };
+  }
+
+  // the canvas spec of the next period as guided: r is web/guidance.js's projection of sp0 (the period on the canvas)
+  function guidedFlows(p, o, sp0, r, g, period, ago) {
+    const FG = global.FFGuidance;
+    const { vals, guided } = guidedValues(p.u, o, sp0, r, g.items, period);
+    const u1 = Object.assign({}, p.u, { now: vals, q: o.annual ? null : p.u.now, y: o.annual ? p.u.now : ago || null });
+    const sp = build(u1, o);
+    const rById = new Map(r.nodes.map((n) => [n.id, n]));
+    const base = dec(r.base || '');
+    const fROLE = (c) => 'f_' + (c === 'rev' || c === 'profit' ? c : 'cost');
+    const isG = new Set();
+    sp.nodes.forEach((n) => {
+      const k = sp.keys.get(n.id), rn = rById.get(n.id), it = guided[k];
+      if (rn && rn.gnote && rn.gnote.guided && !it) {
+        n.color = rn.color; n.range = rn.range; n.gnote = rn.gnote;
+        n.lines = n.lines.concat(rn.lines.slice(3));
+        isG.add(n.id);
+      } else if (it) {
+        const w = FG && FG.words ? FG.words(it) : [];
+        n.color = fROLE(n.color);
+        n.lines.push([it.change === 'lowered' || it.change === 'withdrawn' ? 'gdn' : it.change === 'raised' ? 'gup' : 'gnt',
+          esc(`guided ${FG && FG.range ? FG.range(it) : ''}${w.length ? ' · ' + w.join(' · ') : ''}`)]);
+        if (it.hi != null && it.hi > it.lo) n.range = [it.lo, it.hi];
+        n.gnote = { guided: true, item: it };
+        isG.add(n.id);
+      } else {
+        const m = mainOf(k);
+        const was = rn && (rn.lines.find((l) => l[0] === 'gas') || [])[1];
+        const v0 = (p.u.now || {})[k];
+        const same = v0 != null && Math.abs((vals[k] || 0) - v0) <= Math.abs(v0) * 0.001;
+        const txt = m === 'cash_chg' ? 'the balance: what the other cash lines leave'
+          : k === '#cat:fcf' ? 'operating cash flow less capital spending'
+          : m === 'ocf' ? `net earnings as projected, the other items as in ${esc(base)}`
+          : same && (k.startsWith('cf>') || k.startsWith('#cat:')) ? `assumed: as in ${esc(base)}`
+          : was || (same ? `assumed: as in ${esc(base)}` : 'follows from the lines guided');
+        n.lines.push(['gas', txt]);
+        n.gnote = { guided: false };
+      }
+    });
+    sp.links.forEach((l) => { if (isG.has(l.t)) l.color = fROLE(l.color); });
+    const subtitle = String(r.subtitle || '').replace(/\d+ guided lines?/, `${isG.size} guided line${isG.size === 1 ? '' : 's'}`);
+    return { sp, spec: Object.assign({}, r, { nodes: sp.nodes, links: sp.links, subtitle }) };
   }
 
   // ---------- the canvas ----------
@@ -386,7 +618,7 @@
     const list = (o.fy ? o.doc.years : o.doc.quarters) || [];
     const near = (a, b) => a && b && Math.abs(Date.parse(a) - Date.parse(b)) <= 6 * 864e5;
     let idx = Math.max(0, list.findIndex((x) => near(x.end, o.end)));
-    const st = { revAxis: null, costs: 'accounts', cash: 'statement', opened: new Set(), closed: new Set(), all: false, cmp: '', guide: false };
+    const st = { revAxis: null, costs: 'accounts', cash: 'statement', opened: new Set(), closed: new Set(), all: false, cmp: '', guide: false, next: false, says: true };
     let vb = null, scene = null, sel = null, src = null, srcP = null;
     const el = document.createElement('div');
     el.className = 'ffu';
@@ -399,7 +631,9 @@
         <span class="ffu-seg" data-g="costs"><span>Costs</span><button type="button" data-costs="accounts">By account</button><button type="button" data-costs="segments">By segment</button></span>
         <span class="ffu-seg" data-g="cash"><span>Cash</span><button type="button" data-cash="statement">As filed</button><button type="button" data-cash="uses">By use</button></span>
         <span class="ffu-seg"><button type="button" data-cmp="">Now</button><button type="button" data-cmp="q">vs prior quarter</button><button type="button" data-cmp="y">vs year ago</button></span>
-        <button type="button" class="ffu-btn" data-guide title="This period against the guidance it was given">◆ Guidance</button>
+        <button type="button" class="ffu-btn" data-guide title="This period against the guidance it was given (the cash lines too)">◆ vs guidance</button>
+        <button type="button" class="ffu-btn" data-next title="The next period as the company guided it (earnings release and 10-Q / 10-K outlook), drawn in this detail: guided lines in violet, the rest at today’s shares">◇ Next period as guided</button>
+        <button type="button" class="ffu-btn" data-says title="What the company says ahead (its MD&amp;A and earnings release), pinned to the line each statement is about">💬 Outlook</button>
         <button type="button" class="ffu-btn" data-all>Open everything</button>
         <button type="button" class="ffu-btn" data-std>Back to detailed</button>
         <span class="ffu-seg"><button type="button" data-z="out" aria-label="Zoom out">−</button><button type="button" data-z="fit">Fit</button><button type="button" data-z="in" aria-label="Zoom in">+</button></span>
@@ -447,7 +681,10 @@
       $$('[data-costs]').forEach((b) => b.classList.toggle('on', b.dataset.costs === (v.seg ? st.costs : 'accounts')));
       $$('[data-cash]').forEach((b) => b.classList.toggle('on', b.dataset.cash === (v.cash ? st.cash : 'statement')));
       $$('[data-cmp]').forEach((b) => { b.classList.toggle('on', b.dataset.cmp === st.cmp); b.disabled = (b.dataset.cmp === 'q' && (o.fy || !p.q_end)) || (b.dataset.cmp === 'y' && !p.has_y); });
-      $('[data-guide]').classList.toggle('on', st.guide);
+      $('[data-guide]').classList.toggle('on', st.guide && !st.next);
+      $('[data-next]').classList.toggle('on', st.next);
+      $('[data-says]').classList.toggle('on', st.says);
+      $$('[data-cmp]').forEach((b) => { if (st.next) b.disabled = true; });
       $('[data-all]').classList.toggle('on', st.all);
       $('[data-per]').value = String(idx);
     }
@@ -471,13 +708,36 @@
     }
     async function draw(keep) {
       const before = keep && scene ? scene.nodes.find((n) => n.id === keep.id) : null;
-      const { sp, spec } = current();
+      let { sp, spec } = current();
       let shown = spec, guided = false;
       msg.hidden = true;
-      if (st.guide && global.FFGuidance && global.FFGuidance.versus) {
+      if ((st.guide || st.next || st.says) && !srcP) srcP = Promise.resolve(o.guidance ? o.guidance() : null).catch(() => null);
+      if (srcP) src = await srcP;
+      if (st.next && global.FFGuidance && global.FFGuidance.future) {
+        // the next period as guided: the latest release's guidance with the newer MD&A outlook's figures for the same period
         try {
-          if (!srcP) srcP = Promise.resolve(o.guidance ? o.guidance() : null);
-          src = await srcP;
+          let g = guidanceDoc(src);
+          const company = { quarters: [Object.assign({}, spec)], years: [], periods: o.periods, _doc: list.filter((x) => x.end <= per().end) };
+          if (o.fy) { company.years = company.quarters; company.quarters = []; }
+          if (g && !o.fy) g = impliedQ4(g, Object.assign({}, spec, { label: o.labelOf(per().end, false) }), company);
+          const r = g ? global.FFGuidance.future(Object.assign({}, spec, { label: o.labelOf(per().end, o.fy) }), g, { company, name: o.name, history: src && src.hist, full: true })
+            : { error: 'No guidance on file for this company.' };
+          if (r && !r.error) {
+            shown = Object.assign({}, r, { dense: true, title: `${o.name} ${r.period || 'next period'} as guided — ultra-detailed` });
+            // the projection carried into every line (and the guided cash lines set), the flows built anew
+            try {
+              const tg = global.FFGuidance.target(g, Object.assign({}, spec, { label: o.labelOf(per().end, o.fy) }), company);
+              const end = Date.parse(per().end) + (o.fy ? 365 : 91) * 864e5 - 365 * 864e5;
+              const ago = o.fy ? null : list.find((x) => x.u && Math.abs(Date.parse(x.end) - end) <= 12 * 864e5);
+              const nx = tg ? guidedFlows(per(), Object.assign({ annual: !!o.fy }, st), sp, r, g, tg.period, ago && ago.u.now) : null;
+              if (nx && nx.sp.nodes.length >= 6) { sp = nx.sp; shown = Object.assign(nx.spec, { dense: true, title: shown.title }); }
+            } catch (err) { if (global.FF_DEBUG) console.error(err); }   // the projection as drawn by web/guidance.js stays
+          }
+          else { msg.textContent = (r && r.error) || 'No guidance on file.'; msg.hidden = false; }
+        } catch (err) { msg.textContent = 'The guidance could not be drawn.'; msg.hidden = false; }
+      }
+      if (st.guide && !st.next && global.FFGuidance && global.FFGuidance.versus) {
+        try {
           const older = list.filter((x) => x.end < per().end && x.u);
           const base = older.length ? older.reduce((a, b) => (a.end > b.end ? a : b)) : null;
           // the period and the one before it, both drawn the same way (the guidance is projected onto the one before)
@@ -485,18 +745,30 @@
           const into = company[o.fy ? 'years' : 'quarters'];
           into.push(Object.assign({}, spec, { period: o.fy ? 'fy' : undefined }));
           if (base) into.push(Object.assign(specOf(base, st).spec, { label: o.labelOf(base.end, o.fy) }));
-          const r = src ? global.FFGuidance.versus(spec, src, { company, name: o.name }) : { error: 'No guidance on file for this company.' };
+          const r = src ? global.FFGuidance.versus(spec, src, { company, name: o.name, full: true }) : { error: 'No guidance on file for this company.' };
           if (r && !r.error) { shown = r; guided = true; } else { msg.textContent = (r && r.error) || 'No guidance on file.'; msg.hidden = false; }
         } catch (err) { msg.textContent = 'The guidance could not be read.'; msg.hidden = false; }
       }
-      scene = S.layout(shown, { compare: st.cmp || null, guide: guided });
+      scene = S.layout(shown, { compare: st.next ? null : st.cmp || null, guide: guided });
+      const says = st.says && src ? outlookOn(src.outlook, Object.assign({}, sp, { nodes: shown.nodes.map((n) => Object.assign({}, n, { key: (sp.nodes.find((x) => x.id === n.id) || {}).key })) })) : new Map();
+      st.saysMap = says;
       // + / − on the lines that open: drawn over the chart (screen only)
       const tog = scene.nodes.filter((n) => sp.toggles.has(n.id)).map((n) => {
         const [x, y, w, h] = n.bar, t = sp.toggles.get(n.id), cx = x + w / 2, cy = y + Math.min(h / 2, 12);
         return `<g class="ffu-tog" data-tog="${esc(n.id)}" data-x="${cx.toFixed(1)}" data-y="${cy.toFixed(1)}" transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)})"><title>${t === '+' ? 'Open its parts' : 'Close its parts'}</title><circle r="11" fill="${t === '+' ? '#1d1d1b' : '#6b6a66'}" stroke="#fff" stroke-width="2"/>` +
           `<path d="M-5 0H5${t === '+' ? 'M0 -5V5' : ''}" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></g>`;
       }).join('');
-      host.innerHTML = S.toSVG(scene, `${o.name} ultra-detailed flow`).replace('</svg>', `<g>${tog}</g></svg>`);
+      // 💬 what the company says ahead about the line: a bubble with the number of statements, coloured by their tone
+      const TONE = { positive: '#0b7a75', negative: '#d9480f', neutral: '#6b6a80' };
+      const bub = scene.nodes.filter((n) => says.has(n.id)).map((n) => {
+        const xs = says.get(n.id), pos = xs.filter((x) => x.tone === 'positive').length, neg = xs.filter((x) => x.tone === 'negative').length;
+        const tone = pos > neg ? 'positive' : neg > pos ? 'negative' : 'neutral';
+        const [x, y, w] = n.bar, cx = x + w + 14, cy = y - 2;
+        return `<g class="ffu-tog ffu-say" data-say="${esc(n.id)}" data-x="${cx.toFixed(1)}" data-y="${cy.toFixed(1)}" transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)})"><title>${xs.length} statement${xs.length === 1 ? '' : 's'} about what is ahead</title>` +
+          `<path d="M-10 -8h20a2 2 0 0 1 2 2v11a2 2 0 0 1 -2 2h-12l-5 4v-4h-3a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2z" fill="${TONE[tone]}" stroke="#fff" stroke-width="1.5"/>` +
+          `<text x="0" y="3.5" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">${xs.length}</text></g>`;
+      }).join('');
+      host.innerHTML = S.toSVG(scene, `${o.name} ultra-detailed flow`).replace('</svg>', `<g>${bub}${tog}</g></svg>`);
       const svg = host.querySelector('svg');
       svg.removeAttribute('width'); svg.removeAttribute('height');
       svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
@@ -506,16 +778,20 @@
         applyView();
       } else fit();
       st.sp = sp;
+      st.shown = shown;
       sync();
       if (sel && !sp.keys.has(sel)) { sel = null; info.hidden = true; }
     }
     function showInfo(id) {
-      const n = (st.sp && st.sp.nodes || []).find((x) => x.id === id);
+      const n = (st.shown && st.shown.nodes || st.sp && st.sp.nodes || []).find((x) => x.id === id) || (st.sp && st.sp.nodes || []).find((x) => x.id === id);
       if (!n) { info.hidden = true; return; }
       sel = id;
       const lines = (n.lines || []).slice(1).map((l) => `<div>${l[1]}</div>`).join('');
       const cm = st.cmp === 'q' ? n.cmp : st.cmp === 'y' ? n.cmp_y : '';
-      info.innerHTML = `<div class="ffu-k">${n.name}</div><div class="ffu-v">${lines}${cm ? `<div>${esc(cm)}</div>` : ''}</div>` +
+      const xs = (st.saysMap && st.saysMap.get(id)) || [];
+      const says = xs.length ? `<div class="ffu-says"><div class="ffu-k2">What the company says ahead</div>${xs.slice(0, 8).map((x) =>
+        `<p class="ffu-say-${esc(x.tone || 'neutral')}">${esc(x.t)} <span class="muted">— ${esc(x.src)}${x.filed ? ' ' + esc(x.filed) : ''}${x.status && x.status !== 'repeated' ? ' · ' + esc(x.status) : ''}${x.hedge ? ' · hedged' : ''}</span></p>`).join('')}</div>` : '';
+      info.innerHTML = `<div class="ffu-k">${n.name}</div><div class="ffu-v">${lines}${cm ? `<div>${esc(cm)}</div>` : ''}</div>${says}` +
         `${n.source ? `<p class="ffu-src">${n.source}</p>` : ''}${st.sp.toggles.has(id) ? `<button type="button" class="ffu-btn" data-tog-info="${esc(id)}">${st.sp.toggles.get(id) === '+' ? '+ Open its parts' : '− Close its parts'}</button>` : ''}` +
         '<button type="button" class="ffu-btn" data-info-close>Close</button>';
       info.hidden = false;
@@ -530,6 +806,7 @@
     el.addEventListener('click', (e) => {
       const b = e.target.closest('button, .ffu-tog, [data-node]');
       if (!b) return;
+      if (b.matches('.ffu-say')) { e.stopPropagation(); showInfo(b.dataset.say); return; }
       if (b.matches('.ffu-tog')) { e.stopPropagation(); toggle(b.dataset.tog); return; }
       if (b.dataset.togInfo) { toggle(b.dataset.togInfo); return; }
       if (b.hasAttribute('data-info-close')) { info.hidden = true; sel = null; return; }
@@ -538,7 +815,13 @@
       if (b.dataset.costs) { st.costs = b.dataset.costs; draw(); return; }
       if (b.dataset.cash) { st.cash = b.dataset.cash; draw(); return; }
       if (b.dataset.cmp !== undefined && b.hasAttribute('data-cmp')) { st.cmp = b.dataset.cmp; draw(); return; }
-      if (b.hasAttribute('data-guide')) { st.guide = !st.guide; draw(); return; }
+      if (b.hasAttribute('data-guide')) { st.guide = !st.guide; st.next = false; draw(); return; }
+      if (b.hasAttribute('data-next')) {
+        st.next = !st.next; st.guide = false;
+        if (st.next && per().u.cash_uses && st.cash === 'statement') st.cash = 'uses';   // capital spending and free cash flow as their own lines
+        draw(); return;
+      }
+      if (b.hasAttribute('data-says')) { st.says = !st.says; draw(); return; }
       if (b.hasAttribute('data-all')) { st.all = !st.all; if (!st.all) st.opened.clear(); draw(); return; }
       if (b.hasAttribute('data-std')) { Object.assign(st, { revAxis: null, costs: 'accounts', cash: 'statement', all: false }); st.opened.clear(); st.closed.clear(); draw(); return; }
       if (b.dataset.z) { zoom(b.dataset.z === 'in' ? 0.7 : b.dataset.z === 'out' ? 1 / 0.7 : 0); return; }
@@ -601,6 +884,6 @@
     return el;
   }
 
-  global.FFFlow = { build, views, structure, mainOf, money, AXIS_WORD, open };
+  global.FFFlow = { build, views, structure, mainOf, money, AXIS_WORD, open, guidedValues, guidedFlows, impliedQ4, outlookOn, guidanceDoc };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.FFFlow;
 })(typeof window !== 'undefined' ? window : globalThis);

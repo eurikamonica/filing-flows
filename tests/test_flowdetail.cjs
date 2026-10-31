@@ -129,4 +129,41 @@ assert.ok(sp.nodes.every((n) => n.y != null) && sp.links.every((x) => x.y != nul
 assert.ok(/^Δ \+\$5\.0B/.test(sp.nodes.find((n) => n.id === 'revenue').cmp));
 const v = F.views(u);
 assert.deepStrictEqual([v.rev.length, v.seg, v.cash], [2, true, true]);
+// the next period as guided: the projection carried into every line, the guided capital spending set, the totals summed
+// again and the flows built anew — free cash flow turns into a gap and the cash is drawn down to fill it
+const FG = require('../web/guidance.js');
+global.FFGuidance = FG;
+const g = { filed: '2026-10-20', form: '8-K', items: [
+  { metric: 'revenue', name: 'Revenue', period: 'Q4 2026', unit: 'usd', lo: 108e9, hi: 112e9 },
+  { metric: 'operating_income', name: 'Operating income', period: 'Q4 2026', unit: 'usd', lo: 40e9, hi: 40e9 },
+  { metric: 'capex', name: 'Capital expenditures', period: 'Q4 2026', unit: 'usd', lo: 45e9, hi: 45e9, approx: true }] };
+const near = (a, b, tol) => Math.abs(a - b) <= (tol || 0.01);
+for (const cash of ['uses', 'statement']) {
+  const opts = { cash };
+  const sp0 = F.build(u, opts);
+  const spec = { nodes: sp0.nodes, links: sp0.links, end: '2026-09-30', label: 'Q3 2026' };
+  const company = { quarters: [Object.assign({}, spec)], years: [] };
+  const r = FG.future(spec, g, { company, name: 'Made-up', full: true });
+  assert.ok(!r.error, r.error);
+  const tg = FG.target(g, spec, company);
+  const { vals, guided } = F.guidedValues({ ...u }, opts, sp0, r, g.items, tg.period);
+  const B = (key) => vals[key] / 1e9;
+  assert.ok(near(B(G + 'Revenues'), 110) && near(B(k('Revenues', P, 'Hw')), 66), 'revenue and its parts');
+  assert.ok(near(B(G + 'OperatingIncomeLoss'), 40), 'guided operating profit');
+  assert.ok(near(B('cf>' + G + 'PaymentsToAcquirePropertyPlantAndEquipment'), 45), 'guided capital spending');
+  assert.ok(near(B('cf>' + G + 'PaymentsForRepurchaseOfCommonStock'), 10), 'cash lines not guided stay');
+  const ni = B(G + 'NetIncomeLoss');
+  assert.ok(near(B('cf>' + G + 'NetCashProvidedByUsedInOperatingActivities'), ni + 5 - 3), 'operating cash flow from the projected earnings');
+  assert.ok(near(B('cf>' + G + 'CashPeriodIncreaseDecrease'), ni + 2 - 45 - 14), 'the cash change is the balance');
+  assert.ok(guided['cf>' + G + 'PaymentsToAcquirePropertyPlantAndEquipment']);
+  const nx = F.guidedFlows({ u, end: '2026-09-30' }, opts, sp0, r, g, tg.period, null);
+  assert.deepStrictEqual(balanced(nx.sp), []);
+  const capex = nx.sp.nodes.find((n) => n.id === 'capex');
+  assert.ok(capex && capex.color === 'f_cost' && near(capex.v / 1e9, 45) && capex.lines.some((x) => /guided ≈ \$45/.test(x[1])), 'capital spending drawn as guided');
+  const chg = nx.sp.nodes.find((n) => n.id === 'cash_chg');
+  assert.ok(chg && chg.name === 'Drawn from cash' && chg.lines.some((x) => /the balance/.test(x[1])), 'cash drawn down');
+  assert.ok(/3 guided lines/.test(nx.spec.subtitle), nx.spec.subtitle);
+  assert.ok(nx.sp.nodes.find((n) => n.id === 'revenue').lines.some((x) => /guided \$108B–\$112B/.test(x[1])));
+  if (cash === 'uses') assert.ok(nx.sp.links.some((x) => x.s === 'fcf' && x.t === 'capex'), 'free cash flow is now a gap flowing into capital spending');
+}
 console.log('flowdetail canvas: ok');

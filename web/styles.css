@@ -999,3 +999,8 @@ body.ffu-open { overflow: hidden; }
   .ffu-hint { display: none; }
 }
 body.ffu-open .flo-launch, body.ffu-open .flo-half, body.ffu-open .flo-panel { display: none !important; }   /* the assistant waits behind the canvas */
+.ffu-says { margin: 6px 0 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.ffu-says .ffu-k2 { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+.ffu-says p { margin: 0 0 6px; font-size: 13px; padding-left: 8px; border-left: 3px solid #6b6a80; }
+.ffu-says p.ffu-say-positive { border-left-color: #0b7a75; }
+.ffu-says p.ffu-say-negative { border-left-color: #d9480f; }

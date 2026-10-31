@@ -131,7 +131,9 @@
   const ROLE = (c) => (c === 'rev' || c === 'profit' || c === 'cost' ? c : 'cost');
 
   // guided values: {nodeId: {v(F) → value, lo(F), hi(F), it}} (F: future values computed so far)
-  function guides(items, period, implied) {
+  // opts.full (the ultra-detailed canvas, web/flowdetail.js): the cash lines a company guides too — capital spending,
+  // operating and free cash flow, depreciation & amortization, stock-based pay, interest expense
+  function guides(items, period, implied, opts) {
     const G = {};
     const pick = (m, u) => choose(items, m, period, u);
     const sub = (id, x) => (implied ? x - (implied.ytd[id] || 0) : x);
@@ -155,15 +157,21 @@
     if (tax && !implied) G.tax = { it: tax, at: (F) => mid(tax) / 100 * F.pretax, lo: (F) => tax.lo / 100 * F.pretax, hi: (F) => tax.hi / 100 * F.pretax, of: 'pretax' };
     const ni = pick('net_income', ['usd']);
     if (ni && mid(ni) > 0) G.net = { it: ni, at: () => sub('net', mid(ni)), lo: () => sub('net', ni.lo), hi: () => sub('net', ni.hi) };
+    if (opts && opts.full && !implied) {
+      [['capex', 'capex'], ['ocf', 'ocf'], ['fcf', 'fcf'], ['da', 'da'], ['sbc', 'sbc'], ['interest_expense', 'interest']].forEach(([m, id]) => {
+        const it = pick(m, ['usd']);
+        if (it && mid(it) > 0) G[id] = { it, at: () => mid(it), lo: () => it.lo, hi: () => it.hi };
+      });
+    }
     return G;
   }
 
-  function project(base, G) {
+  function project(base, G, opts) {
     const all = new Map(base.nodes.map((n) => [n.id, n]));
     const rev = all.get('revenue');
     if (!rev || !G.revenue) return null;
     const net = all.get('net');
-    const cut = net ? net.col : Infinity;
+    const cut = net && !(opts && opts.full) ? net.col : Infinity;      // the canvas carries the cash flows on
     const nodes = base.nodes.filter((n) => n.col <= cut);
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const links = base.links.filter((l) => byId.has(l.s) && byId.has(l.t) && l.v > 0);
@@ -327,13 +335,13 @@
       });
       implied = { ytd };
     }
-    const G = guides(items, tg.period, implied);
+    const G = guides(items, tg.period, implied, { full: o.full });
     // a guided revenue far from the base period is a misread (or a different scope): not drawn
     const R = G.revenue && G.revenue.at({});
     if (!(R > 0) || R < base.nodes.find((n) => n.id === 'revenue').v * 0.4 || R > base.nodes.find((n) => n.id === 'revenue').v * 2.5) {
       return { error: 'The guided revenue does not match the scale of the reported revenue; not drawn.' };
     }
-    const P = project(base, G);
+    const P = project(base, G, { full: o.full });
     if (!P) return { error: 'This chart has no revenue node to project.' };
     const { F, LV, guided } = P;
     const per = tg.label.replace(/^FY(\d{4})$/, 'FY$1');
@@ -414,7 +422,8 @@
       `${dec(base.label)}, so the chart adds up. Change words: ▲ raised / ▼ lowered = the midpoint moved; →← narrowed / ←→ widened = the range ` +
       'width changed; = reaffirmed; ✦ initiated; ✕ withdrawn — against the prior range the release states, else the company’s previous release on file.',
       `In the release${g.filed ? ` of ${fdate(g.filed)}` : ''}: ${listed.join('; ')}.` + (listed.length < (g.items || []).length ? ' …' : ''),
-      'Only GAAP or basis-free guidance is drawn into the flows; adjusted (non-GAAP) figures are listed, not drawn. The cash-flow part is left out (not guided).',
+      'Only GAAP or basis-free guidance is drawn into the flows; adjusted (non-GAAP) figures are listed, not drawn. ' +
+        (o.full ? 'The cash flows go on: the cash lines guided (capital spending, operating and free cash flow, D&A, stock-based pay) as guided, the rest at their shares.' : 'The cash-flow part is left out (not guided).'),
     ];
     if (implied) footer.splice(1, 0, `${tg.label}: the full-year guidance minus the three reported quarters of FY${tg.fy}.`);
     P.notes.forEach((x) => footer.push(x));
@@ -528,7 +537,7 @@
       .sort((a, b) => (a.end < b.end ? 1 : -1));
     const base = list[0];
     if (!base) return { error: `The period before ${dec(spec.label)} is not on file, so its guidance cannot be drawn.` };
-    const G = guides(items, tp, null);
+    const G = guides(items, tp, null, { full: o.full });
     const R = G.revenue && G.revenue.at({}), R0 = (base.nodes.find((n) => n.id === 'revenue') || {}).v;
     if (!(R > 0) || !(R0 > 0) || R < R0 * 0.4 || R > R0 * 2.5) return { error: 'The guided revenue does not match the scale of the reported revenue; not drawn.' };
     // a guided line far from the same line in the base period is a misread: not drawn as guided
@@ -539,7 +548,7 @@
       const r = v / B0.get(id);
       if (!(r >= 0.33 && r <= 3)) delete G[id];
     });
-    const PJ = project(base, G);
+    const PJ = project(base, G, { full: o.full });
     if (!PJ) return { error: 'This chart has no revenue node to project.' };
     const { F, LV, guided } = PJ;
     const key = (l) => `${l.s}|${l.t}`;

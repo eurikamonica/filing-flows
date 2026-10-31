@@ -937,7 +937,10 @@
     const getJ = (u) => fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null);
     const holdersGuidance = () => holdersP || (holdersP = Promise.all([getJ(`disclosures/data/holders/${encodeURIComponent(ticker)}.json`), getJ(`data/outlook/${p.cik}.json`)])
       .then(([h, ol]) => {
-        const g = (h && h.guidance) || null, hist = (h && h.guidance_history) || null;
+        const hist = (h && h.guidance_history) || null;
+        // the latest release's guidance; when the 8-K reader has not filed it (yet), the newest release kept in the history
+        const rel = ((hist && hist.releases) || []).filter((r) => (r.items || []).length && r.filed).sort((a, b) => (a.filed < b.filed ? 1 : -1))[0];
+        const g = (h && h.guidance) || (rel ? { filed: rel.filed, accession: rel.accession, url: rel.url, form: '8-K', label: rel.label || null, tags: rel.tags || [], items: rel.items.slice() } : null);
         const all = window.FFGuidance.sources ? window.FFGuidance.sources(hist, ol, g) : hist;
         return g || all ? { g, hist: all, outlook: ol } : null;
       }));
