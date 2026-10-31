@@ -324,7 +324,7 @@ def parse_8k(txt, accession, folder):
     score = max([TOPIC_WEIGHT.get(t, 0) for t in topics] + [2 if g in ('raised', 'lowered', 'withdrawn', 'mixed') else 0] + [0])
     if 'guidance' in topics and g in ('raised', 'lowered', 'withdrawn', 'mixed', 'narrowed', 'widened'):
         score = max(score, 6)
-    return {'v': PARSER, 'accession': accession, 'url': folder, 'form': h['form'] or '8-K', 'filed': h['filed'], 'accepted': h['accepted'],
+    return {'v': PARSER, 'gv': G.VERSION, 'accession': accession, 'url': folder, 'form': h['form'] or '8-K', 'filed': h['filed'], 'accepted': h['accepted'],
             'period': h['period'], 'cik': (company.get('cik') or '').lstrip('0'), 'company': company.get('name', ''),
             'items': items, 'code': code or '', 'topics': topics, 'guidance': g, 'guidance_quote': (gq or '')[:300],
             **({'guidance_tags': gr['tags']} if gr['tags'] else {}),
@@ -369,7 +369,8 @@ def parse_daily_index(text):
     return out
 
 
-PARSER = 5          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
+PARSER = 6          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
+                    # 6: the guided period no longer taken from a comparison base (guidance.py VERSION 2)
 
 
 def store(root):
@@ -423,7 +424,7 @@ def collect(client, root, cfg=None, today=None):
     if state.get('parser') != PARSER and not state.get('reparse'):
         # guidance is read from earnings releases: only those are read again (items 2.02 / 7.01, or guidance found before)
         state['reparse'] = [[r['accession'], r['url']] for r in shards.all()
-                            if PARSER != 5 or set(r.get('items') or []) & {'2.02', '7.01'} or r.get('guidance')]
+                            if set(r.get('items') or []) & {'2.02', '7.01'} or r.get('guidance')]
     redo = [tuple(x) for x in state.get('reparse') or []]
     batch = int(cfg.get('batch', 300))
     pending = [x for x in queue if retry.due(x[0])]

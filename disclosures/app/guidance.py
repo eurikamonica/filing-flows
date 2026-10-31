@@ -20,6 +20,9 @@ src}, change, range, ends, quote}. Fixed rules, no model: a sentence it cannot r
 """
 import re
 
+VERSION = 2                   # bump when read() changes: the releases kept (app/guidance_history.py) are read again
+                              # 2: a comparison base ("compared with … fourth quarter 2025") no longer dates the guide
+
 # ------------------------------------------------------------------ change words
 NOUN = r'(?:guidance|outlook|forecasts?|financial (?:targets?|framework)|targets?|expectations?|projections?|guidance ranges?|range)'
 _STOP = (r'(?:than|ahead|above|below|exceed\w*|versus|vs|compared|relative|beat|surpass\w*|within|despite|while|but|although|after|'
@@ -327,6 +330,9 @@ PER_FY = re.compile(r"(?i)\b(?:(?P<w>full[- ]year|fiscal(?: year)?|fy|calendar(?
 YEAR = re.compile(r'\b(20\d{2})\b(?!\s*(?:-|–|to)\s*20\d{2})')
 LONG = re.compile(r'(?i)\blong[- ]term\b|\bmulti-?year\b|\bthrough (?:fiscal )?20\d{2}\b|\bby (?:fiscal )?20\d{2}\b|\b20\d{2}\s*(?:-|–|to|through)\s*20\d{2}\b|\bcagr\b')
 BASE = re.compile(r'(?i)(?:from|over|versus|vs\.?|compared (?:to|with)|than|relative to|since|ended|ending)\s+(?:the\s+)?(?:(?:full|fiscal)[- ]?(?:year\s+)?)?$')
+# a comparison base a few words back: "compared with $25.0 billion in fourth quarter 2025", "versus 12% in fiscal 2025" —
+# the period of the figure it is compared with, not of the guided one
+CMP = re.compile(r'(?i)\b(?:compared (?:to|with)|as compared|versus|vs\.?|relative to|up from|down from|year[- ]ago|prior[- ]year|last year)\b(?:[^.;:!?]|(?<=\d)\.(?=\d)){0,48}$')
 
 
 def _yr(y):
@@ -339,24 +345,29 @@ def _yr(y):
 def _periods(text):
     """[(start, 'Q4 2026' | 'FY2026' | 'FY' | 'long-term')] named in a text, comparison bases left out ("growth over 2025")."""
     out = []
+    cmp_ = lambda m: CMP.search(text[max(0, m.start() - 60):m.start()])
+    taken = [(m.start(), m.end()) for m in PER_Q.finditer(text)]
     for m in PER_Q.finditer(text):
         n = ORD.get((m.group('w') or '').lower()) or int(m.group('n') or m.group('n2'))
         y = _yr(m.group('y'))
+        if (y and BASE.search(text[max(0, m.start() - 24):m.start()])) or cmp_(m):
+            continue                                   # "growth over the fourth quarter of 2025", "compared with … Q4 2025"
         out.append((m.start(), f"Q{n} {'FY' if m.group('f') else ''}{y}" if y else f'Q{n}' + (' FY' if m.group('f') else '')))
-    taken = [(m.start(), m.end()) for m in PER_Q.finditer(text)]
     for m in PER_FY.finditer(text):
         if any(a <= m.start() < b for a, b in taken):
             continue
         y = _yr(m.group('y'))
         if y and BASE.search(text[max(0, m.start() - 24):m.start()]) and not re.search(r'(?i)\b(?:of|in|during)\s+$', text[max(0, m.start() - 6):m.start()]):
             continue
-        out.append((m.start(), f'FY{y}' if y else 'FY'))
         taken.append((m.start(), m.end()))
+        if y and cmp_(m):
+            continue
+        out.append((m.start(), f'FY{y}' if y else 'FY'))
     for m in YEAR.finditer(text):
         if any(a <= m.start() < b for a, b in taken):
             continue
         before = text[max(0, m.start() - 30):m.start()]
-        if BASE.search(before) or re.search(r'(?i)(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+\d{1,2},?\s*$', before):
+        if BASE.search(before) or cmp_(m) or re.search(r'(?i)(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+\d{1,2},?\s*$', before):
             continue
         out.append((m.start(), f'FY{m.group(1)}'))
     for m in LONG.finditer(text):
@@ -389,9 +400,22 @@ def period(text, default=None):
 def period_near(clause, pre, sentence, default=None):
     """The period a figure belongs to: named between the metric and its figure, else the nearest one before the metric
     (in its sentence), else elsewhere in the sentence, else the section's."""
-    head = re.split(r'\$|\d', clause, maxsplit=1)[0] if clause else ''
-    for text, pick in ((head, 0), (pre, -1), (sentence, 0)):
+    parts = re.split(r'\$|\d', clause, maxsplit=1) if clause else ['']
+    head = parts[0]
+    # after the figure, up to the next comparison or sentence break: "growth of over 40% both in 2027 and in 2028"
+    tail = re.split(r'(?i)[;:]|\bcompared\b|\bversus\b|\bvs\.', clause[len(head):], maxsplit=1)[0] if clause else ''
+    # a period before the metric with another figure in between belongs to that figure ("revenue growth in Q3 ($184
+    # billion run rate) and projected growth of over 40% in 2027"): not this one's
+    pp = _periods(pre)
+    if pp:
+        rest = pre[pp[-1][0]:]
+        m0 = PER_Q.match(rest) or PER_FY.match(rest) or YEAR.match(rest) or LONG.match(rest)
+        if re.search(r'[\d$]', rest[m0.end() if m0 else 0:]):
+            pre = ''
+    for text, pick in ((head, 0), (pre, -1), (tail, 0), (sentence, 0)):
         ps = _periods(text)
+        if text is tail:
+            ps = [x for x in ps if re.search(r'\d{4}', x[1]) or x[1] == 'long-term']
         if ps:
             p = ps[pick][1]
             if p == 'long-term':

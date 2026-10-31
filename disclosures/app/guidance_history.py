@@ -13,7 +13,12 @@ Store:  cache/guidance/<cik>.json.gz — {'cik', 'releases': [{accession, filed,
         'backfill': {'done', 'checked_at', 'tried': {accession: failures}}}
 collect(client, root, cfg):
   1. every 8-K row with guidance on file (the 8-K store) is copied in — the store fills as new releases are read;
-  2. a few older earnings releases per run (`budget`, newest first) for the companies that guide: the company's list of
+  2. releases read with an older guidance reader (guidance.VERSION) are read again, `reread` per run, so a fix reaches
+     the whole record (a guided period dated a year early by a comparison base: "compared with fourth quarter 2025");
+  3. companies not on file yet, largest first (SEC's company list): the latest earnings release of `discover` companies
+     per run is read, and one with guidance figures starts its history — the 8-K store keeps only recent weeks, so
+     a company reporting off the main season (NVIDIA, Salesforce, Walmart …) would otherwise never be found;
+  4. a few older earnings releases per run (`budget`, newest first) for the companies that guide: the company's list of
      filings (data.sec.gov/submissions), its 8-Ks with item 2.02 of the last `years` years, each read once with
      events8k.parse_8k (the same reader as the 8-K events).
 publish(root) → ticker → {'releases': [...]} (compact: no quotes, no segment figures) for the holders files.
@@ -21,7 +26,8 @@ publish(root) → ticker → {'releases': [...]} (compact: no quotes, no segment
 import datetime as dt
 from pathlib import Path
 
-from core import now, read_gz, write_gz
+from core import now, read_gz, read_json, write_gz, write_json
+import guidance as G
 import ownership as OWN
 
 SUBMISSIONS = 'https://data.sec.gov/submissions/CIK{cik:010d}.json'
@@ -58,7 +64,7 @@ def release_of(row):
     if not items:
         return None
     return {'accession': row['accession'], 'filed': row.get('filed'), 'url': row.get('url'), 'label': row.get('guidance'),
-            'tags': row.get('guidance_tags') or [], 'items': items}
+            'tags': row.get('guidance_tags') or [], 'items': items, 'gv': int(row.get('gv') or 1)}
 
 
 def add(doc, rel):
@@ -102,8 +108,101 @@ def earnings_8ks(sub, since):
     return sorted(out, key=lambda x: x[2], reverse=True)
 
 
+def _read_release(client, acc, folder):
+    import events8k as E
+    txt = client.get(folder + acc + '.txt', sec=True).decode('utf-8', 'replace')
+    return release_of(E.parse_8k(txt, acc, folder))
+
+
+def _old(r):
+    return int(r.get('gv') or 1) < G.VERSION
+
+
+def reread(client, root, budget):
+    """Releases kept from an older guidance reader (their 'gv') read again with the current one, the most recent companies
+    first; a release that no longer has guidance figures is dropped. → (releases read, errors, companies finished)."""
+    queue = []
+    for p in sorted(home(root).glob('*.json.gz')) if home(root).exists() else []:
+        if p.name.startswith('_'):
+            continue
+        doc = read_gz(p, None)
+        if doc and any(_old(r) for r in doc.get('releases') or []):
+            queue.append(doc)
+    queue.sort(key=lambda d: d['releases'][0].get('filed') or '', reverse=True)
+    read = errors = finished = 0
+    for doc in queue:
+        if read >= budget or errors > 5:
+            break
+        for r in [x for x in doc['releases'] if _old(x)]:
+            if read >= budget or errors > 5:
+                break
+            read += 1
+            try:
+                rel = _read_release(client, r['accession'], r.get('url') or '')
+            except Exception as exc:
+                errors += 1
+                print(f'guidance history re-read {r["accession"]}: {exc}', flush=True)
+                continue
+            doc['releases'] = [x for x in doc['releases'] if x['accession'] != r['accession']] + ([rel] if rel else [])
+        finished += int(not any(_old(x) for x in doc['releases']))
+        if doc['releases']:
+            save(root, doc)
+        else:
+            (home(root) / f"{int(doc['cik'])}.json.gz").unlink(missing_ok=True)
+    return read, errors, finished
+
+
+def ranked_ciks(root):
+    """Issuer CIKs in the order of SEC's company list (largest first), one per company."""
+    out, seen = [], set()
+    for r in (read_json(Path(root) / 'cache' / 'prices' / 'sec-tickers.json', {}).get('rows') or []):
+        c = str(r.get('cik') or '').lstrip('0')
+        if c and c not in seen:
+            seen.add(c)
+            out.append(c)
+    return out
+
+
+def discover(client, root, budget, since, today, top=1500, recheck_days=100):
+    """The latest earnings release of companies with no history yet, largest first; one with guidance figures starts a
+    history (its earlier releases are then back-filled like the others). A company found without guidance is asked again
+    after `recheck_days`. State: cache/guidance/_discover.json {cik: {at, acc, g}}. → (releases read, started, errors)."""
+    path = home(root) / '_discover.json'
+    st = read_json(path, {})
+    have = {p.name.split('.')[0] for p in home(root).glob('*.json.gz')} if home(root).exists() else set()
+    stale = (today - dt.timedelta(days=recheck_days)).isoformat()
+    todo = [c for c in ranked_ciks(root)[:top] if c not in have and (c not in st or (st[c].get('at') or '') < stale)]
+    todo.sort(key=lambda c: c in st)                    # never asked first, in size order
+    read = started = errors = 0
+    for cik in todo:
+        if read >= budget or errors > 5:
+            break
+        try:
+            sub = client.json(SUBMISSIONS.format(cik=int(cik)), sec=True)
+            rels = earnings_8ks(sub, since)
+            rec = {'at': today.isoformat()}
+            if rels and (st.get(cik) or {}).get('acc') != rels[0][0]:
+                read += 1
+                rel = _read_release(client, rels[0][0], rels[0][1])
+                rec.update(acc=rels[0][0], g=bool(rel))
+                if rel:
+                    doc = load(root, cik)
+                    add(doc, rel)
+                    save(root, doc)
+                    started += 1
+            elif rels:
+                rec.update(acc=rels[0][0], g=False)
+            st[cik] = rec
+        except Exception as exc:
+            errors += 1
+            print(f'guidance discovery {cik}: {exc}', flush=True)
+    write_json(path, st)
+    return read, started, errors
+
+
 def collect(client, root, cfg=None, today=None):
-    """Copies new releases in, then reads up to `budget` older earnings releases of the companies that guide."""
+    """Copies new releases in, re-reads releases kept from an older reader, finds companies not on file yet, then reads up
+    to `budget` older earnings releases of the companies that guide."""
     import events8k as E
     cfg = cfg or {}
     today = today or dt.date.today()
@@ -112,14 +211,20 @@ def collect(client, root, cfg=None, today=None):
     since = (today - dt.timedelta(days=int(365 * years))).isoformat()
     docs = from_events(root)
     written = sum(1 for d in docs.values() if save(root, d))
+    re_read, re_err, re_done = reread(client, root, int(cfg.get('reread', 40)))
+    d_read, d_started, d_err = discover(client, root, int(cfg.get('discover', 20)), since, today, int(cfg.get('discover_top', 1500)))
     # the companies to back-fill: the ones with guidance on file whose earlier releases have not been read yet, the
     # most recent guidance first
     queue = []
     for p in sorted(home(root).glob('*.json.gz')) if home(root).exists() else []:
-        doc = docs.get(p.name.split('.')[0]) or read_gz(p, None)
+        if p.name.startswith('_'):
+            continue
+        doc = read_gz(p, None)
         if doc and not (doc.get('backfill') or {}).get('done') and doc.get('releases'):
             queue.append(doc)
+    rank = {c: i for i, c in enumerate(ranked_ciks(root))}       # the largest companies first, then the latest guidance
     queue.sort(key=lambda d: d['releases'][0].get('filed') or '', reverse=True)
+    queue.sort(key=lambda d: rank.get(str(d['cik']).lstrip('0'), 10 ** 6))
     read, errors, done = 0, 0, 0
     for doc in queue:
         if read >= budget or errors > 5:
@@ -155,8 +260,10 @@ def collect(client, root, cfg=None, today=None):
         done += int(not left)
         if save(root, doc):
             written += 1
-    return {'status': 'partial' if errors else 'ok', 'companies': len(list(home(root).glob('*.json.gz'))) if home(root).exists() else 0,
-            'new_from_8k': len(docs), 'read': read, 'errors': errors, 'backfilled': done, 'waiting': max(0, len(queue) - done),
+    return {'status': 'partial' if errors or re_err or d_err else 'ok',
+            'companies': len([p for p in home(root).glob('*.json.gz') if not p.name.startswith('_')]) if home(root).exists() else 0,
+            'new_from_8k': len(docs), 'read': read, 'errors': errors + re_err + d_err, 'backfilled': done, 'waiting': max(0, len(queue) - done),
+            're_read': re_read, 're_read_done': re_done, 'discover_read': d_read, 'discovered': d_started,
             'written': written, 'updated_at': now()}
 
 
@@ -165,6 +272,8 @@ def publish(root, keep=12):
     tickers = OWN.cik_tickers(root)
     out = {}
     for p in sorted(home(root).glob('*.json.gz')) if home(root).exists() else []:
+        if p.name.startswith('_'):
+            continue
         doc = read_gz(p, None)
         t = tickers.get(str((doc or {}).get('cik') or '').lstrip('0'))
         if not t or not doc.get('releases'):

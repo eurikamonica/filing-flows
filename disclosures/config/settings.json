@@ -397,9 +397,12 @@
     "index_days_per_run": 3,
     "keep_days": 120,
     "guidance_history": {
-      "budget": 40,
+      "budget": 60,
       "years": 3,
-      "_note": "Every earnings release's guidance kept for good (cache/guidance/<cik>.json.gz, the last 16 releases); `budget` older 8-K earnings releases of the companies that guide read per run (40: the record fills in about four days), back `years` years (app/guidance_history.py)."
+      "reread": 20,
+      "discover": 20,
+      "discover_top": 1500,
+      "_note": "Every earnings release's guidance kept for good (cache/guidance/<cik>.json.gz, the last 16 releases); `budget` older 8-K earnings releases of the companies that guide read per run, the largest companies first, back `years` years; `reread` releases kept from an older guidance reader read again per run; `discover` companies not on file yet (the largest `discover_top` of SEC's list) have their latest earnings release read per run (app/guidance_history.py)."
     },
     "_note": "Every 8-K and 8-K/A: the newest from the EDGAR feed, then the daily indexes back `backfill_days`; `batch` filings read per run, kept `keep_days`."
   },

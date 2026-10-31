@@ -30,7 +30,7 @@ def record(root, key, result, attempted=None):
     out = {k: v for k, v in result.items() if k in (
         'status', 'error', 'errors', 'error_samples', 'read', 'found', 'waiting', 'failed_queue',
         'next_retry_at', 'blocked', 'skipped', 'published', 'counts', 'on_file', 'trades', 'added',
-        'newest', 'available', 'index_days', 'underlyings', 'fetched', 'reparse_left', 'cursor', 'paper')}
+        'newest', 'available', 'index_days', 'underlyings', 'fetched', 'reparse_left', 'cursor', 'paper', 'guidance_history')}
     out.update(status=status, last_attempt=attempted or now(),
                last_success=previous.get('last_success'),
                last_partial_success=previous.get('last_partial_success'),

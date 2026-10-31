@@ -122,6 +122,22 @@ class Ranges(unittest.TestCase):
                     'For the fourth quarter of 2026, the Company expects revenue in the range of $850 million to $870 million.'])
         self.assertEqual([(i['period'], i['lo']) for i in r['items'] if i['metric'] == 'revenue' and i['unit'] == 'usd'], [('Q4 2026', 850e6)])
 
+    def test_a_comparison_base_does_not_date_the_guide(self):
+        # Amazon, Oct 2026: the guided quarter is the section's; the quarter of the figure it is compared with is not
+        r = G.read(['Fourth Quarter 2026 Guidance',
+                    '• Net sales are expected to be between $240.0 billion and $247.0 billion, or to grow between 12% and 16% '
+                    'compared with fourth quarter 2025.',
+                    '• Operating income is expected to be between $28.5 billion and $33.5 billion, compared with $25.0 billion in '
+                    'fourth quarter 2025.',
+                    '• We continue to expect 2026 cash capital expenditures to be approximately $220 billion.'])
+        self.assertEqual(item(r, 'revenue', unit='usd')['period'], 'Q4 2026')
+        self.assertEqual(item(r, 'revenue', unit='growth')['period'], 'Q4 2026')
+        self.assertEqual((item(r, 'operating_income')['period'], item(r, 'operating_income')['lo']), ('Q4 2026', 28.5e9))
+        self.assertEqual(item(r, 'capex')['period'], 'FY2026')
+        # a quarter named before the metric with another figure in between belongs to that figure
+        r = G.read(['“We delivered 39% revenue growth in Q3 ($184 billion run rate) and expect revenue growth of over 40% in 2027,” said the CEO.'])
+        self.assertEqual(item(r, 'revenue', unit='growth')['period'], 'FY2027')
+
 
 class Numbers(unittest.TestCase):
     def test_compare(self):
