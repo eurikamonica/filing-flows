@@ -9,6 +9,8 @@ disclosures/data/research/paths/, drawn by docs/paths-view.js (company page "Pri
             and the sector and style ETFs: ten years on the first fetch, then the last months merged in (a refresh restates
             every earlier adjusted close after a dividend or split, so the rows on file are rescaled to the new basis).
             cache/ohlc/<TICKER>.json.gz, state.json.
+            Also, for the move odds only: the style ETFs and the market indices' daily history since 1970 (LONG_HISTORY).
+  moves     public/moves/ (moves.py): each asset's daily returns for the move odds, today's moves and their percentiles.
   build     public/c/<cik>.json per company, public/index.json, public/models.json (the walk-forward scorecard of every
             path model and analog method), public/rules.json (every price-action rule with its pooled, out-of-sample
             evidence), public/portfolios/{m,o}/… (13F managers' and officials' portfolios), public/ledger.json (each week's
@@ -45,6 +47,10 @@ YAHOO_D = ('https://query1.finance.yahoo.com/v8/finance/chart/{s}?period1={p1}&p
 STOOQ_D = 'https://stooq.com/q/d/l/?s={s}&i=d'
 ETFS = [RH.BENCH] + [t for t, _, _ in RH.SECTOR_ETFS] + ['QQQ', 'IWM', 'DIA', 'TLT', 'GLD']
 SECTOR_ETF = {k: t for t, k, _ in RH.SECTOR_ETFS}
+# collected for the move odds only (moves.py; the path models above keep ETFS): the style ETFs, and the market indices'
+# long daily history (price only), from these dates on the first fetch
+MOVES_ETFS = [t for t, _ in RH.STYLE_ETFS if t not in ETFS]
+LONG_HISTORY = {'IDX-GSPC': '1970-01-02', 'IDX-IXIC': '1971-02-05', 'IDX-DJI': '1970-01-02', 'IDX-NDX': '1985-10-01', 'IDX-RUT': '1987-09-10'}
 FORMAT = 1
 HORIZON = 63                                 # trading days ahead (about 13 weeks)
 WINDOW = 756                                 # three years of daily returns behind each path model
@@ -210,20 +216,31 @@ def save(root, ticker, doc):
 
 
 def fetch(client, ticker, full=True, sources=('yahoo', 'stooq')):
-    """(bars, source): ten years (full) or the last REFRESH_SPAN days; raises with every source's error."""
+    """(bars, source): ten years (full; a market index of LONG_HISTORY from its date) or the last REFRESH_SPAN days;
+    raises with every source's error."""
+    t = RH.symbol(ticker)
+    long_from = LONG_HISTORY.get(t)
     problems = []
     for src in sources:
         try:
             if src == 'yahoo':
                 p2 = int(time.time()) + 86400
-                p1 = p2 - (YEARS * 366 + 2) * 86400 if full else p2 - REFRESH_SPAN * 86400
-                return parse_yahoo_daily(client.json(YAHOO_D.format(s=RH.symbol(ticker), p1=p1, p2=p2))), 'yahoo'
+                if not full:
+                    p1 = p2 - REFRESH_SPAN * 86400
+                elif long_from:
+                    p1 = int(dt.datetime.fromisoformat(long_from).replace(tzinfo=dt.timezone.utc).timestamp())
+                else:
+                    p1 = p2 - (YEARS * 366 + 2) * 86400
+                ys = RH.IDX_YAHOO.get(t, t).replace('^', '%5E')
+                return parse_yahoo_daily(client.json(YAHOO_D.format(s=ys, p1=p1, p2=p2))), 'yahoo'
             if src == 'stooq':
-                bars = parse_stooq_daily(client.get(STOOQ_D.format(s=RH.symbol(ticker).lower() + '.us')).decode('utf-8', 'replace'))
+                if t in RH.IDX_STOOQ and not RH.IDX_STOOQ[t]:
+                    raise ValueError('no Stooq symbol for this index')
+                bars = parse_stooq_daily(client.get(STOOQ_D.format(s=RH.IDX_STOOQ.get(t) or (t.lower() + '.us'))).decode('utf-8', 'replace'))
                 if not full:
                     bars = {k: v[-REFRESH_SPAN:] for k, v in bars.items()}
                 else:
-                    since = (dt.date.today() - dt.timedelta(days=YEARS * 366)).isoformat()
+                    since = long_from or (dt.date.today() - dt.timedelta(days=YEARS * 366)).isoformat()
                     i0 = next((i for i, d in enumerate(bars['t']) if d >= since), 0)
                     bars = {k: v[i0:] for k, v in bars.items()}
                 return bars, 'stooq'
@@ -301,7 +318,7 @@ def collect(client, root, tickers, batch=2000, refresh=2500, minutes=25.0, first
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['collect', 'build'])
+    ap.add_argument('cmd', choices=['collect', 'build', 'moves'])
     ap.add_argument('--root', default='paths')
     ap.add_argument('--universe', default=None, help="research-valuation's public/index.json")
     ap.add_argument('--people', default=None, help="the hub's research/people folder (managers.json, m/, officials.json, o/)")
@@ -318,8 +335,12 @@ def main():
         client = Client(tempfile.mkdtemp(prefix='paths-raw-'),
                         {**http, 'host_intervals': {**http.get('host_intervals', {}), 'query1.finance.yahoo.com': 0.6, 'stooq.com': 1.0}})
         extra = [t for t in re.split(r'[\s,;]+', a.tickers or '') if t]
-        tickers = list(dict.fromkeys([RH.symbol(t) for t in extra] + ETFS + [c['t'] for c in universe(a.universe)]))
+        tickers = list(dict.fromkeys([RH.symbol(t) for t in extra] + ETFS + MOVES_ETFS + list(LONG_HISTORY)
+                                     + [c['t'] for c in universe(a.universe)]))
         print(json.dumps(collect(client, a.root, tickers, a.batch, a.refresh, a.minutes, first=extra)))
+    elif a.cmd == 'moves':
+        import moves
+        print(json.dumps(moves.build(a.root, a.universe, limit=a.limit)))
     else:
         import paths_build
         print(json.dumps(paths_build.build(a.root, a.universe, a.people, limit=a.limit)))

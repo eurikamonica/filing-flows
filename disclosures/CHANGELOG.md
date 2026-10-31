@@ -1,5 +1,23 @@
 # Changelog
 
+## Move odds: how rare today's move is, and what followed moves like it
+
+app/moves.py (paths.py moves, run after the daily bars in research-paths.yml) turns the daily bars into one compact file
+per asset — trading days and daily log returns in whole basis points — for every valued company, the market (SPY, QQQ,
+DIA, IWM, RSP, MDY; the S&P 500, Nasdaq and Dow indices since 1970, now collected), the sector and style ETFs, and an
+equal-weighted composite of each SIC industry and SIC major group with five or more companies (today's companies only),
+plus an index of every asset's latest move: its percentile in its own history, its size against its own recent
+volatility, how often moves as large come, and what followed the similar and the more extreme days. moves-view.js (a
+company-page tab, Valuation & expectations → Move odds, and the hub's new Move odds tab, moves.js) works the rest out in
+the browser with the same arithmetic: the move over a day, a week or a month, as a % change, in sigmas of its own
+volatility or beyond what the market's move implied (beta-adjusted); the days within ±1 / 2.5 / 5 / 10 percentile
+points of it and the days at least as extreme; their returns over the next day, week and month against every day's,
+with episodes (clusters counted once) and a better / worse / within-chance verdict; any past day (optionally judged only
+on the history before it, with what actually happened marked) or a what-if move; a company switchable to its industry,
+its sector and the market. The hub tab adds the market and sector cards, the industries most extreme first, the valued
+companies' biggest moves of the day for each stock, and the day's breadth (the share of stocks with a bottom- or
+top-5% day of their own).
+
 ## Notes: what each note changed against last year's annual report (年度变化)
 
 notes.py (VERSION 5) reads the previous annual report's notes too and compares each note with the same note a year

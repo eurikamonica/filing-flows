@@ -4,7 +4,8 @@
 # cache), then public/ is rebuilt by app/paths.py: seven correlated path models (joint and block bootstrap, filtered
 # historical simulation, factor model, Cholesky, t-copula, DCC-GARCH), analogs and correlated-asset historical simulation,
 # rule-based price action with its pooled out-of-sample evidence, portfolios of 13F managers and officials, and the
-# weekly ledger of frozen forecasts.
+# weekly ledger of frozen forecasts. Then public/moves/ (app/moves.py, the Move odds): each asset's daily returns, the
+# latest moves and their percentiles; the style ETFs and the market indices' daily history since 1970 are collected for it.
 # Kept on the branch "research-paths" (one commit, force-pushed); scan.yml publishes public/ at
 # disclosures/data/research/paths/.
 name: Research — price paths & patterns
@@ -67,6 +68,13 @@ jobs:
           ppl=""
           [ -d _research-people/public ] && ppl="--people _research-people/public"
           python disclosures/app/paths.py build --root pth --universe _research-valuation/public/index.json $ppl
+      - name: Move odds (public/moves/)
+        # each asset's daily returns for the move odds (company pages and the hub's Move odds tab): runs even when the
+        # path models' build above was skipped or failed, as it needs only the daily bars
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 20
+        run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json
       - name: Save to the branch (one commit, force-pushed)
         if: always()
         run: |
