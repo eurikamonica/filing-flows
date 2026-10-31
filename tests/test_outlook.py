@@ -63,6 +63,11 @@ class Statements(unittest.TestCase):
         capex = next(i for i in items if i["metric"] == "capex")
         self.assertEqual((capex["lo"], capex["period"]), (1.4e9, "FY2026"))
 
+    def test_supply_and_macro_topics(self):
+        st = O.statements(["We will be shipping both Blackwell and Rubin systems in the future and we are currently experiencing certain supply constraints.",
+                           "We expect foreign currency exchange rates and higher interest rates to weigh on consumer spending in fiscal 2027."])
+        self.assertEqual([x["topic"] for x in st], ["supply", "macro"])
+
     def test_with_year(self):
         self.assertEqual(O._with_year("FY", "For the year ending December 31, 2026, we expect net income of $9 billion."), "FY2026")
         self.assertEqual(O._with_year("Q4", "in the fourth quarter of 2026"), "Q4 2026")
@@ -89,6 +94,19 @@ class Store(unittest.TestCase):
             ix = json.loads((out / "index.json").read_text())
             self.assertEqual(ix["rows"][0][:4], [320193, "mdna", "10-Q", "2026-08-01"])
             self.assertTrue((out / "320193.json").exists())
+
+    def test_an_older_filing_caught_up_later_is_compared_in_order(self):
+        with tempfile.TemporaryDirectory() as d:
+            b = O.keep(d, 1, "mdna", "10-Q", "A2", "2026-08-01", "u2", "2026-06-30", MDNA_Q3)    # the latest first (the scan)
+            self.assertNotIn("vs", b)
+            O.keep(d, 1, "mdna", "10-Q", "A1", "2026-05-01", "u1", "2026-03-31", MDNA_Q2)          # then the one before (catch-up)
+            doc = O.load(d, 1)
+            a2 = next(x for x in doc["docs"] if x["accn"] == "A2")
+            self.assertEqual(a2["vs"], "A1")
+            self.assertEqual(a2["counts"]["new"], 1)
+            self.assertTrue(any("two new plants" in x["t"] for x in a2["dropped"]))
+            self.assertEqual({x["t"][:25]: x["status"] for x in a2["statements"]}["We now expect capital exp"], "updated")
+            self.assertTrue(all(x.get("status") == "first" for x in next(x for x in doc["docs"] if x["accn"] == "A1")["statements"]))
 
 
 if __name__ == "__main__":

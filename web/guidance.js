@@ -608,7 +608,7 @@
         title: `${name ? name + ': ' : ''}${dec(spec.label)} vs guidance`,
         bullets: bullets.slice(0, 6),
         footer: `Compared with the guidance in the earnings release of ${when}${rel.url ? '' : ''} (the last release on file before ${dec(spec.label)} ended): ` +
-          `band and bar = as reported; the light part reaches the guided figure (the midpoint); a dense-dot strip in a band = above guidance; a dense-dot area with a dashed outline = below guidance (what was guided beyond what was reported); ` +
+          `band and bar = as reported; guidance is drawn on the top edge of each band (vs the previous quarter or a year earlier keep the bottom edge): dense dots over the top of a band = above guidance (the part beyond the guided midpoint); a dense-dot area with a dashed outline above a band = below guidance (what was guided beyond what was reported); ` +
           `the bracket beside a bar spans the guided range. Lines compared: those the guidance fixes — guided GAAP or basis-free figures, and lines that follow from them alone ` +
           `(guided margins × guided revenue); every other line is drawn plain. ◆ teal = better than guided (higher revenue or profit, lower costs), orange = worse, grey = within the range.`,
       },
@@ -811,6 +811,96 @@
 
   // the record as HTML: per metric a summary, a strip of dots (each period's result against its guided range, drawn as
   // % from the guided midpoint) and the table of guides, moves and results
+  // ---------- the record drawn: how each guided period's range moved, and where the results landed ----------
+  // The guide path: per metric, each period (oldest left) as a group of bars — one per release that guided it, oldest
+  // first — and the reported figure as a dot; all on one scale, % (points for a rate) from the last guide's midpoint, so
+  // periods of different size line up. Raised guides step up, cuts step down, a narrowing range shortens the bars.
+  function pathHTML(rec, esc) {
+    const e = esc || enc;
+    if (!rec || !rec.metrics) return '';
+    const COLR = { above: '#0b7a75', within: '#3a2a8c', below: '#d9480f', met: '#0b7a75' };
+    const charts = rec.metrics.filter((m) => m.rows.some((r) => r.guides.length > 1 || r.outcome)).slice(0, 3).map((m) => {
+      const rows = m.rows.filter((r) => r.guides.length > 1 || r.outcome).slice(0, 8).reverse();
+      if (!rows.length) return '';
+      const ref = (r) => { const g = r.guides[r.guides.length - 1]; return (g.lo + g.hi) / 2; };
+      const rel = (v, r) => (m.unit === 'pct' ? v - ref(r) : ref(r) ? (v / ref(r) - 1) * 100 : 0);
+      const vals = [];
+      rows.forEach((r) => { r.guides.forEach((g) => vals.push(rel(g.lo, r), rel(g.hi, r))); if (r.actual != null) vals.push(rel(r.actual, r)); });
+      const sorted = vals.map(Math.abs).sort((a, b) => a - b);
+      const span = Math.max(m.unit === 'pct' ? 0.5 : 1, sorted[Math.floor((sorted.length - 1) * 0.9)] * 1.2);   // an outlier stays at the edge
+      const W = 640, H = 230, x0 = 56, x1 = W - 10, y0 = 14, y1 = H - 40, gw = (x1 - x0) / rows.length;
+      const Y = (v) => y0 + (span - Math.max(-span, Math.min(span, v))) / (2 * span) * (y1 - y0);
+      const u = m.unit === 'pct' ? ' pts' : '%';
+      let svg = `<svg class="gr-path" viewBox="0 0 ${W} ${H}" role="img" aria-label="${e(m.name)}: how each period's guidance moved and what was reported">`;
+      [span, span / 2, 0, -span / 2, -span].forEach((t) => {
+        svg += `<line x1="${x0}" x2="${x1}" y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}" stroke="${t === 0 ? '#8c8a84' : '#e4e2dc'}"${t === 0 ? ' stroke-dasharray="3 3"' : ''}/>` +
+          `<text x="${x0 - 6}" y="${(Y(t) + 4).toFixed(1)}" text-anchor="end" class="gr-ax">${t > 0 ? '+' : t < 0 ? '−' : ''}${Math.abs(t).toFixed(span < 3 ? 1 : 0)}${u}</text>`;
+      });
+      rows.forEach((r, i) => {
+        const gx = x0 + i * gw, n = r.guides.length + 1, slot = Math.min(22, (gw - 12) / n), start = gx + (gw - slot * n) / 2;
+        const mids = [];
+        r.guides.forEach((g, j) => {
+          const cx = start + (j + 0.5) * slot, top = Y(rel(g.hi, r)), bot = Y(rel(g.lo, r)), point = Math.abs(g.hi - g.lo) < 1e-9 * Math.max(1, Math.abs(g.hi));
+          const op = (0.45 + 0.55 * (j + 1) / r.guides.length).toFixed(2);
+          svg += `<rect x="${(cx - 4).toFixed(1)}" y="${Math.min(top, bot - (point ? 3 : 0)).toFixed(1)}" width="8" height="${Math.max(point ? 6 : 2, bot - top).toFixed(1)}" rx="2" fill="#5b3fc4" fill-opacity="${op}"${point ? ' stroke="#5b3fc4" stroke-dasharray="2 1.5"' : ''}>` +
+            `<title>${e(`${r.label}: guided ${guideText(g, m.unit)} on ${fdate(g.filed)}${j ? ` (${WORD[g.change] || g.change}${g.range ? ', ' + WORD[g.range] : ''})` : ''}`)}</title></rect>`;
+          mids.push([cx, Y(rel((g.lo + g.hi) / 2, r))]);
+        });
+        if (mids.length > 1) svg += `<polyline points="${mids.map(([a, b]) => `${a.toFixed(1)},${b.toFixed(1)}`).join(' ')}" fill="none" stroke="#5b3fc4" stroke-width="1.4"/>`;
+        if (r.actual != null && r.outcome) {
+          const ax = start + (n - 0.5) * slot, ay = Y(rel(r.actual, r)), col = COLR[r.outcome] || '#6b6a80';
+          const last = mids[mids.length - 1];
+          svg += `<line x1="${last[0].toFixed(1)}" y1="${last[1].toFixed(1)}" x2="${ax.toFixed(1)}" y2="${ay.toFixed(1)}" stroke="${col}" stroke-dasharray="3 2" stroke-width="1.2"/>` +
+            `<circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="5" fill="${col}"><title>${e(`${r.label}: reported ${fmtVal(r.actual, m.unit)} — ${OUT[r.outcome]}`)}</title></circle>`;
+        } else if (r.pending) {
+          svg += `<text x="${(start + (n - 0.5) * slot).toFixed(1)}" y="${(Y(0) + 4).toFixed(1)}" text-anchor="middle" class="gr-ax">?</text>`;
+        }
+        svg += `<text x="${(gx + gw / 2).toFixed(1)}" y="${H - 22}" text-anchor="middle" class="gr-lab">${e(r.label)}</text>` +
+          `<text x="${(gx + gw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle" class="gr-ax">${r.guides.length} guide${r.guides.length === 1 ? '' : 's'}</text>`;
+      });
+      svg += '</svg>';
+      return `<div class="gr-pathbox"><h4>${e(m.name)}: how the guidance moved</h4>${svg}</div>`;
+    }).filter(Boolean);
+    if (!charts.length) return '';
+    return `<div class="gr-paths">${charts.join('')}<p class="muted">Each bar is one release’s guided range for that period, oldest left (paler = earlier), on one scale: % from the last guide’s midpoint (points for a rate). The line follows the midpoint; the dot is what was reported — teal above the range, violet within, orange below; ? = not reported yet.</p></div>`;
+  }
+
+  // Where the results landed in the guided ranges, every metric and period together, oriented so that right is better
+  // (above the range for revenue and profit, below it for costs and the tax rate): a company that lands in the better
+  // third or beyond most of the time guides conservatively.
+  function landingHTML(rec, esc) {
+    const e = esc || enc;
+    if (!rec || !rec.metrics) return '';
+    const bins = [0, 0, 0, 0, 0];
+    rec.metrics.forEach((m) => m.rows.forEach((r) => {
+      if (!r.outcome || !r.final || r.actual == null) return;
+      const g = r.final, better = HIGHER_IS_BETTER[m.metric] !== false;
+      let lo = g.lo, hi = g.hi;
+      if (Math.abs(hi - lo) < 1e-9 * Math.max(1, Math.abs(hi))) { const band = m.unit === 'usd' ? Math.abs(lo) * 0.01 : m.unit === 'ps' ? 0.01 : 0.25; lo -= band; hi += band; }
+      let k = r.actual > hi ? 4 : r.actual < lo ? 0 : (r.actual - lo) / (hi - lo) < 1 / 3 ? 1 : (r.actual - lo) / (hi - lo) > 2 / 3 ? 3 : 2;
+      if (!better) k = 4 - k;
+      bins[k] += 1;
+    }));
+    const n = bins.reduce((a, b) => a + b, 0);
+    if (n < 2) return '';
+    const names = ['Worse than the range', 'Worse third', 'Middle third', 'Better third', 'Better than the range'];
+    const cols = ['#d9480f', '#e8a17a', '#8f84c9', '#6fb8a8', '#0b7a75'];
+    const max = Math.max(...bins), W = 640, H = 150, bw = (W - 40) / 5;
+    let svg = `<svg class="gr-land" viewBox="0 0 ${W} ${H}" role="img" aria-label="Where the reported figures landed in the guided ranges">`;
+    bins.forEach((v, i) => {
+      const h = max ? v / max * (H - 56) : 0, x = 20 + i * bw;
+      svg += `<rect x="${(x + 10).toFixed(1)}" y="${(H - 40 - h).toFixed(1)}" width="${(bw - 20).toFixed(1)}" height="${Math.max(h, v ? 2 : 0).toFixed(1)}" rx="3" fill="${cols[i]}"/>` +
+        `<text x="${(x + bw / 2).toFixed(1)}" y="${(H - 46 - h).toFixed(1)}" text-anchor="middle" class="gr-lab">${v}</text>` +
+        `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 22}" text-anchor="middle" class="gr-ax">${names[i]}</text>`;
+    });
+    svg += '</svg>';
+    const good = bins[3] + bins[4], bad = bins[0] + bins[1];
+    const verdict = good / n >= 0.6 ? `lands in the better third or beyond ${good} of ${n} times: it guides conservatively`
+      : bad / n >= 0.5 ? `lands in the worse third or beyond ${bad} of ${n} times: its guidance tends to be optimistic`
+        : `lands around the middle of its ranges (${bins[2]} of ${n} in the middle third)`;
+    return `<div class="gr-landbox"><h4>Where the results landed</h4>${svg}<p class="muted">Every guided figure held to a reported one (${n}), in thirds of its range; right is better — above the range for revenue and profit, below it for costs and tax. The company ${e(verdict)}.</p></div>`;
+  }
+
   function recordHTML(rec, esc, opts) {
     const e = esc || enc, o = opts || {};
     if (!rec || !rec.metrics.length) return '';
@@ -896,7 +986,7 @@
     return track + '<p class="empty">Not guided: the line keeps its share of its parent from the period on file, so the chart adds up. It is an assumption, not a figure the company gave.</p>';
   }
 
-  const api = { future, versus, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
+  const api = { future, versus, pathHTML, landingHTML, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.FFGuidance = api;
 })(typeof window !== 'undefined' ? window : globalThis);

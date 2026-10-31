@@ -103,5 +103,16 @@ const note = FG.noteHTML(f.nodes.find((n) => n.id === 'revenue'), null, null, f.
 assert.ok(note.includes('Track record:') && note.includes('2 of 3'), note);
 const none = FG.future(base, null, { company, history });
 assert.ok(none.error && none.record, 'no current guidance: the record still shows');
+// drawn: the guide path (a bar per release per period, the reported dot) and where the results landed
+const path = FG.pathHTML(rec);
+assert.ok(path.includes('<svg class="gr-path"') && path.includes('Revenue: how the guidance moved'), 'a path chart for revenue');
+assert.strictEqual((path.split('<svg class="gr-path"')[1].split('</svg>')[0].match(/<rect /g) || []).length, 3 + 4, 'Q1–Q3 one bar each, FY2026 four');
+assert.ok(/FY2026[\s\S]*4 guides/.test(path) && path.includes('>?</text>'), 'the year guided four times, still to report');
+const land = FG.landingHTML(rec);
+// revenue: Q3 above (better), Q2 at the low end (worse third), Q1 below (worse); GAAP gross margin 50.0 in 49.5–50.5 (middle);
+// opex 2.0 vs ≈2.1 (below the ±1% band: better for a cost); tax 14.7% vs 15–16% (below: better)
+assert.ok(land.includes('<svg class="gr-land"') && /The company lands around the middle|guides conservatively|optimistic/.test(land), land);
+assert.ok(/held to a reported one \(6\)/.test(land), 'six figures held to their results');
+assert.strictEqual(FG.pathHTML(null), '');
 assert.strictEqual(FG.record({ releases: [] }, company), null);
 console.log('guidance record: ok');

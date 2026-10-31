@@ -32,7 +32,7 @@
     set(k, v) { try { localStorage.setItem('ff:' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
   };
   const savedCmp = prefs.get('compare', null);                       // 'q' | 'y' | null (older builds stored true)
-  const state = { compare: savedCmp === true ? 'q' : savedCmp, zoom: prefs.get('zoom', 'fit'), decreases: prefs.get('decreases', false),
+  const state = { compare: savedCmp === true ? 'q' : savedCmp, gview: prefs.get('gview', false), zoom: prefs.get('zoom', 'fit'), decreases: prefs.get('decreases', false),
     fcf: fcfBasis(prefs.get('fcf', 'company')), dragZoom: prefs.get('drag-zoom', false) === true,
     linesUnmatched: prefs.get('lines-unmatched', false) === true, charts: [] };
   // Free cash flow as the reader chose in their alerts (pipeline/reported.py fcf_view does the same for e-mails):
@@ -206,8 +206,10 @@
     const el = document.createElement('section');
     const has = (c) => !!(c && c.bullets && c.bullets.length);
     // "vs guidance" (web/guidance.js versus): this period against the guidance it was given, read when the chart opens
+    // it is drawn on the top edge of each band, so it can share the chart with vs the previous quarter / a year earlier
     const gv = { spec: null, byId: null, err: null };
-    const cmpOf = (m) => (m === 'y' ? spec.compare_y : m === 'q' ? spec.compare : m === 'g' ? gv.spec && gv.spec.compare_g : null);
+    if (state.compare === 'g') { state.compare = null; state.gview = true; }     // the first build had it as a view of its own
+    const cmpOf = (m) => (m === 'y' ? spec.compare_y : m === 'q' ? spec.compare : null);
     const yearly = spec.period === 'fy' && !ctx.custom;      // a full year has no "previous quarter"
     el.innerHTML = `
       <div class="controls">
@@ -215,8 +217,8 @@
           <button type="button" data-view="std">Standard</button>
           <button type="button" data-view="q" ${yearly ? 'hidden' : ''} ${has(spec.compare) ? '' : 'disabled title="No previous quarter on file"'}>vs ${has(spec.compare) ? t(spec.compare.vs) : 'previous quarter'}</button>
           <button type="button" data-view="y" ${ctx.custom ? 'hidden' : ''} ${has(spec.compare_y) ? '' : `disabled title="No ${yearly ? 'earlier year' : 'year-ago quarter'} on file"`}>vs ${has(spec.compare_y) ? t(spec.compare_y.vs) : 'year ago'}</button>
-          ${ctx.vsGuide ? `<button type="button" data-view="g" class="gview" disabled title="Reading the company’s guidance…">◆ vs guidance</button>` : ''}
         </div>
+        ${ctx.vsGuide ? `<button class="btn small gview-btn" type="button" data-gview aria-pressed="false" disabled title="Reading the company’s guidance…">◆ Guidance</button>` : ''}
         <label class="dec-toggle" hidden title="Hatched areas with a dashed outline show what each line lost"><input type="checkbox" data-dec ${state.decreases ? 'checked' : ''}> Show decreases</label>
         ${ctx.guide ? `<button class="btn small guide-btn" type="button" data-guide aria-pressed="false" title="Draw the next period as the company guided it in its latest earnings release: guided lines in violet with their range, the rest at today's shares">◇ Show guidance</button>
         <div class="seg gseg" role="group" aria-label="Compare the guided period" hidden>
@@ -250,7 +252,8 @@
     // "Show guidance" (web/guidance.js): the next period as guided; its own spec, nodes and notes while it is on
     const guide = { on: false, open: false, doc: undefined, spec: null, byId: null, cmp: '' };
     const futureOn = () => guide.on && guide.spec && !guide.spec.error;
-    const nodesNow = () => (futureOn() ? guide.byId : mode() === 'g' && gv.byId ? gv.byId : baseById);
+    const gOn = () => !futureOn() && !!state.gview && !!gv.spec;
+    const nodesNow = () => (futureOn() ? guide.byId : gOn() && gv.byId ? gv.byId : baseById);
     const byId = { get: (id) => nodesNow().get(id), has: (id) => nodesNow().has(id) };
     let scene = null, selected = null;
     let own = ctx.custom ? 'q' : undefined;                     // a requested comparison opens on its comparison
@@ -328,7 +331,9 @@
       $('.pz-hint', el).hidden = !state.dragZoom;
       if (!state.dragZoom && vb) { vb = null; applyView(); }
       $$('[data-view]', el).forEach((b) => b.classList.toggle('on', !futureOn() && b.dataset.view === (mode() || 'std')));
-      $('.dec-toggle', el).hidden = futureOn() ? !guide.cmp : !mode() || mode() === 'g';   // below guidance is always drawn
+      $('.dec-toggle', el).hidden = futureOn() ? !guide.cmp : !mode();
+      const gvt = $('[data-gview]', el);
+      if (gvt) { gvt.classList.toggle('on', gOn()); gvt.setAttribute('aria-pressed', gOn() ? 'true' : 'false'); }
       const gb = $('[data-guide]', el);
       if (gb) { gb.classList.toggle('on', guide.open); gb.setAttribute('aria-pressed', guide.open ? 'true' : 'false'); }
       const gr = $('.guide-record', el);
@@ -383,9 +388,10 @@
           ${window.FFGuidance.noteHTML(n, guide.doc && guide.doc.g, t, guide.spec.record)}
           <button class="btn" type="button" data-clear>Close note</button>`;
       }
-      const cm = mode() === 'y' ? n.cmp_y : mode() === 'g' ? n.cmp_g : mode() ? n.cmp : null;
-      const gsrc = mode() === 'g' && cm ? `<div class="muted">${t(gv.spec.compare_g.heading)}: ${t(gv.spec.compare_g.vs)}${gv.spec.compare_g.url ? ` · <a href="${t(gv.spec.compare_g.url)}" target="_blank" rel="noopener">open release ↗</a>` : ''}</div>` : '';
-      const lines = (n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('') + (cm ? `<div class="${Array.isArray(cm) ? 'gchg ' + cm[0] : ''}">${t(Array.isArray(cm) ? S.dec(cm[1]) : cm)}</div>${gsrc}` : '');
+      const cm = mode() === 'y' ? n.cmp_y : mode() ? n.cmp : null, cg = gOn() ? n.cmp_g : null;
+      const gsrc = cg ? `<div class="muted">${t(gv.spec.compare_g.heading)}: ${t(gv.spec.compare_g.vs)}${gv.spec.compare_g.url ? ` · <a href="${t(gv.spec.compare_g.url)}" target="_blank" rel="noopener">open release ↗</a>` : ''}</div>` : '';
+      const lines = (n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('') + (cm ? `<div>${t(cm)}</div>` : '') +
+        (cg ? `<div class="gchg ${cg[0]}">${t(S.dec(cg[1]))}</div>${gsrc}` : '');
       let body;
       const m = /^L:m(\d+)$/.exec(n.id);
       if (ctx.group && m && ctx.companies && ctx.companies[+m[1]]) {
@@ -454,8 +460,8 @@
         scene = S.layout(guide.spec, { compare: gc ? guide.cmp : null, decreases: state.decreases });
         sheet.innerHTML = S.toSVG(scene, S.dec(gc ? gc.title : guide.spec.title));
       } else {
-        scene = S.layout(mode() === 'g' ? gv.spec : spec, { compare: mode(), decreases: state.decreases });
-        sheet.innerHTML = S.toSVG(scene, S.dec(mode() ? cmpOf(mode()).title : spec.title));
+        scene = S.layout(gOn() ? gv.spec : spec, { compare: mode(), guide: gOn(), decreases: state.decreases });
+        sheet.innerHTML = S.toSVG(scene, S.dec(mode() ? cmpOf(mode()).title + (gOn() ? ' and guidance' : '') : gOn() ? gv.spec.compare_g.title : spec.title));
       }
       vb = null;                                                // another layout: shown whole
       applyView();
@@ -478,7 +484,7 @@
       if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(g.dataset.node); }
     });
     const gmsg = $('.guide-msg', el);
-    const gvb = $('[data-view="g"]', el);
+    const gvb = $('[data-gview]', el);
     if (gvb && ctx.vsGuide) {
       ctx.vsGuide.load().then((d) => {
         const r = d ? window.FFGuidance.versus(spec, d, { company: ctx.vsGuide.company, name: ctx.company }) : { error: 'No guidance on file for this company.' };
@@ -486,13 +492,20 @@
           gv.spec = r;
           gv.byId = new Map(r.nodes.map((n) => [n.id, n]));
           gvb.disabled = false;
-          gvb.title = `This ${yearly ? 'year' : 'quarter'} against the guidance of ${r.compare_g.vs.replace(/^guidance \((.*)\)$/, '$1')}: dotted strip = above guidance, dotted area = below`;
-          if (pick() === 'g' && el.isConnected) draw();
+          gvb.title = `This ${yearly ? 'year' : 'quarter'} against the guidance of ${r.compare_g.vs.replace(/^guidance \((.*)\)$/, '$1')}, on the top edge of each band (dots over the top = above guidance, a dotted area above = below); combine it with vs the previous quarter or a year earlier`;
+          if (state.gview && el.isConnected) draw();
         } else {
           gv.err = (r && r.error) || 'No guidance on file.';
           gvb.title = gv.err;
         }
       }).catch(() => { gvb.title = 'The guidance could not be read.'; });
+      gvb.addEventListener('click', () => {
+        if (!gv.spec) return;
+        if (guide.on || guide.open) { guide.on = false; guide.open = false; gmsg.hidden = true; selected = null; }
+        state.gview = !gOn();
+        prefs.set('gview', state.gview);
+        draw();
+      });
     }
     const gbtn = $('[data-guide]', el);
     if (gbtn) gbtn.addEventListener('click', async () => {
@@ -551,7 +564,7 @@
       b.disabled = true;
       try {
         const blob = await S.exportScene(scene, fmt);
-        const name = `${ctx.slug}${futureOn() ? `-guidance${guide.cmp ? '-vs-' + (guide.cmp === 'y' ? 'year-ago' : 'current') : ''}` : ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : mode() === 'g' ? '-vs-guidance' : ''}-sankey.${fmt}`;
+        const name = `${ctx.slug}${futureOn() ? `-guidance${guide.cmp ? '-vs-' + (guide.cmp === 'y' ? 'year-ago' : 'current') : ''}` : ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : ''}${!futureOn() && gOn() ? (mode() ? '-and-guidance' : '-vs-guidance') : ''}-sankey.${fmt}`;
         if (share) {                                               // Android share sheet (X, messages, mail …)
           nativeApp.shareFile(name, 'image/png', await blobBase64(blob));
           return;

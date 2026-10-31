@@ -12,7 +12,7 @@
 (function (global) {
   'use strict';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const TOPIC = { demand: 'Demand & revenue', margin: 'Margins & pricing', costs: 'Costs', capex: 'Capital spending', returns: 'Buybacks & dividends',
+  const TOPIC = { demand: 'Demand & revenue', margin: 'Margins & pricing', costs: 'Costs', supply: 'Supply & capacity', macro: 'Economy & markets', capex: 'Capital spending', returns: 'Buybacks & dividends',
     financing: 'Financing', people: 'People & restructuring', deals: 'Deals', products: 'Products', legal: 'Regulation & legal', tax: 'Tax',
     backlog: 'Backlog & orders', ai: 'AI', other: 'Other' };
   const STATUS = { new: 'new', updated: 'updated', repeated: 'repeated', first: '' };
@@ -60,7 +60,12 @@
 .olv .chips button{font:inherit;font-size:.78rem;border:1px solid var(--line,#d0d5dd);background:transparent;border-radius:999px;padding:2px 9px;cursor:pointer;color:inherit}
 .olv .chips button[aria-pressed="true"]{background:var(--ink,#1d2939);color:var(--bg,#fff)}.olv details summary{cursor:pointer;font-size:.88rem}
 .olv .tone{display:flex;gap:3px;align-items:flex-end;height:46px;margin:6px 0 2px}.olv .tone i{flex:1;max-width:26px;border-radius:2px 2px 0 0;background:#98a2b3}
-.olv .tone i.p{background:#3a9d6a}.olv .tone i.n{background:#d9480f}.olv .guide-record{margin-top:4px}`;
+.olv .tone i.p{background:#3a9d6a}.olv .tone i.n{background:#d9480f}.olv .guide-record{margin-top:4px}
+.olv svg.gr-path,.olv svg.gr-land{width:100%;max-width:640px;height:auto;display:block;color:inherit}.olv .gr-lab{font-size:12px;fill:currentColor}
+.olv .gr-ax{font-size:10.5px;fill:currentColor;opacity:.65}.olv .gr-pathbox h4,.olv .gr-landbox h4{margin:10px 0 2px;font-size:.92rem}
+.olv table.tmap{width:auto;min-width:0;border-collapse:separate;border-spacing:3px;font-size:.8rem}.olv table.tmap td,.olv table.tmap th{border:0;padding:3px 6px;text-align:center}
+.olv table.tmap th.tp{text-align:left;font-weight:500;white-space:nowrap}.olv table.tmap td.c{min-width:38px;border-radius:4px;font-variant-numeric:tabular-nums;position:relative}
+.olv table.tmap td.c b{position:absolute;top:2px;right:3px;width:6px;height:6px;border-radius:50%;background:#1d4ed8}.olv table.tmap th.dc{font-weight:400;font-size:.72rem;opacity:.75;white-space:nowrap}`;
     document.head.appendChild(s);
   }
   const loaders = {};
@@ -100,6 +105,33 @@
       <ul class="fls">${sorted.slice(0, 14).map(li).join('')}</ul>
       ${sorted.length > 14 ? `<details><summary>${sorted.length - 14} more</summary><ul class="fls">${sorted.slice(14).map(li).join('')}</ul></details>` : ''}
       ${(doc.dropped || []).length ? `<details><summary>No longer said (${doc.dropped.length}) — in the ${doc.kind === 'mdna' ? 'filing' : 'release'} before, not in this one</summary><ul class="fls">${doc.dropped.map((s) => `<li><span class="tag">${esc(TOPIC[s.topic] || s.topic)}</span>${esc(s.t)}</li>`).join('')}</ul></details>` : ''}</div>`;
+  }
+
+  // the outlook filing by filing: one row per topic, one column per MD&A (oldest left); the number is how many statements
+  // looked ahead on it, the colour their balance — green leaning positive, orange negative, grey even — and a blue dot
+  // marks new statements; a topic that appears, swells or fades shows at a glance
+  function topicMap(docs) {
+    const ds = (docs || []).slice(0, 8).reverse();
+    if (ds.length < 2) return '';
+    const tally = {};
+    ds.forEach((d, j) => (d.statements || []).forEach((st) => {
+      const t = tally[st.topic] = tally[st.topic] || { n: 0, cells: ds.map(() => ({ n: 0, p: 0, q: 0, nw: 0 })) };
+      const c = t.cells[j];
+      t.n += 1; c.n += 1; c.p += st.tone === 'positive' ? 1 : 0; c.q += st.tone === 'negative' ? 1 : 0; c.nw += st.status === 'new' ? 1 : 0;
+    }));
+    const topics = Object.entries(tally).sort((a, b) => b[1].n - a[1].n).slice(0, 12);
+    if (!topics.length) return '';
+    const fill = (c) => {
+      if (!c.n) return 'transparent';
+      const bal = (c.p - c.q) / c.n, a = Math.min(0.85, 0.18 + 0.12 * c.n);
+      return bal > 0.15 ? `rgba(23,115,74,${a.toFixed(2)})` : bal < -0.15 ? `rgba(217,72,15,${a.toFixed(2)})` : `rgba(102,112,133,${(a * 0.7).toFixed(2)})`;
+    };
+    const ink = (c) => (c.n && Math.min(0.85, 0.18 + 0.12 * c.n) > 0.5 ? '#fff' : 'inherit');
+    const head = ds.map((d) => { const m = /^(\d{4})-(\d{2})/.exec(d.filed || ''); return `<th class="dc">${esc(d.form)}<br>${m ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1] + ' ’' + m[1].slice(2) : ''}</th>`; }).join('');
+    const rows = topics.map(([t, v]) => `<tr><th class="tp">${esc(TOPIC[t] || t)}</th>${v.cells.map((c, j) => `<td class="c" style="background:${fill(c)};color:${ink(c)}" title="${esc(`${TOPIC[t] || t} · ${ds[j].form} ${fdate(ds[j].filed)}: ${c.n} statement${c.n === 1 ? '' : 's'}, ${c.p} positive, ${c.q} negative${c.nw ? `, ${c.nw} new` : ''}`)}">${c.n || ''}${c.nw ? '<b></b>' : ''}</td>`).join('')}</tr>`).join('');
+    return `<div class="olv-card"><h3>The outlook, filing by filing <span class="muted">MD&amp;A topics</span></h3>
+      <div style="overflow-x:auto"><table class="tmap"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="muted">Each cell: how many statements looked ahead on the topic in that 10-Q / 10-K. Green = leaning positive, orange = negative, grey = even; darker = more; ● new since the filing before.</p></div>`;
   }
 
   function events(rows) {
@@ -150,7 +182,10 @@
     if (rec && G && G.recordHTML) {
       const html = G.recordHTML(rec, esc);
       if (html) parts.push(`<div class="olv-card"><div class="guide-record">${html}</div>${merged.releases.some((r) => r.src) ? '<p class="muted">Includes figures guided in the 10-Q / 10-K MD&A for periods no earnings release guided.</p>' : ''}</div>`);
+      const drawn = (G.pathHTML ? G.pathHTML(rec, esc) : '') + (G.landingHTML ? G.landingHTML(rec, esc) : '');
+      if (drawn) parts.push(`<div class="olv-card"><h3>The guidance record, drawn</h3>${drawn}</div>`);
     }
+    parts.push(topicMap(mdna));
     parts.push(flsCard(mdna[0], 'Forward-looking statements · MD&A', mdna));
     parts.push(flsCard(rel[0], 'Forward-looking statements · earnings release', rel));
     parts.push(events(ev));

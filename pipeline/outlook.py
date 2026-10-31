@@ -5,8 +5,9 @@ in which the company looks ahead ("we expect", "we anticipate", "we plan to", "r
 target …"), leaving out the boilerplate (the safe-harbor paragraph, accounting standards to be adopted, "sufficient to
 fund our operations for the next twelve months", option-pricing assumptions …). Each statement gets:
 
-  topic   demand and revenue, margins and pricing, costs, capital spending, capital returns, financing, people and
-          restructuring, deals, products, regulation and legal, tax, backlog and orders, AI
+  topic   demand and revenue, margins and pricing, costs, supply and capacity, the economy and markets (rates, currency,
+          consumers, geopolitics), capital spending, capital returns, financing, people and restructuring, deals,
+          products, regulation and legal, tax, backlog and orders, AI
   tone    positive / negative / neutral (growth, improve, strong … against decline, pressure, headwind …)
   hedge   whether it is qualified (may, could, uncertain, subject to …)
   when    the period it is about when it names one ("fiscal 2027", "the fourth quarter", "second half")
@@ -32,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "disclosures" / "ap
 
 KEEP = 10                      # documents kept per company
 REFRESH_PER_RUN = 30           # companies caught up per scan
+DEPTH = 4                      # MD&As caught up per company (the latest and three before it: a year of filings to compare)
 
 FWD = re.compile(r"(?i)\b(?:expect(?:s|ed|ing)?|anticipat(?:e|es|ed|ing)|plan(?:s|ned)? to|intend(?:s|ed)? to|project(?:s|ed)?|"
                  r"forecast(?:s|ed)?|estimates? that|target(?:s|ed|ing)?|aim(?:s)? to|on track|outlook|guidance|going forward|"
@@ -53,13 +55,17 @@ TOPICS = [
     ("demand", r"demand|revenue|sales|customers?|orders?|volume|traffic|subscribers?|bookings|market share|comparable (?:store )?sales|same-store"),
     ("margin", r"margins?|pricing|prices|price increases|mix|profitab\w+|gross profit|operating income|earnings per share|EPS"),
     ("costs", r"costs?|expenses?|inflation|tariffs?|freight|commodit\w+|raw materials?|labor costs|wage|input"),
+    ("supply", r"supply(?: chain)?|suppliers?|shortages?|constrain\w*|capacity (?:constraints?|limitations?)|lead times?|availability|"
+               r"sourc\w+|logistics|manufacturing (?:capacity|output|ramp)|ramp(?:ing)?|yield|production (?:levels?|rates?|ramp)|inventor\w+"),
+    ("macro", r"econom\w+|macroeconomic|recession|interest rates?|foreign (?:currency|exchange)|currency|exchange rates?|"
+              r"consumer (?:spending|demand|confidence)|geopolitic\w+|war|conflict|China|export (?:controls?|restrictions?)|trade (?:policy|tensions?)"),
     ("capex", r"capital expenditures?|capex|capital spending|invest(?:ment|ing)? in|capacity|(?:new|open\w*|build\w*) (?:\w+ )?(?:plants?|factor(?:y|ies)|facilit(?:y|ies)|stores?|data cent\w+|fabs?)|build[- ]out"),
     ("returns", r"repurchas\w+|buybacks?|dividends?|return (?:of )?capital to (?:share|stock)holders"),
     ("financing", r"debt|borrow\w*|credit facility|refinanc\w+|notes due|leverage|liquidity|interest expense|rating"),
     ("people", r"headcount|workforce|employees|hiring|restructur\w+|layoffs?|severance|reductions? in force|cost savings|efficienc\w+"),
     ("deals", r"acquisitions?|acquire|merger|divest\w+|dispos\w+|spin-?off|close (?:the|this) transaction|transaction (?:is|to) (?:expected to )?close"),
     ("products", r"launch\w*|product(?:s)? (?:introduction|pipeline|roadmap)|approval|FDA|new products?|roll ?out|platform"),
-    ("legal", r"regulat\w+|litigation|lawsuits?|settlement|investigation|compliance|legislation|government"),
+    ("legal", r"regulat\w+|litigation|lawsuits?|settlement|investigation|compliance|legislation|government|licens\w+"),
     ("tax", r"tax rate|income taxes|tax (?:expense|benefit)|effective tax|ETR(?:-adjusted)?"),
     ("backlog", r"backlog|remaining performance obligations|RPO|pipeline of|contracted|awards?"),
     ("ai", r"\bAI\b|artificial intelligence|generative|machine learning|GPU|accelerat\w+ comput\w+|data cent\w+"),
@@ -225,6 +231,31 @@ def load(root, cik):
         return {"cik": int(cik), "docs": []}
 
 
+def restatus(doc):
+    """Each document against the one before it of the same kind, oldest first — run again whenever a document arrives out
+    of order (an older MD&A caught up after a newer one), so "new / updated / no longer said" always reads one step back."""
+    by = {}
+    for d in doc.get("docs") or []:
+        by.setdefault(d.get("kind"), []).append(d)
+    for ds in by.values():
+        ds.sort(key=lambda d: (d.get("filed") or "", d.get("accn") or ""))
+        prev = None
+        for d in ds:
+            for st in d.get("statements") or []:
+                st.pop("status", None)
+                st.pop("was", None)
+            dropped = compare(d.get("statements") or [], prev["statements"] if prev else None)
+            d["dropped"] = [{"t": o["t"], "topic": o["topic"]} for o in dropped[:12]] if prev else []
+            if prev:
+                d["vs"] = prev.get("accn")
+            else:
+                d.pop("vs", None)
+            d["counts"] = counts(d.get("statements") or [])
+            d["counts"]["dropped"] = len(dropped) if prev else 0
+            prev = d
+    return doc
+
+
 def keep(root, cik, kind, form, accn, filed, url, end, paras):
     """Add one document's forward-looking statements to <root>/outlook/<cik>.json (newest first). Returns the entry."""
     if not root:
@@ -244,6 +275,8 @@ def keep(root, cik, kind, form, accn, filed, url, end, paras):
     entry["counts"] = counts(stmts)
     entry["counts"]["dropped"] = len(dropped) if prev else 0
     doc["docs"] = sorted(doc["docs"] + [entry], key=lambda d: d.get("filed") or "", reverse=True)[:KEEP]
+    if any((d.get("filed") or "") > (filed or "") and d.get("kind") == kind for d in doc["docs"]):
+        restatus(doc)                                # an older document arrived after newer ones: compare them again
     p = path(root, cik)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(doc, separators=(",", ":")))
@@ -251,26 +284,31 @@ def keep(root, cik, kind, form, accn, filed, url, end, paras):
 
 
 def refresh(store, sec, text, time_up, limit=REFRESH_PER_RUN):
-    """Catch up: companies with no MD&A statements on file yet — their latest 10-Q / 10-K and the one before it (so the
-    first view already shows what changed), largest first, within the run's time budget."""
+    """Catch up, largest companies first, within the run's time budget: those with no MD&A statements on file get their
+    latest 10-Q / 10-K and the one before it (so the first view already shows what changed); then those with fewer than
+    DEPTH get the next older one each run, so every company has a year of filings to follow its outlook through."""
     root = store.root if hasattr(store, "root") else None
     if not root:
         return 0
     todo = []
     for cik in store.ciks():
-        if any(d.get("kind") == "mdna" for d in load(root, cik)["docs"]):
+        docs = load(root, cik)["docs"]
+        have = {d.get("accn") for d in docs if d.get("kind") == "mdna"}
+        if len(have) >= DEPTH:
             continue                                 # new 10-Qs and 10-Ks are kept as the scan reads them (build.py)
         c = store.company(cik)
         qs = sorted((q for q in (c.get("quarters") or {}).values() if q.get("form") in ("10-Q", "10-K") and q.get("doc_url")),
-                    key=lambda q: q.get("end") or "", reverse=True)
+                    key=lambda q: q.get("end") or "", reverse=True)[:DEPTH]
         if not qs:
             continue
-        have = {d.get("accn") for d in load(root, cik)["docs"]}
-        if qs[0].get("accn") in have:
+        missing = [q for q in qs if q.get("accn") not in have and q.get("accn") not in {d.get("accn") for d in docs}]
+        if not missing:
             continue
-        todo.append((-((qs[0].get("raw") or {}).get("revenue") or 0), cik, [q for q in qs[:2] if q.get("accn") not in have][::-1]))
+        first = not have
+        size = -((qs[0].get("raw") or {}).get("revenue") or 0)
+        todo.append((0 if first else 1, size, cik, (missing[:2] if first else missing[:1])[::-1]))
     n = 0
-    for _, cik, qs in sorted(todo)[:limit]:
+    for _, _, cik, qs in sorted(todo)[:limit]:
         if time_up():
             break
         for q in qs:
