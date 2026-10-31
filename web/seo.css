@@ -24,6 +24,9 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 .seo th, .seo td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; }
 .seo .tbl-wrap { overflow-x: auto; }
 .seo .tbl-wrap th, .seo .tbl-wrap td { white-space: nowrap; }
+/* a cell allowed to wrap (the signals list, scripts/seo_hub.py) keeps a readable width: in a table wider than a phone it
+   got the width of its longest word, one word a line, rows 300px tall */
+.seo .tbl-wrap td [style*="white-space:normal"], .seo .tbl-wrap td [style*="white-space: normal"] { display: inline-block; min-width: 20em; }
 .seo th { background: var(--surface-2); font-size: 12px; color: var(--muted); font-weight: 500; }
 .seo td.num, .seo th.num { text-align: right; font-family: var(--mono); font-size: 13px; }
 .seo-list { padding-left: 18px; line-height: 1.9; }
@@ -107,4 +110,7 @@ details.seo-live > :not(summary) { padding: 0 14px; }
   figure.seo-svg { overflow-x: auto; }
   figure.seo-svg svg { min-width: 560px; }           /* legible labels: the chart scrolls sideways instead of shrinking */
   .seo-chart:not([data-src]) svg { min-width: 600px; }  /* the 13F line chart too */
+}
+@media (max-width: 605px) {   /* narrower than a drawn chart's 560px: the rest of it is a swipe away; say so, as under a Sankey */
+  figure.seo-svg::after { content: '← swipe →'; position: sticky; left: 0; display: block; text-align: center; font: 500 11px var(--mono); color: var(--muted); padding-top: 4px; }
 }
