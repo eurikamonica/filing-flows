@@ -367,6 +367,45 @@ def set_quality(c, fx):
     except Exception as e:
         print(f"  profit and cash figures not read: {e}", file=sys.stderr)
         c["quality"] = {"v": quality.VERSION, "error": str(e)[:200]}
+    set_invest(c, fx)
+
+
+def set_invest(c, fx):
+    """Investment balances and gains (pipeline/investments.py) for the "Investments" view; stored with their version
+    even when empty."""
+    from . import investments
+    try:
+        c["inv"] = investments.compute(fx, (c.get("profile") or {}).get("fye") or "1231")
+    except Exception as e:
+        print(f"  investment figures not read: {e}", file=sys.stderr)
+        c["inv"] = {"v": investments.VERSION, "error": str(e)[:200]}
+
+
+def refresh_invest(store, limit=None):
+    """Stored companies without the current investment figures get them from SEC's company facts, largest first."""
+    from . import investments
+    limit = investments.REFRESH_PER_RUN if limit is None else limit
+    todo = []
+    for cik in store.ciks():
+        c = store.company(cik)
+        if c.get("quarters") and c.get("profile") and (c.get("inv") or {}).get("v") != investments.VERSION:
+            last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
+            todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
+    n = 0
+    for _, cik in sorted(todo)[:limit]:
+        if time_up(CATCH_UP_SHARE, "investment figures"):
+            break
+        try:
+            c = store.company(cik)
+            set_invest(c, companyfacts(cik))
+            store.put(cik, c)
+            n += 1
+        except Exception as e:
+            print(f"  investment figures not read for {cik}: {e}", file=sys.stderr)
+        finally:
+            _cf.pop(cik, None)
+    if todo:
+        print(f"investment figures: {n} companies updated, {max(len(todo) - n, 0)} to go")
 
 
 def refresh_quality(store, limit=QUALITY_PER_RUN):
@@ -575,6 +614,11 @@ def process_filing(store, cik, accn, form, starred=False):
             set_intro(c, text.note1(doc, [p["name"]], p.get("tickers")), doc_url, row.get("filingDate"), "10-Q")
     except Exception as e:
         print(f"  intro skipped for {cik}: {e}", file=sys.stderr)
+    try:                                                     # the companies it names as investees (investments.py)
+        from . import investments
+        investments.note_filing(c, cik, form, accn, row.get("filingDate"), doc_url, doc, inst_text, lab_text, end)
+    except Exception as e:
+        print(f"  investees skipped for {cik} {accn}: {e}", file=sys.stderr)
 
     label, fq, fy = facts.fiscal_label(end, c["profile"]["fye"])
     replaced = c["quarters"].get(end) if (c["quarters"].get(end) or {}).get("form") == "8-K" else None
@@ -1808,6 +1852,7 @@ def run(args):
     refresh_da(store)
     refresh_reported(store)
     refresh_quality(store)
+    refresh_invest(store)
     try:                                                         # forward-looking statements of companies not read yet
         from . import outlook
         outlook.refresh(store, sec, text, lambda: time_up(CATCH_UP_SHARE, "forward-looking statements"))
@@ -1823,6 +1868,11 @@ def run(args):
         custnet.refresh(store, sec, dims, lambda: time_up(CATCH_UP_SHARE, "customer network"))
     except Exception as e:
         print(f"::warning::customer network not refreshed: {e}")
+    try:                                                         # the investees named in 10-Qs and 10-Ks (investments.py)
+        from . import investments
+        investments.refresh(store, sec, dims, lambda: time_up(CATCH_UP_SHARE, "investees"))
+    except Exception as e:
+        print(f"::warning::investees not refreshed: {e}")
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         if time_up(CATCH_UP_SHARE, "starred companies' history"):
@@ -2487,6 +2537,12 @@ def render(store, out, stars=frozenset()):
         custnet.build(store, out, index)
     except Exception as e:
         print(f"::warning::customer network not built: {e}")
+        traceback.print_exc()
+    try:                                                         # what listed companies invest in (#investors)
+        from . import investments
+        investments.build(store, out, index)
+    except Exception as e:
+        print(f"::warning::investments not built: {e}")
         traceback.print_exc()
     try:  # Gamma is generated from all SIC industries, independently of thematic chains.
         gamma.build(store, out, index, usd_recs)

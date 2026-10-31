@@ -27,6 +27,7 @@ from . import drivers as DR
 from . import facts as F
 from . import fsa as W
 from . import history as H
+from . import investments as IV
 from . import reform as RF
 
 VERSION = 10              # 10: ten years of quarterly cash figures for the video studio (capital.py "hq")
@@ -94,7 +95,8 @@ FAMILIES = [
      "other": [["RestructuringReserveTranslationAndOtherAdjustment", "RestructuringReserveTranslationAdjustment"]]},
 ]
 # balances the facts index keeps as point-in-time values (see facts.index_facts)
-INSTANTS = CQ.INSTANTS | {"Assets"} | {t for f in FAMILIES for t in f["balance"]} | W.INSTANT_CONCEPTS | K.INSTANT_CONCEPTS | RF.INSTANT_CONCEPTS
+INSTANTS = CQ.INSTANTS | {"Assets"} | {t for f in FAMILIES for t in f["balance"]} | W.INSTANT_CONCEPTS | K.INSTANT_CONCEPTS | RF.INSTANT_CONCEPTS \
+    | IV.INSTANT_CONCEPTS                        # investment balances (pipeline/investments.py)
 SHARES = W.SHARE_CONCEPTS | K.SHARE_CONCEPTS
 
 

@@ -344,16 +344,18 @@ def manager_pages(root, hub, cfg, U, px, smart_root=None):
         name = include.get(cik, {}).get('label') or info.get('name') or cik
         slug = slugify(re.sub(r'\b(INC|LLC|LP|LTD|CORP|CO)\b\.?', '', name, flags=re.I), cik)
         rec = records.get('f:' + cik)
+        corp = bool(include.get(cik, {}).get('corporate'))           # a listed company investing its own capital
         page = {'cik': cik, 'name': name, 'slug': slug, 'aum': last[2], 'period': last[0], 'filed': last[1], 'positions': len(last[3]),
+                **({'corporate': True} if corp else {}),
                 'holdings_fields': ['ticker', 'name', 'weight', 'value', 'status', 'delta_pct'], 'holdings': holdings,
                 'adds': [a for a in adds if a[0]], 'cuts': [a for a in cuts if a[0]], 'clone': bt, 'record': rec,
                 'quarters': [[s[0], s[1], s[2]] for s in snaps]}
         pages[cik] = page
         rows.append([cik, name, slug, last[2], last[0], last[1], len(last[3]), (bt or {}).get('start'), (bt or {}).get('end'),
                      (bt or {}).get('total'), (bt or {}).get('spy_total'), (bt or {}).get('excess'), (bt or {}).get('max_dd'),
-                     (bt or {}).get('coverage'), (rec or {}).get('hit'), (rec or {}).get('decisions')])
+                     (bt or {}).get('coverage'), (rec or {}).get('hit'), (rec or {}).get('decisions'), 1 if corp else 0])
     fields = ['cik', 'name', 'slug', 'aum', 'period', 'filed', 'positions', 'clone_start', 'clone_end', 'clone_total', 'spy_total',
-              'excess', 'max_dd', 'coverage', 'hit', 'decisions']
+              'excess', 'max_dd', 'coverage', 'hit', 'decisions', 'corporate']
     return {'fields': fields, 'rows': rows}, pages
 
 
