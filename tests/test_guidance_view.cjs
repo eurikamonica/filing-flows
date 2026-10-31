@@ -153,4 +153,42 @@ assert.ok(FG.future(base, null).error);
 assert.ok(FG.future(base, { items: [{ metric: 'revenue', basis: 'non-GAAP', period: 'Q3 FY2027', unit: 'usd', lo: 108, hi: 112 }] }, { company }).error);
 assert.ok(FG.future(base, { items: [{ metric: 'revenue', basis: '', period: 'Q1 FY2028', unit: 'usd', lo: 108, hi: 112 }] }, { company }).error);
 assert.ok(FG.future(base, { items: [{ metric: 'revenue', basis: '', period: 'Q3 FY2027', unit: 'usd', lo: 1080, hi: 1120 }] }, { company }).error);
+
+// "vs guidance" on a reported quarter: Q3 FY27 as reported against the guidance given in the Q2 release (Aug 26, before
+// the quarter ended); the guided figures projected from Q2 as the guidance view does; only the lines guidance fixes
+{
+  const act = JSON.parse(JSON.stringify(base));
+  Object.assign(act, { label: 'Q3 FY27', end: '2026-10-25' });
+  const V = { 'L:a': 70, 'L:b': 44, revenue: 114, gp: 84, cor: 30, oi: 61, opex: 23, nonop_in: 2, pretax: 63, 'I:rd': 17, 'I:sga': 6, net: 54, tax: 9, ocf: 50, wc_out: 4 };
+  act.nodes.forEach((n) => { n.v = V[n.id]; });
+  act.links.forEach((l) => { l.v = l.t in V && ['revenue', 'opex', 'net'].includes(l.s) || l.s.startsWith('L:') ? (l.s.startsWith('L:') ? V[l.s] : V[l.t]) : V[l.t]; });
+  act.links.find((l) => l.s === 'oi').v = 61; act.links.find((l) => l.s === 'nonop_in').v = 2;
+  const co3 = { periods: { q: [{ end: '2026-10-25', q: 3, fy: 2027 }, { end: '2026-07-26', q: 2, fy: 2027 }] }, quarters: [act, base] };
+  const later = { filed: '2026-11-19', accession: 'later', items: [{ metric: 'revenue', basis: '', period: 'Q3 FY2027', unit: 'usd', lo: 114, hi: 114 }] };   // the result, after the quarter: not a guide
+  const r = FG.versus(act, { g: later, hist: { releases: [later, Object.assign({ accession: 'g' }, g)] } }, { company: co3, name: 'Example' });
+  assert.ok(!r.error, r.error);
+  const M = new Map(r.nodes.map((n) => [n.id, n]));
+  near(M.get('revenue').g, 110, 'held to the guided midpoint of the release before the quarter ended');
+  assert.deepStrictEqual(M.get('revenue').grange, [108, 112]);
+  near(M.get('gp').g, 82.5, 'gross profit: guided GAAP margin × guided revenue');
+  near(M.get('cor').g, 27.5, 'cost of revenue follows from the two guided lines');
+  near(M.get('opex').g, 22, 'guided operating expenses');
+  near(M.get('oi').g, 60.5, 'operating profit follows: gross profit − opex');
+  assert.ok(!M.get('I:rd').g && !M.get('L:a').g && !M.get('nonop_in').g, 'lines guidance does not fix stay plain');
+  assert.ok(M.get('pretax').g == null && M.get('tax').g == null && M.get('net').g == null, 'pre-tax depends on unguided other income: not compared, nor tax');
+  const lk = (s, t) => r.links.find((l) => l.s === s && l.t === t);
+  near(lk('revenue', 'gp').g, 82.5, 'the band into gross profit carries its guided size');
+  near(lk('gp', 'oi').g, 60.5, 'the remainder band');
+  assert.ok(lk('L:a', 'revenue').g == null && lk('opex', 'I:rd').g == null, 'segment and opex-split bands are not fixed by guidance');
+  assert.strictEqual(M.get('revenue').cmp_g[0], 'cup', 'revenue above the range: better');
+  assert.ok(/above the range/.test(M.get('revenue').cmp_g[1]) && /\+3\.6%/.test(M.get('revenue').cmp_g[1]), M.get('revenue').cmp_g[1]);
+  assert.strictEqual(M.get('opex').cmp_g[0], 'cdn', 'opex above its guide: worse (a cost)');
+  assert.strictEqual(M.get('cor').cmp_g[0], 'cnt', 'a cost guidance only implies moves with revenue: neutral');
+  assert.ok(r.compare_g.vs.includes('Aug 26, 2026') && /Q3 FY27 vs guidance/.test(r.compare_g.title), r.compare_g.title);
+  assert.ok(/^Revenue .*\(\+3\.6%\) — above the range/.test(r.compare_g.bullets[0]) && r.compare_g.bullets.some((b) => /Gross margin 73\.7% vs guided 74%–76%/.test(b)), r.compare_g.bullets.join(' | '));
+  assert.ok(/dense-dot/.test(r.compare_g.footer));
+  // not held: no guide for it before it ended, or no base period
+  assert.ok(FG.versus(act, { hist: { releases: [later] } }, { company: co3 }).error);
+  assert.ok(FG.versus(act, { g: Object.assign({ accession: 'g' }, g) }, { company: { periods: co3.periods, quarters: [act] } }).error);
+}
 console.log('guidance view: ok');

@@ -468,6 +468,153 @@
     return out;
   }
 
+  // ---------- the reported period against its guidance ("vs guidance" on the quarter's or the year's own Sankey) ----------
+  // spec: a reported quarter or fiscal year (the site's spec); src: {g: the latest guidance, hist: guidance_history}
+  // (holders/<TICKER>.json); opts: {company, name}. The guide the period is held to is the last release on file, filed by
+  // the period's end, that guided it (revenue in dollars, GAAP or basis-free) — as the record holds it. The guided figures
+  // are projected onto the period before (the base the company guided from), as the guidance view does; a line is
+  // compared only when guidance fixes it: a guided line, or one that follows from guided lines alone (cost of revenue =
+  // guided revenue − guided gross profit; a line that is the only one out of a fixed line). Every other line stays plain.
+  // → a copy of spec with links' g (guided value), nodes' g, grange and cmp_g ([style, text]) and compare_g, or {error}.
+  function versus(spec, src, opts) {
+    const o = opts || {}, company = o.company || {};
+    if (!spec || !spec.nodes || !spec.end) return { error: 'No reported period.' };
+    const byAcc = new Map();
+    [src && src.g].concat((src && src.hist && src.hist.releases) || []).forEach((r) => {
+      if (r && r.filed && (r.items || []).length && !byAcc.has(r.accession || r.filed)) byAcc.set(r.accession || r.filed, r);
+    });
+    const rels = [...byAcc.values()].sort((a, b) => (a.filed < b.filed ? 1 : -1));
+    if (!rels.length) return { error: 'No guidance on file for this company.' };
+    const isFy = spec.period === 'fy';
+    const P = periodsOf(company);
+    const here = (period, filed) => { const per = periodFor(period, filed, P); return !!per && per.end === spec.end && per.kind === (isFy ? 'fy' : 'q'); };
+    let rel = null, items = null, tp = null;
+    for (const r of rels) {
+      if (r.filed > spec.end) continue;                    // given after the period ended: a result, not a guide
+      const its = usable(r).filter((it) => here(it.period, r.filed));
+      const rev = its.find((it) => it.metric === 'revenue' && it.unit === 'usd' && it.basis !== 'non-GAAP');
+      if (rev) {
+        rel = r; tp = rev.period;
+        items = usable(r).map((it) => (here(it.period, r.filed) ? Object.assign({}, it, { period: tp }) : it));
+        break;
+      }
+    }
+    if (!rel) return { error: `No revenue guidance on file for ${dec(spec.label)} from a release before it ended.` };
+    const list = ((isFy ? company.years : company.quarters) || []).filter((x) => x && x.end < spec.end && x.nodes)
+      .sort((a, b) => (a.end < b.end ? 1 : -1));
+    const base = list[0];
+    if (!base) return { error: `The period before ${dec(spec.label)} is not on file, so its guidance cannot be drawn.` };
+    const G = guides(items, tp, null);
+    const R = G.revenue && G.revenue.at({}), R0 = (base.nodes.find((n) => n.id === 'revenue') || {}).v;
+    if (!(R > 0) || !(R0 > 0) || R < R0 * 0.4 || R > R0 * 2.5) return { error: 'The guided revenue does not match the scale of the reported revenue; not drawn.' };
+    const PJ = project(base, G);
+    if (!PJ) return { error: 'This chart has no revenue node to project.' };
+    const { F, LV, guided } = PJ;
+    const key = (l) => `${l.s}|${l.t}`;
+    // fixed by guidance: guided nodes (a tax rate only once pre-tax earnings are fixed), lines into them, the remainder
+    // of a fixed line whose other parts are fixed, and a line all of whose inflows are fixed
+    const det = new Set(), dl = new Set();
+    const fix = (withTax) => {
+      Object.keys(guided).forEach((id) => { if (guided[id] && (id !== 'tax' || withTax)) det.add(id); });
+      for (let grew = true; grew;) {
+        grew = false;
+        PJ.links.forEach((l) => {
+          const k = key(l);
+          if (dl.has(k)) return;
+          const into = det.has(l.t) && guided[l.t] && PJ.ins.get(l.t).length === 1;
+          const rest = det.has(l.s) && PJ.outs.get(l.s).every((x) => x === l || dl.has(key(x)));
+          if (into || rest) { dl.add(k); grew = true; }
+        });
+        PJ.nodes.forEach((n) => {
+          const ins = PJ.ins.get(n.id) || [];
+          if (!det.has(n.id) && ins.length && ins.every((x) => dl.has(key(x)))) { det.add(n.id); grew = true; }
+        });
+      }
+    };
+    fix(false);
+    if (guided.tax && det.has('pretax')) fix(true);
+    const fm = fmtOf(R0);
+    const ACT = new Map(spec.nodes.map((n) => [n.id, +n.v]));
+    const better = (n) => (ROLE(n.color) === 'cost' ? 'lower' : 'higher');
+    const pctTxt = (a, b) => (b > 0 && a >= 0 ? `${a >= b ? '+' : '−'}${Math.abs((a / b - 1) * 100).toFixed(1)}%` : 'n/m');
+    const cmpLine = (n) => {
+      const a = +n.v, gv = F[n.id], g1 = G[n.id] && guided[n.id] ? G[n.id] : null;
+      if (!(gv > 0)) return null;
+      const lo = g1 && g1.lo ? g1.lo(F) : null, hi = g1 && g1.hi ? g1.hi(F) : null;
+      const it = g1 ? g1.it : null;
+      let where = '';
+      if (lo != null && hi != null && isFinite(lo) && isFinite(hi)) {
+        const oc = outcome(a, { unit: 'usd', lo, hi, bound: it && it.unit === 'usd' ? it.bound : null });
+        where = oc === 'above' ? 'above the range' : oc === 'below' ? 'below the range' : oc === 'met' ? 'met' : 'within the range';
+      }
+      const up = a > gv * 1.0005, dn = a < gv * 0.9995;
+      const good = better(n) === 'higher' ? up : dn, bad = better(n) === 'higher' ? dn : up;
+      // a cost guidance only implies (cost of revenue = guided revenue − guided gross profit) moves with the revenue it
+      // serves: neither better nor worse in itself
+      const st = where === 'within the range' || where === 'met' || (!good && !bad) || (!g1 && better(n) === 'lower') ? 'cnt' : good ? 'cup' : 'cdn';
+      const what = g1 ? (it.unit === 'usd' ? `guided ${range(it)}` : `guided ${NAMES[it.metric] ? NAMES[it.metric].toLowerCase() + ' ' : ''}${range(it)} → ${fm.money(gv)}`) : `implied by guidance ${fm.money(gv)}`;
+      return [st, enc(`◆ ${what} · ${pctTxt(a, gv)}${where ? ' · ' + where : ''}`)];
+    };
+    // the reported period must be built like the base where a comparison rests on it: a line that splits differently
+    // now (other expense out of operating profit this quarter, not last) is not held to the projected split
+    const sides = (ls) => { const o = new Map(), i = new Map(); ls.filter((l) => l.v > 0).forEach((l) => { (o.get(l.s) || o.set(l.s, new Set()).get(l.s)).add(l.t); (i.get(l.t) || i.set(l.t, new Set()).get(l.t)).add(l.s); }); return { o, i }; };
+    const A = sides(spec.links), B = sides(PJ.links.map((l) => ({ s: l.s, t: l.t, v: LV.get(l) || l.v })));
+    const same = (x, y) => (x ? x.size : 0) === (y ? y.size : 0) && [...(x || [])].every((v) => y && y.has(v));
+    const sameOuts = (id) => same(A.o.get(id), B.o.get(id)), sameIns = (id) => same(A.i.get(id), B.i.get(id));
+    [...dl].forEach((k) => { const [a, b] = k.split('|'); if (!sameOuts(a) || !sameIns(b)) dl.delete(k); });
+    [...det].forEach((id) => { if (!(guided[id] && G[id]) && !sameIns(id)) det.delete(id); });
+    const nodes = spec.nodes.map((n) => {
+      if (!det.has(n.id) || !(F[n.id] > 0)) return n;
+      const g1 = G[n.id] && guided[n.id] ? G[n.id] : null, out = Object.assign({}, n, { g: F[n.id], cmp_g: cmpLine(n) });
+      if (g1 && g1.lo && g1.hi) {
+        const lo = g1.lo(F), hi = g1.hi(F);
+        if (isFinite(lo) && isFinite(hi) && hi > lo) out.grange = [lo, hi];
+      }
+      return out;
+    });
+    const LVk = new Map(PJ.links.map((l) => [key(l), LV.get(l)]));
+    const links = spec.links.map((l) => (dl.has(key(l)) && LVk.get(key(l)) != null ? Object.assign({}, l, { g: LVk.get(key(l)) }) : l));
+    const nC = nodes.filter((n) => n.g != null).length;
+    if (!nC) return { error: 'None of this period’s lines can be compared with its guidance.' };
+    const name = dec(o.name || '');
+    const when = fdate(rel.filed);
+    // the main results against the guide, in words
+    const bullets = [];
+    const N = new Map(nodes.map((n) => [n.id, n]));
+    const say = (id, label) => {
+      const n = N.get(id);
+      if (!n || n.g == null) return;
+      const g1 = G[id] && guided[id] ? G[id] : null;
+      const rng = g1 && g1.it.unit === 'usd' ? ` (guided ${range(g1.it)})` : '';
+      bullets.push(`${label} ${fm.money(+n.v)} vs ${fm.money(n.g)} ${g1 ? 'guided' : 'implied by guidance'}${rng}: ${fm.delta(+n.v - n.g)} (${pctTxt(+n.v, n.g)})${n.cmp_g && /range|met/.test(n.cmp_g[1]) ? ' — ' + /(above the range|below the range|within the range|met)/.exec(dec(n.cmp_g[1]))[1] : ''}.`);
+    };
+    say('revenue', 'Revenue');
+    const gm = choose(items, 'gross_margin', tp, ['pct']);
+    if (gm && ACT.get('gp') != null && ACT.get('revenue') > 0) {
+      const a = ACT.get('gp') / ACT.get('revenue') * 100;
+      bullets.push(`Gross margin ${a.toFixed(1)}% vs guided ${range(gm)}${gm.basis ? ` (${gm.basis})` : ''}: ${a - mid(gm) >= 0 ? '+' : '−'}${Math.abs(a - mid(gm)).toFixed(1)} pts vs the midpoint.`);
+    } else say('gp', 'Gross profit');
+    say('opex', 'Operating expenses');
+    say('oi', 'Operating profit');
+    say('net', 'Net earnings');
+    const notDrawn = (rel.items || []).filter((it) => here(it.period, rel.filed) && it.lo != null && (it.basis === 'non-GAAP' || it.unit === 'ps'))
+      .slice(0, 4).map((it) => `${it.basis === 'non-GAAP' ? 'adj. ' : ''}${NAMES[it.metric] || it.metric} ${range(it)}`);
+    if (notDrawn.length) bullets.push(`Also guided, not drawn (no GAAP line to hold it to here): ${notDrawn.join('; ')}.`);
+    return Object.assign({}, spec, {
+      nodes, links,
+      compare_g: {
+        vs: `guidance (${when})`, release: rel.filed, url: rel.url || null, period: tp,
+        heading: `${dec(spec.label)} vs guidance`,
+        title: `${name ? name + ': ' : ''}${dec(spec.label)} vs guidance`,
+        bullets: bullets.slice(0, 6),
+        footer: `Compared with the guidance in the earnings release of ${when}${rel.url ? '' : ''} (the last release on file before ${dec(spec.label)} ended): ` +
+          `band and bar = as reported; the light part reaches the guided figure (the midpoint); a dense-dot strip in a band = above guidance; a dense-dot area with a dashed outline = below guidance (what was guided beyond what was reported); ` +
+          `the bracket beside a bar spans the guided range. Lines compared: those the guidance fixes — guided GAAP or basis-free figures, and lines that follow from them alone ` +
+          `(guided margins × guided revenue); every other line is drawn plain. ◆ teal = better than guided (higher revenue or profit, lower costs), orange = worse, grey = within the range.`,
+      },
+    });
+  }
+
   // ---------- the record: every guided period against what the company then reported, and how each guide moved ----------
   // history: holders/<TICKER>.json → guidance_history {releases: [{filed, accession, url, label, tags, items}] newest first}
   // company: the site's company file (quarters, years, periods) — the reported figures, GAAP
@@ -749,7 +896,7 @@
     return track + '<p class="empty">Not guided: the line keeps its share of its parent from the period on file, so the chart adds up. It is an assumption, not a figure the company gave.</p>';
   }
 
-  const api = { future, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
+  const api = { future, versus, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.FFGuidance = api;
 })(typeof window !== 'undefined' ? window : globalThis);

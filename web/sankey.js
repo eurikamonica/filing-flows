@@ -1,10 +1,13 @@
 /* Earnings Sankey: layout + rendering in the earnings-sankey standard format.
  *
- * layout(spec, {compare: 'q'|'y', decreases: true}) turns the pipeline's JSON (nodes with column, colour role, label lines and a
+ * layout(spec, {compare: 'q'|'y'|'g', decreases: true}) turns the pipeline's JSON (nodes with column, colour role, label lines and a
  * preferred label side; links with current and previous-quarter values) into a scene: a flat display
  * list of bands, bars and text. The same scene is drawn as interactive SVG on screen and onto a canvas
  * for PNG/JPG/PDF export. Shapes flagged `ui` (note markers, hit areas) exist only on screen.
  * In a comparison, `decreases` also draws what each line lost (hatched, dashed outline) in room reserved beside it.
+ * 'g' compares the reported period with its guidance (web/guidance.js versus(): links' g, nodes' g / grange / cmp_g,
+ * spec.compare_g) in the same grammar with a texture of its own: dense dots where Q/Q and Y/Y use solid strips and
+ * diagonal hatching — a dotted strip = above guidance, a dotted area with a dashed outline = below it (always drawn).
  */
 (function (global) {
   'use strict';
@@ -56,6 +59,35 @@
   const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
   const dec = (s) => String(s == null ? '' : s).replace(/&(amp|lt|gt|quot|#39);/g, (m) => ENT[m]);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // the guidance comparison: dense dots in the guidance violet (the colour of guided lines in the guidance view)
+  const DOT = '#4b34b8', DOT_GAP = 3.8, DOT_R = 1.2;
+  const DOT_ROW = DOT_GAP * 0.87;
+  // dot centres on one staggered lattice for the whole chart (so neighbouring areas line up), inside a shape: a band
+  // (s.curve = [x0, a0, x1, a1, th]: only the rows between its edges, column by column) or a box; drawn clipped to it
+  function dotsOf(s) {
+    const out = [];
+    if (s.curve) {
+      const [x0, a0, x1, a1, th] = s.curve;
+      const topAt = (x) => {                          // the band's upper edge at x (bezX is monotonic in t)
+        let lo = 0, hi = 1;
+        for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (bezX(x0, x1, m) < x) lo = m; else hi = m; }
+        return a0 + (a1 - a0) * ease((lo + hi) / 2);
+      };
+      for (let par = 0; par < 2; par++) {
+        for (let cx = Math.ceil((x0 - par * DOT_GAP / 2) / DOT_GAP) * DOT_GAP + par * DOT_GAP / 2; cx <= x1; cx += DOT_GAP) {
+          const t0 = topAt(cx) - DOT_R, t1 = t0 + th + 2 * DOT_R;
+          for (let r = Math.ceil(t0 / DOT_ROW); r * DOT_ROW <= t1; r++) if (((r % 2) + 2) % 2 === par) out.push([cx, r * DOT_ROW]);
+        }
+      }
+      return out;
+    }
+    const [x, y, w, h] = shapeBox(s);
+    for (let r = Math.ceil((y - DOT_R) / DOT_ROW); r * DOT_ROW <= y + h + DOT_R; r++) {
+      const off = (((r % 2) + 2) % 2) * DOT_GAP / 2;
+      for (let cx = Math.ceil((x - DOT_R - off) / DOT_GAP) * DOT_GAP + off; cx <= x + w + DOT_R; cx += DOT_GAP) out.push([cx, r * DOT_ROW]);
+    }
+    return out;
+  }
   const HATCH = 8;                                    // spacing of the diagonal lines that mark a decrease
   const HATCH_W = 1.8;                                // their width
   // the diagonal lines ("/") that cover a box, as plain geometry: drawn clipped to the area, so they print and
@@ -91,7 +123,7 @@
 
   function labelBlock(n, mode) {
     const lines = (n.lines || [['name', n.name]]).map(([st, t]) => ({ st: STY[st] ? st : 'mut', t: dec(t) }));
-    const cmp = mode === 'y' ? n.cmp_y : mode === 'q' ? n.cmp : null;
+    const cmp = mode === 'y' ? n.cmp_y : mode === 'q' ? n.cmp : mode === 'g' ? n.cmp_g : null;
     if (Array.isArray(cmp)) lines.push({ st: STY[cmp[0]] ? cmp[0] : 'cmp', t: dec(cmp[1]) });   // [style, text]: the guidance view
     else if (cmp) lines.push({ st: 'cmp', t: dec(cmp) });
     let w = 0, h = 0;
@@ -156,12 +188,14 @@
   // ---------- layout ----------
   function layout(spec, opts) {
     opts = opts || {};
-    // comparison variant: 'q' = vs the previous quarter, 'y' = vs the same quarter a year earlier
-    const mode = opts.compare === 'y' || opts.compare === 'q' ? opts.compare : opts.compare === true ? 'q' : null;
-    const cmpSpec = mode === 'y' ? spec.compare_y : mode === 'q' ? spec.compare : null;
+    // comparison variant: 'q' = vs the previous quarter, 'y' = vs the same quarter a year earlier, 'g' = vs guidance
+    const mode = ['y', 'q', 'g'].includes(opts.compare) ? opts.compare : opts.compare === true ? 'q' : null;
+    const cmpSpec = mode === 'y' ? spec.compare_y : mode === 'q' ? spec.compare : mode === 'g' ? spec.compare_g : null;
     const compare = !!cmpSpec;
-    const ghosts = compare && !!opts.decreases;       // draw decreases as hatched, dashed areas
-    const prior = (l) => (mode === 'y' ? l.y : l.q);
+    const gmode = compare && mode === 'g';
+    // decreases as hatched, dashed areas (Q/Q, Y/Y: when asked); below guidance always, as dotted areas
+    const ghosts = compare && (!!opts.decreases || gmode);
+    const prior = (l) => (mode === 'y' ? l.y : mode === 'g' ? l.g : l.q);
     const nodes = spec.nodes.map((n, i) => Object.assign({}, n, { idx: i, ins: [], outs: [] }));
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const links = spec.links
@@ -481,22 +515,23 @@
       const stripFill = fut ? NEW : pal.node;
       const cls = { ls: l.s, lt: l.t };            // link ends (not `s`/`t`: `t` is the shape type)
       if (compare && prior(l) != null) {
+        // above guidance: the strip keeps the band's light colour under dense dots (Q/Q, Y/Y: a solid dark strip)
+        const strip = (a0, a1, th) => shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, a0, g.x1, a1, th), fill: gmode ? pal.flow : stripFill, band: true },
+          gmode ? { dots: DOT, curve: [g.x0, a0, g.x1, a1, th] } : {}, cls));
         if (prior(l) <= 0) {
-          shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, l.th), fill: stripFill, band: true }, cls));
+          strip(g.a0, g.a1, l.th);
         } else {
-          const base = Math.min(prior(l), l.v) * K, strip = l.th - base;
+          const base = Math.min(prior(l), l.v) * K, sth = l.th - base;
           shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, base), fill: pal.flow, band: true }, cls));
-          if (strip > 0.05) {
-            shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0 + base, g.x1, g.a1 + base, Math.max(strip, 0.6)),
-              fill: stripFill, band: true }, cls));
-          }
+          if (sth > 0.05) strip(g.a0 + base, g.a1 + base, Math.max(sth, 0.6));
         }
       } else {
         shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, Math.max(l.th, 0.8)), fill: pal.flow, band: true }, cls));
       }
       if (l.ghost > 0.3) {
         shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0 + l.th, g.x1, g.a1 + l.th, l.ghost), fill: 'none',
-          hatch: pal.node, band: true, ghost: true,
+          [gmode ? 'dots' : 'hatch']: gmode ? DOT : pal.node, outline: true, band: true, ghost: true,
+          curve: gmode ? [g.x0, g.a0 + l.th, g.x1, g.a1 + l.th, l.ghost] : undefined,
           box: [g.x0, Math.min(g.a0, g.a1) + l.th, g.x1 - g.x0, Math.abs(g.a1 - g.a0) + l.ghost] }, cls));
       }
     });
@@ -507,12 +542,14 @@
       const side = n.outs.length ? n.outs : n.ins, off = n.outs.length ? 'so' : 'to';
       const sideSum = n.outs.length ? n.outSum : n.inSum;
       const lost = (fut ? PALETTE[baseRole(n.color)] || pal : pal).node;     // a decrease is hatched in the line's own colour
+      const miss = (y, h) => (gmode ? { t: 'rect', x: n.x, y, w: NW, h, fill: 'none', dots: DOT, outline: true, group: n.id }
+        : { t: 'rect', x: n.x, y, w: NW, h, fill: 'none', hatch: lost, group: n.id });
       if (ghosts && side.length && (side.some((l) => l.ghost > 0.3) || n.h - sideSum > 0.5)) {
         side.forEach((l) => {
           shapes.push({ t: 'rect', x: n.x, y: n.top + l[off], w: NW, h: Math.max(l.th, 0.8), fill: pal.node, group: n.id });
-          if (l.ghost > 0.3) shapes.push({ t: 'rect', x: n.x, y: n.top + l[off] + l.th, w: NW, h: l.ghost, fill: 'none', hatch: lost, group: n.id });
+          if (l.ghost > 0.3) shapes.push(miss(n.top + l[off] + l.th, l.ghost));
         });
-        if (n.h - sideSum > 0.5) shapes.push({ t: 'rect', x: n.x, y: n.top + sideSum, w: NW, h: n.h - sideSum, fill: 'none', hatch: lost, group: n.id });
+        if (n.h - sideSum > 0.5 && (!gmode || n.g != null)) shapes.push(miss(n.top + sideSum, n.h - sideSum));
       } else {
         shapes.push({ t: 'rect', x: n.x, y: n.top, w: NW, h: n.h, fill: pal.node, group: n.id });
       }
@@ -521,6 +558,12 @@
         const c = n.top + n.h / 2, hi = Math.max(n.range[1] * K, n.h), lo = Math.min(n.range[0] * K, n.h);
         shapes.push({ t: 'rect', x: n.x - 5, y: c - hi / 2, w: NW + 10, h: hi, fill: 'none', stroke: RANGE, dash: [4, 3], sw: 1.4, group: n.id });
         [c - lo / 2, c + lo / 2].forEach((y) => shapes.push({ t: 'rect', x: n.x - 8, y: y - 1, w: NW + 16, h: 2, fill: RANGE, group: n.id }));
+      }
+      if (gmode && n.grange && n.grange[1] > n.grange[0]) {
+        // the guided range beside the bar, from its top: a bar ending inside the bracket was within the range
+        const lo = n.top + n.grange[0] * K, hi = n.top + n.grange[1] * K, bx = n.x - 8;
+        shapes.push({ t: 'rect', x: bx, y: lo, w: 3, h: Math.max(hi - lo, 1.5), fill: DOT, group: n.id });
+        [lo, hi].forEach((yy) => shapes.push({ t: 'rect', x: bx - 3.5, y: yy - 1, w: 10, h: 2, fill: DOT, group: n.id }));
       }
       const [lx, ly, lw, lh, anchor] = n.lr;
       let y = ly;
@@ -585,7 +628,11 @@
       : LEGEND.filter(([k]) => used.has(k) || k === 'rev' || k === 'profit' || k === 'cost');
     const lgItems = legend.map(([k, t]) => ({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
     if (spec.future && nodes.some((n) => n.range)) lgItems.push({ k: 'range', t: 'Dashed box = guided range (tick = low end)', w: 22 + measure('Dashed box = guided range (tick = low end)', 14, 400) });
-    if (compare) {                     // increases are drawn as dark strips; a decrease leaves the band light (its Δ is negative)
+    if (gmode) {                       // vs guidance: dense dots, the bracket of the guided range, the ◆ colours
+      [['gstrip', 'Dotted strip = above guidance'], ['gghost', 'Dotted, dashed outline = below guidance'], ['gbracket', 'Bracket = guided range'],
+        ['cup', 'better than guided'], ['cdn', 'worse than guided']]
+        .forEach(([k, t]) => lgItems.push({ k, t, w: 22 + measure(t, 14, 400) }));
+    } else if (compare) {              // increases are drawn as dark strips; a decrease leaves the band light (its Δ is negative)
       [['strip', spec.future ? `Violet strip = increase vs ${dec(cmpSpec.vs)}` : `Dark strip = increase vs ${dec(cmpSpec.vs)}`],
         ghosts ? ['ghost', `Hatched = decrease vs ${dec(cmpSpec.vs)}`] : ['nostrip', 'No strip = decrease (Δ below the value is negative)']]
         .forEach(([k, t]) => lgItems.push({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
@@ -596,7 +643,8 @@
     }
     const lgW = lgItems.reduce((s, it) => s + it.w, 0) + 20 * (lgItems.length - 1);
     const footer = (spec.footer || []).map(dec);
-    if (compare) {
+    if (gmode) footer.push(dec(cmpSpec.footer || ''));
+    else if (compare) {
       footer.push(`Comparison view: band width = ${spec.future ? `the guided period (${dec(spec.period || '')}); the light part keeps the standard grey, green and red (what the line had in ${dec(cmpSpec.vs)}); violet strip` : 'current quarter; dark strip'} = increase vs ${dec(cmpSpec.vs)} ` +
         (ghosts ? `(hatched area with a dashed outline = decrease: what the line had in ${dec(cmpSpec.vs)} beyond this quarter). `
           : '(no strip = it fell). ') +
@@ -636,6 +684,14 @@
         shapes.push({ t: 'rect', x: lx, y: ly - 2, w: 14, h: 20, fill: 'none', stroke: RANGE, dash: [4, 3], sw: 1.4 });
       } else if (it.k === 'ghost') {
         shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', hatch: LP.hatch || LP.node });
+      } else if (it.k === 'gstrip') {
+        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE.profit.flow, r: 3 });
+        shapes.push({ t: 'rect', x: lx, y: ly + 7, w: 14, h: 8, fill: PALETTE.profit.flow, dots: DOT });
+      } else if (it.k === 'gghost') {
+        shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', dots: DOT, outline: true });
+      } else if (it.k === 'gbracket') {
+        shapes.push({ t: 'rect', x: lx + 6, y: ly + 1, w: 2.4, h: 14, fill: DOT });
+        [ly + 1, ly + 15].forEach((yy) => shapes.push({ t: 'rect', x: lx + 3, y: yy - 0.9, w: 8.4, h: 1.8, fill: DOT }));
       } else {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE[it.k].node, r: 3 });
       }
@@ -777,12 +833,23 @@
         (lines ? `<path clip-path="url(#${id})" d="${lines}" fill="none" stroke="${s.hatch}" stroke-width="${HATCH_W}"/>` : '') +
         outline + ` fill="none" stroke="${s.hatch}" stroke-width="1.2" stroke-dasharray="5 3.5"/></g>`;
     }
+    function dotted(s, attrs) {                      // vs guidance: dense dots (above: on the band's colour; below: dashed outline)
+      const id = `ffc-${uid}-${nclip++}`;
+      const shape = s.t === 'path' ? `<path d="${s.d}"/>` : `<rect x="${f2(s.x)}" y="${f2(s.y)}" width="${f2(s.w)}" height="${f2(s.h)}"/>`;
+      const outline = s.t === 'path' ? `<path d="${s.d}"` : `<rect x="${f2(s.x)}" y="${f2(s.y)}" width="${f2(s.w)}" height="${f2(s.h)}"`;
+      const r = DOT_R, dots = dotsOf(s).map(([x, y]) => `M${f2(x - r)} ${f2(y)}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`).join('');
+      return `<g${attrs}><clipPath id="${id}">${shape}</clipPath>` +
+        (s.outline ? outline + ` fill="${scene.bg}" fill-opacity="0.85"/>` : outline + ` fill="${s.fill}"/>`) +
+        (dots ? `<path clip-path="url(#${id})" d="${dots}" fill="${s.dots}"/>` : '') +
+        (s.outline ? outline + ` fill="none" stroke="${s.dots}" stroke-width="1.2" stroke-dasharray="5 3.5"/>` : '') + '</g>';
+    }
     let group = null;
     const close = () => { if (group !== null) out.push('</g>'); group = null; };
     scene.shapes.forEach((s) => {
       if (s.band) {
         close();
         if (s.hatch) out.push(hatched(s, ` class="band ghost" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}"`));
+        else if (s.dots) out.push(dotted(s, ` class="band${s.ghost ? ' ghost' : ''}" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}"`));
         else out.push(`<path class="band" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}" d="${s.d}" fill="${s.fill}"/>`);
         return;
       }
@@ -792,6 +859,8 @@
       }
       if (s.t === 'rect' && s.hatch) {
         out.push(hatched(s, s.group ? ' class="bar ghost"' : ''));
+      } else if (s.t === 'rect' && s.dots) {
+        out.push(dotted(s, s.group ? ' class="bar ghost"' : ''));
       } else if (s.t === 'rect') {
         const cls = s.hit ? ' class="hit"' : s.group ? ' class="bar"' : '';
         out.push(`<rect${cls} x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" width="${s.w.toFixed(2)}" height="${s.h.toFixed(2)}"` +
@@ -835,6 +904,20 @@
         ctx.setLineDash([5, 3.5]); ctx.lineWidth = 1.2; ctx.strokeStyle = s.hatch;
         ctx.stroke(path);
         ctx.restore();
+        return;
+      }
+      if (s.dots) {                             // vs guidance: dense dots, clipped to the shape
+        const path = s.t === 'path' ? new Path2D(s.d) : new Path2D();
+        if (s.t !== 'path') path.rect(s.x, s.y, s.w, s.h);
+        ctx.save();
+        if (s.outline) { ctx.globalAlpha = 0.85; ctx.fillStyle = scene.bg; ctx.fill(path); ctx.globalAlpha = 1; }
+        else { ctx.fillStyle = s.fill; ctx.fill(path); }
+        ctx.clip(path);
+        ctx.beginPath();
+        dotsOf(s).forEach(([x, y]) => { ctx.moveTo(x + DOT_R, y); ctx.arc(x, y, DOT_R, 0, Math.PI * 2); });
+        ctx.fillStyle = s.dots; ctx.fill();
+        ctx.restore();
+        if (s.outline) { ctx.save(); ctx.setLineDash([5, 3.5]); ctx.lineWidth = 1.2; ctx.strokeStyle = s.dots; ctx.stroke(path); ctx.restore(); }
         return;
       }
       if (s.stroke && (s.t === 'rect' || s.t === 'path')) {   // dashed / dotted outlines (the guidance view)

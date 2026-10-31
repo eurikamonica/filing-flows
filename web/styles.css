@@ -897,6 +897,11 @@ main.wrap { position: relative; }
 :root[data-theme="dark"] .guide-btn { border-color: #6c5fb5; color: #cfc6ff; }
 :root[data-theme="dark"] .guide-msg { background: #24213a; color: #d8d3f5; border-left-color: #6c5fb5; }
 .gseg button[data-gcmp].on { background: #3a2a8c; color: #fff; }
+/* "◆ vs guidance" on a reported quarter or year: the guidance violet, the comparison drawn in dense dots */
+.seg button.gview:not(:disabled) { color: #3a2a8c; }
+.seg button.gview.on { background: #3a2a8c; color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .seg button.gview:not(:disabled):not(.on) { color: #cfc6ff; } }
+:root[data-theme="dark"] .seg button.gview:not(:disabled):not(.on) { color: #cfc6ff; }
 .notes .gchg { font-weight: 600; }
 .notes .gchg.cup { color: #0b7a75; }
 .notes .gchg.cdn { color: #c2410c; }
