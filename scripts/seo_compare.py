@@ -20,6 +20,7 @@ from xml.sax.saxutils import escape as xesc
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
 import seo_svg as SV  # noqa: E402
+from seo_history import sankey_figure  # noqa: E402
 
 e, display_name, slug_for, fdate = seo.e, seo.display_name, seo.slug_for, seo.fdate
 
@@ -138,6 +139,11 @@ def page_for(a, b, fa, fb, va, vb, base):
                        ('Gross margin', fa.get('gm'), fb.get('gm'), pct), ('Operating margin', fa.get('om'), fb.get('om'), pct),
                        ('Net margin', fa.get('nm'), fb.get('nm'), pct), ('Free cash flow', fa.get('fcf'), fb.get('fcf'), money)],
                       (f'{na} ({ta})', f'{nb} ({tb})'), f'{na} vs {nb}, latest quarter')
+            + f"<h2>Where the money goes: {e(ta)} and {e(tb)}</h2><div class='seo-two'>"
+            + ''.join(f"<div><h3>{e(n_)} ({e(tk)}) · {e(f_['label'])}</h3>" + sankey_figure(x['cik'], f_['label'], f"{n_} {f_['label']} Sankey", up='../../') + '</div>'
+                      for n_, tk, x, f_ in ((na, ta, a, fa), (nb, tb, b, fb)))
+            + "</div>"
+            + ''.join(SV.hbars(list(f_['segs']), money, f"{n_} revenue by segment, {f_['label']}") for n_, f_ in ((na, fa), (nb, fb)) if len(f_['segs'] or []) > 1)
             + f"{tbl}"
             + (f"<h2>Where the revenue comes from</h2>{seg}" if seg else '')
             + '<h2>Questions</h2>' + ''.join(f'<h3>{e(q)}</h3><p>{e(x)}</p>' for q, x in qa)

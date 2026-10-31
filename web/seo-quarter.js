@@ -5,6 +5,8 @@
    increases drawn inside each band, with what changed listed under the chart. A figure that cannot be drawn is removed. */
 (function () {
   'use strict';
+  if (window.__ffSeoSankey) return;          // the script may be on a page twice (two charts)
+  window.__ffSeoSankey = true;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const MODES = [['', 'This quarter'], ['q', 'vs previous quarter (Q/Q)'], ['y', 'vs a year earlier (Y/Y)']];
   async function one(f) {

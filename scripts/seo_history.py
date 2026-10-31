@@ -78,10 +78,10 @@ def margin(n, k, i):
 KEY = [('revenue', 'Revenue'), ('gp', 'Gross profit'), ('oi', 'Operating profit'), ('net', 'Net earnings'), ('ocf', 'Operating cash flow'), ('fcf', 'Free cash flow')]
 
 
-def sankey_figure(cik, label, alt, compare=''):
+def sankey_figure(cik, label, alt, compare='', up='../../../'):
     """drawn in the browser from the company's data by seo-quarter.js (one shared script, not one per page)"""
-    return (f"<figure class='seo-chart' data-src='../../../data/c/{e(cik)}.json' data-label='{e(label)}' data-compare='{e(compare)}' aria-label='{e(alt)}'>"
-            "<p class='muted'>Drawing the Sankey…</p></figure><script src='../../../sankey.js' defer></script><script src='../../../seo-quarter.js' defer></script>")
+    return (f"<figure class='seo-chart' data-src='{up}data/c/{e(cik)}.json' data-label='{e(label)}' data-compare='{e(compare)}' aria-label='{e(alt)}'>"
+            f"<p class='muted'>Drawing the Sankey…</p></figure><script src='{up}sankey.js' defer></script><script src='{up}seo-quarter.js' defer></script>")
 
 
 def first(s):
@@ -237,6 +237,7 @@ def metric_page(r, c, base, slug, who, name, mslug, label, key, kind):
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(label[0].upper() + label[1:])}</p>"
             f"<h1>{e(who)} {e(label)} by quarter</h1><p class='lead'>{e(lead)}</p>" + SV.bars([(x[0], x[1]) for x in reversed(s)], fmt, f"{name} {label} by quarter")
             + f"<div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>{e(label[0].upper() + label[1:])}</th><th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>"
+            + f"<h2>{e(latest[0])} at a glance</h2>" + sankey_figure(r['cik'], latest[0], f"{who} {latest[0]} income statement Sankey")
             + faq(qa) + f"<p><a href='../{qslug(latest[0])}/'>{e(latest[0])} results →</a> · <a href='../revenue/'>How {e(name)} makes money →</a></p>")
     crumbs = [('Filing Flows', base + '/'), (who, f'{base}/c/{slug}/'), (label, url)]
     mod = (latest[2] or '')[:10] or None
@@ -312,7 +313,8 @@ def guidance_page(r, rec, base, slug, who, name):
     url = f"{base}/c/{slug}/guidance-history/"
     title = f"{who} guidance history: guided vs reported" + (f", met or beat {round(100 * hit / n)}% of the time" if n else '') + ' | Filing Flows'
     page_body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › Guidance history</p>"
-                 f"<h1>{e(who)} guidance history: what it guided and what it reported</h1><p class='lead'>{e(lead)}</p>{body}" + faq(qa)
+                 f"<h1>{e(who)} guidance history: what it guided and what it reported</h1><p class='lead'>{e(lead)}</p>{body}"
+                 + "<h2>The latest quarter</h2>" + sankey_figure(r['cik'], '', f"{who} latest quarter Sankey") + faq(qa)
                  + "<p><a href='../guidance/'>Latest guidance and outlook →</a></p><p class='muted'>Each guided period is held to the last guidance given before its figures were reported; a single figure counts as in line within 1% (0.25 pts for a rate). Reported figures are GAAP, from the company's filings; adjusted guidance shows its moves only.</p>")
     crumbs = [('Filing Flows', base + '/'), (who, f'{base}/c/{slug}/'), ('Guidance history', url)]
     return url, (rec.get('latest') or '')[:10] or None, seo.page(title, lead[:300], url, page_body, 3, base + '/og.png', ld(base, crumbs, qa))

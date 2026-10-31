@@ -23,6 +23,7 @@ from xml.sax.saxutils import escape as xesc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
+import seo_svg as SV  # noqa: E402
 
 e, fdate, display_name = seo.e, seo.fdate, seo.display_name
 GUIDE = {'raised': '▲ raised', 'lowered': '▼ lowered', 'narrowed': 'narrowed', 'widened': 'widened', 'reaffirmed': 'reaffirmed', 'initiated': 'initiated',
@@ -91,7 +92,12 @@ def insiders(hub, link, today, code):
     word = 'bought' if buy else 'sold'
     lead = (f"Company insiders {word} {money(tot)} of their own companies' shares in {len(rows)} open-market trades over the last two weeks. "
             + 'The largest: ' + '; '.join(f"{r.get('insider')} ({r.get('role') or 'insider'}) {word} {money(r.get('value'))} of {r.get('issuer')} ({r['ticker']})" for r in big) + '.')
-    body = ''
+    body = SV.hbars([(f"{r['ticker']} · {r.get('insider')}", r.get('value')) for r in sorted(rows, key=lambda r: -(r.get('value') or 0))[:12]], money,
+                    f"Largest insider {'purchases' if buy else 'sales'}, last two weeks", color=SV.GREEN if buy else SV.RED, n=12)
+    by_co = {}
+    for r in rows:
+        by_co[r['ticker']] = by_co.get(r['ticker'], 0) + (r.get('value') or 0)
+    body += SV.hbars(sorted(by_co.items(), key=lambda kv: -kv[1]), money, f"By company: insider {'buying' if buy else 'selling'}, last two weeks", n=12)
     for day, rs in by_date(rows, lambda r: r.get('date')):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Insider', 'Role', 'Value', 'Price', 'Shares'], [
             [link(r['ticker'], f"{r['ticker']} · {r.get('issuer')}", 'who-owns'), e(r.get('insider')), e(r.get('role') or r.get('title') or ''),

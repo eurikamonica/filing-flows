@@ -158,11 +158,27 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     return url, page(title, desc, url, body, depth, image or base + "/og.png", ld)
 
 
-def list_page(title, desc, url, intro, items, depth):
+def sector_charts(items, sname):
+    """A sector page's charts: the largest companies, growth against margin, and the largest one's Sankey."""
+    import seo_svg as SV
+    from seo_history import sankey_figure
+    out = SV.hbars([(x.get("ticker") or display_name(x.get("name")), x.get("revenue")) for x in items], money, f"{sname}: the largest companies by quarterly revenue", n=15)
+    pts = [(x.get("ticker") or display_name(x.get("name")), max(-100, min(300, x["yoy"])), max(-100, min(100, x["om"])), x.get("revenue"))
+           for x in items[:150] if x.get("yoy") is not None and x.get("om") is not None]
+    out += SV.scatter(pts, "revenue growth, year over year", "operating margin", f"{sname}: growth against margin, the largest {len(pts)} companies",
+                      me=pts[0][0] if pts else None, note="Dot size is quarterly revenue; dashed lines are the medians; the largest company is named.")
+    if items:
+        top = items[0]
+        out += (f"<h2>The largest: {e(display_name(top.get('name')))}</h2>"
+                + sankey_figure(top["cik"], top.get("label"), f"{display_name(top.get('name'))} {top.get('label')} Sankey", up="../../"))
+    return out
+
+
+def list_page(title, desc, url, intro, items, depth, extra=''):
     lis = "".join(f"<li><a href='{'../' * depth}c/{slug_for(x)}/'>{e(display_name(x.get('name')))}{' (' + e(x['ticker']) + ')' if x.get('ticker') else ''}</a> "
                   f"<span class='muted'>{e(x.get('label'))} · revenue {e(x.get('rev') or '—')}{' · ' + pct(x.get('yoy')) + ' Y/Y' if x.get('yoy') is not None else ''}</span></li>"
                   for x in items)
-    body = f"<p class='crumbs'><a href='{'../' * depth}'>Filing Flows</a> › {e(title)}</p><h1>{e(title)}</h1><p class='lead'>{e(intro)}</p><ul class='seo-list'>{lis}</ul>"
+    body = f"<p class='crumbs'><a href='{'../' * depth}'>Filing Flows</a> › {e(title)}</p><h1>{e(title)}</h1><p class='lead'>{e(intro)}</p>{extra}<ul class='seo-list'>{lis}</ul>"
     return page(f"{title} | Filing Flows", desc, url, body, depth, url.split("/c/")[0].split("/sector/")[0] + "/og.png")
 
 
@@ -190,6 +206,12 @@ def chain_pages(data_dir, out_dir, base, images=None):
                 f"<h1>{e(d['name'])}</h1><p class='lead'>{e(d.get('about') or '')}</p><p>{e(lead)} Trailing twelve months to "
                 f"{fdate(d.get('asof'))}, from SEC filings.</p><p><a class='seo-cta' href='../../#chain-{e(c['id'])}'>Open the interactive money-flow chart →</a></p>"
                 f"<h2>Companies</h2><ul class='seo-list'>{lis}</ul>")
+        import seo_svg as SV
+        img = (images or {}).get(f"chain-{c['id']}")
+        pic = (f"<figure class='seo-pic'><a href='../../#chain-{e(c['id'])}'><img src='{e(img)}' alt='{e(d['name'])} money flow chart' width='1200' height='630' "
+               f"loading='lazy' style='width:100%;height:auto;border-radius:8px'></a><figcaption class='muted small'>The money-flow chart (open the interactive one above).</figcaption></figure>" if img else '')
+        bars = SV.hbars([(f"{r['t']} · {r.get('name') or ''}", r.get('attr')) for r in rows], money, f"{d['name']}: the largest companies by revenue in the chain", n=15)
+        body = body.replace("<h2>Companies</h2>", pic + bars + "<h2>Companies</h2>", 1)
         desc = f"{d['name']}: where the money flows, from SEC filings. {lead}"[:300]
         os.makedirs(os.path.join(out_dir, "chains", c["id"]), exist_ok=True)
         open(os.path.join(out_dir, "chains", c["id"], "index.html"), "w", encoding="utf-8").write(
@@ -220,6 +242,28 @@ def qname(q):
     """'2026Q3' -> 'Q3 2026'."""
     m = re.match(r"(\d{4})Q(\d)", str(q or ""))
     return f"Q{m.group(2)} {m.group(1)}" if m else str(q or "")
+
+
+def gamma_charts(d, mdl, nm, sic):
+    """An industry page's charts: its companies by revenue, how their growth spreads, the model's forecast range, and
+    the interactive money flow (input-output) and money flow lab (web/seo-embed.js)."""
+    import seo_svg as SV
+    cos = sorted(d.get("companies") or [], key=lambda m: -(m.get("revenue_usd") or 0))
+    out = SV.hbars([((m.get("ticker") or display_name(m.get("name"))), m.get("revenue_usd")) for m in cos], money, f"{nm}: the largest companies by quarterly revenue", n=12)
+    ys = [100 * (m.get("current") or {}).get("yoy") for m in cos if (m.get("current") or {}).get("yoy") is not None]
+    if len(ys) >= 5:
+        edges = [-1e9, -25, -10, 0, 10, 25, 50, 1e9]
+        names_ = ["< −25%", "−25 to −10%", "−10 to 0%", "0 to 10%", "10 to 25%", "25 to 50%", "> 50%"]
+        cnt = [sum(1 for y in ys if lo <= y < hi) for lo, hi in zip(edges, edges[1:])]
+        out += SV.bars(list(zip(names_, cnt)), lambda v: f"{v:.0f}", f"{nm}: how many companies grew how fast (revenue, year over year)", color=SV.GREY)
+    fc = mdl.get("fc") or []
+    if fc:
+        out += SV.ranges([(qname(q), lo, hi, rv) for q, g, rv, lo, hi, *_ in fc], money, f"{nm}: the growth model's forecast of industry revenue",
+                         legend=("80% range", "model's central forecast"))
+    out += (f"<section class='seo-live' data-kind='industry' data-sic='{e(sic)}' data-sector='{e(d.get('sector') or '')}'><h2>Money flow: where the industry's revenue goes</h2>"
+            f"<p class='muted'>Loading the interactive chart…</p></section><script>window.FF_BASE='../../';</script><script src='../../sankey.js' defer></script>"
+            f"<script src='../../chains.js' defer></script><script src='../../flowlab.js' defer></script><script src='../../seo-embed.js' defer></script>")
+    return out
 
 
 def gamma_pages(data_dir, out_dir, base, slugs, images=None):
@@ -267,7 +311,8 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
                       for q, g, rv, lo, hi, *_ in (mdl.get("fc") or [])) if mdl.get("fc") else ""
         body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Industries</a> › {e(sector)} › {e(nm)}</p>"
                 f"<h1>{e(nm)} <span class='muted'>SIC {e(sic)}</span></h1><p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>"
-                f"<p><a class='seo-cta' href='../../#gamma-{e(sic)}'>Open the industry: growth distribution, money flow, network →</a></p>"
+                + gamma_charts(d, mdl, nm, sic)
+                + f"<p><a class='seo-cta' href='../../#gamma-{e(sic)}'>Open the industry: growth distribution, money flow, network →</a></p>"
                 + (f"<h2>Who sells to whom</h2><p class='muted'>Customers and suppliers named in the companies' annual reports; the share is of the supplier's revenue.</p><ul class='seo-list'>{links}</ul>" if links else "")
                 + (f"<h2>Growth model</h2><p class='muted'>Industry revenue, the same companies year on year; 80% ranges. Fitted on SEC filings and tested out of sample (<a href='../../model/'>how</a>).</p>"
                    f"<div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>Growth Y/Y</th><th class='num'>Revenue</th><th class='num'>80% range</th></tr></thead><tbody>{fct}</tbody></table></div>" if fct else "")
@@ -403,7 +448,7 @@ def write_pages(data_dir, out_dir, base):
         url = f"{base}/sector/{sid}/"
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(list_page(
             f"{sname} earnings", f"Latest quarterly earnings of {len(items)} {sname} companies as Sankey diagrams: revenue, growth, margins.",
-            url, f"{len(items)} {sname} companies by revenue, each with its latest quarter drawn from the SEC filing.", items, 2))
+            url, f"{len(items)} {sname} companies by revenue, each with its latest quarter drawn from the SEC filing.", items, 2, sector_charts(items, sname)))
         urls.append((url, None))
     urls += chain_pages(data_dir, out_dir, base, images)
     urls += gamma_pages(data_dir, out_dir, base, {slug_for(r) for r in latest.values()}, images)

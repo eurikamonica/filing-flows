@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
 import seo_svg as SV  # noqa: E402
 import seo_charts as SC  # noqa: E402
+from seo_history import sankey_figure  # noqa: E402
 
 e, display_name, slug_for, fdate = seo.e, seo.display_name, seo.slug_for, seo.fdate
 
@@ -353,7 +354,7 @@ def revenue(co, c):
     if net is not None:
         qa.append((f"What is {name}'s profit margin?", f"Net earnings were {money(net)}, {100 * net / tot:.1f}% of revenue, in the {words}"
                    + (f"; the operating margin was {100 * oi / tot:.1f}%." if oi is not None else '.')))
-    body = (f"<p class='lead'>{e(lead)}</p>"
+    body = (f"<p class='lead'>{e(lead)}</p>" + sankey_figure(co.get('cik') or 0, q.get('label'), f"{name} {q.get('label')} revenue to profit and cash Sankey")
             + (SV.hbars([(n_, v[0]) for n_, v, _ in segs], money, f"{name} revenue by segment, {q.get('label')}") if len(segs) > 1 else '')
             + SV.bars([(x.get('label'), (x.get('headline') or {}).get('revenue')) for x in reversed(qs[:8])], money, f"{name} revenue by quarter")
             + SV.hbars([(k, x) for k, x in ladder[1:] if x is not None and x > 0], lambda v, tt=tot: f"{100 * v / tt:.0f}¢", f"{name}: where each dollar of revenue goes", n=9)
@@ -435,7 +436,7 @@ def write(site, base, limit=None):
         cik, slug, t = r['cik'], slug_for(r), (r.get('ticker') or '')
         if not t:
             continue
-        co = {'who_name': display_name(r.get('name')), 'ticker': t}
+        co = {'who_name': display_name(r.get('name')), 'ticker': t, 'cik': cik}
         h = read(os.path.join(hub, 'holders', f'{t}.json'))
         cdoc = read(os.path.join(site, 'data', 'c', f'{cik}.json'))
         pages = {
@@ -449,6 +450,7 @@ def write(site, base, limit=None):
             'risks': lambda: risks(co, read(os.path.join(hub, 'research', 'outside', 'c', f'{cik}.json'))),
         }
         pages = {k: safe(f, k, t) for k, f in pages.items()}
+        latest_q = (((cdoc or {}).get('quarters') or [{}])[0] or {}).get('label')
         have = [k for k, v in pages.items() if v]
         if not have:
             continue
@@ -459,7 +461,9 @@ def write(site, base, limit=None):
             app = next(a for k, _, a in TOPICS if k == topic)
             crumbs = [('Filing Flows', base + '/'), (f"{co['who_name']} ({t})", f'{base}/c/{slug}/'), (p['h1'], url)]
             body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(co['who_name'])} ({e(t)})</a> › {e(next(l for k, l, _ in TOPICS if k == topic))}</p>"
-                    f"<h1>{e(p['h1'])}</h1>{nav(slug, topic, have, cik)}{p['body']}{faq_html(p['qa'])}"
+                    f"<h1>{e(p['h1'])}</h1>{nav(slug, topic, have, cik)}{p['body']}"
+                    + (f"<h2>{e(co['who_name'])}'s latest quarter</h2>" + sankey_figure(cik, latest_q, f"{co['who_name']} {latest_q} income statement Sankey") if latest_q and topic != 'revenue' else '')
+                    + f"{faq_html(p['qa'])}"
                     f"<p><a class='seo-cta' href='../../../#c-{cik}{('-' + app) if app else ''}'>Open the interactive view →</a></p>"
                     f"<p class='muted'>Updated {e(fdate(today))}. Read automatically from SEC filings and public data; errors are possible. Not investment advice.</p>")
             mod = p.get('modified') or week
