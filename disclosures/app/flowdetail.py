@@ -815,6 +815,10 @@ def spec_of(F, now, q=None, y=None, annual=False):
                 wide = F['root'] in a and any(main_of(k) == 'ocf' for k in list(a) + list(b))
                 if wide:
                     offs = {k: 0 if k == F['root'] else 2 + shift if main_of(k) == 'ocf' else 1 + shift for k in list(a) + list(b)}
+                elif any(main_of(k) == 'ocf' for k in list(a) + list(b)) and F.get('cash_root') in list(a) + list(b):
+                    # operating cash flow → investing, financing, cash: the sections one column after it, whichever way
+                    # they flow (their own parts then keep clear of the operating lines)
+                    offs = {k: 0 if main_of(k) == 'ocf' else 1 for k in list(a) + list(b)}
                 else:
                     offs = {k: 0 for k in a}
                     offs.update({k: 1 for k in b})
