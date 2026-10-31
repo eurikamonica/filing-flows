@@ -187,8 +187,37 @@ assert.ok(FG.future(base, { items: [{ metric: 'revenue', basis: '', period: 'Q3 
   assert.ok(r.compare_g.vs.includes('Aug 26, 2026') && /Q3 FY27 vs guidance/.test(r.compare_g.title), r.compare_g.title);
   assert.ok(/^Revenue .*\(\+3\.6%\) — above the range/.test(r.compare_g.bullets[0]) && r.compare_g.bullets.some((b) => /Gross margin 73\.7% vs guided 74%–76%/.test(b)), r.compare_g.bullets.join(' | '));
   assert.ok(/dense-dot/.test(r.compare_g.footer));
+  // the bridge from guidance to the result: down to operating profit (pre-tax rests on other income nobody guided), in
+  // steps that add up: revenue at the expected 75% gross margin, the margin on the reported revenue, operating expenses
+  const br = r.compare_g.bridge;
+  assert.ok(br && br.end === 'oi', JSON.stringify(br));
+  near(br.start, 60.5, 'expected operating profit');
+  near(br.fin, 61, 'reported operating profit');
+  const st = Object.fromEntries(br.steps.map((x) => [x.id, x.v]));
+  near(st.revenue, 4 * 0.75, 'revenue: 4 more at the expected gross margin');
+  near(st.gp, 84 - 114 * 0.75, 'gross margin 73.7% vs 75% on the reported revenue');
+  near(st.opex, -1, 'operating expenses 1 above their guide');
+  assert.deepStrictEqual(br.guided, ['revenue', 'gross margin', 'operating expenses'], 'the tax rate is not part of a bridge to operating profit');
   // not held: no guide for it before it ended, or no base period
   assert.ok(FG.versus(act, { hist: { releases: [later] } }, { company: co3 }).error);
   assert.ok(FG.versus(act, { g: Object.assign({ accession: 'g' }, g) }, { company: { periods: co3.periods, quarters: [act] } }).error);
+}
+// scenarios: the low case takes the end of every range that leaves less profit, the high case the other end
+{
+  assert.strictEqual(FG.pointOf({ lo: 1, hi: 3 }, 'revenue'), 2);
+  assert.strictEqual(FG.pointOf({ lo: 1, hi: 3 }, 'revenue', 'low'), 1);
+  assert.strictEqual(FG.pointOf({ lo: 1, hi: 3 }, 'opex', 'low'), 3);
+  assert.strictEqual(FG.pointOf({ lo: 1, hi: 3 }, 'capex', 'high'), 1);
+  assert.strictEqual(FG.pointOf({ lo: 5, hi: null }, 'revenue', 'high'), 5);
+  const lo = FG.future(base, g, { company, name: 'Example', case: 'low' }), hi = FG.future(base, g, { company, name: 'Example', case: 'high' });
+  const NL = new Map(lo.nodes.map((n) => [n.id, n])), NH = new Map(hi.nodes.map((n) => [n.id, n]));
+  near(NL.get('revenue').v, 108, 'low case: revenue at the low end');
+  near(NL.get('gp').v, 108 * 0.74, 'low case: the low gross margin');
+  near(NL.get('tax').v, (108 * 0.74 - 22 + 2) * 0.16, 'low case: the high tax rate');
+  near(NH.get('revenue').v, 112, 'high case: revenue at the high end');
+  near(NH.get('gp').v, 112 * 0.76, 'high case: the high gross margin');
+  near(NH.get('tax').v, (112 * 0.76 - 22 + 2) * 0.14, 'high case: the low tax rate');
+  assert.ok(/\(low case\)/.test(lo.title) && lo.case === 'low' && /less profitable end/.test(lo.subtitle), lo.title);
+  assert.ok(/leaves less profit/.test(lo.footer[0]) && /at its midpoint/.test(f.footer[0]));
 }
 console.log('guidance view: ok');

@@ -130,11 +130,31 @@
   // ---------- the projection ----------
   const ROLE = (c) => (c === 'rev' || c === 'profit' || c === 'cost' ? c : 'cost');
 
+  // the point of a guided range a scenario draws: the midpoint; the low case = the end of every range that leaves less
+  // profit (revenue, margins and profit at their low end; costs, the tax rate, capital spending at their high end), the high
+  // case the other end
+  const COSTLY = new Set(['opex', 'tax_rate', 'capex', 'interest_expense', 'da', 'sbc']);
+  const CASES = { low: 'low case', high: 'high case' };
+  function pointOf(it, metric, cs) {
+    if (!it) return null;
+    const hi = it.hi == null ? it.lo : it.hi;
+    if (cs !== 'low' && cs !== 'high') return (it.lo + hi) / 2;
+    return (cs === 'low') !== COSTLY.has(metric) ? it.lo : hi;
+  }
+  function caseWords(cs) {
+    return cs === 'low' ? 'each guided range at the end that leaves less profit (revenue, margins and profit at the low end; costs, the tax rate and capital spending at the high end)'
+      : cs === 'high' ? 'each guided range at the end that leaves more profit (revenue, margins and profit at the high end; costs, the tax rate and capital spending at the low end)'
+        : 'each guided range at its midpoint';
+  }
+
   // guided values: {nodeId: {v(F) → value, lo(F), hi(F), it}} (F: future values computed so far)
   // opts.full (the ultra-detailed canvas, web/flowdetail.js): the cash lines a company guides too — capital spending,
   // operating and free cash flow, depreciation & amortization, stock-based pay, interest expense
+  // opts.case: 'low' | 'high' (else the midpoint), see pointOf
   function guides(items, period, implied, opts) {
     const G = {};
+    const cs = opts && opts.case;
+    const mid = (it) => pointOf(it, it.metric, cs);
     const pick = (m, u) => choose(items, m, period, u);
     const sub = (id, x) => (implied ? x - (implied.ytd[id] || 0) : x);
     const rev = pick('revenue', ['usd']);
@@ -335,7 +355,7 @@
       });
       implied = { ytd };
     }
-    const G = guides(items, tg.period, implied, { full: o.full });
+    const G = guides(items, tg.period, implied, { full: o.full, case: o.case });
     // a guided revenue far from the base period is a misread (or a different scope): not drawn
     const R = G.revenue && G.revenue.at({});
     if (!(R > 0) || R < base.nodes.find((n) => n.id === 'revenue').v * 0.4 || R > base.nodes.find((n) => n.id === 'revenue').v * 2.5) {
@@ -417,7 +437,7 @@
         `${it.lo != null ? ' ' + range(it) : ''}${w.length ? ' ' + w.join(' ') : ''}${it.prior ? ' ' + priorText(it) : ''}`;
     });
     const footer = [
-      `Guidance view (not a forecast by Filing Flows): violet, indigo and plum = a figure ${company || 'the company'} guided, drawn at the midpoint; the dashed box ` +
+      `Guidance view (not a forecast by Filing Flows): violet, indigo and plum = a figure ${company || 'the company'} guided, drawn with ${caseWords(o.case)}; the dashed box ` +
       'spans the guided range and its tick marks the low end. Grey, green and red = not guided, in the standard colours: the line keeps its share of its parent from ' +
       `${dec(base.label)}, so the chart adds up. Change words: ▲ raised / ▼ lowered = the midpoint moved; →← narrowed / ←→ widened = the range ` +
       'width changed; = reaffirmed; ✦ initiated; ✕ withdrawn — against the prior range the release states, else the company’s previous release on file.',
@@ -436,8 +456,8 @@
     });
     return {
       future: true, kind: tg.kind, period: tg.label, bg: '#fbfaff',
-      title: `${company ? company + ': ' : ''}${per} as guided`,
-      subtitle: `From the ${g.form || '8-K'} earnings release filed ${fdate(g.filed)}${words0.length ? ' · ' + words0.join(' · ') : ''} · ${nGuided} guided line${nGuided === 1 ? '' : 's'}, the rest at ${dec(base.label)} shares`,
+      title: `${company ? company + ': ' : ''}${per} as guided${CASES[o.case] ? ` (${CASES[o.case]})` : ''}`, case: CASES[o.case] ? o.case : 'mid',
+      subtitle: `From the ${g.form || '8-K'} earnings release filed ${fdate(g.filed)}${words0.length ? ' · ' + words0.join(' · ') : ''} · ${nGuided} guided line${nGuided === 1 ? '' : 's'}${CASES[o.case] ? ` at the ${o.case === 'low' ? 'less' : 'more'} profitable end of each range` : ''}, the rest at ${dec(base.label)} shares`,
       nodes, links, footer, checks: [],
       legend: [['f_rev', 'Guided revenue'], ['f_profit', 'Guided profit'], ['f_cost', 'Guided cost'], ['rev', 'Revenue (not guided)'],
         ['profit', 'Profit (not guided)'], ['cost', 'Costs (not guided)']],
@@ -652,8 +672,58 @@
           `band and bar = as reported; guidance is drawn on the top edge of each band (vs the previous quarter or a year earlier keep the bottom edge): above guidance, the band grows past the guided figure on its top edge — that growth in violet dots on a violet tint, the guided amount below it in the band's own colour; short of guidance, a dense-dot area with a dashed outline above the band (what was guided beyond what was reported); ` +
           `the bracket beside a bar spans the guided range. Lines compared: those the guidance fixes — guided GAAP or basis-free figures, and lines that follow from them alone ` +
           `(guided margins × guided revenue); every other line is drawn plain. ◆ teal = better than guided (higher revenue or profit, lower costs), orange = worse, grey = within the range.`,
+        bridge: bridgeOf(F, spec, PJ, G, guided, dec(base.label || ''), det),
       },
     });
+  }
+
+  // ---------- from guidance to the reported result: a bridge (waterfall) ----------
+  // F: the period as guidance expected it (the guided lines at their midpoints, every other line at its share in the period
+  // before); spec: the period as reported; det: the lines guidance fixes (the bridge goes down to the deepest of operating
+  // profit, pre-tax and net earnings it fixes, so no step rests on an assumption). Expected → reported, in steps that add up
+  // exactly:
+  //   revenue (the difference in revenue at the expected gross margin) + gross margin (the margin's difference on the
+  //   reported revenue) − operating expenses + other income − income tax and the rest below pre-tax earnings
+  // (no gross profit line: revenue at the expected operating margin and the operating margin's difference instead)
+  function bridgeOf(F, spec, PJ, G, guided, baseLabel, det) {
+    const A = new Map(spec.nodes.map((n) => [n.id, n]));
+    const prof = (n) => n && /profit$/.test(String(n.color || '')) && +n.v > 0;
+    const a = (id) => (A.has(id) ? +A.get(id).v : null), e = (id) => (F[id] > 0 ? F[id] : null);
+    const P = PJ.byId;
+    if (!(a('revenue') > 0 && e('revenue') > 0) || !prof(A.get('oi')) || !prof(P.get('oi')) || !(e('oi') > 0)) return null;
+    const fixed = (id) => !det || det.has(id);
+    const ok = (id) => prof(A.get(id)) && prof(P.get(id)) && e(id) && fixed(id);
+    const end = ok('net') && ok('pretax') ? 'net' : ok('pretax') ? 'pretax' : ok('oi') ? 'oi' : null;
+    if (!end) return null;
+    const Ra = a('revenue'), Re = e('revenue');
+    const steps = [];
+    const hasGp = ok('gp');
+    if (hasGp) {
+      const me = e('gp') / Re, ma = a('gp') / Ra;
+      steps.push({ id: 'revenue', label: 'Revenue', note: `at the expected ${(me * 100).toFixed(1)}% gross margin`, v: (Ra - Re) * me });
+      steps.push({ id: 'gp', label: 'Gross margin', note: `${(ma * 100).toFixed(1)}% vs ${(me * 100).toFixed(1)}% expected`, v: a('gp') - Ra * me });
+      steps.push({ id: 'opex', label: 'Operating expenses', note: 'and other operating items', v: -((a('gp') - a('oi')) - (e('gp') - e('oi'))) });
+    } else {
+      const me = e('oi') / Re, ma = a('oi') / Ra;
+      steps.push({ id: 'revenue', label: 'Revenue', note: `at the expected ${(me * 100).toFixed(1)}% operating margin`, v: (Ra - Re) * me });
+      steps.push({ id: 'oi', label: 'Operating margin', note: `${(ma * 100).toFixed(1)}% vs ${(me * 100).toFixed(1)}% expected`, v: a('oi') - Ra * me });
+    }
+    if (end !== 'oi') {
+      const pa = a('pretax'), pe = e('pretax');
+      if (pa != null && pe != null && prof(A.get('pretax')) && prof(P.get('pretax'))) {
+        steps.push({ id: 'nonop', label: 'Other income', note: 'below operating profit', v: (pa - a('oi')) - (pe - e('oi')) });
+        if (end === 'net') steps.push({ id: 'tax', label: 'Income tax', note: 'and the rest below pre-tax', v: -((pa - a('net')) - (pe - e('net'))) });
+      } else if (end === 'net') steps.push({ id: 'nonop', label: 'Below operating profit', note: 'other income and tax', v: (a('net') - a('oi')) - (e('net') - e('oi')) });
+    }
+    const start = e(end), fin = a(end);
+    const sum = start + steps.reduce((x, st) => x + st.v, 0);
+    if (Math.abs(sum - fin) > Math.max(1, Math.abs(fin) * 1e-6)) return null;
+    const NAME = { net: 'net earnings', pretax: 'pre-tax earnings', oi: 'operating profit' };
+    const IN = { oi: ['revenue', 'gross_margin', 'gross_profit', 'opex', 'operating_income', 'operating_margin'] };
+    IN.pretax = IN.oi.concat(['other_income']);
+    IN.net = IN.pretax.concat(['tax_rate', 'net_income']);
+    const gl = Object.keys(guided).filter((id) => guided[id] && G[id] && IN[end].includes(G[id].it.metric)).map((id) => (NAMES[G[id].it.metric] || id).toLowerCase());
+    return { end, name: NAME[end], start, fin, steps, guided: [...new Set(gl)], base: baseLabel, unit: Re >= 1e9 ? 'B' : 'M' };
   }
 
   // ---------- the record: every guided period against what the company then reported, and how each guide moved ----------
@@ -1101,7 +1171,7 @@
     return track + '<p class="empty">Not guided: the line keeps its share of its parent from the period on file, so the chart adds up. It is an assumption, not a figure the company gave.</p>';
   }
 
-  const api = { future, versus, sources, resolve, yearOffset, plausible, pathHTML, landingHTML, landingBins, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
+  const api = { pointOf, caseWords, bridgeOf, future, versus, sources, resolve, yearOffset, plausible, pathHTML, landingHTML, landingBins, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.FFGuidance = api;
 })(typeof window !== 'undefined' ? window : globalThis);

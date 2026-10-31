@@ -466,7 +466,7 @@
   // sits in), the cash lines the company guided are set (capital spending, operating and free cash flow, D&A, stock-based
   // pay), every total is summed again and the flows are built anew: free cash flow can turn from a gap into a surplus, and
   // the cash drawn or added is what the other lines leave.
-  function guidedValues(u, o, sp0, r, items, period) {
+  function guidedValues(u, o, sp0, r, items, period, cs) {
     const S = structure(u, o);
     const J = S.J, now = u.now || {};
     const rv = new Map(r.nodes.map((n) => [n.id, +n.v]));
@@ -514,7 +514,9 @@
       const xs = (items || []).filter((it) => it.metric === m && it.period === period && it.unit === 'usd' && it.lo != null && it.basis !== 'non-GAAP');
       return xs.find((x) => x.basis === 'GAAP') || xs.find((x) => !x.basis) || null;
     };
-    const midOf = (it) => (it.lo + (it.hi == null ? it.lo : it.hi)) / 2;
+    // the point of the range the scenario draws (web/guidance.js pointOf: the midpoint, or the low / high case)
+    const FG0 = global.FFGuidance;
+    const midOf = (it) => (FG0 && FG0.pointOf ? FG0.pointOf(it, it.metric, cs) : (it.lo + (it.hi == null ? it.lo : it.hi)) / 2);
     const keyOf = (m) => Object.keys(now).find((k) => k.startsWith('cf>') && mainOf(k) === m && now[k] != null);
     const guided = {};
     const sgn = (x) => (x < 0 ? -1 : 1);
@@ -567,9 +569,9 @@
   }
 
   // the canvas spec of the next period as guided: r is web/guidance.js's projection of sp0 (the period on the canvas)
-  function guidedFlows(p, o, sp0, r, g, period, ago) {
+  function guidedFlows(p, o, sp0, r, g, period, ago, cs) {
     const FG = global.FFGuidance;
-    const { vals, guided } = guidedValues(p.u, o, sp0, r, g.items, period);
+    const { vals, guided } = guidedValues(p.u, o, sp0, r, g.items, period, cs);
     const u1 = Object.assign({}, p.u, { now: vals, q: o.annual ? null : p.u.now, y: o.annual ? p.u.now : ago || null });
     const sp = build(u1, o);
     const rById = new Map(r.nodes.map((n) => [n.id, n]));
@@ -618,7 +620,7 @@
     const list = (o.fy ? o.doc.years : o.doc.quarters) || [];
     const near = (a, b) => a && b && Math.abs(Date.parse(a) - Date.parse(b)) <= 6 * 864e5;
     let idx = Math.max(0, list.findIndex((x) => near(x.end, o.end)));
-    const st = { revAxis: null, costs: 'accounts', cash: 'statement', opened: new Set(), closed: new Set(), all: false, cmp: '', guide: false, next: false, says: true };
+    const st = { revAxis: null, costs: 'accounts', cash: 'statement', opened: new Set(), closed: new Set(), all: false, cmp: '', guide: false, next: false, says: true, case: 'mid' };
     let vb = null, scene = null, sel = null, src = null, srcP = null;
     const el = document.createElement('div');
     el.className = 'ffu';
@@ -633,6 +635,7 @@
         <span class="ffu-seg"><button type="button" data-cmp="">Now</button><button type="button" data-cmp="q">vs prior quarter</button><button type="button" data-cmp="y">vs year ago</button></span>
         <button type="button" class="ffu-btn" data-guide title="This period against the guidance it was given (the cash lines too)">◆ vs guidance</button>
         <button type="button" class="ffu-btn" data-next title="The next period as the company guided it (earnings release and 10-Q / 10-K outlook), drawn in this detail: guided lines in violet, the rest at today’s shares">◇ Next period as guided</button>
+        <span class="ffu-seg" data-g="case" hidden title="The guided ranges: the low case takes the end of every range that leaves less profit (revenue and margins low, costs and capital spending high), the high case the other end"><span>Case</span><button type="button" data-case="low">Low</button><button type="button" data-case="mid">Mid</button><button type="button" data-case="high">High</button></span>
         <button type="button" class="ffu-btn" data-says title="What the company says ahead (its MD&amp;A and earnings release), pinned to the line each statement is about">💬 Outlook</button>
         <button type="button" class="ffu-btn" data-all>Open everything</button>
         <button type="button" class="ffu-btn" data-std>Back to detailed</button>
@@ -683,6 +686,8 @@
       $$('[data-cmp]').forEach((b) => { b.classList.toggle('on', b.dataset.cmp === st.cmp); b.disabled = (b.dataset.cmp === 'q' && (o.fy || !p.q_end)) || (b.dataset.cmp === 'y' && !p.has_y); });
       $('[data-guide]').classList.toggle('on', st.guide && !st.next);
       $('[data-next]').classList.toggle('on', st.next);
+      $('[data-g="case"]').hidden = !st.next;
+      $$('[data-case]').forEach((b) => b.classList.toggle('on', b.dataset.case === st.case));
       $('[data-says]').classList.toggle('on', st.says);
       $$('[data-cmp]').forEach((b) => { if (st.next) b.disabled = true; });
       $('[data-all]').classList.toggle('on', st.all);
@@ -720,16 +725,16 @@
           const company = { quarters: [Object.assign({}, spec)], years: [], periods: o.periods, _doc: list.filter((x) => x.end <= per().end) };
           if (o.fy) { company.years = company.quarters; company.quarters = []; }
           if (g && !o.fy) g = impliedQ4(g, Object.assign({}, spec, { label: o.labelOf(per().end, false) }), company);
-          const r = g ? global.FFGuidance.future(Object.assign({}, spec, { label: o.labelOf(per().end, o.fy) }), g, { company, name: o.name, history: src && src.hist, full: true })
+          const r = g ? global.FFGuidance.future(Object.assign({}, spec, { label: o.labelOf(per().end, o.fy) }), g, { company, name: o.name, history: src && src.hist, full: true, case: st.case })
             : { error: 'No guidance on file for this company.' };
           if (r && !r.error) {
-            shown = Object.assign({}, r, { dense: true, title: `${o.name} ${r.period || 'next period'} as guided — ultra-detailed` });
+            shown = Object.assign({}, r, { dense: true, title: `${o.name} ${r.period || 'next period'} as guided${r.case && r.case !== 'mid' ? ` (${r.case} case)` : ''} — ultra-detailed` });
             // the projection carried into every line (and the guided cash lines set), the flows built anew
             try {
               const tg = global.FFGuidance.target(g, Object.assign({}, spec, { label: o.labelOf(per().end, o.fy) }), company);
               const end = Date.parse(per().end) + (o.fy ? 365 : 91) * 864e5 - 365 * 864e5;
               const ago = o.fy ? null : list.find((x) => x.u && Math.abs(Date.parse(x.end) - end) <= 12 * 864e5);
-              const nx = tg ? guidedFlows(per(), Object.assign({ annual: !!o.fy }, st), sp, r, g, tg.period, ago && ago.u.now) : null;
+              const nx = tg ? guidedFlows(per(), Object.assign({ annual: !!o.fy }, st), sp, r, g, tg.period, ago && ago.u.now, st.case) : null;
               if (nx && nx.sp.nodes.length >= 6) { sp = nx.sp; shown = Object.assign(nx.spec, { dense: true, title: shown.title }); }
             } catch (err) { if (global.FF_DEBUG) console.error(err); }   // the projection as drawn by web/guidance.js stays
           }
@@ -829,6 +834,7 @@
         if (st.next && per().u.cash_uses && st.cash === 'statement') st.cash = 'uses';   // capital spending and free cash flow as their own lines
         draw(); return;
       }
+      if (b.dataset.case) { st.case = b.dataset.case; draw(); return; }
       if (b.hasAttribute('data-says')) { st.says = !st.says; draw(); return; }
       if (b.hasAttribute('data-all')) { st.all = !st.all; if (!st.all) st.opened.clear(); draw(); return; }
       if (b.hasAttribute('data-std')) { Object.assign(st, { revAxis: null, costs: 'accounts', cash: 'statement', all: false }); st.opened.clear(); st.closed.clear(); draw(); return; }

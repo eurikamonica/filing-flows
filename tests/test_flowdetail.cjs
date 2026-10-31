@@ -166,4 +166,15 @@ for (const cash of ['uses', 'statement']) {
   assert.ok(nx.sp.nodes.find((n) => n.id === 'revenue').lines.some((x) => /guided \$108B–\$112B/.test(x[1])));
   if (cash === 'uses') assert.ok(nx.sp.links.some((x) => x.s === 'fcf' && x.t === 'capex'), 'free cash flow is now a gap flowing into capital spending');
 }
+// the low case: revenue at the low end of its range, carried into every line
+{
+  const opts = { cash: 'uses' };
+  const sp0 = F.build(u, opts);
+  const spec = { nodes: sp0.nodes, links: sp0.links, end: '2026-09-30', label: 'Q3 2026' };
+  const company = { quarters: [Object.assign({}, spec)], years: [] };
+  const r = FG.future(spec, g, { company, name: 'Made-up', full: true, case: 'low' });
+  const { vals } = F.guidedValues(u, opts, sp0, r, g.items, 'Q4 2026', 'low');
+  assert.ok(near(vals[G + 'Revenues'] / 1e9, 108) && near(vals[k('Revenues', P, 'Hw')] / 1e9, 108 * 0.6), 'low case revenue and its parts');
+  assert.ok(near(vals['cf>' + G + 'PaymentsToAcquirePropertyPlantAndEquipment'] / 1e9, 45), 'a point guide stays');
+}
 console.log('flowdetail canvas: ok');

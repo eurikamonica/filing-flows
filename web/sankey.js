@@ -630,6 +630,7 @@
 
     // comparison callout in an empty corner (with guidance as well: the main changes first, then the results vs guidance)
     const bullets = (compare ? (cmpSpec.bullets || []).slice(0, gmode ? 3 : 9) : []).concat(gmode ? (gSpec.bullets || []).slice(0, compare ? 3 : 9) : []);
+    let noteRect = null;
     if ((compare || gmode) && bullets.length) {
       const bw = 560, items = [];
       let bh = 30;
@@ -645,6 +646,7 @@
       let pos = cands.find(([x, y]) => free([x, y, bw, bh]));
       if (!pos) { pos = [MARGIN, bottom + 36]; bottom += 36 + bh; }
       const [cx, cy] = pos;
+      noteRect = [cx, cy, bw, bh];
       const head = compare ? (cmpSpec.heading || `What changed vs ${cmpSpec.vs}`) + (gmode ? ' · and vs guidance' : '') : gSpec.heading;
       shapes.push({ t: 'text', x: cx, y: cy + 18, text: dec(head), size: 18, weight: 600, fill: INK, anchor: 'start' });
       let yy = cy + 30;
@@ -656,6 +658,49 @@
         });
         yy += 8;
       });
+    }
+
+    // vs guidance: from the result guidance expected to the reported one, step by step (web/guidance.js bridgeOf)
+    const br = gmode && gSpec.bridge;
+    if (br && br.steps && br.steps.length) {
+      const bw = 600, bh = 318;
+      const occupied = nodes.map((n) => n.lr).concat(nodes.map((n) => [n.x, n.top, NW, n.h])).concat(noteRect ? [noteRect] : []);
+      const boxes = bandBoxes().map((b) => b.r);
+      const free = (r) => !occupied.some((o) => overlap(r, o, 16)) && !boxes.some((o) => overlap(r, o, 16));
+      const cands = [[W - MARGIN - bw, bottom - bh], [MARGIN, bottom - bh], [W - MARGIN - bw, HEAD], [MARGIN, HEAD + 40],
+        noteRect ? [noteRect[0] + noteRect[2] + 40, noteRect[1]] : null, noteRect ? [noteRect[0], noteRect[1] - bh - 24] : null].filter(Boolean);
+      let pos = cands.find(([x, y]) => x >= MARGIN && x + bw <= W - MARGIN && y >= HEAD && free([x, y, bw, bh]));
+      if (!pos) { pos = [MARGIN, bottom + 36]; bottom += 36 + bh; }
+      const [bx, by] = pos;
+      const fmt = (v) => { const a = Math.abs(v); return a >= 0.95e9 ? `$${(a / 1e9).toFixed(a >= 9.95e9 ? 1 : 2)}B` : `$${(a / 1e6).toFixed(a >= 9.95e6 ? 0 : 1)}M`; };
+      const sgn = (v) => (v > 0 ? '+' : v < 0 ? '−' : '±');
+      shapes.push({ t: 'text', x: bx, y: by + 18, text: `From guidance to reported ${br.name}`, size: 18, weight: 600, fill: INK, anchor: 'start' });
+      const sub = `Expected = the guided figures at their midpoints${br.guided.length ? ` (${br.guided.join(', ')})` : ''}; only what guidance fixes is bridged`;
+      const run = [br.start];
+      br.steps.forEach((st) => run.push(run[run.length - 1] + st.v));
+      const lo = Math.min(...run, br.fin), hi = Math.max(...run, br.fin);
+      const span = Math.max(hi - lo, Math.abs(br.fin) * 0.04, 1);
+      const floor = Math.max(0, lo - span * 0.9), ceil = hi + span * 0.22;
+      wrap(sub + (floor > 0 ? ' · the scale starts above zero' : ''), 13, 400, bw).slice(0, 2).forEach((ln, i) => shapes.push({ t: 'text', x: bx, y: by + 38 + i * 16, text: ln, size: 13, weight: 400, fill: INK3, anchor: 'start' }));
+      const top = by + 80, base = by + bh - 58;
+      const Y = (v) => base - (v - floor) / (ceil - floor) * (base - top);
+      const cols = br.steps.length + 2, slot = bw / cols, w = Math.min(64, slot * 0.6);
+      const bars = [{ label: 'Expected', note: 'from guidance', from: floor, to: br.start, fill: PALETTE.f_profit.node, val: fmt(br.start) }]
+        .concat(br.steps.map((st, i) => ({ label: st.label, note: st.note, from: run[i], to: run[i + 1], fill: st.v >= 0 ? CHG.cup : CHG.cdn, val: `${sgn(st.v)}${fmt(st.v)}` })))
+        .concat([{ label: 'Reported', note: br.name, from: floor, to: br.fin, fill: PALETTE.profit.node, val: fmt(br.fin) }]);
+      bars.forEach((b, i) => {
+        const x = bx + i * slot + (slot - w) / 2, y0 = Y(Math.max(b.from, b.to)), y1 = Y(Math.min(b.from, b.to));
+        shapes.push({ t: 'rect', x, y: y0, w, h: Math.max(1.5, y1 - y0), fill: b.fill });
+        shapes.push({ t: 'text', x: x + w / 2, y: y0 - 6, text: b.val, size: 13, weight: 600, fill: i === 0 || i === bars.length - 1 ? INK : b.fill, anchor: 'middle' });
+        if (i < bars.length - 1) {
+          const lv = Y(i === 0 ? br.start : run[i]);
+          shapes.push({ t: 'path', d: `M${(x + w).toFixed(1)} ${lv.toFixed(1)}H${(x + slot).toFixed(1)}`, fill: 'none', stroke: INK3, sw: 1, dash: [3, 2.5] });
+        }
+        wrap(b.label, 13, 600, slot - 6).slice(0, 2).forEach((ln, j) => shapes.push({ t: 'text', x: bx + i * slot + slot / 2, y: base + 18 + j * 15, text: ln, size: 13, weight: 600, fill: INK2, anchor: 'middle' }));
+        const nl = wrap(b.label, 13, 600, slot - 6).slice(0, 2).length;
+        wrap(b.note || '', 11, 400, slot - 6).slice(0, 3 - nl).forEach((ln, j) => shapes.push({ t: 'text', x: bx + i * slot + slot / 2, y: base + 18 + (nl + j) * 15, text: ln, size: 11, weight: 400, fill: INK3, anchor: 'middle' }));
+      });
+      shapes.push({ t: 'path', d: `M${bx} ${base.toFixed(1)}H${bx + bw}`, fill: 'none', stroke: INK3, sw: 1 });
     }
 
     // header

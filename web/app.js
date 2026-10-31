@@ -320,6 +320,11 @@
           <button type="button" data-gcmp="">As guided</button>
           <button type="button" data-gcmp="q">vs current</button>
           <button type="button" data-gcmp="y">vs year ago</button>
+        </div>
+        <div class="seg gcase" role="group" aria-label="Guided ranges" hidden title="Low case: every guided range at the end that leaves less profit (revenue and margins low, costs high); high case: the other end">
+          <button type="button" data-gcase="low">Low case</button>
+          <button type="button" data-gcase="mid">Midpoint</button>
+          <button type="button" data-gcase="high">High case</button>
         </div>` : ''}
         <div class="seg" role="group" aria-label="Zoom">
           <button type="button" data-zoom="fit">Fit</button>
@@ -345,7 +350,7 @@
     const sheet = $('.sheet', el), notes = $('.notes', el);
     const baseById = new Map(spec.nodes.map((n) => [n.id, n]));
     // "Show guidance" (web/guidance.js): the next period as guided; its own spec, nodes and notes while it is on
-    const guide = { on: false, open: false, doc: undefined, spec: null, byId: null, cmp: '' };
+    const guide = { on: false, open: false, doc: undefined, spec: null, byId: null, cmp: '', case: 'mid' };
     const futureOn = () => guide.on && guide.spec && !guide.spec.error;
     const gOn = () => !futureOn() && !!state.gview && !!gv.spec;
     const nodesNow = () => (futureOn() ? guide.byId : gOn() && gv.byId ? gv.byId : baseById);
@@ -437,6 +442,11 @@
         const rec = guide.open && guide.spec && guide.spec.record;
         gr.hidden = !rec;
         if (rec && gr.dataset.drawn !== '1') { gr.innerHTML = window.FFGuidance.recordHTML(rec, t); gr.dataset.drawn = '1'; }
+      }
+      const gk = $('.gcase', el);
+      if (gk) {
+        gk.hidden = !futureOn();
+        $$('[data-gcase]', gk).forEach((b) => b.classList.toggle('on', b.dataset.gcase === guide.case));
       }
       const gs = $('.gseg', el);
       if (gs) {
@@ -615,7 +625,7 @@
       gbtn.disabled = true;
       try {
         if (guide.doc === undefined) guide.doc = await ctx.guide.load();
-        guide.spec = ctx.guide.build(guide.doc);
+        guide.spec = ctx.guide.build(guide.doc, guide.case);
       } catch (err) {
         guide.spec = { error: `Guidance could not be read (${err.message}).` };
       } finally { gbtn.disabled = false; }
@@ -633,6 +643,13 @@
       draw();
     });
     $$('[data-gcmp]', el).forEach((b) => b.addEventListener('click', () => { guide.cmp = b.dataset.gcmp; draw(); }));
+    $$('[data-gcase]', el).forEach((b) => b.addEventListener('click', () => {
+      if (!guide.doc || guide.case === b.dataset.gcase) return;
+      guide.case = b.dataset.gcase;
+      const sp = ctx.guide.build(guide.doc, guide.case);
+      if (sp && !sp.error) { guide.spec = sp; guide.byId = new Map(sp.nodes.map((n) => [n.id, n])); }
+      draw();
+    }));
     $$('[data-view]', el).forEach((b) => b.addEventListener('click', () => {
       if (guide.on || guide.open) { guide.on = false; guide.open = false; gmsg.hidden = true; selected = null; }
       const v = b.dataset.view === 'std' ? null : b.dataset.view;
@@ -666,7 +683,7 @@
       b.disabled = true;
       try {
         const blob = await S.exportScene(scene, fmt);
-        const name = `${ctx.slug}${futureOn() ? `-guidance${guide.cmp ? '-vs-' + (guide.cmp === 'y' ? 'year-ago' : 'current') : ''}` : ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : ''}${!futureOn() && gOn() ? (mode() ? '-and-guidance' : '-vs-guidance') : ''}-sankey.${fmt}`;
+        const name = `${ctx.slug}${futureOn() ? `-guidance${guide.case && guide.case !== 'mid' ? `-${guide.case}-case` : ''}${guide.cmp ? '-vs-' + (guide.cmp === 'y' ? 'year-ago' : 'current') : ''}` : ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : ''}${!futureOn() && gOn() ? (mode() ? '-and-guidance' : '-vs-guidance') : ''}-sankey.${fmt}`;
         if (share) {                                               // Android share sheet (X, messages, mail …)
           nativeApp.shareFile(name, 'image/png', await blobBase64(blob));
           return;
@@ -1000,7 +1017,7 @@
       guide: window.FFGuidance && ticker && own === 'USD' && (q === qs[0] || (fy && q === ys[0])) ? {
         // the latest guidance and every earlier release's (the guidance record: hit rate and moves)
         load: holdersGuidance,
-        build: (d) => window.FFGuidance.future(q, d && d.g, { company: c, name: S.dec(p.name), history: d && d.hist }),
+        build: (d, cs) => window.FFGuidance.future(q, d && d.g, { company: c, name: S.dec(p.name), history: d && d.hist, case: cs }),
       } : null,
       // "vs guidance": any quarter or year reported in dollars, against the guidance it was given
       vsGuide: window.FFGuidance && window.FFGuidance.versus && ticker && own === 'USD' && !cmpId ? { load: holdersGuidance, company: c } : null,
