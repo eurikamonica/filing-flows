@@ -961,3 +961,35 @@ main.wrap { position: relative; }
 .guide-record details.gr-metric > summary h4::before { content: '▸ '; color: #8f84c9; }
 .guide-record details.gr-metric[open] > summary h4::before { content: '▾ '; }
 .guide-record .gr-strip .gr-out-lab { font-weight: 600; }
+
+/* the ultra-detailed flow canvas (web/flowdetail.js): full screen, + / − on the lines, drag / wheel / pinch zoom */
+.detail-flow .df-ultra { margin-left: auto; }
+body.ffu-open { overflow: hidden; }
+.ffu { position: fixed; inset: 0; z-index: 1200; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); }
+.ffu-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.ffu-title { font-size: 15px; margin-right: 6px; }
+.ffu-per select { font: inherit; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.ffu-seg { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.ffu-seg > span { padding: 0 8px; font-size: 12px; color: var(--muted); }
+.ffu-seg button, .ffu-btn { font: inherit; font-size: 13px; padding: 5px 10px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.ffu-seg button + button { border-left: 1px solid var(--line); }
+.ffu-seg button.on, .ffu-btn.on { background: var(--ink); color: var(--surface); }
+.ffu-seg button:disabled { opacity: .4; cursor: default; }
+.ffu-btn { border: 1px solid var(--line); border-radius: 8px; }
+.ffu-close { margin-left: auto; font-size: 16px; }
+.ffu-stage { position: relative; flex: 1; overflow: hidden; touch-action: none; cursor: grab; background: var(--sheet); }
+.ffu-stage.grabbing { cursor: grabbing; }
+.ffu-svg, .ffu-svg svg { width: 100%; height: 100%; display: block; }
+.ffu-svg .node { cursor: pointer; }
+.ffu-tog { cursor: pointer; }
+.ffu-tog:hover circle { fill: var(--accent); }
+.ffu-info { position: absolute; right: 12px; top: 12px; width: min(360px, calc(100vw - 24px)); max-height: calc(100% - 24px); overflow: auto; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); font-size: 14px; }
+.ffu-info .ffu-k { font-weight: 600; margin-bottom: 4px; }
+.ffu-info .ffu-v { color: var(--ink-2); margin-bottom: 8px; }
+.ffu-info .ffu-src { color: var(--muted); font-size: 13px; }
+.ffu-info .ffu-btn { margin: 4px 6px 0 0; }
+.ffu-msg { position: absolute; left: 12px; bottom: 8px; margin: 0; padding: 6px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; color: var(--muted); }
+.ffu-hint { padding: 6px 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); background: var(--surface); }
+@media (max-width: 640px) { .ffu-bar { gap: 4px 6px; padding: 6px 8px; } .ffu-seg button, .ffu-btn { padding: 5px 7px; font-size: 12px; } .ffu-hint { display: none; } }
+body.ffu-open .flo-launch, body.ffu-open .flo-half, body.ffu-open .flo-panel { display: none !important; }   /* the assistant waits behind the canvas */

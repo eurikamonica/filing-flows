@@ -103,6 +103,15 @@
     return segs;
   }
   const shapeBox = (s) => s.box || [s.x, s.y, s.w, s.h];
+  const STRIPE = 5;                                   // the "of which" lines (stock pay inside a cost line): "\\" every 5 px
+  function stripeLines(b) {
+    const [x, y, w, h] = b, step = STRIPE * Math.SQRT2, segs = [];
+    for (let c = x - y - h + step / 2; c < x + w - y; c += step) {
+      const xa = Math.max(x, c + y), xb = Math.min(x + w, c + y + h);
+      if (xb > xa) segs.push([xa, xa - c, xb, xb - c]);
+    }
+    return segs;
+  }
 
   let mctx = null;
   function measure(text, size, weight) {
@@ -539,6 +548,11 @@
       } else {
         shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, A0, g.x1, A1, Math.max(l.th, 0.8)), fill: pal.flow, band: true }, cls));
       }
+      if (l.of > 0.01 && !compare && !gmode) {    // the part of a cost line that is stock pay: lined, at the band's foot
+        const f = Math.min(1, l.of), th = Math.max(l.th * f, 0.8), y0 = A0 + l.th - th, y1 = A1 + l.th - th;
+        shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, y0, g.x1, y1, th), fill: 'none', stripe: pal.node, band: true,
+          box: [g.x0, Math.min(y0, y1), g.x1 - g.x0, Math.abs(y1 - y0) + th] }, cls));
+      }
       if (l.gIn > 0.05) {                          // above guidance: the band's growth past the guided figure, on top of it
         const th = Math.min(Math.max(l.gIn, 0.6), l.th);   // (below it, the guided amount in the band's own colour)
         shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, A0, g.x1, A1, th), fill: GTINT, dots: DOT, curve: [g.x0, A0, g.x1, A1, th], band: true }, cls));
@@ -655,6 +669,7 @@
     const legend = spec.legend ? spec.legend.filter(([k]) => used.has(k) && PALETTE[k])
       : LEGEND.filter(([k]) => used.has(k) || k === 'rev' || k === 'profit' || k === 'cost');
     const lgItems = legend.map(([k, t]) => ({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
+    if (!compare && !gmode && links.some((l) => l.of > 0.01)) lgItems.push({ k: 'stripe', t: 'Lined = stock-based pay inside the line', w: 22 + measure('Lined = stock-based pay inside the line', 14, 400) });
     if (spec.future && nodes.some((n) => n.range)) lgItems.push({ k: 'range', t: 'Dashed box = guided range (tick = low end)', w: 22 + measure('Dashed box = guided range (tick = low end)', 14, 400) });
     if (compare) {                     // increases are drawn as dark strips; a decrease leaves the band light (its Δ is negative)
       [['strip', spec.future ? `Violet strip = increase vs ${dec(cmpSpec.vs)}` : `Dark strip = increase vs ${dec(cmpSpec.vs)}`],
@@ -708,6 +723,9 @@
       if (it.k === 'strip') {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: LP.flow, r: 3 });
         shapes.push({ t: 'rect', x: lx, y: ly + 10, w: 14, h: 5, fill: LP.node });
+      } else if (it.k === 'stripe') {
+        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE.cost.flow, r: 3 });
+        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: 'none', stripe: PALETTE.cost.node });
       } else if (it.k === 'nostrip') {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: LP.flow, r: 3 });
       } else if (it.k === 'cup' || it.k === 'cdn') {
@@ -876,12 +894,19 @@
         (dots ? `<path clip-path="url(#${id})" d="${dots}" fill="${s.dots}"/>` : '') +
         (s.outline ? outline + ` fill="none" stroke="${s.dots}" stroke-width="1.2" stroke-dasharray="5 3.5"/>` : '') + '</g>';
     }
+    function striped(s, attrs) {                     // "of which": lines across the shape, clipped to it
+      const id = `ffc-${uid}-${nclip++}`;
+      const shape = s.t === 'path' ? `<path d="${s.d}"/>` : `<rect x="${f2(s.x)}" y="${f2(s.y)}" width="${f2(s.w)}" height="${f2(s.h)}"/>`;
+      const lines = stripeLines(shapeBox(s)).map(([a, b, c, d]) => `M${f2(a)} ${f2(b)}L${f2(c)} ${f2(d)}`).join('');
+      return lines ? `<g${attrs}><clipPath id="${id}">${shape}</clipPath><path clip-path="url(#${id})" d="${lines}" fill="none" stroke="${s.stripe}" stroke-width="1.1" stroke-opacity="0.75"/></g>` : '';
+    }
     let group = null;
     const close = () => { if (group !== null) out.push('</g>'); group = null; };
     scene.shapes.forEach((s) => {
       if (s.band) {
         close();
-        if (s.hatch) out.push(hatched(s, ` class="band ghost" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}"`));
+        if (s.stripe) out.push(striped(s, ` class="band of" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}"`));
+        else if (s.hatch) out.push(hatched(s, ` class="band ghost" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}"`));
         else if (s.dots) out.push(dotted(s, ` class="band${s.ghost ? ' ghost' : ''}" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}"`));
         else out.push(`<path class="band" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}" d="${s.d}" fill="${s.fill}"/>`);
         return;
@@ -890,7 +915,9 @@
         close();
         if (s.group) { out.push(`<g class="node" data-node="${esc(s.group)}">`); group = s.group; }
       }
-      if (s.t === 'rect' && s.hatch) {
+      if (s.stripe) {
+        out.push(striped(s, ''));
+      } else if (s.t === 'rect' && s.hatch) {
         out.push(hatched(s, s.group ? ' class="bar ghost"' : ''));
       } else if (s.t === 'rect' && s.dots) {
         out.push(dotted(s, s.group ? ' class="bar ghost"' : ''));
@@ -923,6 +950,17 @@
     ctx.fillRect(0, 0, scene.W, scene.H);
     scene.shapes.forEach((s) => {
       if (s.ui) return;                         // notes markers and hit areas are screen-only
+      if (s.stripe) {                           // "of which": lines across the shape, clipped to it
+        const path = s.t === 'path' ? new Path2D(s.d) : new Path2D();
+        if (s.t !== 'path') path.rect(s.x, s.y, s.w, s.h);
+        ctx.save();
+        ctx.clip(path);
+        ctx.beginPath();
+        stripeLines(shapeBox(s)).forEach(([a, b, c2, d]) => { ctx.moveTo(a, b); ctx.lineTo(c2, d); });
+        ctx.strokeStyle = s.stripe; ctx.globalAlpha = 0.75; ctx.lineWidth = 1.1; ctx.stroke();
+        ctx.restore();
+        return;
+      }
       if (s.hatch) {                            // a decrease: hatched area with a dashed outline
         const path = s.t === 'path' ? new Path2D(s.d) : new Path2D();
         if (s.t !== 'path') path.rect(s.x, s.y, s.w, s.h);

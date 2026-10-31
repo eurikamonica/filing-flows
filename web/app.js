@@ -238,7 +238,8 @@
     const sec = document.createElement('section');
     sec.className = 'section detail-flow';
     sec.innerHTML = `<div class="section-head"><h2>Detailed flow</h2>
-      <span class="muted">Every line split as far as the filing and its notes split it — the company’s own sums in its XBRL</span></div>
+      <span class="muted">Every line split as far as the filing and its notes split it — the company’s own sums in its XBRL</span>
+      <button class="btn small df-ultra" type="button" hidden title="Full screen: open any line with +, the segments’ own income statements, revenue by product, segment or region, cash by use">⛶ Ultra-detailed canvas</button></div>
       <div class="df-body"><div class="loading">Reading the detailed flow…</div></div>`;
     const u = `${FLOW_BASE}c/${encodeURIComponent(o.ticker)}.json`;
     const near = (a, b) => a && b && Math.abs(Date.parse(a) - Date.parse(b)) <= 6 * 864e5;
@@ -271,6 +272,12 @@
           years: (d.years || []).map((x) => ({ end: x.end, filed: x.filed, label: labelOf(x.end, true), nodes: x.nodes, links: x.links, period: 'fy' })),
           periods: o.c.periods,
         };
+        const ub = $('.df-ultra', sec);
+        if (ub && dp.u && window.FFFlow && window.FFFlow.open) {
+          ub.hidden = false;
+          ub.onclick = () => window.FFFlow.open({ doc: d, fy: o.fy, end: o.q.end, name, labelOf, guidance: o.guidance, periods: o.c.periods,
+            slug: `${o.ticker}-${o.q.label}`.replace(/\s+/g, '-') });
+        }
         const body = $('.df-body', sec);
         body.innerHTML = '';
         const fwd = forwardHTML(dp.forward, dp.nodes, o.fy);

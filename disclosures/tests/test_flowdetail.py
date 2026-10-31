@@ -13,7 +13,7 @@ CTX = {'Q': ('2026-01-01', '2026-03-31'), 'PQ': ('2025-01-01', '2025-03-31')}
 AX = 'srt:ProductOrServiceAxis'
 
 
-def filing(q, pq, members=None, nonop_note=True):
+def filing(q, pq, members=None, nonop_note=True, segs=None):
     """q, pq: {local concept: value} of the quarter and the same quarter a year earlier (a first quarter: the year to date)."""
     contexts = {k: {'s': s, 'e': e, 'dims': {}} for k, (s, e) in CTX.items()}
     facts = [{'c': 'dei:DocumentPeriodEndDate', 'v': '2026-03-31', 'ctx': 'Q', 'u': None, 'd': None, 'id': None},
@@ -27,6 +27,11 @@ def filing(q, pq, members=None, nonop_note=True):
             k = f'{cid}_{m}'
             contexts[k] = {'s': CTX[cid][0], 'e': CTX[cid][1], 'dims': {AX: 'x:' + m}}
             facts.append({'c': G + 'Revenues', 'v': float(v), 'ctx': k, 'u': 'USD', 'd': '-6', 'id': None})
+    for m, vals in (segs or {}).items():               # a segment's own lines (ASU 2023-07), with the consolidation member
+        k = f'S_{m}'
+        contexts[k] = {'s': CTX['Q'][0], 'e': CTX['Q'][1], 'dims': {D.SEG_AXIS: 'x:' + m, D.CONS_AXIS: 'srt:OperatingSegmentsMember'}}
+        for c, v in vals.items():
+            facts.append({'c': G + c, 'v': float(v), 'ctx': k, 'u': 'USD', 'd': '-6', 'id': None})
     cal = {
         'R_IS': {G + 'NetIncomeLoss': [(G + 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest', 1.0), (G + 'IncomeTaxExpenseBenefit', -1.0)],
                  G + 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest': [(G + 'OperatingIncomeLoss', 1.0), (G + 'NonoperatingIncomeExpense', 1.0)],
@@ -141,6 +146,27 @@ class Structure(unittest.TestCase):
         FL = filing(dict(scaled(PROFIT), InterestExpenseNonoperating=4 * SCALE), scaled(PROFIT, 0.8 * SCALE))
         F = D.read_filing(FL)
         self.assertNotIn(G + 'NonoperatingIncomeExpense', F['J'])
+
+
+class Ultra(unittest.TestCase):
+    def test_segments_cash_by_use(self):
+        segs = {'EastMember': {'Revenues': 70e9, 'CostOfRevenue': 30e9, 'SellingGeneralAndAdministrativeExpense': 5e9, 'OperatingIncomeLoss': 35e9,
+                               'DepreciationDepletionAndAmortization': 2e9},
+                'WestMember': {'Revenues': 30e9, 'CostOfRevenue': 10e9, 'SellingGeneralAndAdministrativeExpense': 5e9, 'OperatingIncomeLoss': 15e9}}
+        F = D.read_filing(filing(scaled(PROFIT), scaled(PROFIT, 0.8 * SCALE), segs=segs))
+        U = F['U']
+        seg = U['seg']
+        self.assertEqual(seg['profit'], G + 'OperatingIncomeLoss')
+        east = [t for t in seg['J'] if 'EastMember' in t and 'OperatingIncomeLoss' in t][0]
+        kids = {D.local(D.parse_key(k)[0]): w for k, w in seg['J'][east]}
+        # revenue less cost of revenue and SG&A make the profit; depreciation is a memo line, not one of the expenses
+        self.assertEqual(kids, {'Revenues': 1.0, 'CostOfRevenue': -1.0, 'SellingGeneralAndAdministrativeExpense': -1.0})
+        self.assertIn(('gap:seg', 1.0), [tuple(x) for x in seg['J'][G + 'OperatingIncomeLoss']])
+        self.assertEqual(U['cash_uses']['order'], ['capex', 'buyback', 'dividend'])
+        vals = D.synth(U, F['vals']['cur'])
+        self.assertAlmostEqual(vals['gap:seg'], -15e9)                   # 35 − 35 − 15: what the segments do not carry
+        self.assertAlmostEqual(vals['cat:fcf'], 17e9)                    # operating cash flow 35 less capital spending 20 net of 2 of sales
+        self.assertEqual(D.label_of(None, 'cat:buyback'), 'Share buybacks')
 
 
 class Forward(unittest.TestCase):

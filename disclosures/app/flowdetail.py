@@ -46,10 +46,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import xbrl_filing as X
 import notes as N
 
-VERSION = 2                  # 2: what the notes already commit (forward figures) with each period
+VERSION = 3                  # 2: what the notes already commit (forward figures); 3: the ultra-detailed canvas (u)
 FOLD = 0.003                 # parts under 0.3% of revenue are summed into "Other …" (per junction and side)
 MAX_PARTS = 9                # at most this many parts per side of a junction; the smallest beyond it are summed too
 NOTE_DEPTH = 2               # a line split by a note, its parts by another note: this many levels at most
+NOTE_DEPTH_ULTRA = 4         # the ultra-detailed canvas: deeper (its extra levels open with +)
 
 # the site's ids for the main lines (pipeline/sankey.py): the guidance comparison and the colours rest on them
 MAIN = [
@@ -162,6 +163,7 @@ class Tree:
     def __init__(self, FL, P):
         self.FL, self.P = FL, P
         self.J, self.via, self.seen = {}, {}, set()
+        self.note_limit, self.tax_one = NOTE_DEPTH, True
         st, notes = N.classify_reports(FL)
         self.st = {s['kind']: s['report'] for s in st if s['kind'] not in ()}
         self.titles = {}
@@ -220,7 +222,7 @@ class Tree:
                 r = (self.v(root, p) - sum(w * self.v(k, p) for k, w in have)) / mw
                 if r and abs(r) <= 5 * abs(self.v(root, p)) + 1:
                     kids, via = cand, self.stmt_title.get(role, 'the statement')
-        if kids is None and not dims and note_depth < NOTE_DEPTH:
+        if kids is None and not dims and note_depth < self.note_limit:
             best = None
             for r, tree in cal.items():
                 if r == role or r in self.stmt_title or c not in tree:
@@ -237,8 +239,8 @@ class Tree:
             if best:
                 kids, via = best[1], best[2]
                 note_depth += 1
-                if MAIN_OF.get(local(c)) == 'tax':
-                    note_depth = NOTE_DEPTH          # income tax: one split (federal, state, foreign or current, deferred)
+                if MAIN_OF.get(local(c)) == 'tax' and self.tax_one:
+                    note_depth = self.note_limit     # income tax: one split (federal, state, foreign or current, deferred)
         if kids is None:
             return
         self.add(root, kids, via)
@@ -355,20 +357,22 @@ def _find(FL, role, locs, p):
     return None
 
 
-def read_filing(FL):
-    """One filing → its structure and its figures: {'periods', 'J' (junctions), 'via', 'labels', 'vals': {period: {key: v}},
-    'root', 'cash_root', 'axis'}; None when the statements cannot be read."""
-    P = periods(FL)
-    if not P:
-        return None
-    T = Tree(FL, P)
-    # a combined "statement of income and comprehensive income" is listed as comprehensive income (notes.py)
-    isr, cfr = (T.st.get('is') or T.st.get('oci') or {}).get('role'), (T.st.get('cf') or {}).get('role')
-    if not isr:
-        return None
+def _fresh(T, ultra=False):
+    """A new, empty build on the same filing (the reports are classified once)."""
+    T2 = Tree.__new__(Tree)
+    T2.__dict__.update(T.__dict__)
+    T2.J, T2.seen = {}, set()
+    T2.note_limit, T2.tax_one = (NOTE_DEPTH_ULTRA, False) if ultra else (NOTE_DEPTH, True)
+    return T2
+
+
+def _build(T0, isr, cfr, ultra=False):
+    """The junctions of one filing: the income statement from net income down (split by notes), revenue by members, the
+    cash flow statement. ultra: notes four levels deep, income tax fully, the cash flow statement's nested lines too."""
+    FL, P = T0.FL, T0.P
+    T = _fresh(T0, ultra)
     cur, ytd = P['cur'], P['ytd']
     cal = FL.F['cal']
-    # the root: net income, the statement's top-most calculation total
     root = None
     for loc in dict(MAIN)['net']:
         c = _find(FL, isr, [loc], cur)
@@ -385,17 +389,21 @@ def read_filing(FL):
     if not any(main_of(k) == 'revenue' for j in T.J.values() for k, _ in j['kids']):
         _skeleton(T, FL, isr, rk, cur)
     rev = next((k for j in T.J.values() for k, _ in j['kids'] if main_of(k) == 'revenue'), None)
-    axis = None
+    axis, rev_split = None, rev
     if rev and rev in T.J:                         # revenue split by the statement (sales + other income): its sales by members
         big = max((k for k, w in T.J[rev]['kids'] if w > 0 and main_of(k) == 'revenue' and k not in T.J),
                   key=lambda k: abs(T.v(k, cur) or 0), default=None)
         if big and abs(T.v(big, cur) or 0) >= 0.6 * abs(T.v(rev, cur) or 1):
-            rev = big
-    if rev and rev not in T.J:
-        got = T.split_dims(rev, cur)
-        if got:
-            axis, cc, J = got
-            for t, kids in J.items():
+            rev_split = big
+    alt = {}
+    if rev_split and rev_split not in T.J:
+        for ax in REV_AXES:                        # every dimension whose members add up (the canvas can switch)
+            got = T.split_dims(rev_split, cur, need_axis=ax)
+            if got:
+                alt[ax] = got[2]
+        if alt:
+            axis = next(ax for ax in REV_AXES if ax in alt)
+            for t, kids in alt[axis].items():
                 T.add(t, kids, 'dims:' + axis)
     # cost of revenue on the same members
     cor = next((k for j in T.J.values() for k, _ in j['kids'] if main_of(k) == 'cor'), None)
@@ -406,7 +414,7 @@ def read_filing(FL):
             if got and not got[1]:
                 T.add(cor, [(key_of(parse_key(cor)[0], ((axis, x),)), 1.0) for x in got[0]], 'dims:' + axis)
     # the cash flow statement (a 10-Q's is year to date): net income → operating cash flow → the rest of the cash flows
-    cash_root = None
+    cash_root = cash_ni = None
     if cfr:
         ck = None
         for loc in dict(MAIN)['cash_chg']:
@@ -421,28 +429,27 @@ def read_filing(FL):
                 ok = key_of(c)
                 break
         if ok:
-            T2 = Tree.__new__(Tree)
-            T2.__dict__.update(T.__dict__)
-            T2.J, T2.seen = {}, set()
+            T2 = _fresh(T0, ultra)
             if ck:
                 T2.seen.add(ck)
-                T2.grow(cfr, ck, ytd, note_depth=NOTE_DEPTH)
+                T2.grow(cfr, ck, ytd, note_depth=T2.note_limit)
             if ok not in T2.J:
                 T2.seen.add(ok)
-                T2.grow(cfr, ok, ytd, note_depth=NOTE_DEPTH)
-            depth, todo = {ck or ok: 0}, [ck or ok]
-            while todo:
-                t = todo.pop(0)
-                for k, _ in T2.J.get(t, {}).get('kids', []):
-                    if k not in depth:
-                        depth[k] = depth[t] + 1
-                        todo.append(k)
-            od = depth.get(ok, 0)
-            for t in list(T2.J):
-                d = depth.get(t, 0)
-                under_ocf = t != ok and _under(T2.J, ok, t)
-                if t != ok and t != ck and (d >= 2 and not under_ocf or under_ocf and d - od >= 2):
-                    del T2.J[t]
+                T2.grow(cfr, ok, ytd, note_depth=T2.note_limit)
+            if not ultra:                          # the detailed chart: the sections' own lines, not deeper
+                depth, todo = {ck or ok: 0}, [ck or ok]
+                while todo:
+                    t = todo.pop(0)
+                    for k, _ in T2.J.get(t, {}).get('kids', []):
+                        if k not in depth:
+                            depth[k] = depth[t] + 1
+                            todo.append(k)
+                od = depth.get(ok, 0)
+                for t in list(T2.J):
+                    d = depth.get(t, 0)
+                    under_ocf = t != ok and _under(T2.J, ok, t)
+                    if t != ok and t != ck and (d >= 2 and not under_ocf or under_ocf and d - od >= 2):
+                        del T2.J[t]
             # the net income in operating cash flow is the income statement's (ProfitLoss there, NetIncomeLoss here …)
             nis = [k for k, _ in T2.J.get(ok, {}).get('kids', []) if MAIN_OF.get(local(k)) == 'net']
             if ok in T2.J and nis:
@@ -457,27 +464,300 @@ def read_filing(FL):
                     for t, j in T2.J.items():
                         if t != ni:
                             T.J[cf(t)] = {'kids': [(cf(k), w) for k, w in j['kids']], 'via': j['via']}
-                    cash_root = cf(top)
-                    T.cash_ni = ni
+                    cash_root, cash_ni = cf(top), ni
+    return {'T': T, 'root': rk, 'cash_root': cash_root, 'cash_ni': cash_ni, 'axis': axis, 'alt': alt, 'rev': rev_split}
+
+
+def read_filing(FL):
+    """One filing → its structure and its figures: {'periods', 'J' (junctions), 'via', 'labels', 'vals': {period: {key: v}},
+    'root', 'cash_root', 'axis', 'forward', 'U' (the ultra-detailed canvas's deeper structure and its views)}; None when the
+    statements cannot be read."""
+    P = periods(FL)
+    if not P:
+        return None
+    T0 = Tree(FL, P)
+    # a combined "statement of income and comprehensive income" is listed as comprehensive income (notes.py)
+    isr, cfr = (T0.st.get('is') or T0.st.get('oci') or {}).get('role'), (T0.st.get('cf') or {}).get('role')
+    if not isr:
+        return None
+    b = _build(T0, isr, cfr)
+    if not b:
+        return None
+    T = b['T']
+    try:
+        U = ultra_of(T0, isr, cfr, b)
+    except Exception as e:                               # the canvas is extra: a filing it cannot read keeps its chart
+        print(f'ultra: {type(e).__name__}: {e}', file=sys.stderr)
+        U = None
     keys = set(T.J) | {k for j in T.J.values() for k, _ in j['kids']}
+    ukeys = set(U['keys']) if U else set()
     vals = {}
     for name in ('cur', 'ytd', 'py', 'pytd'):
         p = P.get(name)
-        vals[name] = {k: T.v(k, p) for k in keys} if p else {}
+        vals[name] = {k: T.v(k, p) for k in keys | ukeys} if p else {}
         vals[name] = {k: v for k, v in vals[name].items() if v is not None}
         _residuals(T.J, vals[name])
     labels = {}
-    for k in keys:
+    for k in keys | ukeys:
         c, dims = parse_key(k)
-        labels[k] = ('Other (outside the split)' if k.startswith('gap:') else FL.label(dims[-1][1]) if dims else tidy(FL.label(c, 'terse')))
+        labels[k] = label_of(FL, k)
     try:
         fwd = forward(FL, P['cur'][2])
     except Exception:                                    # a note read badly never stops the chart
         fwd = {}
+    if U:
+        U.pop('keys')
     return {'periods': {k: (list(v[1:]) if isinstance(v, tuple) else v) for k, v in P.items()}, 'J': {t: j['kids'] for t, j in T.J.items()},
             'forward': fwd,
-            'via': {t: j['via'] for t, j in T.J.items()}, 'labels': labels, 'vals': vals, 'root': rk, 'cash_root': cash_root,
-            'cash_ni': getattr(T, 'cash_ni', None), 'axis': axis}
+            'via': {t: j['via'] for t, j in T.J.items()}, 'labels': labels, 'vals': vals, 'root': b['root'], 'cash_root': b['cash_root'],
+            'cash_ni': b['cash_ni'], 'axis': b['axis'], 'U': U}
+
+
+# ------------------------------------------------------------------ the ultra-detailed canvas
+SEG_AXIS = 'us-gaap:StatementBusinessSegmentsAxis'
+CONS_AXIS = 'srt:ConsolidationItemsAxis'
+ISL_AXIS = 'us-gaap:IncomeStatementLocationAxis'
+# segment profit measures, in the order tried (the consolidated line they reconcile to must be on the chart)
+SEG_PROFIT = ['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
+              'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments',
+              'GrossProfit']
+SEG_REV = ['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues', 'RevenueForReportableSegments',
+           'RevenueFromContractWithCustomerIncludingAssessedTax']
+# lines a segment table shows beside its expenses without being one of them
+SEG_MEMO = re.compile(r'(?i)Depreciation|Amortization$|AdjustmentFor|Expenditure|Assets|Goodwill|Intersegment|PercentageChange|'
+                      r'Capital|Interest(?:Income|Revenue)|Employees|Restructuring')
+# the cash flows by what they are for (the canvas's "cash by use" view): key → (concepts, label)
+CASH_CATS = {
+    'capex': (r'PaymentsToAcquire(?:PropertyPlantAndEquipment|ProductiveAssets|OtherPropertyPlantAndEquipment|IntangibleAssets|Software|RealEstate)|'
+              r'PaymentsForCapitalImprovements|PaymentsToDevelopSoftware|PaymentsForSoftware|ProceedsFromSaleOf(?:PropertyPlantAndEquipment|'
+              r'ProductiveAssets|OtherPropertyPlantAndEquipment|RealEstate)|PropertyPlantAndEquipment', 'Capital spending'),
+    'acq': (r'Businesses|Acquisition|Divestiture|EquityMethod|Subsidiar', 'Acquisitions & divestitures'),
+    'inv': (r'Securities|Investments?|Marketable|AvailableForSale|HeldToMaturity|TimeDeposits', 'Investments bought & sold'),
+    'sbc_tax': (r'TaxWithholding|SharesWithheld|WithholdingTax', 'Shares withheld for employee taxes'),
+    'buyback': (r'RepurchaseOf(?:Common|Equity)|TreasuryStock|RepurchaseOfStock', 'Share buybacks'),
+    'dividend': (r'Dividend', 'Dividends'),
+    'stock': (r'ProceedsFrom(?:IssuanceOf(?:Common|Equity|Shares)|StockOptions|StockPlans|EmployeeStock|Issuance.*Stock)|ProceedsFromStock', 'Shares issued'),
+    'debt': (r'Debt|Borrowing|Notes|CommercialPaper|LinesOfCredit|Loans?Payable|Bonds|Convertible|FinanceLease|Repayments', 'Debt raised & repaid'),
+    'fx': (r'EffectOfExchangeRate', 'Exchange rates'),
+    'fcf': (r'^$', 'Free cash flow (OCF − capex)'),
+    'other': (r'.', 'Other cash flows'),
+}
+
+
+def ultra_of(T0, isr, cfr, base):
+    """The canvas's structure: the deeper junctions (opened with +; the detailed chart's open by default), revenue by every
+    dimension that adds up, the segments' own income statements, the cash flows by use, and stock pay / amortization inside
+    the cost lines."""
+    ub = _build(T0, isr, cfr, ultra=True)
+    if not ub:
+        return None
+    T = ub['T']
+    J = {t: j['kids'] for t, j in T.J.items()}
+    U = {'J': J, 'via': {t: j['via'] for t, j in T.J.items()}, 'root': ub['root'], 'cash_root': ub['cash_root'], 'cash_ni': ub['cash_ni'],
+         'axis': ub['axis'], 'alt': ub['alt'], 'default': sorted(t for t in J if t in base['T'].J)}
+    U['seg'] = segments(T, J, ub)
+    U['cash_uses'] = cash_uses(J, ub)
+    U['of'] = of_lines(T, J)
+    keys = set(J) | {k for kids in J.values() for k, _ in kids}
+    for ax, Jx in U['alt'].items():
+        keys |= set(Jx) | {k for kids in Jx.values() for k, _ in kids}
+    if U['seg']:
+        keys |= set(U['seg']['J']) | {k for kids in U['seg']['J'].values() for k, _ in kids}
+    if U['cash_uses']:
+        keys |= set(U['cash_uses']['J']) | {k for kids in U['cash_uses']['J'].values() for k, _ in kids}
+    for d in U['of'].values():
+        keys |= set(d.values())
+    U['keys'] = sorted(keys)
+    return U
+
+
+def segments(T, J, ub):
+    """Each segment's own income statement (ASU 2023-07): its revenue, its significant expenses (the segment note's own
+    calculation, else the lines that make the revenue and the profit agree), its profit; the profits with what is not
+    allocated make the consolidated line. → {'J', 'profit', 'rev', 'src', 'members'} or None."""
+    FL, cur = T.FL, T.P['cur']
+    by = {}
+    for (c, pk, dims), (v, _, u) in FL.num.items():
+        if pk != cur or v is None or (u and u != 'USD'):
+            continue
+        d = dict(dims)
+        if SEG_AXIS not in d or set(d) - {SEG_AXIS, CONS_AXIS}:
+            continue
+        if CONS_AXIS in d and not d[CONS_AXIS].endswith('OperatingSegmentsMember'):
+            continue
+        old = by.setdefault(d[SEG_AXIS], {}).get(c)
+        if old is None or len(dims) < len(old[0]):
+            by[d[SEG_AXIS]][c] = (dims, v)
+    if len(by) < 2:
+        return None
+    tree = set(J) | {k for kids in J.values() for k, _ in kids}
+    pc = None
+    for x in SEG_PROFIT:
+        c = 'us-gaap:' + x
+        if key_of(c) in tree and sum(1 for m in by.values() if c in m) >= 2:
+            pc = c
+            break
+    if not pc:
+        return None
+    members = [m for m, cs in by.items() if pc in cs]
+    rc = next(('us-gaap:' + x for x in SEG_REV if all('us-gaap:' + x in by[m] for m in members)), None)
+    if not rc:
+        return None
+    cal = FL.F['cal']
+    SJ, profits, revs = {}, [], []
+    for m in members:
+        cs = by[m]
+        dims = cs[pc][0]
+        k = lambda c, d=dims: key_of(c, d)
+        prof, rev = cs[pc][1], cs[rc][1]
+        kids = None
+        for role, tr in cal.items():                     # the segment note's own calculation of the profit
+            if pc not in tr:
+                continue
+            cand = [(c, w) for c, w in tr[pc] if c in cs]
+            if len(cand) >= 2 and any(c == rc for c, _ in cand) and abs(sum(w * cs[c][1] for c, w in cand) - prof) <= max(abs(rev) * 0.0015, 1.0):
+                kids = [(k(c, cs[c][0]), w) for c, w in cand]
+                break
+        if kids is None:                                 # else the lines that make revenue and profit agree (costs first)
+            items = [(c, cs[c][1]) for c in cs if c not in (pc, rc) and not SEG_MEMO.search(local(c))
+                     and not local(c).startswith('Revenue') and cs[c][1]]
+            items = sorted(items, key=lambda x: -abs(x[1]))[:9]
+            best = None
+            for signs in _signs(len(items)):
+                tot = rev - sum(sg * v for (c, v), sg in zip(items, signs))
+                if abs(tot - prof) <= max(abs(rev) * 0.0015, 1.0):
+                    score = (sum(1 for sg in signs if sg == 1), -sum(1 for sg in signs if sg == -1))
+                    if not best or score > best[0]:
+                        best = (score, signs)
+            if not best:
+                return None
+            kids = [(k(rc, cs[rc][0]), 1.0)] + [(k(c, cs[c][0]), -float(sg)) for (c, v), sg in zip(items, best[1]) if sg]
+        SJ[k(pc)] = kids
+        profits.append(k(pc))
+        revs.append(next(x for x, _ in kids if parse_key(x)[0] == rc))
+    if len(SJ) < 2:
+        return None
+    # the segments' revenue adds up to which line (total revenue, or the sales within it)
+    total = sum(by[m][rc][1] for m in members)
+    src = min((x for x in (ub['rev'], next((k for kids in J.values() for k, _ in kids if main_of(k) == 'revenue'), None)) if x),
+              key=lambda x: abs((T.v(x, cur) or 0) - total), default=None)
+    if not src or abs((T.v(src, cur) or 0) - total) > 0.25 * abs(total):
+        return None
+    SJ[key_of(pc)] = [(x, 1.0) for x in profits] + [('gap:seg', 1.0)]
+    SJ['seg>' + src] = [(x, 1.0) for x in revs] + [('gap:seg>' + src, 1.0)]
+    return {'J': SJ, 'profit': key_of(pc), 'rev': 'seg>' + src, 'src': src, 'members': members}
+
+
+def _signs(n):
+    """Every way of taking n lines: left out (0), a cost (1), an income (−1); costs-only first."""
+    import itertools
+    return itertools.product((1, 0, -1), repeat=n)
+
+
+def cash_uses(J, ub):
+    """The cash flows by what they are for: operating cash flow less capital spending (free cash flow), then buybacks,
+    dividends, acquisitions, investments, debt … each a group of the statement's own lines."""
+    cr = ub['cash_root']
+    if not cr or cr not in J:
+        return None
+    ocf = next((k for k, _ in J[cr] if main_of(k) == 'ocf'), None)
+    if not ocf:
+        return None
+    lines = []
+
+    def leaves(k, w):
+        if k in J and main_of(k) != 'ocf':
+            for x, ww in J[k]:
+                leaves(x, w * ww)
+        elif k != ocf:
+            lines.append((k, w))
+    for k, w in J[cr]:
+        if k != ocf:
+            leaves(k, w)
+    cats = {}
+    for k, w in lines:
+        loc = local(parse_key(k)[0])
+        cat = next(c for c, (rx, _) in CASH_CATS.items() if re.search(rx, loc))
+        cats.setdefault(cat, []).append((k, w))
+    if len(cats) < 2:
+        return None
+    UJ = {f'cat:{c}': kids for c, kids in cats.items()}
+    top = []
+    if 'capex' in cats:
+        UJ['cat:fcf'] = [(ocf, 1.0), ('cat:capex', 1.0)]
+        top.append(('cat:fcf', 1.0))
+    else:
+        top.append((ocf, 1.0))
+    top += [(f'cat:{c}', 1.0) for c in CASH_CATS if c in cats and c != 'capex']
+    UJ[cr] = top
+    return {'J': UJ, 'order': [c for c in CASH_CATS if c in cats]}
+
+
+def of_lines(T, J):
+    """Stock pay and amortization of acquired intangibles inside each cost line (the notes' tables by income statement
+    line): {line key: {'sbc': key, 'amort': key}}."""
+    FL, cur = T.FL, T.P['cur']
+    lines = [k for k in set(J) | {k for kids in J.values() for k, _ in kids} if not parse_key(k)[1] and not k.startswith(('cf>', 'gap:', 'cat:'))]
+    want = [('CostOf', ('CostOf',)), ('ResearchAndDevelopment', ('ResearchAndDevelopment',)), ('SellingGeneralAndAdministrative', ('SellingGeneralAndAdministrative',)),
+            ('SellingAndMarketing|SalesAndMarketing|MarketingAndSales', ('SellingAndMarketing', 'MarketingAndAdvertising')), ('GeneralAndAdministrative', ('GeneralAndAdministrative',)),
+            ('OperatingExpense', ('OperatingExpenses',))]
+    out = {}
+    for (c, pk, dims), (v, _, u) in FL.num.items():
+        if pk != cur or not v or len(dims) != 1 or not re.search(r'(?i)IncomeStatementLocation|StatementOfIncomeLocation|IncomeLocation', dims[0][0]):
+            continue
+        kind = 'sbc' if re.search(r'ShareBased|StockBased|StockCompensation', c) else 'amort' if re.search(r'AmortizationOfIntangible|AmortizationOfAcquired', c) else None
+        if not kind:
+            continue
+        mem = local(dims[0][1]).replace('Member', '')
+        for rx, targets in want:
+            if re.search(rx, mem):
+                line = next((x for x in lines if any(local(parse_key(x)[0]).startswith(t) for t in targets)), None)
+                if line:
+                    out.setdefault(line, {})[kind] = key_of(c, dims)
+                break
+    return out
+
+
+def synth(U, vals):
+    """The canvas's made-up lines in one period's figures: the segment split's revenue, what a split leaves (gap:), the cash
+    groups (cat:)."""
+    vals = dict(vals)
+    if U.get('seg'):
+        src = U['seg']['src']
+        if src in vals:
+            vals['seg>' + src] = vals[src]
+    cu = (U.get('cash_uses') or {}).get('J') or {}
+    for c in list(CASH_CATS) + ['fcf']:
+        kids = cu.get(f'cat:{c}')
+        if kids and all(k in vals for k, _ in kids):        # a group with a line missing this period has no total
+            vals[f'cat:{c}'] = sum(w * vals[k] for k, w in kids)
+    for Jx in [U['J']] + list((U.get('alt') or {}).values()) + ([U['seg']['J']] if U.get('seg') else []):
+        _residuals({t: kids for t, kids in Jx.items()}, vals)
+    return vals
+
+
+def label_of(FL, k):
+    if k.startswith('gap:seg>'):
+        return 'Revenue outside the segments'
+    if k.startswith('gap:seg'):
+        return 'Corporate & unallocated'
+    if k.startswith('gap:'):
+        return 'Other (outside the split)'
+    if k.startswith('cat:'):
+        return CASH_CATS.get(k[4:], ('', k[4:]))[1]
+    if k.startswith('seg>'):
+        return 'Revenue'
+    c, dims = parse_key(k)
+    seg = dict(dims).get(SEG_AXIS)
+    if seg and not re.match(r'Revenue|Sales', local(c)):
+        # a segment's own line: "Americas · cost of sales", "Americas · segment profit"
+        line = 'segment profit' if local(c) in SEG_PROFIT else tidy(FL.label(c, 'terse'))
+        return f'{FL.label(seg)} · {line[0].lower() + line[1:] if line[:2] != line[:2].upper() else line}'
+    if seg:
+        return FL.label(seg)
+    if dims:
+        return FL.label(dims[-1][1])
+    return tidy(FL.label(c, 'terse'))
 
 
 def tidy(label):
@@ -1047,6 +1327,26 @@ def assemble(filings):
     return {'quarters': out_q[::-1], 'years': out_y[::-1]}
 
 
+def ukeys(U):
+    """Every key the canvas can draw (the structure's, its views', the lines inside costs)."""
+    out = set()
+    for Jx in [U['J']] + list((U.get('alt') or {}).values()) + [(U.get('seg') or {}).get('J') or {}, (U.get('cash_uses') or {}).get('J') or {}]:
+        out |= set(Jx) | {k for kids in Jx.values() for k, _ in kids}
+    for d in (U.get('of') or {}).values():
+        out |= set(d.values())
+    return out
+
+
+def ultra_period(F, now, q, y):
+    """The canvas's data for one period: the structure and the figures now, a quarter earlier, a year earlier."""
+    U = F.get('U')
+    if not U:
+        return None
+    ks = ukeys(U)
+    pick = lambda vals: {k: v for k, v in synth(U, vals or {}).items() if k in ks} if vals else None
+    return dict(U, labels={k: F['labels'].get(k) for k in ks if F['labels'].get(k)}, now=pick(now), q=pick(q), y=pick(y))
+
+
 def _period(q, nodes, links, prevq, annual=False):
     m = q['meta']
     F = q['F']
@@ -1054,6 +1354,7 @@ def _period(q, nodes, links, prevq, annual=False):
             'form': m.get('form'), 'accession': m.get('accession'), 'filed': m.get('filed'), 'url': m.get('url'),
             'q_end': prevq['end'] if prevq else None, 'has_y': any(n.get('y') is not None for n in nodes),
             'cash': bool(F.get('cash_root')) and (annual or q.get('cash', False)), 'axis': F.get('axis'), 'forward': F.get('forward') or None,
+            'u': ultra_period(F, q['now'], prevq['now'] if prevq else None, q.get('y')),
             'nodes': nodes, 'links': links}
 
 
@@ -1154,6 +1455,11 @@ def build_company(cik, ua, root, ticker=None, info=None, sic=None):
         if got and fin:
             got = dict(got, cash_root=None, cash_ni=None)
             got['J'] = {t: k for t, k in got['J'].items() if not t.startswith('cf>')}
+            if got.get('U'):
+                U = dict(got['U'], cash_root=None, cash_ni=None, cash_uses=None)
+                U['J'] = {t: k for t, k in U['J'].items() if not t.startswith('cf>')}
+                U['default'] = [t for t in U.get('default') or [] if not t.startswith('cf>')]
+                got['U'] = U
         pairs.append((f, got))
     keep = {f"{f['accession']}.json" for f in info['filings']}
     for p in reads.glob('*.json'):                       # reads no longer needed
