@@ -753,20 +753,28 @@
       const says = st.says && src ? outlookOn(src.outlook, Object.assign({}, sp, { nodes: shown.nodes.map((n) => Object.assign({}, n, { key: (sp.nodes.find((x) => x.id === n.id) || {}).key })) })) : new Map();
       st.saysMap = says;
       // + / − on the lines that open: drawn over the chart (screen only)
+      // the + / − and the 💬 sit beside the bar, on the side away from its label (readable at any zoom); a label above or
+      // below the bar leaves them on its right, lifted a little off a label underneath
+      const ctl = (n) => {
+        const [x, y, w, h] = n.bar, L = n.label || [];
+        const side = L.length && L[0] + L[2] <= x + 1 ? 1 : L.length && L[0] >= x + w - 1 ? -1 : 0;
+        const under = !side && L.length && L[1] >= y + h - 1;
+        return { s: side || 1, ax: side < 0 ? x : x + w, ay: y + Math.min(h / 2, 12), dy: under ? -8 : 0 };
+      };
       const tog = scene.nodes.filter((n) => sp.toggles.has(n.id)).map((n) => {
-        const [x, y, w, h] = n.bar, t = sp.toggles.get(n.id), cx = x + w / 2, cy = y + Math.min(h / 2, 12);
-        return `<g class="ffu-tog" data-tog="${esc(n.id)}" data-x="${cx.toFixed(1)}" data-y="${cy.toFixed(1)}" transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)})"><title>${t === '+' ? 'Open its parts' : 'Close its parts'}</title><circle r="11" fill="${t === '+' ? '#1d1d1b' : '#6b6a66'}" stroke="#fff" stroke-width="2"/>` +
-          `<path d="M-5 0H5${t === '+' ? 'M0 -5V5' : ''}" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></g>`;
+        const t = sp.toggles.get(n.id), c = ctl(n);
+        return `<g class="ffu-tog" data-tog="${esc(n.id)}" data-x="${c.ax.toFixed(1)}" data-y="${c.ay.toFixed(1)}" transform="translate(${c.ax.toFixed(1)} ${c.ay.toFixed(1)})"><title>${t === '+' ? 'Open its parts' : 'Close its parts'}</title><g transform="translate(${c.s * 14} ${c.dy})"><circle r="11" fill="${t === '+' ? '#1d1d1b' : '#6b6a66'}" stroke="#fff" stroke-width="2"/>` +
+          `<path d="M-5 0H5${t === '+' ? 'M0 -5V5' : ''}" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></g></g>`;
       }).join('');
       // 💬 what the company says ahead about the line: a bubble with the number of statements, coloured by their tone
       const TONE = { positive: '#0b7a75', negative: '#d9480f', neutral: '#6b6a80' };
       const bub = scene.nodes.filter((n) => says.has(n.id)).map((n) => {
         const xs = says.get(n.id), pos = xs.filter((x) => x.tone === 'positive').length, neg = xs.filter((x) => x.tone === 'negative').length;
         const tone = pos > neg ? 'positive' : neg > pos ? 'negative' : 'neutral';
-        const [x, y, w] = n.bar, cx = x + w + 14, cy = y - 2;
-        return `<g class="ffu-tog ffu-say" data-say="${esc(n.id)}" data-x="${cx.toFixed(1)}" data-y="${cy.toFixed(1)}" transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)})"><title>${xs.length} statement${xs.length === 1 ? '' : 's'} about what is ahead</title>` +
-          `<path d="M-10 -8h20a2 2 0 0 1 2 2v11a2 2 0 0 1 -2 2h-12l-5 4v-4h-3a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2z" fill="${TONE[tone]}" stroke="#fff" stroke-width="1.5"/>` +
-          `<text x="0" y="3.5" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">${xs.length}</text></g>`;
+        const c = ctl(n), dx = c.s * (sp.toggles.has(n.id) ? 40 : 16);
+        return `<g class="ffu-tog ffu-say" data-say="${esc(n.id)}" data-x="${c.ax.toFixed(1)}" data-y="${c.ay.toFixed(1)}" transform="translate(${c.ax.toFixed(1)} ${c.ay.toFixed(1)})"><title>${xs.length} statement${xs.length === 1 ? '' : 's'} about what is ahead</title><g transform="translate(${dx} ${c.dy})">` +
+          `<path d="M-10 -9h20a2 2 0 0 1 2 2v11a2 2 0 0 1 -2 2h-12l-5 4v-4h-3a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2z" fill="${TONE[tone]}" stroke="#fff" stroke-width="1.5"/>` +
+          `<text x="0" y="2.5" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">${xs.length}</text></g></g>`;
       }).join('');
       host.innerHTML = S.toSVG(scene, `${o.name} ultra-detailed flow`).replace('</svg>', `<g>${bub}${tog}</g></svg>`);
       const svg = host.querySelector('svg');
