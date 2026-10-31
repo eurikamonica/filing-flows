@@ -304,6 +304,34 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     const Two = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH,LAG', m: 'revenue', ttm: '0' }));
     ok(Two.series.every((x) => x.v[Two.grid.length - 1] != null) && [...Two.notes].some((x) => /latest figure on file/.test(x)), 'a company a quarter behind still shows its latest figure');
     ok(S.TEMPLATES.some((t) => t.s.k === 'cash') && S.TEMPLATES.some((t) => t.s.m === 'fcf') && S.TEMPLATES.some((t) => t.s.m === 'conv'), 'templates for the cash videos');
+    // ten years of quarters (cap.hq): free cash flow quarter by quarter, not a year at a time; the history's missing
+    // quarters of operating cash flow (a 10-Q gives the year to date) filled; a quarter without capital spending skipped
+    {
+      const hqRows = [];
+      for (let i = 0; i < 24; i++) { const e = new Date(Date.UTC(2020, 3 * i + 3, 0)).toISOString().slice(0, 10); hqRows.push([e, 30 * B, i === 5 ? null : -10 * B, -5 * B, i > 20 ? -1 * B : null]); }
+      const fyOnly = (end) => ({ end, kind: 'fy', label: 'FY', items: item({ ocf: 120 * B, capex: -40 * B }) });
+      files['data/index.json'].companies.push({ ticker: 'HQA', cik: 14, name: 'Quarters Inc', revenue: 1 }, { ticker: 'HQB', cik: 15, name: 'June Years Inc', revenue: 1 });
+      files['data/c/14.json'] = { profile: { name: 'Quarters Inc' }, quality: { hist: { periods: [['2020-01-01', '2020-03-31', 'q', 'Q1 2020']], v: { ocf: [[0, [[31 * B, [0, '3m', []]]]]] } }, cap: { fy: ['2021-12-31', '2022-12-31', '2023-12-31', '2024-12-31', '2025-12-31'].map(fyOnly), q: [], hq: { keys: ['ocf', 'capex', 'buyback', 'div'], rows: hqRows } } }, quarters: [] };
+      const Q4 = await S.build(Object.assign(S.parseState('k=fund'), { t: 'HQA', m: 'fcf', ttm: '0' }));
+      const at = (V, e) => V.series[0].v[V.grid.findIndex((g) => new Date(g).toISOString().slice(0, 10) === e)];
+      ok(Q4.grid.length === 23 && at(Q4, '2020-06-30') === 20 * B && at(Q4, '2021-06-30') == null && [...Q4.notes].some((x) => /quarter by quarter/.test(x)), 'free cash flow every quarter from the ten-year history: ' + Q4.grid.length);
+      const Qo = await S.build(Object.assign(S.parseState('k=fund'), { t: 'HQA', m: 'ocf', ttm: '0' }));
+      ok(at(Qo, '2020-03-31') === 31 * B && at(Qo, '2020-06-30') === 30 * B, 'operating cash flow: the history first, the quarters it lacks from the cash flow statements');
+      const Qr = await S.build(Object.assign(S.parseState('k=fund'), { t: 'HQA', m: 'ret', ttm: '0' }));
+      ok(at(Qr, '2020-03-31') === 5 * B && at(Qr, '2025-12-31') === 6 * B, 'shareholder returns: buybacks and dividends');
+      // only the years on file, one company's ending in December and the other's in June: the year as filed stands
+      // until the next, so neither line has a hole (no dash on its label) at the other's year ends
+      files['data/c/15.json'] = { profile: { name: 'June Years Inc' }, quality: { cap: { fy: ['2022-06-30', '2023-06-30', '2024-06-30', '2025-06-30'].map(fyOnly), q: [] } }, quarters: [] };
+      files['data/c/16.json'] = { profile: { name: 'Dec Years Inc' }, quality: { cap: { fy: ['2021-12-31', '2022-12-31', '2023-12-31', '2024-12-31'].map(fyOnly), q: [] } }, quarters: [] };
+      files['data/index.json'].companies.push({ ticker: 'HQC', cik: 16, name: 'Dec Years Inc', revenue: 1 });
+      const Y2 = await S.build(Object.assign(S.parseState('k=fund'), { t: 'HQB,HQC', m: 'fcf', ttm: '1' }));
+      const holes = Y2.series.map((x) => { const f0 = x.v.findIndex((v) => v != null); return x.v.slice(f0).filter((v) => v == null).length; });
+      ok(holes.every((h) => h === 0) && [...Y2.notes].some((x) => /stands until the next/.test(x)), 'annual figures of staggered years hold until the next: ' + holes);
+      // a line across a missing step: from the last value before it, not gone for the length of the hole
+      const G4 = [0, 1, 2, 3].map((i) => i * 90 * 864e5), arr = [10, null, 30, 40];
+      ok(S.headAt(arr, 1.25, G4, G4[1] + 0.25 * (G4[2] - G4[1])) === 10 + 20 * (1.25 / 2) && S.headAt([10, null, null], 1.5, G4, G4[1] + 45 * 864e5) === 10 && S.headAt([null, 5, 6], 0.2, G4, 0) == null, 'the head of a line across a hole');
+      for (const style of ['line', 'area', 'bars']) { Y2.style = style; for (const t of [0, 3, 6, 11.9]) S.draw(ctx, 1920, 1080, Y2, { theme: 'clean', dur: 12 }, t); n++; }
+    }
   }
   // spend or invest: a thing bought, its value, upkeep, a loan, trade-ins, rent saved, habits, one-off costs — against
   // the same money on the same dates in a stock. A stock whose price never moves keeps exactly the money put in

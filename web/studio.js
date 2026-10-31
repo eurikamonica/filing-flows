@@ -289,6 +289,23 @@
           out.q[k] = m;
         }
       }
+      // ten years of quarters from the cash flow statements (cap.hq: each quarter its own figure, year to date less the
+      // quarter before): operating cash flow where the history lacks the quarter (a 10-Q gives cash flows for the year to
+      // date only), capital spending, free cash flow, shareholder returns. A quarter without capital spending tagged
+      // gets no free cash flow, unless the company never tags any
+      const HQ = ((c.quality || {}).cap || {}).hq;
+      if (HQ && Array.isArray(HQ.rows) && Array.isArray(HQ.keys)) {
+        const col = (k) => HQ.keys.indexOf(k) + 1, io = col('ocf'), ic = col('capex'), ib = col('buyback'), id = col('div');
+        const anyCap = ic > 0 && HQ.rows.some((r) => fin(r[ic])), put = (k, e, v) => { (out.q[k] = out.q[k] || new Map()).set(e, v); };
+        for (const r of HQ.rows) {
+          const e = r[0], ocf = io > 0 ? r[io] : null; if (!e || !fin(ocf)) continue;
+          if (!(out.q.ocf && out.q.ocf.has(e))) put('ocf', e, +ocf);
+          const capx = ic > 0 && fin(r[ic]) ? +r[ic] : anyCap ? null : 0;
+          if (capx != null) { put('capex', e, -capx); put('fcf', e, +ocf + capx); }
+          put('ret', e, -((ib > 0 && fin(r[ib]) ? +r[ib] : 0) + (id > 0 && fin(r[id]) ? +r[id] : 0)));
+        }
+        out.hq = true;
+      }
       for (const r of (((c.quality || {}).cap || {}).q || [])) {     // the cash flow statements' last eight quarters: capital spending, free cash flow, shareholder returns
         const it = r.items || {}; if (!r.end || !fin(it.ocf)) continue;
         const capx = (fin(it.capex) ? +it.capex : 0) + (fin(it.realestate) ? +it.realestate : 0), put = (k, v) => { (out.q[k] = out.q[k] || new Map()).set(r.end, v); };
@@ -1325,7 +1342,8 @@
       T.filter((s, i) => !cos.find((c) => c.sym === s)).forEach((s) => notes.add(s + ': no company figures on file (the site draws companies that file 10-Qs and 10-Ks)'));
       if (!cos.length) throw new Error('None of these companies has figures on file');
       const key = st.m in FIG ? st.m : 'revenue', ttm = st.ttm === '1' || RATIO.has(key);
-      if (CAPQ.has(key)) notes.add('Capital spending, free cash flow and shareholder returns come from the cash flow statements of the last eight quarters' + (ttm ? ': trailing four quarters from the fourth on' : ''));
+      if (CAPQ.has(key)) notes.add(cos.every((C) => C.hq) ? 'Capital spending, free cash flow and shareholder returns come from the cash flow statements, quarter by quarter (a 10-Q gives the year to date: each quarter is it less the quarter before)'
+        : 'Capital spending, free cash flow and shareholder returns come from the cash flow statements of the last eight quarters' + (ttm ? ': trailing four quarters from the fourth on, the years before as filed' : ''));
       const from = st.from ? Date.parse(st.from + 'T00:00:00Z') : -Infinity, to = st.to ? Date.parse(st.to + 'T00:00:00Z') : Infinity;
       const rows = cos.map((C) => ({ C, r: figure(C, key, ttm).filter(([e]) => e >= from && e <= to) }));
       const ends = [...new Set(rows.flatMap((x) => x.r.map((p) => p[0])))].sort((a, b) => a - b);
@@ -1337,8 +1355,17 @@
       out.qlabel = (g) => (lab ? lab.get(iso(g)) || quarterLabel(g) : monthYear(g));
       out.grid = G; out.quarterly = true; out.fmt = figFmt(key); out.unit = RATIO.has(key) ? '%' : '$';
       out.metric = FIG[key] + (ttm && !RATIO.has(key) ? ', trailing four quarters' : RATIO.has(key) && key !== 'growth' ? ' (trailing four quarters)' : '');
-      out.series = rows.map(({ C, r }) => ({ key: C.sym, label: C.sym, name: C.name, v: G.map((g) => { let p = null; for (const x of r) if (x[0] <= g + 45 * DAY && x[0] >= g - 100 * DAY) p = x; return p ? p[1] : null; }) }));
+      // each company at its latest figure at each step: up to a quarter old; a trailing-year figure up to a year old (where
+      // only the years are on file, the year as filed stands until the next, rather than a hole in the line)
+      const back = (ttm ? 380 : 100) * DAY;
+      let held = false;
+      out.series = rows.map(({ C, r }) => ({ key: C.sym, label: C.sym, name: C.name, v: G.map((g) => {
+        let p = null; for (const x of r) if (x[0] <= g + 45 * DAY && x[0] >= g - back) p = x;
+        if (p && p[0] < g - 100 * DAY) held = true;
+        return p ? p[1] : null;
+      }) }));
       if (cos.length > 1) notes.add('Each company at its latest figure on file at each step (up to a quarter old): fiscal calendars and filing dates differ.');
+      if (held) notes.add('Where a company’s quarters are not on file, its latest trailing-year figure (up to a year old) stands until the next.');
       if (key === 'conv') notes.add('Cash conversion is left out where net earnings were too small for the ratio to mean much (over 400%).');
       out.title = out.title || (cos.length === 1 ? `${cos[0].name.replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '')}: ${FIG[key].toLowerCase()}` : `${FIG[key]}: ${cos.map((c) => c.sym).join(' vs ')}`);
       out.sub = out.sub || `${out.metric} · ${dayLabel(G[0])} – ${dayLabel(G[G.length - 1])} · from SEC filings`;
@@ -1611,6 +1638,15 @@
     if (!fin(a)) return fin(b) && f - i > 0.5 ? b : null;
     return fin(b) ? lerp(a, b, f - i) : a;
   };
+  // the newest point of a line: as valAt, but across a missing step from the last value before it, so the line and its
+  // label do not vanish (or show a dash) for the length of the hole
+  const headAt = (arr, f, G, tCur) => {
+    const i = clamp(Math.floor(f), 0, arr.length - 1), j = Math.min(arr.length - 1, i + 1);
+    if (fin(arr[i])) return valAt(arr, f);
+    let p = i - 1; while (p >= 0 && !fin(arr[p])) p--;
+    if (p < 0) return valAt(arr, f);
+    return fin(arr[j]) && G[j] > G[p] ? lerp(arr[p], arr[j], clamp((tCur - G[p]) / (G[j] - G[p]), 0, 1)) : arr[p];
+  };
   const roleCol = (th, role) => { const light = luminance(th.text) < 0.4; return ({ in: light ? '#17734a' : '#3ccf8e', out: light ? '#c0392b' : '#ff7a6b', sub: light ? '#b7791f' : th.accent, end: light ? '#2a78d6' : '#5ab0ff', sh: light ? '#7a7974' : '#c9d3e0' })[role] || th.text; };
   const benchCol = (th, kind) => { const light = luminance(th.text) < 0.4; return kind === 'cash' ? (light ? '#6b6a66' : '#cfd8e3') : (light ? '#9c4f2e' : '#f2b39b'); };
   const upDown = (th, up) => (th.text === '#1d1d1b' || luminance(th.text) < 0.4 ? (up ? '#17734a' : '#c0392b') : (up ? '#3ee39a' : '#ff6b6b'));
@@ -1805,7 +1841,7 @@
     V.series.forEach((s, k) => {
       const col = pal(k), pts = [];
       for (let i = 0; i <= Math.floor(f) && i < n; i++) if (fin(s.v[i])) pts.push([X(G[i]), Y(s.v[i]), i]);
-      const hv = valAt(s.v, f); if (fin(hv)) pts.push([X(tCur), Y(hv), f]);
+      const hv = headAt(s.v, f, G, tCur); if (fin(hv)) pts.push([X(tCur), Y(hv), f]);
       if (pts.length < 1) return;
       if (!s.bench && (area || (k === 0 && V.series.length <= 3))) {      // a soft fill under the line
         const band = area && V.split && s.price, fillTo = band ? null : (V.zero && !log && lo < 0 ? Y(0) : b.y + b.h);
@@ -3480,6 +3516,6 @@
     if (+st.yrs > 0) { const end = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(); st = Object.assign({}, st, { from: iso(end - (+st.yrs) * 365.25 * DAY) }); }
     const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, headAt, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

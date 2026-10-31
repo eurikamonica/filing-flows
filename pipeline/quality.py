@@ -29,7 +29,8 @@ from . import fsa as W
 from . import history as H
 from . import reform as RF
 
-VERSION = 9               # 9: the EPS bridge (diluted shares) in drivers.py
+VERSION = 10              # 10: ten years of quarterly cash figures for the video studio (capital.py "hq")
+                          # 9: the EPS bridge (diluted shares) in drivers.py
                           # 8: evidence-backed company quality measures (company_quality.py)
                           # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
                           # 3: capital allocation, share count and debt maturities (pipeline/capital.py)

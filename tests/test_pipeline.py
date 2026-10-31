@@ -2219,6 +2219,30 @@ def test_capital_trailing_twelve_months_shares_and_maturities():
     assert m["at"] == "2025-12-31" and [(b, v) for b, v, _ in m["buckets"]] == [(1, 5), (2, 6), (6, 30)] and m["cash"] == 12
 
 
+def test_capital_ten_years_of_quarters_from_year_to_date_cash_flows():
+    """A 10-Q gives cash flows for the year to date (Alphabet tags only the first quarter as three months): every
+    quarter of the last ten years is the year to date less the one a quarter earlier, the fourth the year less nine
+    months, so the studio's free cash flow runs quarter by quarter, not a year at a time. Cash out is negative;
+    quarters over ten years before the latest are left out."""
+    from pipeline import facts as F, quality as Q
+    ytd = lambda y, vals: [(f"{y}-01-01", e, v) for e, v in zip((f"{y}-03-31", f"{y}-06-30", f"{y}-09-30", f"{y}-12-31"), vals)]
+    rows = {"NetIncomeLoss": [], "NetCashProvidedByUsedInOperatingActivities": [], "PaymentsToAcquirePropertyPlantAndEquipment": [],
+            "PaymentsForRepurchaseOfCommonStock": [], "PaymentsOfDividendsCommonStock": []}
+    for y in range(2014, 2026):
+        rows["NetIncomeLoss"] += ytd(y, [10, 20, 30, 40])
+        rows["NetCashProvidedByUsedInOperatingActivities"] += ytd(y, [20, 45, 75, 110])     # quarters 20, 25, 30, 35
+        rows["PaymentsToAcquirePropertyPlantAndEquipment"] += ytd(y, [5, 11, 18, 26])       # 5, 6, 7, 8
+        rows["PaymentsForRepurchaseOfCommonStock"] += ytd(y, [3, 6, 9, 12])
+    rows["PaymentsOfDividendsCommonStock"] = ytd(2025, [1, 2, 3, 4])                       # dividends only lately
+    hq = Q.compute(F.index_facts(_cf(rows)))["cap"]["hq"]
+    assert hq["keys"] == ["ocf", "capex", "buyback", "div"]
+    by = {r[0]: r[1:] for r in hq["rows"]}
+    assert min(by) == "2016-03-31" and max(by) == "2025-12-31" and len(by) == 40      # ten years back from the latest
+    assert [by[e] for e in ("2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31")] == \
+        [[20, -5, -3, -1], [25, -6, -3, -1], [30, -7, -3, -1], [35, -8, -3, -1]]
+    assert by["2018-12-31"] == [35, -8, -3, None]                                     # not tagged: null, not zero
+
+
 def test_as_known_then_keeps_every_version_and_reads_the_pattern():
     """3M's 10-K of Feb 2025 took Solventum out of 2023 revenue (net income unchanged: presentation); AMD's 2019 10-K
     adopted a revenue standard retrospectively (net income changed: results). Every version stays, oldest first."""

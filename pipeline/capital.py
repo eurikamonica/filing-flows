@@ -14,13 +14,17 @@ figures many times their actual borrowing; the gross figures are kept for the ev
 
 Periods: the last five fiscal years, the last eight quarters (a three-month figure, or year to date minus the year to
 date a quarter earlier; the fourth quarter = the fiscal year − nine months), and the trailing twelve months when a 10-Q
-came after the last 10-K (last fiscal year + this year to date − the same period a year earlier).
+came after the last 10-K (last fiscal year + this year to date − the same period a year earlier). Besides these, every
+quarter of the last ten years with only the figures the video studio charts by quarter (operating cash flow, capital
+spending, buybacks, dividends: "hq"), so a free cash flow chart runs quarter by quarter rather than a year at a time.
 """
 from . import facts as F
 from . import fsa as W
 
 KEEP_FY = 5
 KEEP_Q = 8
+KEEP_HQ_YEARS = 10       # quarters of the compact history (hq)
+HQ_KEYS = ["ocf", "capex", "buyback", "div"]
 
 OCF = F.CONCEPTS["ocf"]
 INV_TOTAL = ["NetCashProvidedByUsedInInvestingActivities", "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations"]
@@ -292,6 +296,44 @@ def period(fx, ev, P, label):
     return out
 
 
+# ------------------------------------------------------------------ ten years of quarters, figures only
+def _val(fx, concepts, P, largest=False):
+    """The figure alone, without its evidence: the first candidate tagged for the period (or the largest)."""
+    vals = []
+    for c in concepts:
+        v, _, _ = read(fx.get(c), P)
+        if v is not None:
+            if not largest:
+                return v
+            vals.append(v)
+    return max(vals) if vals else None
+
+
+def history_q(fx, qe):
+    """{"keys": HQ_KEYS, "rows": [[end, ocf, capex, buyback, div], ...]}: every quarter of the last ten years. Each figure
+    is the quarter's own (three months, or the year to date less the year to date a quarter earlier; the fourth quarter
+    is the year less nine months), signed as the periods' items are (cash out negative); capital spending includes the
+    property real-estate companies buy. A quarter without operating cash flow is left out; a figure not tagged is null.
+    No evidence (the periods above carry it for the latest quarters), to keep the company file small."""
+    if not qe:
+        return None
+    last = F.d(qe[-1])
+    cut = last.replace(year=last.year - KEEP_HQ_YEARS).isoformat()
+    neg = lambda v: None if v is None else -v
+    rows = []
+    for e in qe:
+        if e <= cut:
+            continue
+        P = {"kind": "q", "end": e}
+        ocf = _val(fx, OCF, P)
+        if ocf is None:
+            continue
+        capex, re_ = _val(fx, F.CONCEPTS["capex"], P, largest=True), _val(fx, REALESTATE, P)
+        capx = None if capex is None and re_ is None else -((capex or 0) + (re_ or 0))
+        rows.append([e, ocf, capx, neg(_val(fx, BUYBACK, P)), neg(_val(fx, DIVIDEND, P))])
+    return {"keys": HQ_KEYS, "rows": rows} if rows else None
+
+
 # ------------------------------------------------------------------ shares: dilution against buybacks
 def _shares_fy(fx, concept, end):
     per = (fx.get("__shares__") or {}).get(concept) or {}
@@ -367,7 +409,7 @@ def maturities(fx, ev, ye, fye):
 
 # ------------------------------------------------------------------ the tab's data
 def compute(fx, ev, qe, ye, fye="1231"):
-    """{"fy": [periods], "q": [periods], "ttm": period or None, "shares": [...], "maturities": {...}} or None."""
+    """{"fy": [periods], "q": [periods], "ttm": period or None, "shares": [...], "maturities": {...}, "hq": {...}} or None."""
     fy = []
     for e in ye[-KEEP_FY:]:
         p = period(fx, ev, {"kind": "fy", "end": e}, F.fiscal_year_label(e, fye)[0])
@@ -384,6 +426,7 @@ def compute(fx, ev, qe, ye, fye="1231"):
         ttm = period(fx, ev, {"kind": "ttm", "end": q, "fy": ye[-1]}, "TTM to " + F.fiscal_label(q, fye)[0])
     sh = shares(fx, ev, ye, fye)
     mat = maturities(fx, ev, ye, fye)
-    if not (fy or qs or ttm or sh or mat):
+    hq = history_q(fx, qe)
+    if not (fy or qs or ttm or sh or mat or hq):
         return None
-    return {"fy": fy, "q": qs, "ttm": ttm, "shares": sh, "maturities": mat}
+    return {"fy": fy, "q": qs, "ttm": ttm, "shares": sh, "maturities": mat, "hq": hq}
