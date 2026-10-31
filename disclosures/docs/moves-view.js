@@ -313,6 +313,12 @@
     const raw = (hi - lo) / n || 1, p = 10 ** Math.floor(Math.log10(raw)), st = [1, 2, 2.5, 5, 10].map((m) => m * p).find((v) => v >= raw);
     const out = []; for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) out.push(+v.toFixed(6)); return out;
   }
+  // the years to label on a time axis from y0 to y1: a round step (1, 2, 5, 10, 20, 25 or 50 years) for about n labels
+  function yearTicks(y0, y1, n) {
+    const st = [1, 2, 5, 10, 20, 25, 50].find((s) => s >= (y1 - y0) / n) || 100, out = [];
+    for (let y = Math.ceil((y0 + 1) / st) * st; y <= y1; y += st) out.push(y);
+    return out;
+  }
   // where the move ranks: every day's move as a histogram, the move looked at marked, the tail beyond it shaded
   function rankSvg(R, o) {
     const W = o.narrow ? 440 : 720;
@@ -388,8 +394,7 @@
     const sx = (d) => L + (Date.parse(d) - t0) / (t1 - t0 || 1) * (W - L - Rr), sy = (v) => T + (hi - Math.min(hi, Math.max(lo, v))) / (hi - lo) * (Hh - T - B);
     let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Every ${esc(what(o))} over time, the days like the one looked at coloured">`;
     ticks(lo, hi, 4).forEach((v) => { g += `<line class="mv-g" x1="${L}" x2="${W - Rr}" y1="${sy(v)}" y2="${sy(v)}"/><text class="mv-t" x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${esc(tickFmt(o, v))}</text>`; });
-    const y0 = +A.days[0].slice(0, 4), y1 = new Date(t1).getUTCFullYear(), step = Math.max(1, Math.ceil((y1 - y0) / (o.narrow ? 5 : 10)));
-    for (let y = y0 + 1; y <= y1; y += step) { const x = sx(`${y}-01-01`); g += `<text class="mv-t" x="${x}" y="${Hh - 8}" text-anchor="middle">${y}</text>`; }
+    yearTicks(+A.days[0].slice(0, 4), new Date(t1).getUTCFullYear(), o.narrow ? 5 : 10).forEach((y) => { g += `<text class="mv-t" x="${sx(`${y}-01-01`)}" y="${Hh - 8}" text-anchor="middle">${y}</text>`; });
     let grey = '', hot = '';
     for (let j = 0; j <= N; j++) {
       if (!R.all[j]) continue;
@@ -569,8 +574,9 @@
       out.vix = new Float64Array(N + 1).fill(NaN);
       for (let j = 0; j <= N; j++) { const k = at.get(A.days[j]); if (k != null) out.vix[j] = lv(k); }
       out.vixNow = out.vix[t];
-      const vv = Float64Array.from(Array.from(out.vix).filter(Number.isFinite)).sort();
+      const vv = Float64Array.from(V.days, (_, k) => lv(k)).sort();         // ranked in the VIX's own history, as on its page
       out.vixPct = pctOf(vv, out.vixNow);
+      out.vixSince = V.days[0];
     }
     return out;
   }
@@ -583,8 +589,7 @@
     const line = (arr, col, wd, op) => { let d = '', on = false; for (let j = 0; j <= N; j += step) { const v = arr[j]; if (!Number.isFinite(v)) { on = false; continue; } d += `${on ? 'L' : 'M'}${sx(j).toFixed(1)},${sy(v).toFixed(1)}`; on = true; } return `<path d="${d}" style="fill:none;stroke:${col};stroke-width:${wd};opacity:${op}"/>`; };
     let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Realized volatility over one month, every day on file${V.vix ? ', with the VIX' : ''}">`;
     ticks(0, top, 4).forEach((v) => { g += `<line class="mv-g" x1="${L}" x2="${W - Rr}" y1="${sy(v)}" y2="${sy(v)}"/><text class="mv-t" x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${num(v * 100, 0)}%</text>`; });
-    const y0 = +A.days[0].slice(0, 4), y1 = +A.days[N].slice(0, 4), st = Math.max(1, Math.ceil((y1 - y0) / (o.narrow ? 5 : 10)));
-    for (let y = Math.ceil((y0 + 1) / st) * st; y <= y1; y += st) { const x = L + (Date.parse(`${y}-01-01`) - t0) / (t1 - t0 || 1) * (W - L - Rr); g += `<text class="mv-t" x="${x}" y="${Hh - 8}" text-anchor="middle">${y}</text>`; }
+    yearTicks(+A.days[0].slice(0, 4), +A.days[N].slice(0, 4), o.narrow ? 5 : 10).forEach((y) => { const x = L + (Date.parse(`${y}-01-01`) - t0) / (t1 - t0 || 1) * (W - L - Rr); g += `<text class="mv-t" x="${x}" y="${Hh - 8}" text-anchor="middle">${y}</text>`; });
     g += `<line x1="${L}" x2="${W - Rr}" y1="${sy(V.med)}" y2="${sy(V.med)}" style="stroke:${COL.mute};stroke-dasharray:3 3"/>`;
     if (V.vix) g += line(V.vix, COL.warn, 1.2, 0.85);
     g += line(V.rv, COL.band, 1.3, 0.95);
@@ -596,7 +601,7 @@
     const V = volData(R), A = R.A, name = esc(doc.ticker || doc.name);
     if (!Number.isFinite(V.now)) return '';
     let h = `<h3>Volatility</h3><p class="mv-head" style="font-size:16px">${name}'s volatility over the last month: <b>${num(V.now * 100, 0)}% a year</b> — ${rankWords(V.pct)} of its days since ${esc(my(A.days[0]))} (the typical day: ${num(V.med * 100, 0)}%); over three months ${num(V.now3 * 100, 0)}%.`
-      + (V.vix && Number.isFinite(V.vixNow) ? ` The VIX, what options expect of the S&P 500 over the next month: <b>${num(V.vixNow * 100, 1)}</b> (${rankWords(V.vixPct)} since 1990).` : '') + '</p>';
+      + (V.vix && Number.isFinite(V.vixNow) ? ` The VIX, what options expect of the S&P 500 over the next month: <b>${num(V.vixNow * 100, 1)}</b> (${rankWords(V.vixPct)} since ${esc(my(V.vixSince))}).` : '') + '</p>';
     h += `<p class="mv-sub">The standard deviation of the 21 daily returns up to each day, annualized${V.vix ? '; the orange line is the VIX on the same days' : ''}. "Measured as: its volatility" ranks it like a move, and "Volatility then: similar" compares only days that came in a similar stretch.</p>`;
     h += volSvg(R, o, V) + `<div class="mv-legend"><span><b style="background:${COL.band}"></b>realized, one month</span>${V.vix ? `<span><b style="background:${COL.warn}"></b>VIX (implied)</span>` : ''}<span><b style="background:none;border-top:2px dashed ${COL.mute};height:0"></b>the typical day</span></div>`;
     return h;
@@ -728,8 +733,7 @@
     x.font = pngFont(12); x.fillStyle = PC.muted; x.strokeStyle = PC.line; x.lineWidth = 1;
     ticks(0, top, 4).forEach((v) => { x.beginPath(); x.moveTo(L, sy(v)); x.lineTo(L + Wd, sy(v)); x.stroke(); x.textAlign = 'right'; x.fillText(num(v * 100, 0) + '%', L - 6, sy(v) + 4); });
     x.textAlign = 'center';
-    const ya = +A.days[0].slice(0, 4), yb = +A.days[N].slice(0, 4), stp = Math.max(1, Math.ceil((yb - ya) / 8));
-    for (let y = Math.ceil((ya + 1) / stp) * stp; y <= yb; y += stp) x.fillText(String(y), L + (Date.parse(`${y}-01-01`) - t0) / (t1 - t0 || 1) * Wd, P.y + P.h - 2);
+    yearTicks(+A.days[0].slice(0, 4), +A.days[N].slice(0, 4), 8).forEach((y) => x.fillText(String(y), L + (Date.parse(`${y}-01-01`) - t0) / (t1 - t0 || 1) * Wd, P.y + P.h - 2));
     x.textAlign = 'left';
     const step = Math.max(1, Math.floor(N / 1600));
     const path = (arr, col, wd) => { x.beginPath(); let on = false; for (let j = 0; j <= N; j += step) { const v = arr[j]; if (!Number.isFinite(v)) { on = false; continue; } if (on) x.lineTo(sx(j), sy(v)); else x.moveTo(sx(j), sy(v)); on = true; } x.strokeStyle = col; x.lineWidth = wd; x.stroke(); };
@@ -775,7 +779,7 @@
     }
     x.strokeStyle = PC.line; x.beginPath(); x.moveTo(M, Hh - footH + 8); x.lineTo(Wd - M, Hh - footH + 8); x.stroke();
     x.fillStyle = PC.muted; x.font = pngFont(12.5);
-    x.fillText(`Move odds · daily closes ${mdy(R.A.days[0])} – ${mdy(doc.as_of || R.A.days[R.A.days.length - 1])}, adjusted for dividends and splits · returns close to close after each chosen day`, M, Hh - footH + 32);
+    x.fillText(`Move odds · daily closes ${mdy(R.A.days[0])} – ${mdy(doc.as_of || R.A.days[R.A.days.length - 1])}, ${['index', 'volatility'].includes(doc.kind) ? 'price only' : 'adjusted for dividends and splits'} · returns close to close after each chosen day`, M, Hh - footH + 32);
     x.fillText('What followed similar moves in the past — history, not a forecast. Not investment advice.', M, Hh - footH + 50);
     let lx = Wd - M;
     x.textAlign = 'right'; x.fillStyle = PC.ink; x.font = pngFont(19, 700); x.fillText('Filing Flows', lx, Hh - footH + 36);
@@ -900,7 +904,7 @@
     await draw();
   }
 
-  const api = { render, decode, cum, moves, ahead, pctOf, quantile, volScaled, residual, realized, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw };
+  const api = { render, decode, cum, moves, ahead, pctOf, quantile, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw };
   if (typeof window !== 'undefined') window.MovesView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

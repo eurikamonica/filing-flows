@@ -169,6 +169,16 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   const W = V.analyze(VX, { w: 1, measure: 'level', mode: 'whatif', whatif: 40, band: 5 }, null, SP);
   near(W.value, Math.log(40 / 20) + cv[500], 'a what-if level', 1e-12);
   ok(!V.canDraw({ volIdx: true, rec: null }, 'vol') && !V.canDraw({ rec: null }, 'back') && V.canDraw({ rec: {} }, 'high') && V.canDraw({}, 'now'), 'a picture holds only the panels that apply');
+  // the VIX beside a market with a shorter history: ranked in the VIX's own whole history, as on the VIX's page
+  const vx = []; for (let i = 0; i < 600; i++) vx.push((i < 300 ? 0.06 : 0.01) * normal());
+  const VX2 = Object.assign(V.decode(doc(vx).doc), { last: 19 });
+  const mk = []; for (let i = 0; i < 299; i++) mk.push(0.01 * normal());
+  const MK = Object.assign(V.decode(doc(mk, VX2.days[301]).doc), { last: 100 });
+  const VD = V.volData({ A: MK, t: -1, vix: VX2 });
+  const cvx = V.cum(VX2.r), lvAll = Float64Array.from(cvx, (c) => 19 * Math.exp(c - cvx[600]) / 100).sort();
+  near(VD.vixNow, 0.19, 'the VIX on the latest day', 1e-12);
+  near(VD.vixPct, V.pctOf(lvAll, 0.19), "the VIX ranked among all its days, not only the market's", 1e-12);
+  ok(VD.vixSince === VX2.days[0] && MK.days[MK.days.length - 1] === VX2.days[600], 'since its first day');
 }
 
 // 7. the hub tab from an index file
