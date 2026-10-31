@@ -31,6 +31,12 @@ whole history and its rank, the VIX beside the market's), "its volatility" as a 
 days that came in a like stretch), the volatility of the month after, and a volatility panel for the picture; a
 volatility index is ranked by its level and judged by what the S&P 500 did next. The hub adds the volatility cards and a
 volatility column in the stocks table.
+Older days counting less: "Older days count" — the same, or a day's weight halving every 10, 5 or 2 years or every year
+away from the day looked at. Everything is then weighted (the percentile as the share of weight below the move, the
+days like it within the band of weighted percentiles, the medians, shares and ranges of what followed, a weighted
+Kaplan–Meier, the volatility after), with how many days of full weight the weights are worth ((Σw)² / Σw²) and the
+unweighted figures beside them: the dashed lines on the charts and the picture, older dots fainter over time. Worked
+out in the browser only; the hub's summary counts every day the same.
 
 ## Notes: what each note changed against last year's annual report (年度变化)
 
