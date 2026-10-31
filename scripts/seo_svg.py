@@ -120,7 +120,7 @@ def pair(rows, names, title, note=None):
 def ranges(rows, fmt, title, note=None, legend=('guided range', 'reported (above / within / below)')):
     """Guided ranges against what was reported: [(label, lo, hi, actual)] oldest first; actual may be None."""
     rs = [r for r in rows if r[1] is not None]
-    if len(rs) < 1:
+    if not rs or not any(r[3] is not None for r in rs):  # nothing reported to hold the ranges to: the table says it
         return ''
     W, H, top, bot = 640, 250, 58, 34
     vals = [v for r in rs for v in (r[1], r[2], r[3]) if v is not None]
@@ -134,7 +134,7 @@ def ranges(rows, fmt, title, note=None, legend=('guided range', 'reported (above
     for i, (l, a, b, act) in enumerate(rs):
         cx = i * step + step / 2
         b = a if b is None else b
-        out.append(f"<rect x='{cx - 14:.0f}' y='{Y(b):.0f}' width='28' height='{max(2, Y(a) - Y(b)):.0f}' rx='3' fill='{GREY}' opacity='.45'/>")
+        out.append(f"<rect x='{cx - 14:.0f}' y='{Y(b):.0f}' width='28' height='{max(5, Y(a) - Y(b)):.0f}' rx='3' fill='{GREY}' opacity='.5'/>")
         if act is not None:
             c = GREEN if act >= b else RED if act < a else BLUE
             out.append(f"<circle cx='{cx:.0f}' cy='{Y(act):.0f}' r='6' fill='{c}'/><text x='{cx + 10:.0f}' y='{Y(act) + 4:.0f}' font-size='11' fill='{INK}'>{_e(fmt(act))}</text>")
