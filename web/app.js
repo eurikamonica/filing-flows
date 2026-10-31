@@ -201,6 +201,65 @@
     document.body.appendChild(d);
   }
 
+  // ---------- the detailed flow (disclosures/app/flowdetail.py; branch flowdetail-history, public/c/<TICKER>.json) ----------
+  // every total and its parts as the company's XBRL sums them (statements, then the notes that split a line further, revenue
+  // by the filing's own members), drawn by the same chart component: Q/Q, Y/Y and vs guidance work on it as on the standard
+  // chart (web/guidance.js versus finds the main lines by the same ids)
+  const FLOW_BASE = window.FF_FLOW_BASE || 'https://raw.githubusercontent.com/eurikamonica/filing-flows/flowdetail-history/public/';
+  const flowDocs = new Map();
+  function detailFlow(o) {
+    const sec = document.createElement('section');
+    sec.className = 'section detail-flow';
+    sec.innerHTML = `<div class="section-head"><h2>Detailed flow</h2>
+      <span class="muted">Every line split as far as the filing and its notes split it — the company’s own sums in its XBRL</span></div>
+      <div class="df-body"><div class="loading">Reading the detailed flow…</div></div>`;
+    const u = `${FLOW_BASE}c/${encodeURIComponent(o.ticker)}.json`;
+    const near = (a, b) => a && b && Math.abs(Date.parse(a) - Date.parse(b)) <= 6 * 864e5;
+    const go = () => {
+      if (!flowDocs.has(u)) flowDocs.set(u, fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+      flowDocs.get(u).then((d) => {
+        if (!sec.isConnected) return;
+        const list = d && (o.fy ? d.years : d.quarters);
+        const dp = (list || []).find((x) => near(x.end, o.q.end));
+        if (!dp || !dp.nodes || !dp.nodes.length) { sec.remove(); return; }
+        const siteOf = (end, yr) => ((yr ? o.ys : o.qs) || []).find((x) => near(x.end, end));
+        const labelOf = (end, yr) => { const x = siteOf(end, yr); return x ? x.label : end; };
+        const yAgo = new Date(Date.parse(dp.end) - 364 * 864e5).toISOString().slice(0, 10);
+        const yl = siteOf(yAgo, o.fy) ? siteOf(yAgo, o.fy).label : (o.q.compare_y && o.q.compare_y.vs) || 'a year earlier';
+        const ql = dp.q_end ? labelOf(dp.q_end, false) : null;
+        const name = S.dec(o.p.name), lab = S.dec(o.q.label);
+        const spec = Object.assign({}, dp, {
+          end: o.q.end, label: o.q.label, period: o.fy ? 'fy' : undefined, form: dp.form || o.q.form, filed: dp.filed, doc_url: dp.url,
+          index_url: o.q.index_url, dense: true,
+          title: `${name} ${lab} — detailed flow`,
+          subtitle: `${o.fy ? 'Fiscal year' : 'Quarter'} ended ${date(o.q.end)} · every line split as the ${dp.form || 'filing'} and its notes split it · GAAP${dp.has_y ? ` · Y/Y vs. ${yl}` : ''}${ql ? ` · Q/Q vs. ${ql}` : ''}`,
+          footer: [`Source: SEC EDGAR XBRL (${dp.form || 'filing'}${dp.filed ? ` filed ${dp.filed}` : ''}). Each total and its parts are the company’s own calculation in its XBRL — the statements, then the notes that split a line further; revenue by the filing’s own members. Parts under 0.3% of revenue are summed as Other.`,
+            o.fy ? 'Full-year figures as reported in the 10-K, against the year before.' : dp.cash ? 'Cash flows for a quarter: this year to date less the previous 10-Q’s (a fourth quarter: the year less nine months).' : 'The cash flow statement is not drawn for this period.'],
+          compare: ql && (dp.bullets_q || []).length ? { vs: ql, title: `${name} ${lab} vs ${ql}: what changed (detailed)`, bullets: dp.bullets_q } : null,
+          compare_y: dp.has_y && (dp.bullets_y || []).length ? { vs: yl, title: `${name} ${lab} vs ${yl}: what changed (detailed)`, bullets: dp.bullets_y } : null,
+        });
+        // the guidance comparison projects the guidance onto the period before, here drawn in detail as well
+        const company = {
+          quarters: (d.quarters || []).map((x) => ({ end: x.end, filed: x.filed, label: labelOf(x.end, false), nodes: x.nodes, links: x.links })),
+          years: (d.years || []).map((x) => ({ end: x.end, filed: x.filed, label: labelOf(x.end, true), nodes: x.nodes, links: x.links, period: 'fy' })),
+          periods: o.c.periods,
+        };
+        const body = $('.df-body', sec);
+        body.innerHTML = '';
+        body.appendChild(chartUI(spec, {
+          company: name, form: spec.form, label: o.q.label, docUrl: dp.url, cik: o.p.cik, detail: true,
+          slug: `${o.ticker}-${o.q.label}-detailed`.replace(/\s+/g, '-'),
+          vsGuide: window.FFGuidance && window.FFGuidance.versus ? { load: o.guidance, company } : null,
+        }));
+      });
+    };
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); go(); } }, { rootMargin: '800px' });
+      io.observe(sec);
+    } else go();
+    return sec;
+  }
+
   // ---------- the chart component: Sankey + notes panel + view / zoom / export controls ----------
   function chartUI(spec, ctx) {
     const el = document.createElement('section');
@@ -361,7 +420,7 @@
       sheet.classList.toggle('future', futureOn());
       $$('[data-zoom]', el).forEach((b) => b.classList.toggle('on', b.dataset.zoom === state.zoom));
       sheet.classList.toggle('fit', state.zoom === 'fit');
-      if (scene) sheet.style.setProperty('--min-w', `${Math.round(scene.W * 0.5)}px`);   // never shrink below half size
+      if (scene) sheet.style.setProperty('--min-w', `${Math.round(scene.W * (ctx.detail ? 0.4 : 0.5))}px`);   // never shrink below half size (the wide detailed flow: 40%)
     }
     function intro() {
       if (ctx.group) {
@@ -373,6 +432,11 @@
         return `<div class="eyebrow">Guidance view · ${t(guide.spec.period)}</div>
           <p class="hint"><span class="dot guide"></span><span>Violet lines are what ${t(ctx.company)} guided in its earnings release (bar = midpoint, dashed box = the range). Grey, green and red lines were not guided: they keep their standard colours and their ${t(guide.spec.base)} share, so the chart adds up. Compared with a reported quarter, the violet strip in a band is the increase; a decrease is hatched.</span></p>
           <p class="empty">▲ raised · ▼ lowered (midpoint) · →← narrowed · ←→ widened (range) · = reaffirmed · ✦ initiated — against the prior range in the release, else the company’s previous release. Click a line for the sentence it comes from.</p>`;
+      }
+      if (ctx.detail) {
+        return `<div class="eyebrow">How to read</div>
+          <p class="hint"><span class="dot"></span><span>Every total and its parts are ${t(ctx.company)}’s own sums in its XBRL: the statements, then the notes that split a line further (other income, income tax, operating expenses …) and revenue by the filing’s own members. Click any node for its XBRL line and where its split comes from.</span></p>
+          <p class="empty">Q/Q, Y/Y and ◆ Guidance work as on the standard chart. Exports show the chart only.</p>`;
       }
       const withNotes = spec.nodes.filter((n) => n.notes).length;
       return `<div class="eyebrow">Notes from the filing</div>
@@ -405,6 +469,8 @@
           String(x.text).split(/\n\n+/).map((p) => `<p>${t(p)}</p>`).join('')}</blockquote>`).join('') +
           `<div class="src">Quoted verbatim from ${t(noteSource(ctx.form))}${
             ctx.docUrl ? ` · <a href="${t(ctx.docUrl)}" target="_blank" rel="noopener">open filing ↗</a>` : ''}</div>`;
+      } else if (ctx.detail) {
+        body = '';
       } else {
         body = `<p class="empty">${ctx.form === '8-K' || ctx.form === '6-K' ? 'The release has no passage about this line.' : `The ${t(ctx.form)} has no separate MD&amp;A passage about this line.`}</p>`;
       }
@@ -893,6 +959,8 @@
     body.appendChild(text);
     const disc = $('#ff-company-disclosures');                 // debt and disclosure signals: after the chart and its analysis
     if (disc) text.after(disc);
+    // the detailed flow: every line split as far as the 10-Q / 10-K and its notes split it, beside the standard chart
+    if (ticker && own === 'USD') text.after(detailFlow({ c, q, qs, ys, fy, ticker, p, guidance: holdersGuidance }));
     // Created by ChatGPT (OpenAI): user-initiated loopback assistant, separate from rule-based analysis.
     // owner tool only (see #owner): it needs the Windows companion running on this computer
     if (window.LocalFilingModel && prefs.get('owner', false)) window.LocalFilingModel.mount(body, p, q);

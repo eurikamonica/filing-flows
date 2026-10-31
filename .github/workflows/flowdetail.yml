@@ -1,0 +1,87 @@
+# The detailed Sankey of every company (the "Detailed flow" section of each company page, beside the standard chart). For
+# each company of the Sankey site, largest first, its latest 10-Qs and 10-K (and the 10-Q before it) are read from their
+# XBRL on EDGAR by disclosures/app/flowdetail.py: the statements' own calculations, split further by the notes (other
+# income, income tax, operating expenses …) and revenue by the filing's own members, with the cash flow statement. Results
+# are kept on the branch "flowdetail-history" (data only; the first run creates it) as public/c/<TICKER>.json, with
+# public/index.json, state.json and reads/<cik>/<accession>.json (each filing read once); the site reads them straight from
+# the repository's raw files. Each run builds a batch: companies never read, then those with a newer filing. Run it by hand
+# (Actions → Detailed flow → Run workflow) to build given tickers now.
+name: Detailed flow
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Build these first (comma separated, e.g. NVDA, AAPL)'
+        default: ''
+      minutes:
+        description: 'Minutes to spend reading filings this run'
+        default: '38'
+  schedule:
+    - cron: '41 */3 * * *'           # every three hours: a batch, until every company is on file; then new filings
+  push:                              # a new version of the reader: a batch straight away (largest companies first)
+    branches: [main]
+    paths:
+      - 'disclosures/app/flowdetail.py'
+      - '.github/workflows/flowdetail.yml'
+permissions:
+  contents: write
+concurrency:
+  group: flowdetail-history
+  cancel-in-progress: false
+jobs:
+  flowdetail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: lxml (the XBRL reader's parser)
+        run: pip install --quiet lxml
+      - name: The data branch (created by the first run)
+        id: branch
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" flowdetail-history >/dev/null; then
+            git clone --quiet --depth 1 --branch flowdetail-history "$url" fh
+          else
+            mkdir fh && git -C fh init --quiet -b flowdetail-history && git -C fh remote add origin "$url"
+          fi
+          du -sh fh; ls fh
+      - name: The Sankey site's companies (largest first)
+        run: |
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site
+          curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+          python -c "import json; d=json.load(open('site/index.json')); print(len(d.get('companies', [])), 'companies on the site')"
+      - name: Read the filings (new companies first, then newer filings)
+        timeout-minutes: 48
+        env:
+          TICKERS: ${{ inputs.tickers }}
+        run: |
+          python disclosures/app/flowdetail.py collect --root fh --site-index site/index.json \
+            --minutes "${{ inputs.minutes || '38' }}" --tickers "$TICKERS"
+      - name: Save to the branch (one commit, force-pushed)
+        if: ${{ always() && steps.branch.outcome == 'success' }}
+        run: |
+          rm -rf fh/_cache
+          python disclosures/app/flowdetail.py index --root fh
+          cd fh
+          printf '%s\n' '# flowdetail-history (data only)' '' \
+            'Every company'"'"'s detailed Sankey (public/c/<TICKER>.json, public/index.json), each filing read once' \
+            '(reads/<cik>/<accession>.json) and progress (state.json), kept by .github/workflows/flowdetail.yml on main' \
+            '(disclosures/app/flowdetail.py). Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "flowdetail $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "flowdetail $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:flowdetail-history && break; sleep $((i * 10)); done
+          python -c "import json; print(json.dumps(json.load(open('public/status.json'))))"

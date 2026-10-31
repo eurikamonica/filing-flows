@@ -484,7 +484,7 @@
       for (let round = 0; round < 10; round++) {
         resolveColumns();
         issues = placeLabels();
-        if (!issues.length || !nudge(issues)) break;
+        if (!issues.length || spec.dense || !nudge(issues)) break;   // dense (the detailed flow): no nudging away
       }
       resolveColumns();
       issues = placeLabels();
