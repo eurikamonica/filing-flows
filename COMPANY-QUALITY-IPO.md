@@ -156,3 +156,46 @@ Dedicated IPO market/browser checks passed in GitHub Actions run 40377974153.
 The expanded Python regression run passed 96 tests (six local browser-dependent
 tests excluded). The monitor also explicitly flags a failed live-update check
 while preserving the visible snapshot.
+
+## The company page: one standard Sankey, the analysis and the prospectus (2026-10)
+
+`#ipo-CIK` now opens on the site's own earnings Sankey for the newest period
+(`pipeline/ipo_charts.py`, built by `pipeline/sankey.py` like every company chart):
+share of parent, Y/Y against the same length of time a year earlier (H1 2026 vs
+H1 2025, FY 2025 vs FY 2024; nothing when the filing has no such period), the
+loss layout and the operating-cash-flow bridge, with the same controls as a
+company chart (standard / vs a year earlier, zoom, PNG/JPG/PDF export, a note for
+every node with where its figure is and what the MD&A says about it).
+
+- Opt-in lines in the chart builder, unused by existing charts (3,000 random
+  inputs give byte-identical output): a filing's own cost lines with their own
+  names (`raw["cost_lines"]`), its non-operating lines one by one
+  (`raw["nonop_lines"]`, only when they add up to pre-tax minus operating profit)
+  and named non-cash items of the cash bridge (`raw["bridge_lines"]`, taken out of
+  working capital & other). For Anthropic the $72.4B fair-value loss on
+  convertible notes and SAFEs is a line of its own in the income statement and
+  is added back by name in the cash bridge, instead of hiding in "Interest &
+  other" and "Working capital & other".
+- The money unit follows the largest flow: a loss 21 times revenue reads in
+  billions ($0.39B revenue, $8.3B loss), not "$8,309.0M".
+- Key figures, the rule-based analysis (`pipeline/analysis.py`, reworded for a
+  half year or a year) and "what changed" against the comparable period;
+  revenue by period and operating costs per $1 of revenue (each cost line, the
+  $1.00 break-even line) across the filing's periods; a click on a period opens
+  its chart.
+- The prospectus reader (`pipeline/ipo_reader.py`, `web/ipo-reader.js`): the
+  contents with a link into the SEC copy for every section, each section's
+  opening text and headings, the risk factors (the summary's bullets and every
+  risk heading by category, with a filter), the notes to the financial
+  statements, the principal stockholders table and the share-class rights, and
+  the cover facts (proposed ticker, exchange, price range, emerging growth /
+  controlled company / public benefit corporation / share classes). Text is
+  cut from the document, never rewritten. Both document shapes are read:
+  ordinary HTML and "positioned" HTML where every printed line is an element.
+- The collector reads every IPO-language registration statement it analyses,
+  and the ones analysed before the reader existed three per run, newest first
+  (`analyses/reader/<accession>.json`, published as `reader/<accession>.json`).
+  A download failure is retried; a document the reader cannot read is marked.
+- The four accounting reconciliations, quality measures, reported inputs, the
+  filing history and coverage limits stay on the page, folded away. A snapshot
+  published before the charts keeps the earlier view.
