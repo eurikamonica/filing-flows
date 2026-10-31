@@ -69,3 +69,21 @@ assert.equal(R._t.sec('javascript:alert(1)'), '');
 const sv = R._t.sectionView({ title: 'Use <of> Proceeds', anchor: 'u', page: '80', words: 900, text: ['We intend <x>.', '• A bullet'], heads: ['Overview'] }, 'https://www.sec.gov/x.htm');
 assert(sv.includes('Use &lt;of&gt; Proceeds') && sv.includes('x.htm#u') && sv.includes('class="ipo-bullet"') && sv.includes('900-word section'));
 console.log('IPO company page pieces and prospectus reader checks passed');
+
+// The monitor's status line (web/ipo-market.js health): when SEC was checked, in plain words; a warning only when
+// the monitor has not run for hours.
+require('../web/ipo-market.js');
+const M = globalThis.FFIPOMarket, NOW = Date.parse('2026-10-31T08:00:00Z');
+const at = (min) => new Date(NOW - min * 60000).toISOString();
+assert.equal(M.ago(at(0.2), NOW), 'just now');
+assert.equal(M.ago(at(12), NOW), '12 min ago');
+assert.equal(M.ago(at(185), NOW), '3 h ago');
+assert.equal(M.ago('', NOW), null);
+const fresh = M.health({ last_attempt: at(12), feed_last_success: at(12), generated_at: at(11) }, 'live_branch', NOW);
+assert(fresh.includes('SEC checked 12 min ago') && fresh.includes('every feed read in full') && !fresh.includes('qi-notice'), fresh);
+const lag = M.health({ last_attempt: at(12), feed_last_success: null, generated_at: at(11) }, 'site_snapshot', NOW);
+assert(lag.includes(' lag') && lag.includes('not recorded') && lag.includes('daily SEC indexes'), lag);
+const stale = M.health({ last_attempt: at(300), feed_last_success: at(300), generated_at: at(299) }, 'cached_fallback', NOW);
+assert(stale.includes('qi-notice') && stale.includes('has not checked SEC since 5 h ago') && stale.includes('could not be reached'), stale);
+assert(!M.health({ last_attempt: '<img src=x onerror=1>' }, 'live_branch', NOW).includes('<img'));
+console.log('IPO monitor status checks passed');

@@ -173,7 +173,10 @@ def discover(db,backfill_from='2024-01-01',quarter_batch=2,feed_pages=3,deadline
             rows,total=got
             if total<100:break
             if page==feed_pages-1:
-                feed_complete=False;record_source(db,url,'feed',form,'truncated',len(rows),'Page cap reached; quarterly/daily reconciliation required')
+                # EFFECT and RW notices outnumber the page cap on most days; they only annotate a registration, and the
+                # daily index adds any beyond the cap, so a capped notice feed does not make the pass incomplete
+                if form not in LIFECYCLE:feed_complete=False
+                record_source(db,url,'feed',form,'truncated',len(rows),'Page cap reached; quarterly/daily reconciliation required')
             if time.monotonic()>feed_deadline:feed_complete=False;break
     if feed_complete:setmeta(db,'feed_last_success',utcnow())
     setmeta(db,'feed_state','ok' if feed_complete else 'partial_or_failed')
@@ -284,12 +287,14 @@ def read_prospectus(html,meta,doc=None):
     return {**r,'accession':meta['accession'],'cik':meta['cik'],'form':meta['form'],'filed':meta['filed'],'read_at':utcnow()}
 
 
-def refresh_readers(db,root,limit=3,deadline=None):
-    """Read the IPO prospectuses analysed before the reader existed or by an older reader: newest first, a few per
-    run. A download failure is retried next run; a document the reader cannot read is marked and left alone."""
+def refresh_readers(db,root,limit=4,deadline=None):
+    """Read the IPO prospectuses analysed before the reader existed or by an older reader, a few per run: first the
+    filings whose financial statements were read (their pages show charts, and the reading puts the MD&A on them),
+    then the rest newest first. A download failure is retried next run; a document the reader cannot read is marked
+    and left alone."""
     forms=sorted(REGISTRATION|PROSPECTUS)
     rows=db.execute(f"""SELECT * FROM filings WHERE classification='ipo_language_identified' AND source_url IS NOT NULL
-                       AND form IN ({','.join('?'*len(forms))}) ORDER BY filed DESC,accession DESC""",forms).fetchall()
+                       AND form IN ({','.join('?'*len(forms))}) ORDER BY state='parsed' DESC,filed DESC,accession DESC""",forms).fetchall()
     done=0
     for r in rows:
         if done>=limit or (deadline is not None and time.monotonic()>deadline):break
@@ -487,7 +492,7 @@ def main():
         publish(db,a.root,out)
         if a.discover:
             process(db,a.root,a.batch,deadline,a.retry_review)
-            refresh_readers(db,a.root,3,deadline)
+            refresh_readers(db,a.root,4,time.monotonic()+75)     # its own minute: the queue may use all of its budget
     finally:
         result=publish(db,a.root,out);db.close()
         print(json.dumps({k:result[k] for k in ('issuer_count','filing_count','quarters_completed','quarters_total','feed_state','states')}))
