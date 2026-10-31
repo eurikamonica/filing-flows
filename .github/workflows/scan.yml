@@ -357,6 +357,7 @@ jobs:
         run: |
           python scripts/seo_compare.py --site _site
           python scripts/seo_zh.py --site _site
+          python scripts/seo_intl.py --site _site
 
       - name: Integrate SIC relationships, markets and audit-visible research pages
         run: |

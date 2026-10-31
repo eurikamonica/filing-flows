@@ -63,3 +63,22 @@ def test_zh(tmp_path):
     assert "热门公司" in (s / "zh" / "index.html").read_text()
     assert (s / "sitemap-zh.xml").read_text().count("<url>") == 5
     assert Z.yuan(9.622e10) == "962.2 亿美元" and Z.yuan(9.62e10) == "962 亿美元" and Z.yuan(5.3e6) == "530 万美元" and Z.period("FY2025") == "2025财年"
+
+
+def test_es_fr(tmp_path):
+    import seo_intl as I
+    s = site(tmp_path)
+    Z.write(str(s), "https://example.com")
+    assert I.write(str(s), "https://example.com") == {"es": 4, "fr": 4}
+    es = (s / "es" / "c" / "nvda" / "index.html").read_text()
+    fr = (s / "fr" / "c" / "nvda" / "index.html").read_text()
+    assert '<html lang="es">' in es and "registró ingresos de 96,2 mil millones de dólares en el segundo trimestre del año fiscal 2027" in es
+    assert "un aumento del 106% interanual" in es and "Data Center 89 mil millones de dólares (93%)" in es
+    assert '<html lang="fr">' in fr and "a réalisé un chiffre d’affaires de 96,2 milliards de dollars au deuxième trimestre de l’exercice 2027" in fr
+    assert "en hausse de 106 % sur un an" in fr
+    for page in (es, fr, (s / "c" / "nvda" / "index.html").read_text(), (s / "zh" / "c" / "nvda" / "index.html").read_text()):
+        assert re.findall(r'hreflang="([^"]+)" href', page) == ["en", "zh-Hans", "es", "fr", "x-default"]   # every version names all the others
+    assert "Español" in (s / "c" / "nvda" / "index.html").read_text()
+    assert I.money(1.2345e12, I.L["fr"]) == "1 234,5 milliards de dollars" and I.money(5.3e8, I.L["es"]) == "530 millones de dólares"
+    robots = (s / "robots.txt").read_text()
+    assert "sitemap-es.xml" in robots and "sitemap-fr.xml" in robots
