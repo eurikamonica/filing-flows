@@ -56,9 +56,25 @@ def section(paras, start_pat, end_pat):
     return []
 
 
+def _heading_tables(html_text):
+    """The document with each item heading set in a small table of its own ("Item 2. | Management's Discussion and
+    Analysis …", Amazon) turned into a paragraph, so the sections can be found (paragraphs() skips tables)."""
+    soup = BeautifulSoup(html_text, "lxml")
+    for t in soup.find_all("table"):
+        txt = re.sub(r"\s+", " ", t.get_text(" ", strip=True)).strip()
+        if len(txt) <= 220 and re.match(r"(?i)^item\s*\d+[a-z]?\.?\s", txt):
+            p = soup.new_tag("p")
+            p.string = txt
+            t.replace_with(p)
+    return str(soup)
+
+
 def mdna(html_text):
-    paras = paragraphs(html_text)
-    return section(paras, r"^item\s*[27]\.?\s*(—|-|:)?\s*management", r"^item\s*(3|7a)\.?\s")
+    start, end = r"^item\s*[27]\.?\s*(—|-|:)?\s*management", r"^item\s*(3|7a)\.?\s"
+    md = section(paragraphs(html_text), start, end)
+    if not md:
+        md = section(paragraphs(_heading_tables(html_text)), start, end)
+    return md
 
 
 def _norm(s):

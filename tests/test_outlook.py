@@ -192,5 +192,33 @@ class Estimates(unittest.TestCase):
         self.assertTrue(es[0]["ref"])
 
 
+class Pointers(unittest.TestCase):
+    def test_a_pointer_to_the_risk_factors_is_not_a_list(self):
+        rs = O.risks(["Forward-looking statements provide current expectations of future events. Actual results could differ materially "
+                      "from those anticipated. Factors that might cause such differences include, but are not limited to, those discussed in "
+                      "Part I, Item 1A of the 2025 Form 10-K and Part II, Item 1A of this Form 10-Q under the heading “Risk Factors,” which are "
+                      "incorporated herein by reference, except as required by law."])
+        self.assertEqual(rs, [])
+
+    def test_a_page_header_does_not_end_the_estimates(self):
+        es = O.estimates([{"text": "CRITICAL ACCOUNTING ESTIMATES", "heading": True},
+                          {"text": "Revenue Recognition", "heading": True}, {"text": "Judgment is required to determine the SSP.", "heading": False},
+                          {"text": "PART II Item 7", "heading": True}, {"text": "Goodwill", "heading": True},
+                          {"text": "We allocate goodwill to reporting units based on estimates.", "heading": False},
+                          {"text": "Income Taxes", "heading": True}, {"text": "Judgment is required in determining our tax provision.", "heading": False},
+                          {"text": "Item 7A. Quantitative and Qualitative Disclosures", "heading": True}])
+        self.assertEqual([e["name"] for e in es], ["Revenue Recognition", "Goodwill", "Income Taxes"])
+
+    def test_item_headings_set_in_a_table(self):
+        from pipeline import text
+        html = ("<html><body><table><tr><td>Item 2.</td><td>Management’s Discussion and Analysis of Financial Condition and Results of "
+                "Operations</td></tr></table><p><b>Forward-Looking Statements</b></p><p>" + "We expect demand to grow next year. " * 20 +
+                "</p><table><tr><td>Item 3.</td><td>Quantitative and Qualitative Disclosures About Market Risk</td></tr></table>"
+                "<p>Market risk text.</p></body></html>")
+        md = text.mdna(html)
+        self.assertEqual(md[0]["text"], "Forward-Looking Statements")
+        self.assertFalse(any("Market risk" in p["text"] for p in md))
+
+
 if __name__ == "__main__":
     unittest.main()

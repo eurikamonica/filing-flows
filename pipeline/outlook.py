@@ -228,7 +228,9 @@ def counts(stmts):
 # pinned to the lines it would move. The MD&A's "Critical Accounting Estimates" names the reported figures that rest on
 # judgment (inventories, income taxes, useful lives …), with a sensitivity when the company gives one ("a 10% change in
 # … would have changed … by $X million").
-RISK_V = 1                     # bump when risks() / estimates() change: the MD&As on file are read again (refresh)
+RISK_V = 2                     # bump when risks() / estimates() change: the MD&As on file are read again (refresh)
+                               # 2: references ("those discussed in Part I, Item 1A …") are not risks; a page header ("PART II Item 7")
+                               #    does not end the critical accounting estimates
 FLS_PARA = re.compile(r"(?i)differ materially|cause (?:our )?actual results|actual (?:results|outcomes) (?:and outcomes )?(?:may|could|might)|"
                       r"factors that could cause|risks and uncertainties|materially (?:affected|different)|subject to (?:substantial |significant )?uncertaint")
 LIST_INTRO = re.compile(r"(?i)(?:for a variety of reasons,? including,?(?:\s*(?:but not limited to|among others),?)?|"
@@ -274,7 +276,7 @@ EST_LINES = [(re.compile(r"(?i)" + p), ls) for p, ls in EST_LINES]
 CAE_HEAD = re.compile(r"(?i)^critical accounting (?:estimates|policies|judgments)(?: and (?:estimates|judgments|policies))?\b")
 CAE_END = re.compile(r"(?i)^(?:recent(?:ly)? (?:issued |adopted )?accounting|new accounting|accounting (?:standards|pronouncements)|"
                      r"liquidity|results of operations|overview|non-gaap|off-balance|contractual obligations|quantitative and qualitative|"
-                     r"item\s*\d|financial condition|capital resources|segment (?:results|information)|executive summary|outlook|guidance|"
+                     r"item\s*\d+[a-z]?\.?\s+\w|financial condition|capital resources|segment (?:results|information)|executive summary|outlook|guidance|"
                      r"(?:fiscal )?(?:20\d\d|first|second|third|fourth) (?:quarter|year)|three months|six months|nine months)")
 CAE_REF = re.compile(r"(?i)no (?:material |significant )?changes? (?:to|in) (?:our )?critical accounting|"
                      r"(?:described|discussed|included|disclosed) in (?:item 7|part ii|our (?:20\d\d |most recent )?annual report|our form 10-k)")
@@ -336,7 +338,9 @@ def _split_list(s):
         else:
             out.append(x)
     return [x for x in out if 4 <= len(x) <= 160 and not re.search(r"(?i)\b(?:are described|see item|risk factors”?|in greater detail|"
-                                                                 r"factors (?:detailed|discussed|described|listed|set forth)|in addition to (?:the|those))\b", x)]
+                                                                 r"factors (?:detailed|discussed|described|listed|set forth)|in addition to (?:the|those)|"
+                                                                 r"part i{1,2}\b|item 1a|form 10-[kq]|annual report|quarterly report|required by law|"
+                                                                 r"this (?:report|filing|document)|herein|those (?:discussed|described|set forth|identified))", x)]
 
 
 def risks(paras, limit=60):
@@ -358,6 +362,8 @@ def risks(paras, limit=60):
                 continue
             body = s[m.end():]
             items = _split_list(body) if len(body) > 30 else []
+            if len(items) < 3:
+                items = []                            # a pointer to the risk factors, not a list of its own
             # "… include the following:" and the items as bullets
             if not items and s.rstrip().endswith(":"):
                 for q in ps[i + 1:i + 40]:
@@ -385,10 +391,10 @@ def estimates(paras):
         return []
     body = []
     for h, t in rows[starts[-1] + 1:]:
+        if re.match(r"(?i)^table of contents$|^\d+$|^(?:part\s+i{1,3}\s*)?(?:item\s*\d+[a-z]?\.?)?$|^part\s+i{1,3}\b.{0,12}$", t):
+            continue                                  # a page's header or number ("PART II Item 7")
         if h and CAE_END.match(t):
             break
-        if re.match(r"(?i)^table of contents$|^\d+$", t):
-            continue
         body.append((h, t))
         if len(body) > 80:
             break
