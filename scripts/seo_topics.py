@@ -125,6 +125,15 @@ def forecast(co, v, cons):
             'desc': lead[:300], 'body': body, 'qa': qa}
 
 
+def safe(f, topic, ticker):
+    """one page that cannot be built (odd data) is left out, not the run"""
+    try:
+        return f()
+    except Exception as err:  # noqa: BLE001
+        print(f'  {ticker} {topic}: skipped ({type(err).__name__}: {err})')
+        return None
+
+
 def owners(co, h):
     if not h or not (h.get('institutional') or h.get('officials')):
         return None
@@ -138,7 +147,7 @@ def owners(co, h):
     short = (h.get('short') or [None])[-1] if isinstance(h.get('short'), list) and h.get('short') else None
     q = h.get('q13f') or {}
     qr = (q.get('rows') or [])
-    qlast = dict(zip(q.get('fields') or [], qr[-2])) if len(qr) >= 2 else {}
+    qlast = dict(zip(q.get('fields') or [], qr[-2])) if len(qr) >= 2 and isinstance(qr[-2], (list, tuple)) else {}
     lead = f"{len(inst):,} funds reported {name} ({t}) shares in their latest 13F filings" + (f", worth {money(total)} in all" if total else '') + '.'
     if top:
         lead += f" The largest holder is {display_name(top[0].get('manager'))} ({money(top[0].get('value_usd'))})."
@@ -422,14 +431,15 @@ def write(site, base, limit=None):
         h = read(os.path.join(hub, 'holders', f'{t}.json'))
         cdoc = read(os.path.join(site, 'data', 'c', f'{cik}.json'))
         pages = {
-            'revenue': revenue(co, cdoc),
-            'earnings-date': earnings_date(co, read(os.path.join(hub, 'research', 'earnings', 'c', f'{t}.json')), cdoc, read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
-            'stock-forecast': forecast(co, read(os.path.join(hub, 'research', 'valuation', 'c', f'{cik}.json')), read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
-            'who-owns': owners(co, h),
-            'guidance': guidance(co, h, read(os.path.join(site, 'data', 'outlook', f'{cik}.json'))),
-            'takeover': takeover(co, read(os.path.join(hub, 'research', 'lbo', 'c', f'{cik}.json')), brow.get(cik)),
-            'risks': risks(co, read(os.path.join(hub, 'research', 'outside', 'c', f'{cik}.json'))),
+            'revenue': lambda: revenue(co, cdoc),
+            'earnings-date': lambda: earnings_date(co, read(os.path.join(hub, 'research', 'earnings', 'c', f'{t}.json')), cdoc, read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
+            'stock-forecast': lambda: forecast(co, read(os.path.join(hub, 'research', 'valuation', 'c', f'{cik}.json')), read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
+            'who-owns': lambda: owners(co, h),
+            'guidance': lambda: guidance(co, h, read(os.path.join(site, 'data', 'outlook', f'{cik}.json'))),
+            'takeover': lambda: takeover(co, read(os.path.join(hub, 'research', 'lbo', 'c', f'{cik}.json')), brow.get(cik)),
+            'risks': lambda: risks(co, read(os.path.join(hub, 'research', 'outside', 'c', f'{cik}.json'))),
         }
+        pages = {k: safe(f, k, t) for k, f in pages.items()}
         have = [k for k, v in pages.items() if v]
         if not have:
             continue

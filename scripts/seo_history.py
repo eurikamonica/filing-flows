@@ -327,12 +327,12 @@ def write(site, base, period_pages=PERIOD_PAGES):
         with open(os.path.join(path, 'index.html'), 'w', encoding='utf-8') as f:
             f.write(doc)
         maps[kind].append((url, mod))
-    for cik, r in latest.items():
+    def one(cik, r):
         if not r.get('ticker'):
-            continue
+            return
         c = read(os.path.join(site, 'data', 'c', f'{cik}.json'))
         if not c or not c.get('quarters'):
-            continue
+            return
         slug, name = slug_for(r), display_name(r.get('name'))
         who = f"{name} ({r['ticker']})"
         d = os.path.join(site, 'c', slug)
@@ -383,6 +383,12 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 open(main, 'w', encoding='utf-8').write(txt.replace('</main>', block + '</main>', 1))
         except OSError:
             pass
+
+    for cik, r in latest.items():
+        try:
+            one(cik, r)
+        except Exception as err:  # noqa: BLE001 - one company's odd data never stops the run
+            print(f"  {r.get('ticker')}: skipped ({type(err).__name__}: {err})")
     robots = os.path.join(site, 'robots.txt')
     txt = open(robots).read() if os.path.exists(robots) else f'User-agent: *\nAllow: /\nSitemap: {base}/sitemap.xml\n'
     for kind, urls in maps.items():
