@@ -17,8 +17,16 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 .seo-cta { display: inline-block; background: var(--ink); color: var(--bg); text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: 500; margin-right: 10px; }
 .seo-cta:hover { background: var(--accent); color: #fff; }
 .seo blockquote { margin: 0; padding: 10px 14px; border-left: 3px solid var(--line); color: var(--ink-2); background: var(--surface); border-radius: 0 8px 8px 0; }
-.seo table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
-.seo th, .seo td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+/* tables: the generated ones scroll sideways in their .tbl-wrap; a table of an app view drawn on the page
+   (web/seo-embed.js, e.g. fair value) keeps the view's own sizing: a minimum width from the page made it wider than its
+   column, and the page wider than a phone */
+.seo table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.seo th, .seo td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+.seo .tbl-wrap { overflow-x: auto; }
+.seo .tbl-wrap th, .seo .tbl-wrap td { white-space: nowrap; }
+/* a cell allowed to wrap (the signals list, scripts/seo_hub.py) keeps a readable width: in a table wider than a phone it
+   got the width of its longest word, one word a line, rows 300px tall */
+.seo .tbl-wrap td [style*="white-space:normal"], .seo .tbl-wrap td [style*="white-space: normal"] { display: inline-block; min-width: 20em; }
 .seo th { background: var(--surface-2); font-size: 12px; color: var(--muted); font-weight: 500; }
 .seo td.num, .seo th.num { text-align: right; font-family: var(--mono); font-size: 13px; }
 .seo-list { padding-left: 18px; line-height: 1.9; }
@@ -26,6 +34,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 .seo-foot { max-width: 980px; margin: 0 auto; padding: 16px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
 .seo-chart { box-sizing: border-box; width: min(1280px, calc(100vw - 32px)); margin: 18px 0 10px calc(50% - min(640px, 50vw - 16px)); background: #fcfcfb; border: 1px solid var(--line); border-radius: 12px; padding: 8px; overflow-x: auto; }
 .seo-chart svg { display: block; width: 100%; height: auto; min-width: 860px; }
+.seo-chart:not([data-src]) svg { min-width: 0; }          /* a line chart in a chart box (13F pages) scales; only Sankeys keep 860px */
 .seo-chart > p { margin: 40px 0; text-align: center; }
 
 /* the topic pages' links to each other (scripts/seo_topics.py) */
@@ -39,8 +48,11 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 .seo-svg svg{display:block}.seo-live{margin-top:18px}
 .seo-sk-modes{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.seo-sk-modes button{cursor:pointer;padding:6px 10px;border:1px solid #a7b2bc;border-radius:7px;background:transparent;color:inherit;font:inherit;font-size:13px}
 .seo-sk-modes button[aria-pressed="true"]{background:#184a68;color:#fff;border-color:#184a68}.seo-sk-notes ul{margin:4px 0 0 18px}.seo-sk-notes h3{margin:8px 0 2px;font-size:15px}
-.seo-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:860px){.seo-two{grid-template-columns:1fr}}
-.seo-two h3{margin:4px 0;font-size:15px}
+/* two companies' Sankeys (scripts/seo_compare.py): one under the other, each as wide as a chart on any page; in two
+   columns each showed about half of its chart, or overflowed the page when it kept the chart width (CL vs EL) */
+.seo-two{display:block}
+.seo-two > div + div{margin-top:26px}
+.seo-two h3{margin:4px 0;font-size:16px}
 
 /* ---- 2026-10 look: cards, the headline, sign colours, a contents bar, collapsible interactive views ---- */
 .seo { max-width: 1040px; }
@@ -82,9 +94,6 @@ details.seo-live > :not(summary) { padding: 0 14px; }
 .seo-ic { font-size: 20px; }
 .seo-tap { font: 500 11px/1.8 var(--mono); padding: 0 8px; border-radius: 99px; background: var(--accent-soft, #dcebe2); color: var(--accent-ink, #0f5134); }
 .seo-live table { font-size: 13px; }
-/* side by side: each Sankey fills its column and scrolls inside it */
-.seo-two .seo-chart { width: auto; margin: 8px 0; }
-.seo-two > div { min-width: 0; }
 @media (max-width: 700px) {
   .seo { padding: 16px 14px 40px; }
   .seo h2 { font-size: 18px; }
@@ -100,6 +109,10 @@ details.seo-live > :not(summary) { padding: 0 14px; }
   .seo-toc { margin: 6px -14px 4px; padding: 8px 14px; }
   figure.seo-svg { overflow-x: auto; }
   figure.seo-svg svg { min-width: 560px; }           /* legible labels: the chart scrolls sideways instead of shrinking */
+  .seo-chart:not([data-src]) svg { min-width: 600px; }  /* the 13F line chart too */
+}
+@media (max-width: 605px) {   /* narrower than a drawn chart's 560px: the rest of it is a swipe away; say so, as under a Sankey */
+  figure.seo-svg::after { content: '← swipe →'; position: sticky; left: 0; display: block; text-align: center; font: 500 11px var(--mono); color: var(--muted); padding-top: 4px; }
 }
 
 /* the company's Sankey as a picture: image search, saving and sharing */

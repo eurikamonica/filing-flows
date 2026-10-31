@@ -403,7 +403,9 @@ def investors(hub, L):
         if d:
             break
     rows = (d or {}).get('rows') if isinstance(d, dict) else d
-    rows = [r for r in rows or [] if r.get('gains')]
+    if isinstance(d, dict) and d.get('fields'):      # the research file is columnar: the field names once, a list per company
+        rows = [dict(zip(d['fields'], r)) if isinstance(r, list) else r for r in rows or []]
+    rows = [r for r in rows or [] if isinstance(r, dict) and r.get('gains')]
     if len(rows) < 5:
         return None
     rows.sort(key=lambda r: -(r.get('gains') or 0))
