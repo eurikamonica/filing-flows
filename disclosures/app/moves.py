@@ -39,7 +39,7 @@ import rotation_history as RH                 # noqa: E402
 FORMAT = 1
 MIN_DAYS = 250                 # an asset is published with a year of trading days or more
 BAND = 2.5                     # the index's similar days: within this many percentile points of the latest move
-HORIZONS = (1, 5, 21)          # next day, next week, next month (trading days)
+HORIZONS = (1, 5, 10, 21)      # next day, week, two weeks and month (trading days)
 VOL_DAYS = 63                  # a move against the volatility of the three months before it
 MIN_MEMBERS = 5                # an industry composite needs this many companies, and this many trading on a day
 CLIP = (-0.5, 1.0)             # a member's daily return in a composite, at most (a bad print moves no industry)
@@ -182,6 +182,59 @@ def brief(f):
     return [int(len(s)), float(np.median(s)), float(np.mean(s > 0))]
 
 
+def first_after(c, j, level, up=True, end=None):
+    """The first trading day after j, up to `end`, whose cumulative level c is at or above `level` (up) or at or below
+    it; None when there is none."""
+    tail = np.asarray(c[j + 1:(len(c) if end is None else end + 1)], float)
+    hit = tail >= level if up else tail <= level
+    return j + 1 + int(np.argmax(hit)) if hit.any() else None
+
+
+def recovery(c, idx, w, side, end=None):
+    """For each chosen day j (indices idx), the trading days until the close got back to the close before its w-day
+    move (side < 0: climbed back; side > 0: gave the rise back) and until a new high (back to the highest close on file up
+    to j), each with whether it happened by `end` (else censored there, the days observed). ([times], [events]) twice."""
+    c = np.asarray(c, float)
+    end = len(c) - 1 if end is None else end
+    peak = np.maximum.accumulate(c)
+    out = ([], [], [], [])
+    for j in idx:
+        if j - w < 0 or j >= end:
+            continue
+        k = first_after(c, j, c[j - w], up=side < 0, end=end)
+        out[0].append((k if k is not None else end) - j)
+        out[1].append(k is not None)
+        k = first_after(c, j, peak[j], up=True, end=end)
+        out[2].append((k if k is not None else end) - j)
+        out[3].append(k is not None)
+    return out
+
+
+def km(times, events, at=21):
+    """Kaplan–Meier over recovery times with censoring: [days, median days (None when half never recovered), share
+    recovered within `at` days] (None without days)."""
+    t, e = np.asarray(times, float), np.asarray(events, bool)
+    if not len(t):
+        return None
+    order = np.lexsort((~e, t))                         # by time, recoveries before censorings on the same day
+    t, e = t[order], e[order]
+    s, risk, median, s_at, i = 1.0, len(t), None, 1.0, 0
+    while i < len(t):
+        j, d = i, 0
+        while j < len(t) and t[j] == t[i]:
+            d += int(e[j])
+            j += 1
+        if d:
+            s *= 1.0 - d / risk
+            if median is None and s <= 0.5:
+                median = int(t[i])
+        if t[i] <= at:
+            s_at = s
+        risk -= j - i
+        i = j
+    return [int(len(t)), median, 1.0 - s_at]
+
+
 def summary(days, r, band=BAND):
     """The latest day's move against the asset's history: index.json's numbers."""
     c = cum(r)
@@ -210,6 +263,8 @@ def summary(days, r, band=BAND):
         out[f'ext{h}'] = brief(f[ext])
         a = brief(f[np.isfinite(m1)])
         out[f'all{h}'] = a[1:] if a else None
+    bt, be, ht, he = recovery(c, np.flatnonzero(sim & (np.arange(len(c)) != last)), 1, -1 if x <= 0 else 1)
+    out['back'], out['high'] = km(bt, be), km(ht, he)
     return out
 
 
@@ -275,7 +330,7 @@ def _r(v, n=4):
 
 
 FIELDS = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members', 'as_of', 'd0', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every',
-          'last_as', 'move5', 'pct5', 'move21', 'pct21'] + [f'{s}{h}' for s in ('sim', 'ext', 'all') for h in HORIZONS]
+          'last_as', 'move5', 'pct5', 'move21', 'pct21'] + [f'{s}{h}' for s in ('sim', 'ext', 'all') for h in HORIZONS] + ['back', 'high']
 
 
 def build(root, universe_path, val_dir=None, limit=0):

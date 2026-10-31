@@ -105,7 +105,43 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   ok(R5.kEp >= 1 && R5.kEp <= R5.k, 'weeks counted as episodes');
 }
 
-// 5. the hub tab from an index file
+// 5. how long it took: the block search against a plain scan, Kaplan–Meier with waiting days, recovery times
+{
+  const c = [0];
+  for (let i = 0; i < 600; i++) c.push(c[i] + 0.02 * normal());
+  const P = V.sparse(c), Q = V.sparse(c.map((v) => -v));
+  const scan = (from, v, end, up) => { for (let k = from; k <= end; k++) if (up ? c[k] >= v : c[k] <= v) return k; return -1; };
+  let agree = true;
+  for (let q = 0; q < 400; q++) {
+    const from = Math.floor(rnd() * 600), end = Math.min(600, from + Math.floor(rnd() * 650)), v = c[Math.floor(rnd() * 600)] + 0.05 * normal();
+    if (V.firstAt(P, from, v, end) !== scan(from, v, end, true) || V.firstAt(Q, from, -v, end) !== scan(from, v, end, false)) agree = false;
+  }
+  ok(agree, 'the block search finds the same first day as a plain scan (400 questions)');
+  const K = V.km([2, 3, 5, 5], [true, false, true, true]);
+  ok(K.median === 5 && Math.abs(K.by(3) - 0.25) < 1e-12 && K.by(21) === 1, 'Kaplan–Meier as app/moves.py');
+  const K2 = V.km([10, 10, 10], [false, false, true]);
+  ok(K2.median === null && Math.abs(K2.by(21) - 1 / 3) < 1e-12, 'half never back: no median');
+  const T = { up: P, dn: Q, peak: Float64Array.from(c.reduce((a, v, i) => { a.push(i ? Math.max(a[i - 1], v) : v); return a; }, [])) };
+  const idx = []; for (let j = 1; j < 600; j++) if (c[j] < c[j - 1] - 0.03) idx.push(j);
+  const Rr = V.recovery(c, idx, 1, -1, 600, T);
+  const times = idx.map((j) => { const k = scan(j + 1, c[j - 1], 600, true); return k < 0 ? 600 - j : k - j; });
+  ok(Rr.back.n === idx.length && Rr.back.median === V.km(times, idx.map((j) => scan(j + 1, c[j - 1], 600, true) >= 0)).median, 'recovery times as a plain scan');
+  // the analysis carries it, with the day looked at
+  const rets = []; for (let i = 0; i < 500; i++) rets.push(0.0003 + 0.01 * normal());
+  rets.push(-0.06);
+  const A = V.decode(doc(rets).doc), R = V.analyze(A, { w: 1, measure: 'raw', mode: 'latest', band: 5 });
+  const cc = V.cum(A.r), N = A.days.length - 1;
+  ok(R.rec && R.rec.side === -1 && R.rec.sim.back.n > 0 && R.rec.base.high.n > 0, 'climb back and new high for days like it and every down day');
+  near(R.rec.now.back, Math.expm1(cc[N - 1] - cc[N]), 'how far to climb back', 1e-12);
+  ok(R.h[10] && R.h[10].sim, 'two weeks ahead');
+  // the bell: a kernel density that adds up to about one
+  const vals = Float64Array.from({ length: 2000 }, () => normal()).sort();
+  const D = V.kde(vals, -6, 6, 241);
+  near(D.ys.reduce((a, y) => a + y, 0) * (12 / 240), 1, 'the density integrates to one', 0.01);
+  ok(V.PANELS.map((p) => p[0]).join() === 'now,1,5,10,21,back,high', 'the panels a picture can hold');
+}
+
+// 6. the hub tab from an index file
 {
   const fields = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members', 'as_of', 'd0', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every', 'last_as', 'move5', 'pct5', 'move21', 'pct21',
     'sim1', 'sim5', 'sim21', 'ext1', 'ext5', 'ext21', 'all1', 'all5', 'all21'];

@@ -20,6 +20,7 @@ const mvPct=(v,d=1)=>v==null||!Number.isFinite(+v)?'—':(v>0?'+':v<0?'−':'')+
 const mvRank=p=>p==null?'—':p>=50?`top ${(100-p)<1?(100-p).toFixed(2):(100-p).toFixed(1)}%`:`bottom ${p<1?p.toFixed(2):p.toFixed(1)}%`;
 const mvTone=v=>v==null?'':v>0?'mv-up':v<0?'mv-down':'';
 const mvEvery=v=>v==null?'—':'1 in '+(v<10?v.toFixed(1):Math.round(v).toLocaleString('en-US'));
+const mvBack=b=>!b?'—':b[1]==null?'over half never':`${b[1]} day${b[1]===1?'':'s'} · ${Math.round(100*b[2])}% in a month`;
 const mvDay=e=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(e||'');return m?`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1]} ${+m[3]}, ${m[1]}`:String(e||'')};
 function mvCss(){
  if(typeof document==='undefined'||document.getElementById('mvh-css'))return;
@@ -69,11 +70,12 @@ function mvStocks(rows,d){
  const st=rows.filter(r=>r.kind==='stock'&&r.as_of===d.as_of&&r.pct!=null);
  const sort=MV_SORTS.some(s=>s[0]===state.mvs)?state.mvs:'falls';
  const list=sort==='sigma'?st.filter(r=>r.z!=null).sort((a,b)=>Math.abs(b.z)-Math.abs(a.z)):sort==='rises'?st.sort((a,b)=>b.pct-a.pct):st.sort((a,b)=>a.pct-b.pct);
- const t=table(['Company','Sector','Move','Rank in its history','Against its volatility','How often','After days like it: next month','Rose','Days like it'],list.slice(0,200).map(r=>[
+ const backLab=sort==='rises'?'Rise given back (median)':sort==='falls'?'Climbed back (median)':'Back to the close before (median)';
+ const t=table(['Company','Sector','Move','Rank in its history','Against its volatility','How often','After days like it: next month','Rose',backLab,'Days like it'],list.slice(0,200).map(r=>[
   `<button type="button" class="mvh-k" data-mvk="${esc(r.key)}" data-mvone="1">${esc(r.ticker)}</button> <span class="muted">${esc(r.name)}</span>`,esc(r.sector||''),
   `<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,mvRank(r.pct),r.z==null?'—':(r.z>0?'+':'−')+Math.abs(r.z).toFixed(1)+'σ',esc(mvEvery(r.every)),
-  r.sim21?`<span class="${mvTone(r.sim21[1])}">${mvPct(r.sim21[1])}</span>`:'—',r.sim21?Math.round(100*r.sim21[2])+'%':'—',r.sim21?fmt(r.sim21[0]):'—']));
- return `<p class="mvh-note">${esc(mvDay(d.as_of))}, the ${fmt(st.length)} valued companies with a close that day. "Rank in its history" compares each move with every day of the same stock since about ten years ago; "against its volatility" with the three months before the move. Pick a company to see the whole analysis.</p>`+t;
+  r.sim21?`<span class="${mvTone(r.sim21[1])}">${mvPct(r.sim21[1])}</span>`:'—',r.sim21?Math.round(100*r.sim21[2])+'%':'—',mvBack(r.back),r.sim21?fmt(r.sim21[0]):'—']));
+ return `<p class="mvh-note">${esc(mvDay(d.as_of))}, the ${fmt(st.length)} valued companies with a close that day. "Rank in its history" compares each move with every day of the same stock since about ten years ago; "against its volatility" with the three months before the move. "Climbed back": the median trading days after the days like it until the close was back at the close before the move. Pick a company to see the whole analysis.</p>`+t;
 }
 function movesView(){
  mvCss();

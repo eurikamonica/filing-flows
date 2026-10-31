@@ -16,7 +16,12 @@ with episodes (clusters counted once) and a better / worse / within-chance verdi
 on the history before it, with what actually happened marked) or a what-if move; a company switchable to its industry,
 its sector and the market. The hub tab adds the market and sector cards, the industries most extreme first, the valued
 companies' biggest moves of the day for each stock, and the day's breadth (the share of stocks with a bottom- or
-top-5% day of their own).
+top-5% day of their own). How long it took: after each chosen day, the trading days until the close was back at the
+close before the move (for a rise: until it was given back) and until a new high, as Kaplan–Meier curves (days still
+waiting count for as long as they were watched), with what the day looked at still needs. The returns ahead add two
+weeks (10 trading days). A picture to share: pick any of Now (the bell of every move with the day marked), the next
+day, 1 week, 2 weeks, 1 month, climb back and new high, and the view draws them into one PNG (title, panels, footer,
+the Filing Flows mark) to preview, download or copy.
 
 ## Notes: what each note changed against last year's annual report (年度变化)
 

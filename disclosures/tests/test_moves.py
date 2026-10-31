@@ -96,6 +96,43 @@ class Arithmetic(unittest.TestCase):
         self.assertEqual(len(s['all21']), 2)
 
 
+class Recovery(unittest.TestCase):
+    def test_climbing_back_and_new_highs(self):
+        c = np.log([100, 90, 95, 101, 80, 120, 110])
+        self.assertEqual(M.first_after(c, 1, c[0]), 3)
+        self.assertIsNone(M.first_after(c, 5, np.log(130)))
+        self.assertEqual(M.first_after(c, 3, np.log(85), up=False), 4)
+        bt, be, ht, he = M.recovery(c, [1, 4, 6], 1, -1)
+        self.assertEqual((bt, be), ([2, 1], [True, True]))      # day 6 has nothing after it: left out
+        self.assertEqual((ht, he), ([2, 1], [True, True]))
+        bt, be, ht, he = M.recovery(c, [3], 1, 1)                 # a rise (95 → 101): given back on day 4
+        self.assertEqual((bt, be), ([1], [True]))
+        self.assertEqual((ht, he), ([2], [True]))                # 120 on day 5 is above the high of 101
+        bt, be, _, _ = M.recovery(c, [1], 1, -1, end=2)          # judged on what was known by day 2: still waiting
+        self.assertEqual((bt, be), ([1], [False]))
+
+    def test_kaplan_meier_with_waiting_days(self):
+        self.assertEqual(M.km([2, 3, 5, 5], [True, False, True, True], at=3), [4, 5, 0.25])
+        self.assertEqual(M.km([2, 3, 5, 5], [True, False, True, True], at=21)[2], 1.0)
+        n, med, within = M.km([10, 10, 10], [False, False, True], at=21)   # one of three back, the two others still waiting
+        self.assertEqual((n, med), (3, None))
+        self.assertAlmostEqual(within, 1 / 3)
+        self.assertIsNone(M.km([], []))
+
+    def test_the_summary_says_how_long(self):
+        rng = np.random.default_rng(5)
+        r = np.round(np.concatenate([rng.normal(0.0004, 0.01, 800), [-0.05]]) * 1e4) / 1e4
+        s = M.summary(weekdays('2023-01-02', len(r) + 1), r)
+        n, med, within = s['back']
+        self.assertGreater(n, 5)
+        self.assertTrue(med is None or med >= 1)
+        self.assertTrue(0 <= within <= 1)
+        self.assertEqual(len(s['high']), 3)
+        self.assertEqual(len(s['sim10']), 3)
+        self.assertIn('sim10', M.FIELDS)
+        self.assertIn('back', M.FIELDS)
+
+
 class Composite(unittest.TestCase):
     def test_equal_weighted_with_enough_members(self):
         days = weekdays('2026-01-05', 4)
