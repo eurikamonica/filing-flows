@@ -511,7 +511,7 @@
     '5.07': 'shareholder vote', '7.01': 'Reg FD disclosure', '8.01': 'other events' };
   const FORM_WORD = (f) => (/^10-Q/.test(f) ? 'quarterly report (10-Q)' : /^10-K/.test(f) ? 'annual report (10-K)' : /^(20|40)-F/.test(f) ? 'annual report (' + f + ')'
     : /^424B|^S-|^F-[134]/.test(f) ? 'offering prospectus (' + f + ')' : /13D/.test(f) ? 'a 5%+ stake (Schedule 13D)' : /^SC TO/.test(f) ? 'tender offer'
-      : /14D9/.test(f) ? 'response to a tender offer' : /M14A/.test(f) ? 'merger proxy' : /^25-NSE|^15-12B/.test(f) ? 'delisting' : /^NT 10/.test(f) ? 'late filing notice' : /^6-K/.test(f) ? 'foreign issuer report (6-K)' : f);
+      : /14D9/.test(f) ? 'response to a tender offer' : /M14A/.test(f) ? 'merger proxy' : /^25-NSE/.test(f) ? 'a listed security removed (Form 25)' : /^15-12B/.test(f) ? 'registration ended (Form 15)' : /^NT 10/.test(f) ? 'late filing notice' : /^6-K/.test(f) ? 'foreign issuer report (6-K)' : f);
   const HOT = new Set(['2.02', '1.05', '2.05', '2.06', '4.02', '3.01', '1.03', '5.01']);
   function newsIndex(news, days) {
     const by = new Map();
