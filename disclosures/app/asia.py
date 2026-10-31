@@ -292,7 +292,10 @@ def collect(root, markets=MARKETS, minutes=40, http=None, today=None):
                 reps = M.list_reports(http, since, until, key=key) or []
                 have = {r['id'] for r in st['queue']} | set(got)
                 new = [r for r in reps if r.get('id') and r['id'] not in have]
-                st['queue'] = sorted(st['queue'] + new, key=lambda r: r.get('filed') or '', reverse=True)
+                prio = {r['id']: r.get('prio') or 0 for r in reps if r.get('id')}
+                for r in st['queue']:                       # a size the market gives (Taiwan: paid-in capital)
+                    r['prio'] = prio.get(r['id'], r.get('prio') or 0)
+                st['queue'] = sorted(st['queue'] + new, key=lambda r: (r.get('filed') or '', r.get('prio') or 0), reverse=True)
                 st['listed'] = until
                 s['listed'] = len(new)
             except Exception as e:                  # noqa: BLE001 — the reading below still runs on the queue

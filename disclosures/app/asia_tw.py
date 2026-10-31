@@ -117,8 +117,16 @@ def companies(http):
                         'name': (r.get('公司簡稱') or r.get('CompanyAbbreviation') or '').strip(),
                         'name_full': (r.get('公司名稱') or r.get('CompanyName') or '').strip(),
                         'name_en': (r.get('英文簡稱') or r.get('Symbol') or '').replace('　', ' ').strip(),
-                        'board': board})
+                        'board': board, 'capital': _capital(r)})
     return out
+
+
+def _capital(r):
+    """Paid-in capital (實收資本額, TWD): the reading order, largest companies first."""
+    try:
+        return float(str(r.get('實收資本額') or r.get('Paidin.Capital.NTDollars') or r.get('PaidInCapital') or 0).replace(',', ''))
+    except ValueError:
+        return 0.0
 
 
 def listing_url(code, fy):
@@ -132,7 +140,7 @@ def list_reports(http, since, until, key=None):
     fy = latest_fy(until)
     return [{'id': f'tw-{c["code"]}-{fy}', 'code': c['code'], 'name': c['name'], 'name_en': c['name_en'],
              'name_full': c['name_full'], 'board': c['board'], 'filed': None, 'fy': fy,
-             'url': listing_url(c['code'], fy)} for c in companies(http)]
+             'url': listing_url(c['code'], fy), 'prio': c.get('capital') or 0} for c in companies(http)]
 
 
 # ---------------------------------------------------------------- doc.twse.com.tw

@@ -14,7 +14,7 @@ on:
     inputs:
       minutes:
         description: 'Minutes for reading reports'
-        default: '45'
+        default: '65'
       markets:
         description: 'Markets (jp,kr,tw,hk)'
         default: 'jp,kr,tw,hk'
@@ -28,7 +28,7 @@ concurrency:
 jobs:
   asia:
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    timeout-minutes: 110
     env:
       SITE_URL: ${{ vars.SITE_URL }}
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
@@ -58,8 +58,8 @@ jobs:
           mkdir -p site && curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
       - name: Read annual reports
         id: collect
-        timeout-minutes: 75
-        run: python disclosures/app/asia.py collect --root asia --minutes "${{ inputs.minutes || '45' }}" --markets "${{ inputs.markets || 'jp,kr,tw,hk' }}"
+        timeout-minutes: 85
+        run: python disclosures/app/asia.py collect --root asia --minutes "${{ inputs.minutes || '65' }}" --markets "${{ inputs.markets || 'jp,kr,tw,hk' }}"
       - name: Build public/
         if: always() && steps.collect.outcome != 'skipped'
         timeout-minutes: 10
