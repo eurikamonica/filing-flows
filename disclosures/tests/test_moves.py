@@ -190,6 +190,29 @@ class HistoryAndVolatility(unittest.TestCase):
             self.assertEqual(doc['links'], {'outcome': 'SPY'})
             self.assertEqual(doc['names']['SPY'], 'S&P 500 (SPY)')
 
+    def test_more_indices_and_etfs_grouped(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'pth'
+            days = weekdays('2022-01-03', 300)
+            rng = np.random.default_rng(21)
+            for t in ('SPY', 'TLT', 'IDX-N225', 'EWJ', 'IDX-SX5E'):
+                closes = list(100 * np.exp(np.cumsum(rng.normal(0, 0.01, len(days)))))
+                P.save(root, t, {'ticker': t, 'source': 'yahoo', 'fetched_at': '2026-01-01T00:00:00+00:00', **bars(days, closes)})
+            M.build(root, None)
+            out = root / 'public' / 'moves'
+            ix = json.loads((out / 'index.json').read_text())
+            got = {r[0]: dict(zip(ix['fields'], r)) for r in ix['rows']}
+            self.assertEqual((got['IDX-N225']['kind'], got['IDX-N225']['group'], got['IDX-N225']['name']), ('index', 'world', 'Nikkei 225 (Japan)'))
+            self.assertEqual((got['EWJ']['kind'], got['EWJ']['group'], got['EWJ']['name']), ('etf', 'country', 'Japan (EWJ)'))
+            self.assertEqual((got['SPY']['group'], got['TLT']['group']), ('market', 'bonds'))         # a style ETF grouped by what it holds
+            self.assertEqual(got['IDX-SX5E']['group'], 'world')
+            doc = json.loads((out / 'a' / 'EWJ.json').read_text())
+            self.assertEqual((doc['links'], doc['group']), ({'market': 'SPY'}, 'country'))
+            self.assertEqual(json.loads((out / 'a' / 'IDX-N225.json').read_text())['links'], {})
+        self.assertTrue(all(len(k) <= 10 for k, _, _, _ in P.MOVES_INDEXES))                       # cache file names
+        self.assertEqual(P.YAHOO_SYMBOL['IDX-SSEC'], '000001.SS')
+        self.assertEqual(P.LONG_HISTORY['IDX-N225'], P.LONG_FROM)                                    # from the first day Yahoo has
+
     def test_the_backfill_fetches_once(self):
         with tempfile.TemporaryDirectory() as tmp:
             days = weekdays('2016-10-17', 30)

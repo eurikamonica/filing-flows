@@ -48,6 +48,9 @@ INDEX_NAMES = {'IDX-GSPC': 'S&P 500 index', 'IDX-IXIC': 'Nasdaq Composite index'
                'IDX-NDX': 'Nasdaq-100 index', 'IDX-RUT': 'Russell 2000 index'}
 SECTOR_NAME = {t: n for t, _, n in RH.SECTOR_ETFS}
 STYLE_NAME = dict(RH.STYLE_ETFS)
+# the hub's Indices & ETFs view groups every asset but the companies and industries: the style ETFs by what they hold
+STYLE_GROUP = {'TLT': 'bonds', 'GLD': 'commodities', 'USO': 'commodities', 'SMH': 'industry', 'XBI': 'industry', 'KRE': 'industry',
+               'ITB': 'industry', 'EFA': 'broad', 'EEM': 'broad'}
 # SIC major groups (the first two digits)
 SIC2 = {'01': 'Agricultural production: crops', '02': 'Agricultural production: livestock', '07': 'Agricultural services', '08': 'Forestry',
         '09': 'Fishing, hunting and trapping', '10': 'Metal mining', '12': 'Coal mining', '13': 'Oil and gas extraction',
@@ -352,7 +355,7 @@ def _r(v, n=4):
 
 FIELDS = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members', 'as_of', 'd0', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every',
           'last_as', 'move5', 'pct5', 'move21', 'pct21'] + [f'{s}{h}' for s in ('sim', 'ext', 'all') for h in HORIZONS] + ['back', 'high',
-          'rv21', 'rvpct', 'level', 'lpct', 'out5', 'out21']
+          'rv21', 'rvpct', 'level', 'lpct', 'out5', 'out21', 'group']
 
 
 def build(root, universe_path, val_dir=None, limit=0):
@@ -369,10 +372,15 @@ def build(root, universe_path, val_dir=None, limit=0):
     for t in list(MARKET) + list(INDEX_NAMES) + [x for x, _, _ in RH.SECTOR_ETFS] + [x for x, _ in RH.STYLE_ETFS if x not in MARKET]:
         kind = 'market' if t in MARKET else 'index' if t in INDEX_NAMES else 'sector' if t in SECTOR_NAME else 'style'
         name = MARKET.get(t) or INDEX_NAMES.get(t) or (SECTOR_NAME.get(t) and f'{SECTOR_NAME[t]} sector ({t})') or f'{STYLE_NAME.get(t, t)} ({t})'
-        assets.append({'key': t, 'ticker': None if kind == 'index' else t, 'name': name, 'kind': kind,
+        group = {'market': 'market', 'index': 'us', 'sector': 'sector'}.get(kind) or STYLE_GROUP.get(t, 'style')
+        assets.append({'key': t, 'ticker': None if kind == 'index' else t, 'name': name, 'kind': kind, 'group': group,
                        'sector': next((k for x, k, _ in RH.SECTOR_ETFS if x == t), None)})
     for t, _, name in P.VOL_INDEXES:                     # the volatility indices: their level, and the S&P 500 after it
-        assets.append({'key': t, 'ticker': None, 'name': name, 'kind': 'volatility'})
+        assets.append({'key': t, 'ticker': None, 'name': name, 'kind': 'volatility', 'group': 'volatility'})
+    for t, _, name, group in P.MOVES_INDEXES:            # more US indices, the world's, the dollar: price only, own currency
+        assets.append({'key': t, 'ticker': None, 'name': name, 'kind': 'index', 'group': group})
+    for t, name, group in P.MOVES_MORE_ETFS:              # countries, bonds, commodities, industries and themes
+        assets.append({'key': t, 'ticker': t, 'name': f'{name} ({t})', 'kind': 'etf', 'group': group})
     # every valued company, with its industry
     sics = {}
     for c in comps:
@@ -395,7 +403,7 @@ def build(root, universe_path, val_dir=None, limit=0):
         if len(common) > MIN_DAYS:
             ratio = [v[d] / v3[d] for d in common]
             data['VIX-TERM'] = (common, ratio, round(ratio[-1], 4))
-            assets.append({'key': 'VIX-TERM', 'ticker': None, 'name': 'VIX term structure (VIX ÷ VIX3M; above 1 = stress)', 'kind': 'volatility'})
+            assets.append({'key': 'VIX-TERM', 'ticker': None, 'name': 'VIX term structure (VIX ÷ VIX3M; above 1 = stress)', 'kind': 'volatility', 'group': 'volatility'})
     # composites: SIC industries (four digits) and major groups (two), five companies or more
     groups = {}
     for a in assets:
@@ -440,6 +448,8 @@ def build(root, universe_path, val_dir=None, limit=0):
             errors.append(f"{a['key']}: {str(exc)[:160]}")
             continue
         ln = {}
+        if a['kind'] == 'etf':
+            ln['market'] = 'SPY'
         if a['kind'] in ('stock', 'industry'):
             if a['kind'] == 'stock' and links.get(a['key']):
                 ln['industry'] = links[a['key']]
@@ -450,7 +460,7 @@ def build(root, universe_path, val_dir=None, limit=0):
             ln['market'] = 'SPY'
         if outcome:
             ln['outcome'] = outcome
-        doc = {'format': FORMAT, 'key': a['key'], 'ticker': a.get('ticker'), 'name': a.get('name'), 'kind': a['kind'], 'sector': a.get('sector'),
+        doc = {'format': FORMAT, 'key': a['key'], 'ticker': a.get('ticker'), 'name': a.get('name'), 'kind': a['kind'], 'group': a.get('group'), 'sector': a.get('sector'),
                'cik': a.get('cik'), 'as_of': ds[-1], 'last': last, 'links': ln, 'names': {k: names.get(k, k) for k in ln.values()}, **enc}
         for k in ('members', 'top', 'sic_level', 'sic'):
             if a.get(k) is not None:
@@ -458,7 +468,7 @@ def build(root, universe_path, val_dir=None, limit=0):
         _dump(out / 'a' / f"{a['key']}.json", doc)
         written.add(f"{a['key']}.json")
         s.update(key=a['key'], ticker=a.get('ticker'), name=a.get('name'), kind=a['kind'], sector=a.get('sector'), industry=ln.get('industry'),
-                 cik=a.get('cik'), members=a.get('members'), last=last)
+                 cik=a.get('cik'), members=a.get('members'), last=last, group=a.get('group'))
         rows.append([[_r(x) for x in v] if isinstance(v, list) else _r(v) for v in (s.get(f) for f in FIELDS)])
     for p in (out / 'a').glob('*.json'):                                # assets no longer on file
         if p.name not in written:

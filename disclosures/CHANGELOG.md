@@ -37,6 +37,18 @@ days like it within the band of weighted percentiles, the medians, shares and ra
 Kaplan–Meier, the volatility after), with how many days of full weight the weights are worth ((Σw)² / Σw²) and the
 unweighted figures beside them: the dashed lines on the charts and the picture, older dots fainter over time. Worked
 out in the browser only; the hub's summary counts every day the same.
+Indices and ETFs of every kind: 23 more indices (the SOX, NYSE Composite, S&P 400 and 600, Russell 1000, Dow
+Transports and Utilities; the Nikkei, FTSE 100, DAX, CAC 40, Euro Stoxx 50, Hang Seng, Shanghai, KOSPI, Taiwan, Sensex,
+Nifty, TSX, ASX 200, Bovespa and IPC, each from its first day on Yahoo; the US Dollar Index) and 47 more ETFs (world,
+countries, bonds, commodities, industries and themes), each with a group; the hub's new Indices & ETFs view lists
+every index and ETF by group, weakest to strongest, with the move, its rank, how often, the volatility and what followed.
+Similar stretches, what to expect and a simulation: the stretches of 1, 3 or 6 months or a year in the asset's history
+most like the last one (alike in size and shape, or in shape only), each ending with the months after it before that
+one began, none overlapping; their paths into and after it, the expected path (their average), the median and middle
+half against every stretch's range, a table of each with what followed and the worst and best on the way; and 2,000
+simulated paths of the months ahead, each built a week at a time from the same weeks after a stretch like it (the order
+kept, the weeks mixed): the price bands, the chance of ending higher and of a 10% fall or rise on the way. A past day is
+judged on the stretches before it, with what happened drawn; both are panels of the picture.
 
 ## Notes: what each note changed against last year's annual report (年度变化)
 

@@ -138,7 +138,7 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   const vals = Float64Array.from({ length: 2000 }, () => normal()).sort();
   const D = V.kde(vals, -6, 6, 241);
   near(D.ys.reduce((a, y) => a + y, 0) * (12 / 240), 1, 'the density integrates to one', 0.01);
-  ok(V.PANELS.map((p) => p[0]).join() === 'now,paths,1,5,10,21,63,back,high,vol', 'the panels a picture can hold');
+  ok(V.PANELS.map((p) => p[0]).join() === 'now,paths,analog,sim,1,5,10,21,63,back,high,vol', 'the panels a picture can hold');
   // each case and the expected path after it: one line per chosen day, the mean of the cases at each day after
   const cs = V.cases(R, { w: 1, band: 5 }, 'sim');
   let nSim = 0; for (let j = 0; j < R.sim.length; j++) if (R.sim[j]) nSim++;
@@ -268,5 +268,71 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   near(D.ys.reduce((p, q) => p + q, 0) * (1 / 400), 1, 'the weighted density integrates to one', 0.02);
   const Same = V.analyze(A, Object.assign({}, o, { hl: 0 }));
   ok(Same.at === R0.at && Same.h[21].sim.median === R0.h[21].sim.median && Same.sw === undefined, 'half-life 0: every day the same, as before');
+}
+// 9. similar stretches: the closest past paths (an exact copy found first), none overlapping, each ending with its months
+// after before the stretch looked at; what to expect is their average; the simulation keeps a lone analog's path
+{
+  const rets = [];
+  for (let i = 0; i < 1400; i++) rets.push(0.0003 + 0.012 * normal());
+  const seg = rets.slice(300, 363);                                   // 63 days copied at the end: the stretch looked at
+  for (const v of seg) rets.push(v);
+  const A = V.decode(doc(rets, '2015-01-05').doc), N = A.days.length - 1, c = V.cum(A.r);
+  const R = V.analyze(A, { w: 1, measure: 'raw', mode: 'latest', band: 5 });
+  const AN = V.analogs(R, { alen: 63, afwd: 63, ak: 10, amatch: 'size' });
+  ok(!AN.error && AN.items.length === 10 && AN.t === N, 'ten stretches like it');
+  // the copy: the stretch ending on day 363 of the returns, i.e. close 363 (returns 300..362 lead from close 300 to 363)
+  ok(AN.items[0].j === 363 && AN.items[0].d < 1e-3 && AN.items[0].corr > 0.999, 'the exact copy first, with no gap (whole basis points aside)');
+  ok(AN.items.every((x, i) => i === 0 || x.d >= AN.items[i - 1].d - 1e-12), 'closest first');
+  ok(AN.items.every((x) => x.j + 63 <= N - 63) && AN.items.every((x, i) => AN.items.every((y, k) => k === i || Math.abs(x.j - y.j) >= 63)), 'each ends with its months after before the stretch; none overlap');
+  const mean63 = AN.items.reduce((a, x) => a + Math.expm1(c[x.j + 63] - c[x.j]), 0) / 10;
+  near(AN.E.mean[63], mean63, 'what to expect: the average of what followed them', 1e-12);
+  ok(AN.every[63] && AN.every[21] && AN.every[5] && !AN.every[126], 'every stretch, for comparison, at the marks within three months');
+  // brute force: the gap of a few stretches from their definition
+  const gap = (j) => { let ss = 0; for (let k = 0; k <= 63; k++) { const d = (c[j - 63 + k] - c[j - 63]) - (c[N - 63 + k] - c[N - 63]); ss += d * d; } return Math.sqrt(ss / 64); };
+  ok(AN.items.every((x) => Math.abs(x.d - gap(x.j)) < 1e-12), 'the gap as defined');
+  // shape only: a copy of the stretch at twice the size is alike in shape, not in size
+  const r2 = rets.slice(0, 1400).concat(seg.map((v) => 2 * v));        // the stretch looked at: the copy at twice the size
+  const A2 = V.decode(doc(r2, '2015-01-05').doc), R2 = V.analyze(A2, { w: 1, measure: 'raw', mode: 'latest', band: 5 });
+  const S2 = V.analogs(R2, { alen: 63, afwd: 21, ak: 5, amatch: 'shape' }), Z2 = V.analogs(R2, { alen: 63, afwd: 21, ak: 5, amatch: 'size' });
+  ok(S2.items[0].j === 363 && S2.items[0].d < 0.01, 'shape only: twice the size, the same shape');
+  ok(Z2.items[0].j !== 363 || Z2.items[0].d > 0.01, 'size and shape: twice the size is not alike');
+  // the simulation: seeded, ordered bands, and with one analog every path is that analog's path
+  const sim = V.simulate(AN, 500, 42), sim2 = V.simulate(AN, 500, 42);
+  ok(sim.band.q50[63] === sim2.band.q50[63] && sim.up === sim2.up, 'the same seed, the same paths');
+  ok(sim.band.q5.every((v, d) => v <= sim.band.q25[d] + 1e-12 && sim.band.q25[d] <= sim.band.q50[d] + 1e-12 && sim.band.q50[d] <= sim.band.q75[d] + 1e-12 && sim.band.q75[d] <= sim.band.q95[d] + 1e-12), 'the bands in order');
+  ok(sim.up >= 0 && sim.up <= 1 && sim.down10 >= 0 && sim.up10 <= 1 && sim.band.q50[0] === 0, 'shares between 0 and 1, every path from today');
+  // a lone stretch that rose 0.1% every day after it: every week drawn from it is the same, so is every path
+  const one = { F: 21, items: [{ fwd: Float64Array.from({ length: 22 }, (_, h) => 0.001 * h), w: 1 }] }, s1 = V.simulate(one, 50, 7);
+  near(s1.band.q5[21], Math.expm1(0.021), 'a steady lone stretch: every path the same', 1e-6);
+  near(s1.band.q95[13], Math.expm1(0.013), 'on every day', 1e-6);
+  ok(s1.up === 1 && s1.down10 === 0, 'all of them higher, none down 10%');
+  // weeks from anywhere in the months after: a crash on day 10 in three stretches can show in the first week too
+  const crash = { F: 20, items: Array.from({ length: 10 }, (_, i) => ({ fwd: Float64Array.from({ length: 21 }, (_, h) => (i < 3 && h >= 10 ? Math.log(0.8) : 0)), w: 1 })) };
+  const sc = V.simulate(crash, 4000, 3);
+  ok(sc.band.q5[5] < -0.1 && sc.down10 > 0.05 && sc.down10 < 0.5, 'a crash week can come in the first week too');
+  // not enough history: said, not drawn
+  const As = V.decode(doc(rets.slice(0, 650), '2015-01-05').doc), Rs = V.analyze(As, { w: 1, measure: 'raw', mode: 'latest', band: 5 });
+  const short = V.analogs(Rs, { alen: 252, afwd: 252, ak: 10 });
+  ok(!!short.error, 'stretches longer than the history allows: an error');
+  ok(V.canDraw({ an: AN, rec: {} }, 'analog') && !V.canDraw({ an: short, rec: {} }, 'analog') && !V.canDraw({ an: short, rec: {} }, 'sim'), 'the picture holds them only when there are stretches');
+}
+// 10. the hub's Indices & ETFs view: every index and ETF by group, the stocks and industries left out, a deep link to an index
+{
+  const fields = ['key', 'ticker', 'name', 'kind', 'as_of', 'd0', 'move', 'pct', 'every', 'sim21', 'rv21', 'rvpct', 'level', 'lpct', 'out21', 'group'];
+  const row = (o) => fields.map((f) => (f in o ? o[f] : null));
+  const ix = { as_of: '2026-10-30', fields, rows: [
+    row({ key: 'SPY', ticker: 'SPY', name: 'S&P 500 (SPY)', kind: 'market', group: 'market', as_of: '2026-10-30', d0: '1993-01-29', move: -0.0177, pct: 4.2, every: 23, sim21: [126, 0.033, 0.69], rv21: 0.12, rvpct: 40 }),
+    row({ key: 'IDX-N225', name: 'Nikkei 225 (Japan)', kind: 'index', group: 'world', as_of: '2026-10-30', d0: '1965-01-05', move: 0.012, pct: 80, every: 5, sim21: [300, 0.01, 0.6] }),
+    row({ key: 'EWJ', ticker: 'EWJ', name: 'Japan (EWJ)', kind: 'etf', group: 'country', as_of: '2026-10-30', d0: '1996-03-18', move: 0.004, pct: 60 }),
+    row({ key: 'IDX-VIX', name: 'CBOE Volatility Index (VIX)', kind: 'volatility', group: 'volatility', as_of: '2026-10-30', level: 19.4, lpct: 60, move: 0.13, out21: [500, 0.011, 0.59] }),
+    row({ key: 'NVDA', ticker: 'NVDA', name: 'NVIDIA CORP', kind: 'stock', as_of: '2026-10-30', move: -0.04, pct: 6 }),
+  ] };
+  state.mvk = 'IDX-N225';
+  const h = H.mvAll(H.mvRows(ix), ix);
+  ok(h.includes('World indices') && h.includes('Country ETFs') && h.includes('Volatility indices') && h.includes('Nikkei 225 (Japan)') && h.includes('19.4'), 'grouped tables');
+  ok(!h.includes('NVIDIA') && h.includes('id="mv-one" data-k="IDX-N225"') && h.includes('>1965<'), 'no stocks; the one picked analysed below; history from');
+  H.movesDeepLink('IDX-N225'); ok(state.mvv === 'all' && state.mvk === 'IDX-N225', 'deep link to a world index');
+  H.movesDeepLink('IDX-VIX'); ok(state.mvv === 'market', 'the VIX stays with the market');
+  H.movesDeepLink('all'); ok(state.mvv === 'all', 'deep link to the view');
 }
 console.log(`moves view: ${n} checks passed`);

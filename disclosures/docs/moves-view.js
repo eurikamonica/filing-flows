@@ -269,6 +269,8 @@
     if (wt) Object.assign(out, { hl, wt, sw, ref: A.days[t >= 0 ? t : N], neff: neffOf(wt, inS), neffSim: neffOf(wt, sim) });
     // what came next: the asset's own returns, or the outcome's on the same days
     const oAt = Out ? new Map(Out.days.map((d, i) => [d, i])) : null, co = Out ? cum(Out.r) : null;
+    out.c = c;
+    if (Out) { out.oc = co; out.oq = Int32Array.from(A.days, (d) => { const q = oAt.get(d); return q == null ? -1 : q; }); }
     const ahead2 = (h) => {
       if (!Out) return ahead(c, h);
       const f = new Float64Array(N + 1).fill(NaN);
@@ -588,8 +590,21 @@
   /* ---------- each day like it: the path after it, and what the company filed ---------- */
   // the cases: every chosen day (a move longer than a day counts once: chosen days within its length of the one before
   // belong to it), with the path of simple returns from its close over the next PATH_D trading days (as far as known)
+  // what followed day j: the simple returns over the next H trading days (as far as day `end` of the asset's own) of the
+  // asset, or of the asset it is judged by (a volatility index: the S&P 500)
+  function pathFrom(R, j, H, end) {
+    const p = [];
+    if (R.oc) {
+      const q = R.oq[j];
+      if (q >= 0) for (let h = 0; h <= H && j + h <= end && q + h < R.oc.length; h++) p.push(Math.expm1(R.oc[q + h] - R.oc[q]));
+      return p;
+    }
+    const c = R.c || (R.c = cum(R.A.r));
+    for (let h = 0; h <= H && j + h <= end; h++) p.push(Math.expm1(c[j + h] - c[j]));
+    return p;
+  }
   function cases(R, o, which) {
-    const mask = R[which], A = R.A, c = cum(A.r), N = A.days.length - 1, w = o.w || 1;
+    const mask = R[which], N = R.A.days.length - 1, w = o.w || 1;
     const end = o.before && o.mode === 'date' && R.t >= 0 ? R.t : N;
     const out = [];
     let last = -Infinity;
@@ -598,27 +613,37 @@
       const join = j - last < w;
       last = j;
       if (join) continue;
-      const path = [];
-      for (let h = 0; h <= PATH_D && j + h <= end; h++) path.push(Math.expm1(c[j + h] - c[j]));
-      out.push({ j, path });
+      const path = pathFrom(R, j, PATH_D, end);
+      if (path.length) out.push({ j, path });
     }
     return out;
   }
-  // the expected path (the mean of the cases' returns at each day after), the median and the middle half
-  function expectedOf(cs) {
+  // the expected path (the mean of the cases' returns at each day after), the median and the middle half; with weights
+  // (one per case: older days counting less), each weighted
+  function expectedOf(cs, wts) {
     const mean = [], med = [], q25 = [], q75 = [], n = [];
     for (let h = 0; h <= PATH_D; h++) {
+      if (wts) {
+        const ids = []; cs.forEach((x, i) => { if (Number.isFinite(x.path[h])) ids.push(i); });
+        if (ids.length < 2) break;
+        ids.sort((a, b) => cs[a].path[h] - cs[b].path[h]);
+        const v = Float64Array.from(ids, (i) => cs[i].path[h]), u = Float64Array.from(ids, (i) => wts[i]), Q = wquant(v, u);
+        let W = 0, m1 = 0; for (let k = 0; k < v.length; k++) { W += u[k]; m1 += u[k] * v[k]; }
+        n.push(v.length); mean.push(m1 / W); med.push(Q(50)); q25.push(Q(25)); q75.push(Q(75));
+        continue;
+      }
       const v = Float64Array.from(cs.map((x) => x.path[h]).filter(Number.isFinite)).sort();
       if (v.length < 2) break;
       n.push(v.length); mean.push(v.reduce((a, b) => a + b, 0) / v.length); med.push(quantile(v, 50)); q25.push(quantile(v, 25)); q75.push(quantile(v, 75));
     }
     return { mean, med, q25, q75, n };
   }
+  const caseW = (R, cs) => (R.wt ? cs.map((x) => R.wt[x.j]) : null);
+  const upShare = (cs, cw, h) => { let a = 0, b = 0; cs.forEach((x, i) => { const v = x.path[Math.min(h, x.path.length - 1)], u = cw ? cw[i] : 1; if (fin(v)) { b += u; if (v > 0) a += u; } }); return a / Math.max(b, 1e-12); };
   // the path of the day looked at, as far as it is known
   function nowPath(R) {
     if (R.t < 0) return null;
-    const c = cum(R.A.r), N = R.A.days.length - 1, p = [];
-    for (let h = 0; h <= PATH_D && R.t + h <= N; h++) p.push(Math.expm1(c[R.t + h] - c[R.t]));
+    const p = pathFrom(R, R.t, PATH_D, R.A.days.length - 1);
     return p.length > 1 ? p : null;
   }
   const px = (h) => Math.sqrt(h / PATH_D);                                   // the days after on a square-root scale
@@ -649,7 +674,7 @@
     cs.forEach((x) => {
       if (x.path.length < 2) return;
       const f = x.path[x.path.length - 1];
-      g += `<path d="${line(x.path)}" style="fill:none;stroke:${f >= 0 ? COL.up : COL.down};stroke-width:1.1;stroke-dasharray:4 3;opacity:${op.toFixed(2)}"><title>${esc(mdy(R.A.days[x.j]))}: ${esc(fmtX(o, R.x[x.j]))} · then ${PATH_MARKS.filter(([h]) => h < x.path.length).map(([h, l]) => `${l} ${sp(x.path[h])}`).join(', ')}</title></path>`;
+      g += `<path d="${line(x.path)}" style="fill:none;stroke:${f >= 0 ? COL.up : COL.down};stroke-width:1.1;stroke-dasharray:4 3;opacity:${(op * (R.wt ? 0.15 + 0.85 * R.wt[x.j] : 1)).toFixed(2)}"><title>${esc(mdy(R.A.days[x.j]))}: ${esc(fmtX(o, R.x[x.j]))} · then ${PATH_MARKS.filter(([h]) => h < x.path.length).map(([h, l]) => `${l} ${sp(x.path[h])}`).join(', ')}</title></path>`;
     });
     if (E.med.length > 1) g += `<path d="${line(E.med)}" style="fill:none;stroke:${COL.ink};stroke-width:1.4;stroke-dasharray:1.5 3;opacity:.8"/>`;
     if (E.mean.length > 1) g += `<path d="${line(E.mean)}" style="fill:none;stroke:${COL.band};stroke-width:3"/>`;
@@ -708,7 +733,7 @@
     const nowRow = R.t >= 0 && o.mode !== 'whatif' ? { j: R.t, path: nowPath(R) || [0] } : null;
     for (const x of (nowRow ? [nowRow] : []).concat(rows)) {
       const isNow = nowRow && x === nowRow;
-      h += `<tr${isNow ? ' class="now"' : ''}><td>${esc(mdy(R.A.days[x.j]))}${isNow ? ' <span class="mv-chip hot">this day</span>' : ''}</td><td class="n ${tone(R.x[x.j])}">${esc(fmtX(o, R.x[x.j]))}</td><td class="n">${num(pctOf(R.s, R.x[x.j]), 1)}</td>`
+      h += `<tr${isNow ? ' class="now"' : ''}><td>${esc(mdy(R.A.days[x.j]))}${isNow ? ' <span class="mv-chip hot">this day</span>' : ''}</td><td class="n ${tone(R.x[x.j])}">${esc(fmtX(o, R.x[x.j]))}</td><td class="n">${num(R.p && Number.isFinite(R.p[x.j]) ? R.p[x.j] : pctOf(R.s, R.x[x.j]), 1)}</td>`
         + cols.map(([hz]) => { const v = x.path[hz]; return `<td class="n ${tone(v)}">${fin(v) ? sp(v) : '—'}</td>`; }).join('')
         + (hasNews ? `<td class="news">${newsCell(by.get(x.j), doc.cik) || `<span class="mv-sub">${news ? 'no filing that day' : '…'}</span>`}</td>` : '') + '</tr>';
     }
@@ -716,19 +741,251 @@
   }
   function casesSection(R, o, doc, news) {
     const which = o.set === 'ext' ? 'ext' : 'sim';
-    const cs = cases(R, o, which), E = expectedOf(cs);
+    const cs = cases(R, o, which), cw = caseW(R, cs), E = expectedOf(cs, cw);
     const lab = which === 'sim' ? `day${cs.length === 1 ? '' : 's'} like it (within ±${fb(o.band)} percentile points)` : `day${cs.length === 1 ? '' : 's'} at least as ${R.side > 0 ? 'high' : 'low'}`;
     const many = cs.length === 1 ? 'The one' : `Each of the ${num(cs.length)}`;
     let h = `<h3>Each day like it, and the path after it</h3>`;
     h += `<p class="mv-sub">${many} ${esc(lab)}${o.w > 1 ? ' (overlapping days of one move counted once)' : ''} is a dashed line (green when it ended up, red when down), from its close over the next day, week, two weeks, month and quarter; the thick blue line is the expected path (the average of the cases at each day after), the dotted one the median, the shaded band the middle half${R.t >= 0 && o.mode !== 'whatif' ? `; orange: what followed ${esc(mdy(R.A.days[R.t]))}` : ''}. Move the slider above to take a narrower or wider band of days.</p>`;
     if (E.mean.length > 1) {
       h += `<p class="mv-head" style="font-size:15.5px">Expected after a day like it: ${PATH_MARKS.filter(([hz]) => hz < E.mean.length).map(([hz, l]) => `${esc(l)} <b class="${tone(E.mean[hz])}">${sp(E.mean[hz])}</b>`).join(' · ')}`
-        + ` <span class="mv-sub" style="display:inline">(${share(cs.filter((x) => fin(x.path[Math.min(21, x.path.length - 1)]) && x.path[Math.min(21, x.path.length - 1)] > 0).length / Math.max(1, cs.length))} up after a month)</span></p>`;
+        + ` <span class="mv-sub" style="display:inline">(${share(upShare(cs, cw, 21))} up after a month${R.hl ? ', older days counting less' : ''})</span></p>`;
     }
     h += pathsSvg(R, o, cs, E);
     h += `<div class="mv-legend"><span><b style="background:none;border-top:2px dashed ${COL.up};height:0;width:14px;border-radius:0"></b><b style="background:none;border-top:2px dashed ${COL.down};height:0;width:14px;border-radius:0"></b>each case</span><span><b style="background:${COL.band}"></b>expected (average)</span><span><b style="background:none;border-top:2px dotted ${COL.ink};height:0;width:14px;border-radius:0"></b>median</span><span><b style="background:${COL.band};opacity:.25"></b>middle half</span>${R.t >= 0 && o.mode !== 'whatif' ? `<span><b style="background:${COL.warn}"></b>this day</span>` : ''}</div>`;
     h += `<p class="mv-sub">${doc.kind === 'stock' ? 'Each case with what the company filed with the SEC that could have moved it: 8-K items (the press release\'s headline and key sentences, read for the days of its biggest moves), quarterly and annual reports, offerings and stakes. Filings are read a batch at a time, the largest companies and most extreme days first; a day may show its filing before its headline.' : 'Company filings are shown for a company: switch to “this company” above.'}</p>`;
     return h + casesTable(R, o, cs, news, doc);
+  }
+
+  /* ---------- similar stretches: the past stretches most like the last weeks, what followed, a simulation ---------- */
+  const ALEN = [[21, '1 month'], [63, '3 months'], [126, '6 months'], [252, '1 year']];
+  const AKS = [5, 10, 20, 30];
+  const AMARKS = [[5, '1 week'], [21, '1 month'], [63, '3 months'], [126, '6 months'], [252, '1 year']];
+  const SIMS = 2000, BLOCK = 5;                                     // simulated paths; trading days drawn together
+  const words = (n, one) => `${num(n)} ${one}${n === 1 ? '' : 's'}`;
+  const tdWords = (d) => (ALEN.find(([v]) => v === d) || [d, `${d} trading days`])[1];
+  // the K stretches of L trading days most like the L days up to the day looked at (t), each ending at least F + L
+  // days before t — what followed it is known and shares no day with the stretch looked at — and no two overlapping.
+  // match 'size': the root mean square gap between the two paths of log closes from their first day (the size and the
+  // shape of the moves); 'shape': between the two paths each less its mean over its spread (the shape alone). Each with
+  // its path from L days before to F days after, in log closes from its last day; weights: older days counting less.
+  function analogs(R, o) {
+    const A = R.A, c = R.c || (R.c = cum(A.r)), N = A.days.length - 1, t = R.t >= 0 ? R.t : N;
+    const L = +o.alen || 63, F = +o.afwd || 63, K = +o.ak || 10, shape = o.amatch === 'shape', n1 = L + 1, last = t - L - F;
+    const base = { L, F, K, shape, t };
+    if (last < L) return Object.assign(base, { error: `Not enough history before ${mdy(A.days[t])} for stretches of ${tdWords(L)} and the ${tdWords(F)} after them.` });
+    const S1 = new Float64Array(N + 2), S2 = new Float64Array(N + 2);   // running sums of c and c², for each stretch's mean and spread
+    for (let i = 0; i <= N; i++) { S1[i + 1] = S1[i] + c[i]; S2[i + 1] = S2[i] + c[i] * c[i]; }
+    const ms = (j) => { const s1 = S1[j + 1] - S1[j - L], m = s1 / n1; return [m, Math.sqrt(Math.max((S2[j + 1] - S2[j - L]) / n1 - m * m, 0)) || 1]; };
+    const q = new Float64Array(n1);
+    if (shape) { const [m, sd] = ms(t); for (let k = 0; k < n1; k++) q[k] = (c[t - L + k] - m) / sd; } else for (let k = 0; k < n1; k++) q[k] = c[t - L + k] - c[t - L];
+    const D = new Float64Array(last + 1).fill(Infinity);
+    for (let j = L; j <= last; j++) {
+      const b = j - L; let ss = 0;
+      if (shape) { const [m, sd] = ms(j); for (let k = 0; k < n1; k++) { const d = (c[b + k] - m) / sd - q[k]; ss += d * d; } }
+      else { const c0 = c[b]; for (let k = 0; k < n1; k++) { const d = c[b + k] - c0 - q[k]; ss += d * d; } }
+      D[j] = Math.sqrt(ss / n1);
+    }
+    const order = []; for (let j = L; j <= last; j++) order.push(j);
+    order.sort((a, b) => D[a] - D[b]);
+    const pick = [];
+    for (const j of order) { if (pick.length >= K) break; if (pick.every((i) => Math.abs(i - j) >= L)) pick.push(j); }
+    const corr = (j) => {                                          // how alike the two shapes are, −1 to 1
+      let sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
+      for (let k = 0; k < n1; k++) { const a = c[j - L + k], b = c[t - L + k]; sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b; }
+      const va = saa - sa * sa / n1, vb = sbb - sb * sb / n1;
+      return va > 0 && vb > 0 ? (sab - sa * sb / n1) / Math.sqrt(va * vb) : 0;
+    };
+    const items = pick.map((j) => {
+      const back = Float64Array.from({ length: n1 }, (_, k) => c[j - L + k] - c[j]), fwd = Float64Array.from({ length: F + 1 }, (_, h) => c[j + h] - c[j]);
+      let lo = 0, hi = 0; for (const v of fwd) { if (v < lo) lo = v; if (v > hi) hi = v; }
+      return { j, d: D[j], corr: corr(j), move: Math.expm1(c[j] - c[j - L]), back, fwd, worst: Math.expm1(lo), best: Math.expm1(hi), w: R.wt ? R.wt[j] : 1 };
+    });
+    const now = Float64Array.from({ length: n1 }, (_, k) => c[t - L + k] - c[t]);
+    const actual = [];                                               // what followed the day looked at, when known
+    if (R.t >= 0) for (let h = 0; h <= F && t + h <= N; h++) actual.push(c[t + h] - c[t]);
+    // what to expect: at each day after, the analogs' weighted average, median and middle half (simple returns)
+    const E = { mean: [], med: [], q25: [], q75: [], q10: [], q90: [] }, W = items.reduce((a, x) => a + x.w, 0);
+    for (let h = 0; h <= F && items.length; h++) {
+      const ids = items.map((_, i) => i).sort((a, b) => items[a].fwd[h] - items[b].fwd[h]);
+      const v = Float64Array.from(ids, (i) => Math.expm1(items[i].fwd[h])), u = Float64Array.from(ids, (i) => items[i].w), Q = wquant(v, u);
+      let m1 = 0; for (let k = 0; k < v.length; k++) m1 += u[k] * v[k];
+      E.mean.push(m1 / W); E.med.push(Q(50)); E.q25.push(Q(25)); E.q75.push(Q(75)); E.q10.push(Q(10)); E.q90.push(Q(90));
+    }
+    const upF = items.reduce((a, x) => a + (x.fwd[F] > 0 ? x.w : 0), 0) / (W || 1);
+    // every day before the stretch looked at, for comparison: the returns over each mark ahead (weighted, when older days count less)
+    const every = {};
+    for (const [h] of AMARKS.concat([[F, '']])) {
+      if (h > F || every[h]) continue;
+      const ids = []; for (let j = 0; j + h <= t; j++) ids.push(j);
+      if (ids.length < 30) continue;
+      ids.sort((a, b) => (c[a + h] - c[a]) - (c[b + h] - c[b]));
+      const v = Float64Array.from(ids, (j) => Math.expm1(c[j + h] - c[j])), u = R.wt ? Float64Array.from(ids, (j) => R.wt[j]) : new Float64Array(ids.length).fill(1), Q = wquant(v, u);
+      let a = 0, b = 0, up = 0; for (let k = 0; k < v.length; k++) { a += u[k] * v[k]; b += u[k]; if (v[k] > 0) up += u[k]; }
+      every[h] = { mean: a / b, med: Q(50), q5: Q(5), q95: Q(95), up: up / b };
+    }
+    return Object.assign(base, { items, now, actual, E, upF, every, W, n: last - L + 1, from: A.days[0] });
+  }
+  // a seeded random number (the same picture on every visit), and a string's seed
+  function rng32(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let x = Math.imul(a ^ (a >>> 15), 1 | a); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
+  const seedOf = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  // the simulation: M paths over the F days ahead, each built a week (BLOCK trading days in a row) at a time, every week
+  // drawn at random from the days after the stretches like it — a stretch by weight, then any week of the F days after
+  // it — so a few odd weeks spread over every day ahead instead of all falling on the day they came. The bands of the
+  // paths at each day (5, 25, 50, 75, 95%), the end, the chance of ending higher and of touching −10% / +10% on the way.
+  function simulate(AN, M, seed) {
+    const it = AN.items, F = AN.F;
+    if (!it || !it.length) return null;
+    const rnd = rng32(seed), cw = []; let acc = 0;
+    for (const x of it) { acc += x.w; cw.push(acc); }
+    const pickI = () => { const u = rnd() * acc; let lo = 0, hi = cw.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (cw[m] < u) lo = m + 1; else hi = m; } return lo; };
+    const P = new Float32Array(M * (F + 1)), mins = new Float64Array(M), maxs = new Float64Array(M);
+    for (let m = 0; m < M; m++) {
+      let lv = 0, mn = 0, mx = 0;
+      for (let h = 0; h < F; h += BLOCK) {
+        const f = it[pickI()].fwd, b = Math.min(BLOCK, F - h), s0 = Math.floor(rnd() * (F - b + 1));   // a week of its days after
+        for (let d = 0; d < b; d++) { lv += f[s0 + d + 1] - f[s0 + d]; P[m * (F + 1) + h + d + 1] = lv; if (lv < mn) mn = lv; if (lv > mx) mx = lv; }
+      }
+      mins[m] = mn; maxs[m] = mx;
+    }
+    const band = { q5: [], q25: [], q50: [], q75: [], q95: [] }, col = new Float64Array(M);
+    for (let d = 0; d <= F; d++) {
+      for (let m = 0; m < M; m++) col[m] = P[m * (F + 1) + d];
+      col.sort();
+      band.q5.push(Math.expm1(quantile(col, 5))); band.q25.push(Math.expm1(quantile(col, 25))); band.q50.push(Math.expm1(quantile(col, 50)));
+      band.q75.push(Math.expm1(quantile(col, 75))); band.q95.push(Math.expm1(quantile(col, 95)));
+    }
+    let up = 0, d10 = 0, u10 = 0, mean = 0;
+    for (let m = 0; m < M; m++) {
+      const e = P[m * (F + 1) + F]; if (e > 0) up++; mean += Math.expm1(e);
+      if (mins[m] <= Math.log(0.9)) d10++; if (maxs[m] >= Math.log(1.1)) u10++;
+    }
+    const samples = [];
+    for (let m = 0; m < Math.min(M, 40); m++) samples.push(Array.from({ length: F + 1 }, (_, d) => Math.expm1(P[m * (F + 1) + d])));
+    return { M, F, band, up: up / M, down10: d10 / M, up10: u10 / M, mean: mean / M, samples };
+  }
+  const aMarks = (F) => AMARKS.filter(([h]) => h <= F);
+  const spanWords = (d) => (AMARKS.find(([v]) => v === d) || ALEN.find(([v]) => v === d) || [d, `${d} trading days`])[1];
+  const dayX = (h) => (h === 0 ? 'today' : `${h < 0 ? '−' : '+'}${spanWords(Math.abs(h))}`);
+  // axis labels [x, text, anchor, keep first] with none closer than `gap` pixels to one already placed
+  function spaced(labels, gap) {
+    const out = [];
+    for (const lb of labels.slice().sort((a, b) => (b[3] ? 1 : 0) - (a[3] ? 1 : 0))) if (out.every((o) => Math.abs(o[0] - lb[0]) >= gap)) out.push(lb);
+    return out;
+  }
+  // the stretches drawn: each analog's path into its last day and on after it, the expected path, the middle half,
+  // every day's range for comparison, the stretch looked at and what followed it
+  function analogSvg(R, o, AN) {
+    const W = o.narrow ? 440 : 760, Hh = o.narrow ? 300 : 340, Lm = 48, Rr = o.narrow ? 54 : 74, T = 18, B = 34, L = AN.L, F = AN.F, E = AN.E;
+    const ex = (v) => Math.expm1(v), pts = [];
+    AN.items.forEach((x) => { x.back.forEach((v) => pts.push(ex(v))); x.fwd.forEach((v) => pts.push(ex(v))); });
+    AN.now.forEach((v) => pts.push(ex(v))); AN.actual.forEach((v) => pts.push(ex(v)));
+    const sv = Float64Array.from(pts).sort();
+    let lo = Math.min(quantile(sv, 1), 0, ...E.q25), hi = Math.max(quantile(sv, 99), 0, ...E.q75);
+    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const sx = (h) => Lm + (h + L) / (L + F) * (W - Lm - Rr), sy = (v) => T + (hi - Math.min(hi, Math.max(lo, v))) / (hi - lo) * (Hh - T - B);
+    const line = (arr, off) => Array.from(arr, (v, k) => `${k ? 'L' : 'M'}${sx(k + off).toFixed(1)},${sy(ex(v)).toFixed(1)}`).join('');
+    const lineS = (arr) => arr.map((v, h) => `${h ? 'L' : 'M'}${sx(h).toFixed(1)},${sy(v).toFixed(1)}`).join('');
+    const clip = 'mva' + Math.random().toString(36).slice(2, 8);
+    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="The stretches most like the one looked at, and what followed them"><defs><clipPath id="${clip}"><rect x="${Lm}" y="${T}" width="${W - Lm - Rr + 2}" height="${Hh - T - B}"/></clipPath></defs>`;
+    ticks(lo * 100, hi * 100, 6).forEach((v) => { g += `<line class="mv-g" x1="${Lm}" x2="${W - Rr}" y1="${sy(v / 100)}" y2="${sy(v / 100)}"/><text class="mv-t" x="${Lm - 6}" y="${sy(v / 100) + 4}" text-anchor="end">${esc(sgn(v, Math.abs(v) < 1 && v !== 0 ? 1 : 0))}</text>`; });
+    g += `<line x1="${Lm}" x2="${W - Rr}" y1="${sy(0)}" y2="${sy(0)}" style="stroke:${COL.mute};stroke-width:1"/><line x1="${sx(0)}" x2="${sx(0)}" y1="${T}" y2="${Hh - B}" style="stroke:${COL.ink};stroke-width:1;stroke-dasharray:3 3"/>`;
+    spaced([[sx(-L), dayX(-L), 'start', 1], [sx(0), R.t >= 0 ? mdy(R.A.days[AN.t]) : 'today', 'middle', 1], [sx(F), dayX(F), 'end', 1], ...aMarks(F).filter(([h]) => h < F).map(([h]) => [sx(h), dayX(h), 'middle'])], o.narrow ? 70 : 84)
+      .forEach(([x, l, an]) => { g += `<text class="mv-t" x="${x}" y="${Hh - B + 16}" text-anchor="${an}">${esc(l)}</text>`; });
+    g += `<g clip-path="url(#${clip})">`;
+    const evs = aMarks(F).map(([h]) => h).filter((h) => AN.every[h]);
+    if (evs.length) g += `<path d="M${sx(0)},${sy(0)}${evs.map((h) => `L${sx(h).toFixed(1)},${sy(AN.every[h].q95).toFixed(1)}`).join('')}${evs.slice().reverse().map((h) => `L${sx(h).toFixed(1)},${sy(AN.every[h].q5).toFixed(1)}`).join('')}Z" style="fill:${COL.all};opacity:.10"/>`;
+    if (E.mean.length > 1) g += `<path d="${lineS(E.q75)}${E.q25.map((v, h) => `L${sx(h).toFixed(1)},${sy(v).toFixed(1)}`).reverse().join('')}Z" style="fill:${COL.band};opacity:.12"/>`;
+    const op = Math.max(0.2, Math.min(0.8, 2.4 / Math.sqrt(AN.items.length)));
+    AN.items.forEach((x, i) => {
+      const f = x.fwd[F], col = f >= 0 ? COL.up : COL.down, fade = R.wt ? 0.15 + 0.85 * x.w : 1;
+      g += `<path d="${line(x.back, -L)}" style="fill:none;stroke:${COL.all};stroke-width:1;opacity:${(op * 0.8 * fade).toFixed(2)}"/>`
+        + `<path d="${line(x.fwd, 0)}" style="fill:none;stroke:${col};stroke-width:1.2;opacity:${(op * fade).toFixed(2)}"><title>${i + 1}. ${esc(mdy(R.A.days[x.j - L]))} – ${esc(mdy(R.A.days[x.j]))}: ${esc(sp(x.move))}, then ${esc(sp(Math.expm1(f)))}</title></path>`;
+    });
+    if (E.med.length > 1) g += `<path d="${lineS(E.med)}" style="fill:none;stroke:${COL.ink};stroke-width:1.4;stroke-dasharray:1.5 3;opacity:.8"/>`;
+    if (E.mean.length > 1) g += `<path d="${lineS(E.mean)}" style="fill:none;stroke:${COL.band};stroke-width:3"/>`;
+    g += `<path d="${line(AN.now, -L)}" style="fill:none;stroke:${COL.ink};stroke-width:2.4"/>`;
+    if (AN.actual.length > 1) g += `<path d="${line(AN.actual, 0)}" style="fill:none;stroke:${COL.warn};stroke-width:2.4"/>`;
+    g += '</g>';
+    const shown = spaced(aMarks(F).filter(([h]) => h < E.mean.length).map(([h]) => [sx(h), h, '', h === F]).concat([[sx(0), -1, '', true]]), o.narrow ? 64 : 56).map((v) => v[1]);
+    aMarks(F).forEach(([h]) => {
+      if (h >= E.mean.length) return;
+      const y = sy(E.mean[h]);
+      g += `<circle cx="${sx(h)}" cy="${y}" r="3.6" style="fill:${COL.band};stroke:#fff;stroke-width:1.2"/>`;
+      if (shown.includes(h)) g += `<text class="mv-l" x="${sx(h) + (h === F ? 7 : 0)}" y="${y - 8}" text-anchor="${h === F ? 'start' : 'middle'}" style="font-weight:650;fill:${COL.band}">${esc(sp(E.mean[h]))}</text>`;
+    });
+    return g + '</svg>';
+  }
+  // the simulation drawn in prices: the bands of the paths, a few of them, the median, every day's median for comparison
+  function simSvg(R, o, AN, S, last) {
+    const W = o.narrow ? 440 : 760, Hh = o.narrow ? 280 : 310, Lm = o.narrow ? 56 : 64, Rr = o.narrow ? 92 : 96, T = 16, B = 30, F = S.F;
+    const pv = (v) => last * (1 + v);
+    let lo = Math.min(...S.band.q5, 0), hi = Math.max(...S.band.q95, 0);
+    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const sx = (h) => Lm + h / F * (W - Lm - Rr), sy = (v) => T + (hi - Math.min(hi, Math.max(lo, v))) / (hi - lo) * (Hh - T - B);
+    const lineS = (arr) => arr.map((v, h) => `${h ? 'L' : 'M'}${sx(h).toFixed(1)},${sy(v).toFixed(1)}`).join('');
+    const area = (a, b) => `${lineS(a)}${b.map((v, h) => `L${sx(h).toFixed(1)},${sy(v).toFixed(1)}`).reverse().join('')}Z`;
+    const dp = last >= 1000 ? 0 : last >= 100 ? 1 : 2;
+    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${num(S.M)} simulated paths of the price over the ${esc(tdWords(F))} ahead">`;
+    ticks(pv(lo), pv(hi), 5).forEach((v) => { const y = sy(v / last - 1); g += `<line class="mv-g" x1="${Lm}" x2="${W - Rr}" y1="${y}" y2="${y}"/><text class="mv-t" x="${Lm - 6}" y="${y + 4}" text-anchor="end">${esc(num(v, dp))}</text>`; });
+    spaced([[sx(0), R.t >= 0 ? mdy(R.A.days[AN.t]) : 'today', 'start', 1], [sx(F), dayX(F), 'end', 1], ...aMarks(F).filter(([h]) => h < F).map(([h]) => [sx(h), dayX(h), 'middle'])], o.narrow ? 76 : 90)
+      .forEach(([x, l, an]) => { g += `<text class="mv-t" x="${x}" y="${Hh - B + 16}" text-anchor="${an}">${esc(l)}</text>`; });
+    g += `<line x1="${Lm}" x2="${W - Rr}" y1="${sy(0)}" y2="${sy(0)}" style="stroke:${COL.mute};stroke-width:1;stroke-dasharray:3 3"/>`;
+    g += `<path d="${area(S.band.q95, S.band.q5)}" style="fill:${COL.band};opacity:.12"/><path d="${area(S.band.q75, S.band.q25)}" style="fill:${COL.band};opacity:.2"/>`;
+    S.samples.forEach((p) => { g += `<path d="${lineS(p)}" style="fill:none;stroke:${COL.band};stroke-width:.7;opacity:.18"/>`; });
+    const ev = AN.every[F];
+    if (ev) g += `<line x1="${sx(0)}" y1="${sy(0)}" x2="${sx(F)}" y2="${sy(ev.med)}" style="stroke:${COL.all};stroke-width:1.5;stroke-dasharray:5 4"/>`;
+    g += `<path d="${lineS(S.band.q50)}" style="fill:none;stroke:${COL.band};stroke-width:2.6"/>`;
+    if (AN.actual.length > 1) g += `<path d="${AN.actual.map((v, h) => `${h ? 'L' : 'M'}${sx(h).toFixed(1)},${sy(Math.expm1(v)).toFixed(1)}`).join('')}" style="fill:none;stroke:${COL.warn};stroke-width:2.2"/>`;
+    g += `<circle cx="${sx(0)}" cy="${sy(0)}" r="4.5" style="fill:${COL.ink};stroke:#fff;stroke-width:1.5"/>`;
+    const lab = (v, txt, bold) => { g += `<text class="mv-l" x="${sx(F) + 6}" y="${sy(v) + 4}" style="${bold ? 'font-weight:650;fill:' + COL.band : ''}">${esc(txt)}</text>`; };
+    lab(S.band.q95[F], `${num(pv(S.band.q95[F]), dp)} (95%)`); lab(S.band.q50[F], `${num(pv(S.band.q50[F]), dp)}`, true); lab(S.band.q5[F], `${num(pv(S.band.q5[F]), dp)} (5%)`);
+    return g + '</svg>';
+  }
+  // "May 25 – Aug 24, 2017", or both years when they differ
+  const spanDates = (a, b) => (a.slice(0, 4) === b.slice(0, 4) ? `${mdy(a).replace(/, \d{4}$/, '')} – ${mdy(b)}` : `${mdy(a)} – ${mdy(b)}`);
+  function analogTable(R, o, AN) {
+    const L = AN.L, marks = aMarks(AN.F), shape = AN.shape, D = R.A.days;
+    let h = `<div class="mv-wrap"><table class="mv-tbl"><thead><tr><th>The stretch</th><th class="n">Its move</th><th class="n">Alike: r${shape ? '' : ' · gap'}</th>${marks.map(([, l]) => `<th class="n">${esc(l)} after</th>`).join('')}<th class="n">Worst · best on the way</th></tr></thead><tbody>`;
+    h += `<tr class="now"><td><b>${esc(spanDates(D[AN.t - L], D[AN.t]))}</b> <span class="mv-chip hot">looked at</span></td><td class="n ${tone(-AN.now[0])}">${sp(Math.expm1(-AN.now[0]))}</td><td></td>`
+      + marks.map(([hz]) => { const v = AN.actual[hz]; return `<td class="n ${tone(v)}">${v != null ? sp(Math.expm1(v)) : '—'}</td>`; }).join('') + '<td></td></tr>';
+    AN.items.forEach((x, i) => {
+      h += `<tr><td><span class="mv-sub" style="display:inline">${i + 1}.</span> ${esc(spanDates(D[x.j - L], D[x.j]))}</td><td class="n ${tone(x.move)}">${sp(x.move)}</td><td class="n">${num(x.corr, 2)}${shape ? '' : ` · ${num(x.d * 100, 1)}%`}</td>`
+        + marks.map(([hz]) => { const v = Math.expm1(x.fwd[hz]); return `<td class="n ${tone(v)}">${sp(v)}</td>`; }).join('') + `<td class="n"><span class="mv-down">${sp(x.worst)}</span> · <span class="mv-up">${sp(x.best)}</span></td></tr>`;
+    });
+    const row = (lab, f, cls) => `<tr class="grp"><td>${lab}</td><td></td><td></td>${marks.map(([hz]) => { const v = f(hz); return `<td class="n ${cls === true ? tone(v) : ''}">${v == null ? '—' : cls === 'share' ? share(v) : sp(v)}</td>`; }).join('')}<td></td></tr>`;
+    h += row(`Expected (average${R.hl ? ', older days counting less' : ''})`, (hz) => AN.E.mean[hz], true) + row('Median', (hz) => AN.E.med[hz], true)
+      + row('Higher', (hz) => AN.items.reduce((a, x) => a + (x.fwd[hz] > 0 ? x.w : 0), 0) / (AN.W || 1), 'share')
+      + row('Every day: average', (hz) => (AN.every[hz] ? AN.every[hz].mean : null), true) + row('Every day: higher', (hz) => (AN.every[hz] ? AN.every[hz].up : null), 'share');
+    return h + '</tbody></table></div>';
+  }
+  function analogSection(R, o, doc) {
+    const AN = R.an;
+    if (!AN) return '';
+    const pill = (k, v, l, on) => `<button type="button" class="mv-pill${on ? ' on' : ''}" data-mv="${k}" data-v="${esc(v)}">${esc(l)}</button>`;
+    let h = `<h3>Similar stretches in its history</h3>`;
+    h += `<div class="mv-bar"><div><label>Stretch: the last</label><div class="mv-pills">${ALEN.map(([v, l]) => pill('alen', v, l, AN.L === v)).join('')}</div></div>`
+      + `<div><label>Then</label><div class="mv-pills">${ALEN.map(([v, l]) => pill('afwd', v, l, AN.F === v)).join('')}</div></div>`
+      + `<div><label>How many</label><div class="mv-pills">${AKS.map((v) => pill('ak', v, String(v), AN.K === v)).join('')}</div></div>`
+      + `<div><label>Alike in</label><div class="mv-pills">${pill('amatch', 'size', 'size and shape', !AN.shape)}${pill('amatch', 'shape', 'shape only', AN.shape)}</div></div></div>`;
+    if (AN.error) return h + `<p class="mv-sub">${esc(AN.error)}</p>`;
+    const name = esc(doc.ticker || doc.name), L = AN.L, F = AN.F, E = AN.E, nI = AN.items.length, upN = AN.items.filter((x) => x.fwd[F] > 0).length;
+    const ev = AN.every[F], cN = R.c[R.c.length - 1], last = (R.A.last || doc.last) * Math.exp(R.c[AN.t] - cN);
+    h += `<p class="mv-sub">The ${words(nI, 'stretch')} of ${esc(tdWords(L))} in ${name}'s history since ${esc(my(AN.from))} whose path was most like the ${esc(tdWords(L))} to ${esc(mdy(R.A.days[AN.t]))}${AN.shape ? ' in shape (each scaled to its own swings)' : ' in size and shape'}, none overlapping, each ended before that stretch began, and what followed each over the next ${esc(tdWords(F))}: green when higher at the end, red when lower; the thick blue line is the expected path (their average${R.hl ? ', older days counting less' : ''}), the dotted one the median, the blue band the middle half; grey, the range of every ${esc(tdWords(F))} in its history (5–95%).${AN.actual.length > 1 ? ` Orange: what followed ${esc(mdy(R.A.days[AN.t]))}.` : ''}</p>`;
+    h += `<p class="mv-head" style="font-size:16px">${num(upN)} of ${num(nI)} were higher ${esc(tdWords(F))} later. Expected after a stretch like this: ${aMarks(F).filter(([hz]) => hz < E.mean.length).map(([hz, l]) => `${esc(l)} <b class="${tone(E.mean[hz])}">${sp(E.mean[hz])}</b>`).join(' · ')}`
+      + `${ev ? ` <span class="mv-sub" style="display:inline">(every ${esc(tdWords(F))}: ${sp(ev.mean)} on average, ${share(ev.up)} higher)</span>` : ''}.</p>`;
+    h += analogSvg(R, o, AN);
+    h += `<div class="mv-legend"><span><b style="background:${COL.ink}"></b>the stretch looked at</span><span><b style="background:${COL.up}"></b><b style="background:${COL.down}"></b>what followed each stretch like it</span><span><b style="background:${COL.band}"></b>expected (average)</span><span><b style="background:none;border-top:2px dotted ${COL.ink};height:0;width:14px;border-radius:0"></b>median</span><span><b style="background:${COL.band};opacity:.3"></b>middle half</span><span><b style="background:${COL.all};opacity:.3"></b>every ${esc(tdWords(F))}, 5–95%</span>${AN.actual.length > 1 ? `<span><b style="background:${COL.warn}"></b>what followed this day</span>` : ''}</div>`;
+    h += analogTable(R, o, AN);
+    const S = AN.sim;
+    if (S && fin(last)) {
+      const pv = (v) => last * (1 + v), dp = last >= 1000 ? 0 : last >= 100 ? 1 : 2;
+      h += `<h3>A simulation of the ${esc(tdWords(F))} ahead</h3>`;
+      h += `<p class="mv-sub">${num(S.M)} paths, each built a week at a time: every week is one drawn at random from the ${esc(tdWords(F))} after one of the ${words(nI, 'stretch')} above${R.hl ? ' (a stretch by its weight)' : ''}, so their good and bad weeks are mixed into many more paths than the ${num(nI)} alone. The bands hold the middle 50% and 90% of the paths at each day; a few of them are drawn thin; the dashed grey line is the median of every ${esc(tdWords(F))} in its history; prices from the close of ${esc(mdy(R.A.days[AN.t]))} (${esc(num(last, dp))}).</p>`;
+      h += `<p class="mv-head" style="font-size:16px">In ${esc(tdWords(F))}: median <b class="${tone(S.band.q50[F])}">${esc(num(pv(S.band.q50[F]), dp))}</b> (${sp(S.band.q50[F])}); 90% of the paths between ${esc(num(pv(S.band.q5[F]), dp))} and ${esc(num(pv(S.band.q95[F]), dp))}. Higher than today in <b>${share(S.up)}</b> of them; on the way, ${share(S.down10)} fell 10% or more at some point and ${share(S.up10)} rose 10% or more.</p>`;
+      h += simSvg(R, o, AN, S, last);
+      h += `<div class="mv-legend"><span><b style="background:${COL.band}"></b>median path</span><span><b style="background:${COL.band};opacity:.35"></b>middle half</span><span><b style="background:${COL.band};opacity:.15"></b>90% of the paths</span><span><b style="background:none;border-top:2px dashed ${COL.all};height:0;width:14px;border-radius:0"></b>every ${esc(tdWords(F))}: median</span>${AN.actual.length > 1 ? `<span><b style="background:${COL.warn}"></b>what happened</span>` : ''}</div>`;
+    }
+    return h;
   }
 
   /* ---------- how long it took: climbing back, a new high ---------- */
@@ -840,8 +1097,9 @@
   }
 
   /* ---------- a picture to share: the chosen panels in one PNG ---------- */
-  const PANELS = [['now', 'Now'], ['paths', 'Each case'], ['1', 'Next day'], ['5', '1 week'], ['10', '2 weeks'], ['21', '1 month'], ['63', '1 quarter'], ['back', 'Climb back'], ['high', 'New high'], ['vol', 'Volatility']];
-  const canDraw = (R, k) => ((k !== 'back' && k !== 'high') || !!R.rec) && (k !== 'vol' || !R.volIdx);
+  const PANELS = [['now', 'Now'], ['paths', 'Each case'], ['analog', 'Similar stretches'], ['sim', 'Simulation'], ['1', 'Next day'], ['5', '1 week'], ['10', '2 weeks'], ['21', '1 month'], ['63', '1 quarter'], ['back', 'Climb back'], ['high', 'New high'], ['vol', 'Volatility']];
+  const canDraw = (R, k) => ((k !== 'back' && k !== 'high') || !!R.rec) && (k !== 'vol' || !R.volIdx)
+    && (k !== 'analog' || !!(R.an && !R.an.error && R.an.items.length)) && (k !== 'sim' || !!(R.an && R.an.sim));
   const PC = { bg: '#fcfcfb', card: '#ffffff', ink: '#1d1d1b', ink2: '#3d3c39', muted: '#6b6a66', line: '#e3e1dc', up: '#17734a', down: '#c0392b', band: '#2a78d6', warn: '#d9822b', calm: '#5b7fa6', grey: '#9a9893' };
   // a Gaussian kernel density of sorted values over n points from lo to hi (Silverman's bandwidth); with weights wts
   // (in the order of vals), each value counts by its weight and the bandwidth goes by the equal days they are worth
@@ -994,7 +1252,7 @@
     label(x, `now ${num(V.now * 100, 0)}% a year · ${rankWords(V.pct)} · typical ${num(V.med * 100, 0)}%${V.vix && Number.isFinite(V.vixNow) ? ` · VIX ${num(V.vixNow * 100, 1)}` : ''}`, P.x + P.w, P.y + 10, PC.band, pngFont(13, 650), 'right');
   }
   function drawPaths(x, box, R, o) {
-    const which = o.set === 'ext' ? 'ext' : 'sim', cs = cases(R, o, which), E = expectedOf(cs), now = nowPath(R);
+    const which = o.set === 'ext' ? 'ext' : 'sim', cs = cases(R, o, which), E = expectedOf(cs, caseW(R, cs)), now = nowPath(R);
     const P = card(x, box.x, box.y, box.w, box.h, `Each ${which === 'sim' ? 'day like it' : 'day at least as ' + (R.side > 0 ? 'high' : 'low')} and the path after it`,
       `${num(cs.length)} cases, dashed (green ended up, red down) · thick blue: the expected path (average) · dotted: median${now ? ' · orange: this day' : ''}`);
     const pts = []; cs.forEach((c) => c.path.forEach((v) => pts.push(v)));
@@ -1014,7 +1272,7 @@
     const op = Math.max(0.12, Math.min(0.75, 2.6 / Math.sqrt(cs.length)));
     x.save(); x.beginPath(); x.rect(L, top, Wd + 2, bot - top); x.clip();
     x.save(); x.setLineDash([4, 3]); x.lineWidth = 1.1;
-    cs.forEach((c) => { if (c.path.length < 2) return; x.globalAlpha = op; x.strokeStyle = c.path[c.path.length - 1] >= 0 ? PC.up : PC.down; path(c.path); x.stroke(); });
+    cs.forEach((c) => { if (c.path.length < 2) return; x.globalAlpha = op * (R.wt ? 0.15 + 0.85 * R.wt[c.j] : 1); x.strokeStyle = c.path[c.path.length - 1] >= 0 ? PC.up : PC.down; path(c.path); x.stroke(); });
     x.restore();
     if (E.med.length > 1) { x.save(); x.setLineDash([1.5, 3]); x.strokeStyle = PC.ink; x.lineWidth = 1.4; path(E.med); x.stroke(); x.restore(); }
     if (E.mean.length > 1) { x.strokeStyle = PC.band; x.lineWidth = 3; path(E.mean); x.stroke(); }
@@ -1027,6 +1285,74 @@
       label(x, sp(E.mean[h]), h === PATH_D ? X + 8 : X, Y - 9, PC.band, pngFont(13, 650), h === PATH_D ? 'left' : 'center');
     });
   }
+  // the picture's similar stretches and simulation (as the view draws them)
+  function drawAnalog(x, box, R, o) {
+    const AN = R.an, L = AN.L, F = AN.F, E = AN.E;
+    const P = card(x, box.x, box.y, box.w, box.h, `The ${words(AN.items.length, 'stretch')} most like the last ${tdWords(L)}, and the ${tdWords(F)} after`,
+      `black: the last ${tdWords(L)} · green / red: what followed each · thick blue: expected (average) · dotted: median · grey: every ${tdWords(F)}, 5–95%${AN.actual.length > 1 ? ' · orange: what happened' : ''}`);
+    const ex = Math.expm1, pts = [];
+    AN.items.forEach((it) => { it.back.forEach((v) => pts.push(ex(v))); it.fwd.forEach((v) => pts.push(ex(v))); }); AN.now.forEach((v) => pts.push(ex(v)));
+    const sv = Float64Array.from(pts).sort();
+    let lo = Math.min(quantile(sv, 1), 0, ...E.q25), hi = Math.max(quantile(sv, 99), 0, ...E.q75); const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const Lx = P.x + 46, Wd = P.w - 46 - 76, top = P.y + 8, bot = P.y + P.h - 22;
+    const sx = (h) => Lx + (h + L) / (L + F) * Wd, sy = (v) => bot - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * (bot - top);
+    x.font = pngFont(12); x.fillStyle = PC.muted; x.strokeStyle = PC.line; x.lineWidth = 1;
+    ticks(lo * 100, hi * 100, 5).forEach((v) => { x.beginPath(); x.moveTo(Lx, sy(v / 100)); x.lineTo(Lx + Wd, sy(v / 100)); x.stroke(); x.textAlign = 'right'; x.fillText(sgn(v, Math.abs(v) < 1 && v !== 0 ? 1 : 0), Lx - 6, sy(v / 100) + 4); });
+    spaced([[sx(-L), dayX(-L), 'left', 1], [sx(0), R.t >= 0 ? mdy(R.A.days[AN.t]) : 'today', 'center', 1], [sx(F), dayX(F), 'right', 1], ...aMarks(F).filter(([h]) => h < F).map(([h]) => [sx(h), dayX(h), 'center'])], 96)
+      .forEach(([X, l, an]) => { x.textAlign = an; x.fillText(l, X, P.y + P.h - 4); });
+    x.textAlign = 'left';
+    vline(x, sx(0), top, bot, PC.ink, [3, 3]);
+    x.save(); x.beginPath(); x.rect(Lx, top, Wd + 2, bot - top); x.clip();
+    const ev = AN.every[F];
+    if (ev) { x.beginPath(); x.moveTo(sx(0), sy(0)); x.lineTo(sx(F), sy(ev.q95)); x.lineTo(sx(F), sy(ev.q5)); x.closePath(); x.globalAlpha = 0.12; x.fillStyle = PC.grey; x.fill(); x.globalAlpha = 1; }
+    if (E.mean.length > 1) { x.beginPath(); E.q75.forEach((v, h) => (h ? x.lineTo(sx(h), sy(v)) : x.moveTo(sx(h), sy(v)))); for (let h = E.q25.length - 1; h >= 0; h--) x.lineTo(sx(h), sy(E.q25[h])); x.closePath(); x.globalAlpha = 0.14; x.fillStyle = PC.band; x.fill(); x.globalAlpha = 1; }
+    const path = (arr, off, log) => { x.beginPath(); Array.from(arr).forEach((v, k) => { const y = sy(log ? ex(v) : v); if (k) x.lineTo(sx(k + off), y); else x.moveTo(sx(k + off), y); }); };
+    const op = Math.max(0.2, Math.min(0.8, 2.4 / Math.sqrt(AN.items.length)));
+    AN.items.forEach((it) => {
+      const fade = R.wt ? 0.15 + 0.85 * it.w : 1;
+      x.globalAlpha = op * 0.8 * fade; x.strokeStyle = PC.grey; x.lineWidth = 1; path(it.back, -L, true); x.stroke();
+      x.globalAlpha = op * fade; x.strokeStyle = it.fwd[F] >= 0 ? PC.up : PC.down; x.lineWidth = 1.3; path(it.fwd, 0, true); x.stroke();
+    });
+    x.globalAlpha = 1;
+    if (E.med.length > 1) { x.save(); x.setLineDash([1.5, 3]); x.strokeStyle = PC.ink; x.lineWidth = 1.4; path(E.med, 0, false); x.stroke(); x.restore(); }
+    if (E.mean.length > 1) { x.strokeStyle = PC.band; x.lineWidth = 3; path(E.mean, 0, false); x.stroke(); }
+    x.strokeStyle = PC.ink; x.lineWidth = 2.4; path(AN.now, -L, true); x.stroke();
+    if (AN.actual.length > 1) { x.strokeStyle = PC.warn; x.lineWidth = 2.4; path(AN.actual, 0, true); x.stroke(); }
+    x.restore();
+    aMarks(F).forEach(([h]) => {
+      if (h >= E.mean.length) return;
+      const X = sx(h), Y = sy(E.mean[h]);
+      x.beginPath(); x.arc(X, Y, 4, 0, Math.PI * 2); x.fillStyle = PC.band; x.fill();
+      if (h === F || h >= 21) label(x, sp(E.mean[h]), h === F ? X + 8 : X, Y - 9, PC.band, pngFont(13, 650), h === F ? 'left' : 'center');
+    });
+  }
+  function drawSim(x, box, R, o, doc) {
+    const AN = R.an, S = AN.sim, F = S.F, cN = R.c[R.c.length - 1], last = (R.A.last || doc.last) * Math.exp(R.c[AN.t] - cN), dp = last >= 1000 ? 0 : last >= 100 ? 1 : 2;
+    const pv = (v) => last * (1 + v);
+    const P = card(x, box.x, box.y, box.w, box.h, `A simulation: ${num(S.M)} paths over the next ${tdWords(F)}, from what followed the stretches like it`,
+      `median ${num(pv(S.band.q50[F]), dp)} (${sp(S.band.q50[F])}) · 90% of paths ${num(pv(S.band.q5[F]), dp)}–${num(pv(S.band.q95[F]), dp)} · higher in ${share(S.up)} · fell 10% on the way in ${share(S.down10)}, rose 10% in ${share(S.up10)}`);
+    let lo = Math.min(...S.band.q5, 0), hi = Math.max(...S.band.q95, 0); const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const Lx = P.x + 60, Wd = P.w - 60 - 100, top = P.y + 8, bot = P.y + P.h - 22;
+    const sx = (h) => Lx + h / F * Wd, sy = (v) => bot - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * (bot - top);
+    x.font = pngFont(12); x.fillStyle = PC.muted; x.strokeStyle = PC.line; x.lineWidth = 1;
+    ticks(pv(lo), pv(hi), 5).forEach((v) => { const Y = sy(v / last - 1); x.beginPath(); x.moveTo(Lx, Y); x.lineTo(Lx + Wd, Y); x.stroke(); x.textAlign = 'right'; x.fillText(num(v, dp), Lx - 6, Y + 4); });
+    spaced([[sx(0), R.t >= 0 ? mdy(R.A.days[AN.t]) : 'today', 'left', 1], [sx(F), dayX(F), 'right', 1], ...aMarks(F).filter(([h]) => h < F).map(([h]) => [sx(h), dayX(h), 'center'])], 100)
+      .forEach(([X, l, an]) => { x.textAlign = an; x.fillText(l, X, P.y + P.h - 4); });
+    x.textAlign = 'left';
+    const band = (a, b, al) => { x.beginPath(); a.forEach((v, h) => (h ? x.lineTo(sx(h), sy(v)) : x.moveTo(sx(h), sy(v)))); for (let h = b.length - 1; h >= 0; h--) x.lineTo(sx(h), sy(b[h])); x.closePath(); x.globalAlpha = al; x.fillStyle = PC.band; x.fill(); x.globalAlpha = 1; };
+    band(S.band.q95, S.band.q5, 0.13); band(S.band.q75, S.band.q25, 0.22);
+    x.lineWidth = 0.7; x.strokeStyle = PC.band;
+    S.samples.forEach((p) => { x.globalAlpha = 0.18; x.beginPath(); p.forEach((v, h) => (h ? x.lineTo(sx(h), sy(v)) : x.moveTo(sx(h), sy(v)))); x.stroke(); });
+    x.globalAlpha = 1;
+    const ev = AN.every[F];
+    if (ev) { x.save(); x.setLineDash([5, 4]); x.strokeStyle = PC.grey; x.lineWidth = 1.5; x.beginPath(); x.moveTo(sx(0), sy(0)); x.lineTo(sx(F), sy(ev.med)); x.stroke(); x.restore(); }
+    x.strokeStyle = PC.band; x.lineWidth = 2.8; x.beginPath(); S.band.q50.forEach((v, h) => (h ? x.lineTo(sx(h), sy(v)) : x.moveTo(sx(h), sy(v)))); x.stroke();
+    if (AN.actual.length > 1) { x.strokeStyle = PC.warn; x.lineWidth = 2.4; x.beginPath(); AN.actual.forEach((v, h) => (h ? x.lineTo(sx(h), sy(Math.expm1(v))) : x.moveTo(sx(h), sy(Math.expm1(v))))); x.stroke(); }
+    x.beginPath(); x.arc(sx(0), sy(0), 4.5, 0, Math.PI * 2); x.fillStyle = PC.ink; x.fill();
+    label(x, `${num(pv(S.band.q95[F]), dp)} (95%)`, sx(F) + 6, sy(S.band.q95[F]) + 4, PC.ink2, pngFont(12.5));
+    label(x, num(pv(S.band.q50[F]), dp), sx(F) + 6, sy(S.band.q50[F]) + 4, PC.band, pngFont(13.5, 650));
+    label(x, `${num(pv(S.band.q5[F]), dp)} (5%)`, sx(F) + 6, sy(S.band.q5[F]) + 4, PC.ink2, pngFont(12.5));
+  }
   async function picture(R, o, doc, picks, hub) {
     if (typeof document === 'undefined') return null;
     if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) { /* draw with what is loaded */ } }
@@ -1034,7 +1360,7 @@
     if (!order.length) return null;
     const Wd = 1200, M = 32, G = 22, full = Wd - 2 * M, half = (full - G) / 2, ph = 300;
     const rows = []; let rest = order.slice();
-    for (const wide of ['now', 'paths']) if (rest[0] === wide) { rows.push([wide]); rest = rest.slice(1); }
+    for (const wide of ['now', 'paths', 'analog', 'sim']) if (rest[0] === wide) { rows.push([wide]); rest = rest.slice(1); }
     while (rest.length) { rows.push(rest.length === 1 ? [rest[0]] : [rest[0], rest[1]]); rest = rest.slice(2); }
     const headH = R.hl ? 124 : 104, footH = 64, Hh = headH + rows.length * (ph + G) + footH;
     const c = document.createElement('canvas'), sc = 2; c.width = Wd * sc; c.height = Hh * sc;
@@ -1060,6 +1386,8 @@
         const box = { x: M + i * (half + G), y, w: row.length === 1 ? full : half, h: ph };
         if (k === 'now') drawNow(x, box, R, o);
         else if (k === 'paths') drawPaths(x, box, R, o);
+        else if (k === 'analog') drawAnalog(x, box, R, o);
+        else if (k === 'sim') drawSim(x, box, R, o, doc);
         else if (k === 'back' || k === 'high') drawRecovery(x, box, R, o, k, doc);
         else if (k === 'vol') drawVol(x, box, R, o, doc);
         else drawHorizon(x, box, R, o, +k, o.set === 'ext' ? 'ext' : 'sim');
@@ -1096,6 +1424,7 @@
       + `<div><label>Compared with every day</label><div class="mv-pills"><button type="button" class="mv-pill${which === 'sim' ? ' on' : ''}" data-mv="set" data-v="sim">days like it</button><button type="button" class="mv-pill${which === 'ext' ? ' on' : ''}" data-mv="set" data-v="ext">at least as ${R.side > 0 ? 'high' : 'low'}</button></div></div></div>`;
     h += nextSvg(R, st, st.h, which) + `<div class="mv-legend"><span><b style="background:${COL.up};opacity:.6"></b><b style="background:${COL.down};opacity:.6"></b>after the ${which === 'sim' ? 'days like it' : 'more extreme days'} (share of those days)</span><span><b style="background:none;border:1.5px solid ${COL.ink}"></b>after every day</span>${R.eq ? `<span><b style="background:none;border-top:2px dashed ${COL.band};height:0"></b>${which === 'sim' ? 'days like it' : 'the more extreme days'}, unweighted</span>` : ''}${fin(R.actual[st.h]) ? `<span><b style="background:${COL.warn}"></b>what happened after this day</span>` : ''}</div>`;
     h += casesSection(R, st, doc, news);
+    h += analogSection(R, st, doc);
     h += recoverySection(R, st, doc);
     h += volSection(R, st, doc);
     h += `<h3>When ${st.measure === 'level' ? 'levels' : st.measure === 'rv' ? 'volatility' : 'moves'} like this happened</h3><p class="mv-sub">Every ${esc(what(st))} over time; the coloured dots are the days like this one (larger) and the days at least as ${R.side > 0 ? 'high' : 'low'}. Big moves come in clusters, in volatile years.</p>${timeSvg(R, st)}`;
@@ -1103,6 +1432,8 @@
       + `<p><b>The move.</b> The close-to-close change over one day, a week (5 trading days) or a month (21), on prices adjusted for dividends and splits (the indices: price only). Measured against its own volatility, it is divided by the standard deviation of the 63 daily returns before the move began (scaled to its length), so a 3% day counts for more in a calm stretch than in a wild one. Beyond the market, it is the move less beta times the S&P 500's move over the same days, beta from the year of daily returns before it.</p>`
       + `<p><b>The percentile.</b> Its mid-rank among every move of the same length on file: 2.5 means 2.5% of moves were lower. "Days like it" are those within the chosen number of percentile points of it; "at least as high / low" those as far out or further on the same side.</p>`
       + `<p><b>What came next.</b> The returns over the next 1, 5, 10 and 21 trading days from the close of each chosen day. Moves longer than a day overlap, and big days cluster, so neighbouring days are not independent tries: the episodes count each cluster once, and "better / worse than usual" asks whether the mean differs from every day's by more than twice its standard error over the episodes. With "only before that day", a past day is judged only on the history known then.</p>`
+      + `<p><b>Similar stretches.</b> The path of log closes over the last 1, 3 or 6 months or year is set against every stretch as long in the asset's history that ended, with the months after it, before that one began: the gap is the root mean square distance between the two paths from their first day (size and shape), or between the two paths each less its mean over its spread (shape only, so a calm year can match a wild one). The closest, no two overlapping, are the stretches like it; "r" is the correlation of the two paths. What to expect is their average path after (weighted when older days count less), against every stretch's.</p>`
+      + `<p><b>The simulation.</b> ${num(SIMS)} paths over the months ahead, each built a week (five trading days in a row) at a time: for each week, one of the stretches like it is drawn at random (by weight, when older days count less) and then any week of the months after it. Their weeks are mixed into many more paths than the few analogs alone, and an odd week (a crash in one of them) spreads over every day ahead rather than falling on the day it came. The bands are the 25–75% and 5–95% of the paths at each day; a past day is simulated only from the stretches before it, and what happened is drawn in orange. Seeded, so the same day gives the same paths.</p>`
       + `<p><b>How long it took.</b> From each chosen day, the trading days until the close was back at the close before the move (for a rise: back down to it), and until it was back at the highest close on file up to that day. Days still waiting on the last day on file count for as long as they were watched (the Kaplan–Meier estimate), so recent days do not look like failures; "not back on file" counts them.</p>`
       + `<p><b>Older days counting less.</b> Markets change, so the recent past may say more. With a half-life of 5 years, a day 5 years from the one looked at counts half as much, 10 years a quarter, 20 years a sixteenth. Every number is then weighted: the percentile (the share of weight below the move), the days like it (within the band of weighted percentiles), the medians, shares and ranges of what followed, how long it took (a weighted Kaplan–Meier) and the volatility after. "Worth ≈" is how many days of full weight the weights add up to, (Σw)² / Σw²: the fewer, the noisier. The dashed lines and "unweighted" figures count every day the same.</p>`
       + `<p><b>Limits.</b> Each company's and ETF's daily history from its first trading day on file (1962 for the oldest), the S&P 500 index from 1928. Industry composites are equal-weighted and hold today's companies only, which flatters their past. History rhymes rather than repeats; this describes what followed, it does not forecast. Not investment advice.</p></details>`;
@@ -1125,7 +1456,7 @@
       return;
     }
     const st = Object.assign({ key: home, w: 1, measure: homeDoc.kind === 'volatility' ? 'level' : 'raw', mode: 'latest', date: '', whatif: '', band: 2.5, before: false,
-      h: 21, set: 'sim', rk: 'back', outcome: 'spx', vreg: 'any', hl: 0, png: ['now', 'paths', '5', '21', '63', 'back'] }, opts.state || {});
+      h: 21, set: 'sim', rk: 'back', outcome: 'spx', vreg: 'any', hl: 0, alen: 63, afwd: 63, ak: 10, amatch: 'size', png: ['now', 'paths', '5', '21', '63', 'back'] }, opts.state || {});
     const egOf = (m) => (m === 'vol' ? -3 : m === 'level' ? 30 : m === 'rv' ? 60 : -5);
     const docs = { [home]: homeDoc }, dec = {};
     const assets = [[home, homeDoc.kind === 'stock' ? homeDoc.ticker || home : homeDoc.name, homeDoc.kind === 'stock' ? 'this company' : homeDoc.kind]];
@@ -1148,17 +1479,21 @@
       let Mk = null, Out = null, Vix = null;
       if (st.measure === 'beta') { Mk = await load('SPY'); if (!Mk) st.measure = 'raw'; }
       if (volIdx && st.outcome !== 'self' && doc.links && doc.links.outcome) Out = await load(doc.links.outcome);
-      if (!volIdx && ['market', 'index'].includes(doc.kind)) Vix = await load('IDX-VIX');      // implied next to realized
+      if (!volIdx && (doc.kind === 'market' || (doc.kind === 'index' && (!doc.group || doc.group === 'us')))) Vix = await load('IDX-VIX');      // the S&P 500's implied next to US realized
       if (!here()) return;
       st.narrow = (el.clientWidth || 800) < 600;
       const R = analyze(A, st, Mk, Out);
       R.vix = Vix;
       R.volIdx = volIdx;
       if (R.hl && !R.error) { const E = analyze(A, Object.assign({}, st, { hl: 0 }), Mk, Out); if (!E.error) R.eq = E; }   // every day the same, to compare
+      if (!R.error) {                                   // similar stretches and the simulation from what followed them
+        R.an = analogs(R, st);
+        if (!R.an.error && R.an.items.length) R.an.sim = simulate(R.an, SIMS, seedOf(`${st.key}|${R.A.days[R.an.t]}|${R.an.L}|${R.an.F}|${R.an.K}|${st.amatch}|${st.hl}`));
+      }
       const names = assets.map(([k, l, role]) => [k, l || (homeDoc.names || {})[k] || (docs[k] && docs[k].name) || k, role]);
       let h = '<div class="mv">';
       if (names.length > 1) h += `<div class="mv-assets" role="group" aria-label="What to look at">${names.map(([k, l, role]) => `<button type="button" class="mv-asset${k === st.key ? ' on' : ''}" data-mva="${esc(k)}"><small>${esc(role)}</small>${esc(l)}</button>`).join('')}</div>`;
-      h += `<p class="mv-sub">${esc(doc.name || doc.key)} · daily closes ${esc(mdy(doc.d0))} – ${esc(mdy(doc.as_of))}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''}${doc.kind === 'index' ? ' · price only' : ''}</p>`;
+      h += `<p class="mv-sub">${esc(doc.name || doc.key)} · daily closes ${esc(mdy(doc.d0))} – ${esc(mdy(doc.as_of))}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''}${doc.kind === 'index' ? (doc.group === 'world' ? ' · price only, in its own currency' : ' · price only') : ''}</p>`;
       let news = null;
       if (doc.kind === 'stock') { try { news = await get(`${hub}data/research/paths/moves/n/${encodeURIComponent(st.key)}.json`); } catch (e) { news = null; } }
       if (!here()) return;
@@ -1168,7 +1503,7 @@
       el.querySelectorAll('[data-mv]').forEach((b) => {
         b.onclick = () => {
           const k = b.dataset.mv, v = b.dataset.v;
-          st[k] = k === 'w' || k === 'h' || k === 'band' || k === 'hl' ? +v : k === 'before' ? v === '1' : v;
+          st[k] = ['w', 'h', 'band', 'hl', 'alen', 'afwd', 'ak'].includes(k) ? +v : k === 'before' ? v === '1' : v;
           if (k === 'mode' && v === 'date' && !st.date) st.date = (dec[st.key] || A).days[Math.max(0, (dec[st.key] || A).days.length - 22)];
           if (k === 'mode' && v === 'whatif' && !fin(st.whatif)) st.whatif = egOf(st.measure);
           if (k === 'measure' && st.mode === 'whatif') st.whatif = egOf(v);
@@ -1203,7 +1538,7 @@
     await draw();
   }
 
-  const api = { render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb };
+  const api = { render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf };
   if (typeof window !== 'undefined') window.MovesView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

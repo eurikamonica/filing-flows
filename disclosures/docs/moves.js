@@ -1,11 +1,15 @@
 /* Move odds — the hub tab: how rare each asset's latest move is in its own history, and what followed moves like it.
    Views: the market and its sectors (a card each: the latest move and where it ranks; the one picked analysed below),
-   industries (every SIC composite, the most extreme first), stocks today (the valued companies' most extreme moves either
-   way, or the most unusual against their own volatility) and one ticker. The analysis is moves-view.js, shared with the
+   indices & ETFs (every index — US, the world's, volatility — and ETF on file, by group), industries (every SIC
+   composite, the most extreme first), stocks today (the valued companies' most extreme moves either way, or the most
+   unusual against their own volatility) and one ticker. The analysis is moves-view.js, shared with the
    company pages. Data: data/research/paths/moves/index.json and a/<KEY>.json (app/moves.py, branch research-paths).
-   Deep links: #moves, #moves/industries, #moves/stocks, #moves/SPY, #moves/SIC-3674, #moves/NVDA. */
+   Deep links: #moves, #moves/all, #moves/industries, #moves/stocks, #moves/SPY, #moves/IDX-N225, #moves/SIC-3674, #moves/NVDA. */
 const mvStore={};
-const MV_VIEWS=[['market','Market & sectors'],['industries','Industries'],['stocks','Stocks today'],['one','One ticker']];
+const MV_VIEWS=[['market','Market & sectors'],['all','Indices & ETFs'],['industries','Industries'],['stocks','Stocks today'],['one','One ticker']];
+const MV_GROUPS=[['market','The market (ETFs)'],['us','US indices'],['world','World indices — own currency, price only'],['sector','Sector ETFs'],['style','Styles & factors'],
+ ['industry','Industry & theme ETFs'],['country','Country ETFs'],['broad','World & total-market ETFs'],['bonds','Bond ETFs'],['commodities','Commodities & the dollar'],['volatility','Volatility indices']];
+const MV_CORE=['IDX-GSPC','SPY','QQQ','IDX-NDX','DIA','IDX-DJI','IWM','IDX-RUT','RSP','MDY','IDX-IXIC'];
 const MV_SORTS=[['falls','Biggest falls for each stock'],['rises','Biggest rises for each stock'],['sigma','Most unusual against their own volatility']];
 function mvData(){
  const m=mvStore.ix||(mvStore.ix={});
@@ -48,11 +52,32 @@ function mvVolCard(r,on){
  return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small><b>${lvl}</b>${mvMeter(r.lpct,true)}<i>${r.lpct==null?'':mvRank(r.lpct)+' level since '+esc(String(r.d0||'').slice(0,4))} · today ${mvPct(r.move)}</i><i>S&amp;P 500 the month after levels like this: <span class="${mvTone(r.out21&&r.out21[1])}">${r.out21?mvPct(r.out21[1]):'—'}</span>${r.out21?` · ${Math.round(100*r.out21[2])}% rose`:''}</i></button>`;
 }
 function mvAnalysis(key){return key?`<div id="mv-one" data-k="${esc(key)}" style="margin-top:10px"></div>`:''}
+// a plain table (no pager: a group is short, and several share the view)
+const mvTable=(h,rows)=>`<div class="tablebox"><table><thead><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(c=>`<tr>${c.map((v,i)=>`<td class="${i?'num':''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+function mvAll(rows,d){
+ const list=rows.filter(r=>r.group&&r.kind!=='stock'&&r.kind!=='industry');
+ const pick=state.mvk&&list.some(r=>r.key===state.mvk)?state.mvk:'SPY';
+ const k=r=>`<button type="button" class="mvh-k" data-mvk="${esc(r.key)}">${esc(r.name)}</button>${r.as_of&&r.as_of!==d.as_of?` <span class="muted">· ${esc(mvDay(r.as_of).replace(/, \d{4}$/,''))}</span>`:''}${r.key===pick?' <span class="muted">· below</span>':''}`;
+ let out=`<p class="mvh-note">Every index and ETF on file, each group from the weakest latest day to the strongest (a date after the name when its last close is not ${esc(mvDay(d.as_of))}): the move, where it ranks in the asset's own history, how often a move as large comes, its volatility over the last month, and what followed the days like it. World indices are in their own currency, price only. Pick one for the whole analysis below: the days like it, similar stretches in its history, what to expect and a simulation.</p>`;
+ for(const [g,lab] of MV_GROUPS){
+  const rs=list.filter(r=>r.group===g);if(!rs.length)continue;
+  if(g==='volatility'){
+   rs.sort((a,b)=>(b.lpct??50)-(a.lpct??50));
+   out+=`<h3 class="mvh-h">${esc(lab)}</h3>`+mvTable(['Index','Level','Rank of the level','Today','S&P 500 a month after levels like this','Rose'],rs.map(r=>[k(r),
+    r.level==null?'—':(r.level<10?r.level.toFixed(2):r.level.toFixed(1)),mvRank(r.lpct),`<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,r.out21?`<span class="${mvTone(r.out21[1])}">${mvPct(r.out21[1])}</span>`:'—',r.out21?Math.round(100*r.out21[2])+'%':'—']));
+   continue;
+  }
+  rs.sort((a,b)=>(a.pct??50)-(b.pct??50));
+  out+=`<h3 class="mvh-h">${esc(lab)}</h3>`+mvTable(['Name','Move','Rank in its history','How often','Volatility, 1 month','Next month after days like it','Rose','Since'],rs.map(r=>[k(r),
+   `<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,mvRank(r.pct),esc(mvEvery(r.every)),r.rv21==null?'—':`${Math.round(100*r.rv21)}% · ${mvRank(r.rvpct)}`,
+   r.sim21?`<span class="${mvTone(r.sim21[1])}">${mvPct(r.sim21[1])}</span>`:'—',r.sim21?Math.round(100*r.sim21[2])+'%':'—',esc(String(r.d0||'').slice(0,4))]));
+ }
+ return out+mvAnalysis(pick);
+}
 function mvMarket(rows,d){
  const pick=state.mvk&&rows.some(r=>r.key===state.mvk&&['market','index','sector','style','volatility'].includes(r.kind))?state.mvk:'SPY';
  const grp=(kind)=>rows.filter(r=>r.kind===kind);
- const order=['IDX-GSPC','SPY','QQQ','IDX-NDX','DIA','IDX-DJI','IWM','IDX-RUT','RSP','MDY','IDX-IXIC'];
- const mk=[...grp('market'),...grp('index')].sort((a,b)=>(order.indexOf(a.key)+1||99)-(order.indexOf(b.key)+1||99));
+ const mk=rows.filter(r=>MV_CORE.includes(r.key)).sort((a,b)=>MV_CORE.indexOf(a.key)-MV_CORE.indexOf(b.key));   // the rest: Indices & ETFs
  const sec=grp('sector').sort((a,b)=>(a.pct??50)-(b.pct??50));
  const sty=grp('style');
  const b=d.breadth||{};
@@ -86,17 +111,18 @@ function mvStocks(rows,d){
 function movesView(){
  mvCss();
  state.mvv=MV_VIEWS.some(v=>v[0]===state.mvv)?state.mvv:'market';
- let out=head('Move odds','How rare the latest move is in each asset\'s own history — the market, its sectors and industries, every valued company — and what followed moves like it over the next day, week and month: the days that ranked about the same, the days at least as extreme, and every day.','PERCENTILES · WHAT CAME NEXT');
+ let out=head('Move odds','How rare the latest move is in each asset\'s own history — the market, US and world indices, ETFs of every kind, sectors and industries, every valued company — and what followed moves like it over the next day, week, month and quarter; the stretches of its history most like the last months, what to expect after them, and a simulation of the months ahead.','PERCENTILES · WHAT CAME NEXT');
  out+=`<div class="toolbar">${field('mvv','View',MV_VIEWS,state.mvv)}`;
  if(state.mvv==='stocks')out+=field('mvs','Show',MV_SORTS,state.mvs||'falls',true);
  if(state.mvv==='one')out+=`<div class="field wide"><label for="mvt">Ticker</label><input id="mvt" value="${esc(state.mvt||'')}" placeholder="e.g. NVDA, SPY, XLK · Enter"></div>`;
  out+='</div>';
- if(state.mvv==='one'){const t=String(state.mvt||'').trim().toUpperCase().replace(/[./]/g,'-');return out+(t?mvAnalysis(t):empty('Type a ticker: a valued company, an ETF (SPY, QQQ, XLK …) or an index (IDX-GSPC).'))}
+ if(state.mvv==='one'){const t=String(state.mvt||'').trim().toUpperCase().replace(/[./]/g,'-');return out+(t?mvAnalysis(t):empty('Type a ticker: a valued company, an ETF (SPY, XLK, EWJ, TLT …) or an index (IDX-GSPC, IDX-N225 …).'))}
  const g=mvData();
  if(g.err)return out+empty(`The move odds could not load (${g.err}). They are rebuilt after every US close by .github/workflows/research-paths.yml (app/moves.py).`);
  if(!g.data)return out+empty('Loading the move odds…');
  const rows=mvRows(g.data);
  if(state.mvv==='industries')return out+mvIndustries(rows,g.data);
+ if(state.mvv==='all')return out+mvAll(rows,g.data);
  if(state.mvv==='stocks')return out+mvStocks(rows,g.data);
  return out+mvMarket(rows,g.data);
 }
@@ -117,7 +143,8 @@ function movesDeepLink(arg){
  if(MV_VIEWS.some(x=>x[0]===v)){state.mvv=v;return}
  const k=v.toUpperCase().replace(/[./]/g,'-');
  if(/^SIC-\d+$/.test(k)){state.mvv='industries';state.mvk=k;return}
- if(/^(SPY|QQQ|DIA|IWM|RSP|MDY|IDX-[A-Z0-9]+|VIX-TERM|XL[A-Z]{1,2})$/.test(k)){state.mvv='market';state.mvk=k;return}
+ if(/^(SPY|QQQ|DIA|IWM|RSP|MDY|IDX-(GSPC|IXIC|DJI|NDX|RUT|VIX[A-Z0-9]*|VXN|VVIX|OVX|GVZ|SKEW)|VIX-TERM|XL[A-Z]{1,2})$/.test(k)){state.mvv='market';state.mvk=k;return}
+ if(/^IDX-[A-Z0-9]+$/.test(k)){state.mvv='all';state.mvk=k;return}
  state.mvv='one';state.mvt=k;
 }
 function movesNotice(){
@@ -131,4 +158,4 @@ window.movesDeepLink=movesDeepLink;
 window.HUB_NOTICES=Object.assign(window.HUB_NOTICES||{},{moves:movesNotice});
 window.HUB_VIEWS=Object.assign(window.HUB_VIEWS||{},{moves:movesView});
 window.HUB_BINDS=Object.assign(window.HUB_BINDS||{},{moves:bindMoves});
-if(typeof module!=='undefined')module.exports={mvMarket,mvIndustries,mvStocks,mvRows,mvRank,movesDeepLink};
+if(typeof module!=='undefined')module.exports={mvMarket,mvAll,mvIndustries,mvStocks,mvRows,mvRank,movesDeepLink};

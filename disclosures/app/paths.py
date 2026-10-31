@@ -9,8 +9,9 @@ disclosures/data/research/paths/, drawn by docs/paths-view.js (company page "Pri
             and the sector and style ETFs: ten years on the first fetch, then the last months merged in (a refresh restates
             every earlier adjusted close after a dividend or split, so the rows on file are rescaled to the new basis).
             cache/ohlc/<TICKER>.json.gz, state.json.
-            Also, for the move odds only: the style ETFs, and the market and volatility indices' whole daily history
-            (LONG_HISTORY: the S&P 500 since 1928, VIX since 1990 …).
+            Also, for the move odds only: the style ETFs and more ETFs (MOVES_MORE_ETFS: countries, bonds, commodities,
+            industries), and the market, world and volatility indices' whole daily history (LONG_HISTORY: the S&P 500
+            since 1928, the Nikkei since 1965, VIX since 1990 …).
   long      cache/long/: every other ticker's daily bars before the ones on file, fetched once (backfill()), so that
             the move odds see each company's whole history (from 1962 for the oldest).
   moves     public/moves/ (moves.py): each asset's daily returns for the move odds, today's moves and their percentiles.
@@ -57,11 +58,43 @@ VOL_INDEXES = [('IDX-VIX', '^VIX', 'CBOE Volatility Index (VIX)'), ('IDX-VXN', '
                ('IDX-VVIX', '^VVIX', 'Volatility of the VIX (VVIX)'), ('IDX-VIX9D', '^VIX9D', '9-day VIX (VIX9D)'),
                ('IDX-VIX3M', '^VIX3M', '3-month VIX (VIX3M)'), ('IDX-OVX', '^OVX', 'Crude Oil Volatility Index (OVX)'),
                ('IDX-GVZ', '^GVZ', 'Gold Volatility Index (GVZ)'), ('IDX-SKEW', '^SKEW', 'CBOE SKEW Index (tail risk)')]
-YAHOO_SYMBOL = {**RH.IDX_YAHOO, **{k: y for k, y, _ in VOL_INDEXES}}
-LONG_HISTORY = {'IDX-GSPC': '1927-12-30', 'IDX-IXIC': '1971-02-05', 'IDX-DJI': '1970-01-02', 'IDX-NDX': '1985-10-01', 'IDX-RUT': '1987-09-10',
-                **{k: '1990-01-02' for k, _, _ in VOL_INDEXES}}
+# more indices (key, Yahoo symbol, name, group: price only, in their own currency) and ETFs (ticker, name, group) for the
+# move odds; moves.py groups them on the hub's Indices & ETFs view
+MOVES_INDEXES = [
+    ('IDX-SOX', '^SOX', 'PHLX Semiconductor index', 'us'), ('IDX-NYA', '^NYA', 'NYSE Composite index', 'us'),
+    ('IDX-SP400', '^SP400', 'S&P MidCap 400 index', 'us'), ('IDX-SP600', '^SP600', 'S&P SmallCap 600 index', 'us'),
+    ('IDX-RUI', '^RUI', 'Russell 1000 index', 'us'), ('IDX-DJT', '^DJT', 'Dow Jones Transportation Average', 'us'),
+    ('IDX-DJU', '^DJU', 'Dow Jones Utility Average', 'us'),
+    ('IDX-N225', '^N225', 'Nikkei 225 (Japan)', 'world'), ('IDX-FTSE', '^FTSE', 'FTSE 100 (UK)', 'world'),
+    ('IDX-GDAXI', '^GDAXI', 'DAX (Germany)', 'world'), ('IDX-FCHI', '^FCHI', 'CAC 40 (France)', 'world'),
+    ('IDX-SX5E', '^STOXX50E', 'Euro Stoxx 50', 'world'), ('IDX-HSI', '^HSI', 'Hang Seng (Hong Kong)', 'world'),
+    ('IDX-SSEC', '000001.SS', 'Shanghai Composite (China)', 'world'), ('IDX-KS11', '^KS11', 'KOSPI (South Korea)', 'world'),
+    ('IDX-TWII', '^TWII', 'Taiwan Weighted', 'world'), ('IDX-BSESN', '^BSESN', 'BSE Sensex (India)', 'world'),
+    ('IDX-NSEI', '^NSEI', 'Nifty 50 (India)', 'world'), ('IDX-GSPTSE', '^GSPTSE', 'S&P/TSX Composite (Canada)', 'world'),
+    ('IDX-AXJO', '^AXJO', 'S&P/ASX 200 (Australia)', 'world'), ('IDX-BVSP', '^BVSP', 'Bovespa (Brazil)', 'world'),
+    ('IDX-MXX', '^MXX', 'IPC (Mexico)', 'world'), ('IDX-DXY', 'DX-Y.NYB', 'US Dollar Index', 'commodities')]
+MOVES_MORE_ETFS = [
+    ('VTI', 'US total market', 'broad'), ('ACWI', 'All-country world', 'broad'), ('VEA', 'Developed markets ex-US', 'broad'),
+    ('VWO', 'Emerging markets', 'broad'),
+    ('EWJ', 'Japan', 'country'), ('FXI', 'China large caps', 'country'), ('MCHI', 'China', 'country'), ('KWEB', 'China internet', 'country'),
+    ('EWZ', 'Brazil', 'country'), ('INDA', 'India', 'country'), ('EWG', 'Germany', 'country'), ('EWU', 'United Kingdom', 'country'),
+    ('EWC', 'Canada', 'country'), ('EWA', 'Australia', 'country'), ('EWT', 'Taiwan', 'country'), ('EWY', 'South Korea', 'country'),
+    ('EWW', 'Mexico', 'country'), ('EWH', 'Hong Kong', 'country'),
+    ('IEF', 'Treasuries 7–10 years', 'bonds'), ('SHY', 'Treasuries 1–3 years', 'bonds'), ('AGG', 'US aggregate bonds', 'bonds'),
+    ('LQD', 'Investment-grade corporate bonds', 'bonds'), ('HYG', 'High-yield corporate bonds', 'bonds'),
+    ('TIP', 'Inflation-protected Treasuries', 'bonds'), ('EMB', 'Emerging-market bonds', 'bonds'), ('MUB', 'Municipal bonds', 'bonds'),
+    ('SLV', 'Silver', 'commodities'), ('UNG', 'Natural gas', 'commodities'), ('DBC', 'Broad commodities', 'commodities'),
+    ('DBA', 'Agriculture', 'commodities'), ('GDX', 'Gold miners', 'commodities'),
+    ('VNQ', 'Real estate (REITs)', 'industry'), ('IBB', 'Biotechnology', 'industry'), ('KBE', 'Banks', 'industry'),
+    ('XHB', 'Homebuilders', 'industry'), ('XRT', 'Retail', 'industry'), ('XOP', 'Oil & gas exploration', 'industry'),
+    ('OIH', 'Oil services', 'industry'), ('XME', 'Metals & mining', 'industry'), ('ITA', 'Aerospace & defense', 'industry'),
+    ('IYT', 'Transportation', 'industry'), ('JETS', 'Airlines', 'industry'), ('TAN', 'Solar', 'industry'), ('ICLN', 'Clean energy', 'industry'),
+    ('IGV', 'Software', 'industry'), ('ARKK', 'ARK Innovation', 'industry'), ('URA', 'Uranium', 'industry')]
+YAHOO_SYMBOL = {**RH.IDX_YAHOO, **{k: y for k, y, _ in VOL_INDEXES}, **{k: y for k, y, _, _ in MOVES_INDEXES}}
 # every other ticker's daily bars before the ones on file (which start ten years back), fetched once by backfill()
 LONG_FROM = '1927-12-30'
+LONG_HISTORY = {'IDX-GSPC': '1927-12-30', 'IDX-IXIC': '1971-02-05', 'IDX-DJI': '1970-01-02', 'IDX-NDX': '1985-10-01', 'IDX-RUT': '1987-09-10',
+                **{k: '1990-01-02' for k, _, _ in VOL_INDEXES}, **{k: LONG_FROM for k, _, _, _ in MOVES_INDEXES}}
 FORMAT = 1
 HORIZON = 63                                 # trading days ahead (about 13 weeks)
 WINDOW = 756                                 # three years of daily returns behind each path model
@@ -450,7 +483,7 @@ def main():
         client = Client(tempfile.mkdtemp(prefix='paths-raw-'),
                         {**http, 'host_intervals': {**http.get('host_intervals', {}), 'query1.finance.yahoo.com': 0.6, 'stooq.com': 1.0}})
         extra = [t for t in re.split(r'[\s,;]+', a.tickers or '') if t]
-        tickers = list(dict.fromkeys([RH.symbol(t) for t in extra] + ETFS + MOVES_ETFS + list(LONG_HISTORY)
+        tickers = list(dict.fromkeys([RH.symbol(t) for t in extra] + ETFS + MOVES_ETFS + [t for t, _, _ in MOVES_MORE_ETFS] + list(LONG_HISTORY)
                                      + [c['t'] for c in universe(a.universe)]))
         if a.cmd == 'long':
             print(json.dumps(backfill(client, a.root, [t for t in tickers if t not in extra], a.minutes)))
