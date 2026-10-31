@@ -322,15 +322,29 @@
     }
     if (M) M.watch(app, here);
   }
+  // a company whose statements are not read yet but whose prospectus is: the prospectus first, the rest folded
   function unparsed(app, d, here, u) {
     const rd = d.reader || null, R = root.FFIPOReader, M = root.FFIPOMarket;
+    const lab = { ipo_language_identified: 'Initial public offering', resale_language_identified: 'Resale registration', registration_unclassified: 'Registration statement' };
     app.innerHTML = `<section class="section qi-section ipo-page"><a class="ipo-back" href="#ipo">← IPO market monitor</a>
-      <header class="ipo-head"><div class="eyebrow">${esc(d.form)} filed ${esc(day(d.filed))}</div><h1>${esc(d.name)} · IPO analysis</h1>${R && rd ? R.chips(rd.cover) : ''}
-      <p class="ipo-links">${u ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">Prospectus on SEC ↗</a>` : ''}</p></header>
-      ${M ? M.detail(d) : ''}<section class="ipo-read" aria-labelledby="ipo-read-h"></section><div class="ipo-source"></div>
-      <h2>Coverage limits</h2><ul>${(d.limitations || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>`;
-    if (M) { app.querySelector('.ipo-source').innerHTML = M.sourceAnalysis(d); M.watch(app, here); }
-    if (rd && R && M) M.load(rd.path).then((r) => { if (here() && app.isConnected) R.render(app.querySelector('.ipo-read'), r, { url: rd.url || d.source_url, form: rd.form || d.form }); }).catch(() => {});
+      <header class="ipo-head"><div class="eyebrow">${esc(lab[d.classification] || 'Registration statement')} · ${esc(d.form)} filed ${esc(day(d.filed))}</div><h1>${esc(d.name)}</h1>${R && rd ? R.chips(rd.cover) : ''}
+      <p class="ipo-links">${u ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">Prospectus on SEC ↗</a>` : ''}</p>
+      <p class="muted ipo-nofin">The financial statements of this filing are not read yet: no chart is drawn and no figure is guessed. Its prospectus is below.</p></header>
+      <section class="ipo-read" aria-labelledby="ipo-read-h"><p class="muted" role="status">Loading the prospectus…</p></section>
+      <section class="ipo-more">
+        <details class="ipo-src"><summary>Source tables found in the filing</summary><div class="ipo-source"></div></details>
+        <details id="ipo-data"><summary>Filings and data status</summary><div class="ipo-status"></div></details>
+        <details><summary>Coverage limits</summary><ul>${(d.limitations || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul></details>
+      </section></section>`;
+    if (M) {
+      app.querySelector('.ipo-source').innerHTML = M.sourceAnalysis(d);
+      app.querySelector('.ipo-status').innerHTML = M.detail(d, { open: false });
+      M.watch(app, here);
+    }
+    if (rd && R && M) {
+      M.load(rd.path).then((r) => { if (here() && app.isConnected) R.render(app.querySelector('.ipo-read'), r, { url: rd.url || d.source_url, form: rd.form || d.form }); })
+        .catch(() => { if (here()) app.querySelector('.ipo-read').innerHTML = '<p class="muted">The prospectus reading could not be loaded.</p>'; });
+    }
   }
   async function ipo(app,here=()=>true,cik,accession) {
     app.innerHTML='<p role="status">Loading IPO filings…</p>';

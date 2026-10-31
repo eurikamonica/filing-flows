@@ -124,3 +124,10 @@
   .ipo-rtabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .ipo-rtabs button { white-space: nowrap; }
 }
+.ipo-health { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; font-size: 13.5px; color: var(--muted); margin: 6px 0 2px; }
+.ipo-health strong { color: var(--ink-2); font-weight: 500; }
+.ipo-health .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); align-self: center; }
+.ipo-health.lag .dot { background: var(--q-warm, #b7792f); }
+div.ipo-health { display: block; }
+.ipo-head + .ipo-read { margin-top: 10px; padding-top: 0; border-top: 0; }
+.ipo-nofin { font-size: 14px; }

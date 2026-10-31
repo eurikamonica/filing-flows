@@ -24,7 +24,7 @@ try:
 except ImportError:                                   # older bs4
     pass
 
-READER_VERSION = 1
+READER_VERSION = 2                    # 2: MD&A comparisons in more wordings
 BLOCKS = {"p", "div", "li", "h1", "h2", "h3", "h4", "h5", "h6", "td", "th", "center", "blockquote", "dt", "dd"}
 BOLD = re.compile(r"font-weight:\s*(?:bold|[6-9]00)", re.I)
 ITALIC = re.compile(r"font-style:\s*italic", re.I)
@@ -383,20 +383,36 @@ def read_notes(doc, paras):
     return notes
 
 
+CMP_CUE = re.compile(r"comparison|compared|results of operations|\bvs\.?(?=\s)|versus", re.I)
+CMP_SPAN = {3: r"\bthree(?: and (?:six|nine))? months\b", 6: r"\b(?:three and )?six months\b",
+            9: r"\b(?:three and )?nine months\b", 12: r"\b(?:fiscal )?years?\b"}
+MDNA_PART = re.compile(r"^(?:liquidity|non-gaap|quarterly results|key (?:business |operating )?metrics|critical accounting|"
+                       r"off-balance|contractual obligations)", re.I)
+
+
+def _is_comparison(t):
+    """A heading over the comparison of two periods, however it is worded: "Comparison of the Six Months Ended June 30,
+    2025 and 2026", "Results of Operations for the Six Months ended June 30, 2026 and 2025", "Year Ended December 31,
+    2025 as compared to the Year Ended December 31, 2024"."""
+    return bool(CMP_CUE.search(t) and re.search(r"\b(?:19|20)\d\d\b", t) and re.search(r"\bmonths\b|\byears?\b", t, re.I))
+
+
 def _comparison(md, months, end):
-    """The MD&A paragraphs comparing the period ending `end` with a year earlier ("Comparison of the Six Months Ended
-    June 30, 2025 and 2026"), up to the next comparison or the next part of the MD&A; None when there is none."""
-    span = {3: "three months", 6: "six months", 9: "nine months", 12: "(?:fiscal )?years?"}.get(months)
+    """The MD&A paragraphs comparing the period ending `end` with a year earlier, up to the next comparison or the next
+    part of the MD&A; None when there is none."""
+    span = CMP_SPAN.get(months)
     if not span:
         return None
     y = int(end[:4])
-    pat = re.compile(rf"^comparison of (?:the )?{span} ended\b.*\b{y - 1}\b.*\b{y}\b", re.I)
-    start = next((i for i, p in enumerate(md) if p["heading"] and pat.match(p["text"])), None)
+
+    def match(t):
+        return (_is_comparison(t) and re.search(span, t, re.I) and re.search(rf"\b{y}\b", t)
+                and re.search(rf"\b{y - 1}\b", t))
+    start = next((i for i, p in enumerate(md) if p["heading"] and match(p["text"])), None)
     if start is None:
         return None
     stop = next((i for i in range(start + 1, len(md)) if md[i]["heading"]
-                 and re.match(r"^(?:comparison of|non-gaap|liquidity|quarterly results|key (?:business )?metrics)", md[i]["text"], re.I)),
-                len(md))
+                 and (_is_comparison(md[i]["text"]) or MDNA_PART.match(md[i]["text"]))), len(md))
     return md[start + 1:stop]
 
 

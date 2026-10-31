@@ -16,10 +16,20 @@ async function load(path){
  }
  const d=await json('data/ipo/'+path);return {...d,_transport:remoteError?'cached_fallback':'site_snapshot'};
 }
-function health(s,transport){
- const stamp=s.feed_last_success, age=stamp?(Date.now()-Date.parse(stamp))/60000:Infinity;
- const stale=!Number.isFinite(age)||age>20;
- return `<div class="qi-notice" role="status"><strong>${stale?'Monitor stale / not yet running':s.feed_state==='ok'?'Latest feed pass completed':'Discovery incomplete'}</strong> · Target: every 5 minutes; SEC and scheduler delays apply.<br>Last attempt: ${esc(s.last_attempt||'Not run')} · Last successful feed pass: ${esc(stamp||'Not run')}<br>Snapshot generated: ${esc(s.generated_at||'Unknown')} · ${transport==='cached_fallback'?'Live source unavailable; showing site snapshot.':transport==='live_branch'?'Live public data branch':'Site snapshot'}</div>`;
+// how fresh the monitor is, in plain words: when SEC was last checked and the last complete pass of the feeds
+function ago(stamp,now=Date.now()){
+ const t=Date.parse(stamp||'');if(!Number.isFinite(t))return null;
+ const m=Math.max(0,(now-t)/60000);
+ return m<1?'just now':m<60?`${Math.round(m)} min ago`:m<48*60?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} days ago`;
+}
+function health(s,transport,now=Date.now()){
+ const age=k=>{const t=Date.parse(s[k]||'');return Number.isFinite(t)?(now-t)/60000:Infinity;};
+ const checked=age('last_attempt'),complete=age('feed_last_success');
+ const where=transport==='cached_fallback'?'The live data could not be reached: this is the site’s copy.':transport==='live_branch'?'Live data.':'The site’s copy of the data.';
+ const when=`Scheduled every 5 minutes; GitHub often runs it every 20–60.`;
+ if(checked>180)return `<div class="qi-notice ipo-health" role="status"><strong>The monitor has not checked SEC ${ago(s.last_attempt,now)?'since '+esc(ago(s.last_attempt,now)):'yet'}</strong> · GitHub delays or skips scheduled runs; nothing new appears until it runs again. ${when}<br><small>${esc(where)} Snapshot ${esc(ago(s.generated_at,now)||'time unknown')}.</small></div>`;
+ const lag=complete>Math.max(checked,0)+90;
+ return `<p class="ipo-health${lag?' lag':''}" role="status"><span class="dot"></span><strong>SEC checked ${esc(ago(s.last_attempt,now))}</strong>${lag?` · the last complete pass of the feeds was ${esc(ago(s.feed_last_success,now)||'not recorded')}; the daily SEC indexes fill the gap`:' · every feed read in full'} · ${esc(when)} ${esc(where)}</p>`;
 }
 function watch(app,here,generation){
  activeGeneration=generation;clearTimeout(timer);const cycle=async()=>{
@@ -63,12 +73,12 @@ function index(app,d,here){
  for(const id of ['ipo-search','ipo-state','ipo-kind','ipo-form'])app.querySelector('#'+id).addEventListener('input',()=>{limit=60;draw();});
  app.querySelector('#ipo-more').onclick=()=>{limit+=60;draw();};draw();watch(app,here,d.generation);
 }
-function detail(d){
- const latest=d.latest_discovered||d,rows=d.filings||[];
- return `<div class="qi-notice"><strong>${esc(labels[latest.classification]||latest.classification||'Public filing')}</strong> · ${esc(labels[latest.state]||d.analysis_state||'Snapshot')}<br>Latest discovered: ${esc(latest.form)} ${esc(latest.filed)} · ${esc(latest.accession)}<br>Selected analysis: ${esc(d.form)} ${esc(d.filed)} · ${esc(d.accession)}${latest.accession!==d.accession?'<br>These figures belong to an earlier or explicitly selected filing, not the latest amendment.':''}${d.lifecycle?'<br>Same SEC file-number lifecycle: '+esc(d.lifecycle)+' (not proof of exchange listing).':''}</div><details open><summary>Filing and amendment history (${rows.length})</summary><div class="qi-table"><table><thead><tr><th>Filed / accepted</th><th>Form / accession</th><th>Status</th><th>Evidence</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.filed)}<br><small>${esc(r.accepted||'Acceptance time not read')}</small></td><td>${esc(r.form)}<br>${esc(r.accession)}<br><small>SEC file ${esc(r.file_number||'unknown')}</small></td><td>${esc(labels[r.state]||r.state)}</td><td>${link(r)}${['parsed','needs_review','document_only'].includes(r.state)?` · <a href="#ipo-${Number(r.cik)}/${esc(r.accession)}">Inspect version</a>`:''}</td></tr>`).join('')}</tbody></table></div></details>`;
+function detail(d,opts){
+ const latest=d.latest_discovered||d,rows=d.filings||[],open=!opts||opts.open!==false;
+ return `<div class="qi-notice"><strong>${esc(labels[latest.classification]||latest.classification||'Public filing')}</strong> · ${esc(labels[latest.state]||d.analysis_state||'Snapshot')}<br>Latest discovered: ${esc(latest.form)} ${esc(latest.filed)} · ${esc(latest.accession)}<br>Selected analysis: ${esc(d.form)} ${esc(d.filed)} · ${esc(d.accession)}${latest.accession!==d.accession?'<br>These figures belong to an earlier or explicitly selected filing, not the latest amendment.':''}${d.lifecycle?'<br>Same SEC file-number lifecycle: '+esc(d.lifecycle)+' (not proof of exchange listing).':''}</div><details${open?' open':''}><summary>Filing and amendment history (${rows.length})</summary><div class="qi-table"><table><thead><tr><th>Filed / accepted</th><th>Form / accession</th><th>Status</th><th>Evidence</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.filed)}<br><small>${esc(r.accepted||'Acceptance time not read')}</small></td><td>${esc(r.form)}<br>${esc(r.accession)}<br><small>SEC file ${esc(r.file_number||'unknown')}</small></td><td>${esc(labels[r.state]||r.state)}</td><td>${link(r)}${['parsed','needs_review','document_only'].includes(r.state)?` · <a href="#ipo-${Number(r.cik)}/${esc(r.accession)}">Inspect version</a>`:''}</td></tr>`).join('')}</tbody></table></div></details>`;
 }
 function sourceAnalysis(d){
  return `<h2>Prospectus analysis & source evidence</h2>${!(d.periods||[]).length?'<p class="qi-notice">Financial values are not yet mapped with reliable period and unit evidence. Review the source sections/tables below; no financial figures or Sankey flows are invented.</p>':''}${d.parse_error?`<p class="muted">Mapping status: ${esc(d.parse_error)}</p>`:''}${(d.sections||[]).map(s=>`<details><summary>${esc(s.title)}</summary><p>${esc(s.excerpt)}</p><p class="muted">Source excerpt; not an automated risk conclusion. ${link(d)}</p></details>`).join('')}${(d.source_tables||[]).map(t=>`<details><summary>Financial source table ${t.table_index+1} · mapping requires review</summary><p>${esc(t.note)}</p><div class="qi-table"><table><tbody>${t.rows.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${link(d)}</details>`).join('')}`;
 }
-root.FFIPOMarket={load,index,detail,sourceAnalysis,watch,health};
+root.FFIPOMarket={load,index,detail,sourceAnalysis,watch,health,ago};
 })(typeof window!=='undefined'?window:globalThis);

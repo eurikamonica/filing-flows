@@ -165,6 +165,33 @@ def test_older_prospectuses_are_read_a_few_per_run(tmp_path):
         assert M.refresh_readers(db,tmp_path,limit=3)==0
 
 
+def test_charted_filings_are_read_first(tmp_path):
+    db=M.connect(tmp_path);M.remember(db,[row(),row(ACC2,'S-1/A','2026-10-20')],'feed',M.utcnow())
+    db.execute("UPDATE filings SET classification='ipo_language_identified',state='needs_review',source_url=?",
+               (M.sec.filing_base(1234567,ACC)+'/x.htm',))
+    db.execute("UPDATE filings SET state='parsed' WHERE accession=?",(ACC,));db.commit()   # the older one has charts
+    with patch.object(M,'get',return_value=PROSPECTUS):M.refresh_readers(db,tmp_path,limit=1)
+    assert M.reader_path(tmp_path,ACC).exists() and not M.reader_path(tmp_path,ACC2).exists()
+
+
+def feed(form,n):
+    entries=''.join(f'''<entry><title>{form} - Issuer {i} (00012{i:05d}) (Filer)</title><category term="{form}"/><id>urn:tag:sec.gov:accession-number=00012{i:05d}-26-{i:06d}</id><updated>2026-10-30T09:00:00-04:00</updated><summary>&lt;b&gt;Filed:&lt;/b&gt; 2026-10-30</summary></entry>''' for i in range(n))
+    return f'<feed xmlns="http://www.w3.org/2005/Atom">{entries}</feed>'
+
+
+def test_capped_notice_feed_does_not_fail_the_pass(tmp_path):
+    db=M.connect(tmp_path)
+    def response(url,capped='EFFECT'):
+        if 'getcurrent' in url:return feed(capped,100) if f'type={capped}&' in url else ATOM
+        return MASTER
+    with patch.object(M,'get',side_effect=response):M.discover(db,'2026-07-01',quarter_batch=1)
+    assert M.setting(db,'feed_state')=='ok' and M.setting(db,'feed_last_success')
+    assert db.execute("SELECT count(*) FROM sources WHERE state='truncated' AND period='EFFECT'").fetchone()[0]==1
+    db2=M.connect(tmp_path/'b')
+    with patch.object(M,'get',side_effect=lambda u:response(u,'S-1')):M.discover(db2,'2026-07-01',quarter_batch=1)
+    assert M.setting(db2,'feed_state')=='partial_or_failed'          # a registration form past the cap is a real gap
+
+
 def test_parsed_periods_get_standard_sankeys(tmp_path):
     db=M.connect(tmp_path);M.seed(db,tmp_path);M.publish(db,tmp_path,tmp_path/'public')
     d=json.loads((tmp_path/'public/2130357.json').read_text())

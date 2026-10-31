@@ -123,3 +123,23 @@ def test_positioned_lines_are_joined_back():
     # the lines of each block of text are one paragraph again (one before the risk headings, one after)
     assert len(rf["text"]) == 2 and all(t.count("We sell our products") == 6 for t in rf["text"])
     assert [g["group"] for g in r["risks"]["groups"]] == ["Risks Related to Our Business and Industry"]
+
+
+def test_mdna_comparisons_in_their_usual_wordings():
+    def md(*items):
+        return [{"text": t, "heading": h} for h, t in items]
+    lines = md((True, "Results of Operations For the Six Months ended June 30, 2026 and 2025"),
+               (False, "Revenue increased by $2.0 million for the six months ended June 30, 2026."),
+               (True, "Year Ended December 31, 2025 as compared to the Year Ended December 31, 2024"),
+               (False, "Revenue increased by $3.0 million for the year ended December 31, 2025."),
+               (True, "Comparison of the Year ended December 31, 2024 and the 2023 Period"),
+               (False, "Revenue increased by $1.0 million in 2024."),
+               (True, "Liquidity and Capital Resources"), (False, "We had cash of $5 million."))
+    assert [p["text"][:30] for p in R._comparison(lines, 6, "2026-06-30")] == ["Revenue increased by $2.0 mill"]
+    assert [p["text"][:30] for p in R._comparison(lines, 12, "2025-12-31")] == ["Revenue increased by $3.0 mill"]
+    assert [p["text"][:30] for p in R._comparison(lines, 12, "2024-12-31")] == ["Revenue increased by $1.0 mill"]
+    assert R._comparison(lines, 3, "2026-06-30") is None
+    both = md((True, "Three and Six Months Ended June 30, 2026 as compared to the Three and Six Months Ended June 30, 2025"),
+              (False, "Revenue rose."))
+    assert R._comparison(both, 3, "2026-06-30") and R._comparison(both, 6, "2026-06-30")
+    assert not R._is_comparison("Liquidity for the six months ended June 30, 2026 and 2025")

@@ -12,6 +12,9 @@ let generation='one',failStatus=false;
 const status=()=>({generation,generated_at:now,feed_last_success:now,last_attempt:now,feed_state:'ok',coverage_start:'2024-01-01',quarters_completed:2,quarters_total:12,filing_count:2,states:{parsed:1,needs_review:1}});
 const legacyDoc={...seed,latest_discovered:known,filings:[known],analysis_state:'parsed'};   // a snapshot from before the charts
 const doc={...legacyDoc,charts:extra.charts,reader:extra.summary};
+// a company whose prospectus was read but whose statements were not: the prospectus first, the rest folded away
+const readOnlyRow={...missing,cik:7654321,name:'Read Only Corp',accession:'0007654321-26-000001',classification:'ipo_language_identified'};
+const readOnly={...readOnlyRow,periods:[],latest_discovered:readOnlyRow,filings:[readOnlyRow],sections:[],source_tables:[],reader:extra.summary};
 const unparsed={...missing,periods:[],latest_discovered:missing,filings:[missing],sections:[{title:'Use of Proceeds',excerpt:'Source <script> text must be escaped.'}],source_tables:[{table_index:1,note:'Mapping requires review',rows:[['2025','2024'],['Revenue','100']]}]};
 const fixture=`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/quality-ipo.css"></head><body><main id="app" class="wrap"></main><script src="/sankey.js"></script><script src="/ipo-market.js"></script><script src="/ipo-reader.js"></script><script src="/quality-ipo.js"></script><script>let version=0;async function route(){const v=++version,m=/^#ipo(?:-(\\d+)(?:\\/(\\d{10}-\\d{2}-\\d{6}))?)?$/.exec(location.hash);await FFQualityIPO.ipo(document.getElementById('app'),()=>v===version,m&&m[1],m&&m[2]);}addEventListener('hashchange',route);route();</script></body></html>`;
 const server=http.createServer((req,res)=>{const url=req.url.split('?')[0];res.setHeader('Content-Type','application/json');let data;
@@ -22,6 +25,7 @@ else if(url==='/data/ipo/2130357.json')data=doc;
 else if(url===`/data/ipo/filings/${acc}.json`)data=legacyDoc;
 else if(url===`/data/ipo/reader/${acc}.json`)data=extra.reader;
 else if(url==='/data/ipo/1234567.json'||url===`/data/ipo/filings/${missing.accession}.json`)data=unparsed;
+else if(url==='/data/ipo/7654321.json')data=readOnly;
 if(data){res.end(JSON.stringify(data));return;}
 if(url==='/'){res.setHeader('Content-Type','text/html');res.end(fixture);return;}
 const name=path.basename(url);if(!/^[\w.-]+\.(js|css)$/.test(name)){res.statusCode=404;res.end('{}');return;}
@@ -52,6 +56,9 @@ assert((await page.locator('.ipo-head').innerText()).includes('ACME'));
 await page.click('[data-goto="ipo-data"]');assert(await page.locator('#ipo-data').evaluate(e=>e.open));
 await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
 await page.setViewportSize({width:1440,height:1000});
+await page.goto(base+'/#ipo-7654321');await page.waitForSelector('.ipo-read .ipo-rtabs');assert.equal(await page.locator('.ipo-chart').count(),0);
+assert((await page.locator('.ipo-nofin').innerText()).includes('not read yet'));assert.equal(await page.locator('#ipo-data').evaluate(e=>e.open),false);
+assert(await page.evaluate(()=>document.querySelector('.ipo-read').getBoundingClientRect().top<document.querySelector('.ipo-more').getBoundingClientRect().top));
 // a snapshot published before the charts: the earlier view with its four reconciliation charts
 await page.goto(base+'/#ipo-2130357/'+acc);await page.waitForSelector('.qi-chart svg');assert.equal(await page.locator('.qi-chart svg').count(),4);await page.selectOption('#ipo-period','2');assert((await page.locator('.qi-cards').innerText()).includes('4.59B'));
 await page.clock.install();await page.goto(base+'/#ipo');await page.waitForSelector('#ipo-search');assert.equal(await page.locator('.ipo-fcard').count(),1);assert((await page.locator('.ipo-fcard').innerText()).includes('$16.3B'));generation='two';await page.clock.fastForward(61000);await page.waitForSelector('[data-ipo-update]');await page.locator('[data-ipo-update] button').click();await page.waitForSelector('#ipo-search');

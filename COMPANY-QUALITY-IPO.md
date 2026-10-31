@@ -199,3 +199,16 @@ every node with where its figure is and what the MD&A says about it).
 - The four accounting reconciliations, quality measures, reported inputs, the
   filing history and coverage limits stay on the page, folded away. A snapshot
   published before the charts keeps the earlier view.
+
+Follow-up after the first production runs:
+
+- The filings whose financial statements were read are read first (their pages show the charts, and the reading puts
+  the MD&A on them), then the rest newest first, four per run with a minute of their own.
+- MD&A comparisons are found in their usual wordings ("Results of Operations for the Six Months ended June 30, 2026
+  and 2025", "Year Ended December 31, 2025 as compared to …", "Comparison of the Six Months …"); reader version 2,
+  so earlier readings are read again.
+- EFFECT and RW notices outnumber the feed's page cap on most days; a capped notice feed no longer marks the pass
+  incomplete (the daily index adds any beyond the cap). The status line says when SEC was last checked, in plain
+  words, and warns only when the monitor has not run for three hours.
+- A company whose prospectus was read but whose statements were not shows the prospectus first, with the source
+  tables and filing history folded away.
