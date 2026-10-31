@@ -1,0 +1,300 @@
+{
+  "cik": 1854368,
+  "ticker": "DGXX",
+  "name": "Digi Power X Inc.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "sic_description": "Finance Services",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:05:18+00:00",
+  "price": 2.245,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.157076,
+  "snapshot": {
+    "cash": 128121977,
+    "equity": 265029285,
+    "assets": 279576320,
+    "liabilities": 14547035,
+    "assets_current": 144636216,
+    "liabilities_current": 12854509,
+    "retained_earnings": -107883461,
+    "pretax_income": -28356223,
+    "net_income": -36031253,
+    "da": 8752165,
+    "ocf": -17838102,
+    "capex": 112048787,
+    "revenue": 31396008,
+    "debt_repaid": 78130,
+    "shares": 101393355,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (fiscal year)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 128121977.0,
+    "net_debt": null,
+    "ebitda": -19604058.0,
+    "ebit": -28356223.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -129886889,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 128121977.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 9.191632,
+    "market_cap": 227628081.975,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "take_or_pay",
+        "label": "Take-or-pay contracts",
+        "excerpt": "Phase 1 ( 15 MW) and a conditional Phase 2 ( 25 MW). In exchange, the Corporation will receive a fixed, take-or-pay colocation fee of $ 195.00 per kW per month (approximately $ 2,925,000 and $ 4,875,000 per month for Phase 1 and Phase 2, respectively), escalating 3",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026089940/ea0301731-10q_digipower.htm",
+        "accession": "0001213900-26-089940",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-089940",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026089940/ea0301731-10q_digipower.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0761,
+      "receivables_growth": 618.2658,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 670.2376,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 670.2376,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 34188226.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-037677",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026037677/"
+        },
+        {
+          "value_usd": 37002263.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-037677",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026037677/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1136972.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-037677",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026037677/"
+        },
+        {
+          "value_usd": 1836.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-037677",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026037677/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -25535126.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-037677",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026037677/"
+        },
+        {
+          "value_usd": -17532344.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-037677",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026037677/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -28356223.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-037677",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026037677/"
+        },
+        {
+          "value_usd": -12391298.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-037677",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026037677/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "be a related party transaction when there is a transfer of resources or obligations between related parties. Related party transactions are recorded at the exchange amount, being the amount agreed to between the related parties. Key management personnel are those persons having auth",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026089940/ea0301731-10q_digipower.htm",
+        "accession": "0001213900-26-089940",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "n which the payments are based occur. Amounts received in advance of the related usage period are recorded as deferred revenue and recognized over the lease term. (d) | Investment in associate | Investments in associates are entities over which the Corporation has significan",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1854368/000121390026089940/ea0301731-10q_digipower.htm",
+        "accession": "0001213900-26-089940",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-05-08",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-26-053566",
+      "doc": "ea0289585-8k_digi.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-04-09",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-26-042070",
+      "doc": "ea0285700-8k_digi.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

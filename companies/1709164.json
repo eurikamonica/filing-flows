@@ -1,0 +1,547 @@
+{
+  "cik": 1709164,
+  "ticker": "HBB",
+  "name": "Hamilton Beach Brands Holding Co",
+  "sector": "consumer-disc",
+  "industry": "Electric Housewares & Fans",
+  "sic": "3634",
+  "docs": {
+    "xbrl:0001709164-26-000037": {
+      "instruments": [
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 50000000.0,
+          "spread": 0.0165,
+          "reference": "Base Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-25",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001709164-26-000160": {
+      "instruments": [
+        {
+          "name": "HBB Facility",
+          "kind": "other",
+          "as_of": "2026-06-30",
+          "capacity": 125000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-05",
+      "report": "2026-06-30"
+    },
+    "0001709164-24-000055:exhibit101agreement.htm": {
+      "kind": "agreement",
+      "date": "2024-12-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-12-13",
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.65,
+        1.65
+      ],
+      "margin_text": ", with respect to SOFR Loans, 1.65% per annum, and, with respect to Base Rate Loans, 0% per annum. ",
+      "floor_pct": 0.0,
+      "maturity": "2029-12-13",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "During any Compliance Period, the Fixed Charge Coverage Ratio of Parent and its Subsidiaries (on a consolidated basis) at the end of each month for the trailing twelve (12) month period then ended shall not be less than 1.0 to 1.0, 74 commencing with the month immediately preceding the commencement of the Compliance Period for which financial statements were required to be delivered pursuant to Section 5.1 . 8."
+        }
+      ]
+    },
+    "0001709164-22-000055:exhibit101consent.htm": {
+      "kind": "agreement",
+      "date": "2022-11-15",
+      "agreement_kind": "amendment",
+      "dated": "2022-11-15",
+      "facility": "loan"
+    },
+    "0001709164-22-000044:exhibit101amendment12.htm": {
+      "kind": "agreement",
+      "date": "2022-08-18",
+      "agreement_kind": "amendment",
+      "dated": "2022-08-15",
+      "title": "To Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "LIBOR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.55,
+        2.05
+      ],
+      "margin_text": ", as of any date of determination and with respect to each Type of Loan, as applicable, the applicable margin set forth in the following table that corresponds to the Average Excess Availability for the most recently completed fiscal quarter: | Level | Average Excess Availability | Applicable Margin Relative to Base Rate Loans (the “Base Rate Margin”) | Applicable Margin Relative to SOFR Loans, BA Equivalent Loans and Letter of Credit Fees (the “SOFR Margin”) | I | Greater than or equal to $35,000,000 | 0% | 1.55% | II | Less than $35,000,000 and greater than or equal to $20,000,000 | 0% | 1.8",
+      "floor_pct": 0.0,
+      "maturity": "2025-06-30",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "During any Compliance Period, the Fixed Charge Coverage Ratio of Parent and its Subsidiaries (on a consolidated basis) at the end of each month for the trailing twelve (12) month period then ended shall not be less than 1.0 to 1.0, commencing with the month immediately preceding the commencement of the Compliance Period for which financial statements were required to be delivered pursuant to Section 5.1 . 8."
+        },
+        {
+          "type": "net_worth",
+          "limit": 2000000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Eligible Transferee ” means (a) any Lender or Affiliate or Subsidiary of a Lender (other than a Defaulting Lender), (b) any other commercial bank, financial institution, institutional lender or “accredited investor” (as defined in Regulation D of the Securities and Exchange Commission) with a net worth of at least $2,000,000,000;"
+        }
+      ]
+    }
+  },
+  "sic_description": "Electric Housewares & Fans",
+  "snapshot": {
+    "total_debt": 50000000,
+    "cash": 47313000,
+    "operating_leases": 41913000,
+    "revolver_capacity": 125000000,
+    "revolver_available": 73783000,
+    "revolver_drawn": 50000000,
+    "equity": 216734000,
+    "assets": 411286000,
+    "liabilities": 194552000,
+    "assets_current": 330125000,
+    "liabilities_current": 105353000,
+    "retained_earnings": 177821000,
+    "interest_expense": 703000,
+    "interest_paid": 900000,
+    "operating_income": 76492000,
+    "pretax_income": 76680000,
+    "net_income": 57444000,
+    "da": 8775000,
+    "ocf": 99129000,
+    "capex": 2206000,
+    "revenue": 610305000,
+    "wavg_rate_all": 0.0594,
+    "effective_rate": 0.033,
+    "shares": 13551000,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "history": [
+    {
+      "end": "2016-12-31",
+      "filed": "2018-03-07",
+      "total_debt": 38714000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 43374000,
+      "da": null,
+      "ocf": null,
+      "revenue": 745357000,
+      "shares": 0,
+      "convertible": null,
+      "equity": 65268000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-12-31",
+      "filed": "2019-03-06",
+      "total_debt": 51346000,
+      "cash": 10906000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 38135000,
+      "da": null,
+      "ocf": 11824000,
+      "revenue": 743179000,
+      "shares": 0,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-03-31",
+      "filed": "2020-07-24",
+      "total_debt": 35000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 13625000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-06-30",
+      "filed": "2020-08-05",
+      "total_debt": 0,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 13625000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-09-30",
+      "filed": "2020-11-09",
+      "total_debt": 0,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 13625000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-12-31",
+      "filed": "2022-03-09",
+      "total_debt": 98360000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 37415000,
+      "da": null,
+      "ocf": null,
+      "revenue": 603713000,
+      "shares": 13667000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 2800000
+    },
+    {
+      "end": "2022-12-31",
+      "filed": "2023-03-09",
+      "total_debt": 110895000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": -3418000,
+      "revenue": null,
+      "shares": 13888000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-12-31",
+      "filed": "2025-02-26",
+      "total_debt": 50000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": 1887000,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": 625625000,
+      "shares": 14085000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-12-31",
+      "filed": "2026-02-25",
+      "total_debt": 50000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": 703000,
+      "operating_income": 36579000,
+      "da": 5887000,
+      "ocf": 13813000,
+      "revenue": 606852000,
+      "shares": 13571000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 900000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001709164-26-000037",
+  "xbrl_10-Q": "xbrl:0001709164-26-000160",
+  "events": [
+    {
+      "date": "2024-12-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001709164-24-000055",
+      "doc": "hbb-20241213.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-11-15",
+      "items": "1.01,9.01",
+      "acc": "0001709164-22-000055",
+      "doc": "hbb-20221115.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001709164-22-000044",
+      "doc": "hbb-20220815.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:22:49+00:00",
+  "signature": "0001709164-26-000160",
+  "hidden_leverage": {
+    "as_of": "2025-12-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 41913000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000037/hbb-20251231.htm",
+        "accession": "0001709164-26-000037",
+        "form": "10-K",
+        "filed": "2026-02-25",
+        "as_of": "2025-12-31",
+        "evidence": [
+          {
+            "value_usd": 41913000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001709164-26-000037",
+            "filed": "2026-02-25",
+            "form": "10-K",
+            "as_of": "2025-12-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000037/hbb-20251231.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "supplier_finance",
+        "label": "Supplier finance / reverse factoring",
+        "excerpt": "g the impact this ASU may have on our consolidated financial statement disclosures. Accounts Payable - Supplier Finance Program The Company has an agreement with a third-party administrator to provide an accounts payable tracking system which facilitates a participating supp",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000160/hbb-20260630.htm",
+        "accession": "0001709164-26-000160",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001709164-26-000160",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000160/hbb-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2025-12-31",
+    "metrics": {
+      "revenue_growth": -0.0731,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 0.5221
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": 0.5221,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 606852000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001709164-26-000037",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000037/"
+        },
+        {
+          "value_usd": 654693000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001709164-26-000037",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000037/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 13813000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001709164-26-000037",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000037/"
+        },
+        {
+          "value_usd": 65415000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001709164-26-000037",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000037/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 26455000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001709164-26-000037",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000037/"
+        },
+        {
+          "value_usd": 30759000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001709164-26-000037",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000037/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "the Company expects to be entitled to in exchange for those goods or services, which includes an estimate for variable consideration. The Company’s warranty program to the consumer consists generally of an assurance-type limited warranty for electric appliances, with the majority",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000160/hbb-20260630.htm",
+        "accession": "0001709164-26-000160",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "supplier_finance",
+      "label": "Supplier finance / reverse factoring",
+      "excerpt": "g the impact this ASU may have on our consolidated financial statement disclosures. Accounts Payable - Supplier Finance Program The Company has an agreement with a third-party administrator to provide an accounts payable tracking system which facilitates a participating supp",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000160/hbb-20260630.htm",
+      "accession": "0001709164-26-000160",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001709164-26-000160",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001709164-26-000160",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "the Company expects to be entitled to in exchange for those goods or services, which includes an estimate for variable consideration. The Company’s warranty program to the consumer consists generally of an assurance-type limited warranty for electric appliances, with the majority",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1709164/000170916426000160/hbb-20260630.htm",
+      "accession": "0001709164-26-000160",
+      "form": "10-Q",
+      "filed": "2026-08-05"
+    }
+  ],
+  "revenue_quality_text_source": "0001709164-26-000160"
+}

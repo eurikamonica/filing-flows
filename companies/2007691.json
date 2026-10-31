@@ -1,0 +1,305 @@
+{
+  "cik": 2007691,
+  "ticker": "IOND",
+  "name": "Ionic Digital Inc.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "docs": {
+    "xbrl:0002007691-26-000012": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-09-01",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Finance Services",
+  "snapshot": {
+    "cash": 415738000,
+    "operating_leases": 176000,
+    "equity": 510556000,
+    "assets": 922518000,
+    "liabilities": 61415000,
+    "assets_current": 642565000,
+    "liabilities_current": 26345000,
+    "retained_earnings": -255867000,
+    "shares": 44996175,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [],
+  "xbrl_10-Q": "xbrl:0002007691-26-000012",
+  "events": [],
+  "fetched_at": "2026-10-26T01:37:40+00:00",
+  "signature": "0002007691-26-000016",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase_broad",
+        "label": "Purchase obligations, gross (potential overlap)",
+        "class": "operating_commitment",
+        "amount_usd": 9600000.0,
+        "reported_total": true,
+        "schedule": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 9600000.0,
+            "tag": "us-gaap:PurchaseObligation",
+            "accession": "0002007691-26-000012",
+            "filed": "2026-09-01",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 176000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 176000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0002007691-26-000012",
+            "filed": "2026-09-01",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "ppa",
+        "label": "Power purchase agreements",
+        "excerpt": "g business, we manage our cost of electricity through participation in various demand response programs, power purchase agreements, and curtailment of miners when electricity prices make it unprofitable to mine bitcoin. Geopolitical and macroeconomic factors, such as overseas mil",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "e credit loss model, especially for assets acquired in business combinations or through consolidation of variable interest entities. The Company adopted the simplified method available to it in estimating allowance for credit losses as of January 1, 2026, which had an immaterial i",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "ional Class (FRGXX), which invests at least 99.5% of its assets in cash, U.S. government securities, and repurchase agreements collateralized by such securities. At June 30, 2026 and December 31, 2025, the fair value of these investments was $ 12.8 million and $ 42.1 million,",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002007691-26-000012",
+      "form": "10-Q",
+      "filed": "2026-09-01",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "5 , Financial Instruments—Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets . This ASU introduces simplifications for estimating credit losses on current accounts receivable and contract assets arising from Topic 606 (Revenue",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "r both. When determining the transaction price, an entity must consider the effects of all the following: ● Variable consideration ● Constraining estimates of variable consideration ● The existence of a significant financing component in the contract ● Noncash consideration",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "owing: ● Variable consideration ● Constraining estimates of variable consideration ● The existence of a significant financing component in the contract ● Noncash consideration ● Consideration payable to a customer Variable consideration is included in the transaction price only",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ver a 24-hour period and the payout is made the following day. There is no significant financing component, deferred revenue, or other obligations in these transactions since there are no payments in advance of the performance, and there are no remaining performance obligat",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+        "accession": "0002007691-26-000012",
+        "form": "10-Q",
+        "filed": "2026-09-01"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "ppa",
+      "label": "Power purchase agreements",
+      "excerpt": "g business, we manage our cost of electricity through participation in various demand response programs, power purchase agreements, and curtailment of miners when electricity prices make it unprofitable to mine bitcoin. Geopolitical and macroeconomic factors, such as overseas mil",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+      "accession": "0002007691-26-000012",
+      "form": "10-Q",
+      "filed": "2026-09-01",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "e credit loss model, especially for assets acquired in business combinations or through consolidation of variable interest entities. The Company adopted the simplified method available to it in estimating allowance for credit losses as of January 1, 2026, which had an immaterial i",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+      "accession": "0002007691-26-000012",
+      "form": "10-Q",
+      "filed": "2026-09-01",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "ional Class (FRGXX), which invests at least 99.5% of its assets in cash, U.S. government securities, and repurchase agreements collateralized by such securities. At June 30, 2026 and December 31, 2025, the fair value of these investments was $ 12.8 million and $ 42.1 million,",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+      "accession": "0002007691-26-000012",
+      "form": "10-Q",
+      "filed": "2026-09-01",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0002007691-26-000012",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0002007691-26-000012",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "5 , Financial Instruments—Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets . This ASU introduces simplifications for estimating credit losses on current accounts receivable and contract assets arising from Topic 606 (Revenue",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+      "accession": "0002007691-26-000012",
+      "form": "10-Q",
+      "filed": "2026-09-01"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "r both. When determining the transaction price, an entity must consider the effects of all the following: ● Variable consideration ● Constraining estimates of variable consideration ● The existence of a significant financing component in the contract ● Noncash consideration",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+      "accession": "0002007691-26-000012",
+      "form": "10-Q",
+      "filed": "2026-09-01"
+    },
+    {
+      "key": "significant_financing",
+      "label": "Significant financing component",
+      "excerpt": "owing: ● Variable consideration ● Constraining estimates of variable consideration ● The existence of a significant financing component in the contract ● Noncash consideration ● Consideration payable to a customer Variable consideration is included in the transaction price only",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+      "accession": "0002007691-26-000012",
+      "form": "10-Q",
+      "filed": "2026-09-01"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "ver a 24-hour period and the payout is made the following day. There is no significant financing component, deferred revenue, or other obligations in these transactions since there are no payments in advance of the performance, and there are no remaining performance obligat",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2007691/000200769126000012/ioni-20260630.htm",
+      "accession": "0002007691-26-000012",
+      "form": "10-Q",
+      "filed": "2026-09-01"
+    }
+  ],
+  "revenue_quality_text_source": "0002007691-26-000012"
+}

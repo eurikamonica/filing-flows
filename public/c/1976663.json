@@ -1,0 +1,372 @@
+{
+  "cik": 1976663,
+  "ticker": "NXNT",
+  "name": "Nexscient, Inc.",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "sic_description": "Services-Prepackaged Software",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:18:04+00:00",
+  "price": 0.5199,
+  "price_date": "2026-10-02",
+  "equity_vol": 4.111141,
+  "snapshot": {
+    "total_debt": 2022899,
+    "current_debt": 1726155,
+    "cash": 489216,
+    "short_term_borrowings": 1429411,
+    "operating_leases": 201637,
+    "convertible": 247526,
+    "convertible_current": 670711,
+    "equity": 2143308,
+    "assets": 4680235,
+    "liabilities": 2536927,
+    "assets_current": 1290588,
+    "liabilities_current": 1775262,
+    "retained_earnings": -2435217,
+    "net_income": -874155,
+    "revenue": 1110112,
+    "conversion_price": 0.5,
+    "shares": 34564312,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "DebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "convertible_current": "ConvertibleDebtCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "net_income": "ProfitLoss (four quarters)",
+    "revenue": "Revenues (four quarters)",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "analysis": {
+    "total_debt": 2022899,
+    "cash_and_investments": 489216.0,
+    "net_debt": 1533683.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 489216.0,
+    "due_12m": 1726155,
+    "due_24m": null,
+    "liquidity_to_due12": 0.283414,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 17969985.8088,
+    "debt_to_ev": 0.103719,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Seller Convertible Note",
+          "face": 140711.0,
+          "carrying": 140711.0,
+          "coupon": null,
+          "conv_price": null,
+          "maturity": null
+        }
+      ],
+      "total_face": 140711.0,
+      "in_the_money_face": 0,
+      "in_the_money_carrying": 0,
+      "shares_if_converted": 0,
+      "coupon_saved": 0
+    },
+    "implied": {
+      "dd": -0.720048,
+      "pd_1y": 0.764252,
+      "spread_5y_bps": 1828.241565,
+      "asset_vol": 3.0,
+      "calibrated_5y_bps": 195.664161,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 5
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 201637.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793226005094/nexscient_10q.htm",
+        "accession": "0001477932-26-005094",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 201637.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001477932-26-005094",
+            "filed": "2026-08-14",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793226005094/nexscient_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001477932-26-005094",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793226005094/nexscient_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": null,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001477932-25-007240",
+          "filed": "2025-09-30",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793225007240/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001477932-25-007240",
+          "filed": "2025-09-30",
+          "end": "2024-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793225007240/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -407834.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477932-25-007240",
+          "filed": "2025-09-30",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793225007240/"
+        },
+        {
+          "value_usd": -645452.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477932-25-007240",
+          "filed": "2025-09-30",
+          "end": "2024-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793225007240/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -529704.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477932-25-007240",
+          "filed": "2025-09-30",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793225007240/"
+        },
+        {
+          "value_usd": -937592.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477932-25-007240",
+          "filed": "2025-09-30",
+          "end": "2024-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793225007240/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "terms are generally 30 to 60 days from invoice and contracts do not contain significant financing components, variable consideration or rights of return. Revenue of $ 1,110,112 for the three months ended June 30, 2026 was derived entirely from data engineering and content services",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793226005094/nexscient_10q.htm",
+        "accession": "0001477932-26-005094",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "41,721 , accrued liabilities of $ 141,891 and accrued interest payable — short term of $ 74,705 . NOTE 10 — RELATED PARTY TRANSACTIONS In connection with the acquisition, Anthony De Luna, the founder and Chief Executive Officer of Flipside AI and, effective April 1, 2026, the Compa",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976663/000147793226005094/nexscient_10q.htm",
+        "accession": "0001477932-26-005094",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-06-30",
+      "2024-06-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Loans payable Flipside AI",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 558700.0,
+      "floating": false
+    },
+    {
+      "name": "Loan payable Arcadia Data Pte Ltd",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 200000.0,
+      "floating": false
+    },
+    {
+      "name": "Seller Convertible Note",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "carrying": 140711.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-01-14",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001477932-26-000196",
+      "doc": "nexscient_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-02-14",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001477932-25-000982",
+      "doc": "nexscient_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      2022899,
+      489216,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-08",
+      1825.24,
+      -0.346,
+      4.1033,
+      190.8
+    ],
+    [
+      "2026-09",
+      1826.88,
+      -0.531,
+      4.1111,
+      193.2
+    ],
+    [
+      "2026-10",
+      1826.78,
+      -0.518,
+      4.1111,
+      193.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

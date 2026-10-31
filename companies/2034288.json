@@ -1,0 +1,224 @@
+{
+  "cik": 2034288,
+  "ticker": "RMGL",
+  "name": "Rocky Mountains Group Ltd",
+  "sector": "industrials",
+  "industry": "Services-Educational Services",
+  "sic": "8200",
+  "docs": {
+    "xbrl:0001493152-26-035556": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-07-31",
+      "report": "2026-05-31"
+    },
+    "xbrl:0001493152-26-044816": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-09-29",
+      "report": "2026-08-31"
+    }
+  },
+  "sic_description": "Services-Educational Services",
+  "snapshot": {
+    "cash": 715,
+    "equity": 9851,
+    "assets": 12951,
+    "liabilities": 3100,
+    "assets_current": 11304,
+    "liabilities_current": 3100,
+    "retained_earnings": -51493,
+    "operating_income": -17092,
+    "net_income": -17091,
+    "da": 1853,
+    "ocf": -27078,
+    "revenue": 30000,
+    "shares": 23200000,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001493152-26-035556",
+  "xbrl_10-Q": "xbrl:0001493152-26-044816",
+  "events": [],
+  "fetched_at": "2026-10-26T04:58:02+00:00",
+  "signature": "0001493152-26-044816",
+  "hidden_leverage": {
+    "as_of": "2026-08-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-044816",
+      "form": "10-Q",
+      "filed": "2026-09-29",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226044816/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-31",
+    "metrics": {
+      "revenue_growth": -0.1696,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 25000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-035556",
+          "filed": "2026-07-31",
+          "end": "2026-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226035556/"
+        },
+        {
+          "value_usd": 30105.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-035556",
+          "filed": "2026-07-31",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226035556/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -21983.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-035556",
+          "filed": "2026-07-31",
+          "end": "2026-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226035556/"
+        },
+        {
+          "value_usd": -9961.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-035556",
+          "filed": "2026-07-31",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226035556/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -23640.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-035556",
+          "filed": "2026-07-31",
+          "end": "2026-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226035556/"
+        },
+        {
+          "value_usd": -23635.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-035556",
+          "filed": "2026-07-31",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226035556/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "Financial Instruments - Credit Losses (Topic 326): Measurements of Credit Losses for Accounts Receivable and Contract Assets (ASU 2025-05). In July 2025, the FASB issued ASU 2025-05, Financial Instruments - Credit Losses (Topic 326): Measurements of Credit Losses for Acco",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226044816/form10-q.htm",
+        "accession": "0001493152-26-044816",
+        "form": "10-Q",
+        "filed": "2026-09-29"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "in the context of the contract; | (iii) | measurement of the transaction price, including the constraint on variable consideration; | (iv) | allocation of the transaction price to the performance obligations; and | (v) | recognition of revenue when (or as) the Company satisfies",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226044816/form10-q.htm",
+        "accession": "0001493152-26-044816",
+        "form": "10-Q",
+        "filed": "2026-09-29"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-05-31",
+      "2025-05-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001493152-26-044816",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-044816",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "Financial Instruments - Credit Losses (Topic 326): Measurements of Credit Losses for Accounts Receivable and Contract Assets (ASU 2025-05). In July 2025, the FASB issued ASU 2025-05, Financial Instruments - Credit Losses (Topic 326): Measurements of Credit Losses for Acco",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226044816/form10-q.htm",
+      "accession": "0001493152-26-044816",
+      "form": "10-Q",
+      "filed": "2026-09-29"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "in the context of the contract; | (iii) | measurement of the transaction price, including the constraint on variable consideration; | (iv) | allocation of the transaction price to the performance obligations; and | (v) | recognition of revenue when (or as) the Company satisfies",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2034288/000149315226044816/form10-q.htm",
+      "accession": "0001493152-26-044816",
+      "form": "10-Q",
+      "filed": "2026-09-29"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-044816"
+}

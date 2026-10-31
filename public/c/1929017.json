@@ -1,0 +1,438 @@
+{
+  "cik": 1929017,
+  "ticker": null,
+  "name": "Sealy Industrial Partners IV, LP",
+  "sector": "real-estate",
+  "industry": "Real Estate",
+  "sic": "6500",
+  "sic_description": "Real Estate",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:00:50+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 103736000,
+    "cash": 15166000,
+    "operating_leases": 2344000,
+    "revolver_drawn": 52000000,
+    "assets": 470256000,
+    "liabilities": 180801000,
+    "interest_expense": 8815000,
+    "interest_paid": 7621000,
+    "operating_income": 315000,
+    "net_income": -7140000,
+    "da": 20887000,
+    "ocf": 15208000,
+    "capex": 8408000,
+    "revenue": 40820000,
+    "shares": 4159573,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 103736000,
+    "cash_and_investments": 15166000.0,
+    "net_debt": 88570000.0,
+    "ebitda": 21202000,
+    "ebit": 315000,
+    "interest_expense": 8815000,
+    "leverage": 4.892746,
+    "net_leverage": 4.177436,
+    "interest_coverage": 0.035735,
+    "ebitda_coverage": 2.405218,
+    "cash_coverage": 2.995539,
+    "fcf": 6800000,
+    "fcf_to_debt": 0.065551,
+    "effective_rate": 0.084975,
+    "revolver_available": 150000000.0,
+    "liquidity": 165166000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 103736000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 1037360.0,
+    "plus100bp_share_of_ebit": 3.293206,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 262000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "First Amended And Restated Credit Agreement",
+        "dated": "2026-01-15",
+        "text": "The Borrower will not at any time permit Consolidated Tangible Net Worth to be less than the sum of (i) $262,000,000, plus (ii) eighty percent (80.0%) of the sum of any additional Net Offering Proceeds after the date of this Agreement. §9.5 Secured Indebtedness ."
+      }
+    ],
+    "cushion_score": 10
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2344000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000015/ck0001929017-20260630.htm",
+        "accession": "0001929017-26-000015",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 2344000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001929017-26-000015",
+            "filed": "2026-08-05",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000015/ck0001929017-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ion assessment pursuant to the consolidation guidance under ASC 810. We concluded that, while DST-I is a variable interest entity (\"VIE\"), the Company is not required to consolidate as the Company is not the primary beneficiary of the VIE. Under the Trust Agreement, the investor",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000015/ck0001929017-20260630.htm",
+        "accession": "0001929017-26-000015",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001929017-26-000015",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000015/ck0001929017-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.853,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 37413000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001929017-26-000008",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000008/"
+        },
+        {
+          "value_usd": 20191000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001929017-26-000008",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000008/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 15851000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001929017-26-000008",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000008/"
+        },
+        {
+          "value_usd": 14390000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001929017-26-000008",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000008/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -2955000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001929017-26-000008",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000008/"
+        },
+        {
+          "value_usd": 495000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001929017-26-000008",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000008/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ys preferred dividends at an annual rate of 12 % per share, payable in two installments each year. Note 10. Related-Party Transactions The following is a summary of amounts incurred with the GP, Sealy, and their affiliates during the three and six months ended June 30, 2026 and 202",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000015/ck0001929017-20260630.htm",
+        "accession": "0001929017-26-000015",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "First Amended And Restated Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-01-15",
+      "capacity": 150000000.0,
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Fixed Rate Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 105300000.0,
+      "floating": false
+    },
+    {
+      "name": "Thrivent Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 105220000.0,
+      "coupon": 0.0539,
+      "maturity": "2030-10-01",
+      "floating": true
+    },
+    {
+      "name": "Key Bank Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 52000000.0,
+      "spread": 0.0539,
+      "maturity": "2029-03-30",
+      "rate_now": 0.0539,
+      "floating": true
+    },
+    {
+      "name": "Construction Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 4310000.0,
+      "spread": 0.0613,
+      "maturity": "2028-12-05",
+      "face": 10800000.0,
+      "coupon": 0.0613,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-01-22",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-01-15",
+      "title": "First Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 262000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower will not at any time permit Consolidated Tangible Net Worth to be less than the sum of (i) $262,000,000, plus (ii) eighty percent (80.0%) of the sum of any additional Net Offering Proceeds after the date of this Agreement. §9.5 Secured Indebtedness ."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "The Collateral Pool Availability shall be the amount which is the lesser of (a) the Total Commitment, (b) the Adjusted Collateral Pool Value, (c) the maximum principal amount of Loans which would not cause the Collateral Pool Implied Debt Service Coverage Ratio to be less than 1.30 to 1.00, and (d) the maximum principal amount of the Loans which would not cause the Collateral Pool Interest Coverage Ratio to be less t"
+        },
+        {
+          "type": "net_worth",
+          "limit": 500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Upon any such resignation or removal, the Required Lenders, subject to the terms of §18.1, shall have the right to appoint as a successor Agent and, if applicable, Issuing Lender and Swing Loan Lender, any Lender or any bank whose senior debt obligations are rated not less than “A3” or its equivalent by Moody’s or not less than “A” or its equivalent by S&P and which has a net worth of not less than $500,000,000.00."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901726000004/ck0001929017-ex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-09-22",
+      "agreement_kind": "amendment",
+      "dated": "2025-09-19",
+      "title": "Sixth Amendment To Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1929017/000192901725000024/ck0001929017-ex10_1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-01-22",
+      "items": "1.01,2.02,2.03,7.01,9.01",
+      "acc": "0001929017-26-000004",
+      "doc": "ck0001929017-20260115.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001929017-25-000024",
+      "doc": "ck0001929017-20250919.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001929017-25-000021",
+      "doc": "ck0001929017-20250911.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-09-30",
+      144010000,
+      13096000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      103660000,
+      16368000,
+      7973000,
+      20747000,
+      887000,
+      0.07691
+    ],
+    [
+      "2026-06-30",
+      103736000,
+      15166000,
+      8815000,
+      21202000,
+      315000,
+      0.08498
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

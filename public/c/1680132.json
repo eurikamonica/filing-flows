@@ -1,0 +1,652 @@
+{
+  "cik": 1680132,
+  "ticker": "CSUI",
+  "name": "CANNABIS SUISSE CORP.",
+  "sector": "real-estate",
+  "industry": "Real Estate",
+  "sic": "6500",
+  "sic_description": "Real Estate",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T04:57:19+00:00",
+  "price": 0.0077,
+  "price_date": "2026-10-23",
+  "equity_vol": 3.125331,
+  "snapshot": {
+    "total_debt": 695701,
+    "cash": 256,
+    "convertible": 1406574,
+    "convertible_current": 50000,
+    "equity": -1624106,
+    "assets": 358906,
+    "liabilities": 1983012,
+    "assets_current": 41301,
+    "liabilities_current": 576438,
+    "retained_earnings": -2879180,
+    "interest_expense": 64656,
+    "interest_paid": 0,
+    "operating_income": -226599,
+    "pretax_income": 163959,
+    "net_income": 163959,
+    "da": 4244,
+    "ocf": -15999,
+    "revenue": 21000,
+    "maturities": {
+      "as_of": "2026-08-31",
+      "y2": 220000,
+      "y3": 187852,
+      "y4": 101760,
+      "y5": 186089
+    },
+    "if_converted_shares": 142738720,
+    "shares": 70680938,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "convertible_current": "ConvertibleNotesPayableCurrent",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "analysis": {
+    "total_debt": 695701,
+    "cash_and_investments": 256.0,
+    "net_debt": 695445.0,
+    "ebitda": -222355,
+    "ebit": -226599,
+    "interest_expense": 64656,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -3.504686,
+    "ebitda_coverage": -3.439047,
+    "fcf": -15999.0,
+    "fcf_to_debt": -0.022997,
+    "effective_rate": 0.092936,
+    "revolver_available": null,
+    "liquidity": 256.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -14.880474,
+    "market_cap": 544243.2226,
+    "debt_to_ev": 0.56119,
+    "convertibles": null,
+    "implied": {
+      "dd": -1.265722,
+      "pd_1y": 0.897194,
+      "spread_5y_bps": 1830.287379,
+      "asset_vol": 2.940594,
+      "calibrated_5y_bps": 202.97631,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 5
+  },
+  "hidden_leverage": {
+    "as_of": "2026-08-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001680132-26-000012",
+      "form": "10-Q",
+      "filed": "2026-10-15",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1680132/000168013226000012/csui-20260831_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-31",
+    "metrics": {
+      "revenue_growth": -1.0,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": -0.3285
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": -0.3285,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001680132-26-000010",
+          "filed": "2026-09-25",
+          "end": "2026-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1680132/000168013226000010/"
+        },
+        {
+          "value_usd": 22500.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001680132-26-000010",
+          "filed": "2026-09-25",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1680132/000168013226000010/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -40324.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001680132-26-000010",
+          "filed": "2026-09-25",
+          "end": "2026-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1680132/000168013226000010/"
+        },
+        {
+          "value_usd": -45112.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001680132-26-000010",
+          "filed": "2026-09-25",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1680132/000168013226000010/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 122739.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001680132-26-000010",
+          "filed": "2026-09-25",
+          "end": "2026-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1680132/000168013226000010/"
+        },
+        {
+          "value_usd": -456142.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001680132-26-000010",
+          "filed": "2026-09-25",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1680132/000168013226000010/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "claims or other contingencies that would require accrual or disclosure in the financial statements. NOTE 6 - RELATED PARTY TRANSACTIONS During the three months ended August 31, 2026, the Company’s CEO, who is also the President and sole director, advanced $ 8,000 in cash to the Comp",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1680132/000168013226000012/csui-20260831_10q.htm",
+        "accession": "0001680132-26-000012",
+        "form": "10-Q",
+        "filed": "2026-10-15"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-05-31",
+      "2025-05-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Serhii Cherniienko, April 2021",
+      "kind": "other",
+      "as_of": "2026-08-31",
+      "effective": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Noi Tech LLC, April 15 2021",
+      "kind": "other",
+      "as_of": "2026-08-31",
+      "effective": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Okie LLC, May 2022",
+      "kind": "other",
+      "as_of": "2026-08-31",
+      "effective": 0.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-08-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2022-07-28",
+      "items": "1.01,5.01,5.02,8.01",
+      "acc": "0001680132-22-000021",
+      "doc": "form8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-11-23",
+      "items": "1.01,9.01",
+      "acc": "0001680132-20-000026",
+      "doc": "csui8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-06-06",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001680132-19-000024",
+      "doc": "cannabis8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2020-02-29",
+      86509,
+      59276,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-08-31",
+      68794,
+      58087,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-02-28",
+      0,
+      0,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-05-31",
+      424612,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-08-31",
+      610701,
+      25742,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-11-30",
+      610701,
+      4100,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-02-28",
+      610701,
+      50,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-05-31",
+      610701,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-05-31",
+      695701,
+      null,
+      64656,
+      -263575,
+      -267819,
+      0.09294
+    ],
+    [
+      "2026-08-31",
+      695701,
+      256,
+      64656,
+      -222355,
+      -226599,
+      0.09294
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2020-06",
+      1168.86,
+      2.236,
+      1.8366,
+      160.4
+    ],
+    [
+      "2020-07",
+      1133.08,
+      2.378,
+      1.8487,
+      158.9
+    ],
+    [
+      "2020-08",
+      1376.88,
+      1.843,
+      1.9938,
+      164.7
+    ],
+    [
+      "2020-09",
+      1524.13,
+      1.337,
+      2.0494,
+      170.4
+    ],
+    [
+      "2020-10",
+      1741.42,
+      0.592,
+      2.4071,
+      179.1
+    ],
+    [
+      "2020-11",
+      1747.61,
+      0.6,
+      2.4435,
+      179.0
+    ],
+    [
+      "2020-12",
+      1758.57,
+      0.474,
+      2.4547,
+      180.6
+    ],
+    [
+      "2021-01",
+      1737.7,
+      0.662,
+      2.4173,
+      178.3
+    ],
+    [
+      "2021-02",
+      1686.75,
+      0.823,
+      2.2693,
+      176.4
+    ],
+    [
+      "2021-03",
+      1687.67,
+      0.81,
+      2.2669,
+      176.5
+    ],
+    [
+      "2024-10",
+      1788.32,
+      -0.6,
+      2.4144,
+      194.1
+    ],
+    [
+      "2024-11",
+      1817.26,
+      -0.662,
+      2.7149,
+      194.9
+    ],
+    [
+      "2024-12",
+      1825.79,
+      -0.737,
+      2.9346,
+      195.9
+    ],
+    [
+      "2025-01",
+      1829.13,
+      -0.872,
+      3.2344,
+      197.7
+    ],
+    [
+      "2025-02",
+      1829.78,
+      -1.009,
+      3.3838,
+      199.5
+    ],
+    [
+      "2025-03",
+      1829.7,
+      -0.991,
+      3.4867,
+      199.3
+    ],
+    [
+      "2025-04",
+      1829.71,
+      -0.991,
+      3.4814,
+      199.3
+    ],
+    [
+      "2025-05",
+      1830.58,
+      -1.23,
+      3.4452,
+      202.5
+    ],
+    [
+      "2025-06",
+      1830.43,
+      -1.179,
+      3.5073,
+      201.8
+    ],
+    [
+      "2025-07",
+      1829.57,
+      -0.96,
+      3.4672,
+      198.8
+    ],
+    [
+      "2025-08",
+      1830.54,
+      -1.213,
+      3.5452,
+      202.3
+    ],
+    [
+      "2025-09",
+      1829.37,
+      -0.913,
+      3.4512,
+      198.2
+    ],
+    [
+      "2025-10",
+      1830.42,
+      -1.174,
+      3.2658,
+      201.7
+    ],
+    [
+      "2025-11",
+      1830.75,
+      -1.28,
+      3.3238,
+      203.2
+    ],
+    [
+      "2025-12",
+      1830.52,
+      -1.2,
+      3.1894,
+      202.1
+    ],
+    [
+      "2026-01",
+      1830.93,
+      -1.342,
+      3.2449,
+      204.0
+    ],
+    [
+      "2026-02",
+      1830.9,
+      -1.332,
+      3.2275,
+      203.9
+    ],
+    [
+      "2026-03",
+      1830.9,
+      -1.336,
+      3.2627,
+      203.9
+    ],
+    [
+      "2026-04",
+      1830.4,
+      -1.168,
+      3.2994,
+      201.6
+    ],
+    [
+      "2026-05",
+      1831.09,
+      -1.411,
+      3.4039,
+      205.0
+    ],
+    [
+      "2026-06",
+      1830.53,
+      -1.209,
+      3.2806,
+      202.2
+    ],
+    [
+      "2026-07",
+      1831.06,
+      -1.404,
+      3.2646,
+      204.9
+    ],
+    [
+      "2026-08",
+      1830.67,
+      -1.257,
+      3.2272,
+      202.9
+    ],
+    [
+      "2026-09",
+      1830.89,
+      -1.341,
+      3.195,
+      204.0
+    ],
+    [
+      "2026-10",
+      1830.29,
+      -1.266,
+      3.1253,
+      203.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

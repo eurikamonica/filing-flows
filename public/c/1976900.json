@@ -1,0 +1,298 @@
+{
+  "cik": 1976900,
+  "ticker": null,
+  "name": "DFP HOLDINGS Ltd",
+  "sector": "industrials",
+  "industry": "Services-Educational Services",
+  "sic": "8200",
+  "sic_description": "Services-Educational Services",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:21:37+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 326522,
+    "operating_leases": 90166,
+    "equity": 928629,
+    "assets": 1834279,
+    "liabilities": 943337,
+    "assets_current": 1423132,
+    "liabilities_current": 940214,
+    "retained_earnings": -2853641,
+    "operating_income": -797055,
+    "pretax_income": -789397,
+    "net_income": -731464,
+    "da": 169710,
+    "ocf": -448792,
+    "capex": 12602,
+    "revenue": 1271644,
+    "shares": 217111050,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 326522.0,
+    "net_debt": null,
+    "ebitda": -627345,
+    "ebit": -797055,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -461394,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 326522.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 90166.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315226037531/form10-q.htm",
+        "accession": "0001493152-26-037531",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 90166.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-037531",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315226037531/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "hich the Company expects to account for under the equity method in accordance with ASC 323, subject to a variable interest entity assessment under ASC 810. Digital Frontier is a related party under ASC 850 because it is under common ownership with Mr. Hsu, the Company’s the Co",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315226037531/form10-q.htm",
+        "accession": "0001493152-26-037531",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-037531",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315226037531/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.2233,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1152084.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-25-028430",
+          "filed": "2025-12-19",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315225028430/"
+        },
+        {
+          "value_usd": 1483227.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-25-028430",
+          "filed": "2025-12-19",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315225028430/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -505898.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-25-028430",
+          "filed": "2025-12-19",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315225028430/"
+        },
+        {
+          "value_usd": -235188.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-25-028430",
+          "filed": "2025-12-19",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315225028430/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -453527.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-25-028430",
+          "filed": "2025-12-19",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315225028430/"
+        },
+        {
+          "value_usd": -334397.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-25-028430",
+          "filed": "2025-12-19",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315225028430/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "tock with a fair value of $ 165,041 for the acquisitions of DFLZ, HCL, and HSCL (see Note 6). 16 | NOTE 9 - RELATED PARTY TRANSACTIONS Mr. Hsu Shou Hung (“Mr. Hsu”), a founder of the Company, is currently the Company’s Chief Executive Officer, Chief Financial Officer, President, Se",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315226037531/form10-q.htm",
+        "accession": "0001493152-26-037531",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "DERS’ EQUITY | Current liabilities: | Accounts payable and accrued liabilities | $ | 318,463 | $ | 63,082 | Deferred revenue | 280,892 | 68,820 | Due to officer | 9,342 | 7,739 | Due to non-controlling interest | 70,064 | - | Operating lease liability – current portion |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976900/000149315226037531/form10-q.htm",
+        "accession": "0001493152-26-037531",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-09-30",
+      "2024-09-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2024-11-18",
+      "items": "1.01",
+      "acc": "0001493152-24-046443",
+      "doc": "form8-k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

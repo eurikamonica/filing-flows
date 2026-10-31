@@ -1,0 +1,1696 @@
+{
+  "cik": 1475922,
+  "ticker": "PRI",
+  "name": "Primerica, Inc.",
+  "sector": "financials",
+  "industry": "Life Insurance",
+  "sic": "6311",
+  "sic_description": "Life Insurance",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-25T22:47:40+00:00",
+  "price": 274.43,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.214791,
+  "snapshot": {
+    "total_debt": 595716000,
+    "cash": 600183000,
+    "operating_leases": 46852000,
+    "equity": 2522954000,
+    "assets": 14781939000,
+    "liabilities": 12258985000,
+    "retained_earnings": 2473436000,
+    "pretax_income": 1026389000,
+    "net_income": 796213000,
+    "da": 17130000,
+    "ocf": 891746000,
+    "revenue": 3431295000,
+    "shares": 30777350,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 595716000,
+    "cash_and_investments": 600183000.0,
+    "net_debt": -4467000.0,
+    "ebitda": 1043519000.0,
+    "ebit": 1026389000.0,
+    "interest_expense": null,
+    "leverage": 0.570872,
+    "net_leverage": -0.004281,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 891746000.0,
+    "fcf_to_debt": 1.496931,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 600183000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 1.108913,
+    "market_cap": 8446228160.5,
+    "debt_to_ev": 0.070568,
+    "convertibles": null,
+    "implied": {
+      "dd": 16.369436,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.0,
+      "asset_vol": 0.207786,
+      "calibrated_5y_bps": 67.994701,
+      "rating_band": "A"
+    },
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 1570000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Second Amended And Restated Credit Agreement",
+        "dated": "2026-06-02",
+        "text": "As of the last day of any fiscal quarter, permit Consolidated Net Worth to be less than the sum of (i) $1,570,000,000, (ii) 25% of Consolidated Net Income (if positive) for each fiscal quarter of the Borrower ending after March 31, 2026 and (iii) 25% of the net cash proceeds received by the Borrower or any of its Subsidiaries from the issuance of any of their respective Equity Interests (excluding Equity Interests of"
+      }
+    ],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 46852000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526337365/pri-20260630.htm",
+        "accession": "0001193125-26-337365",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 46852000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-337365",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526337365/pri-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "| $ | 3,265,246 | All of our AFS mortgage- and asset-backed securities represent beneficial interests in variable interest entities (“VIEs”). We are not the primary beneficiary of these VIEs because we do not have the power to direct the activities that most significantly impact t",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526337365/pri-20260630.htm",
+        "accession": "0001193125-26-337365",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "tax_equity",
+        "label": "Tax equity financing",
+        "excerpt": "uances with severe ratings downgrades indicating a significant increase in the possibility of default. Tax Equity Investment. In the second quarter of 2026, the Company entered into a $ 110.0 million tax equity investment transaction for the purpose of obtaining federal inc",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526337365/pri-20260630.htm",
+        "accession": "0001193125-26-337365",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-337365",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526337365/pri-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0656,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.1996
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 3291713000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-082233",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526082233/"
+        },
+        {
+          "value_usd": 3089143000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-082233",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526082233/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 901178000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-082233",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526082233/"
+        },
+        {
+          "value_usd": 862088000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-082233",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526082233/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 751234000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001193125-26-082233",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526082233/"
+        },
+        {
+          "value_usd": 470518000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000950170-25-029882",
+          "filed": "2025-02-28",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000095017025029882/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ommissions in the Corporate and Other Distributed Products segment, we record a renewal commission receivable contract asset for the amount of ongoing renewal commissions we anticipate collecting in reporting periods subsequent to the satisfaction of the performance obligat",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526337365/pri-20260630.htm",
+        "accession": "0001193125-26-337365",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Surplus Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "face": 1100000000.0,
+      "maturity": "2030-12-31",
+      "coupon": 0.045,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "face": 600000000.0,
+      "maturity": "2031-11-19",
+      "coupon": 0.028,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "face": 200000000.0,
+      "maturity": "2026-06-22",
+      "spread_min": 0.01,
+      "spread_max": 0.01625,
+      "fee_min": 0.0008,
+      "fee_max": 0.00225,
+      "reference": "Base Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "2.800% Senior Notes due 2031",
+      "floating": false,
+      "coupon": 2.8,
+      "principal": 600000000.0,
+      "currency": "USD",
+      "maturity": "2031-11-19",
+      "price": 99.55,
+      "yield": 2.852,
+      "benchmark": "1.375% due November 15, 2031",
+      "bench_yield": 1.632,
+      "spread_bps": 122.0,
+      "trade_date": "2021-11-16",
+      "ratings": "Baa1 / A-",
+      "convertible": false,
+      "cusip": "74164M AB4",
+      "date": "2021-11-16",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312521331185/d430614dfwp.htm"
+    },
+    {
+      "title": "4.750% Senior Notes due 2022",
+      "floating": false,
+      "coupon": 4.75,
+      "principal": 375000000.0,
+      "currency": "USD",
+      "maturity": "2022-07-15",
+      "price": 99.843,
+      "yield": 4.77,
+      "benchmark": "1.750% due May 15, 2022",
+      "bench_yield": 1.52,
+      "spread_bps": 325.0,
+      "trade_date": "2012-07-11",
+      "ratings": "Moody’s: Baa2 (stable)",
+      "convertible": false,
+      "cusip": "74164MAA6",
+      "date": "2012-07-11",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312512299973/d365836dfwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-06-02",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-02",
+      "size": 200000000.0,
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.08,
+        1.625
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.08,
+      "floor_pct": 0.0,
+      "maturity": "2031-06-02",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 1570000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter, permit Consolidated Net Worth to be less than the sum of (i) $1,570,000,000, (ii) 25% of Consolidated Net Income (if positive) for each fiscal quarter of the Borrower ending after March 31, 2026 and (iii) 25% of the net cash proceeds received by the Borrower or any of its Subsidiaries from the issuance of any of their respective Equity Interests (excluding Equity Interests of"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1475922/000119312526253592/pri-ex10_1.htm",
+      "all_in_pct": [
+        0.1189,
+        1.6639
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-06-24",
+      "agreement_kind": "credit_agreement",
+      "dated": "2021-06-22",
+      "size": 200000000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        0.1,
+        1.625
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.1,
+      "floor_pct": 0.0,
+      "maturity": "2026-06-22",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 1260000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter, permit Consolidated Net Worth to be less than the sum of (i) $1,260,000,000, (ii) 25% of Consolidated Net Income (if positive) for each fiscal quarter of the Borrower ending after the Closing Date and (iii) 25% of the net cash proceeds received by the Borrower or any of its S"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1475922/000156459021034217/pri-ex101_6.htm",
+      "all_in_pct": [
+        0.1389,
+        1.6639
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2017-12-20",
+      "agreement_kind": "credit_agreement",
+      "dated": "2017-12-19",
+      "size": 200000000.0,
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.15,
+        1.625
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.125,
+      "maturity": "2022-12-19",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 863437000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter, permit Consolidated Net Worth to be less than the sum of (i) $863,437,000, (ii) 25% of Consolidated Net Income (if positive) for each fiscal quarter of the Borrower ending after the Closing Date and (iii) 25% of the net cash proceeds received by the Borrower or any of its Subsidiaries from the issuance of any of their respective Equity Interests (excluding Equity Interests of"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1475922/000156459017025124/pri-ex101_17.htm",
+      "all_in_pct": [
+        0.1889,
+        1.6639
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-253592",
+      "doc": "pri-20260602.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-19",
+      "items": "1.01,2.03,7.01,8.01,9.01",
+      "acc": "0001193125-21-335217",
+      "doc": "d268644d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-07-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001564590-21-035525",
+      "doc": "pri-8k_20210630.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-24",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-21-034217",
+      "doc": "pri-8k_20210622.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-19",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001564590-21-019416",
+      "doc": "pri-8k_20210419.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-12-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-17-025124",
+      "doc": "pri-8k_20171219.htm",
+      "desc": "8-K CREDIT AGREEMENT 12-19-17"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2012-12-31",
+      374433000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2013-03",
+      0.0,
+      11.87,
+      0.2092,
+      83.9
+    ],
+    [
+      "2013-04",
+      0.0,
+      11.389,
+      0.2193,
+      86.7
+    ],
+    [
+      "2013-05",
+      0.0,
+      13.135,
+      0.1934,
+      77.1
+    ],
+    [
+      "2013-06",
+      0.0,
+      14.385,
+      0.18,
+      70.9
+    ],
+    [
+      "2013-07",
+      0.0,
+      15.063,
+      0.1763,
+      68.0
+    ],
+    [
+      "2013-08",
+      0.0,
+      13.85,
+      0.1865,
+      73.5
+    ],
+    [
+      "2013-09",
+      0.0,
+      14.316,
+      0.1846,
+      71.2
+    ],
+    [
+      "2013-10",
+      0.0,
+      14.773,
+      0.1832,
+      69.0
+    ],
+    [
+      "2013-11",
+      0.0,
+      14.901,
+      0.1811,
+      68.4
+    ],
+    [
+      "2013-12",
+      0.0,
+      14.945,
+      0.1813,
+      68.2
+    ],
+    [
+      "2014-01",
+      0.0,
+      14.239,
+      0.1883,
+      71.6
+    ],
+    [
+      "2014-02",
+      0.0,
+      13.797,
+      0.1978,
+      73.7
+    ],
+    [
+      "2014-03",
+      0.0,
+      13.08,
+      0.2101,
+      77.4
+    ],
+    [
+      "2014-04",
+      0.0,
+      13.497,
+      0.2029,
+      75.2
+    ],
+    [
+      "2014-05",
+      0.0,
+      13.2,
+      0.2071,
+      76.7
+    ],
+    [
+      "2014-06",
+      0.0,
+      13.409,
+      0.2072,
+      75.7
+    ],
+    [
+      "2014-07",
+      0.0,
+      13.586,
+      0.2035,
+      74.8
+    ],
+    [
+      "2014-08",
+      0.0,
+      14.342,
+      0.197,
+      71.1
+    ],
+    [
+      "2014-09",
+      0.0,
+      14.326,
+      0.1954,
+      71.1
+    ],
+    [
+      "2014-10",
+      0.0,
+      13.698,
+      0.207,
+      74.2
+    ],
+    [
+      "2014-11",
+      0.0,
+      13.51,
+      0.2115,
+      75.2
+    ],
+    [
+      "2014-12",
+      0.0,
+      13.277,
+      0.2178,
+      76.3
+    ],
+    [
+      "2015-01",
+      0.0,
+      13.34,
+      0.2109,
+      76.0
+    ],
+    [
+      "2015-02",
+      0.0,
+      13.505,
+      0.2121,
+      75.2
+    ],
+    [
+      "2015-03",
+      0.0,
+      14.171,
+      0.1998,
+      71.9
+    ],
+    [
+      "2015-04",
+      0.0,
+      14.034,
+      0.1986,
+      72.6
+    ],
+    [
+      "2015-05",
+      0.0,
+      14.019,
+      0.1949,
+      72.6
+    ],
+    [
+      "2015-06",
+      0.0,
+      14.441,
+      0.1925,
+      70.6
+    ],
+    [
+      "2015-07",
+      0.0,
+      12.264,
+      0.2238,
+      81.7
+    ],
+    [
+      "2015-08",
+      0.0,
+      11.501,
+      0.2342,
+      86.0
+    ],
+    [
+      "2015-09",
+      0.0,
+      11.054,
+      0.2461,
+      88.7
+    ],
+    [
+      "2015-10",
+      0.0,
+      11.431,
+      0.2435,
+      86.4
+    ],
+    [
+      "2015-11",
+      0.0,
+      10.698,
+      0.2657,
+      90.8
+    ],
+    [
+      "2015-12",
+      0.01,
+      9.906,
+      0.2828,
+      95.8
+    ],
+    [
+      "2016-01",
+      0.06,
+      9.159,
+      0.2979,
+      100.7
+    ],
+    [
+      "2016-02",
+      0.12,
+      8.778,
+      0.3073,
+      103.3
+    ],
+    [
+      "2016-03",
+      0.17,
+      8.603,
+      0.3138,
+      104.5
+    ],
+    [
+      "2016-04",
+      0.23,
+      8.488,
+      0.3298,
+      105.3
+    ],
+    [
+      "2016-05",
+      0.17,
+      8.654,
+      0.3346,
+      104.2
+    ],
+    [
+      "2016-06",
+      0.23,
+      8.509,
+      0.337,
+      105.2
+    ],
+    [
+      "2016-07",
+      0.22,
+      8.519,
+      0.3324,
+      105.1
+    ],
+    [
+      "2016-08",
+      0.09,
+      9.001,
+      0.3245,
+      101.8
+    ],
+    [
+      "2016-09",
+      0.1,
+      8.931,
+      0.3205,
+      102.3
+    ],
+    [
+      "2016-10",
+      0.07,
+      9.148,
+      0.3156,
+      100.8
+    ],
+    [
+      "2016-11",
+      0.77,
+      7.862,
+      0.3934,
+      109.9
+    ],
+    [
+      "2016-12",
+      0.43,
+      8.175,
+      0.3751,
+      107.6
+    ],
+    [
+      "2017-01",
+      0.19,
+      8.639,
+      0.3647,
+      104.3
+    ],
+    [
+      "2017-02",
+      0.06,
+      9.295,
+      0.3446,
+      99.8
+    ],
+    [
+      "2017-03",
+      0.04,
+      9.497,
+      0.3399,
+      98.4
+    ],
+    [
+      "2017-04",
+      0.01,
+      9.963,
+      0.3261,
+      95.4
+    ],
+    [
+      "2017-05",
+      0.11,
+      8.907,
+      0.3495,
+      102.4
+    ],
+    [
+      "2017-06",
+      0.06,
+      9.23,
+      0.3425,
+      100.2
+    ],
+    [
+      "2017-07",
+      0.02,
+      9.8,
+      0.3292,
+      96.5
+    ],
+    [
+      "2017-08",
+      0.03,
+      9.591,
+      0.3314,
+      97.8
+    ],
+    [
+      "2017-09",
+      0.02,
+      9.707,
+      0.3327,
+      97.1
+    ],
+    [
+      "2017-10",
+      0.01,
+      9.906,
+      0.3336,
+      95.8
+    ],
+    [
+      "2017-11",
+      0.0,
+      14.263,
+      0.2403,
+      71.4
+    ],
+    [
+      "2017-12",
+      0.0,
+      14.504,
+      0.238,
+      70.3
+    ],
+    [
+      "2018-01",
+      0.0,
+      15.175,
+      0.2299,
+      68.0
+    ],
+    [
+      "2018-02",
+      0.0,
+      14.356,
+      0.2401,
+      71.0
+    ],
+    [
+      "2018-03",
+      0.0,
+      12.995,
+      0.2622,
+      77.8
+    ],
+    [
+      "2018-04",
+      0.0,
+      12.988,
+      0.2634,
+      77.8
+    ],
+    [
+      "2018-05",
+      0.0,
+      14.76,
+      0.2328,
+      69.1
+    ],
+    [
+      "2018-06",
+      0.0,
+      14.688,
+      0.2346,
+      69.4
+    ],
+    [
+      "2018-07",
+      0.0,
+      14.824,
+      0.2405,
+      68.8
+    ],
+    [
+      "2018-08",
+      0.0,
+      15.661,
+      0.2318,
+      68.0
+    ],
+    [
+      "2018-09",
+      0.0,
+      15.947,
+      0.227,
+      68.0
+    ],
+    [
+      "2018-10",
+      0.0,
+      13.773,
+      0.2548,
+      73.8
+    ],
+    [
+      "2018-11",
+      0.0,
+      15.362,
+      0.2349,
+      68.0
+    ],
+    [
+      "2018-12",
+      0.0,
+      12.445,
+      0.274,
+      80.7
+    ],
+    [
+      "2019-01",
+      0.0,
+      12.319,
+      0.2857,
+      81.4
+    ],
+    [
+      "2019-02",
+      0.0,
+      12.887,
+      0.2815,
+      78.4
+    ],
+    [
+      "2019-03",
+      0.0,
+      12.882,
+      0.2811,
+      78.4
+    ],
+    [
+      "2019-04",
+      0.0,
+      13.012,
+      0.2813,
+      77.7
+    ],
+    [
+      "2019-05",
+      0.0,
+      12.408,
+      0.2873,
+      80.9
+    ],
+    [
+      "2019-06",
+      0.0,
+      12.504,
+      0.288,
+      80.4
+    ],
+    [
+      "2019-07",
+      0.0,
+      12.74,
+      0.2857,
+      79.2
+    ],
+    [
+      "2019-08",
+      0.0,
+      12.17,
+      0.2954,
+      82.2
+    ],
+    [
+      "2019-09",
+      0.0,
+      12.397,
+      0.2948,
+      81.0
+    ],
+    [
+      "2019-10",
+      0.0,
+      13.429,
+      0.2716,
+      75.6
+    ],
+    [
+      "2019-11",
+      0.0,
+      14.109,
+      0.2628,
+      72.2
+    ],
+    [
+      "2019-12",
+      0.0,
+      16.734,
+      0.2208,
+      68.0
+    ],
+    [
+      "2020-01",
+      0.0,
+      16.887,
+      0.2138,
+      68.0
+    ],
+    [
+      "2020-02",
+      0.0,
+      12.048,
+      0.2932,
+      82.9
+    ],
+    [
+      "2020-03",
+      70.25,
+      4.789,
+      0.6617,
+      135.1
+    ],
+    [
+      "2020-04",
+      100.2,
+      4.482,
+      0.7123,
+      137.9
+    ],
+    [
+      "2020-05",
+      93.02,
+      4.602,
+      0.7245,
+      136.8
+    ],
+    [
+      "2020-06",
+      101.33,
+      4.518,
+      0.7333,
+      137.6
+    ],
+    [
+      "2020-07",
+      92.2,
+      4.627,
+      0.7295,
+      136.6
+    ],
+    [
+      "2020-08",
+      92.72,
+      4.64,
+      0.7382,
+      136.5
+    ],
+    [
+      "2020-09",
+      105.93,
+      4.48,
+      0.7395,
+      137.9
+    ],
+    [
+      "2020-10",
+      112.79,
+      4.416,
+      0.746,
+      138.5
+    ],
+    [
+      "2020-11",
+      98.71,
+      4.6,
+      0.7539,
+      136.8
+    ],
+    [
+      "2020-12",
+      99.77,
+      4.591,
+      0.7554,
+      136.9
+    ],
+    [
+      "2021-01",
+      95.07,
+      4.645,
+      0.7534,
+      136.4
+    ],
+    [
+      "2021-02",
+      75.25,
+      4.861,
+      0.7269,
+      134.4
+    ],
+    [
+      "2021-03",
+      0.09,
+      9.244,
+      0.4054,
+      100.1
+    ],
+    [
+      "2021-04",
+      0.0,
+      12.463,
+      0.3094,
+      80.6
+    ],
+    [
+      "2021-05",
+      0.0,
+      13.829,
+      0.2807,
+      73.6
+    ],
+    [
+      "2021-06",
+      0.0,
+      13.319,
+      0.2883,
+      76.1
+    ],
+    [
+      "2021-07",
+      0.0,
+      13.08,
+      0.2893,
+      77.4
+    ],
+    [
+      "2021-08",
+      0.0,
+      14.505,
+      0.2646,
+      70.3
+    ],
+    [
+      "2021-09",
+      0.0,
+      14.931,
+      0.2568,
+      68.3
+    ],
+    [
+      "2021-10",
+      0.0,
+      16.561,
+      0.2373,
+      68.0
+    ],
+    [
+      "2021-11",
+      0.0,
+      15.176,
+      0.2508,
+      68.0
+    ],
+    [
+      "2021-12",
+      0.0,
+      15.365,
+      0.2503,
+      68.0
+    ],
+    [
+      "2022-01",
+      0.0,
+      15.111,
+      0.2537,
+      68.0
+    ],
+    [
+      "2022-02",
+      0.0,
+      13.445,
+      0.2756,
+      75.5
+    ],
+    [
+      "2022-03",
+      0.0,
+      13.521,
+      0.277,
+      75.1
+    ],
+    [
+      "2022-04",
+      0.0,
+      13.48,
+      0.275,
+      75.3
+    ],
+    [
+      "2022-05",
+      0.0,
+      12.005,
+      0.3065,
+      83.2
+    ],
+    [
+      "2022-06",
+      0.0,
+      12.591,
+      0.29,
+      80.0
+    ],
+    [
+      "2022-07",
+      0.0,
+      12.559,
+      0.2952,
+      80.1
+    ],
+    [
+      "2022-08",
+      0.0,
+      12.195,
+      0.3037,
+      82.1
+    ],
+    [
+      "2022-09",
+      0.0,
+      12.023,
+      0.306,
+      83.1
+    ],
+    [
+      "2022-10",
+      0.0,
+      12.279,
+      0.3108,
+      81.6
+    ],
+    [
+      "2022-11",
+      0.0,
+      13.31,
+      0.2889,
+      76.2
+    ],
+    [
+      "2022-12",
+      0.0,
+      13.24,
+      0.2885,
+      76.5
+    ],
+    [
+      "2023-01",
+      0.0,
+      13.514,
+      0.2901,
+      75.1
+    ],
+    [
+      "2023-02",
+      0.0,
+      15.233,
+      0.2664,
+      68.0
+    ],
+    [
+      "2023-03",
+      0.0,
+      13.425,
+      0.2978,
+      75.6
+    ],
+    [
+      "2023-04",
+      0.0,
+      13.605,
+      0.2979,
+      74.7
+    ],
+    [
+      "2023-05",
+      0.0,
+      15.524,
+      0.2628,
+      68.0
+    ],
+    [
+      "2023-06",
+      0.0,
+      16.658,
+      0.2491,
+      68.0
+    ],
+    [
+      "2023-07",
+      0.0,
+      17.127,
+      0.2458,
+      68.0
+    ],
+    [
+      "2023-08",
+      0.0,
+      17.41,
+      0.2394,
+      68.0
+    ],
+    [
+      "2023-09",
+      0.0,
+      17.747,
+      0.2332,
+      68.0
+    ],
+    [
+      "2023-10",
+      0.0,
+      17.638,
+      0.2347,
+      68.0
+    ],
+    [
+      "2023-11",
+      0.0,
+      17.908,
+      0.2358,
+      68.0
+    ],
+    [
+      "2023-12",
+      -0.0,
+      18.233,
+      0.2299,
+      68.0
+    ],
+    [
+      "2024-01",
+      -0.0,
+      18.515,
+      0.2311,
+      68.0
+    ],
+    [
+      "2024-02",
+      -0.0,
+      19.399,
+      0.2257,
+      68.0
+    ],
+    [
+      "2024-03",
+      -0.0,
+      26.223,
+      0.1679,
+      68.0
+    ],
+    [
+      "2024-04",
+      -0.0,
+      21.338,
+      0.1987,
+      68.0
+    ],
+    [
+      "2024-05",
+      -0.0,
+      21.546,
+      0.1993,
+      68.0
+    ],
+    [
+      "2024-06",
+      -0.0,
+      21.229,
+      0.2043,
+      68.0
+    ],
+    [
+      "2024-07",
+      -0.0,
+      21.422,
+      0.2048,
+      68.0
+    ],
+    [
+      "2024-08",
+      -0.0,
+      22.285,
+      0.199,
+      68.0
+    ],
+    [
+      "2024-09",
+      -0.0,
+      22.237,
+      0.1992,
+      68.0
+    ],
+    [
+      "2024-10",
+      -0.0,
+      23.413,
+      0.1913,
+      68.0
+    ],
+    [
+      "2024-11",
+      -0.0,
+      22.883,
+      0.1997,
+      68.0
+    ],
+    [
+      "2024-12",
+      -0.0,
+      21.053,
+      0.2118,
+      68.0
+    ],
+    [
+      "2025-01",
+      -0.0,
+      20.961,
+      0.2158,
+      68.0
+    ],
+    [
+      "2025-02",
+      -0.0,
+      19.716,
+      0.2294,
+      68.0
+    ],
+    [
+      "2025-03",
+      -0.0,
+      19.41,
+      0.2318,
+      68.0
+    ],
+    [
+      "2025-04",
+      0.0,
+      18.206,
+      0.2428,
+      68.0
+    ],
+    [
+      "2025-05",
+      0.0,
+      17.988,
+      0.2478,
+      68.0
+    ],
+    [
+      "2025-06",
+      0.0,
+      18.161,
+      0.245,
+      68.0
+    ],
+    [
+      "2025-07",
+      0.0,
+      17.852,
+      0.2487,
+      68.0
+    ],
+    [
+      "2025-08",
+      0.0,
+      17.829,
+      0.2498,
+      68.0
+    ],
+    [
+      "2025-09",
+      0.0,
+      18.136,
+      0.2471,
+      68.0
+    ],
+    [
+      "2025-10",
+      0.0,
+      17.801,
+      0.2482,
+      68.0
+    ],
+    [
+      "2025-11",
+      -0.0,
+      18.466,
+      0.2391,
+      68.0
+    ],
+    [
+      "2025-12",
+      -0.0,
+      19.071,
+      0.232,
+      68.0
+    ],
+    [
+      "2026-01",
+      -0.0,
+      19.551,
+      0.2269,
+      68.0
+    ],
+    [
+      "2026-02",
+      -0.0,
+      18.335,
+      0.2402,
+      68.0
+    ],
+    [
+      "2026-03",
+      0.0,
+      18.199,
+      0.2406,
+      68.0
+    ],
+    [
+      "2026-04",
+      -0.0,
+      21.572,
+      0.2089,
+      68.0
+    ],
+    [
+      "2026-05",
+      -0.0,
+      21.836,
+      0.205,
+      68.0
+    ],
+    [
+      "2026-06",
+      -0.0,
+      21.999,
+      0.2058,
+      68.0
+    ],
+    [
+      "2026-07",
+      -0.0,
+      23.111,
+      0.2009,
+      68.0
+    ],
+    [
+      "2026-08",
+      -0.0,
+      21.778,
+      0.2091,
+      68.0
+    ],
+    [
+      "2026-09",
+      -0.0,
+      20.798,
+      0.2166,
+      68.0
+    ],
+    [
+      "2026-10",
+      -0.0,
+      20.957,
+      0.2148,
+      68.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

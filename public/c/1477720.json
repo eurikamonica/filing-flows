@@ -1,0 +1,393 @@
+{
+  "cik": 1477720,
+  "ticker": "ASAN",
+  "name": "Asana, Inc.",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "sic_description": "Services-Prepackaged Software",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T01:14:30+00:00",
+  "price": 12.02,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.643868,
+  "snapshot": {
+    "current_debt": 37059000,
+    "cash": 219562000,
+    "operating_leases": 221267000,
+    "revolver_available": 78300000,
+    "equity": 104323000,
+    "assets": 816149000,
+    "liabilities": 711826000,
+    "assets_current": 471768000,
+    "liabilities_current": 512867000,
+    "retained_earnings": -2299826000,
+    "interest_expense": 2854000,
+    "interest_paid": 2882000,
+    "operating_income": -160430000,
+    "pretax_income": -151288000,
+    "net_income": -154240000,
+    "da": 24200000,
+    "ocf": 130052000,
+    "capex": 6159000,
+    "revenue": 828127000,
+    "debt_repaid": 5000000,
+    "maturities": {
+      "as_of": "2026-07-31",
+      "rest_of_year": 36875000
+    },
+    "shares": 234431000,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfSeniorDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 219562000.0,
+    "net_debt": null,
+    "ebitda": -136230000,
+    "ebit": -160430000,
+    "interest_expense": 2854000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -56.212334,
+    "ebitda_coverage": -47.733006,
+    "cash_coverage": 46.125607,
+    "fcf": 123893000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 78300000,
+    "liquidity": 297862000.0,
+    "due_12m": 36875000,
+    "due_24m": null,
+    "liquidity_to_due12": 8.077614,
+    "liquidity_to_due24": null,
+    "floating_debt": 36900000.0,
+    "floating_share": null,
+    "plus100bp_interest": 369000.0,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -1.264309,
+    "market_cap": 2817860620.0,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": 52
+  },
+  "hidden_leverage": {
+    "as_of": "2026-07-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 221267000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm",
+        "accession": "0001477720-26-000060",
+        "form": "10-Q",
+        "filed": "2026-09-03",
+        "as_of": "2026-07-31",
+        "evidence": [
+          {
+            "value_usd": 221267000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001477720-26-000060",
+            "filed": "2026-09-03",
+            "form": "10-Q",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "rchase shares in the open market, through privately negotiated transactions, by entering into structured repurchase agreements with third parties, by making block purchases, and/or pursuant to Rule 10b5-1 trading plans. The timing, manner, price, and amount of any repurchases",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm",
+        "accession": "0001477720-26-000060",
+        "form": "10-Q",
+        "filed": "2026-09-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001477720-26-000060",
+      "form": "10-Q",
+      "filed": "2026-09-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-31",
+    "metrics": {
+      "revenue_growth": 0.0925,
+      "receivables_growth": 0.2597,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.1092,
+      "dsri": 1.1531,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 790806000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        },
+        {
+          "value_usd": 723876000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 110312000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        },
+        {
+          "value_usd": 87567000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 333636000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        },
+        {
+          "value_usd": 300798000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 90361000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        },
+        {
+          "value_usd": 14925000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -189024000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        },
+        {
+          "value_usd": -255536000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477720-26-000021",
+          "filed": "2026-03-13",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000021/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "l changes to the business, dispose of assets, make certain types of restricted payments or enter into certain related party transactions, subject to customary exceptions. In addition, the November 2022 Senior Secured Credit Facility contains financial covenants, including a consolidate",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm",
+        "accession": "0001477720-26-000060",
+        "form": "10-Q",
+        "filed": "2026-09-03"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "unts payable | $ | 15,438 | $ | 18,822 | Accrued expenses and other current liabilities | 119,875 | 123,716 | Deferred revenue, current | 350,337 | 333,636 | Operating lease liabilities, current | 27,217 | 24,846 | Total current liabilities | 512,867 | 501,020 | Deferred reve",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm",
+        "accession": "0001477720-26-000060",
+        "form": "10-Q",
+        "filed": "2026-09-03"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-01-31",
+      "2025-01-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-07-31",
+      "coupon": 0.0125,
+      "spread": 0.001,
+      "fee": 0.0015,
+      "carrying": 36900000.0,
+      "reference": "SOFR",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-07-31"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-03-02",
+      "agreement_kind": "amendment",
+      "dated": "2022-11-07",
+      "title": "Fifth Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000012/exhibit101-fifthamendmentt.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-06-03",
+      "agreement_kind": "amendment",
+      "dated": "2022-11-07",
+      "title": "Fourth Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772025000107/asana-q1202610xqxex101xfou.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-12-05",
+      "agreement_kind": "amendment",
+      "dated": "2022-11-07",
+      "title": "Third Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772024000107/exhibit101-thirdamendmentt.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2022-11-10",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001477720-22-000051",
+      "doc": "asan-20221107.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-09-07",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001193125-22-239995",
+      "doc": "d401626d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,314 @@
+{
+  "cik": 1327068,
+  "ticker": "USO",
+  "name": "United States Oil Fund, LP",
+  "sector": "financials",
+  "industry": "Commodity Contracts Brokers & Dealers",
+  "sic": "6221",
+  "sic_description": "Commodity Contracts Brokers & Dealers",
+  "generated_at": "2026-10-31T14:35:10+00:00",
+  "fetched_at": "2026-10-25T22:44:45+00:00",
+  "price": 168.83,
+  "price_date": "2026-10-30",
+  "equity_vol": 0.519364,
+  "snapshot": {
+    "cash": 1345734884,
+    "assets": 1904147269,
+    "liabilities": 150422027,
+    "net_income": 586313940,
+    "ocf": 831578389,
+    "revenue": 596621312,
+    "shares": 14823603,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (four quarters)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1345734884.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 831578389.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1345734884.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 2502668894.49,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-092623",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1327068/000110465926092623/uso-20260630x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.1689,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 320800.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001104659-26-021501",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1327068/000110465926021501/"
+        },
+        {
+          "value_usd": 386000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001104659-26-021501",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1327068/000110465926021501/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -21869115.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-021501",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1327068/000110465926021501/"
+        },
+        {
+          "value_usd": 175738682.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-021501",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1327068/000110465926021501/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -64657517.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-021501",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1327068/000110465926021501/"
+        },
+        {
+          "value_usd": 221118191.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-021501",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1327068/000110465926021501/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "of making decisions for allocating resources and evaluating performance. NOTE 3 — FEES PAID BY THE FUND AND RELATED PARTY TRANSACTIONS USCF Management Fee Under the LP Agreement, USCF is responsible for investing the assets of USO in accordance with the objectives and policies of U",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1327068/000110465926092623/uso-20260630x10q.htm",
+        "accession": "0001104659-26-092623",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-25",
+      "items": "1.01",
+      "acc": "0002071876-26-000219",
+      "doc": "i26398_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-08-06",
+      "items": "1.01,9.01",
+      "acc": "0001171200-24-000247",
+      "doc": "i24274_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2023-08-08",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001171200-23-000374",
+      "doc": "i23341_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2022-10-03",
+      "items": "1.01,9.01",
+      "acc": "0001171200-22-000326",
+      "doc": "i22436_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2022-06-15",
+      "items": "1.01,9.01",
+      "acc": "0001171200-22-000268",
+      "doc": "i22345_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-12-01",
+      "items": "1.01,9.01",
+      "acc": "0001171200-21-000397",
+      "doc": "i21649_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-12-07",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001171200-20-000683",
+      "doc": "i20619_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-06-09",
+      "items": "1.01,9.01",
+      "acc": "0001171200-20-000409",
+      "doc": "i20386_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-05-29",
+      "items": "1.01,9.01",
+      "acc": "0001171200-20-000372",
+      "doc": "i20358_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-03-30",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001171200-20-000196",
+      "doc": "i20186_uso-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-05-18",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001193125-15-191984",
+      "doc": "d927831d8k.htm",
+      "desc": "8-K FOR UNITED STATES OIL FUND, LP"
+    },
+    {
+      "date": "2013-10-10",
+      "items": "1.01,9.01",
+      "acc": "0001144204-13-054747",
+      "doc": "v357018_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-10-24",
+      "items": "1.01,9.01",
+      "acc": "0001193125-11-278340",
+      "doc": "d246654d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

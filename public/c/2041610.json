@@ -1,0 +1,814 @@
+{
+  "cik": 2041610,
+  "ticker": "PSKY",
+  "name": "Skydance Corp",
+  "sector": "communication",
+  "industry": "Television Broadcasting Stations",
+  "sic": "4833",
+  "sic_description": "Television Broadcasting Stations",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-25T20:52:52+00:00",
+  "price": 9.775,
+  "price_date": "2026-10-16",
+  "equity_vol": 0.892652,
+  "snapshot": {
+    "total_debt": 15156000000,
+    "current_debt": 665000000,
+    "cash": 1627000000,
+    "commercial_paper": 0,
+    "finance_leases": 2000000,
+    "debt_fair_value": 12100000000,
+    "revolver_drawn": 1800000000,
+    "equity": 11771000000,
+    "assets": 44411000000,
+    "assets_current": 11020000000,
+    "liabilities_current": 10600000000,
+    "retained_earnings": -1544000000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 433000000,
+      "y2": 584000000,
+      "y3": 1000000000,
+      "y4": 500000000,
+      "y5": 827000000,
+      "after5": 11632000000
+    },
+    "shares": 1071666977,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtAndCapitalLeaseObligations",
+    "current_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "commercial_paper": "CommercialPaper",
+    "finance_leases": "FinanceLeaseLiability",
+    "debt_fair_value": "DebtInstrumentFairValue",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 15156000000,
+    "cash_and_investments": 1627000000.0,
+    "net_debt": 13529000000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 2000000000.0,
+    "liquidity": 3627000000.0,
+    "due_12m": 433000000,
+    "due_24m": 1017000000,
+    "liquidity_to_due12": 8.376443,
+    "liquidity_to_due24": 3.566372,
+    "floating_debt": 1800000000.0,
+    "floating_share": 0.118765,
+    "plus100bp_interest": 18000000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 10475544700.175001,
+    "debt_to_ev": 0.63138,
+    "convertibles": null,
+    "implied": {
+      "dd": 1.327663,
+      "pd_1y": 0.092145,
+      "spread_5y_bps": 544.571805,
+      "asset_vol": 0.539218,
+      "calibrated_5y_bps": 170.496991,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.06615,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 5.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "To The Credit Agreement",
+        "dated": "2026-10-06",
+        "text": "(a) Without the consent of the Required Pro Rata Facilities Lenders, the Parent Borrower, will not permit: (i) the Consolidated Total Net Leverage Ratio, as of the last day of any fiscal quarter of the Parent Borrower beginning with the first full fiscal quarter ended after the Closing Date, to be greater than (A) prior to the Investment Grade Fall-Away Date, 5.50 to 1.00 and (B) on and following the Investment Grade"
+      }
+    ],
+    "cushion_score": 62
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "imated fair value of FCC licenses that were impaired in the second quarter of 2025 (see Note 15 ). 9 ) VARIABLE INTEREST ENTITIES In the normal course of business, we enter into joint ventures or make investments with business partners that support our underlying business st",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000054/psky-20260630.htm",
+        "accession": "0002041610-26-000054",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "closing of the Skydance Transactions, Paramount Skydance Corporation provided a full and unconditional parent guarantee of Paramount Global’s senior and junior debt. None of Paramount Skydance Corporation’s other subsidiaries are guarantors of Paramount Global’s de",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000054/psky-20260630.htm",
+        "accession": "0002041610-26-000054",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002041610-26-000054",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000054/psky-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0148,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.0312,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 29213000000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        },
+        {
+          "value_usd": 29652000000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 6920000000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        },
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 825000000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        },
+        {
+          "value_usd": 800000000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 752000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        },
+        {
+          "value_usd": 475000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -6190000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        },
+        {
+          "value_usd": -608000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0002041610-26-000011",
+          "filed": "2026-02-25",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000011/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "nal expected term of one year or less, mainly consisting of advertising contracts, (ii) contracts for which variable consideration is determined based on the customer’s subsequent sale or usage, mainly consisting of affiliate agreements and (iii) long-term licensing agreements",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000054/psky-20260630.htm",
+        "accession": "0002041610-26-000054",
+        "form": "10-Q",
+        "filed": "2026-08-04"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "censee for exhibition, while the related cash is generally collected over the term of the license period. Contract Liabilities Contract liabilities are included within “Deferred revenues” and “Other liabilities” on the Consolidated Balance Sheets and were $ 1.6 billion an",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000054/psky-20260630.htm",
+        "accession": "0002041610-26-000054",
+        "form": "10-Q",
+        "filed": "2026-08-04"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2024-12-31",
+      "2023-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Standby Letter of Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 1900000000.0,
+      "floating": false
+    },
+    {
+      "name": "Miramax Credit Facility, Matures November 2027",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 50000000.0,
+      "floating": false
+    },
+    {
+      "name": "4.0% Senior Notes due 2026",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.04,
+      "maturity_year": 2026,
+      "floating": false
+    },
+    {
+      "name": "3.70% Senior Notes due 2026",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.037,
+      "maturity_year": 2026,
+      "floating": false
+    },
+    {
+      "name": "2.90% Senior Notes due 2027",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.029,
+      "maturity_year": 2027,
+      "floating": false
+    },
+    {
+      "name": "3.375% Senior Notes due 2028",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.03375,
+      "maturity_year": 2028,
+      "floating": false
+    },
+    {
+      "name": "3.70% Senior Notes due 2028",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.037,
+      "maturity_year": 2028,
+      "floating": false
+    },
+    {
+      "name": "4.20% Senior Notes due 2029",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.042,
+      "maturity_year": 2029,
+      "floating": false
+    },
+    {
+      "name": "7.875% Senior Debentures due 2030",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.07875,
+      "maturity_year": 2030,
+      "floating": false
+    },
+    {
+      "name": "4.95% Senior Notes due 2031",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0495,
+      "maturity_year": 2031,
+      "floating": false
+    },
+    {
+      "name": "4.20% Senior Notes due 2032",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.042,
+      "maturity_year": 2032,
+      "floating": false
+    },
+    {
+      "name": "5.50% Senior Debentures due 2033",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.055,
+      "maturity_year": 2033,
+      "floating": false
+    },
+    {
+      "name": "4.85% Senior Debentures due 2034",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0485,
+      "maturity_year": 2034,
+      "floating": false
+    },
+    {
+      "name": "6.875% Senior Debentures due 2036",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.06875,
+      "maturity_year": 2036,
+      "floating": false
+    },
+    {
+      "name": "6.75% Senior Debentures due 2037",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0675,
+      "maturity_year": 2037,
+      "floating": false
+    },
+    {
+      "name": "5.90% Senior Notes due 2040",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.059,
+      "maturity_year": 2040,
+      "floating": false
+    },
+    {
+      "name": "4.50% Senior Debentures due 2042",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.045,
+      "maturity_year": 2042,
+      "floating": false
+    },
+    {
+      "name": "4.85% Senior Notes due 2042",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0485,
+      "maturity_year": 2042,
+      "floating": false
+    },
+    {
+      "name": "4.375% Senior Debentures due 2043",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.04375,
+      "maturity_year": 2043,
+      "floating": false
+    },
+    {
+      "name": "4.875% Senior Debentures due 2043",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.04875,
+      "maturity_year": 2043,
+      "floating": false
+    },
+    {
+      "name": "5.85% Senior Debentures due 2043",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0585,
+      "maturity_year": 2043,
+      "floating": false
+    },
+    {
+      "name": "5.25% Senior Debentures due 2044",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0525,
+      "maturity_year": 2044,
+      "floating": false
+    },
+    {
+      "name": "4.90% Senior Notes due 2044",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.049,
+      "maturity_year": 2044,
+      "floating": false
+    },
+    {
+      "name": "4.60% Senior Notes due 2045",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.046,
+      "maturity_year": 2045,
+      "floating": false
+    },
+    {
+      "name": "4.95% Senior Notes due 2050",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0495,
+      "maturity_year": 2050,
+      "floating": false
+    },
+    {
+      "name": "6.25% Junior Subordinated Debentures due 2057",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0625,
+      "maturity_year": 2057,
+      "floating": false
+    },
+    {
+      "name": "6.375% Junior Subordinated Debentures due 2062",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.06375,
+      "maturity_year": 2062,
+      "floating": false
+    },
+    {
+      "name": "Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 1800000000.0,
+      "rate_now": 0.0613,
+      "available": 3200000000.0,
+      "floating": false
+    },
+    {
+      "name": "Miramax Credit Facility, Matures November 2025",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 50000000.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-10-06",
+      "agreement_kind": "amendment",
+      "dated": "2026-10-06",
+      "title": "To The Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "EURIBOR",
+        "SONIA"
+      ],
+      "fee_pct": 0.175,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "(a) Without the consent of the Required Pro Rata Facilities Lenders, the Parent Borrower, will not permit: (i) the Consolidated Total Net Leverage Ratio, as of the last day of any fiscal quarter of the Parent Borrower beginning with the first full fiscal quarter ended after the Closing Date, to be greater than (A) prior to the Investment Grade Fall-Away Date, 5.50 to 1.00 and (B) on and following the Investment Grade"
+        },
+        {
+          "type": "leverage",
+          "limit": 0.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Asset Sale Prepayment Percentage ” shall mean, (a) 100%, if the Parent Borrower’s First Lien Net Leverage Ratio at the end of the most recently ended Test Period equals or exceeds the Closing Date First Lien Net Leverage Ratio less 0.50 to 1.00; (b) 50%, if such First Lien Net Leverage Ratio is less than the Closing Date First Lien Net Leverage Ratio less 0.50 to 1.00 but equals or exceeds the Closing Date First Li"
+        },
+        {
+          "type": "leverage",
+          "limit": 0.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "no Restricted Subsidiary may be a Subsidiary of an Unrestricted Subsidiary (and any Subsidiary of an Unrestricted Subsidiary that is acquired or formed after the date of designation shall automatically be designated as an Unrestricted Subsidiary); and 172 (C) immediately after such designation, the Consolidated Total Net Leverage Ratio, determined on a Pro Forma Basis as of such date, would not exceed 0.25 to 1.00 gr"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "n compliance on a Pro Forma Basis with the Financial Covenants; or (c) with respect to Incremental Facilities not secured by a Lien on any portion of the Collateral, either (A) the Parent Borrower not being in compliance on a Pro Forma Basis with the Financial Covenants or (B) the Parent Borrower’s Interest Coverage Ratio for the applicable Test Period being less than 2.00 to 1.00 or, if incurred in connection with a"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2041610/000110465926113913/tm2626659d7_ex10-8.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-04-09",
+      "agreement_kind": "amendment",
+      "dated": "2026-04-07",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/2041610/000110465926041263/tm2610616d2_ex10-2.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-04-09",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-04-07",
+      "size": 10000000000.0,
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "EURIBOR",
+        "SONIA"
+      ],
+      "fee_pct": 0.175,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "(a) Without the consent of the Required Pro Rata Facilities Lenders, the Parent Borrower, will not permit: (i) the Consolidated Total Net Leverage Ratio, as of the last day of any fiscal quarter of the Parent Borrower beginning with the first full fiscal quarter ended after the Closing Date, to be greater than (A) prior to the Investment Grade Fall-Away Date, 5.50 to 1.00 and (B) on and following the Investment Grade"
+        },
+        {
+          "type": "leverage",
+          "limit": 0.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Asset Sale Prepayment Percentage ” shall mean, (a) 100%, if the Parent Borrower’s First Lien Net Leverage Ratio at the end of the most recently ended Test Period equals or exceeds the Closing Date First Lien Net Leverage Ratio less 0.50 to 1.00; (b) 50%, if such First Lien Net Leverage Ratio is less than the Closing Date First Lien Net Leverage Ratio less 0.50 to 1.00 but equals or exceeds the Closing Date First Li"
+        },
+        {
+          "type": "leverage",
+          "limit": 0.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "(B) no Restricted Subsidiary may be a Subsidiary of an Unrestricted Subsidiary (and any Subsidiary of an Unrestricted Subsidiary that is acquired or formed after the date of designation shall automatically be designated as an Unrestricted Subsidiary); and (C) immediately after such designation, the Consolidated Total Net Leverage Ratio, determined on a Pro Forma Basis as of such date, would not exceed 0.25 to 1.00 gr"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "n compliance on a Pro Forma Basis with the Financial Covenants; or (c) with respect to Incremental Facilities not secured by a Lien on any portion of the Collateral, either (A) the Parent Borrower not being in compliance on a Pro Forma Basis with the Financial Covenants or (B) the Parent Borrower’s Interest Coverage Ratio for the applicable Test Period being less than 2.00 to 1.00 or, in connection with an investment"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2041610/000110465926041263/tm2610616d2_ex10-1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-10-13",
+      "items": "1.01,2.03,7.01,8.01,9.01",
+      "acc": "0001104659-26-115294",
+      "doc": "tm2626659d12_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-06",
+      "items": "1.01,1.02,2.01,2.03,3.02,5.02,5.03,5.07,7.01,9.01",
+      "acc": "0001104659-26-113913",
+      "doc": "tm2626659d7_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-09",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001104659-26-041263",
+      "doc": "tm2610616d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-02",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-26-021911",
+      "doc": "tm2533570d75_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-08-07",
+      "items": "1.01,1.02,2.01,2.03,3.01,3.02,3.03,5.01,5.02,5.03,5.05,7.01,9.01",
+      "acc": "0001193125-25-175046",
+      "doc": "d841914d8k12b.htm",
+      "desc": "8-K12B"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-09-30",
+      13633000000,
+      3263000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      15483000000,
+      1941000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      15156000000,
+      1627000000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-11",
+      37.62,
+      4.247,
+      0.4038,
+      140.1
+    ],
+    [
+      "2025-12",
+      65.72,
+      3.722,
+      0.4355,
+      145.1
+    ],
+    [
+      "2026-01",
+      117.13,
+      3.212,
+      0.4992,
+      150.2
+    ],
+    [
+      "2026-02",
+      282.25,
+      2.142,
+      0.6451,
+      161.4
+    ],
+    [
+      "2026-03",
+      277.89,
+      2.146,
+      0.6442,
+      161.4
+    ],
+    [
+      "2026-04",
+      289.66,
+      2.164,
+      0.6573,
+      161.2
+    ],
+    [
+      "2026-05",
+      288.44,
+      2.113,
+      0.6573,
+      161.7
+    ],
+    [
+      "2026-06",
+      289.13,
+      2.063,
+      0.6601,
+      162.3
+    ],
+    [
+      "2026-07",
+      402.15,
+      1.751,
+      0.7629,
+      165.7
+    ],
+    [
+      "2026-08",
+      401.81,
+      1.767,
+      0.7611,
+      165.5
+    ],
+    [
+      "2026-09",
+      394.66,
+      1.74,
+      0.7624,
+      165.8
+    ],
+    [
+      "2026-10",
+      545.73,
+      1.345,
+      0.8927,
+      170.3
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

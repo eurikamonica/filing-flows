@@ -1,0 +1,349 @@
+{
+  "cik": 1699031,
+  "ticker": "GRAL",
+  "name": "GRAIL, Inc.",
+  "sector": "health",
+  "industry": "Services-Medical Laboratories",
+  "sic": "8071",
+  "sic_description": "Services-Medical Laboratories",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T01:38:31+00:00",
+  "price": 132.55,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.033456,
+  "snapshot": {
+    "cash": 55645000,
+    "operating_leases": 91309000,
+    "equity": 2542654000,
+    "assets": 2843686000,
+    "liabilities": 301032000,
+    "assets_current": 914722000,
+    "liabilities_current": 83542000,
+    "retained_earnings": -10415115000,
+    "operating_income": -559250000,
+    "pretax_income": -529467000,
+    "net_income": -391587000,
+    "da": 17038000,
+    "ocf": -294749000,
+    "capex": 1413000,
+    "revenue": 165263000,
+    "shares": 44666234,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 55645000.0,
+    "net_debt": null,
+    "ebitda": -542212000,
+    "ebit": -559250000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -296162000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 55645000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 6.432741,
+    "market_cap": 5920509316.700001,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 91309000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026054307/gral-20260630.htm",
+        "accession": "0001628280-26-054307",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 91309000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-054307",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026054307/gral-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-054307",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026054307/gral-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1718,
+      "receivables_growth": -0.0993,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.1875,
+      "dsri": 0.7686,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 147172000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        },
+        {
+          "value_usd": 125595000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 18295000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        },
+        {
+          "value_usd": 20312000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 1900000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        },
+        {
+          "value_usd": 1600000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -299007000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        },
+        {
+          "value_usd": -577156000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -408351000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        },
+        {
+          "value_usd": -2027005000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-017319",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026017319/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "05, Financial Instruments—Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets. This update provides entities with a practical expedient related to developing reasonable and supportable forecasts as part of estimating expected c",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026054307/gral-20260630.htm",
+        "accession": "0001628280-26-054307",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "e entities to estimate forfeitures for all share-based consideration payable to customers, and specifies that variable consideration guidance in ASC 606 does not apply when measuring such awards. This guidance is effective for fiscal years beginning after December 15, 2026, and int",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026054307/gral-20260630.htm",
+        "accession": "0001628280-26-054307",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ble of Contents GRAIL, Inc. NOTES TO CONDENSED CONSOLIDATED FINANCIAL STATEMENTS (unaudited) NOTE 12. RELATED PARTY TRANSACTIONS The Company was a subsidiary of Illumina, Inc. between August 19, 2021 to June 23, 2024. Subsequent to the Spin-Off, Illumina retained a 14.5 % sta",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1699031/000162828026054307/gral-20260630.htm",
+        "accession": "0001628280-26-054307",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-10-20",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001628280-25-045532",
+      "doc": "gral-20251018.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-16",
+      "items": "1.01,2.02,3.02,7.01,9.01",
+      "acc": "0001628280-25-045239",
+      "doc": "gral-20251016.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001699031-25-000180",
+      "doc": "gral-20250911.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-24",
+      "items": "1.01,3.03,5.01,5.02,5.03,9.01",
+      "acc": "0001193125-24-167037",
+      "doc": "d797014d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

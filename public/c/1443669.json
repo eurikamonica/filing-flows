@@ -1,0 +1,325 @@
+{
+  "cik": 1443669,
+  "ticker": "PRLB",
+  "name": "Proto Labs Inc",
+  "sector": "industrials",
+  "industry": "Fabricated Structural Metal Products",
+  "sic": "3440",
+  "sic_description": "Fabricated Structural Metal Products",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T01:22:02+00:00",
+  "price": 85.61,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.444371,
+  "snapshot": {
+    "cash": 127918000,
+    "investments": 14858000,
+    "finance_leases": 286000,
+    "operating_leases": 2761000,
+    "revolver_drawn": 0,
+    "equity": 691733000,
+    "assets": 791298000,
+    "liabilities": 99565000,
+    "assets_current": 266243000,
+    "liabilities_current": 73204000,
+    "retained_earnings": 254326000,
+    "interest_paid": 58000,
+    "operating_income": 36807000,
+    "pretax_income": 42323000,
+    "net_income": 30478000,
+    "da": 32711000,
+    "ocf": 78519000,
+    "capex": 21855000,
+    "revenue": 560536000,
+    "revolver_rate": 0.0175,
+    "shares": 23921897,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 142776000,
+    "net_debt": null,
+    "ebitda": 69518000,
+    "ebit": 36807000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1354.775862,
+    "fcf": 56664000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 142776000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 13.945988,
+    "market_cap": 2047953602.17,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 2.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2017-11-27",
+        "text": "As of the last day of any fiscal quarter, a Consolidated Total Leverage Ratio for the period of four (4) consecutive fiscal quarters ending on or immediately prior to such date of not greater than 2.00 to 1.00."
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001443669-26-000035",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000035/prlb-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0644,
+      "receivables_growth": 0.1873,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.1155,
+      "ocf_to_net_income": 3.5076
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 533127000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001443669-26-000010",
+          "filed": "2026-02-20",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000010/"
+        },
+        {
+          "value_usd": 500890000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001443669-26-000010",
+          "filed": "2026-02-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000010/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 78962000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001443669-26-000010",
+          "filed": "2026-02-20",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000010/"
+        },
+        {
+          "value_usd": 66504000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001443669-26-000010",
+          "filed": "2026-02-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000010/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 74504000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001443669-26-000010",
+          "filed": "2026-02-20",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000010/"
+        },
+        {
+          "value_usd": 77829000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001443669-26-000010",
+          "filed": "2026-02-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000010/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 21241000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001443669-26-000010",
+          "filed": "2026-02-20",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000010/"
+        },
+        {
+          "value_usd": 16593000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001443669-26-000010",
+          "filed": "2026-02-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1443669/000144366926000010/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2017-12-01",
+      "agreement_kind": "credit_agreement",
+      "dated": "2017-11-27",
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR"
+      ],
+      "maturity": "2019-11-30",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter, a Consolidated Total Leverage Ratio for the period of four (4) consecutive fiscal quarters ending on or immediately prior to such date of not greater than 2.00 to 1.00."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1443669/000143774917020059/ex_101319.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2021-01-19",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001437749-21-000799",
+      "doc": "prlb20210118_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-12-01",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001437749-17-020059",
+      "doc": "prlb20171201_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-11-21",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001437749-17-019656",
+      "doc": "prlb20171120_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2016-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

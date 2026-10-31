@@ -1,0 +1,349 @@
+{
+  "cik": 1720424,
+  "ticker": "HIVE",
+  "name": "HIVE Digital Technologies Ltd.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "docs": {
+    "xbrl:0001062993-26-002973": {
+      "instruments": [
+        {
+          "name": "Atlantic Term Loans",
+          "kind": "loan",
+          "as_of": "2026-03-31",
+          "coupon": 0.0439,
+          "carrying": 1255000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-06-02",
+      "report": "2026-03-31"
+    },
+    "xbrl:0001062993-26-004434": {
+      "instruments": [
+        {
+          "name": "Convertible Note Three",
+          "kind": "convertible",
+          "as_of": "2026-06-30",
+          "face": 130000000.0,
+          "floating": false
+        },
+        {
+          "name": "Convertible Note Two",
+          "kind": "convertible",
+          "as_of": "2026-04-21",
+          "face": 115000000.0,
+          "floating": false
+        },
+        {
+          "name": "Atlantic Term Loans",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "coupon": 0.0439,
+          "carrying": 985000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Finance Services",
+  "snapshot": {
+    "current_debt": 1600000,
+    "cash": 208039000,
+    "short_term_borrowings": 1600000,
+    "finance_leases": 27722000,
+    "operating_leases": 80731000,
+    "convertible": 234872000,
+    "convertible_current": 0,
+    "equity": 422699000,
+    "assets": 924640000,
+    "liabilities": 501941000,
+    "assets_current": 280026000,
+    "liabilities_current": 143054000,
+    "retained_earnings": -565217000,
+    "interest_expense": 994000,
+    "interest_paid": 977000,
+    "net_income": -326371000,
+    "da": 202092000,
+    "ocf": 56166000,
+    "revenue": 331300000,
+    "shares": 274277338,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "convertible_current": "ConvertibleDebtCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001062993-26-002973",
+  "xbrl_10-Q": "xbrl:0001062993-26-004434",
+  "events": [
+    {
+      "date": "2026-07-01",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001062993-26-003439",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-22",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001062993-26-003293",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-22",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001062993-26-002077",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:30:58+00:00",
+  "signature": "0001062993-26-004996",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 80731000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm",
+        "accession": "0001062993-26-004434",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 80731000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001062993-26-004434",
+            "filed": "2026-08-14",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "ppa",
+        "label": "Power purchase agreements",
+        "excerpt": "| Total consideration | $ | 63,952 | Land | $ | 952 | Equipment | 44 | Building and leasehold | 57,070 | Power purchase agreement guarantee | 3,314 | VAT receivables | 3,126 | Other | 52 | Total assets | 64,558 | Deferred tax liability | ( 606 | ) | Net assets acquired | $ | 63,",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm",
+        "accession": "0001062993-26-004434",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "idiaries are entities in which the Company has a controlling interest or is the primary beneficiary of a variable interest entity. Subsidiaries are fully consolidated from the date control is transferred to the Company and are de-consolidated from the date control ceases. The co",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm",
+        "accession": "0001062993-26-004434",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001062993-26-004434",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 1.5832,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 297791000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001062993-26-002973",
+          "filed": "2026-06-02",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326002973/"
+        },
+        {
+          "value_usd": 115279000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001062993-26-002973",
+          "filed": "2026-06-02",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326002973/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 62337000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001062993-26-002973",
+          "filed": "2026-06-02",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326002973/"
+        },
+        {
+          "value_usd": 16634000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001062993-26-002973",
+          "filed": "2026-06-02",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326002973/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -148448000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001062993-26-002973",
+          "filed": "2026-06-02",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326002973/"
+        },
+        {
+          "value_usd": -2996000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001062993-26-002973",
+          "filed": "2026-06-02",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326002973/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "cisions issued in respect of periods not yet assessed, and any revised advice from its Swedish counsel. 17. Related Party Transactions The Company entered into the following related party transactions not otherwise disclosed in these consolidated financial statements: (a) As at J",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm",
+        "accession": "0001062993-26-004434",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "ppa",
+      "label": "Power purchase agreements",
+      "excerpt": "| Total consideration | $ | 63,952 | Land | $ | 952 | Equipment | 44 | Building and leasehold | 57,070 | Power purchase agreement guarantee | 3,314 | VAT receivables | 3,126 | Other | 52 | Total assets | 64,558 | Deferred tax liability | ( 606 | ) | Net assets acquired | $ | 63,",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm",
+      "accession": "0001062993-26-004434",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "idiaries are entities in which the Company has a controlling interest or is the primary beneficiary of a variable interest entity. Subsidiaries are fully consolidated from the date control is transferred to the Company and are de-consolidated from the date control ceases. The co",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm",
+      "accession": "0001062993-26-004434",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001062993-26-004434",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001062993-26-004434",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "cisions issued in respect of periods not yet assessed, and any revised advice from its Swedish counsel. 17. Related Party Transactions The Company entered into the following related party transactions not otherwise disclosed in these consolidated financial statements: (a) As at J",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1720424/000106299326004434/form10q.htm",
+      "accession": "0001062993-26-004434",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    }
+  ],
+  "revenue_quality_text_source": "0001062993-26-004434"
+}

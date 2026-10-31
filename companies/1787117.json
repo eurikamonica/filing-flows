@@ -1,0 +1,225 @@
+{
+  "cik": 1787117,
+  "ticker": "REF",
+  "name": "Reformation Inc.",
+  "sector": "consumer-disc",
+  "industry": "Women's, Misses':  and Juniors Outerwear",
+  "sic": "2330",
+  "docs": {
+    "xbrl:0001628280-26-061594": {
+      "instruments": [
+        {
+          "name": "Credit Agreement, Amendment",
+          "kind": "revolver",
+          "as_of": "2026-06-27",
+          "carrying": 246700000.0,
+          "floating": false
+        },
+        {
+          "name": "Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-27",
+          "capacity": 10000000.0,
+          "available": 26400000.0,
+          "carrying": 246687000.0,
+          "spread": 0.0375,
+          "reference": "Secured Overnight Financing Rate SOFR One Month Term",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-09-11",
+      "report": "2026-06-27"
+    }
+  },
+  "sic_description": "Women's, Misses':  and Juniors Outerwear",
+  "snapshot": {
+    "total_debt": 241529000,
+    "current_debt": 1606000,
+    "cash": 76627000,
+    "operating_leases": 193783000,
+    "equity": 376729000,
+    "assets": 1005156000,
+    "liabilities": 628427000,
+    "assets_current": 210759000,
+    "liabilities_current": 133686000,
+    "retained_earnings": 1304000,
+    "maturities": {
+      "as_of": "2026-06-27",
+      "next12m": 4819000,
+      "y2": 11244000,
+      "y3": 12850000,
+      "y4": 12850000,
+      "y5": 204924000
+    },
+    "shares": 59079320,
+    "balance_date": "2026-06-27",
+    "latest_period": "2026-06-27"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2026-06-27",
+      "filed": "2026-09-11",
+      "total_debt": 241529000,
+      "cash": 76627000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 59079320,
+      "convertible": null,
+      "equity": 376729000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0001628280-26-061594",
+  "events": [],
+  "fetched_at": "2026-10-26T01:21:25+00:00",
+  "signature": "0001628280-26-061594",
+  "hidden_leverage": {
+    "as_of": "2026-06-27",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 193783000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm",
+        "accession": "0001628280-26-061594",
+        "form": "10-Q",
+        "filed": "2026-09-11",
+        "as_of": "2026-06-27",
+        "evidence": [
+          {
+            "value_usd": 193783000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-061594",
+            "filed": "2026-09-11",
+            "form": "10-Q",
+            "as_of": "2026-06-27",
+            "url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "d U/T/A dated Novem ber 8, 2018, as amended, and the other parties thereto . | 10.3 | Form of Securities Repurchase Agreement (incorporated by reference to Exhibit 10.3 filed with the Registrant’s Amendment No. 1 to Registration Statement on Form S-1 (File No. 333-297039), f",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm",
+        "accession": "0001628280-26-061594",
+        "form": "10-Q",
+        "filed": "2026-09-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-061594",
+      "form": "10-Q",
+      "filed": "2026-09-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-27",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "ing the reporting period. Some of the more significant estimates and assumptions made by management relate to variable consideration for net sales provided to customers, including the sales return liability, allowances for excess and obsolete inventories; fair value of stock-based",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm",
+        "accession": "0001628280-26-061594",
+        "form": "10-Q",
+        "filed": "2026-09-11"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "9,056 | - | Current lease liabilities | 16,835 | 16,670 | Current portion of long-term debt | 1,606 | 8,250 | Deferred revenue | 7,601 | 6,740 | Total current liabilities | 133,686 | 106,144 | Long-term debt, net of current portion | 239,923 | 147,724 | Noncurrent lease liabi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm",
+        "accession": "0001628280-26-061594",
+        "form": "10-Q",
+        "filed": "2026-09-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "d U/T/A dated Novem ber 8, 2018, as amended, and the other parties thereto . | 10.3 | Form of Securities Repurchase Agreement (incorporated by reference to Exhibit 10.3 filed with the Registrant’s Amendment No. 1 to Registration Statement on Form S-1 (File No. 333-297039), f",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm",
+      "accession": "0001628280-26-061594",
+      "form": "10-Q",
+      "filed": "2026-09-11",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001628280-26-061594",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001628280-26-061594",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "ing the reporting period. Some of the more significant estimates and assumptions made by management relate to variable consideration for net sales provided to customers, including the sales return liability, allowances for excess and obsolete inventories; fair value of stock-based",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm",
+      "accession": "0001628280-26-061594",
+      "form": "10-Q",
+      "filed": "2026-09-11"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "9,056 | - | Current lease liabilities | 16,835 | 16,670 | Current portion of long-term debt | 1,606 | 8,250 | Deferred revenue | 7,601 | 6,740 | Total current liabilities | 133,686 | 106,144 | Long-term debt, net of current portion | 239,923 | 147,724 | Noncurrent lease liabi",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1787117/000162828026061594/lymi-20260627.htm",
+      "accession": "0001628280-26-061594",
+      "form": "10-Q",
+      "filed": "2026-09-11"
+    }
+  ],
+  "revenue_quality_text_source": "0001628280-26-061594"
+}

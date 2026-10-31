@@ -1,0 +1,591 @@
+{
+  "cik": 1975940,
+  "ticker": "FLYE",
+  "name": "Fly-E Group, Inc.",
+  "sector": "consumer-disc",
+  "industry": "Motor Vehicles & Passenger Car Bodies",
+  "sic": "3711",
+  "sic_description": "Motor Vehicles & Passenger Car Bodies",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:12:35+00:00",
+  "price": 1.91,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.411715,
+  "snapshot": {
+    "total_debt": 5946923,
+    "current_debt": 88227,
+    "cash": 60281,
+    "operating_leases": 4176907,
+    "equity": 13503321,
+    "assets": 26157565,
+    "liabilities": 12654244,
+    "assets_current": 16088025,
+    "liabilities_current": 7950176,
+    "retained_earnings": -14092401,
+    "interest_paid": 1396772,
+    "operating_income": -8469765,
+    "pretax_income": -10720305,
+    "net_income": -11188243,
+    "da": 666033,
+    "ocf": -8756040,
+    "capex": -64810,
+    "revenue": 16483299,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 4024285,
+      "y2": 20129,
+      "y3": 9978,
+      "y4": 11283,
+      "y5": 12760,
+      "after5": 1868488
+    },
+    "wavg_rate_short": 0.09,
+    "shares": 1632386,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": 5946923,
+    "cash_and_investments": 60281.0,
+    "net_debt": 5886642.0,
+    "ebitda": -7803732,
+    "ebit": -8469765,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": -5.268768,
+    "fcf": -8820850,
+    "fcf_to_debt": -1.483263,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 60281.0,
+    "due_12m": 4024285,
+    "due_24m": 4044414,
+    "liquidity_to_due12": 0.014979,
+    "liquidity_to_due24": 0.014905,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -0.671466,
+    "market_cap": 3117857.26,
+    "debt_to_ev": 0.660439,
+    "convertibles": null,
+    "implied": {
+      "dd": 0.266729,
+      "pd_1y": 0.394839,
+      "spread_5y_bps": 1144.421894,
+      "asset_vol": 0.904957,
+      "calibrated_5y_bps": 183.103533,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.06741,
+    "covenants": [],
+    "cushion_score": 5
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 4176907.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+        "accession": "0001213900-26-096305",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 4176907.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-096305",
+            "filed": "2026-09-01",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "7 | 12 — COMMITMENTS AND CONTINGENCIES Commitments The Company has not entered any off-balance sheet financial guarantees or other off-balance sheet commitments to guarantee the payment obligations of any third parties. The Company has not entered any derivative contract",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+        "accession": "0001213900-26-096305",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "construction_capex",
+        "label": "Construction / CapEx commitments",
+        "excerpt": "essing the Company’s liquidity, the Company monitors and analyzes its cash on hand and its operating and capital expenditure commitments. The Company’s liquidity needs are to meet its working capital requirements, operating expenses and capital expenditure obligations. Debt financing f",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+        "accession": "0001213900-26-096305",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "earnouts",
+        "label": "Contingent earn-outs",
+        "excerpt": "ed to purchase the shares for total cash consideration of $ 635,193 . There were no contingent payments, earn-outs, or post-closing adjustments specified in the agreements. There was $ 84,302 gain from this disposal. As of June 30, 2026, the Company received $ 326",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+        "accession": "0001213900-26-096305",
+        "form": "10-Q",
+        "filed": "2026-09-01",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-096305",
+      "form": "10-Q",
+      "filed": "2026-09-01",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.2503,
+      "receivables_growth": 14.1218,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 20.1698,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 20.1698,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 19063357.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-080973",
+          "filed": "2026-07-23",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026080973/"
+        },
+        {
+          "value_usd": 25427163.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-080973",
+          "filed": "2026-07-23",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026080973/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 7049592.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-080973",
+          "filed": "2026-07-23",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026080973/"
+        },
+        {
+          "value_usd": 466187.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-080973",
+          "filed": "2026-07-23",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026080973/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -13849914.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-080973",
+          "filed": "2026-07-23",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026080973/"
+        },
+        {
+          "value_usd": -10059466.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-080973",
+          "filed": "2026-07-23",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026080973/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -9257808.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-080973",
+          "filed": "2026-07-23",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026080973/"
+        },
+        {
+          "value_usd": -5291159.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-080973",
+          "filed": "2026-07-23",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026080973/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "accrued expenses and other payables as of June 30, 2026 and March 31, 2026, respectively. The Company has no contract assets and contract liabilities balances as of June 30, 2026 and March 31, 2026, respectively. The following table summarizes the changes in the Company’s",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+        "accession": "0001213900-26-096305",
+        "form": "10-Q",
+        "filed": "2026-09-01"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": ", (ii) identify the performance obligations in the contract, (iii) determine the transaction price, including variable consideration to the extent that it is probable that a significant future reversal will not occur, (iv) allocate the transaction price to the respective performanc",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+        "accession": "0001213900-26-096305",
+        "form": "10-Q",
+        "filed": "2026-09-01"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ngs may not exist. Representations about transactions with related parties, if made, shall not imply that the related party transactions were consummated on terms equivalent to those that prevail in arm’s length transactions unless such representations can be substantiated. (u) Earni",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+        "accession": "0001213900-26-096305",
+        "form": "10-Q",
+        "filed": "2026-09-01"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "d other payables as of June 30, 2026 and March 31, 2026, respectively. The Company has no contract assets and contract liabilities balances as of June 30, 2026 and March 31, 2026, respectively. The following table summarizes the changes in the Company’s warranty reserve: | For",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026096305/ea0304051-10q_flyegroup.htm",
+        "accession": "0001213900-26-096305",
+        "form": "10-Q",
+        "filed": "2026-09-01"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Loans Payable",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-08-22",
+      "carrying": 1922638.0,
+      "floating": false
+    },
+    {
+      "name": "Stripe, Inc.",
+      "kind": "other",
+      "as_of": "2025-06-23",
+      "carrying": 216000.0,
+      "coupon_min": 0.102,
+      "coupon_max": 0.204,
+      "floating": false
+    },
+    {
+      "name": "Forbearance and Modification Agreement",
+      "kind": "other",
+      "as_of": "2026-05-28",
+      "coupon": 0.12875,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-09-22",
+      "items": "1.01,9.01",
+      "acc": "0001213900-25-090115",
+      "doc": "ea0258289-8k_flye.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-06-05",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-25-051577",
+      "doc": "ea0244855-8k_fly.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-11-08",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001213900-24-095923",
+      "doc": "ea0220370-8k_flye.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-06-07",
+      "items": "1.01,5.03,8.01,9.01",
+      "acc": "0001213900-24-050747",
+      "doc": "ea0207438-8k_flyegroup.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-06-23",
+      216000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      5732230,
+      2538076,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      100000,
+      295674,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      5975480,
+      null,
+      null,
+      -5718886,
+      -6438269,
+      null
+    ],
+    [
+      "2026-06-30",
+      5946923,
+      60281,
+      null,
+      -7803732,
+      -8469765,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-08",
+      1296.21,
+      2.479,
+      2.1962,
+      157.8
+    ],
+    [
+      "2025-09",
+      1286.56,
+      2.519,
+      2.1981,
+      157.4
+    ],
+    [
+      "2025-10",
+      1393.5,
+      2.229,
+      2.244,
+      160.5
+    ],
+    [
+      "2025-11",
+      1526.75,
+      1.779,
+      2.2941,
+      165.4
+    ],
+    [
+      "2025-12",
+      1782.61,
+      -0.447,
+      2.3818,
+      192.1
+    ],
+    [
+      "2026-01",
+      1782.51,
+      -0.499,
+      2.3774,
+      192.8
+    ],
+    [
+      "2026-02",
+      1786.76,
+      -0.799,
+      2.4082,
+      196.7
+    ],
+    [
+      "2026-03",
+      1786.47,
+      -0.792,
+      2.4075,
+      196.6
+    ],
+    [
+      "2026-04",
+      1734.26,
+      0.594,
+      2.3996,
+      179.1
+    ],
+    [
+      "2026-05",
+      1731.92,
+      0.604,
+      2.3935,
+      179.0
+    ],
+    [
+      "2026-06",
+      1717.83,
+      0.672,
+      2.3596,
+      178.2
+    ],
+    [
+      "2026-07",
+      1763.77,
+      -0.786,
+      2.3106,
+      196.5
+    ],
+    [
+      "2026-08",
+      1022.0,
+      0.392,
+      1.3087,
+      181.6
+    ],
+    [
+      "2026-09",
+      1005.58,
+      0.327,
+      1.3166,
+      182.4
+    ],
+    [
+      "2026-10",
+      1145.72,
+      0.271,
+      1.4117,
+      183.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,355 @@
+{
+  "cik": 1001171,
+  "ticker": "BYFC",
+  "name": "BROADWAY FINANCIAL CORP \\DE\\",
+  "sector": "financials",
+  "industry": "Savings Institution, Federally Chartered",
+  "sic": "6035",
+  "sic_description": "Savings Institution, Federally Chartered",
+  "generated_at": "2026-10-31T14:35:08+00:00",
+  "fetched_at": "2026-10-26T04:56:09+00:00",
+  "price": 11.26,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.383874,
+  "snapshot": {
+    "cash": 48905000,
+    "operating_leases": 1491000,
+    "equity": 262304000,
+    "assets": 1563699000,
+    "liabilities": 1301218000,
+    "retained_earnings": -14611000,
+    "deposits": 1114651000,
+    "time_deposits": 299734000,
+    "interest_paid": 30555000,
+    "pretax_income": -18824000,
+    "net_income": -20731000,
+    "da": 421000,
+    "ocf": 6743000,
+    "capex": 559000,
+    "revenue": 188000,
+    "deposit_interest": 23827000,
+    "shares": 6145451,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 48905000.0,
+    "net_debt": null,
+    "ebitda": -18403000.0,
+    "ebit": -18824000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.220684,
+    "fcf": 6184000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 48905000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 69197778.26,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "ough an agreement that both entitles and obligates the Bank to repurchase the assets. As a result, these repurchase agreements are accounted for as collateralized financing agreements (i.e., secured borrowings) and not as a sale and subsequent repurchase of securities. The ob",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001171/000114036126032726/ef20074872_10q.htm",
+        "accession": "0001140361-26-032726",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001140361-26-032726",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1001171/000114036126032726/ef20074872_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1871,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 184000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001140361-26-012311",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1001171/000114036126012311/"
+        },
+        {
+          "value_usd": 155000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001140361-26-012311",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1001171/000114036126012311/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 230000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001140361-26-012311",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1001171/000114036126012311/"
+        },
+        {
+          "value_usd": 1393000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001140361-26-012311",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1001171/000114036126012311/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -24795000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001140361-26-012311",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1001171/000114036126012311/"
+        },
+        {
+          "value_usd": 1929000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001140361-26-012311",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1001171/000114036126012311/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Other Financial Institutions",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 10000000.0,
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Participation Loan Transactions Member]",
+      "kind": "loan",
+      "as_of": "2024-12-31",
+      "rate_now": 0.0554,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2010-06-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2009-07-31",
+      "title": "Business Loan Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1001171/000119312510141662/dex1018.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2022-06-08",
+      "items": "1.01,3.02,5.03,8.01,9.01",
+      "acc": "0001140361-22-022257",
+      "doc": "brhc10038548_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-02-23",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001140361-21-005798",
+      "doc": "brhc10020709_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-01-14",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001140361-21-001184",
+      "doc": "brhc10018952_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-11-25",
+      "items": "1.01,3.02",
+      "acc": "0001140361-20-026569",
+      "doc": "brhc10017392_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-26",
+      "items": "1.01,5.01,7.01,8.01,9.01",
+      "acc": "0001104659-20-098621",
+      "doc": "a20-29334_28k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-09-11",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001104659-19-049704",
+      "doc": "a19-18521_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-12-23",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001104659-16-163697",
+      "doc": "a16-23694_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-10-21",
+      "items": "1.01,3.02",
+      "acc": "0001104659-14-072777",
+      "doc": "a14-22720_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-08-28",
+      "items": "1.01,3.02,5.01,5.03,8.01,9.01",
+      "acc": "0001104659-13-066749",
+      "doc": "a13-19397_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-07-03",
+      "items": "1.01,3.02",
+      "acc": "0001193125-12-293917",
+      "doc": "d376323d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2012-03-26",
+      "items": "1.01,9.01",
+      "acc": "0001193125-12-132352",
+      "doc": "d321385d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2012-02-15",
+      "items": "1.01,9.01",
+      "acc": "0001193125-12-063178",
+      "doc": "d301097d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

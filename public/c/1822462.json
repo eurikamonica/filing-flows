@@ -1,0 +1,512 @@
+{
+  "cik": 1822462,
+  "ticker": "FHTX",
+  "name": "Foghorn Therapeutics Inc.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T02:57:11+00:00",
+  "price": 2.0,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.928457,
+  "snapshot": {
+    "cash": 68080000,
+    "operating_leases": 43102000,
+    "equity": -81041000,
+    "assets": 203393000,
+    "liabilities": 284434000,
+    "assets_current": 170046000,
+    "liabilities_current": 50579000,
+    "retained_earnings": -659533000,
+    "operating_income": -72757000,
+    "net_income": -64579000,
+    "da": 2122000,
+    "ocf": -84241000,
+    "capex": 50000,
+    "revenue": 36739000,
+    "shares": 59385315,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 68080000.0,
+    "net_debt": null,
+    "ebitda": -70635000,
+    "ebit": -72757000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -84291000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 68080000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -4.584163,
+    "market_cap": 118770630.0,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 43102000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026053819/fhtx-20260630.htm",
+        "accession": "0001628280-26-053819",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 43102000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-053819",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026053819/fhtx-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-053819",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026053819/fhtx-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.3675,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.0529,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 30909000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-016814",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026016814/"
+        },
+        {
+          "value_usd": 22602000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-016814",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026016814/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 43192000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001628280-26-016814",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026016814/"
+        },
+        {
+          "value_usd": 45606000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001628280-26-016814",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026016814/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -86099000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-016814",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026016814/"
+        },
+        {
+          "value_usd": -100406000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-016814",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026016814/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -74283000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-016814",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026016814/"
+        },
+        {
+          "value_usd": -86620000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-016814",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026016814/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "Accrued expenses and other current liabilities | 7,960 | 11,357 | Operating lease liabilities | 2,819 | 923 | Deferred revenue | 36,593 | 43,192 | Total current liabilities | 50,579 | 59,738 | Operating lease liabilities, net of current portion | 40,283 | 40,347 | Deferred re",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1822462/000162828026053819/fhtx-20260630.htm",
+        "accession": "0001628280-26-053819",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-07-01",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001628280-25-033784",
+      "doc": "fhtx-20250627.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-22",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-24-144934",
+      "doc": "d822638d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-15",
+      "items": "1.01,9.01",
+      "acc": "0001628280-22-009351",
+      "doc": "fhtx-20220415.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-12-13",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001628280-21-024887",
+      "doc": "fhtx-20211210.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-09-01",
+      "items": "1.01,9.01",
+      "acc": "0001628280-21-017921",
+      "doc": "fhtx-20210830.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-15",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001628280-21-012216",
+      "doc": "fhtx-20210614.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-11-25",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001193125-20-303604",
+      "doc": "d10278d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2020-09-30",
+      14791000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      20000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      19826000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      19914000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-12-31",
+      0,
+      null,
+      925000,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2021-01",
+      125.02,
+      4.595,
+      0.8842,
+      136.9
+    ],
+    [
+      "2021-02",
+      61.82,
+      5.223,
+      0.7921,
+      131.2
+    ],
+    [
+      "2021-03",
+      185.18,
+      4.154,
+      0.9212,
+      141.0
+    ],
+    [
+      "2021-04",
+      128.44,
+      4.458,
+      0.8357,
+      138.1
+    ],
+    [
+      "2021-05",
+      128.4,
+      4.364,
+      0.7934,
+      139.0
+    ],
+    [
+      "2021-06",
+      114.39,
+      4.469,
+      0.7756,
+      138.0
+    ],
+    [
+      "2021-07",
+      91.88,
+      4.636,
+      0.7304,
+      136.5
+    ],
+    [
+      "2021-08",
+      75.41,
+      4.898,
+      0.7443,
+      134.1
+    ],
+    [
+      "2021-09",
+      56.02,
+      5.198,
+      0.7313,
+      131.4
+    ],
+    [
+      "2021-10",
+      46.17,
+      5.326,
+      0.6987,
+      130.3
+    ],
+    [
+      "2021-11",
+      31.18,
+      5.659,
+      0.6721,
+      127.4
+    ],
+    [
+      "2021-12",
+      71.31,
+      5.107,
+      0.8188,
+      132.2
+    ],
+    [
+      "2022-01",
+      124.76,
+      4.456,
+      0.8341,
+      138.2
+    ],
+    [
+      "2022-02",
+      187.62,
+      3.939,
+      0.8569,
+      143.0
+    ],
+    [
+      "2022-03",
+      121.93,
+      4.468,
+      0.8466,
+      138.0
+    ],
+    [
+      "2022-04",
+      163.27,
+      4.098,
+      0.8619,
+      141.5
+    ],
+    [
+      "2022-05",
+      188.93,
+      3.994,
+      0.9024,
+      142.5
+    ],
+    [
+      "2022-06",
+      183.72,
+      4.001,
+      0.9049,
+      142.4
+    ],
+    [
+      "2022-07",
+      173.14,
+      4.086,
+      0.9086,
+      141.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

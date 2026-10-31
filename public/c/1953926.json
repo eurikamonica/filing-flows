@@ -1,0 +1,533 @@
+{
+  "cik": 1953926,
+  "ticker": "ZBIO",
+  "name": "Zenas BioPharma, Inc.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:18:52+00:00",
+  "price": 26.87,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.093716,
+  "snapshot": {
+    "total_debt": 78636000,
+    "cash": 110641000,
+    "investments": 232551000,
+    "operating_leases": 1326000,
+    "equity": 247097000,
+    "assets": 701690000,
+    "liabilities": 454593000,
+    "assets_current": 653794000,
+    "liabilities_current": 65818000,
+    "retained_earnings": -957571000,
+    "interest_expense": 7327000,
+    "operating_income": -475573000,
+    "pretax_income": -484164000,
+    "net_income": -484384000,
+    "da": 31000,
+    "ocf": -225972000,
+    "capex": 2000,
+    "revenue": 1000000,
+    "debt_issued": 75000000,
+    "shares": 65176723,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (fiscal year)"
+  },
+  "analysis": {
+    "total_debt": 78636000,
+    "cash_and_investments": 343192000,
+    "net_debt": -264556000,
+    "ebitda": -475542000,
+    "ebit": -475573000,
+    "interest_expense": 7327000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -64.90692,
+    "ebitda_coverage": -64.902689,
+    "fcf": -225974000,
+    "fcf_to_debt": -2.873671,
+    "effective_rate": 0.093176,
+    "revolver_available": null,
+    "liquidity": 343192000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 75000000.0,
+    "floating_share": 0.953762,
+    "plus100bp_interest": 750000.0,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -0.828688,
+    "market_cap": 1751298547.01,
+    "debt_to_ev": 0.052891,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Two Point Five Zero Convertible Senior Notes Due 2032",
+          "face": 230000000.0,
+          "carrying": 230000000.0,
+          "coupon": 0.025,
+          "conv_price": 26.5,
+          "maturity": 2032,
+          "moneyness": 1.013962,
+          "in_the_money": true,
+          "shares": 8679245.283019
+        }
+      ],
+      "total_face": 230000000.0,
+      "in_the_money_face": 230000000.0,
+      "in_the_money_carrying": 230000000.0,
+      "shares_if_converted": 8679245.283019,
+      "coupon_saved": 5750000.0,
+      "dilution": 0.133165
+    },
+    "implied": {
+      "dd": 3.071942,
+      "pd_1y": 0.001063,
+      "spread_5y_bps": 414.058654,
+      "asset_vol": 1.070757,
+      "calibrated_5y_bps": 151.629108,
+      "rating_band": "BB"
+    },
+    "if_converted": {
+      "total_debt": 0.0,
+      "shares_added": 8679245.283019,
+      "dilution": 0.133165,
+      "leverage": null,
+      "interest_coverage": -301.568167,
+      "implied_5y_bps": 0.0,
+      "dd": null
+    },
+    "covenants": [],
+    "cushion_score": 40
+  },
+  "hidden_leverage": {
+    "as_of": "2025-12-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1326000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926027964/zbio-20251231x10k.htm",
+        "accession": "0001104659-26-027964",
+        "form": "10-K",
+        "filed": "2026-03-16",
+        "as_of": "2025-12-31",
+        "evidence": [
+          {
+            "value_usd": 1326000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001104659-26-027964",
+            "filed": "2026-03-16",
+            "form": "10-K",
+            "as_of": "2025-12-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926027964/zbio-20251231x10k.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-095448",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926095448/zbio-20260630x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2025-12-31",
+    "metrics": {
+      "revenue_growth": 1.0,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 10000000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001104659-26-027964",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926027964/"
+        },
+        {
+          "value_usd": 5000000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001104659-26-027964",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926027964/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -172333000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-027964",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926027964/"
+        },
+        {
+          "value_usd": -119674000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-027964",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926027964/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -377737000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-027964",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926027964/"
+        },
+        {
+          "value_usd": -156988000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-027964",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926027964/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "recognized upon delivery prior to March 31, 2025. The Company used the most likely amount method to estimate variable consideration and estimated that the most likely amount for each potential developmental and regulatory variable consideration milestone payment under the agreemen",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926095448/zbio-20260630x10q.htm",
+        "accession": "0001104659-26-095448",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "which would reasonably be expected to have a material adverse effect on the Company’s financial results. 14. Related Party Transactions Xencor, Inc. The Company has obtained exclusive, worldwide licenses from Xencor to research, develop, manufacture, market and sell three antibody",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926095448/zbio-20260630x10q.htm",
+        "accession": "0001104659-26-095448",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Two Point Five Zero Convertible Senior Notes Due 2032",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "coupon": 0.025,
+      "conv_ratio": 37.7358,
+      "conv_price": 26.5,
+      "conv_ratio_max": 50.0,
+      "effective": 0.0307,
+      "carrying": 230000000.0,
+      "fair_value": 275500000.0,
+      "maturity_year": 2032,
+      "floating": false
+    },
+    {
+      "name": "Royalty Purchase Agreement",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 91737000.0,
+      "effective": 0.323,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Term Loan, Tranche A Term Loan",
+      "kind": "loan",
+      "as_of": "2026-03-31",
+      "face": 75000000.0,
+      "floating": true
+    },
+    {
+      "name": "Senior Secured Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0325,
+      "spread": 0.0575,
+      "carrying": 75000000.0,
+      "floating": true
+    },
+    {
+      "name": "Senior Secured Term Loan, Tranche B Term Loan",
+      "kind": "loan",
+      "as_of": "2026-03-31",
+      "face": 50000000.0,
+      "floating": true
+    },
+    {
+      "name": "Senior Secured Term Loan, Tranche D Term Loan",
+      "kind": "loan",
+      "as_of": "2026-03-31",
+      "face": 50000000.0,
+      "floating": true
+    },
+    {
+      "name": "Senior Secured Term Loan, Tranche E Term Loan",
+      "kind": "loan",
+      "as_of": "2026-03-31",
+      "face": 50000000.0,
+      "floating": true
+    },
+    {
+      "name": "Senior Secured Term Loan, Tranche C Term Loan",
+      "kind": "loan",
+      "as_of": "2026-03-31",
+      "face": 25000000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "2.50% Convertible Senior Notes due 2032",
+      "floating": false,
+      "coupon": 2.5,
+      "currency": "USD",
+      "maturity": "2032-04-01",
+      "price": 100.0,
+      "trade_date": "2026-03-27",
+      "convertible": true,
+      "conv_price": 26.5,
+      "conv_rate": 37.7358,
+      "conv_premium": 32.5,
+      "date": "2026-03-27",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926035475/tm2610054d1_fwp.htm"
+    }
+  ],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-03-31",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001104659-26-037821",
+      "doc": "tm2610711d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-10-08",
+      "items": "1.01,2.02,3.02,7.01,8.01,9.01",
+      "acc": "0001104659-25-097663",
+      "doc": "tm2528075d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-09-02",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001104659-25-085982",
+      "doc": "tm2524961d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-09-30",
+      72989000,
+      290884000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      78636000,
+      null,
+      7327000,
+      -383001000,
+      -383057000,
+      0.09318
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-11",
+      97.7,
+      4.607,
+      0.8308,
+      136.8
+    ],
+    [
+      "2025-12",
+      79.01,
+      4.822,
+      0.8138,
+      134.8
+    ],
+    [
+      "2026-01",
+      618.02,
+      2.44,
+      1.1616,
+      158.2
+    ],
+    [
+      "2026-02",
+      554.0,
+      2.7,
+      1.1654,
+      155.5
+    ],
+    [
+      "2026-03",
+      660.29,
+      2.343,
+      1.1904,
+      159.2
+    ],
+    [
+      "2026-04",
+      687.39,
+      2.291,
+      1.2077,
+      159.8
+    ],
+    [
+      "2026-05",
+      581.57,
+      2.509,
+      1.1386,
+      157.5
+    ],
+    [
+      "2026-06",
+      537.23,
+      2.72,
+      1.1541,
+      155.3
+    ],
+    [
+      "2026-07",
+      462.35,
+      2.962,
+      1.129,
+      152.8
+    ],
+    [
+      "2026-08",
+      458.31,
+      2.969,
+      1.126,
+      152.7
+    ],
+    [
+      "2026-09",
+      461.21,
+      2.906,
+      1.1111,
+      153.3
+    ],
+    [
+      "2026-10",
+      437.45,
+      2.967,
+      1.0937,
+      152.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

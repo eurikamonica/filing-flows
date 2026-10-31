@@ -1,0 +1,771 @@
+{
+  "cik": 1692427,
+  "ticker": null,
+  "name": "NCS Multistage Holdings, Inc.",
+  "sector": "energy",
+  "industry": "Oil & Gas Field Services, NEC",
+  "sic": "1389",
+  "sic_description": "Oil & Gas Field Services, NEC",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T01:40:15+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 7521000,
+    "current_debt": 2326000,
+    "cash": 31318000,
+    "equity": 120210000,
+    "assets": 177556000,
+    "liabilities": 36806000,
+    "assets_current": 117435000,
+    "liabilities_current": 27512000,
+    "retained_earnings": -240253000,
+    "operating_income": 3526000,
+    "pretax_income": 9198000,
+    "net_income": 13791000,
+    "da": 6299000,
+    "ocf": 19663000,
+    "capex": 1540000,
+    "revenue": 181169000,
+    "shares": 2624523,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent+LongTermDebtAndCapitalLeaseObligations",
+    "current_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 7521000,
+    "cash_and_investments": 31318000.0,
+    "net_debt": -23797000.0,
+    "ebitda": 9825000,
+    "ebit": 3526000,
+    "interest_expense": null,
+    "leverage": 0.765496,
+    "net_leverage": -2.422087,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 18123000,
+    "fcf_to_debt": 2.409653,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 31318000.0,
+    "due_12m": 2326000,
+    "due_24m": null,
+    "liquidity_to_due12": 13.464316,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2022-05-06",
+        "text": "As of the end of any calendar month, commencing with the most recent calendar month for which Borrowers’ financial statements have been delivered prior to the date on which any FCCR Testing Period commences, the Borrowers will not permit the Fixed Charge Coverage Ratio to be less than 1.0 to 1.0."
+      },
+      {
+        "type": "liquidity",
+        "direction": "min",
+        "limit": 3000000.0,
+        "unit": "usd",
+        "actual": 31318000.0,
+        "cushion": 0.904208,
+        "agreement": "Credit Agreement",
+        "dated": "2022-05-06",
+        "text": "“ Dominion Period ” means any period (a) commencing (i) on any date upon which a Default or an Event of Default has occurred and is continuing, or (ii) at any time when Liquidity is less than the greater of (x) $3,000,000, and (y) 12.0% of the Aggregate Revolving Commitments, and (b) ending when, for a period of thirty (30) consecutive calendar days, (i) no Default or Event of Default has existed and (ii) Liquidity s"
+      }
+    ],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "earnouts",
+        "label": "Contingent earn-outs",
+        "excerpt": "ses | 7,129 | 9,461 | Income taxes payable | 841 | 1,151 | Operating lease liabilities | 1,732 | 1,587 | Contingent purchase consideration | — | 1,250 | Current maturities of long-term debt | 2,326 | 2,385 | Other current liabilities | 2,605 | 4,175 | Total current liabilities | 27,512 |",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926025241/ncsm20260630_10q.htm",
+        "accession": "0001437749-26-025241",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-025241",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926025241/ncsm20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1296,
+      "receivables_growth": 0.2854,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.7309,
+      "dsri": 1.1379,
+      "ocf_to_net_income": 0.9338
+    },
+    "risk_flags": [
+      {
+        "key": "deferred_release",
+        "label": "Contract liabilities decline while revenue increases",
+        "value": -0.7309,
+        "rule": "Contract liabilities < -20% and revenue growth >= 10%"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 183627000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        },
+        {
+          "value_usd": 162557000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 40507000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        },
+        {
+          "value_usd": 31513000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 60000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        },
+        {
+          "value_usd": 223000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 22175000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        },
+        {
+          "value_usd": 12725000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 23748000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        },
+        {
+          "value_usd": 6593000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-007065",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926007065/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "oducts and provision of services is different from the timing of the customer payments, we recognize either a contract asset (performance precedes contractual due date in connection with estimates of variable consideration) or a contract liability (customer payment precedes",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926025241/ncsm20260630_10q.htm",
+        "accession": "0001437749-26-025241",
+        "form": "10-Q",
+        "filed": "2026-07-31"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "recognize either a contract asset (performance precedes contractual due date in connection with estimates of variable consideration) or a contract liability (customer payment precedes performance) on our condensed consolidated balance sheet. The following table presents the curre",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926025241/ncsm20260630_10q.htm",
+        "accession": "0001437749-26-025241",
+        "form": "10-Q",
+        "filed": "2026-07-31"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "asset (performance precedes contractual due date in connection with estimates of variable consideration) or a contract liability (customer payment precedes performance) on our condensed consolidated balance sheet. The following table presents the current contract liabilities a",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774926025241/ncsm20260630_10q.htm",
+        "accession": "0001437749-26-025241",
+        "form": "10-Q",
+        "filed": "2026-07-31"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Finance Lease Debt",
+      "kind": "lease",
+      "as_of": "2026-06-30",
+      "carrying": 7521000.0,
+      "floating": false
+    },
+    {
+      "name": "JPMorgan Chase Bank, N.A.",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "drawn": 0.0,
+      "available": 14500000.0,
+      "spread_min": 0.014,
+      "spread_max": 0.024,
+      "fee_min": 0.0025,
+      "fee_max": 0.005,
+      "effective": 0.061,
+      "reference": "Adjusted Daily Simple SOFR Adjusted Term SOFR Rate Canadian Prime Rate And CDOR Rate",
+      "floating": true
+    },
+    {
+      "name": "Repeat Precision Promissory Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "spread": 0.01,
+      "effective": 0.078,
+      "available": 2500000.0,
+      "reference": "Prime Rate",
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 0.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2022-05-06",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-05-06",
+      "size": 35000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "As of the end of any calendar month, commencing with the most recent calendar month for which Borrowers’ financial statements have been delivered prior to the date on which any FCCR Testing Period commences, the Borrowers will not permit the Fixed Charge Coverage Ratio to be less than 1.0 to 1.0."
+        },
+        {
+          "type": "liquidity",
+          "limit": 3000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "“ Dominion Period ” means any period (a) commencing (i) on any date upon which a Default or an Event of Default has occurred and is continuing, or (ii) at any time when Liquidity is less than the greater of (x) $3,000,000, and (y) 12.0% of the Aggregate Revolving Commitments, and (b) ending when, for a period of thirty (30) consecutive calendar days, (i) no Default or Event of Default has existed and (ii) Liquidity s"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ement, (v) the terms and conditions of such Indebtedness, taken as a whole, are no more restrictive on the Loan Parties than the then available market terms and conditions for comparable issuers and issuances, (vi) both before and immediately after the incurrence of such Indebtedness, the pro forma Leverage Ratio does not exceed 2.00 to 1.00 and the pro forma Fixed Charge Coverage Ratio is at least 2.00 to 1.00, in e"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "n as a whole, are no more restrictive on the Loan Parties than the then available market terms and conditions for comparable issuers and issuances, (vi) both before and immediately after the incurrence of such Indebtedness, the pro forma Leverage Ratio does not exceed 2.00 to 1.00 and the pro forma Fixed Charge Coverage Ratio is at least 2.00 to 1.00, in each case, for the most recent four quarters for which financia"
+        },
+        {
+          "type": "liquidity",
+          "limit": 5000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ FCCR Testing Period ” means any period (a) commencing on any date when Liquidity is less than the greater of (x) $5,000,000 and (y) 20.0% of the Aggregate Revolving Commitments, and (b) ending when, for a period of thirty (30) consecutive calendar days, Liquidity shall have been at least equal to the greater of (x) $5,000,000 and (y) 20.0% of the Aggregate Revolving Commitments, in each case, as determined by Admin"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1692427/000169242722000014/ncsm-20220503xex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-05-02",
+      "agreement_kind": "amendment",
+      "dated": "2022-05-03",
+      "size": 35000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.5,
+      "maturity": "2027-05-03",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "As of the end of any calendar month, commencing with the most recent calendar month for which Borrowers’ financial statements have been delivered prior to the date on which any FCCR Testing Period commences, the Borrowers will not permit the Fixed Charge Coverage Ratio to be less than 1.0 to 1.0."
+        },
+        {
+          "type": "liquidity",
+          "limit": 3000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "“Dominion Period ” means any period (a) commencing (i) on any date upon which a Default or an Event of Default has occurred and is continuing, or (ii) at any time when Liquidity is less than the greater of (x) $3,000,000, and (y) 12.0% of the Aggregate Revolving Commitments, and (b) ending when, for a period of thirty (30) consecutive calendar days, (i) no Default or Event of Default has existed and (ii) Liquidity sh"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ement, (v) the terms and conditions of such Indebtedness, taken as a whole, are no more restrictive on the Loan Parties than the then available market terms and conditions for comparable issuers and issuances, (vi) both before and immediately after the incurrence of such Indebtedness, the pro forma Leverage Ratio does not exceed 2.00 to 1.00 and the pro forma Fixed Charge Coverage Ratio is at least 2.00 to 1.00, in e"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "n as a whole, are no more restrictive on the Loan Parties than the then available market terms and conditions for comparable issuers and issuances, (vi) both before and immediately after the incurrence of such Indebtedness, the pro forma Leverage Ratio does not exceed 2.00 to 1.00 and the pro forma Fixed Charge Coverage Ratio is at least 2.00 to 1.00, in each case, for the most recent four quarters for which financia"
+        },
+        {
+          "type": "liquidity",
+          "limit": 5000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“FCCR Testing Period ” means any period (a) commencing on any date when Liquidity is less than the greater of (x) $5,000,000 and (y) 20.0% of the Aggregate Revolving Commitments, and (b) ending when, for a period of thirty (30) consecutive calendar days, Liquidity shall have been at least equal to the greater of (x) $5,000,000 and (y) 20.0% of the Aggregate Revolving Commitments, in each case, as determined by Admini"
+        },
+        {
+          "type": "liquidity",
+          "limit": 5000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "s not exceed 2.00 to 1.00 and the pro forma Fixed Charge Coverage Ratio is at least 2.00 to 1.00, in each case, for the most recent four quarters for which financial statements have been delivered pursuant to Section 5.01, (vii) both before and immediately after the incurrence of such Indebtedness, Liquidity is equal to or greater than 15% of the Aggregate Revolving Commitments, and (viii) the aggregate principal amo"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1692427/000143774924014375/ex_657203.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2020-08-11",
+      "agreement_kind": "amendment",
+      "dated": "2020-08-06",
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "LIBOR",
+        "Base Rate"
+      ],
+      "maturity": "2023-05-01",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "h in this Agreement, (v) the terms and conditions of such Debt, taken as a whole, are no more restrictive on the Credit Parties than the then available market terms and conditions for comparable issuers and issuances, (vi) both before and immediately after the incurrence of such Debt, the pro forma Leverage Ratio does not exceed 2.00 to 1.00, (vii) both before and immediately after the incurrence of such Debt, Liquid"
+        },
+        {
+          "type": "leverage",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "For the avoidance of doubt, the levels on the pricing grid set forth below are set forth from the lowest (Level I) to the highest (Level V). ﻿ ﻿ | Applicable Margin | Leverage Ratio | Eurocurrency / B/A Advance | Base Rate Advance | Commitment Fee | ﻿ | Level I | Is less than 1.00 to 1.00 | 2.75% | 1.75% | 0.375% | ﻿ | Level II | Is equal to or greater than 1.00 to 1.00 but less than 1.50 to 1.00 | 3.00% | 2.00% | 0."
+        },
+        {
+          "type": "liquidity",
+          "limit": 10000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "e Canadian Credit Parties in form and substance reasonably satisfactory to the US Administrative Agent related to Credit Documents being delivered under this Section 6; (xii) a certificate from a financial officer of the US Borrower, dated as of the Effective Date, certifying that, as of such date, Liquidity (as defined in the Amended Credit Agreement) is at least $10,000,000;"
+        },
+        {
+          "type": "liquidity",
+          "limit": 10000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "redit Parties than the then available market terms and conditions for comparable issuers and issuances, (vi) both before and immediately after the incurrence of such Debt, the pro forma Leverage Ratio does not exceed 2.00 to 1.00, (vii) both before and immediately after the incurrence of such Debt, Liquidity is equal to or greater than 15% of the aggregate Commitments, and (viii) the aggregate principal amount of the"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1692427/000169242720000046/ncsm-20200806xex10_1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-02",
+      "items": "1.01,5.07,8.01,9.01",
+      "acc": "0001193125-26-252096",
+      "doc": "d23867d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-06",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001692427-22-000014",
+      "doc": "ncsm-20220503x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-10",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001692427-20-000041",
+      "doc": "ncsm-20200806x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-05-06",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001692427-19-000018",
+      "doc": "ncsm-20190501x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-10-10",
+      "items": "1.01,9.01",
+      "acc": "0001692427-18-000041",
+      "doc": "ncsm-20181009x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-02-20",
+      "items": "1.01,9.01",
+      "acc": "0001692427-18-000009",
+      "doc": "ncsm-20180216x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-09-01",
+      "items": "1.01,2.01,2.03,3.02,7.01,9.01",
+      "acc": "0001692427-17-000035",
+      "doc": "ncsm-20170831x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-08-30",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001692427-17-000032",
+      "doc": "ncsm-20170830x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-05-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-17-158649",
+      "doc": "d390401d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-05-03",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001193125-17-156217",
+      "doc": "d391494d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2017-03-31",
+      88385000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      3192000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      24255000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      27672000,
+      23680000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      25041000,
+      33477000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      25582000,
+      27440000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      26008000,
+      11984000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      19515000,
+      12175000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      16302000,
+      4518000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      17686000,
+      15485000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      21403000,
+      31259000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      5983000,
+      8635000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      5681000,
+      11962000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      6023000,
+      13899000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      8231000,
+      18444000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-12-31",
+      7818000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

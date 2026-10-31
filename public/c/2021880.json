@@ -1,0 +1,283 @@
+{
+  "cik": 2021880,
+  "ticker": "HMH",
+  "name": "HMH Holding Inc",
+  "sector": "industrials",
+  "industry": "Oil & Gas Field Machinery & Equipment",
+  "sic": "3533",
+  "sic_description": "Oil & Gas Field Machinery & Equipment",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T01:19:33+00:00",
+  "price": 18.18,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.471197,
+  "snapshot": {
+    "total_debt": 197836000,
+    "current_debt": 1473000,
+    "cash": 119705000,
+    "operating_leases": 47187000,
+    "equity": 210261000,
+    "assets": 1362565000,
+    "liabilities": 516166000,
+    "assets_current": 648908000,
+    "liabilities_current": 218317000,
+    "retained_earnings": 27566000,
+    "interest_expense": 35965000,
+    "shares": 6688000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 197836000,
+    "cash_and_investments": 119705000.0,
+    "net_debt": 78131000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 35965000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": 0.181792,
+    "revolver_available": null,
+    "liquidity": 119705000.0,
+    "due_12m": 1473000,
+    "due_24m": null,
+    "liquidity_to_due12": 81.266124,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 121587840.0,
+    "debt_to_ev": 0.990573,
+    "convertibles": null,
+    "implied": {
+      "dd": 2.978993,
+      "pd_1y": 0.001446,
+      "spread_5y_bps": 99.401119,
+      "asset_vol": 0.264348,
+      "calibrated_5y_bps": 152.579694,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 75
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 47187000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2021880/000162828026053385/hmh-20260630.htm",
+        "accession": "0001628280-26-053385",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 47187000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-053385",
+            "filed": "2026-08-05",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2021880/000162828026053385/hmh-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "ness with customers, vendors and others, the Company has issued various bank guarantees, such as advance payment guarantees, surety bonds, performance guarantees, bid bonds, customs and tax guarantees to guarantee the Company’s performance as it relates to contracts with c",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2021880/000162828026053385/hmh-20260630.htm",
+        "accession": "0001628280-26-053385",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-053385",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2021880/000162828026053385/hmh-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "Related party accounts receivable | 1,605 | 1,499 | Related party notes receivable—current | 4,357 | 3,653 | Contract assets | 104,622 | 114,918 | Inventories, net | 252,192 | 253,759 | Other current receivables | 22,500 | 17,854 | Prepaids and other current assets | 18,828",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2021880/000162828026053385/hmh-20260630.htm",
+        "accession": "0001628280-26-053385",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ct revenue | 20,027 | 58,812 | 52,493 | 113,470 | Spare parts revenue | 61,163 | 52,151 | 127,682 | 112,325 | Related party revenue | 560 | 162 | 887 | 252 | Total revenue | 170,822 | 203,457 | 342,143 | 401,887 | Operating expenses | Cost of services sold | 58,766 | 63,671 | 111,",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2021880/000162828026053385/hmh-20260630.htm",
+        "accession": "0001628280-26-053385",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "ze substantially all of the revenue from the total remaining performance obligations over the next 12 months. Contract modifications could affect both the timing to complete as well as the amount to be received as the Company fulfills the related remaining performance obligations.",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2021880/000162828026053385/hmh-20260630.htm",
+        "accession": "0001628280-26-053385",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| 56,206 | Accounts payable—related party | 13 | 107 | Current portion of long-term debt, net | 1,473 | 715 | Contract liabilities | 42,780 | 35,249 | Accrued expenses | 84,964 | 95,780 | Other current liabilities | 24,648 | 35,582 | Total current liabilities | 218,317 | 223,639",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2021880/000162828026053385/hmh-20260630.htm",
+        "accession": "0001628280-26-053385",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "7.875% Senior Secured Bonds due 2028",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.07875,
+      "carrying": 196363000.0,
+      "fair_value": 205000000.0,
+      "maturity_year": 2028,
+      "floating": false
+    },
+    {
+      "name": "Credit Line in China",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 1473000.0,
+      "floating": false
+    },
+    {
+      "name": "Shareholder Loans",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-04-02",
+      "items": "1.01,3.02,3.03,5.02,5.03,7.01,9.01",
+      "acc": "0001193125-26-140110",
+      "doc": "d100419d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      197836000,
+      119705000,
+      35965000,
+      null,
+      null,
+      0.18179
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-10",
+      99.29,
+      2.984,
+      0.4712,
+      152.5
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

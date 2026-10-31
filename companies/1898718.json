@@ -1,0 +1,254 @@
+{
+  "cik": 1898718,
+  "ticker": "GMRS",
+  "name": "GMR Solutions Inc.",
+  "sector": "industrials",
+  "industry": "Transportation Services",
+  "sic": "4700",
+  "docs": {
+    "xbrl:0001104659-26-095037": {
+      "instruments": [
+        {
+          "name": "Secured Debt",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "fair_value": 3955400000.0,
+          "carrying": 3912000000.0,
+          "floating": false
+        },
+        {
+          "name": "Senior Secured Term Loans",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "spread": 0.0325,
+          "carrying": 2912000000.0,
+          "floating": true
+        },
+        {
+          "name": "Senior Secured Notes",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "coupon": 0.0738,
+          "carrying": 1000000000.0,
+          "floating": false
+        },
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 800000000.0,
+          "available": 696300000.0,
+          "floating": true
+        },
+        {
+          "name": "Other Long Term Debt",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "carrying": 559296000.0,
+          "floating": false
+        },
+        {
+          "name": "Letter of Credit",
+          "kind": "other",
+          "as_of": "2026-06-30",
+          "drawn": 103700000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-12",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Transportation Services",
+  "snapshot": {
+    "total_debt": 4417608000,
+    "current_debt": 151231000,
+    "cash": 420001000,
+    "investments": 69557000,
+    "finance_leases": 96417000,
+    "operating_leases": 240938000,
+    "equity": 789263000,
+    "assets": 7429258000,
+    "liabilities": 6639995000,
+    "assets_current": 2022979000,
+    "liabilities_current": 1005846000,
+    "retained_earnings": -181434000,
+    "shares": 54304118,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2026-03-31",
+      "filed": "2026-06-02",
+      "total_debt": 5036244000,
+      "cash": 426092000,
+      "investments": 65630000,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 149275141,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-12",
+      "total_debt": 4417608000,
+      "cash": 420001000,
+      "investments": 69557000,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 54304118,
+      "convertible": null,
+      "equity": 789263000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0001104659-26-095037",
+  "events": [
+    {
+      "date": "2026-09-17",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001104659-26-108602",
+      "doc": "tm2625598d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-18",
+      "items": "1.01,1.02,3.02,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0001104659-26-062932",
+      "doc": "tm2614803d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T21:10:19+00:00",
+  "signature": "0001104659-26-108602",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 240938000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1898718/000110465926095037/gmrs-20260630x10q.htm",
+        "accession": "0001104659-26-095037",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 240938000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001104659-26-095037",
+            "filed": "2026-08-12",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1898718/000110465926095037/gmrs-20260630x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-095037",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1898718/000110465926095037/gmrs-20260630x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001104659-26-095037",
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "se impact on its financial condition, results of operations or liquidity. 20 Table of Contents NOTE 18 – RELATED-PARTY TRANSACTIONS On April 28, 2015, investment funds affiliated with Kohlberg Kravis Roberts & Co. L.P. (“KKR”) acquired 100 % of the equity interest of the Company",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1898718/000110465926095037/gmrs-20260630x10q.htm",
+        "accession": "0001104659-26-095037",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "507 | 133,700 | Total other accrued liabilities | $ | 408,742 | $ | 363,160 | Deferred membership revenue, or contract liabilities, are primarily related to cash payments recorded in advance of satisfying the Company’s performance obligations related to sales of air and ground me",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1898718/000110465926095037/gmrs-20260630x10q.htm",
+        "accession": "0001104659-26-095037",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001104659-26-095037",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "se impact on its financial condition, results of operations or liquidity. 20 Table of Contents NOTE 18 – RELATED-PARTY TRANSACTIONS On April 28, 2015, investment funds affiliated with Kohlberg Kravis Roberts & Co. L.P. (“KKR”) acquired 100 % of the equity interest of the Company",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1898718/000110465926095037/gmrs-20260630x10q.htm",
+      "accession": "0001104659-26-095037",
+      "form": "10-Q",
+      "filed": "2026-08-12"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "507 | 133,700 | Total other accrued liabilities | $ | 408,742 | $ | 363,160 | Deferred membership revenue, or contract liabilities, are primarily related to cash payments recorded in advance of satisfying the Company’s performance obligations related to sales of air and ground me",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1898718/000110465926095037/gmrs-20260630x10q.htm",
+      "accession": "0001104659-26-095037",
+      "form": "10-Q",
+      "filed": "2026-08-12"
+    }
+  ],
+  "revenue_quality_text_source": "0001104659-26-095037"
+}

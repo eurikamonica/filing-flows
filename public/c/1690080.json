@@ -1,0 +1,631 @@
+{
+  "cik": 1690080,
+  "ticker": "FRMM",
+  "name": "FORUM MARKETS Inc",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "sic_description": "Finance Services",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T03:16:47+00:00",
+  "price": 3.38,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.27346,
+  "snapshot": {
+    "total_debt": 17206000,
+    "current_debt": 2940000,
+    "cash": 4102000,
+    "investments": 43966000,
+    "equity": 127802000,
+    "assets": 159031000,
+    "liabilities": 31229000,
+    "assets_current": 14191000,
+    "liabilities_current": 5279000,
+    "retained_earnings": -681126000,
+    "operating_income": -244705000,
+    "pretax_income": -530179000,
+    "net_income": -535507000,
+    "ocf": -56561000,
+    "fixed_share": 0.12,
+    "shares": 13198948,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "fixed_share": "LongTermDebtPercentageBearingFixedInterestRate"
+  },
+  "analysis": {
+    "total_debt": 17206000,
+    "cash_and_investments": 48068000,
+    "net_debt": -30862000,
+    "ebitda": -244705000.0,
+    "ebit": -244705000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -56561000.0,
+    "fcf_to_debt": -3.287284,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 48068000.0,
+    "due_12m": 2940000,
+    "due_24m": null,
+    "liquidity_to_due12": 16.34966,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 44612444.24,
+    "debt_to_ev": 1.251305,
+    "convertibles": null,
+    "implied": {
+      "dd": 1.061862,
+      "pd_1y": 0.144149,
+      "spread_5y_bps": 1007.871341,
+      "asset_vol": 1.07487,
+      "calibrated_5y_bps": 173.571449,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 62
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-090100",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1690080/000121390026090100/ea0301343-10q_forum.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "ecognized in accordance with ASC 842, Leases (“ ASC 842 ”). Lease income consists of fixed lease payments and variable consideration based on engine usage. Fixed lease payments are recognized on a straight-line basis over the lease term, while variable lease payments are recognized",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1690080/000121390026090100/ea0301343-10q_forum.htm",
+        "accession": "0001213900-26-090100",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Community Recourse Loans",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 14016000.0,
+      "floating": false
+    },
+    {
+      "name": "Warehouse Facility",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "carrying": 2452000.0,
+      "floating": false
+    },
+    {
+      "name": "First Insurance - 2025",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "face": 251000.0,
+      "floating": false
+    },
+    {
+      "name": "Warehouse Facility Loan Receivables",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "rate_now": 0.0985,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-10-05",
+      "items": "1.01,2.03,3.02,7.01,8.01,9.01",
+      "acc": "0001213900-26-106655",
+      "doc": "ea0306080-8k_forum.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-07-30",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-083073",
+      "doc": "ea0299699-8k_forum.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-07-16",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-26-078494",
+      "doc": "ea0298168-8k_forum.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-07-01",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-074215",
+      "doc": "ea0296636-8k_forum.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-04-08",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-041270",
+      "doc": "ea0285268-8k_forum.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-03-27",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001213900-26-035601",
+      "doc": "ea0283755-8k_forum.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-03-13",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001213900-26-027230",
+      "doc": "ea0281079-8k_forummark.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-02-05",
+      "items": "1.01,2.01,5.02,7.01,9.01",
+      "acc": "0001213900-26-012553",
+      "doc": "ea0275060-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-12-10",
+      "items": "1.01,2.01,3.02,8.01,9.01",
+      "acc": "0001213900-25-120107",
+      "doc": "ea0269076-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-12-10",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-25-119871",
+      "doc": "ea0269044-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-12-03",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001213900-25-117578",
+      "doc": "ea0268168-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-10-23",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001213900-25-101418",
+      "doc": "ea0262209-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-09-25",
+      "items": "1.01,2.03,3.02,3.03,7.01,8.01,9.01",
+      "acc": "0001213900-25-091334",
+      "doc": "ea0258605-8ka1_ethzilla.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2025-09-22",
+      "items": "1.01,2.03,3.02,3.03,7.01,8.01,9.01",
+      "acc": "0001213900-25-089862",
+      "doc": "ea0258188-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-09-08",
+      "items": "1.01,2.03,7.01,8.01,9.01",
+      "acc": "0001213900-25-085321",
+      "doc": "ea0256312-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-09-05",
+      "items": "1.01,1.02,5.02,8.01,9.01",
+      "acc": "0001213900-25-085041",
+      "doc": "ea0256045-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-08-25",
+      "items": "1.01,9.01",
+      "acc": "0001213900-25-080048",
+      "doc": "ea0254338-8k_ethzilla.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-08-21",
+      "items": "1.01,2.03,3.02,3.03,5.02,7.01,8.01,9.01",
+      "acc": "0001213900-25-079088",
+      "doc": "ea0254067-8ka1_ethzilla.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2025-08-18",
+      "items": "1.01,3.02,5.02,7.01,8.01,9.01",
+      "acc": "0001213900-25-077692",
+      "doc": "ea0253637-8ka1_ethzilla.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2025-08-14",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-25-075972",
+      "doc": "ea0252596-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-08-11",
+      "items": "1.01,2.03,3.02,3.03,5.02,7.01,8.01,9.01",
+      "acc": "0001213900-25-074030",
+      "doc": "ea0252396-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-08-05",
+      "items": "1.01,3.02,5.02,7.01,8.01,9.01",
+      "acc": "0001213900-25-072065",
+      "doc": "ea0251165-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-07-30",
+      "items": "1.01,3.02,5.01,5.02,7.01,8.01,9.01",
+      "acc": "0001213900-25-068930",
+      "doc": "ea0250101-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-06-30",
+      "items": "1.01,1.02,5.02,8.01,9.01",
+      "acc": "0001213900-25-059745",
+      "doc": "ea0247555-8ka1_180life.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2025-06-18",
+      "items": "1.01,1.02,5.02,8.01,9.01",
+      "acc": "0001213900-25-055701",
+      "doc": "ea0246121-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-04-30",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-25-037115",
+      "doc": "ea0239844-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-04-09",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-25-030101",
+      "doc": "ea0237417-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-02-25",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-25-017089",
+      "doc": "ea023200801-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-02-07",
+      "items": "1.01,3.02,5.02,9.01",
+      "acc": "0001213900-25-011369",
+      "doc": "ea0230288-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-12-30",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-24-113500",
+      "doc": "ea0226200-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-10-16",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-24-088119",
+      "doc": "ea0217785-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-10-03",
+      "items": "1.01,2.01,3.02,3.03,5.03,8.01,9.01",
+      "acc": "0001213900-24-084859",
+      "doc": "ea0216403-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-09-09",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-24-076949",
+      "doc": "ea0213868-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-05-09",
+      "items": "1.01,1.02,5.02,8.01,9.01",
+      "acc": "0001213900-24-041030",
+      "doc": "ea0205589-8k_180lifesci.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-11-29",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-23-090732",
+      "doc": "ea189187-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-08-15",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-23-067810",
+      "doc": "ea183547-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-04-10",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-23-028603",
+      "doc": "ea176691-8k_180lifesci.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-01-18",
+      "items": "1.01,9.01",
+      "acc": "0001213900-23-003457",
+      "doc": "ea171827-8k_180lifesci.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-01-12",
+      "items": "1.01,9.01",
+      "acc": "0001213900-23-002524",
+      "doc": "ea171610-8k_180lifesci.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-12-29",
+      "items": "1.01,9.01",
+      "acc": "0001213900-22-083579",
+      "doc": "ea170960-8k_180lifesci.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-12-22",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-22-082245",
+      "doc": "ea170740-8k_180lifesci.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-07-19",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-22-040292",
+      "doc": "ea163025-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-10-05",
+      "items": "1.01,3.02,5.08,8.01,9.01",
+      "acc": "0001013762-21-000204",
+      "doc": "ea148291-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-09-20",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001213900-21-048851",
+      "doc": "ea147661-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-08-24",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-21-044474",
+      "doc": "ea146220-8k_180lifesci.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-08-02",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-21-039847",
+      "doc": "ea145083-8k_180lifescien.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-05-07",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-21-025185",
+      "doc": "ea140402-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-04-02",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-21-019967",
+      "doc": "ea138936-8k_180lifesciences.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-03-03",
+      "items": "1.01,3.01,3.02,5.02,9.01",
+      "acc": "0001213900-21-013180",
+      "doc": "ea136864-8k_180lifesciences.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-02-24",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-21-011376",
+      "doc": "ea136194-8k_180lifesci.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-12-31",
+      "items": "2.04,3.02,4.02,8.01",
+      "acc": "0001213900-20-045765",
+      "doc": "ea132548-8k_180lifesciences.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-11-27",
+      "items": "1.01,9.01",
+      "acc": "0001213900-20-039561",
+      "doc": "ea130620-8k_180life.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-11-12",
+      "items": "1.01,2.01,3.02,3.03,5.01,5.02,5.06,9.01",
+      "acc": "0001213900-20-036383",
+      "doc": "ea129454-8k_180lifescience.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-09-14",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001213900-20-026329",
+      "doc": "ea126632-8k_kblmerger.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-08-13",
+      "items": "1.01,9.01",
+      "acc": "0001213900-20-021714",
+      "doc": "ea125287-8k_kbl.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-07-02",
+      "items": "1.01,2.03,3.02,5.03,9.01",
+      "acc": "0001213900-20-016570",
+      "doc": "ea123756-8k_kblmerger4.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-02-03",
+      "items": "1.01,9.01",
+      "acc": "0001213900-20-002397",
+      "doc": "f8k012920_kblmerger.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2019-07-26",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-19-013664",
+      "doc": "f8k072319_kblmergercorp4.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      17206000,
+      48068000,
+      null,
+      -244705000,
+      -244705000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-08",
+      973.71,
+      1.397,
+      1.2922,
+      169.7
+    ],
+    [
+      "2026-09",
+      980.11,
+      1.324,
+      1.2876,
+      170.5
+    ],
+    [
+      "2026-10",
+      997.67,
+      1.141,
+      1.2735,
+      172.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,236 @@
+{
+  "cik": 1808805,
+  "ticker": "NAUT",
+  "name": "Nautilus Biotechnology, Inc.",
+  "sector": "industrials",
+  "industry": "Laboratory Analytical Instruments",
+  "sic": "3826",
+  "sic_description": "Laboratory Analytical Instruments",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T04:53:32+00:00",
+  "price": 3.24,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.237797,
+  "snapshot": {
+    "cash": 13166000,
+    "investments": 70865000,
+    "operating_leases": 27816000,
+    "equity": 131112000,
+    "assets": 163576000,
+    "liabilities": 32464000,
+    "assets_current": 87626000,
+    "liabilities_current": 8639000,
+    "retained_earnings": -361186000,
+    "net_income": -56521000,
+    "da": 1384000,
+    "ocf": -50235000,
+    "capex": 1626000,
+    "shares": 127255223,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 84031000,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -51861000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 84031000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 412306922.52,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase_broad",
+        "label": "Purchase obligations, gross (potential overlap)",
+        "class": "operating_commitment",
+        "amount_usd": null,
+        "reported_total": false,
+        "schedule": [
+          3000000.0,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1808805/000180880526000034/naut-20260630.htm",
+        "accession": "0001808805-26-000034",
+        "form": "10-Q",
+        "filed": "2026-07-28",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 3000000.0,
+            "tag": "us-gaap:PurchaseObligationDueInNextTwelveMonths",
+            "accession": "0001808805-26-000034",
+            "filed": "2026-07-28",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1808805/000180880526000034/naut-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 27816000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1808805/000180880526000034/naut-20260630.htm",
+        "accession": "0001808805-26-000034",
+        "form": "10-Q",
+        "filed": "2026-07-28",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 27816000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001808805-26-000034",
+            "filed": "2026-07-28",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1808805/000180880526000034/naut-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001808805-26-000034",
+      "form": "10-Q",
+      "filed": "2026-07-28",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1808805/000180880526000034/naut-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-11",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001808805-26-000041",
+      "doc": "naut-20260911.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-02-28",
+      "items": "1.01,9.01",
+      "acc": "0001628280-24-007395",
+      "doc": "naut-20240228.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-02-08",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001140361-21-003650",
+      "doc": "brhc10019858_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-12",
+      "items": "1.01,3.02,5.03,9.01",
+      "acc": "0001140361-20-018194",
+      "doc": "nt10013610x9_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

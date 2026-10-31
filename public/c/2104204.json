@@ -1,0 +1,213 @@
+{
+  "cik": 2104204,
+  "ticker": "ALMR",
+  "name": "Alamar Biosciences, Inc.",
+  "sector": "industrials",
+  "industry": "Laboratory Analytical Instruments",
+  "sic": "3826",
+  "sic_description": "Laboratory Analytical Instruments",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T01:43:17+00:00",
+  "price": 30.69,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.826516,
+  "snapshot": {
+    "cash": 132969000,
+    "investments": 117083000,
+    "operating_leases": 41459000,
+    "convertible": 65094000,
+    "equity": 312857000,
+    "assets": 390975000,
+    "liabilities": 78118000,
+    "assets_current": 331382000,
+    "liabilities_current": 27960000,
+    "retained_earnings": -203299000,
+    "converted_shares": 3910025,
+    "shares": 69392766,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebt",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "converted_shares": "DebtConversionConvertedInstrumentSharesIssued1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 250052000,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 250052000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 2129663988.54,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 41459000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2104204/000119312526343003/ck0002104204-20260630.htm",
+        "accession": "0001193125-26-343003",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 41459000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-343003",
+            "filed": "2026-08-11",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2104204/000119312526343003/ck0002104204-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-343003",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2104204/000119312526343003/ck0002104204-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "and liabilities: | Accounts receivable | ( 7,821 | ) | ( 2,849 | ) | Inventory | ( 6,990 | ) | ( 9,418 | ) | Contract assets | — | 413 | Net investment in sales-type lease | — | 173 | Prepaid expenses and other current assets | ( 2,860 | ) | 349 | Other noncurrent assets |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2104204/000119312526343003/ck0002104204-20260630.htm",
+        "accession": "0001193125-26-343003",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "IOSCIENCES, INC. Notes to Unaudited Condensed Consolidated Financial Statements and therefore there is no variable consideration. Revenue is recorded net of sales taxes collected on behalf of governmental authorities. The Company allocates the transaction price to each distinct",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2104204/000119312526343003/ck0002104204-20260630.htm",
+        "accession": "0001193125-26-343003",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ty was subleased to Attovia Therapeutics, Inc. (“Attovia”) , a related party, through March 2025. See Note 11—Related party transactions for additional information. The Company also leases office space in Europe and Asia as of June 30, 2026. In April 2026, the Company entered into a",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2104204/000119312526343003/ck0002104204-20260630.htm",
+        "accession": "0001193125-26-343003",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "luding United States) | 503 | 364 | 1,790 | 384 | Total | $ | 29,427 | $ | 16,162 | $ | 55,462 | $ | 29,253 | Deferred revenue activity during the three and six months ended June 30, 2026 and 2025 was as follows (in thousands): | Three Months Ended June 30, | Six Months Ended",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2104204/000119312526343003/ck0002104204-20260630.htm",
+        "accession": "0001193125-26-343003",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Convertible Debt",
+      "kind": "convertible",
+      "as_of": "2026-04-19",
+      "coupon": 0.08,
+      "fair_value": 66500000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

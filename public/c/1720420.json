@@ -1,0 +1,684 @@
+{
+  "cik": 1720420,
+  "ticker": "IBEX",
+  "name": "IBEX Ltd",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T01:20:16+00:00",
+  "price": 47.23,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.357914,
+  "snapshot": {
+    "total_debt": 1659000,
+    "current_debt": 882000,
+    "cash": 32566000,
+    "finance_leases": 1659000,
+    "operating_leases": 60785000,
+    "equity": 170230000,
+    "assets": 309135000,
+    "liabilities": 138905000,
+    "assets_current": 179637000,
+    "liabilities_current": 85539000,
+    "retained_earnings": 72072000,
+    "interest_expense": 936000,
+    "interest_paid": 936000,
+    "operating_income": 54964000,
+    "pretax_income": 54294000,
+    "net_income": 46.33,
+    "da": 19922000,
+    "ocf": 59001000,
+    "capex": 27807000,
+    "revenue": 644076000,
+    "if_converted_shares": 0,
+    "shares": 13278634,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent+LongTermDebtAndCapitalLeaseObligations",
+    "current_debt": "DebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "da": "DepreciationDepletionAndAmortization (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (fiscal year)",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "analysis": {
+    "total_debt": 1659000,
+    "cash_and_investments": 32566000.0,
+    "net_debt": -30907000.0,
+    "ebitda": 74886000,
+    "ebit": 54964000,
+    "interest_expense": 936000,
+    "leverage": 0.022154,
+    "net_leverage": -0.412721,
+    "interest_coverage": 58.722222,
+    "ebitda_coverage": 80.00641,
+    "cash_coverage": 64.035256,
+    "fcf": 31194000,
+    "fcf_to_debt": 18.802893,
+    "effective_rate": 0.564195,
+    "revolver_available": null,
+    "liquidity": 32566000.0,
+    "due_12m": 882000,
+    "due_24m": null,
+    "liquidity_to_due12": 36.922902,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 6.070856,
+    "market_cap": 627149883.82,
+    "debt_to_ev": 0.002782,
+    "convertibles": null,
+    "implied": {
+      "dd": 17.313605,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.0,
+      "asset_vol": 0.357222,
+      "calibrated_5y_bps": 67.994701,
+      "rating_band": "A"
+    },
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.0,
+        "unit": "x",
+        "actual": 80.00641,
+        "cushion": 0.987501,
+        "agreement": "Credit Agreement",
+        "dated": "2024-10-29",
+        "text": "During any Covenant Compliance Period, the Group Companies shall not permit the Fixed Charge Coverage Ratio to be less than 1.00 to 1.00, calculated for the four (4) consecutive fiscal quarters most recently then ended and tested (i) immediately upon trigger based on the most recently completed fiscal quarter end and (ii) on the last day of each subsequently completed fiscal quarter ending during such Compliance Peri"
+      }
+    ],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase_broad",
+        "label": "Purchase obligations, gross (potential overlap)",
+        "class": "operating_commitment",
+        "amount_usd": null,
+        "reported_total": false,
+        "schedule": [
+          12600000.0,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/ibex-20260630.htm",
+        "accession": "0001720420-26-000025",
+        "form": "10-K",
+        "filed": "2026-09-10",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 12600000.0,
+            "tag": "us-gaap:PurchaseObligationDueInNextTwelveMonths",
+            "accession": "0001720420-26-000025",
+            "filed": "2026-09-10",
+            "form": "10-K",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/ibex-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 60785000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/ibex-20260630.htm",
+        "accession": "0001720420-26-000025",
+        "form": "10-K",
+        "filed": "2026-09-10",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 60785000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001720420-26-000025",
+            "filed": "2026-09-10",
+            "form": "10-K",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/ibex-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "intercompany balances and transactions have been eliminated in consolidation. The Company consolidates variable interest entities (\"VIE\"), when it is deemed to be the primary beneficiary. The Company is considered the primary beneficiary if it has both (1) the power to direct th",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/ibex-20260630.htm",
+        "accession": "0001720420-26-000025",
+        "form": "10-K",
+        "filed": "2026-09-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "ar, the Company also incurred significant cash outflows from financing activities in connection with the repurchase agreement with TRGI. Cash Flows from Operating Activities Net cash inflow from operating activities during the fiscal year ended June 30, 2026 increased to",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/ibex-20260630.htm",
+        "accession": "0001720420-26-000025",
+        "form": "10-K",
+        "filed": "2026-09-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001720420-26-000025",
+      "form": "10-K",
+      "filed": "2026-09-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/ibex-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1537,
+      "receivables_growth": 0.0696,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.1611,
+      "dsri": 0.9271,
+      "ocf_to_net_income": 1.2735
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 644076000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        },
+        {
+          "value_usd": 558273000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 125292000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        },
+        {
+          "value_usd": 117136000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 6384000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        },
+        {
+          "value_usd": 5498000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 59001000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        },
+        {
+          "value_usd": 45668000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 46331000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        },
+        {
+          "value_usd": 36864000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001720420-26-000025",
+          "filed": "2026-09-10",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ties | $ | 22,996 | $ | 18,692 | Accrued payroll and employee-related liabilities | 40,914 | 38,588 | Current deferred revenue | 6,384 | 5,498 | Current operating lease liabilities | 13,936 | 14,332 | Current debt | 882 | 823 | Due to related parties | — | 22 | Income taxes p",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000025/ibex-20260630.htm",
+        "accession": "0001720420-26-000025",
+        "form": "10-K",
+        "filed": "2026-09-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-06-30",
+      "2025-06-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "US Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.02,
+      "available": 63600000.0,
+      "reference": "Base Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-09-10",
+      "agreement_kind": "amendment",
+      "dated": "2026-09-08",
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Prime Rate"
+      ],
+      "fee_pct": 0.3,
+      "maturity": "2029-10-22",
+      "url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042026000024/exhibit101amendmentno1tocr.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-11-04",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-10-29",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "fee_pct": 0.25,
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "During any Covenant Compliance Period, the Group Companies shall not permit the Fixed Charge Coverage Ratio to be less than 1.00 to 1.00, calculated for the four (4) consecutive fiscal quarters most recently then ended and tested (i) immediately upon trigger based on the most recently completed fiscal quarter end and (ii) on the last day of each subsequently completed fiscal quarter ending during such Compliance Peri"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1720420/000114036124045075/ef20038076_ex10-1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-05-09",
+      "agreement_kind": "amendment",
+      "dated": "2013-11-08",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        0.5,
+        1.75
+      ],
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.2,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "“ Permitted Royalty Payments ” shall mean the payment of Royalty Payments by a Borrower on a quarterly basis upon satisfaction of the following conditions: (a) both before and after giving pro-forma effect to any such payments (i) no Default or Event of Default shall exist, (ii) no Springing Covenant Event shall exist, and (iii) Borrowers shall have caused to be maintained as of the end of the most recent fiscal quar"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.1,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "lt shall exist, (ii) no Springing Covenant Event shall exist, and (iii) Borrowers shall have caused to be maintained as of the end of the most recent fiscal quarter for which Borrowers shall have been required to deliver financial statements to Agent pursuant to Section 9.7 or 9.8, as applicable, a Fixed Charge Coverage Ratio, calculated on a pro forma basis as if such payment was made during such period, of not less"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1720420/000172042024000031/exhibit101seventeenthamend.htm",
+      "all_in_pct": [
+        0.5389,
+        1.7889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-09-10",
+      "items": "1.01,2.02,2.03,9.01",
+      "acc": "0001720420-26-000024",
+      "doc": "ibex-20260908.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-20",
+      "items": "1.01,2.03,3.02,7.01,9.01",
+      "acc": "0001628280-24-048601",
+      "doc": "ibex-20241119.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-04",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001140361-24-045075",
+      "doc": "ef20038076_8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-03-31",
+      20597000,
+      12977000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1573000,
+      22694000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      1431000,
+      15460000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1391000,
+      15409000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      1659000,
+      32566000,
+      936000,
+      74886000,
+      54964000,
+      0.5642
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      0.01,
+      10.172,
+      0.3654,
+      94.1
+    ],
+    [
+      "2025-06",
+      0.01,
+      9.833,
+      0.3766,
+      96.2
+    ],
+    [
+      "2025-07",
+      0.01,
+      9.966,
+      0.3757,
+      95.4
+    ],
+    [
+      "2025-08",
+      0.01,
+      10.186,
+      0.3669,
+      94.0
+    ],
+    [
+      "2025-09",
+      0.38,
+      8.28,
+      0.4817,
+      106.8
+    ],
+    [
+      "2025-10",
+      0.7,
+      7.923,
+      0.492,
+      109.4
+    ],
+    [
+      "2025-11",
+      0.0,
+      12.953,
+      0.4887,
+      78.0
+    ],
+    [
+      "2025-12",
+      0.0,
+      13.213,
+      0.4858,
+      76.7
+    ],
+    [
+      "2026-01",
+      0.0,
+      12.946,
+      0.4929,
+      78.1
+    ],
+    [
+      "2026-02",
+      0.0,
+      12.484,
+      0.4981,
+      80.5
+    ],
+    [
+      "2026-03",
+      0.0,
+      12.059,
+      0.508,
+      82.9
+    ],
+    [
+      "2026-04",
+      0.0,
+      12.057,
+      0.5136,
+      82.9
+    ],
+    [
+      "2026-05",
+      0.0,
+      12.717,
+      0.4984,
+      79.3
+    ],
+    [
+      "2026-06",
+      0.0,
+      12.705,
+      0.4951,
+      79.3
+    ],
+    [
+      "2026-07",
+      0.0,
+      12.992,
+      0.4965,
+      77.8
+    ],
+    [
+      "2026-08",
+      0.0,
+      13.07,
+      0.4993,
+      77.4
+    ],
+    [
+      "2026-09",
+      0.0,
+      17.619,
+      0.3721,
+      68.0
+    ],
+    [
+      "2026-10",
+      0.0,
+      18.493,
+      0.3579,
+      68.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

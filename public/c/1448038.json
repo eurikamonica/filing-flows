@@ -1,0 +1,304 @@
+{
+  "cik": 1448038,
+  "ticker": "RWDMU",
+  "name": "Redwood Mortgage Investors IX",
+  "sector": "real-estate",
+  "industry": "Real Estate",
+  "sic": "6500",
+  "sic_description": "Real Estate",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T03:16:49+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 5808000,
+    "revolver_drawn": 1900000,
+    "assets": 59982000,
+    "liabilities": 2026000,
+    "interest_expense": 96000,
+    "interest_paid": 52000,
+    "net_income": 2637000,
+    "ocf": 2364000,
+    "revenue": 5673000,
+    "stated_rate": 0.0775,
+    "revolver_fee": 0.0025,
+    "revolver_rate": -0.0863,
+    "shares": 0,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_drawn": "LineOfCredit",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "revolver_fee": "LineOfCreditFacilityCommitmentFeePercentage",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 5808000.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 96000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 46.461538,
+    "fcf": 2364000.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 5808000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-351760",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1448038/000119312526351760/ck0001448038-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.1806,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.0011
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 5078000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-154932",
+          "filed": "2026-04-14",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1448038/000119312526154932/"
+        },
+        {
+          "value_usd": 6197000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-154932",
+          "filed": "2026-04-14",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1448038/000119312526154932/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1827000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-154932",
+          "filed": "2026-04-14",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1448038/000119312526154932/"
+        },
+        {
+          "value_usd": 3336000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-154932",
+          "filed": "2026-04-14",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1448038/000119312526154932/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 1825000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-154932",
+          "filed": "2026-04-14",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1448038/000119312526154932/"
+        },
+        {
+          "value_usd": 3388000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-154932",
+          "filed": "2026-04-14",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1448038/000119312526154932/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "located O&O expenses on scheduled redemptions as of June 30, 2026 , to be approximately $ 3 thousand. Other related party transactions - Payable to/receivable from related parties From time to time, in the normal course of business operations, the company may have payables to and",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1448038/000119312526351760/ck0001448038-20260630.htm",
+        "accession": "0001193125-26-351760",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2021-08-16",
+      "agreement_kind": "credit_agreement",
+      "dated": "2020-03-13",
+      "title": "Business Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR"
+      ],
+      "maturity": "2022-03-13",
+      "url": "https://www.sec.gov/Archives/edgar/data/1448038/000156459021044581/exhibit10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-05-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2020-03-13",
+      "title": "Business Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR"
+      ],
+      "maturity": "2022-03-13",
+      "url": "https://www.sec.gov/Archives/edgar/data/1448038/000156459021028356/exhibit10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2020-11-16",
+      "agreement_kind": "credit_agreement",
+      "dated": "2020-03-13",
+      "title": "Business Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR"
+      ],
+      "maturity": "2022-03-13",
+      "url": "https://www.sec.gov/Archives/edgar/data/1448038/000156459020054135/exhibit10_1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-03-17",
+      "items": "1.01,9.01",
+      "acc": "0001193125-26-111145",
+      "doc": "d931116d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-16",
+      "items": "1.01,9.01",
+      "acc": "0001193125-24-097879",
+      "doc": "d815425d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-11",
+      "items": "1.01,5.03,5.07,9.01",
+      "acc": "0001193125-22-073567",
+      "doc": "d257479d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-02",
+      "items": "1.01,2.01",
+      "acc": "0001193125-18-211606",
+      "doc": "d795159d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

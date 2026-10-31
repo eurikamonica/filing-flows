@@ -1,0 +1,244 @@
+{
+  "cik": 1972234,
+  "ticker": "VHUB",
+  "name": "VenHub Global, Inc.",
+  "sector": "industrials",
+  "industry": "Misc Industrial & Commercial Machinery & Equipment",
+  "sic": "3590",
+  "sic_description": "Misc Industrial & Commercial Machinery & Equipment",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T04:54:55+00:00",
+  "price": 0.34,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.63604,
+  "snapshot": {
+    "cash": 2563439,
+    "operating_leases": 940338,
+    "convertible_current": 4576949,
+    "equity": -52871,
+    "assets": 8117669,
+    "liabilities": 8170540,
+    "assets_current": 5785871,
+    "liabilities_current": 7556449,
+    "retained_earnings": -109267588,
+    "interest_expense": 12130447,
+    "interest_paid": 180852,
+    "operating_income": -43002553,
+    "net_income": -59619727,
+    "da": 219012,
+    "ocf": -15532207,
+    "revenue": 505285,
+    "debt_issued": 25000000,
+    "conversion_price": 6,
+    "shares": 91392857,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible_current": "ConvertibleDebtCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (fiscal year)",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 2563439.0,
+    "net_debt": null,
+    "ebitda": -42783541,
+    "ebit": -43002553,
+    "interest_expense": 12130447,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -3.54501,
+    "ebitda_coverage": -3.526955,
+    "cash_coverage": -84.883524,
+    "fcf": -15532207.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 2563439.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -34.243692,
+    "market_cap": 31073571.38,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 940338.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026088442/ea0299970-10q_venhub.htm",
+        "accession": "0001213900-26-088442",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 940338.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-088442",
+            "filed": "2026-08-12",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026088442/ea0299970-10q_venhub.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "9,565 | $ | 716,329 | Interest payable - current | 72,366 | 89,148 | Sales tax payable | 8,624 | 6,839 | Customer deposits | 162,000 | 203,645 | Current operating lease liability | 326,247 | 346,953 | Loan payable - related party (note 4) | 2,100,000 | 1,000,000 | Deferrr",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026088442/ea0299970-10q_venhub.htm",
+        "accession": "0001213900-26-088442",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-088442",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026088442/ea0299970-10q_venhub.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "no obligations remained outstanding under the settlement agreement. See Note 6 for lease commitments. 4. | RELATED PARTY TRANSACTIONS | The Company’s Chief Executive Officer and the Company’s President, are married. The marital relationship between these two executive officers repre",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026088442/ea0299970-10q_venhub.htm",
+        "accession": "0001213900-26-088442",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": ",930 | ) | - | Interest payable | ( 148,331 | ) | 200,689 | Prepaid expenses | ( 476,631 | ) | ( 59,281 | ) | Deferred revenue | - | 1,750,000 | Customer deposits | ( 41,645 | ) | ( 1,000 | ) | Security deposit | ( 64,101 | ) | ( 55,000 | ) | Change in operating right of use",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026088442/ea0299970-10q_venhub.htm",
+        "accession": "0001213900-26-088442",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Promissory Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.04,
+      "maturity": "2030-05-16",
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-10-19",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-110715",
+      "doc": "ea0309071-8k_venhub.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-09-02",
+      "items": "1.01,3.01,3.02,9.01",
+      "acc": "0001213900-26-096780",
+      "doc": "ea0304250-8k_venhub.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-02-12",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-26-015576",
+      "doc": "ea0276752-8k_venhub.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,791 @@
+{
+  "cik": 83246,
+  "ticker": null,
+  "name": "HSBC USA INC /MD/",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "sic_description": "National Commercial Banks",
+  "generated_at": "2026-10-31T14:35:17+00:00",
+  "fetched_at": "2026-10-25T21:14:43+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 34387000000,
+    "current_debt": 9082000000,
+    "cash": 24720000000,
+    "short_term_borrowings": 9082000000,
+    "equity": 12757000000,
+    "assets": 180708000000,
+    "liabilities": 167951000000,
+    "retained_earnings": 1225000000,
+    "deposits": 126813000000,
+    "operating_income": 4386000000,
+    "pretax_income": 1726000000,
+    "net_income": 1333000000,
+    "da": -73000000,
+    "ocf": -4597000000,
+    "revenue": 4442000000,
+    "debt_issued": 11355000000,
+    "debt_repaid": 10299000000,
+    "deposit_interest": 3275000000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 2500000000,
+      "y2": 3500000000,
+      "y3": 6000000000,
+      "y4": 1700000000,
+      "y5": 3400000000,
+      "after5": 5900000000
+    },
+    "shares": 714,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt+ShortTermBorrowings",
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 34387000000,
+    "cash_and_investments": 24720000000.0,
+    "net_debt": 9667000000.0,
+    "ebitda": 4313000000,
+    "ebit": 4386000000,
+    "interest_expense": null,
+    "leverage": 7.972873,
+    "net_leverage": 2.241363,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -4597000000.0,
+    "fcf_to_debt": -0.133684,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 24720000000.0,
+    "due_12m": 2500000000,
+    "due_24m": 6000000000,
+    "floating_debt": 7407000000.0,
+    "floating_share": 0.215401,
+    "plus100bp_interest": 74070000.0,
+    "plus100bp_share_of_ebit": 0.016888,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "Retained Earnings and Regulatory Capital Requirements | 38 | 5 | Allowance for Credit Losses | 20 | 14 | Variable Interest Entities | 39 | 6 | Loans Held for Sale | 22 | 15 | Guarantee Arrangements, Pledged Assets and Repurchase Agreements | 40 | 7 | Derivative Financial Instrumen",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000022/hsbcusa-20260630.htm",
+        "accession": "0000083246-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "Interest Entities | 39 | 6 | Loans Held for Sale | 22 | 15 | Guarantee Arrangements, Pledged Assets and Repurchase Agreements | 40 | 7 | Derivative Financial Instruments | 23 | 16 | Fair Value Measurements | 43 | 8 | Fair Value Option | 28 | 17 | Litigation and Regulatory Ma",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000022/hsbcusa-20260630.htm",
+        "accession": "0000083246-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ability to access the market for long-term funding needs and we continue to seek well-priced and stable customer deposits. HSBC Bank USA is subject to significant restrictions imposed by federal law on extensions of credit to, and certain other 'covered transactions' w",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000022/hsbcusa-20260630.htm",
+        "accession": "0000083246-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000083246-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000022/hsbcusa-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.099,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": -2.0972
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": -2.0972,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 4118000000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000083246-26-000005",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000005/"
+        },
+        {
+          "value_usd": 3747000000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000083246-26-000005",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000005/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        {
+          "value_usd": 3000000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0000083246-25-000007",
+          "filed": "2025-02-19",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324625000007/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -2309000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000083246-26-000005",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000005/"
+        },
+        {
+          "value_usd": 2170000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000083246-26-000005",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000005/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 1101000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000083246-26-000005",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000005/"
+        },
+        {
+          "value_usd": 825000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000083246-26-000005",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000005/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "tion | 8 | 10 | Fee Income from Contracts with Customers | 32 | 2 | Trading Assets and Liabilities | 9 | 11 | Related Party Transactions | 33 | 3 | Securities | 10 | 12 | Business Segments | 36 | 4 | Loans | 13 | 13 | Retained Earnings and Regulatory Capital Requirements | 38 | 5 | All",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/83246/000008324626000022/hsbcusa-20260630.htm",
+        "accession": "0000083246-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-04"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Senior debt:",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 19725000000.0,
+      "floating": false
+    },
+    {
+      "name": "Fixed-rate notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0453,
+      "carrying": 10462000000.0,
+      "floating": false
+    },
+    {
+      "name": "Structured notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0425,
+      "carrying": 6914000000.0,
+      "floating": false
+    },
+    {
+      "name": "Commercial paper",
+      "kind": "commercial_paper",
+      "as_of": "2025-12-31",
+      "carrying": 4058000000.0,
+      "rate_now": 0.0445,
+      "floating": true
+    },
+    {
+      "name": "Floating Rate Notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0463,
+      "carrying": 2349000000.0,
+      "floating": true
+    },
+    {
+      "name": "Securities sold under repurchase agreements",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "carrying": 1311000000.0,
+      "floating": false
+    },
+    {
+      "name": "Other",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "carrying": 1195000000.0,
+      "floating": false
+    },
+    {
+      "name": "FHLB advances - floating-rate",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0401,
+      "carrying": 1000000000.0,
+      "floating": true
+    },
+    {
+      "name": "Federal funds purchased (day to day)",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "carrying": 725000000.0,
+      "rate_now": 0.0384,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2011-06-30",
+      32894000000,
+      1543000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-09-30",
+      37716000000,
+      1585000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-03-31",
+      31660000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-06-30",
+      30745000000,
+      1528000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      35076000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-31",
+      33841000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-30",
+      42328000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-09-30",
+      41650000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      51720000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      37510000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      36898000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      45073000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      43295000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      41966000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      44422000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      42154000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      45562000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      43241000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      46327000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      45349000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      37146000000,
+      1053000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      38140000000,
+      1340000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      34309000000,
+      1336000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      41042000000,
+      1238000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      39498000000,
+      1196000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      38309000000,
+      1496000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      42356000000,
+      983000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      31848000000,
+      1266000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      25563000000,
+      1352000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      23422000000,
+      1447000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      23040000000,
+      1364000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      24482000000,
+      1018000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      22480000000,
+      976000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      21924000000,
+      981000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      22232000000,
+      944000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      26339000000,
+      922000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      27898000000,
+      831000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      26455000000,
+      784000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      26472000000,
+      695000000,
+      5690000000,
+      null,
+      null,
+      0.21494
+    ],
+    [
+      "2024-06-30",
+      25321000000,
+      881000000,
+      5906000000,
+      null,
+      null,
+      0.23325
+    ],
+    [
+      "2024-09-30",
+      26063000000,
+      725000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      28232000000,
+      888000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      32167000000,
+      792000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      29492000000,
+      25094000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      32935000000,
+      25352000000,
+      null,
+      4197000000,
+      4266000000,
+      null
+    ],
+    [
+      "2026-06-30",
+      34387000000,
+      24720000000,
+      null,
+      4313000000,
+      4386000000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

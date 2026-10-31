@@ -1,0 +1,390 @@
+{
+  "cik": 19871,
+  "ticker": "CVR",
+  "name": "CHICAGO RIVET & MACHINE CO",
+  "sector": "industrials",
+  "industry": "Metalworkg Machinery & Equipment",
+  "sic": "3540",
+  "sic_description": "Metalworkg Machinery & Equipment",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:04:34+00:00",
+  "price": 10.5,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.589786,
+  "snapshot": {
+    "cash": 770752,
+    "investments": 0,
+    "operating_leases": 386858,
+    "revolver_drawn": 1500000,
+    "equity": 17452775,
+    "assets": 23598195,
+    "liabilities": 6145420,
+    "assets_current": 12978056,
+    "liabilities_current": 4282220,
+    "retained_earnings": 19789643,
+    "interest_paid": 43994,
+    "operating_income": -2604283,
+    "pretax_income": -2535625,
+    "net_income": -2440799,
+    "da": 1179106,
+    "ocf": -993006,
+    "capex": 427120,
+    "revenue": 27434689,
+    "shares": 966132,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesDomestic (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 770752.0,
+    "net_debt": null,
+    "ebitda": -1425177,
+    "ebit": -2604283,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": -21.571396,
+    "fcf": -1420126,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 4000000.0,
+    "liquidity": 4770752.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 3.40507,
+    "market_cap": 10144386.0,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 386858.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000022/cvr-20260630.htm",
+        "accession": "0000019871-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 386858.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000019871-26-000022",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000022/cvr-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "venue; and (d) evaluating other financing sources, including exploring the potential for a real estate sale leaseback or similar transaction, or seeking to potentially raise additional capital. Management believes that these actions, if successfully executed, will",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000022/cvr-20260630.htm",
+        "accession": "0000019871-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "and salaries | 604,734 | 491,913 | Other accrued liabilities | 240,681 | 248,431 | Unearned revenue and customer deposits | 103,023 | 262,950 | Current portion of operating lease liability | 105,246 | 103,420 | Current portion of line of credit | 1,500,000 | 500,000 | To",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000022/cvr-20260630.htm",
+        "accession": "0000019871-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000019871-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000022/cvr-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0335,
+      "receivables_growth": 0.1558,
+      "contract_assets_growth": 0.137,
+      "contract_liabilities_growth": -0.0107,
+      "dsri": 1.1183,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 27890260.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        },
+        {
+          "value_usd": 26986627.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 3576966.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        },
+        {
+          "value_usd": 3094911.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        }
+      ],
+      "contract_assets": [
+        {
+          "value_usd": 55497.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        },
+        {
+          "value_usd": 48811.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        }
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 262950.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        },
+        {
+          "value_usd": 265789.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -1228018.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        },
+        {
+          "value_usd": -153451.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1083214.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        },
+        {
+          "value_usd": -5615614.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000019871-26-000004",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000004/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "| $ | 1,718,237 | Accounts receivable - less allowances of $ 128,188 and $ 155,000 | 5,159,423 | 3,576,966 | Contract assets | — | 55,497 | Inventories, net | 6,337,028 | 6,170,980 | Assets held for sale | 179,254 | 179,254 | Income taxes receivable | 45,476 | 43,949 | Othe",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/19871/000001987126000022/cvr-20260630.htm",
+        "accession": "0000019871-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 1500000.0,
+      "floating": true
+    },
+    {
+      "name": "March 2025 Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-03-06",
+      "capacity": 2500000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Line Of Credit",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 0.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2022-08-17",
+      "items": "1.01",
+      "acc": "0001193125-22-223229",
+      "doc": "d377716d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

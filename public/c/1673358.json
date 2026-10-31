@@ -1,0 +1,464 @@
+{
+  "cik": 1673358,
+  "ticker": "YUMC",
+  "name": "Yum China Holdings, Inc.",
+  "sector": "consumer-disc",
+  "industry": "Retail-Eating  Places",
+  "sic": "5812",
+  "sic_description": "Retail-Eating  Places",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-25T21:00:21+00:00",
+  "price": 45.78,
+  "price_date": "2026-10-30",
+  "equity_vol": 0.303515,
+  "snapshot": {
+    "current_debt": 66000000,
+    "cash": 485000000,
+    "investments": 901000000,
+    "short_term_borrowings": 66000000,
+    "finance_leases": 56000000,
+    "operating_leases": 2180000000,
+    "revolver_capacity": 1502000000,
+    "revolver_available": 1378000000,
+    "equity": 5357000000,
+    "assets": 10871000000,
+    "liabilities": 4810000000,
+    "assets_current": 2350000000,
+    "liabilities_current": 2436000000,
+    "retained_earnings": 1696000000,
+    "operating_income": 1382000000,
+    "pretax_income": 1425000000,
+    "net_income": 975000000,
+    "da": 466000000,
+    "ocf": 1578000000,
+    "capex": 638000000,
+    "revenue": 12438000000,
+    "shares": 342458136,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1386000000,
+    "net_debt": null,
+    "ebitda": 1848000000,
+    "ebit": 1382000000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 940000000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 1378000000,
+    "liquidity": 2764000000,
+    "due_12m": 66000000,
+    "due_24m": null,
+    "liquidity_to_due12": 41.878788,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 3.72823,
+    "market_cap": 15677733466.08,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Bridge Credit Agreement",
+        "dated": "2026-07-31",
+        "text": "The Borrower shall not permit the Interest Coverage Ratio as of the last day of each Fiscal Quarter ended after the Funding Date, commencing with the last day of the first full Fiscal Quarter ending after the Funding Date, to be less than 3.00 to 1.00. 10.7 [Reserved] . | 53 | 10.8 Liens ."
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2180000000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+        "accession": "0001193125-26-341077",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 2180000000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-341077",
+            "filed": "2026-08-10",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "iled with the SEC on February 27, 2026. Through the acquisition of Daojia, the Company also acquired a variable interest entity (“VIE”) and subsidiaries of the VIE effectively controlled by Daojia. There exists a parent-subsidiary relationship between Daojia and its VIE as a r",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+        "accession": "0001193125-26-341077",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "o lease office spaces, logistics centers and equipment. Our lease agreements do not contain any material residual value guarantees or material restrictive covenants. 17 In limited cases, we sub-lease certain restaurants to franchisees in connection with refranchising transact",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+        "accession": "0001193125-26-341077",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "income tax assets | 168 | 156 | Other assets | 374 | 362 | Total Assets | 10,871 | 10,783 | LIABILITIES, REDEEMABLE NONCONTROLLING INTEREST AND EQUITY | Current Liabilities | Accounts payable and other current liabilities | 2,263 | 2,127 | Short-term borrowings | 66 | 30 | Income taxes pa",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+        "accession": "0001193125-26-341077",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [
+      {
+        "key": "uncommenced_leases",
+        "label": "Additional uncommenced lease commitments (narrative total)",
+        "review_lane": "B",
+        "amount_kind": "disclosed_nominal_lease_commitment",
+        "amount_usd": 77000000.0,
+        "payments": [],
+        "status": "narrative_amount_needs_review",
+        "confidence": "provisional",
+        "currency": "USD",
+        "as_of": "2026-06-30",
+        "filed": "2026-08-10",
+        "form": "10-Q",
+        "accession": "0001193125-26-341077",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+        "context": "As of June 30, 2026  , we have additional lease agreements that have been signed but not yet commenced, with total undiscounted minimum lease payments of $ 77 million",
+        "warning": "Narrative gross lease commitment, not commenced/recognized; no annual amounts reported here. Conditions and overlaps require review."
+      }
+    ],
+    "footnote_status": "candidate_tables_review_required",
+    "text_filing": {
+      "accession": "0001193125-26-341077",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0437,
+      "receivables_growth": 0.2025,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.0459,
+      "dsri": 1.1522,
+      "ocf_to_net_income": 1.578
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 11797000000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        },
+        {
+          "value_usd": 11303000000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 95000000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        },
+        {
+          "value_usd": 79000000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 205000000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        },
+        {
+          "value_usd": 196000000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1466000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        },
+        {
+          "value_usd": 1419000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 929000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        },
+        {
+          "value_usd": 911000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-082824",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526082824/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments - Credit Losses (Topic 326), Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025-05”), which provides the option to elect a practical expedient to assume that the current conditions as of the balance sheet date will rem",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+        "accession": "0001193125-26-341077",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "nal audit on transfer pricing by the Chinese State Taxation Administration (the “STA”) in China regarding our related party transactions for the period from 2006 to 2015. The information and views currently exchanged with the tax authorities focus on our franchise arrangement with YUM.",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+        "accession": "0001193125-26-341077",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "points are earned, based on the percentage of points that are projected to be redeemed, with a corresponding deferred revenue liability included in Accounts payable and other current liabilities in the Condensed Consolidated Balance Sheets and subsequently recognized into re",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526341077/yumc-20260630.htm",
+        "accession": "0001193125-26-341077",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Onshore Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 7700000000.0,
+      "floating": false
+    },
+    {
+      "name": "Offshore Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 200000000.0,
+      "floating": false
+    },
+    {
+      "name": "Either Onshore Or Offshore Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 200000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-08-06",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-07-31",
+      "title": "Bridge Credit Agreement",
+      "facility": "term loan",
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower shall not permit the Interest Coverage Ratio as of the last day of each Fiscal Quarter ended after the Funding Date, commencing with the last day of the first full Fiscal Quarter ending after the Funding Date, to be less than 3.00 to 1.00. 10.7 [Reserved] . | 53 | 10.8 Liens ."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1673358/000119312526336485/yumc-ex10_1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-08-07",
+      "items": "1.01,2.01,7.01,9.01",
+      "acc": "0001193125-26-339048",
+      "doc": "yumc-20260807.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-06",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-336485",
+      "doc": "yumc-20260731.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-16",
+      "items": "1.01",
+      "acc": "0001193125-26-272893",
+      "doc": "yumc-20260616.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

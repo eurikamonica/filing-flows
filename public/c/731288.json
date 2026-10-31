@@ -1,0 +1,386 @@
+{
+  "cik": 731288,
+  "ticker": null,
+  "name": "PACCAR FINANCIAL CORP",
+  "sector": "financials",
+  "industry": "Short-Term Business Credit Institutions",
+  "sic": "6153",
+  "sic_description": "Short-Term Business Credit Institutions",
+  "generated_at": "2026-10-31T14:35:16+00:00",
+  "fetched_at": "2026-10-26T01:13:48+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 10458000000,
+    "cash": 87700000,
+    "commercial_paper": 2333600000,
+    "revolver_available": 4000000000,
+    "equity": 2230300000,
+    "assets": 13291900000,
+    "liabilities": 11061600000,
+    "retained_earnings": 1984600000,
+    "interest_paid": 461500000,
+    "pretax_income": 182700000,
+    "net_income": 138300000,
+    "da": 109200000,
+    "ocf": 158700000,
+    "revenue": 901900000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "y2": 1900000000,
+      "y3": 2000000000,
+      "y4": 1000000000
+    },
+    "effective_rate": 0.042,
+    "shares": 145000,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtLongtermAndShorttermCombinedAmount",
+    "cash": "Cash",
+    "commercial_paper": "CommercialPaper",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaid (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "analysis": {
+    "total_debt": 10458000000,
+    "cash_and_investments": 87700000.0,
+    "net_debt": 10370300000.0,
+    "ebitda": 291900000.0,
+    "ebit": 182700000.0,
+    "interest_expense": null,
+    "leverage": 35.827338,
+    "net_leverage": 35.526893,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.343879,
+    "fcf": 158700000.0,
+    "fcf_to_debt": 0.015175,
+    "effective_rate": null,
+    "revolver_available": 4000000000,
+    "liquidity": 4087700000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": 2333600000,
+    "floating_share": 0.22314,
+    "plus100bp_interest": 23336000.0,
+    "plus100bp_share_of_ebit": 0.127729,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2025-12-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-323783",
+      "form": "10-Q",
+      "filed": "2026-07-29",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526323783/pcar-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2025-12-31",
+    "metrics": {
+      "revenue_growth": -0.1499,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 0.9147
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 31200000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001193125-26-057047",
+          "filed": "2026-02-18",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526057047/"
+        },
+        {
+          "value_usd": 36700000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001193125-26-057047",
+          "filed": "2026-02-18",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526057047/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 131900000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-057047",
+          "filed": "2026-02-18",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526057047/"
+        },
+        {
+          "value_usd": 395400000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-057047",
+          "filed": "2026-02-18",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526057047/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 144200000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-057047",
+          "filed": "2026-02-18",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526057047/"
+        },
+        {
+          "value_usd": 116300000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-057047",
+          "filed": "2026-02-18",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526057047/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "| Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets | 2025-09 | Derivatives and Hedging (Topic 815): Hedge Accounting Improvements | The FASB also issued the following standards, which are no t expecte",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526323783/pcar-20260630.htm",
+        "accession": "0001193125-26-323783",
+        "form": "10-Q",
+        "filed": "2026-07-29"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "uring the first half of 2026 and 2025, respective ly. The increase in credit modifications primarily reflects contract modifications granted to three large fleet customers during the first quarter of 2026. Generally, other than insignificant term extensions and payment delays are c",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/731288/000119312526323783/pcar-20260630.htm",
+        "accession": "0001193125-26-323783",
+        "form": "10-Q",
+        "filed": "2026-07-29"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Committed Bank Facility",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "capacity": 4000000000.0,
+      "floating": false
+    },
+    {
+      "name": "Commercial Paper",
+      "kind": "commercial_paper",
+      "as_of": "2025-12-31",
+      "effective": 0.038,
+      "floating": true
+    },
+    {
+      "name": "Medium Term Notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.043,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2014-12-31",
+      5650600000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-12-31",
+      5834700000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-12-31",
+      6094000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-12-31",
+      5888700000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-12-31",
+      6633800000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-12-31",
+      7527000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-12-31",
+      7306100000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-12-31",
+      6586600000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-12-31",
+      7510800000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-12-31",
+      8951900000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-12-31",
+      10868900000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      10458000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

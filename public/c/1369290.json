@@ -1,0 +1,636 @@
+{
+  "cik": 1369290,
+  "ticker": "MYO",
+  "name": "MYOMO, INC.",
+  "sector": "health",
+  "industry": "Orthopedic, Prosthetic & Surgical Appliances & Supplies",
+  "sic": "3842",
+  "sic_description": "Orthopedic, Prosthetic & Surgical Appliances & Supplies",
+  "generated_at": "2026-10-31T14:35:10+00:00",
+  "fetched_at": "2026-10-26T02:59:42+00:00",
+  "price": 1.21,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.80601,
+  "snapshot": {
+    "total_debt": 11532254,
+    "current_debt": 446962,
+    "cash": 11219217,
+    "investments": 2233141,
+    "finance_leases": 197370,
+    "operating_leases": 7903963,
+    "equity": 5829370,
+    "assets": 35342254,
+    "liabilities": 29512884,
+    "assets_current": 24525681,
+    "liabilities_current": 10610121,
+    "retained_earnings": -125719181,
+    "interest_paid": 869196,
+    "operating_income": -11702811,
+    "pretax_income": -14069958,
+    "net_income": -14533729,
+    "ocf": -7111047,
+    "capex": 1210321,
+    "revenue": 43261847,
+    "debt_issued": -1000000,
+    "shares": 39607854,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 11532254,
+    "cash_and_investments": 13452358,
+    "net_debt": -1920104,
+    "ebitda": -11702811.0,
+    "ebit": -11702811,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": -7.181178,
+    "fcf": -8321368,
+    "fcf_to_debt": -0.721573,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 13452358.0,
+    "due_12m": 446962,
+    "due_24m": null,
+    "liquidity_to_due12": 30.097319,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -3.401893,
+    "market_cap": 47925503.34,
+    "debt_to_ev": 0.250672,
+    "convertibles": null,
+    "implied": {
+      "dd": 2.746398,
+      "pd_1y": 0.003013,
+      "spread_5y_bps": 315.669193,
+      "asset_vol": 0.720211,
+      "calibrated_5y_bps": 154.984651,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 75
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 7903963.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526335149/myo-20260630.htm",
+        "accession": "0001193125-26-335149",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 7903963.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-335149",
+            "filed": "2026-08-05",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526335149/myo-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "nsist of money market funds that limit their investments to only short-term U.S. Treasury Securities and repurchase agreements related to these securities. Short-term investments primarily consist of commercial paper and U.S. Treasury Bills and are carried on the condensed co",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526335149/myo-20260630.htm",
+        "accession": "0001193125-26-335149",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "| 1,952,578 | Accrued professional services | 129,833 | 85,696 | Warranty reserve | 170,461 | 148,296 | Customer deposits | 1,908,388 | 1,930,339 | Accrued insurance | 349,987 | 191,258 | Other | 297,740 | 410,372 | $ | 7,515,613 | $ | 5,819,767 | . Note 7 — Debt On",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526335149/myo-20260630.htm",
+        "accession": "0001193125-26-335149",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-335149",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526335149/myo-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.2573,
+      "receivables_growth": 0.0709,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.8517,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 40928042.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-098531",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526098531/"
+        },
+        {
+          "value_usd": 32551199.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-098531",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526098531/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 4096327.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-098531",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526098531/"
+        },
+        {
+          "value_usd": 3825291.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-098531",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526098531/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -14511454.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-098531",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526098531/"
+        },
+        {
+          "value_usd": -3289904.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-098531",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526098531/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -15573884.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-098531",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526098531/"
+        },
+        {
+          "value_usd": -6183729.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-098531",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526098531/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "within the context of the contract; 3) Determination of the transaction price, including the constraint on variable consideration; 7 4) Allocation of the transaction price to the performance obligations in the contract; and 5) Recognition of revenue when, or as, performanc",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526335149/myo-20260630.htm",
+        "accession": "0001193125-26-335149",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "7 | Current operating and financing lease liability | 730,824 | 494,662 | Taxes payable | 586,644 | 813,260 | Deferred revenue | 202,580 | 218,222 | Warrant derivative liability | 1,127,498 | 999,418 | Current portion long term debt, net of discount of $ 73,871 | 446,962 | —",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1369290/000119312526335149/myo-20260630.htm",
+        "accession": "0001193125-26-335149",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-11-10",
+      "items": "1.01,2.02,2.03,3.02,9.01",
+      "acc": "0001193125-25-274238",
+      "doc": "myo-20251104.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-02-20",
+      "items": "1.01,2.04,9.01",
+      "acc": "0000950170-25-023403",
+      "doc": "myo-20250218.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-05",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-24-271571",
+      "doc": "d855146d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-08-13",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-24-096326",
+      "doc": "myo-20240809.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-07-15",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-24-179060",
+      "doc": "d871170d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-17",
+      "items": "1.01,2.02,8.01,9.01",
+      "acc": "0001193125-24-009264",
+      "doc": "d573347d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-08-28",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-222703",
+      "doc": "d539208d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-01-13",
+      "items": "1.01,9.01",
+      "acc": "0000950170-23-000773",
+      "doc": "myo-20230111.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-02",
+      "items": "1.01,9.01",
+      "acc": "0001193125-22-210150",
+      "doc": "d384616d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-01-05",
+      "items": "1.01",
+      "acc": "0001193125-22-002664",
+      "doc": "d248197d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-15",
+      "items": "1.01,9.01",
+      "acc": "0001193125-21-299569",
+      "doc": "d861707d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-05",
+      "items": "1.01,9.01",
+      "acc": "0001193125-21-292145",
+      "doc": "d205389d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-25",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001193125-21-200401",
+      "doc": "d139619d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-01-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-21-016942",
+      "doc": "d105809d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-01-19",
+      "items": "1.01,2.03",
+      "acc": "0001193125-21-011621",
+      "doc": "d105139d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-05-14",
+      "items": "1.01,2.02,3.02,9.01",
+      "acc": "0001193125-20-142792",
+      "doc": "d892188d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-04-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-20-121070",
+      "doc": "d902810d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-02-12",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-20-033425",
+      "doc": "d889620d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-10-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-19-272613",
+      "doc": "d823667d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-02-08",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001193125-19-031643",
+      "doc": "d654080d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-11-30",
+      "items": "1.01,9.01",
+      "acc": "0001213900-17-012803",
+      "doc": "f8k113017_myomoinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2017-11-14",
+      "items": "1.01,1.02,3.02",
+      "acc": "0001213900-17-012096",
+      "doc": "f8k111317_myomoinc.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-06-30",
+      1333333,
+      15481947,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      2416667,
+      12553558,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      10926208,
+      15696404,
+      null,
+      -14038645,
+      -14038645,
+      null
+    ],
+    [
+      "2026-06-30",
+      11532254,
+      13452358,
+      null,
+      -11702811,
+      -11702811,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-08",
+      204.76,
+      3.925,
+      0.9572,
+      143.2
+    ],
+    [
+      "2025-09",
+      221.99,
+      3.811,
+      0.9564,
+      144.3
+    ],
+    [
+      "2025-10",
+      255.92,
+      3.664,
+      0.986,
+      145.7
+    ],
+    [
+      "2025-11",
+      307.48,
+      3.27,
+      0.9466,
+      149.6
+    ],
+    [
+      "2025-12",
+      312.12,
+      3.303,
+      0.9672,
+      149.3
+    ],
+    [
+      "2026-01",
+      342.11,
+      3.137,
+      0.9648,
+      151.0
+    ],
+    [
+      "2026-02",
+      357.86,
+      3.06,
+      0.9664,
+      151.8
+    ],
+    [
+      "2026-03",
+      359.34,
+      3.011,
+      0.9561,
+      152.3
+    ],
+    [
+      "2026-04",
+      360.38,
+      3.069,
+      0.9778,
+      151.7
+    ],
+    [
+      "2026-05",
+      467.02,
+      2.311,
+      0.9094,
+      159.6
+    ],
+    [
+      "2026-06",
+      528.49,
+      2.136,
+      0.9498,
+      161.5
+    ],
+    [
+      "2026-07",
+      529.47,
+      2.122,
+      0.95,
+      161.6
+    ],
+    [
+      "2026-08",
+      246.94,
+      3.143,
+      0.7828,
+      150.9
+    ],
+    [
+      "2026-09",
+      247.66,
+      3.13,
+      0.7873,
+      151.0
+    ],
+    [
+      "2026-10",
+      310.44,
+      2.78,
+      0.806,
+      154.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

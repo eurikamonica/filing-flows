@@ -1,0 +1,285 @@
+{
+  "cik": 1113169,
+  "ticker": "TROW",
+  "name": "PRICE T ROWE GROUP INC",
+  "sector": "financials",
+  "industry": "Investment Advice",
+  "sic": "6282",
+  "docs": {
+    "xbrl:0001628280-26-008002": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-02-13",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001628280-26-051335": {
+      "instruments": [
+        {
+          "name": "Collateralized Loan Obligation, Warehousing Facility",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "spread": 0.0165,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-07-31",
+      "report": "2026-06-30"
+    },
+    "0001113169-22-000005:exh1023transactionagreemen.htm": {
+      "kind": "agreement",
+      "date": "2022-02-24",
+      "agreement_kind": "other"
+    }
+  },
+  "sic_description": "Investment Advice",
+  "snapshot": {
+    "cash": 3234300000,
+    "operating_leases": 429400000,
+    "equity": 11002500000,
+    "assets": 15357200000,
+    "liabilities": 3184400000,
+    "operating_income": 2335200000,
+    "pretax_income": 3036500000,
+    "net_income": 2221600000,
+    "ocf": 1932200000,
+    "capex": 258400000,
+    "revenue": 7592000000,
+    "shares": 213315850,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001628280-26-008002",
+  "xbrl_10-Q": "xbrl:0001628280-26-051335",
+  "events": [
+    {
+      "date": "2021-12-30",
+      "items": "1.01,2.01,2.03,3.02,5.02,7.01,9.01",
+      "acc": "0001113169-21-000040",
+      "doc": "trow-20211229.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-28",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001113169-21-000030",
+      "doc": "trow-20211028.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T21:05:56+00:00",
+  "signature": "0001628280-26-051335",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 429400000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026051335/trow-20260630.htm",
+        "accession": "0001628280-26-051335",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 429400000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-051335",
+            "filed": "2026-07-31",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026051335/trow-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ment products ($ 1,906.6 million at June 30, 2026 and $ 1,596.1 million at December 31, 2025, related to variable interest entities) | 2,477.2 | 1,951.0 | Operating lease assets | 369.8 | 382.9 | Property, equipment and software, net | 813.5 | 845.3 | Intangible assets, net | 245.",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026051335/trow-20260630.htm",
+        "accession": "0001628280-26-051335",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "d with our investments in affiliated collateralized loan obligations. The debt outstanding is related to repurchase agreements of € 18.6 million at June 30, 2026, compared to € 18.6 million at December 31, 2025 (equivalent to $ 21.2 million at June 30, 2026 and $ 21.8 million",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026051335/trow-20260630.htm",
+        "accession": "0001628280-26-051335",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-051335",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026051335/trow-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "ment products ($ 1,906.6 million at June 30, 2026 and $ 1,596.1 million at December 31, 2025, related to variable interest entities) | 2,477.2 | 1,951.0 | Operating lease assets | 369.8 | 382.9 | Property, equipment and software, net | 813.5 | 845.3 | Intangible assets, net | 245.",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026051335/trow-20260630.htm",
+      "accession": "0001628280-26-051335",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "d with our investments in affiliated collateralized loan obligations. The debt outstanding is related to repurchase agreements of € 18.6 million at June 30, 2026, compared to € 18.6 million at December 31, 2025 (equivalent to $ 21.2 million at June 30, 2026 and $ 21.8 million",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026051335/trow-20260630.htm",
+      "accession": "0001628280-26-051335",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001628280-26-051335",
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0312,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 0.8401
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 7314800000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-008002",
+          "filed": "2026-02-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026008002/"
+        },
+        {
+          "value_usd": 7093600000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-008002",
+          "filed": "2026-02-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026008002/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1753400000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-008002",
+          "filed": "2026-02-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026008002/"
+        },
+        {
+          "value_usd": 1685600000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-008002",
+          "filed": "2026-02-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026008002/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 2087100000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-008002",
+          "filed": "2026-02-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026008002/"
+        },
+        {
+          "value_usd": 2100100000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-008002",
+          "filed": "2026-02-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1113169/000162828026008002/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001628280-26-051335",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001628280-26-051335"
+}

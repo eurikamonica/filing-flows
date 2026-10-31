@@ -1,0 +1,722 @@
+{
+  "cik": 1668010,
+  "ticker": "DBGI",
+  "name": "Digital Brands Group, Inc.",
+  "sector": "consumer-disc",
+  "industry": "Retail-Apparel & Accessory Stores",
+  "sic": "5600",
+  "sic_description": "Retail-Apparel & Accessory Stores",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T03:17:36+00:00",
+  "price": 1.135,
+  "price_date": "2026-10-23",
+  "equity_vol": 2.269462,
+  "snapshot": {
+    "total_debt": 17326879,
+    "current_debt": 12448093,
+    "cash": 1386167,
+    "operating_leases": 4295353,
+    "equity": 540031,
+    "assets": 46674701,
+    "liabilities": 46134670,
+    "assets_current": 17998252,
+    "liabilities_current": 30849473,
+    "retained_earnings": -175729051,
+    "interest_expense": 496763,
+    "operating_income": -40444338,
+    "net_income": -44420241,
+    "da": 1549799,
+    "ocf": -20095850,
+    "revenue": 5781995,
+    "shares": 933509,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 17326879,
+    "cash_and_investments": 1386167.0,
+    "net_debt": 15940712.0,
+    "ebitda": -38894539,
+    "ebit": -40444338,
+    "interest_expense": 496763,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -81.415762,
+    "ebitda_coverage": -78.295966,
+    "fcf": -20095850.0,
+    "fcf_to_debt": -1.159808,
+    "effective_rate": 0.02867,
+    "revolver_available": null,
+    "liquidity": 1386167.0,
+    "due_12m": 12448093,
+    "due_24m": null,
+    "liquidity_to_due12": 0.111356,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -8.323209,
+    "market_cap": 1059532.715,
+    "debt_to_ev": 1.019214,
+    "convertibles": null,
+    "implied": {
+      "dd": -0.550324,
+      "pd_1y": 0.708951,
+      "spread_5y_bps": 1753.177078,
+      "asset_vol": 1.925728,
+      "calibrated_5y_bps": 193.443987,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 5
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 4295353.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226039208/form10-q.htm",
+        "accession": "0001493152-26-039208",
+        "form": "10-Q",
+        "filed": "2026-08-19",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 4295353.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-039208",
+            "filed": "2026-08-19",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226039208/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-039208",
+      "form": "10-Q",
+      "filed": "2026-08-19",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226039208/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.3613,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 7380921.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-016851",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226016851/"
+        },
+        {
+          "value_usd": 11555656.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-016851",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226016851/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -15877168.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-016851",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226016851/"
+        },
+        {
+          "value_usd": -6152338.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-016851",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226016851/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -28252558.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-016851",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226016851/"
+        },
+        {
+          "value_usd": -13106589.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-016851",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226016851/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "RANDS GROUP, INC. NOTES TO UNAUDITED CONDENSED CONSOLIDATED FINANCIAL STATEMENTS JUNE 30, 2026 NOTE 11: RELATED PARTY TRANSACTIONS As of both June 30, 2026 and December 31, 2025, amounts due to related parties was $ 370,921 and $ 370,921 , respectively. The advances are unsecur",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668010/000149315226039208/form10-q.htm",
+        "accession": "0001493152-26-039208",
+        "form": "10-Q",
+        "filed": "2026-08-19"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Paycheck Protection Program Cares Act",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 933294.0,
+      "floating": false
+    },
+    {
+      "name": "Thousand Eight Hundred Diagonal Lending Note",
+      "kind": "notes",
+      "as_of": "2026-06-09",
+      "face": 238050.0,
+      "maturity": "2027-03-15",
+      "coupon": 1.5,
+      "effective": 0.99,
+      "conv_ratio": 0.61,
+      "floating": false
+    },
+    {
+      "name": "Bailey44 Llc",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.025,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Promissory Note Payable",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "effective": 0.12,
+      "coupon": 0.12,
+      "floating": false
+    },
+    {
+      "name": "Bailey Promissory Note",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "face": 3500000.0,
+      "maturity": "2025-12-08",
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Merchant Advances",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "carrying": 1483159.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-07-24",
+      "items": "1.01,9.01",
+      "acc": "0001493152-26-034517",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-17",
+      "items": "1.01,5.03,9.01",
+      "acc": "0001493152-26-033802",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-15",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001493152-26-028546",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-21",
+      "items": "1.01,9.01",
+      "acc": "0001493152-26-018375",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-20",
+      "items": "1.01,9.01",
+      "acc": "0001493152-26-018101",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-18",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001493152-26-011310",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-17",
+      "items": "1.01,3.02,5.03,7.01,9.01",
+      "acc": "0001493152-26-007183",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-09",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-026860",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-11-25",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-024985",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-26",
+      "items": "1.01,3.02,3.03,5.03,8.01,9.01",
+      "acc": "0001493152-25-015802",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-13",
+      "items": "1.01,3.02,3.03,8.01,9.01",
+      "acc": "0001641172-25-023464",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-24",
+      "items": "1.01,9.01",
+      "acc": "0001641172-25-020743",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-02",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001641172-25-002360",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2025-02-18",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-007169",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2025-01-23",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001493152-25-003381",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-11-07",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001493152-24-043963",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-10-31",
+      "items": "1.01,9.01",
+      "acc": "0001493152-24-043115",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-10-04",
+      "items": "1.01,3.01,9.01",
+      "acc": "0001493152-24-039521",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-05-29",
+      "items": "1.01,9.01",
+      "acc": "0001493152-24-021788",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-05-07",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001493152-24-018113",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-05-03",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001493152-24-017631",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2023-12-28",
+      "items": "1.01,9.01",
+      "acc": "0001104659-23-129788",
+      "doc": "tm2333779d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-09-14",
+      "items": "1.01,3.02,5.03,9.01",
+      "acc": "0001104659-23-100825",
+      "doc": "tm2326143d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-09-05",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001104659-23-098314",
+      "doc": "tm2325389d3_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-07-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-23-079173",
+      "doc": "tm2320797d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-06-27",
+      "items": "1.01,1.02,2.01,3.02,5.03,9.01",
+      "acc": "0001104659-23-075232",
+      "doc": "tm2319630d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-06-01",
+      "items": "1.01,3.02,3.03,5.03,9.01",
+      "acc": "0001104659-23-067138",
+      "doc": "tm2317542d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-04-18",
+      "items": "1.01,9.01",
+      "acc": "0001104659-23-046813",
+      "doc": "tm2313082d1_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2023-04-13",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-23-045079",
+      "doc": "tm2312638d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-01-13",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001104659-23-003872",
+      "doc": "tm233245d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-01-04",
+      "items": "2.01,2.03,3.02,8.01,9.01",
+      "acc": "0001104659-23-000862",
+      "doc": "tm2233765d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-01-04",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-23-000843",
+      "doc": "tm2233765d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-12-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-22-123676",
+      "doc": "tm2231609d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-10-18",
+      "items": "1.01,5.03,5.07,8.01,9.01",
+      "acc": "0001104659-22-109704",
+      "doc": "tm2228251d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-10-05",
+      "items": "1.01,1.02,3.02,5.03,8.01,9.01",
+      "acc": "0001104659-22-106347",
+      "doc": "tm2227329d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-08-31",
+      "items": "1.01,3.02,3.03,5.03,5.08,8.01,9.01",
+      "acc": "0001104659-22-096552",
+      "doc": "tm2224712d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-08-02",
+      "items": "1.01,3.01,9.01",
+      "acc": "0001104659-22-085298",
+      "doc": "tm2222209d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-07-27",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-22-083194",
+      "doc": "tm2221904d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-06-23",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-22-073646",
+      "doc": "tm2219174d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-05-10",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001104659-22-058349",
+      "doc": "tm2215033d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-04-12",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-22-044852",
+      "doc": "tm2211776d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-01-20",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-22-005851",
+      "doc": "tm222717d5_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-11-23",
+      "items": "1.01",
+      "acc": "0001104659-21-142670",
+      "doc": "tm2133719d1_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2021-11-19",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-21-141930",
+      "doc": "tm2133487d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-10-06",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001104659-21-123704",
+      "doc": "tm2129419d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-08-31",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001104659-21-111686",
+      "doc": "tm2126684d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-05-18",
+      "items": "1.01,2.01,3.02,5.03,8.01,9.01",
+      "acc": "0001104659-21-068873",
+      "doc": "tm2038877d25_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      6056888,
+      5120371,
+      503487,
+      -33136075,
+      -34956349,
+      0.08313
+    ],
+    [
+      "2026-06-30",
+      17326879,
+      1386167,
+      496763,
+      -38894539,
+      -40444338,
+      0.02867
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-05",
+      1172.4,
+      1.991,
+      1.7665,
+      163.1
+    ],
+    [
+      "2026-06",
+      1260.72,
+      1.948,
+      1.8851,
+      163.5
+    ],
+    [
+      "2026-07",
+      1431.07,
+      1.488,
+      1.968,
+      168.7
+    ],
+    [
+      "2026-08",
+      1645.19,
+      -0.564,
+      2.0175,
+      193.6
+    ],
+    [
+      "2026-09",
+      1690.42,
+      -0.777,
+      2.143,
+      196.4
+    ],
+    [
+      "2026-10",
+      1651.93,
+      -1.194,
+      2.2695,
+      202.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

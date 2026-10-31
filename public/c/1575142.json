@@ -1,0 +1,290 @@
+{
+  "cik": 1575142,
+  "ticker": "BDPT",
+  "name": "BIOADAPTIVES, INC.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T04:58:38+00:00",
+  "price": 0.0015,
+  "price_date": "2026-10-23",
+  "equity_vol": 3.171218,
+  "snapshot": {
+    "total_debt": 32096,
+    "cash": 29221,
+    "investments": 0,
+    "convertible": 490629,
+    "convertible_current": 490629,
+    "equity": -1766107,
+    "assets": 78767,
+    "liabilities": 1844874,
+    "assets_current": 67767,
+    "liabilities_current": 1844874,
+    "retained_earnings": -10682200,
+    "interest_expense": 52220,
+    "interest_paid": 0,
+    "operating_income": -909200,
+    "pretax_income": -1163844,
+    "net_income": -1163844,
+    "da": 6000,
+    "ocf": -436361,
+    "capex": 0,
+    "revenue": 25561,
+    "converted_shares": 19586449,
+    "shares": 196926762,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "investments": "MarketableSecuritiesCurrent",
+    "convertible": "ConvertibleNotesPayable",
+    "convertible_current": "ConvertibleNotesPayableCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "converted_shares": "DebtConversionConvertedInstrumentSharesIssued1"
+  },
+  "analysis": {
+    "total_debt": 32096,
+    "cash_and_investments": 29221.0,
+    "net_debt": 2875.0,
+    "ebitda": -903200,
+    "ebit": -909200,
+    "interest_expense": 52220,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -17.410954,
+    "ebitda_coverage": -17.296055,
+    "fcf": -436361.0,
+    "fcf_to_debt": -13.595495,
+    "effective_rate": 1.626994,
+    "revolver_available": null,
+    "liquidity": 29221.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -254.609676,
+    "market_cap": 295390.143,
+    "debt_to_ev": 0.107609,
+    "convertibles": null,
+    "implied": {
+      "dd": -0.506753,
+      "pd_1y": 0.693836,
+      "spread_5y_bps": 1826.684095,
+      "asset_vol": 3.0,
+      "calibrated_5y_bps": 192.878108,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 5
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001640334-26-001393",
+      "form": "10-Q",
+      "filed": "2026-08-19",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1575142/000164033426001393/bdpt_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.4427,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 18278.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001640334-26-000718",
+          "filed": "2026-04-14",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1575142/000164033426000718/"
+        },
+        {
+          "value_usd": 12669.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001640334-26-000718",
+          "filed": "2026-04-14",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1575142/000164033426000718/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -516025.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001640334-26-000718",
+          "filed": "2026-04-14",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1575142/000164033426000718/"
+        },
+        {
+          "value_usd": -249517.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001640334-26-000718",
+          "filed": "2026-04-14",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1575142/000164033426000718/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1557898.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001640334-26-000718",
+          "filed": "2026-04-14",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1575142/000164033426000718/"
+        },
+        {
+          "value_usd": -899161.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001640334-26-000718",
+          "filed": "2026-04-14",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1575142/000164033426000718/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "10.00 | 8.80 | The intrinsic value of the options as of June 30, 2026, is $ 0 . | 15 | Table of Contents | 8. RELATED PARTY TRANSACTIONS Due to related party As of June 30, 2026, the Company recorded due to a related party of $ 2,978 for the payment of operating expenses on behalf",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1575142/000164033426001393/bdpt_10q.htm",
+        "accession": "0001640334-26-001393",
+        "form": "10-Q",
+        "filed": "2026-08-19"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2022-02-03",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001640334-22-000252",
+      "doc": "bdpt_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-06-11",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001640334-21-001330",
+      "doc": "bdpt_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-05-23",
+      "items": "1.01,4.01,9.01",
+      "acc": "0001262463-14-000498",
+      "doc": "biadaptive8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-10-25",
+      "items": "1.01,2.01,3.02,5.01,5.06,9.01",
+      "acc": "0001262463-13-000705",
+      "doc": "bioadaptive8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

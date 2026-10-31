@@ -1,0 +1,929 @@
+{
+  "cik": 1056288,
+  "ticker": "FHI",
+  "name": "FEDERATED HERMES, INC.",
+  "sector": "financials",
+  "industry": "Investment Advice",
+  "sic": "6282",
+  "sic_description": "Investment Advice",
+  "generated_at": "2026-10-31T14:35:09+00:00",
+  "fetched_at": "2026-10-25T22:57:28+00:00",
+  "price": 56.81,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.189972,
+  "snapshot": {
+    "total_debt": 348499000,
+    "cash": 301727000,
+    "revolver_available": 350000000,
+    "revolver_drawn": 0,
+    "equity": 1252690000,
+    "assets": 2330154000,
+    "liabilities": 933300000,
+    "assets_current": 660505000,
+    "liabilities_current": 254800000,
+    "retained_earnings": 1668693000,
+    "interest_expense": 12727000,
+    "operating_income": 524238000,
+    "pretax_income": 554458000,
+    "net_income": 411861000,
+    "ocf": 373986000,
+    "capex": 7043000,
+    "revenue": 1934012000,
+    "shares": 72297000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestAndDebtExpense (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 348499000,
+    "cash_and_investments": 301727000.0,
+    "net_debt": 46772000.0,
+    "ebitda": 524238000.0,
+    "ebit": 524238000,
+    "interest_expense": 12727000,
+    "leverage": 0.664772,
+    "net_leverage": 0.089219,
+    "interest_coverage": 41.191011,
+    "ebitda_coverage": 41.191011,
+    "fcf": 366943000,
+    "fcf_to_debt": 1.052924,
+    "effective_rate": 0.036519,
+    "revolver_available": 350000000,
+    "liquidity": 651727000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 5.424374,
+    "market_cap": 4107192570.0,
+    "debt_to_ev": 0.083896,
+    "convertibles": null,
+    "implied": {
+      "dd": 17.6812,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.0,
+      "asset_vol": 0.182567,
+      "calibrated_5y_bps": 67.994701,
+      "rating_band": "A"
+    },
+    "covenants": [
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 4.0,
+        "unit": "x",
+        "actual": 41.191011,
+        "cushion": 0.902891,
+        "agreement": "Second Amendment To The Amended And Restated Credit Agreement",
+        "dated": "2014-06-24",
+        "text": "The Loan Parties shall not permit the ratio of Consolidated EBITDA to consolidated interest expense for the four (4) fiscal quarters then ended of the Borrower and its Consolidated Subsidiaries, calculated as of the end of any fiscal quarter, to be less than 4.0 to 1.0. 3."
+      }
+    ],
+    "cushion_score": 98
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ious entities in the normal course of business that may be deemed to be voting rights entities (VREs) or variable interest entities (VIEs). From time to time, Federated Hermes invests in Federated Hermes Funds for general corporate investment purposes or, in the case of newly laun",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000026/fhi-20260630.htm",
+        "accession": "0001056288-26-000026",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "| Total Liabilities | 933,300 | 965,860 | Commitments and Contingencies (Note (17)) | TEMPORARY EQUITY | Redeemable Noncontrolling Interests in Subsidiaries | 144,164 | 66,529 | PERMANENT EQUITY | Federated Hermes, Inc. Shareholders’ Equity | Common Stock: | Class A, No Par Value, 20,000 S",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000026/fhi-20260630.htm",
+        "accession": "0001056288-26-000026",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001056288-26-000026",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000026/fhi-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1033,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 0.7373
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1800663000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001056288-26-000007",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000007/"
+        },
+        {
+          "value_usd": 1632093000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001056288-26-000007",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000007/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 297345000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001056288-26-000007",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000007/"
+        },
+        {
+          "value_usd": 346554000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001056288-26-000007",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000007/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 403299000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001056288-26-000007",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000007/"
+        },
+        {
+          "value_usd": 268314000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001056288-26-000007",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000007/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "rm in nature (i.e., expected duration of one year or less due to termination provisions) and (2) the expected variable consideration would be allocated entirely to future service periods. Federated Hermes expects to recognize revenue in the future related to the unsatisfied porti",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628826000026/fhi-20260630.htm",
+        "accession": "0001056288-26-000026",
+        "form": "10-Q",
+        "filed": "2026-07-31"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Unsecured Senior Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0329,
+      "carrying": 348500000.0,
+      "floating": false
+    },
+    {
+      "name": "Swing Line",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 50000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2014-07-25",
+      "agreement_kind": "amendment",
+      "dated": "2014-06-24",
+      "size": 255000000.0,
+      "title": "Second Amendment To The Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Loan Parties shall not permit the ratio of Consolidated EBITDA to consolidated interest expense for the four (4) fiscal quarters then ended of the Borrower and its Consolidated Subsidiaries, calculated as of the end of any fiscal quarter, to be less than 4.0 to 1.0. 3."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628814000016/exhibit101-2014630.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2014-02-21",
+      "agreement_kind": "amendment",
+      "dated": "2011-06-10",
+      "title": "First Amendment To The Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1056288/000105628814000005/fii-1074fy2013.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2011-08-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2011-06-10",
+      "size": 382500000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Loan Parties shall not permit the ratio of Consolidated EBITDA to consolidated interest expense for the four (4) fiscal quarters then ended of the Borrower and its Consolidated Subsidiaries, calculated as of the end of any fiscal quarter, to be less than 4.0 to 1.0. 8.3 Reporting Requirements ."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1056288/000119312511208121/dex101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-10-23",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001056288-25-000024",
+      "doc": "fhi-20251023.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-07-18",
+      "items": "1.01,9.01",
+      "acc": "0001056288-22-000026",
+      "doc": "fhi-20220715.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001056288-22-000017",
+      "doc": "fhi-20220317.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001056288-21-000017",
+      "doc": "fhi-20210730.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-05-07",
+      "items": "1.01,9.01",
+      "acc": "0001056288-19-000012",
+      "doc": "a8-kx20190507.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-02",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001056288-18-000024",
+      "doc": "a201807028-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-04-13",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001056288-18-000007",
+      "doc": "a20180413-8xk.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-05",
+      "items": "1.01,2.03",
+      "acc": "0001056288-17-000015",
+      "doc": "a8-k2017loanamendment.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2022-03-31",
+      397383000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      397448000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      397514000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      347645000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      347711000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      347777000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      347909000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      347974000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      348040000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      348171000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      348237000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      348303000,
+      506279000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      348434000,
+      513884000,
+      12738000,
+      508441000,
+      508441000,
+      0.03656
+    ],
+    [
+      "2026-06-30",
+      348499000,
+      301727000,
+      12727000,
+      524238000,
+      524238000,
+      0.03652
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2022-05",
+      0.0,
+      10.685,
+      0.2699,
+      90.9
+    ],
+    [
+      "2022-06",
+      0.02,
+      9.347,
+      0.3027,
+      99.4
+    ],
+    [
+      "2022-07",
+      0.02,
+      9.508,
+      0.3027,
+      98.4
+    ],
+    [
+      "2022-08",
+      0.01,
+      9.589,
+      0.3018,
+      97.8
+    ],
+    [
+      "2022-09",
+      0.01,
+      9.513,
+      0.3011,
+      98.3
+    ],
+    [
+      "2022-10",
+      0.03,
+      9.06,
+      0.3217,
+      101.4
+    ],
+    [
+      "2022-11",
+      0.02,
+      9.261,
+      0.3209,
+      100.0
+    ],
+    [
+      "2022-12",
+      0.02,
+      9.153,
+      0.3213,
+      100.7
+    ],
+    [
+      "2023-01",
+      0.0,
+      10.248,
+      0.2928,
+      93.6
+    ],
+    [
+      "2023-02",
+      0.0,
+      10.104,
+      0.2981,
+      94.5
+    ],
+    [
+      "2023-03",
+      0.0,
+      10.345,
+      0.2935,
+      93.0
+    ],
+    [
+      "2023-04",
+      0.0,
+      10.806,
+      0.2837,
+      90.1
+    ],
+    [
+      "2023-05",
+      0.0,
+      10.751,
+      0.2808,
+      90.5
+    ],
+    [
+      "2023-06",
+      0.0,
+      12.203,
+      0.2478,
+      82.1
+    ],
+    [
+      "2023-07",
+      0.0,
+      10.981,
+      0.2704,
+      89.1
+    ],
+    [
+      "2023-08",
+      0.0,
+      11.03,
+      0.27,
+      88.8
+    ],
+    [
+      "2023-09",
+      0.0,
+      11.385,
+      0.2608,
+      86.7
+    ],
+    [
+      "2023-10",
+      0.0,
+      12.123,
+      0.2398,
+      82.5
+    ],
+    [
+      "2023-11",
+      0.0,
+      12.389,
+      0.2354,
+      81.0
+    ],
+    [
+      "2023-12",
+      0.0,
+      12.758,
+      0.2327,
+      79.1
+    ],
+    [
+      "2024-01",
+      0.0,
+      13.062,
+      0.2296,
+      77.5
+    ],
+    [
+      "2024-02",
+      0.0,
+      13.53,
+      0.2226,
+      75.1
+    ],
+    [
+      "2024-03",
+      0.0,
+      13.819,
+      0.2195,
+      73.6
+    ],
+    [
+      "2024-04",
+      0.0,
+      13.773,
+      0.2138,
+      73.8
+    ],
+    [
+      "2024-05",
+      0.0,
+      14.362,
+      0.208,
+      71.0
+    ],
+    [
+      "2024-06",
+      0.0,
+      14.892,
+      0.2002,
+      68.5
+    ],
+    [
+      "2024-07",
+      -0.0,
+      17.808,
+      0.1705,
+      68.0
+    ],
+    [
+      "2024-08",
+      -0.0,
+      17.868,
+      0.1692,
+      68.0
+    ],
+    [
+      "2024-09",
+      0.0,
+      17.616,
+      0.1749,
+      68.0
+    ],
+    [
+      "2024-10",
+      -0.0,
+      18.282,
+      0.1705,
+      68.0
+    ],
+    [
+      "2024-11",
+      -0.0,
+      18.806,
+      0.1707,
+      68.0
+    ],
+    [
+      "2024-12",
+      -0.0,
+      18.478,
+      0.1722,
+      68.0
+    ],
+    [
+      "2025-01",
+      0.0,
+      17.278,
+      0.182,
+      68.0
+    ],
+    [
+      "2025-02",
+      0.0,
+      16.909,
+      0.185,
+      68.0
+    ],
+    [
+      "2025-03",
+      0.0,
+      17.163,
+      0.1847,
+      68.0
+    ],
+    [
+      "2025-04",
+      0.0,
+      15.146,
+      0.2056,
+      68.0
+    ],
+    [
+      "2025-05",
+      0.0,
+      15.176,
+      0.2085,
+      68.0
+    ],
+    [
+      "2025-06",
+      0.0,
+      15.522,
+      0.2064,
+      68.0
+    ],
+    [
+      "2025-07",
+      0.0,
+      15.895,
+      0.2074,
+      68.0
+    ],
+    [
+      "2025-08",
+      0.0,
+      15.957,
+      0.2106,
+      68.0
+    ],
+    [
+      "2025-09",
+      0.0,
+      16.055,
+      0.2081,
+      68.0
+    ],
+    [
+      "2025-10",
+      0.0,
+      15.265,
+      0.2114,
+      68.0
+    ],
+    [
+      "2025-11",
+      0.0,
+      15.216,
+      0.2143,
+      68.0
+    ],
+    [
+      "2025-12",
+      0.0,
+      15.653,
+      0.2125,
+      68.0
+    ],
+    [
+      "2026-01",
+      0.0,
+      16.321,
+      0.203,
+      68.0
+    ],
+    [
+      "2026-02",
+      0.0,
+      16.237,
+      0.207,
+      68.0
+    ],
+    [
+      "2026-03",
+      0.0,
+      16.15,
+      0.2083,
+      68.0
+    ],
+    [
+      "2026-04",
+      -0.0,
+      18.722,
+      0.1798,
+      68.0
+    ],
+    [
+      "2026-05",
+      -0.0,
+      18.186,
+      0.1838,
+      68.0
+    ],
+    [
+      "2026-06",
+      -0.0,
+      18.283,
+      0.1841,
+      68.0
+    ],
+    [
+      "2026-07",
+      -0.0,
+      17.974,
+      0.189,
+      68.0
+    ],
+    [
+      "2026-08",
+      -0.0,
+      18.527,
+      0.1871,
+      68.0
+    ],
+    [
+      "2026-09",
+      0.0,
+      16.86,
+      0.2,
+      68.0
+    ],
+    [
+      "2026-10",
+      0.0,
+      17.681,
+      0.19,
+      68.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,277 @@
+{
+  "cik": 84112,
+  "ticker": "RSKIA",
+  "name": "GEORGE RISK INDUSTRIES, INC.",
+  "sector": "technology",
+  "industry": "Communications Equipment, NEC",
+  "sic": "3669",
+  "sic_description": "Communications Equipment, NEC",
+  "generated_at": "2026-10-31T14:35:17+00:00",
+  "fetched_at": "2026-10-26T03:05:04+00:00",
+  "price": 20.84,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.215999,
+  "snapshot": {
+    "cash": 6842000,
+    "investments": 43452000,
+    "equity": 65383000,
+    "assets": 74178000,
+    "liabilities": 8795000,
+    "assets_current": 71330000,
+    "liabilities_current": 4891000,
+    "retained_earnings": 67761000,
+    "interest_expense": 2000,
+    "interest_paid": 2000,
+    "operating_income": 7064000,
+    "pretax_income": 13137000,
+    "net_income": 9788000,
+    "da": 424000,
+    "ocf": 4476000,
+    "capex": 256000,
+    "revenue": 25804000,
+    "shares": 4888354,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 50294000,
+    "net_debt": null,
+    "ebitda": 7488000,
+    "ebit": 7064000,
+    "interest_expense": 2000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 3532.0,
+    "ebitda_coverage": 3744.0,
+    "cash_coverage": 2239.0,
+    "fcf": 4220000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 50294000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 9.965674,
+    "market_cap": 101873297.36,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-07-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-042546",
+      "form": "10-Q",
+      "filed": "2026-09-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226042546/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-31",
+    "metrics": {
+      "revenue_growth": 0.1027,
+      "receivables_growth": 0.0707,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.971,
+      "ocf_to_net_income": 0.4108
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": 0.4108,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 24852000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-036522",
+          "filed": "2026-08-07",
+          "end": "2026-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226036522/"
+        },
+        {
+          "value_usd": 22538000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-036522",
+          "filed": "2026-08-07",
+          "end": "2025-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226036522/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 5025000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-036522",
+          "filed": "2026-08-07",
+          "end": "2026-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226036522/"
+        },
+        {
+          "value_usd": 4693000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-036522",
+          "filed": "2026-08-07",
+          "end": "2025-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226036522/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 4678000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-036522",
+          "filed": "2026-08-07",
+          "end": "2026-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226036522/"
+        },
+        {
+          "value_usd": 4307000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-036522",
+          "filed": "2026-08-07",
+          "end": "2025-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226036522/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 11388000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-036522",
+          "filed": "2026-08-07",
+          "end": "2026-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226036522/"
+        },
+        {
+          "value_usd": 7133000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-036522",
+          "filed": "2026-08-07",
+          "end": "2025-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226036522/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets , which provides that in developing supportable forecasts as part of estimating expected credit losses, all entities may elect a practical expedient",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/84112/000149315226042546/form10-q.htm",
+        "accession": "0001493152-26-042546",
+        "form": "10-Q",
+        "filed": "2026-09-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-04-30",
+      "2025-04-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2017-10-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001493152-17-011564",
+      "doc": "form8-k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

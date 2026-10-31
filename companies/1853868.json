@@ -1,0 +1,343 @@
+{
+  "cik": 1853868,
+  "ticker": "FRVO",
+  "name": "Fervo Energy Co",
+  "sector": "utilities",
+  "industry": "Electric Services",
+  "sic": "4911",
+  "docs": {
+    "xbrl:0001628280-26-056457": {
+      "instruments": [
+        {
+          "name": "Project Granite Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "carrying": 201302000.0,
+          "capacity": 421400000.0,
+          "spread": 0.03,
+          "reference": "Base Rate",
+          "floating": true
+        },
+        {
+          "name": "Mercuria Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "carrying": 30000000.0,
+          "drawn": 30000000.0,
+          "floating": false
+        },
+        {
+          "name": "Construction loan",
+          "kind": "revolver",
+          "as_of": "2026-03-31",
+          "capacity": 14200000.0,
+          "floating": false
+        },
+        {
+          "name": "XRC Facility",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "carrying": 0.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-13",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Electric Services",
+  "snapshot": {
+    "total_debt": 228418000,
+    "current_debt": 11042000,
+    "cash": 2106371000,
+    "operating_leases": 109867000,
+    "equity": 2793837000,
+    "assets": 3535089000,
+    "liabilities": 554276000,
+    "assets_current": 2154182000,
+    "liabilities_current": 250028000,
+    "retained_earnings": -332277000,
+    "shares": 83643000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2026-03-31",
+      "filed": "2026-06-23",
+      "total_debt": 186636000,
+      "cash": 280776000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 9467000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-13",
+      "total_debt": 228418000,
+      "cash": 2106371000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 83643000,
+      "convertible": null,
+      "equity": 2793837000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0001628280-26-056457",
+  "events": [],
+  "fetched_at": "2026-10-26T04:54:23+00:00",
+  "signature": "0001628280-26-064103",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 109867000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+        "accession": "0001628280-26-056457",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 109867000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-056457",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "ppa",
+        "label": "Power purchase agreements",
+        "excerpt": ", capital availability, and other market conditions; capacity actually constructed or for which we enter power purchase agreements under non-binding agreements, like the Geothermal Framework Agreement with Google Energy LLC (the “GFA”); exposure to legal proceedings and claims ar",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+        "accession": "0001628280-26-056457",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ted Balance Sheets (Unaudited) The following table presents the assets and liabilities of consolidated variable interest entities (“VIEs”), which are included in the Condensed Consolidated Balance Sheets above. The assets in the table below may only be used to settle obligations",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+        "accession": "0001628280-26-056457",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "orized; 0 and 279,995 issued and outstanding as of June 30, 2026 and December 31, 2025 | — | 1,022,942 | Redeemable noncontrolling interest | Cape Phase I HoldCo - Redeemable noncontrolling interest | 105,118 | 102,586 | Cape Phase I Intermediate HoldCo - Redeemable noncontrolling interes",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+        "accession": "0001628280-26-056457",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "l non-recourse debt, equity capital at the corporate or project level, government grants and incentives, customer prepayments or prebuys under offtake arrangements, and capital markets transactions, including corporate debt and equity-linked securities, as well as potential",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+        "accession": "0001628280-26-056457",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "d in Prepaid expenses and other of $ 0.1 million and Other long-term assets of $ 1.1 million. NOTE 6 – ASSET RETIREMENT OBLIGATIONS The following table summarizes the changes in the Company’s Asset Retirement Obligations (“ARO”), which are included in Other long-term liabilities",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+        "accession": "0001628280-26-056457",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-056457",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ct on the Company’s effective tax rate for the three and six months ended June 30, 2026 and 2025. NOTE 18 – RELATED PARTY TRANSACTIONS The Company evaluates its relationships and transactions with related parties in accordance with ASC 850, Related Party Disclosures. Related partie",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+        "accession": "0001628280-26-056457",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "onal megawatts of contracted capacity, which could result in reduced revenues, payment of liquidated damages, contract modifications or terminations, or other adverse effects on our business and financial condition. We have only a limited track record and historical financial inf",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+        "accession": "0001628280-26-056457",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "ppa",
+      "label": "Power purchase agreements",
+      "excerpt": ", capital availability, and other market conditions; capacity actually constructed or for which we enter power purchase agreements under non-binding agreements, like the Geothermal Framework Agreement with Google Energy LLC (the “GFA”); exposure to legal proceedings and claims ar",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+      "accession": "0001628280-26-056457",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "ted Balance Sheets (Unaudited) The following table presents the assets and liabilities of consolidated variable interest entities (“VIEs”), which are included in the Condensed Consolidated Balance Sheets above. The assets in the table below may only be used to settle obligations",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+      "accession": "0001628280-26-056457",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "redeemable_nci",
+      "label": "Put options / redeemable NCI",
+      "excerpt": "orized; 0 and 279,995 issued and outstanding as of June 30, 2026 and December 31, 2025 | — | 1,022,942 | Redeemable noncontrolling interest | Cape Phase I HoldCo - Redeemable noncontrolling interest | 105,118 | 102,586 | Cape Phase I Intermediate HoldCo - Redeemable noncontrolling interes",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+      "accession": "0001628280-26-056457",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "l non-recourse debt, equity capital at the corporate or project level, government grants and incentives, customer prepayments or prebuys under offtake arrangements, and capital markets transactions, including corporate debt and equity-linked securities, as well as potential",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+      "accession": "0001628280-26-056457",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "asset_retirement",
+      "label": "Asset retirement obligations",
+      "excerpt": "d in Prepaid expenses and other of $ 0.1 million and Other long-term assets of $ 1.1 million. NOTE 6 – ASSET RETIREMENT OBLIGATIONS The following table summarizes the changes in the Company’s Asset Retirement Obligations (“ARO”), which are included in Other long-term liabilities",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+      "accession": "0001628280-26-056457",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "B/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001628280-26-056457",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001628280-26-056457",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "ct on the Company’s effective tax rate for the three and six months ended June 30, 2026 and 2025. NOTE 18 – RELATED PARTY TRANSACTIONS The Company evaluates its relationships and transactions with related parties in accordance with ASC 850, Related Party Disclosures. Related partie",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+      "accession": "0001628280-26-056457",
+      "form": "10-Q",
+      "filed": "2026-08-13"
+    },
+    {
+      "key": "contract_modification",
+      "label": "Contract modifications",
+      "excerpt": "onal megawatts of contracted capacity, which could result in reduced revenues, payment of liquidated damages, contract modifications or terminations, or other adverse effects on our business and financial condition. We have only a limited track record and historical financial inf",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1853868/000162828026056457/frvo-20260630.htm",
+      "accession": "0001628280-26-056457",
+      "form": "10-Q",
+      "filed": "2026-08-13"
+    }
+  ],
+  "revenue_quality_text_source": "0001628280-26-056457"
+}

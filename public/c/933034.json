@@ -1,0 +1,525 @@
+{
+  "cik": 933034,
+  "ticker": "STRT",
+  "name": "STRATTEC SECURITY CORP",
+  "sector": "consumer-disc",
+  "industry": "Motor Vehicle Parts & Accessories",
+  "sic": "3714",
+  "sic_description": "Motor Vehicle Parts & Accessories",
+  "generated_at": "2026-10-31T14:35:18+00:00",
+  "fetched_at": "2026-10-26T01:21:49+00:00",
+  "price": 61.01,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.403882,
+  "snapshot": {
+    "cash": 108243000,
+    "operating_leases": 2478000,
+    "revolver_capacity": 40000000,
+    "revolver_drawn": 0,
+    "equity": 238646000,
+    "assets": 387479000,
+    "liabilities": 121982000,
+    "assets_current": 296273000,
+    "liabilities_current": 102231000,
+    "retained_earnings": 289895000,
+    "interest_expense": 359000,
+    "interest_paid": 218000,
+    "operating_income": 26523000,
+    "pretax_income": 32962000,
+    "net_income": 20598000,
+    "da": 15085000,
+    "ocf": 46304000,
+    "capex": 7328000,
+    "revenue": 579392000,
+    "wavg_rate_all": 0.076,
+    "shares": 3985013,
+    "balance_date": "2026-06-28",
+    "latest_period": "2026-06-28"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "da": "Depreciation (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (fiscal year)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 108243000.0,
+    "net_debt": null,
+    "ebitda": 41608000,
+    "ebit": 26523000,
+    "interest_expense": 359000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 73.880223,
+    "ebitda_coverage": 115.899721,
+    "cash_coverage": 213.40367,
+    "fcf": 38976000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 10000000.0,
+    "liquidity": 118243000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 8000000.0,
+    "floating_share": null,
+    "plus100bp_interest": 80000.0,
+    "plus100bp_share_of_ebit": 0.003016,
+    "altman_z": 4.565404,
+    "market_cap": 243125643.13,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-28",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2478000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/strt-20260628.htm",
+        "accession": "0001193125-26-374333",
+        "form": "10-K",
+        "filed": "2026-08-28",
+        "as_of": "2026-06-28",
+        "evidence": [
+          {
+            "value_usd": 2478000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-374333",
+            "filed": "2026-08-28",
+            "form": "10-K",
+            "as_of": "2026-06-28",
+            "url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/strt-20260628.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-374333",
+      "form": "10-K",
+      "filed": "2026-08-28",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/strt-20260628.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-28",
+    "metrics": {
+      "revenue_growth": 0.0254,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 2.248
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 579392000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-374333",
+          "filed": "2026-08-28",
+          "end": "2026-06-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/"
+        },
+        {
+          "value_usd": 565066000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-374333",
+          "filed": "2026-08-28",
+          "end": "2025-06-29",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 46304000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-374333",
+          "filed": "2026-08-28",
+          "end": "2026-06-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/"
+        },
+        {
+          "value_usd": 71677000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-374333",
+          "filed": "2026-08-28",
+          "end": "2025-06-29",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 20598000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-374333",
+          "filed": "2026-08-28",
+          "end": "2026-06-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/"
+        },
+        {
+          "value_usd": 18685000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-374333",
+          "filed": "2026-08-28",
+          "end": "2025-06-29",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "andles and exterior trim products in Canada, the United States and Mexico. The following tables summarize the related party transactions that arise as a result of the joint venture operating agreement (in thousands): | Years Ended | June 28, 2026 | June 29, 2025 | June 30, 2024 | Manag",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/933034/000119312526374333/strt-20260628.htm",
+        "accession": "0001193125-26-374333",
+        "form": "10-K",
+        "filed": "2026-08-28"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-06-28",
+      "2025-06-29"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Amended And Restated JV Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-04-30",
+      "capacity": 10000000.0,
+      "spread": 0.01,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "STRATTEC Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-28",
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Joint Venture Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-06-29",
+      "drawn": 8000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2026-06-28"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-10-30",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-10-27",
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        1.5
+      ],
+      "fee_pct": 0.175,
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 165000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "At all times maintain Consolidated Net Worth in an amount at least equal to the cumulative sum of (a) $165,000,000 plus (b) for each fiscal year beginning with the fiscal year ending on June 28, 2026, 50% of the positive Consolidated Net Earnings of the Company for such fiscal year (without any deduction for net losses)."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/933034/000119312525258802/strt-ex10_1.htm",
+      "all_in_pct": [
+        1.5389,
+        1.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-05-31",
+      "agreement_kind": "amendment",
+      "dated": "2012-06-28",
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        3.0,
+        3.0
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/933034/000095017024067295/strt-ex10_1.htm",
+      "all_in_pct": [
+        3.0389,
+        3.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2023-08-25",
+      "agreement_kind": "amendment",
+      "dated": "2011-08-01",
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.75,
+        1.75
+      ],
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 150000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "The Company shall at all times maintain Consolidated Net Worth in an amount at least equal to the cumulative sum of (a) $150,000,000 plus (b) for each fiscal year beginning with the fiscal year ending on June 30, 2024, 50% of the positive Consolidated Net Earnings of the Company for such fiscal year (without any deduction for net losses)."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/933034/000114036123041293/brhc20057981_ex10-1.htm",
+      "all_in_pct": [
+        1.7889,
+        1.7889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-10-30",
+      "items": "1.01,2.02,2.03,7.01,9.01",
+      "acc": "0001193125-25-258802",
+      "doc": "strt-20251027.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-31",
+      "items": "1.01,2.03",
+      "acc": "0000950170-24-067295",
+      "doc": "form_8-k_credit_am_10_20.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-08-25",
+      "items": "1.01,2.03,5.02,8.01,9.01",
+      "acc": "0001140361-23-041293",
+      "doc": "brhc20057981_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-06-30",
+      "items": "1.01,9.01",
+      "acc": "0001140361-23-032437",
+      "doc": "brhc20055256_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-05-08",
+      "items": "1.01,9.01",
+      "acc": "0001140361-23-023511",
+      "doc": "brhc20052622_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-02-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-23-008866",
+      "doc": "brhc10048657_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-02-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-23-005020",
+      "doc": "brhc10047640_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-21-019611",
+      "doc": "brhc10025315_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-10-28",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-19-019199",
+      "doc": "form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-12-31",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-18-046150",
+      "doc": "form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-09-28",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-18-039561",
+      "doc": "form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-03-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-18-015212",
+      "doc": "form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-17-026253",
+      "doc": "form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-06-24",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-16-070779",
+      "doc": "form8k.htm",
+      "desc": "STRATTEC SECURITY CORPORATION 8-K 6-24-2016"
+    },
+    {
+      "date": "2016-04-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001042167-16-000241",
+      "doc": "form8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-06-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001042167-15-000101",
+      "doc": "form8k.htm",
+      "desc": "FORM 8K TO JUNE 25, 2015"
+    },
+    {
+      "date": "2013-12-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001042167-13-000235",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-10-10",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001042167-13-000167",
+      "doc": "form8koctober9.htm",
+      "desc": "FORM 8K"
+    },
+    {
+      "date": "2011-08-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001042167-11-000166",
+      "doc": "strt8k.htm",
+      "desc": "STRT AUGUST 1, 2011 FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

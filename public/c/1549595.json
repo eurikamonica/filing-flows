@@ -1,0 +1,335 @@
+{
+  "cik": 1549595,
+  "ticker": "NRIX",
+  "name": "Nurix Therapeutics, Inc.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-25T22:51:52+00:00",
+  "price": 25.34,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.57723,
+  "snapshot": {
+    "cash": 720242000,
+    "equity": 968311000,
+    "assets": 1195298000,
+    "liabilities": 226987000,
+    "assets_current": 1103692000,
+    "liabilities_current": 130742000,
+    "retained_earnings": -630128000,
+    "operating_income": 289657000,
+    "pretax_income": 308212000,
+    "net_income": 294877000,
+    "da": 8710000,
+    "ocf": 379312000,
+    "capex": 9504000,
+    "revenue": 701936000,
+    "shares": 109249814,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 720242000.0,
+    "net_debt": null,
+    "ebitda": 298367000,
+    "ebit": 289657000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 369808000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 720242000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 8.943424,
+    "market_cap": 2768390286.76,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-08-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001549595-26-000049",
+      "form": "10-Q",
+      "filed": "2026-10-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000049/nrix-20260831.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-31",
+    "metrics": {
+      "revenue_growth": 0.5395,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.5418,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "deferred_release",
+        "label": "Contract liabilities decline while revenue increases",
+        "value": -0.5418,
+        "rule": "Contract liabilities < -20% and revenue growth >= 10%"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 83980000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001549595-26-000016",
+          "filed": "2026-01-28",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000016/"
+        },
+        {
+          "value_usd": 54549000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001549595-26-000016",
+          "filed": "2026-01-28",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000016/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 17580000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001549595-26-000016",
+          "filed": "2026-01-28",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000016/"
+        },
+        {
+          "value_usd": 38364000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001549595-26-000016",
+          "filed": "2026-01-28",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000016/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -249465000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001549595-26-000016",
+          "filed": "2026-01-28",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000016/"
+        },
+        {
+          "value_usd": -172584000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001549595-26-000016",
+          "filed": "2026-01-28",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000016/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -264457000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001549595-26-000016",
+          "filed": "2026-01-28",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000016/"
+        },
+        {
+          "value_usd": -193569000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001549595-26-000016",
+          "filed": "2026-01-28",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000016/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "to the Pfizer Agreement was $ 9.4 million, of which $ 3.9 million was current, and included $ 7.0 million in contract assets representing the unbilled amount related to the research milestone achieved in August 2026. As of November 30, 2025, deferred revenue related to the",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000049/nrix-20260831.htm",
+        "accession": "0001549595-26-000049",
+        "form": "10-Q",
+        "filed": "2026-10-13"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "received during the duration of the contract. Certain milestone payments and additional fees were considered variable consideration, which were not included in the transaction price based on the most likely amount method as of August 31, 2026. The Company re-evaluates the transact",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000049/nrix-20260831.htm",
+        "accession": "0001549595-26-000049",
+        "form": "10-Q",
+        "filed": "2026-10-13"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "7 | 82,829 | 207,107 | Total | 5,690,800 | 11,399,973 | 5,690,800 | 14,587,076 | 25 Table of Contents 12. Related Party Transactions The Company’s Chief Financial Officer is a trustee for the multiple employer welfare association that facilitates the acquisition and administratio",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000049/nrix-20260831.htm",
+        "accession": "0001549595-26-000049",
+        "form": "10-Q",
+        "filed": "2026-10-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "nses and other current liabilities | 63,674 | 54,852 | Operating lease liabilities, current | 3,241 | 2,824 | Deferred revenue, current | 8,610 | 17,580 | Deferred collaboration funding, current | 22,233 | — | Total current liabilities | 130,742 | 86,471 | Operating lease lia",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1549595/000154959526000049/nrix-20260831.htm",
+        "accession": "0001549595-26-000049",
+        "form": "10-Q",
+        "filed": "2026-10-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-11-30",
+      "2024-11-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-06-08",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001549595-26-000030",
+      "doc": "nrix-20260606.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-12",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-24-094875",
+      "doc": "d818273d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-09-07",
+      "items": "1.01",
+      "acc": "0001549595-23-000042",
+      "doc": "nrix-20230906.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-07-08",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-22-190492",
+      "doc": "d355546d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-02",
+      "items": "1.01",
+      "acc": "0001193125-22-062963",
+      "doc": "d279430d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-09",
+      "items": "1.01",
+      "acc": "0001193125-21-211877",
+      "doc": "d203363d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

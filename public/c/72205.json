@@ -1,0 +1,305 @@
+{
+  "cik": 72205,
+  "ticker": "NOBH",
+  "name": "NOBILITY HOMES INC",
+  "sector": "materials",
+  "industry": "Mobile Homes",
+  "sic": "2451",
+  "sic_description": "Mobile Homes",
+  "generated_at": "2026-10-31T14:35:16+00:00",
+  "fetched_at": "2026-10-26T02:59:15+00:00",
+  "price": 27.21,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.216279,
+  "snapshot": {
+    "cash": 13417420,
+    "equity": 58420668,
+    "assets": 65382420,
+    "liabilities": 6961752,
+    "assets_current": 51248508,
+    "liabilities_current": 6884848,
+    "retained_earnings": 79591517,
+    "interest_paid": 0,
+    "operating_income": 8855373,
+    "pretax_income": 10161315,
+    "net_income": 7632465,
+    "da": 304168,
+    "ocf": 6577442,
+    "capex": 206533,
+    "revenue": 48699333,
+    "shares": 3153665,
+    "balance_date": "2026-08-01",
+    "latest_period": "2026-08-01"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 13417420.0,
+    "net_debt": null,
+    "ebitda": 9159541,
+    "ebit": 8855373,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 6370909,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 13417420.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 11.10593,
+    "market_cap": 85811224.65,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-08-01",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ses and other current liabilities | 1,419,320 | 1,590,827 | Income taxes payable | 1,193,863 | 658,461 | Customer deposits | 3,048,824 | 2,795,344 | Total current liabilities | 6,884,848 | 6,396,486 | Deferred income taxes | 76,904 | 34,069 | Total liabilities | 6,961,752",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526391553/ck0000072205-20260801.htm",
+        "accession": "0001193125-26-391553",
+        "form": "10-Q",
+        "filed": "2026-09-15",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-391553",
+      "form": "10-Q",
+      "filed": "2026-09-15",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526391553/ck0000072205-20260801.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-01",
+    "metrics": {
+      "revenue_growth": 0.0141,
+      "receivables_growth": 0.5679,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.5461,
+      "ocf_to_net_income": 0.4927
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.5461,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      },
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": 0.4927,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 52667970.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-031573",
+          "filed": "2026-01-30",
+          "end": "2025-11-01",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526031573/"
+        },
+        {
+          "value_usd": 51933622.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-031573",
+          "filed": "2026-01-30",
+          "end": "2024-11-02",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526031573/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 4602671.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-031573",
+          "filed": "2026-01-30",
+          "end": "2025-11-01",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526031573/"
+        },
+        {
+          "value_usd": 2935517.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-031573",
+          "filed": "2026-01-30",
+          "end": "2024-11-02",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526031573/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 4161604.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-031573",
+          "filed": "2026-01-30",
+          "end": "2025-11-01",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526031573/"
+        },
+        {
+          "value_usd": 7047954.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-031573",
+          "filed": "2026-01-30",
+          "end": "2024-11-02",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526031573/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 8446383.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-031573",
+          "filed": "2026-01-30",
+          "end": "2025-11-01",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526031573/"
+        },
+        {
+          "value_usd": 8611262.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-031573",
+          "filed": "2026-01-30",
+          "end": "2024-11-02",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526031573/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": ",393 | 237,487 | Total net sales | $ | 12,138,230 | $ | 12,021,194 | $ | 35,051,636 | $ | 39,020,273 | Note 8 Related Party Transactions In January 2026, the Company repurchased 100,000 shares of common stock from our President at $ 29.70 per share. Note 9 Commitments and Contingen",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/72205/000119312526391553/ck0000072205-20260801.htm",
+        "accession": "0001193125-26-391553",
+        "form": "10-Q",
+        "filed": "2026-09-15"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-11-01",
+      "2024-11-02"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2010-01-29",
+      "agreement_kind": "credit_agreement",
+      "dated": "2009-06-04",
+      "title": "To Revolving Letter Of Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR"
+      ],
+      "maturity": "2010-05-30",
+      "url": "https://www.sec.gov/Archives/edgar/data/72205/000119312510016839/dex10ci.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2011-11-14",
+      "items": "1.01,2.06,8.01,9.01",
+      "acc": "0001193125-11-309941",
+      "doc": "d254443d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

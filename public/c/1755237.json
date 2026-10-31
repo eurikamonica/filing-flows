@@ -1,0 +1,342 @@
+{
+  "cik": 1755237,
+  "ticker": "KRSA",
+  "name": "Korsana Biosciences, Inc.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:18:36+00:00",
+  "price": 31.31,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.729144,
+  "snapshot": {
+    "cash": 1391000,
+    "equity": 5087000,
+    "assets": 6930000,
+    "assets_current": 1514000,
+    "liabilities_current": 1843000,
+    "retained_earnings": -275952000,
+    "operating_income": -6824000,
+    "pretax_income": -3528000,
+    "net_income": -6707000,
+    "ocf": -4451000,
+    "revenue": 1900000,
+    "shares": 4681351,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1391000.0,
+    "net_debt": null,
+    "ebitda": -6824000.0,
+    "ebit": -6824000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -4451000.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1391000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 146573099.81,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "rograms to commercial stage. Therefore, the Company concluded that its investment in Tisento Parent is a variable interest entity (“VIE”) in accordance with ASC 810-10-15-14(a) and is subject to potential consolidation under the VIE model. However, all activities that most signi",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526332842/cycn-20260630.htm",
+        "accession": "0001193125-26-332842",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-332842",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526332842/cycn-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.037,
+      "receivables_growth": 0.7986,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.7344,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.7344,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2074000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-132193",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526132193/"
+        },
+        {
+          "value_usd": 2000000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-26-132193",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526132193/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1000000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-132193",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526132193/"
+        },
+        {
+          "value_usd": 556000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-132193",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526132193/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -3314000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-132193",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526132193/"
+        },
+        {
+          "value_usd": -4333000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-132193",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526132193/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -3528000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-132193",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526132193/"
+        },
+        {
+          "value_usd": -3057000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-132193",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526132193/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-11",
+      "items": "1.01,2.01,2.02,3.02,3.03,5.01,5.02,5.03,5.05,5.06,7.01,9.01",
+      "acc": "0001193125-26-389318",
+      "doc": "d178159d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-01",
+      "items": "1.01,5.01,5.02,7.01,9.01",
+      "acc": "0001193125-26-137909",
+      "doc": "d128275d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-01-06",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-26-003509",
+      "doc": "d23253d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-23",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-25-213332",
+      "doc": "d51498d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-05-07",
+      "items": "1.01,9.01",
+      "acc": "0001193125-25-115089",
+      "doc": "d51125d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-25",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001193125-25-062612",
+      "doc": "d926001d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-17",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-24-280125",
+      "doc": "d856941d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-05-12",
+      "items": "1.01,2.02,3.02,7.01,8.01,9.01",
+      "acc": "0001140361-23-024218",
+      "doc": "brhc20052804_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-04",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001140361-21-019923",
+      "doc": "brhc10025496_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-09-03",
+      "items": "1.01,9.01",
+      "acc": "0001104659-20-102011",
+      "doc": "tm2029952d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-03-05",
+      "items": "1.01,9.01",
+      "acc": "0001104659-20-029761",
+      "doc": "tm2011714-1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-04-02",
+      "items": "1.01,2.01,3.02,3.03,5.01,5.02,5.03,7.01,9.01",
+      "acc": "0001104659-19-019416",
+      "doc": "a19-7596_18k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

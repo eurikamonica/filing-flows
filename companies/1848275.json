@@ -1,0 +1,352 @@
+{
+  "cik": 1848275,
+  "ticker": "TOP",
+  "name": "TOP Financial Group Ltd",
+  "sector": "financials",
+  "industry": "Security & Commodity Brokers, Dealers, Exchanges & Services",
+  "sic": "6200",
+  "docs": {
+    "xbrl:0001213900-26-075954": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-07-07",
+      "report": "2026-03-31"
+    },
+    "xbrl:0001213900-26-090479": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-17",
+      "report": "2026-06-30"
+    },
+    "0001213900-26-108043:ea0307865-424b3_topfinancial.htm": {
+      "kind": "424b",
+      "date": "2026-10-08",
+      "tranches": []
+    },
+    "0001213900-26-071103:ea0295426-424b5_topfinancial.htm": {
+      "kind": "424b",
+      "date": "2026-06-23",
+      "tranches": []
+    },
+    "0001213900-24-013275:ea193474-424b5_topfinancial.htm": {
+      "kind": "424b",
+      "date": "2024-02-13",
+      "tranches": []
+    }
+  },
+  "sic_description": "Security & Commodity Brokers, Dealers, Exchanges & Services",
+  "snapshot": {
+    "total_debt": 637592,
+    "cash": 10407367,
+    "operating_leases": 1415554,
+    "equity": 36697571,
+    "assets": 158407198,
+    "liabilities": 121408566,
+    "retained_earnings": 4460209,
+    "operating_income": -1650266,
+    "net_income": -1370248,
+    "da": 85519,
+    "ocf": 12918346,
+    "revenue": 4467072,
+    "shares": 37044475,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001213900-26-075954",
+  "xbrl_10-Q": "xbrl:0001213900-26-090479",
+  "events": [
+    {
+      "date": "2026-07-20",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-26-079696",
+      "doc": "ea0298608-8k_top.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "fetched_at": "2026-10-26T03:18:12+00:00",
+  "signature": "0001213900-26-110029",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1415554.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+        "accession": "0001213900-26-090479",
+        "form": "10-Q",
+        "filed": "2026-08-17",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 1415554.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-090479",
+            "filed": "2026-08-17",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "s. The Company owns 20 % equity interest in Winrich Trust. However the Company treats Winrich Trust as a variable interest entity and consolidate Winrich Trust in its consolidated financial statements, which is because all shareholders of Winrich Trust signed vote-in-concert agr",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+        "accession": "0001213900-26-090479",
+        "form": "10-Q",
+        "filed": "2026-08-17",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "n estimate of its incremental borrowing rate. The Company’s lease agreements do not contain any material residual value guarantees or material restrictive covenants. The table below presents the operating lease related assets and liabilities recorded on the balance sheets. | As",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+        "accession": "0001213900-26-090479",
+        "form": "10-Q",
+        "filed": "2026-08-17",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-090479",
+      "form": "10-Q",
+      "filed": "2026-08-17",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0213,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2928441.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001213900-26-075954",
+          "filed": "2026-07-07",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026075954/"
+        },
+        {
+          "value_usd": 2867430.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001213900-26-075954",
+          "filed": "2026-07-07",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026075954/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 53255.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001213900-26-075954",
+          "filed": "2026-07-07",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026075954/"
+        },
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 14021796.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-075954",
+          "filed": "2026-07-07",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026075954/"
+        },
+        {
+          "value_usd": -14471221.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-075954",
+          "filed": "2026-07-07",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026075954/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1170823.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-075954",
+          "filed": "2026-07-07",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026075954/"
+        },
+        {
+          "value_usd": -5969348.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-075954",
+          "filed": "2026-07-07",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026075954/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "c customers with large volume transactions. The volume rebate offered to such customers is accounted for as a variable consideration and determined based on the most-likely amount method, which is recognized as a reduction of revenues. For the three months ended June 30, 2026 and 2",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+        "accession": "0001213900-26-090479",
+        "form": "10-Q",
+        "filed": "2026-08-17"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "any | Ever Victory Limited | Wholly owned by Mr. Yuen Ka Fai, the Chief Executive Officer of the Company | b. Related parties transactions | For the Three Months Ended June 30, | Nature | 2026 | 2025 | Mr. Huaixi Yang | Gross commission income | $ | - | $ | 30,622.94 | Mr. Huaixi Yang",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+        "accession": "0001213900-26-090479",
+        "form": "10-Q",
+        "filed": "2026-08-17"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ble to customers | $ | 53,815,624 | $ | 48,850,774 | Payable to customers – a related party | 8,568 | 8,570 | Contract liabilities | - | 53,255 | Income tax payable | 105,402 | 149,778 | Promissory notes payable | 637,592 | 637,755 | Accrued expenses and other liabilities | 442,6",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+        "accession": "0001213900-26-090479",
+        "form": "10-Q",
+        "filed": "2026-08-17"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "s. The Company owns 20 % equity interest in Winrich Trust. However the Company treats Winrich Trust as a variable interest entity and consolidate Winrich Trust in its consolidated financial statements, which is because all shareholders of Winrich Trust signed vote-in-concert agr",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+      "accession": "0001213900-26-090479",
+      "form": "10-Q",
+      "filed": "2026-08-17",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "residual_guarantee",
+      "label": "Residual value guarantees",
+      "excerpt": "n estimate of its incremental borrowing rate. The Company’s lease agreements do not contain any material residual value guarantees or material restrictive covenants. The table below presents the operating lease related assets and liabilities recorded on the balance sheets. | As",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+      "accession": "0001213900-26-090479",
+      "form": "10-Q",
+      "filed": "2026-08-17",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001213900-26-090479",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001213900-26-090479",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "c customers with large volume transactions. The volume rebate offered to such customers is accounted for as a variable consideration and determined based on the most-likely amount method, which is recognized as a reduction of revenues. For the three months ended June 30, 2026 and 2",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+      "accession": "0001213900-26-090479",
+      "form": "10-Q",
+      "filed": "2026-08-17"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "any | Ever Victory Limited | Wholly owned by Mr. Yuen Ka Fai, the Chief Executive Officer of the Company | b. Related parties transactions | For the Three Months Ended June 30, | Nature | 2026 | 2025 | Mr. Huaixi Yang | Gross commission income | $ | - | $ | 30,622.94 | Mr. Huaixi Yang",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+      "accession": "0001213900-26-090479",
+      "form": "10-Q",
+      "filed": "2026-08-17"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "ble to customers | $ | 53,815,624 | $ | 48,850,774 | Payable to customers – a related party | 8,568 | 8,570 | Contract liabilities | - | 53,255 | Income tax payable | 105,402 | 149,778 | Promissory notes payable | 637,592 | 637,755 | Accrued expenses and other liabilities | 442,6",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1848275/000121390026090479/ea0301938-10q_topfin.htm",
+      "accession": "0001213900-26-090479",
+      "form": "10-Q",
+      "filed": "2026-08-17"
+    }
+  ],
+  "revenue_quality_text_source": "0001213900-26-090479"
+}

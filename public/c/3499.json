@@ -1,0 +1,415 @@
+{
+  "cik": 3499,
+  "ticker": "ALX",
+  "name": "ALEXANDERS INC",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-31T14:35:15+00:00",
+  "fetched_at": "2026-10-26T01:36:30+00:00",
+  "price": 248.39,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.274917,
+  "snapshot": {
+    "total_debt": 834572000,
+    "cash": 303312000,
+    "equity": 223623000,
+    "assets": 1203064000,
+    "liabilities": 979441000,
+    "retained_earnings": 183001000,
+    "interest_expense": 49554000,
+    "interest_paid": 43742000,
+    "net_income": 169816000,
+    "da": 37549000,
+    "ocf": 27162000,
+    "revenue": 214802000,
+    "debt_repaid": 333061000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 0,
+      "y2": 94000000,
+      "y3": 400000000,
+      "y4": 0,
+      "y5": 175000000,
+      "after5": 167691000
+    },
+    "shares": 5107290,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestAndDebtExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 834572000,
+    "cash_and_investments": 303312000.0,
+    "net_debt": 531260000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 49554000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.620959,
+    "fcf": 27162000.0,
+    "fcf_to_debt": 0.032546,
+    "effective_rate": 0.059377,
+    "revolver_available": null,
+    "liquidity": 303312000.0,
+    "due_12m": 0,
+    "due_24m": 94000000,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": 3.226723,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 1268599763.1,
+    "debt_to_ev": 0.463687,
+    "convertibles": null,
+    "implied": {
+      "dd": 6.734033,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.800655,
+      "asset_vol": 0.209143,
+      "calibrated_5y_bps": 118.535103,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.060954,
+    "refi_extra_interest": 148234.958197,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000003499-26-000038",
+      "form": "10-Q",
+      "filed": "2026-08-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/3499/000000349926000038/alx-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0583,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 2.6022
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 213183000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000003499-26-000005",
+          "filed": "2026-02-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/3499/000000349926000005/"
+        },
+        {
+          "value_usd": 226374000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000003499-26-000005",
+          "filed": "2026-02-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/3499/000000349926000005/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 73444000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000003499-26-000005",
+          "filed": "2026-02-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/3499/000000349926000005/"
+        },
+        {
+          "value_usd": 54106000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000003499-26-000005",
+          "filed": "2026-02-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/3499/000000349926000005/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 28224000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000003499-26-000005",
+          "filed": "2026-02-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/3499/000000349926000005/"
+        },
+        {
+          "value_usd": 43444000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000003499-26-000005",
+          "filed": "2026-02-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/3499/000000349926000005/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "LEXANDER’S, INC. AND SUBSIDIARIES NOTES TO CONSOLIDATED FINANCIAL STATEMENTS (CONTINUED) (UNAUDITED) 6. Related Party Transactions Vornado As of June 30, 2026, Vornado owned 32.4 % of our outstanding common stock. We are managed by, and our properties are leased and developed",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/3499/000000349926000038/alx-20260630.htm",
+        "accession": "0000003499-26-000038",
+        "form": "10-Q",
+        "filed": "2026-08-03"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2002-08-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2002-07-03",
+      "title": "Supplemental Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "maturity": "2006-01-03",
+      "url": "https://www.sec.gov/Archives/edgar/data/3499/000095012302007503/y62648exv10wiwcw2.txt"
+    },
+    {
+      "kind": "agreement",
+      "date": "2002-08-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2002-07-03",
+      "title": "Project Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "maturity": "2006-01-03",
+      "url": "https://www.sec.gov/Archives/edgar/data/3499/000095012302007503/y62648exv10wiwcw1.txt"
+    },
+    {
+      "kind": "agreement",
+      "date": "2002-08-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2002-07-03",
+      "title": "Building Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "maturity": "2006-01-03",
+      "url": "https://www.sec.gov/Archives/edgar/data/3499/000095012302007503/y62648exv10wiwc.txt"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-03-31",
+      "items": "1.01,9.01",
+      "acc": "0000003499-26-000014",
+      "doc": "alx-20260331.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-09",
+      "items": "1.01,7.01,9.01",
+      "acc": "0000003499-26-000010",
+      "doc": "alx-20260306.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000003499-25-000038",
+      "doc": "alx-20251223.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-09",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000003499-25-000032",
+      "doc": "alx-20251205.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-09-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000003499-24-000033",
+      "doc": "alx-20240930.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-12",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000003499-24-000025",
+      "doc": "alx-20240611.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-09-14",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000003499-20-000029",
+      "doc": "alx2020-8xk91420.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-25",
+      "items": "1.01,2.03,8.01",
+      "acc": "0000003499-20-000026",
+      "doc": "alx2020-8xk1.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-12-14",
+      "items": "2.03,9.01",
+      "acc": "0000003499-18-000026",
+      "doc": "alx8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-05",
+      "items": "2.03,9.01",
+      "acc": "0000947871-17-000434",
+      "doc": "ss45623_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2016-01-19",
+      "items": "1.01,9.01",
+      "acc": "0000003499-16-000027",
+      "doc": "alex8k-11916.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-08-06",
+      "items": "2.03,9.01",
+      "acc": "0000003499-15-000017",
+      "doc": "alx8k8615.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-03-05",
+      "items": "2.03,9.01",
+      "acc": "0000003499-14-000007",
+      "doc": "alx8k_20140228.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2012-10-22",
+      "items": "1.01,9.01",
+      "acc": "0000003499-12-000016",
+      "doc": "kp.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-12-06",
+      "items": "2.03,9.01",
+      "acc": "0000003499-11-000027",
+      "doc": "alx8k113011.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-06-16",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000003499-11-000015",
+      "doc": "alx8k61011.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

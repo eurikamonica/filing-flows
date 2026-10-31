@@ -1,0 +1,836 @@
+{
+  "cik": 1387061,
+  "ticker": null,
+  "name": "Lightstone Value Plus REIT V, Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T02:59:03+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 351282000,
+    "cash": 66037000,
+    "equity": 91870000,
+    "assets": 450515000,
+    "liabilities": 358645000,
+    "retained_earnings": -24970000,
+    "interest_expense": 19056000,
+    "interest_paid": 17297000,
+    "net_income": -13081000,
+    "da": 15687000,
+    "ocf": 5198000,
+    "capex": 4215000,
+    "revenue": 50218000,
+    "shares": 16000000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 351282000,
+    "cash_and_investments": 66037000.0,
+    "net_debt": 285245000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 19056000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.300515,
+    "fcf": 983000,
+    "fcf_to_debt": 0.002798,
+    "effective_rate": 0.054247,
+    "revolver_available": null,
+    "liquidity": 66037000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001185185-26-003490",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1387061/000118518526003490/lvpr510q063026.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0226,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 0.8115
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 51243000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001185185-26-001079",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1387061/000118518526001079/"
+        },
+        {
+          "value_usd": 50110000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001185185-26-001079",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1387061/000118518526001079/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 4150000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001185185-26-001079",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1387061/000118518526001079/"
+        },
+        {
+          "value_usd": 6245000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001185185-26-001079",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1387061/000118518526001079/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 5114000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001185185-26-001079",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1387061/000118518526001079/"
+        },
+        {
+          "value_usd": -10985000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001185185-26-001079",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1387061/000118518526001079/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "d 296,516 Common Shares, pursuant to its Amended SRP at a weighted average price per share of $ 13.49 . 7. | Related Party Transactions | The Company’s business is externally managed by the Advisor, an affiliate of Lightstone which provides advisory services to the Company and the Com",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1387061/000118518526003490/lvpr510q063026.htm",
+        "accession": "0001185185-26-003490",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Notes Payable to Banks",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 351933000.0,
+      "floating": false
+    },
+    {
+      "name": "Notes Payable",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 351282000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2024-12-23",
+      "items": "1.01,2.01,2.03,5.02,9.01",
+      "acc": "0001829126-24-008500",
+      "doc": "lightstonereit5_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-20",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001829126-23-008138",
+      "doc": "lightstonevalue5_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-08",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001829126-21-011717",
+      "doc": "lightstonereit5_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-09",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001829126-21-006214",
+      "doc": "lightstonevalue5_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-03-22",
+      "items": "1.01,2.01",
+      "acc": "0001829126-21-001671",
+      "doc": "lightstonereit5_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-06-30",
+      "items": "1.01,2.03",
+      "acc": "0001104659-20-079056",
+      "doc": "tm2023863d1_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-03-26",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001104659-20-038605",
+      "doc": "tm2013902d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-02-21",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001144204-19-009345",
+      "doc": "tv514407_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-12-03",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001144204-18-062875",
+      "doc": "tv508333_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-07-20",
+      "items": "1.01",
+      "acc": "0001144204-18-039113",
+      "doc": "tv498895_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-02-14",
+      "items": "1.01",
+      "acc": "0001144204-18-008619",
+      "doc": "tv486075_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-21",
+      "items": "1.01",
+      "acc": "0001144204-17-033458",
+      "doc": "v469421_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-02-16",
+      "items": "1.01,1.02,5.02,8.01",
+      "acc": "0001104659-17-009925",
+      "doc": "a17-4628_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-07-27",
+      "items": "1.01,9.01",
+      "acc": "0001104659-16-134545",
+      "doc": "a16-15536_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2016-04-13",
+      "items": "1.01",
+      "acc": "0001628280-16-014181",
+      "doc": "form8-klakewood.htm",
+      "desc": "8-K - LAKEWOOD FLATS"
+    },
+    {
+      "date": "2015-07-24",
+      "items": "1.01",
+      "acc": "0001104659-15-053030",
+      "doc": "a15-16198_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2015-06-11",
+      "items": "1.01",
+      "acc": "0001104659-15-044790",
+      "doc": "a15-13916_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2014-10-15",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001104659-14-071729",
+      "doc": "a14-22440_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2014-06-11",
+      "items": "1.01",
+      "acc": "0001104659-14-045317",
+      "doc": "a14-15204_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2014-05-07",
+      "items": "1.01",
+      "acc": "0001104659-14-035755",
+      "doc": "a14-12165_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2014-01-10",
+      "items": "1.01",
+      "acc": "0001104659-14-001683",
+      "doc": "a14-3214_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2013-12-18",
+      "items": "1.01",
+      "acc": "0001104659-13-090951",
+      "doc": "a13-26620_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2013-12-16",
+      "items": "1.01",
+      "acc": "0001104659-13-090429",
+      "doc": "a13-26393_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2013-07-12",
+      "items": "1.01",
+      "acc": "0001104659-13-054256",
+      "doc": "a13-16572_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2012-12-18",
+      "items": "1.01",
+      "acc": "0001104659-12-084853",
+      "doc": "a12-29669_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2012-08-30",
+      "items": "1.01",
+      "acc": "0001104659-12-060952",
+      "doc": "a12-19582_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2011-12-27",
+      "items": "1.01,2.01,2.03,8.01,9.01",
+      "acc": "0001104659-11-071255",
+      "doc": "a11-32328_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2011-12-16",
+      "items": "1.01,8.01",
+      "acc": "0001104659-11-069894",
+      "doc": "a11-31863_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2011-12-13",
+      "items": "1.01",
+      "acc": "0001104659-11-069216",
+      "doc": "a11-31583_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2011-11-28",
+      "items": "1.01",
+      "acc": "0001104659-11-066394",
+      "doc": "a11-30575_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2011-10-25",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001104659-11-057674",
+      "doc": "a11-28565_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2011-10-05",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-11-055057",
+      "doc": "a11-27499_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2011-07-08",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001104659-11-038310",
+      "doc": "a11-17190_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-12-15",
+      "items": "1.01,8.01",
+      "acc": "0001104659-10-062812",
+      "doc": "a10-23641_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-11-29",
+      "items": "1.01,2.01,2.03,5.02,9.01",
+      "acc": "0001104659-10-060348",
+      "doc": "a10-21966_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-11-17",
+      "items": "1.01",
+      "acc": "0001104659-10-058952",
+      "doc": "a10-21456_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-10-26",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001104659-10-053789",
+      "doc": "a10-19957_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-10-26",
+      "items": "1.01,2.01,2.03",
+      "acc": "0001104659-10-053780",
+      "doc": "a10-19955_18ka.htm",
+      "desc": "AMENDMENT TO FORM 8-K"
+    },
+    {
+      "date": "2010-10-15",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001104659-10-052493",
+      "doc": "a10-19437_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-09-23",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001104659-10-049679",
+      "doc": "a10-18323_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-06-17",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-10-034316",
+      "doc": "a10-12151_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-02-17",
+      "items": "1.01,5.03,9.01",
+      "acc": "0001104659-10-007594",
+      "doc": "a10-4048_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2016-03-31",
+      143609000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      143229000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      142789000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-12-31",
+      89921000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      116376000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      116166000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-12-31",
+      139016000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      181545000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      209677000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      209647000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-12-31",
+      183788000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      213148000,
+      19213000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      247961000,
+      28186000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      248034000,
+      27811000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-12-31",
+      212989000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      213330000,
+      27040000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      213251000,
+      25074000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      270593000,
+      38065000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-12-31",
+      277530000,
+      null,
+      null,
+      931000,
+      931000,
+      null
+    ],
+    [
+      "2022-03-31",
+      288675000,
+      37775000,
+      null,
+      -651000,
+      -651000,
+      null
+    ],
+    [
+      "2022-06-30",
+      288997000,
+      59435000,
+      null,
+      -2214000,
+      -2214000,
+      null
+    ],
+    [
+      "2022-09-30",
+      289884000,
+      59143000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-12-31",
+      290289000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      290404000,
+      58805000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      290445000,
+      55839000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      254353000,
+      51855000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-12-31",
+      287029000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      286960000,
+      47695000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      287106000,
+      62872000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      281520000,
+      54482000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-12-31",
+      327011000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      310474000,
+      null,
+      17564000,
+      null,
+      null,
+      0.05657
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

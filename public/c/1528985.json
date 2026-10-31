@@ -1,0 +1,1008 @@
+{
+  "cik": 1528985,
+  "ticker": "INRE",
+  "name": "Inland Real Estate Income Trust, Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T01:40:23+00:00",
+  "price": 10.35,
+  "price_date": "2026-10-23",
+  "equity_vol": 10.526856,
+  "snapshot": {
+    "total_debt": 806403000,
+    "cash": 10831000,
+    "operating_leases": 25762000,
+    "debt_fair_value": 810000000,
+    "revolver_drawn": 810000000,
+    "equity": 318472000,
+    "assets": 1207302000,
+    "liabilities": 888830000,
+    "interest_expense": 39520000,
+    "interest_paid": 38687000,
+    "net_income": -7472000,
+    "da": 58208000,
+    "ocf": 40642000,
+    "revenue": 153402000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 18727000,
+      "y4": 823000000
+    },
+    "wavg_rate_long": 0.0462,
+    "wavg_rate_all": 0.0402,
+    "shares": 36012053,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "wavg_rate_long": "LongtermDebtWeightedAverageInterestRate",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": 806403000,
+    "cash_and_investments": 10831000.0,
+    "net_debt": 795572000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 39520000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.050534,
+    "fcf": 40642000.0,
+    "fcf_to_debt": 0.050399,
+    "effective_rate": 0.049008,
+    "revolver_available": null,
+    "liquidity": 10831000.0,
+    "due_12m": 18727000,
+    "due_24m": null,
+    "liquidity_to_due12": 0.578363,
+    "liquidity_to_due24": null,
+    "floating_debt": 806403000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 8064030.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 372724748.55,
+    "debt_to_ev": 0.690238,
+    "convertibles": null,
+    "implied": {
+      "dd": -1.465989,
+      "pd_1y": 0.928674,
+      "spread_5y_bps": 1831.193062,
+      "asset_vol": 3.0,
+      "calibrated_5y_bps": 205.727942,
+      "rating_band": "BB"
+    },
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 500000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Amended And Restated Credit Agreement",
+        "dated": "2018-08-01",
+        "text": "The Consolidated Group shall maintain, as of the last day of each fiscal quarter ending after the Agreement Effective Date based upon Borrower’s compliance certificate required by Section 6.1(d) hereof for such fiscal quarter, a Consolidated Tangible Net Worth of not less than $500,000,000 plus seventy five percent (75%) of net cash proceeds of all equity raises consummated after the Agreement Effective Date net of s"
+      }
+    ],
+    "cushion_score": 18
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 25762000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000007/ireit-20260630.htm",
+        "accession": "0001528985-26-000007",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 25762000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001528985-26-000007",
+            "filed": "2026-08-05",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000007/ireit-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "rest rate swap contracts, interest rate cap or floor contracts, futures or forward contracts, options or repurchase agreements. Our actual hedging decisions are determined considering the facts and circumstances existing at the time of the hedge. We have used derivative finan",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000007/ireit-20260630.htm",
+        "accession": "0001528985-26-000007",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001528985-26-000007",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000007/ireit-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0225,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 153581000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001528985-26-000002",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000002/"
+        },
+        {
+          "value_usd": 150205000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001528985-26-000002",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000002/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 42697000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001528985-26-000002",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000002/"
+        },
+        {
+          "value_usd": 43292000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001528985-26-000002",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000002/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -11047000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001528985-26-000002",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000002/"
+        },
+        {
+          "value_usd": -14978000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001528985-26-000002",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000002/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "as total assets. NOTE 13 – TRANSACTIONS WITH RELATED PARTIES The following table summarizes the Company’s related party transactions for the three and six months ended June 30, 2026 and 2025. Certain compensation and fees payable to the Business Manager for services provided to the",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528985/000152898526000007/ireit-20260630.htm",
+        "accession": "0001528985-26-000007",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 810000000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 235000000.0,
+      "rate_now": 0.0555,
+      "available": 50000000.0,
+      "floating": true
+    },
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "drawn": 575000000.0,
+      "rate_now": 0.0423,
+      "floating": true
+    },
+    {
+      "name": "Mortgages",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "carrying": 18727000.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2018-08-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2018-08-01",
+      "facility": "term loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1528985/000089262618000090/ireit8k20180807-exh103.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2018-08-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2018-08-01",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1528985/000089262618000090/ireit8k20180807-exh102.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2018-08-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2018-08-01",
+      "size": 700000000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "fee_pct": 0.2,
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Consolidated Group shall maintain, as of the last day of each fiscal quarter ending after the Agreement Effective Date based upon Borrower’s compliance certificate required by Section 6.1(d) hereof for such fiscal quarter, a Consolidated Tangible Net Worth of not less than $500,000,000 plus seventy five percent (75%) of net cash proceeds of all equity raises consummated after the Agreement Effective Date net of s"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1528985/000089262618000090/ireit8k20180807-exh101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-11-17",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-25-284472",
+      "doc": "ireit-20251113.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-12",
+      "items": "1.01,5.07,9.01",
+      "acc": "0000950170-24-125212",
+      "doc": "ireit-20241106.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-19",
+      "items": "1.01,5.02,9.01",
+      "acc": "0000950170-24-005682",
+      "doc": "ireit-20240113.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-20",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001564590-22-020829",
+      "doc": "ck1528985-8k_20220517.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-10",
+      "items": "1.01,9.01",
+      "acc": "0001564590-22-019164",
+      "doc": "ck1528985-8k_20220505.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-02-09",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-22-004388",
+      "doc": "ck1528985-8k_20220203.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-10-05",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001564590-20-045818",
+      "doc": "ck0001528985-8k_20200929.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-02-15",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0000892626-19-000013",
+      "doc": "ireit-8k20190215.htm",
+      "desc": "INLAND REAL ESTATE INCOME TRUST, INC. - FORM 8-K - 2/11/19"
+    },
+    {
+      "date": "2018-08-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000892626-18-000090",
+      "doc": "ireit-8k20180807.htm",
+      "desc": "INLAND REAL ESTATE INCOME TRUST, INC. - FORM 8-K - 8/7/18"
+    },
+    {
+      "date": "2017-04-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000892626-17-000065",
+      "doc": "ireit-8k20170419.htm",
+      "desc": "INLAND REAL ESTATE INCOME TRUST, INC. - FORM 8-K - 4/20/17"
+    },
+    {
+      "date": "2016-01-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000892626-16-000384",
+      "doc": "ireit-8k.htm",
+      "desc": "INLAND REAL ESTATE INCOME TRUST, INC. - FORM 8-K - 1/22/16"
+    },
+    {
+      "date": "2015-12-09",
+      "items": "2.03,9.01",
+      "acc": "0000892626-15-000356",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 12/9/15"
+    },
+    {
+      "date": "2015-10-06",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0000892626-15-000309",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 10/6/15"
+    },
+    {
+      "date": "2015-04-13",
+      "items": "2.01,2.03,9.01",
+      "acc": "0000892626-15-000122",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K"
+    },
+    {
+      "date": "2015-03-20",
+      "items": "2.01,2.03,9.01",
+      "acc": "0000892626-15-000088",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 3/20/15"
+    },
+    {
+      "date": "2014-12-29",
+      "items": "2.01,2.03,9.01",
+      "acc": "0000892626-14-000323",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 12/29/14"
+    },
+    {
+      "date": "2014-12-22",
+      "items": "2.01,2.03,9.01",
+      "acc": "0000892626-14-000315",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 12/22/14"
+    },
+    {
+      "date": "2014-09-19",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000892626-14-000248",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - 8-K - 9/16/14"
+    },
+    {
+      "date": "2014-08-05",
+      "items": "2.03,9.01",
+      "acc": "0000892626-14-000201",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 8/6/14"
+    },
+    {
+      "date": "2014-07-02",
+      "items": "2.01,2.03,9.01",
+      "acc": "0000892626-14-000182",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 7/2/14"
+    },
+    {
+      "date": "2014-05-30",
+      "items": "1.01,2.01,9.01",
+      "acc": "0000892626-14-000167",
+      "doc": "ireit-8k495.htm",
+      "desc": "IREIT - FORM 8-K - 5/30/14"
+    },
+    {
+      "date": "2014-05-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000892626-14-000161",
+      "doc": "ireit-8k497.htm",
+      "desc": "IREIT - FORM 8-K - 5/29/14"
+    },
+    {
+      "date": "2014-05-19",
+      "items": "1.01,2.01",
+      "acc": "0000892626-14-000148",
+      "doc": "ireit-8k491.htm",
+      "desc": "IREIT - FORM 8-K - 5/19/14"
+    },
+    {
+      "date": "2014-05-13",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000892626-14-000131",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 5/13/14"
+    },
+    {
+      "date": "2014-04-24",
+      "items": "1.01,9.01",
+      "acc": "0000892626-14-000101",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 4/24/14"
+    },
+    {
+      "date": "2014-04-14",
+      "items": "1.01,2.01,9.01",
+      "acc": "0000892626-14-000091",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 4/14/14"
+    },
+    {
+      "date": "2014-03-28",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000892626-14-000079",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 3/28/14"
+    },
+    {
+      "date": "2014-03-05",
+      "items": "1.01,2.01,9.01",
+      "acc": "0000892626-14-000050",
+      "doc": "ireit-8k.htm",
+      "desc": "IREIT - FORM 8-K - 3/5/14"
+    },
+    {
+      "date": "2014-02-27",
+      "items": "1.01,2.01,9.01",
+      "acc": "0000892626-14-000046",
+      "doc": "ireit-8k.htm",
+      "desc": "INLAND REAL ESTATE INCOME TRUST, INC. - FORM 8-K - 2/27/14"
+    },
+    {
+      "date": "2013-12-30",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0000892626-13-000328",
+      "doc": "ireit-form8k.htm",
+      "desc": "INLAND REAL ESTATE INCOME TRUST, INC. - FORM 8-K - 12/30/13"
+    },
+    {
+      "date": "2013-07-25",
+      "items": "1.01",
+      "acc": "0000892626-13-000209",
+      "doc": "ireit-304.htm",
+      "desc": "IREIT - FORM 8-K - DATE OF REPORT 7/25/13"
+    },
+    {
+      "date": "2013-01-03",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0000892626-13-000006",
+      "doc": "ireit-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2012-11-13",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001104659-12-077476",
+      "doc": "a12-26946_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-10-24",
+      "items": "1.01,9.01",
+      "acc": "0001528985-12-000013",
+      "doc": "imit8koct24.htm",
+      "desc": "MANAGEMENT AGREEMENTS"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2015-06-30",
+      281901759,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      399762000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      543876000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      609265000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      607642000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      649534000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      671310000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      681164000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      703548000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      703635000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      699887000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      705980000,
+      null,
+      null,
+      18051000,
+      18051000,
+      null
+    ],
+    [
+      "2019-06-30",
+      706079000,
+      null,
+      null,
+      18134000,
+      18134000,
+      null
+    ],
+    [
+      "2019-09-30",
+      697177000,
+      null,
+      null,
+      17242000,
+      17242000,
+      null
+    ],
+    [
+      "2020-03-31",
+      645394000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      669328000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      668904000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      618533000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      609254000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      601861000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      592223000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      856078000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      850697000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      852575000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      847457000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      843674000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      842105000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      840320000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      835533000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      835957000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      833168000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      829377000,
+      11502000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      836075000,
+      9224000,
+      39276000,
+      null,
+      null,
+      0.04698
+    ],
+    [
+      "2026-06-30",
+      806403000,
+      10831000,
+      39520000,
+      null,
+      null,
+      0.04901
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-11",
+      1831.14,
+      -1.431,
+      20.6296,
+      205.2
+    ],
+    [
+      "2025-12",
+      1831.24,
+      -1.472,
+      18.6127,
+      205.8
+    ],
+    [
+      "2026-02",
+      1831.22,
+      -1.465,
+      17.544,
+      205.7
+    ],
+    [
+      "2026-03",
+      1831.28,
+      -1.495,
+      15.875,
+      206.1
+    ],
+    [
+      "2026-04",
+      1831.22,
+      -1.467,
+      15.1932,
+      205.7
+    ],
+    [
+      "2026-05",
+      1831.23,
+      -1.471,
+      13.8217,
+      205.8
+    ],
+    [
+      "2026-06",
+      1831.23,
+      -1.475,
+      12.9567,
+      205.9
+    ],
+    [
+      "2026-07",
+      1831.29,
+      -1.505,
+      12.0773,
+      206.3
+    ],
+    [
+      "2026-08",
+      1831.26,
+      -1.492,
+      11.4881,
+      206.1
+    ],
+    [
+      "2026-09",
+      1831.26,
+      -1.499,
+      10.9774,
+      206.2
+    ],
+    [
+      "2026-10",
+      1831.19,
+      -1.466,
+      10.5269,
+      205.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

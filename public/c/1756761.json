@@ -1,0 +1,618 @@
+{
+  "cik": 1756761,
+  "ticker": null,
+  "name": "Invesco Real Estate Income Trust Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T02:54:19+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 235276000,
+    "cash": 35726000,
+    "finance_leases": 53977000,
+    "revolver_drawn": 15000000,
+    "equity": 34055000,
+    "assets": 1322359000,
+    "liabilities": 512186000,
+    "retained_earnings": -199157000,
+    "interest_expense": 20653000,
+    "interest_paid": 18851000,
+    "net_income": -1616000,
+    "da": 36117000,
+    "ocf": 47740000,
+    "revenue": 88955000,
+    "shares": 23443421,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 235276000,
+    "cash_and_investments": 35726000.0,
+    "net_debt": 199550000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 20653000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 3.532492,
+    "fcf": 47740000.0,
+    "fcf_to_debt": 0.202911,
+    "effective_rate": 0.087782,
+    "revolver_available": 286320000.0,
+    "liquidity": 322046000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 212680000.0,
+    "floating_share": 0.90396,
+    "plus100bp_interest": 2126800.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 419259850.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Fifth Amendment To Revolving Credit Agreement",
+        "dated": "2021-01-22",
+        "text": "Permit the Tangible Net Worth at any time to be less than the sum of (i) $419,259,850 plus (ii) an amount equal to 70% of net equity proceeds received by the Consolidated Group after June 30, 2023 less the aggregate amount of payments made with respect to any redemption, retirement, surrender, defeasance, repurchase, purchase or acquisition for value on account of any Equity Interests of Borrower issued after June 30"
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "instruments and equity | $ | 1,322,359 | $ | 1,200,916 | (1) Includes restricted assets of consolidated variable interest entities at June 30, 2026 and December 31, 2025 of $ 574.3 million and $ 489.7 million, respectively. See Note 16 — “Variable Interest Entities.” (2) Includ",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000110/inreit-20260630.htm",
+        "accession": "0001756761-26-000110",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "d extend the maturity date to March 5, 2032. Financing Obligation, Net In connection with the failed sale and leaseback of The Carmin property, as of June 30, 2026, we hold a financing obligation on our condensed consolidated balance sheets of $ 54.0 million, net of de",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000110/inreit-20260630.htm",
+        "accession": "0001756761-26-000110",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "e of the lease, including any rent steps or abatement provisions. Our tenant leases do not have material residual value guarantees or material restrictive covenants. The following table details the components of operating lease income: Three Months Ended June 30, | Six Months",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000110/inreit-20260630.htm",
+        "accession": "0001756761-26-000110",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "e margin (3) | 5.19 % | $ | 250,000 | $ | 84,000 | $ | 15,000 | $ | 40,000 | Secured Lending Agreement | Repurchase Agreement | Citibank | 12/9/2027 | 12/9/2029 | S + 1.70 % | 5.21 % | $ | 300,000 | $ | 142,320 | $ | 157,680 | $ | 66,480 | Mortgage Notes Payable | The Carmin",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000110/inreit-20260630.htm",
+        "accession": "0001756761-26-000110",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001756761-26-000110",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000110/inreit-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0725,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 70888000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001756761-26-000032",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000032/"
+        },
+        {
+          "value_usd": 66094000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001756761-26-000032",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000032/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 28203000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001756761-26-000032",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000032/"
+        },
+        {
+          "value_usd": 18048000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001756761-26-000032",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000032/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -8071000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001756761-26-000032",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000032/"
+        },
+        {
+          "value_usd": 26744000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001756761-26-000032",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000032/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ecial Limited Partner L.L.C. (the “Special Limited Partner”) holds Class E units in INREIT OP. See Note 18 — “Related Party Transactions” for further details of the Special Limited Partner’s performance participation interest. Because the Special Limited Partner has the ability to rede",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676126000110/inreit-20260630.htm",
+        "accession": "0001756761-26-000110",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Mortgages Payable",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "carrying": 235655000.0,
+      "floating": false
+    },
+    {
+      "name": "Secured Lending Agreements, Repurchase Agreement, Citibank",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "coupon": 0.017,
+      "rate_now": 0.0521,
+      "capacity": 300000000.0,
+      "available": 142320000.0,
+      "carrying": 157680000.0,
+      "floating": false
+    },
+    {
+      "name": "Everly Roseland",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "coupon": 0.0145,
+      "rate_now": 0.0511,
+      "capacity": 113500000.0,
+      "available": 1505000.0,
+      "carrying": 111995000.0,
+      "floating": false
+    },
+    {
+      "name": "The Carmin",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "coupon": 0.0175,
+      "rate_now": 0.0537,
+      "capacity": 84000000.0,
+      "available": 0.0,
+      "carrying": 84000000.0,
+      "floating": false
+    },
+    {
+      "name": "Cortlandt Crossing",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "coupon": 0.0313,
+      "rate_now": 0.0313,
+      "capacity": 39660000.0,
+      "available": 0.0,
+      "carrying": 39660000.0,
+      "floating": false
+    },
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "rate_now": 0.0519,
+      "capacity": 250000000.0,
+      "available": 84000000.0,
+      "carrying": 15000000.0,
+      "spread": 0.005,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0557,
+      "capacity": 250000000.0,
+      "available": 60000000.0,
+      "carrying": 40000000.0,
+      "spread": 0.005,
+      "reference": "SOFR",
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Midwest Industrial Portfolio",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0319,
+      "carrying": 0.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-10-17",
+      "agreement_kind": "amendment",
+      "dated": "2021-01-22",
+      "size": 100000000.0,
+      "title": "Fifth Amendment To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 419259850.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Tangible Net Worth at any time to be less than the sum of (i) $419,259,850 plus (ii) an amount equal to 70% of net equity proceeds received by the Consolidated Group after June 30, 2023 less the aggregate amount of payments made with respect to any redemption, retirement, surrender, defeasance, repurchase, purchase or acquisition for value on account of any Equity Interests of Borrower issued after June 30"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676124000081/exhibit101bofa.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2023-09-13",
+      "agreement_kind": "amendment",
+      "dated": "2021-01-22",
+      "size": 100000000.0,
+      "title": "Fourth Amendment To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 419259850.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Commencing on the last day of the first fiscal quarter in which the Consolidated Group owns at least five Properties, permit Permit the Tangible Net Worth at any time to be less than the sum of (i) 75% of the Tangible Net Worth of the Consolidated Group as of the last day of the most-recent fiscal quarter during which the Consolidated Group owns at least five Properties $419,259,850 plus (ii) an amount equal to 70% o"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1756761/000119312523234474/d499837dex101.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2023-03-24",
+      "agreement_kind": "amendment",
+      "dated": "2021-01-22",
+      "title": "Third Amendment To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1756761/000175676123000023/exh109thirdamendmentwcon.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-05-27",
+      "items": "1.01,9.01",
+      "acc": "0001756761-26-000084",
+      "doc": "inreit-20260522.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-10",
+      "items": "1.01",
+      "acc": "0001756761-25-000114",
+      "doc": "inreit-20251006.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-31",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001756761-25-000079",
+      "doc": "inreit-20250725.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-01",
+      "items": "1.01,3.02,5.03,9.01",
+      "acc": "0001756761-25-000063",
+      "doc": "inreit-20250625.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-05-20",
+      "items": "1.01",
+      "acc": "0001756761-25-000053",
+      "doc": "inreit-20250515.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-10-17",
+      "items": "1.01,9.01",
+      "acc": "0001756761-24-000081",
+      "doc": "inreit-20241011.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-07-10",
+      "items": "1.01",
+      "acc": "0001756761-24-000051",
+      "doc": "inreit-20240708.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-29",
+      "items": "1.01,9.01",
+      "acc": "0001756761-24-000030",
+      "doc": "inreit-20240424.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-09-13",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-234474",
+      "doc": "d499837d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-05-18",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-147845",
+      "doc": "d445808d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-01-31",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-23-020199",
+      "doc": "d429772d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-12-30",
+      "items": "1.01,8.01",
+      "acc": "0001756761-22-000087",
+      "doc": "inreit-20221223.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-12-15",
+      "items": "1.01,9.01",
+      "acc": "0001193125-22-305888",
+      "doc": "d410113d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-11-02",
+      "items": "1.01,9.01",
+      "acc": "0001193125-22-275665",
+      "doc": "d416663d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-01-24",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001193125-22-015950",
+      "doc": "d293121d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-01-13",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001193125-22-008381",
+      "doc": "d246586d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-01-05",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001193125-22-002804",
+      "doc": "d264460d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-12-22",
+      "items": "1.01,9.01",
+      "acc": "0001193125-21-364610",
+      "doc": "d256135d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-29",
+      "items": "1.01",
+      "acc": "0001756761-21-000021",
+      "doc": "inreit_form8-kmm2x41.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-20",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-21-219711",
+      "doc": "d195942d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-06-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001756761-21-000007",
+      "doc": "a05-20218xkcortonaloan.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2021-06-30",
+      81281000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      186357000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

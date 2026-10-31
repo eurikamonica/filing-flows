@@ -1,0 +1,580 @@
+{
+  "cik": 1500881,
+  "ticker": "EU",
+  "name": "enCore Energy Corp.",
+  "sector": "materials",
+  "industry": "Miscellaneous Metal Ores",
+  "sic": "1090",
+  "sic_description": "Miscellaneous Metal Ores",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T02:57:18+00:00",
+  "price": 0.701,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.853062,
+  "snapshot": {
+    "total_debt": 110458000,
+    "cash": 21811000,
+    "operating_leases": 3211000,
+    "equity": 221919000,
+    "assets": 416673000,
+    "liabilities": 171501000,
+    "assets_current": 99478000,
+    "liabilities_current": 12433000,
+    "retained_earnings": -243748000,
+    "interest_expense": 6440000,
+    "interest_paid": 3559000,
+    "operating_income": -50400000,
+    "pretax_income": -71401000,
+    "net_income": -62331000,
+    "da": 5974000,
+    "ocf": -49865000,
+    "revenue": 55248000,
+    "shares": 194280971,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 110458000,
+    "cash_and_investments": 21811000.0,
+    "net_debt": 88647000.0,
+    "ebitda": -44426000,
+    "ebit": -50400000,
+    "interest_expense": 6440000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -7.826087,
+    "ebitda_coverage": -6.898447,
+    "cash_coverage": -13.010958,
+    "fcf": -49865000.0,
+    "fcf_to_debt": -0.451439,
+    "effective_rate": 0.058303,
+    "revolver_available": null,
+    "liquidity": 21811000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -0.358397,
+    "market_cap": 136190960.671,
+    "debt_to_ev": 0.491278,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible debt",
+          "face": 115000000.0,
+          "carrying": 115000000.0,
+          "coupon": null,
+          "conv_price": null,
+          "maturity": null
+        }
+      ],
+      "total_face": 115000000.0,
+      "in_the_money_face": 0,
+      "in_the_money_carrying": 0,
+      "shares_if_converted": 0,
+      "coupon_saved": 0
+    },
+    "implied": {
+      "dd": 1.73562,
+      "pd_1y": 0.041315,
+      "spread_5y_bps": 492.067684,
+      "asset_vol": 0.6219,
+      "calibrated_5y_bps": 165.883839,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 15
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 3211000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm",
+        "accession": "0001628280-26-056452",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 3211000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-056452",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "ppa",
+        "label": "Power purchase agreements",
+        "excerpt": "lans in October 2025 to restart the 601 MWe boiling water reactor. The effort was further supported by a power purchase agreement between NextEra and Google to supply electricity for Google’s Cedar Rapids data center, although the January 2028 licensing target remains subject to",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm",
+        "accession": "0001628280-26-056452",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "y consolidates entities that it controls due to ownership of a majority voting interest and consolidates variable interest entities (“VIEs”) when it is the primary beneficiary. All intercompany transactions and balances have been eliminated. The Company has a 70 % interest in th",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm",
+        "accession": "0001628280-26-056452",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "| 360 | 186 | Total current liabilities | 12,433 | 13,680 | Deferred tax liabilities | 26,190 | 26,384 | Asset retirement obligations | 19,569 | 18,915 | Convertible senior notes | 110,458 | 109,986 | Operating lease liabilities, non-current | 2,851 | 3,077 | Total liabilities | 171",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm",
+        "accession": "0001628280-26-056452",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-056452",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.2602,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 43155000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001628280-26-022507",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026022507/"
+        },
+        {
+          "value_usd": 58334000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001628280-26-022507",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026022507/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 4944000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001628280-26-022507",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026022507/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001628280-26-022507",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026022507/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -24992000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-022507",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026022507/"
+        },
+        {
+          "value_usd": -45204000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-022507",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026022507/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -56856000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-022507",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026022507/"
+        },
+        {
+          "value_usd": -61392000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-022507",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026022507/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ch point payment is unconditional. Accordingly, the Company’s uranium contracts generally do not give rise to contract assets or liabilities. The Company applies the optional exemption not to disclose the remaining transaction price that is variable and allocated to wholly",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm",
+        "accession": "0001628280-26-056452",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "one year and may include fixed prices, market-based prices, and other variable pricing. In many contracts the variable consideration is allocated entirely to a wholly unsatisfied performance obligation, having met the criteria to do so. Other contracts may require certain variable",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm",
+        "accession": "0001628280-26-056452",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "culation of diluted earnings per share, as they would be anti‑dilutive under the treasury stock method. 16. Related Party Transactions Related parties include key management of the Company and any entities controlled by these individuals or their direct family members. Key manageme",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1500881/000162828026056452/encr-20260630.htm",
+        "accession": "0001628280-26-056452",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Convertible debt",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "carrying": 115000000.0,
+      "floating": false
+    },
+    {
+      "name": "Convertible senior notes",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "conv_ratio": 0.303998,
+      "coupon": 0.066,
+      "conv_price": 3.29,
+      "floating": false
+    },
+    {
+      "name": "Cash Facility",
+      "kind": "notes",
+      "as_of": "2025-07-02",
+      "coupon": 0.1,
+      "capacity": 3600000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Convertible Senior Notes",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "conv_ratio": 0.303998,
+      "coupon": 0.066,
+      "conv_price": 3.29,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes payable",
+      "kind": "notes",
+      "as_of": "2025-08-22",
+      "coupon": 0.09,
+      "drawn": 0.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-03-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-02-14",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1500881/000150088125000002/exhibit105-uraniumloanagre.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-12-02",
+      "items": "1.01,5.02,7.01,8.01,9.01",
+      "acc": "0001193125-25-304433",
+      "doc": "d96469d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-22",
+      "items": "1.01,1.02,2.03,3.02,7.01,9.01",
+      "acc": "0001193125-25-186438",
+      "doc": "d22267d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-03",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-155536",
+      "doc": "d24478d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-09",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-25-076251",
+      "doc": "d913771d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-18",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-25-056175",
+      "doc": "d812682d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-02-27",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001193125-25-037583",
+      "doc": "d893278d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-09-30",
+      109315000,
+      91933000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      110220000,
+      41562000,
+      4861000,
+      -34721000,
+      -40183000,
+      0.0441
+    ],
+    [
+      "2026-06-30",
+      110458000,
+      21811000,
+      6440000,
+      -44426000,
+      -50400000,
+      0.0583
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-11",
+      334.2,
+      2.775,
+      0.8294,
+      154.7
+    ],
+    [
+      "2025-12",
+      349.55,
+      2.686,
+      0.8279,
+      155.6
+    ],
+    [
+      "2026-01",
+      322.45,
+      2.878,
+      0.8368,
+      153.6
+    ],
+    [
+      "2026-02",
+      351.09,
+      2.72,
+      0.8399,
+      155.3
+    ],
+    [
+      "2026-03",
+      297.81,
+      2.726,
+      0.7566,
+      155.2
+    ],
+    [
+      "2026-04",
+      276.93,
+      2.841,
+      0.7468,
+      154.0
+    ],
+    [
+      "2026-05",
+      288.69,
+      2.724,
+      0.741,
+      155.2
+    ],
+    [
+      "2026-06",
+      363.01,
+      2.395,
+      0.7862,
+      158.7
+    ],
+    [
+      "2026-07",
+      347.02,
+      2.347,
+      0.7576,
+      159.2
+    ],
+    [
+      "2026-08",
+      335.15,
+      2.452,
+      0.7617,
+      158.1
+    ],
+    [
+      "2026-09",
+      405.26,
+      2.214,
+      0.8182,
+      160.6
+    ],
+    [
+      "2026-10",
+      492.07,
+      1.736,
+      0.8531,
+      165.9
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

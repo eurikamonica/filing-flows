@@ -1,0 +1,243 @@
+{
+  "cik": 2076163,
+  "ticker": "SVIA",
+  "name": "Silvia, Inc.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "docs": {
+    "xbrl:0001493152-26-007352": {
+      "instruments": [
+        {
+          "name": "Two Thousand Twenty Eight Convertible Notes",
+          "kind": "convertible",
+          "as_of": "2025-12-31",
+          "carrying": 235000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-18",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001493152-26-037756": {
+      "instruments": [
+        {
+          "name": "Convertible Notes",
+          "kind": "convertible",
+          "as_of": "2026-02-09",
+          "face": 135400000.0,
+          "floating": false
+        },
+        {
+          "name": "Two Thousand Twenty Eight Convertible Notes",
+          "kind": "convertible",
+          "as_of": "2026-06-30",
+          "carrying": 99600000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-13",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Finance Services",
+  "snapshot": {
+    "cash": 15338000,
+    "operating_leases": 1034000,
+    "convertible": 92256000,
+    "convertible_current": 92256000,
+    "equity": 262794000,
+    "assets": 358452000,
+    "liabilities": 95658000,
+    "assets_current": 17036000,
+    "liabilities_current": 94344000,
+    "retained_earnings": -201782000,
+    "effective_rate": 0.09,
+    "stated_rate": 0,
+    "conversion_price": 13,
+    "shares": 88369575,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "convertible_current": "ConvertibleNotesPayableCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001493152-26-007352",
+  "xbrl_10-Q": "xbrl:0001493152-26-037756",
+  "events": [
+    {
+      "date": "2026-04-06",
+      "items": "1.01,2.01,3.02,5.02,7.01,9.01",
+      "acc": "0001493152-26-015249",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-09",
+      "items": "1.01,2.01,3.02,5.02,7.01,8.01,9.01",
+      "acc": "0001493152-26-005670",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-11",
+      "items": "1.01,2.01,2.03,3.02,3.03,5.01,5.02,5.03,5.05,5.06,7.01,9.01",
+      "acc": "0001213900-25-120791",
+      "doc": "ea0268757-8k_procap.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "fetched_at": "2026-10-26T04:56:24+00:00",
+  "signature": "0001493152-26-047785",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1034000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm",
+        "accession": "0001493152-26-037756",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 1034000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-037756",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "s (Topic 805) and Consolidation (Topic 810): Determining the Accounting Acquirer in the Acquisition of a Variable Interest Entity, which we early adopted. Following the Transaction, ProCap became the publicly traded parent company, and ProCap BTC became its operating subsidiary.",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm",
+        "accession": "0001493152-26-037756",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "and re-hypothecate this asset. On February 9, 2026, the Company entered into privately negotiated note repurchase agreements with certain holders of its outstanding Convertible Notes and repurchased $ 135.4 million in aggregate principal amount for an aggregate cash purchas",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm",
+        "accession": "0001493152-26-037756",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-037756",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "s to estimate expected credit losses for certain short-term financial assets, including trade receivables and contract assets, based on current conditions without requiring reasonable and supportable forecasts. The new guidance is effective for fiscal years beginning after D",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm",
+        "accession": "0001493152-26-037756",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "s (Topic 805) and Consolidation (Topic 810): Determining the Accounting Acquirer in the Acquisition of a Variable Interest Entity, which we early adopted. Following the Transaction, ProCap became the publicly traded parent company, and ProCap BTC became its operating subsidiary.",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm",
+      "accession": "0001493152-26-037756",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "and re-hypothecate this asset. On February 9, 2026, the Company entered into privately negotiated note repurchase agreements with certain holders of its outstanding Convertible Notes and repurchased $ 135.4 million in aggregate principal amount for an aggregate cash purchas",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm",
+      "accession": "0001493152-26-037756",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001493152-26-037756",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-037756",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "s to estimate expected credit losses for certain short-term financial assets, including trade receivables and contract assets, based on current conditions without requiring reasonable and supportable forecasts. The new guidance is effective for fiscal years beginning after D",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2076163/000149315226037756/form10-q.htm",
+      "accession": "0001493152-26-037756",
+      "form": "10-Q",
+      "filed": "2026-08-13"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-037756"
+}

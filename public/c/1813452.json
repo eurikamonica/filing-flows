@@ -1,0 +1,626 @@
+{
+  "cik": 1813452,
+  "ticker": "PLNH",
+  "name": "Planet 13 Holdings Inc.",
+  "sector": "consumer-staples",
+  "industry": "Agricultural Production-Crops",
+  "sic": "0100",
+  "sic_description": "Agricultural Production-Crops",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T02:53:36+00:00",
+  "price": 0.095,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.727929,
+  "snapshot": {
+    "total_debt": 11015683,
+    "current_debt": 9750000,
+    "cash": 6581239,
+    "operating_leases": 44149666,
+    "equity": 38799958,
+    "assets": 144277950,
+    "liabilities": 105477992,
+    "assets_current": 37458725,
+    "liabilities_current": 20843615,
+    "retained_earnings": -333713361,
+    "interest_paid": 6801445,
+    "pretax_income": -50218997,
+    "net_income": -62257534,
+    "da": 9529258,
+    "ocf": -7345943,
+    "capex": 2692695,
+    "revenue": 92444183,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 0,
+      "rest_of_year": 9750000,
+      "y2": 0,
+      "y3": 1265683,
+      "y4": 0,
+      "y5": 0
+    },
+    "shares": 335319455,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 11015683,
+    "cash_and_investments": 6581239.0,
+    "net_debt": 4434444.0,
+    "ebitda": -40689739.0,
+    "ebit": -50218997.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": -0.080056,
+    "fcf": -10038638,
+    "fcf_to_debt": -0.911304,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 6581239.0,
+    "due_12m": 0,
+    "due_24m": 0,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 9750000.0,
+    "floating_share": 0.885102,
+    "plus100bp_interest": 97500.0,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -3.426685,
+    "market_cap": 31855348.225,
+    "debt_to_ev": 0.303548,
+    "convertibles": null,
+    "implied": {
+      "dd": 2.304221,
+      "pd_1y": 0.010605,
+      "spread_5y_bps": 323.82596,
+      "asset_vol": 0.556384,
+      "calibrated_5y_bps": 159.661627,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 44149666.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926027320/plnh20260630_10q.htm",
+        "accession": "0001437749-26-027320",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 44149666.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-027320",
+            "filed": "2026-08-12",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926027320/plnh20260630_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "s are entities in which the Company has a controlling voting interest or is the primary beneficiary of a variable interest entity. Subsidiaries are fully consolidated from the date control is transferred to the Company and are deconsolidated from the date control ceases. All int",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926027320/plnh20260630_10q.htm",
+        "accession": "0001437749-26-027320",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "construction_capex",
+        "label": "Construction / CapEx commitments",
+        "excerpt": "ts were due to related parties ( December 31, 2025 - $ 5,935 ). 16. Commitments and Contingencies | (a) Construction Commitments The Company had $ 0 of outstanding construction commitments as of June 30, 2026 ( December 31, 2025 - $ 383,494 ). 20 Table of Contents PLANET",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926027320/plnh20260630_10q.htm",
+        "accession": "0001437749-26-027320",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "on a straight-line basis over the lease term. The Company’s lease agreements do not contain any material residual value guarantees or material restrictive covenants. 14 Table of Contents PLANET 13 HOLDINGS INC. Notes to the Interim Condensed Consolidated Financial Statemen",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926027320/plnh20260630_10q.htm",
+        "accession": "0001437749-26-027320",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-027320",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926027320/plnh20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.1119,
+      "receivables_growth": -0.3158,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.7704,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 103378829.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001437749-26-009785",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926009785/"
+        },
+        {
+          "value_usd": 116408966.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001437749-26-009785",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926009785/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1007891.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-009785",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926009785/"
+        },
+        {
+          "value_usd": 1473156.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-009785",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926009785/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -14191888.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-009785",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926009785/"
+        },
+        {
+          "value_usd": 5210899.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-009785",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926009785/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -63923695.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-009785",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926009785/"
+        },
+        {
+          "value_usd": -47796856.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-009785",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926009785/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "| $ | 226,731 | Reclassification of long term lease liabilities to current | $ | 165,419 | $ | 267,007 | 15. Related Party Transactions and Balances | Related party transactions are summarized as follows: (a) Building Lease As part of the VidaCann acquisition on May 9, 2024, the Com",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774926027320/plnh20260630_10q.htm",
+        "accession": "0001437749-26-027320",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Promissory Note to VidaCann Former Managers",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "maturity": "2029-05-06",
+      "coupon": 0.075,
+      "effective": 0.15,
+      "floating": false
+    },
+    {
+      "name": "Bank of Nevada Revolving Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "maturity": "2027-06-30",
+      "drawn": 9750000.0,
+      "coupon": 0.0565,
+      "effective": 0.0565,
+      "floating": true
+    },
+    {
+      "name": "Promissory note dated November 4, 2015",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "maturity": "2019-12-01",
+      "coupon": 0.05,
+      "effective": 0.05,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Promissory Note to Former VidaCann Shareholders",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "maturity": "2025-04-01",
+      "coupon": 0.05,
+      "effective": 0.15,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Promissory Note to La Fayette State Bank",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "maturity": "2025-02-20",
+      "coupon": 0.1,
+      "effective": 0.15,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-05-14",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-02-02",
+      "title": "- Loan Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1813452/000143774924016374/ex_668539.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-31",
+      "items": "1.01,9.01",
+      "acc": "0001437749-26-025119",
+      "doc": "plnh20260730_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-05-14",
+      "items": "2.01,2.03,3.02,5.02,7.01,9.01",
+      "acc": "0001437749-24-016374",
+      "doc": "plnh20240506c_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-04-29",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001437749-24-013545",
+      "doc": "plnh20240426_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-03-07",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001437749-24-006905",
+      "doc": "plnh20240306_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-01-22",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001437749-24-001832",
+      "doc": "plnh20240119_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-08-29",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001437749-23-024785",
+      "doc": "plnhf20230807_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-08-05",
+      "items": "1.01,9.01",
+      "acc": "0001654954-22-010685",
+      "doc": "plth_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-03-31",
+      10038499,
+      15556553,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      11838965,
+      15853538,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      11853475,
+      17181080,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      10999574,
+      6007037,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      11015683,
+      6581239,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      187.48,
+      3.521,
+      0.7608,
+      147.1
+    ],
+    [
+      "2025-06",
+      197.27,
+      3.415,
+      0.7491,
+      148.2
+    ],
+    [
+      "2025-07",
+      229.98,
+      3.322,
+      0.8007,
+      149.1
+    ],
+    [
+      "2025-08",
+      131.64,
+      3.905,
+      0.7132,
+      143.4
+    ],
+    [
+      "2025-09",
+      184.16,
+      3.476,
+      0.7284,
+      147.6
+    ],
+    [
+      "2025-10",
+      204.63,
+      3.357,
+      0.7435,
+      148.8
+    ],
+    [
+      "2025-11",
+      224.45,
+      3.266,
+      0.7602,
+      149.7
+    ],
+    [
+      "2025-12",
+      357.47,
+      2.768,
+      0.8654,
+      154.8
+    ],
+    [
+      "2026-01",
+      373.48,
+      2.661,
+      0.8599,
+      155.9
+    ],
+    [
+      "2026-02",
+      376.21,
+      2.639,
+      0.858,
+      156.1
+    ],
+    [
+      "2026-03",
+      386.2,
+      2.53,
+      0.849,
+      157.3
+    ],
+    [
+      "2026-04",
+      251.1,
+      3.02,
+      0.7456,
+      152.2
+    ],
+    [
+      "2026-05",
+      241.65,
+      3.086,
+      0.7475,
+      151.5
+    ],
+    [
+      "2026-06",
+      262.91,
+      2.936,
+      0.7512,
+      153.0
+    ],
+    [
+      "2026-07",
+      213.62,
+      3.115,
+      0.7023,
+      151.2
+    ],
+    [
+      "2026-08",
+      221.16,
+      3.127,
+      0.723,
+      151.1
+    ],
+    [
+      "2026-09",
+      210.45,
+      3.178,
+      0.721,
+      150.6
+    ],
+    [
+      "2026-10",
+      261.09,
+      2.813,
+      0.7279,
+      154.3
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

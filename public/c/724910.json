@@ -1,0 +1,434 @@
+{
+  "cik": 724910,
+  "ticker": "NVEC",
+  "name": "NVE CORP /NEW/",
+  "sector": "technology",
+  "industry": "Semiconductors & Related Devices",
+  "sic": "3674",
+  "sic_description": "Semiconductors & Related Devices",
+  "generated_at": "2026-10-31T14:35:16+00:00",
+  "fetched_at": "2026-10-26T03:07:07+00:00",
+  "price": 72.64,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.632619,
+  "snapshot": {
+    "cash": 3969958,
+    "investments": 19678659,
+    "operating_leases": 871320,
+    "equity": 57976346,
+    "assets": 59861750,
+    "liabilities": 1885404,
+    "assets_current": 35056338,
+    "liabilities_current": 1206706,
+    "retained_earnings": 38204473,
+    "operating_income": 18951206,
+    "pretax_income": 20785240,
+    "net_income": 17879889,
+    "da": 460028,
+    "ocf": 19802155,
+    "capex": 1142125,
+    "revenue": 31260631,
+    "shares": 4844079,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 23648617,
+    "net_debt": null,
+    "ebitda": 19411234,
+    "ebit": 18951206,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 18660030,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 23648617.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 115.117292,
+    "market_cap": 351873898.56,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 871320.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000664/nvec-20260930_10q.htm",
+        "accession": "0001376474-26-000664",
+        "form": "10-Q",
+        "filed": "2026-10-21",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 871320.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001376474-26-000664",
+            "filed": "2026-10-21",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000664/nvec-20260930_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001376474-26-000664",
+      "form": "10-Q",
+      "filed": "2026-10-21",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000664/nvec-20260930_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": -0.1073,
+      "receivables_growth": -0.0502,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.0639,
+      "ocf_to_net_income": 1.096
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1109300.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001376474-26-000348",
+          "filed": "2026-05-06",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000348/"
+        },
+        {
+          "value_usd": 1242592.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001376474-26-000348",
+          "filed": "2026-05-06",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000348/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 3408941.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001376474-26-000348",
+          "filed": "2026-05-06",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000348/"
+        },
+        {
+          "value_usd": 3589268.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001376474-26-000348",
+          "filed": "2026-05-06",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000348/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 16657997.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001376474-26-000348",
+          "filed": "2026-05-06",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000348/"
+        },
+        {
+          "value_usd": 14310418.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001376474-26-000348",
+          "filed": "2026-05-06",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000348/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 15199195.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001376474-26-000348",
+          "filed": "2026-05-06",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000348/"
+        },
+        {
+          "value_usd": 15064516.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001376474-26-000348",
+          "filed": "2026-05-06",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000348/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "-05, Financial Instruments—Credit Losses (Topic 326)—Measurement of Credit Losses for Accounts Receivable and Contract Assets . ASU 2025-05 aims to reduce the cost and complexity of estimating credit losses while maintaining decision-useful information for financial statemen",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/724910/000137647426000664/nvec-20260930_10q.htm",
+        "accession": "0001376474-26-000664",
+        "form": "10-Q",
+        "filed": "2026-10-21"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-12-17",
+      "items": "1.01",
+      "acc": "0001376474-25-000978",
+      "doc": "nvec-20060101_8kz.htm",
+      "desc": "NVE CORP - FORM 8-K/A SEC FILING"
+    },
+    {
+      "date": "2025-02-13",
+      "items": "1.01",
+      "acc": "0001376474-25-000205",
+      "doc": "nvec-20060101.htm",
+      "desc": "NVE CORP - FORM 8-K/A SEC FILING"
+    },
+    {
+      "date": "2024-11-07",
+      "items": "1.01",
+      "acc": "0001376474-24-000647",
+      "doc": "nvec-19981001.htm",
+      "desc": "NVE CORP - FORM 8-K/A SEC FILING"
+    },
+    {
+      "date": "2024-01-03",
+      "items": "1.01",
+      "acc": "0001376474-24-000002",
+      "doc": "nvec-20060101.htm",
+      "desc": "NVE CORP - FORM 8-K SEC FILING AMENDMENT"
+    },
+    {
+      "date": "2023-07-19",
+      "items": "1.01",
+      "acc": "0001376474-23-000366",
+      "doc": "nvec-20090501.htm",
+      "desc": "NVE CORP - FORM 8-K SEC FILING AMENDMENT"
+    },
+    {
+      "date": "2023-01-25",
+      "items": "1.01",
+      "acc": "0001376474-23-000055",
+      "doc": "nvec-20060101.htm",
+      "desc": "NVE CORP - FORM 8-K/A SEC FILING"
+    },
+    {
+      "date": "2022-02-02",
+      "items": "1.01",
+      "acc": "0000724910-22-000006",
+      "doc": "NVE-ABT_AMENDMENT-8_2022_8K.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K (AMENDMENT NO. 7)"
+    },
+    {
+      "date": "2020-12-21",
+      "items": "1.01",
+      "acc": "0000724910-20-000041",
+      "doc": "NVE-STJ_AMENDMENT-6_2020_8K.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K (AMENDMENT NO. 6)"
+    },
+    {
+      "date": "2020-03-03",
+      "items": "1.01",
+      "acc": "0000724910-20-000010",
+      "doc": "bldg-lease-renewal_8K.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K (AMENDMENT NO. 4)"
+    },
+    {
+      "date": "2020-02-18",
+      "items": "1.01",
+      "acc": "0000724910-20-000008",
+      "doc": "Sonova_1st-amd_8K.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K (AMENDMENT NO. 4)"
+    },
+    {
+      "date": "2016-04-21",
+      "items": "1.01",
+      "acc": "0000724910-16-000048",
+      "doc": "NVE-STJ_AMENDMENT-5_2015_8K.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K/A (AMENDMENT NO. 5)"
+    },
+    {
+      "date": "2016-02-10",
+      "items": "1.01",
+      "acc": "0000724910-16-000046",
+      "doc": "NVE-STJ_SQA_8K.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2015-11-16",
+      "items": "1.01",
+      "acc": "0000724910-15-000040",
+      "doc": "Phonak_Amendment-3_8K.htm",
+      "desc": "CURRENT REPORT AMENDMENT"
+    },
+    {
+      "date": "2013-07-01",
+      "items": "1.01",
+      "acc": "0000724910-13-000021",
+      "doc": "NVE-Avago_Amendment_2013_8K.htm",
+      "desc": "NVE CORPORATION-AVAGO AGREEMENT"
+    },
+    {
+      "date": "2011-08-03",
+      "items": "1.01,9.01",
+      "acc": "0000724910-11-000022",
+      "doc": "lease-11.htm",
+      "desc": "AMENDMENT TO CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2011-04-15",
+      "items": "1.01,9.01",
+      "acc": "0000724910-11-000009",
+      "doc": "lease-11.htm",
+      "desc": "MENDMENT TO CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2011-02-07",
+      "items": "1.01,9.01",
+      "acc": "0000724910-11-000006",
+      "doc": "sjm8k-11.htm",
+      "desc": "AMENDMENT NO. 4 TO CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2011-01-12",
+      "items": "1.01,9.01",
+      "acc": "0000724910-11-000001",
+      "doc": "phnk8k-a.htm",
+      "desc": "AMENDMENT NO. 2 TO CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2010-09-16",
+      "items": "1.01,9.01",
+      "acc": "0000724910-10-000022",
+      "doc": "sjm8k-10.htm",
+      "desc": "AMENDMENT NO. 3 TO CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2010-06-28",
+      "items": "1.01,9.01",
+      "acc": "0000724910-10-000014",
+      "doc": "avago-10.htm",
+      "desc": "AMENDMENT NO. 3 TO CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2010-05-12",
+      "items": "1.01,9.01",
+      "acc": "0000724910-10-000008",
+      "doc": "phonak8k.htm",
+      "desc": "AMENDMENT NO. 1 TO CURRENT REPORT ON FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

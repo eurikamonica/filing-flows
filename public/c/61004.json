@@ -1,0 +1,717 @@
+{
+  "cik": 61004,
+  "ticker": "LGL",
+  "name": "LGL GROUP INC",
+  "sector": "technology",
+  "industry": "Electronic Components, NEC",
+  "sic": "3679",
+  "sic_description": "Electronic Components, NEC",
+  "generated_at": "2026-10-31T14:35:15+00:00",
+  "fetched_at": "2026-10-26T03:17:49+00:00",
+  "price": 6.75,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.294336,
+  "snapshot": {
+    "cash": 45115000,
+    "investments": 41000,
+    "operating_leases": 247000,
+    "equity": 44342000,
+    "assets": 49684000,
+    "liabilities": 2097000,
+    "assets_current": 47006000,
+    "liabilities_current": 1811000,
+    "retained_earnings": -6915000,
+    "operating_income": -993000,
+    "pretax_income": -993000,
+    "net_income": -230000,
+    "ocf": 28000,
+    "revenue": 4565000,
+    "effective_rate": 0.0325,
+    "shares": 12613149,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (four quarters)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (four quarters)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 45156000,
+    "net_debt": null,
+    "ebitda": -993000.0,
+    "ebit": -993000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 28000.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 45156000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 25.282812,
+    "market_cap": 85138755.75,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "es | 7 | 3. | Segment Information | 9 | 4. | Investments | 13 | 5. | Fair Value Measurements | 13 | 6. | Variable Interest Entities | 16 | 7. | Related Party Transactions | 18 | 8. | Income Taxes | 20 | 9. | Stock-Based Compensation | 20 | 10. | Stockholders' Equity | 21 | 11. | E",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926028064/lglg20260630_10q.htm",
+        "accession": "0001437749-26-028064",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-028064",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926028064/lglg20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.102,
+      "receivables_growth": 0.1602,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.0529,
+      "ocf_to_net_income": 0.1017
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": 0.1017,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2453000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001437749-26-010362",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926010362/"
+        },
+        {
+          "value_usd": 2226000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001437749-26-010362",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926010362/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 572000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-010362",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926010362/"
+        },
+        {
+          "value_usd": 493000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-010362",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926010362/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 70000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-010362",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926010362/"
+        },
+        {
+          "value_usd": 874000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-010362",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926010362/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 688000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-010362",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926010362/"
+        },
+        {
+          "value_usd": 432000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-010362",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926010362/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "| 9 | 4. | Investments | 13 | 5. | Fair Value Measurements | 13 | 6. | Variable Interest Entities | 16 | 7. | Related Party Transactions | 18 | 8. | Income Taxes | 20 | 9. | Stock-Based Compensation | 20 | 10. | Stockholders' Equity | 21 | 11. | Earnings Per Share | 23 | 12. | Continge",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/61004/000143774926028064/lglg20260630_10q.htm",
+        "accession": "0001437749-26-028064",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2009-08-25",
+      "agreement_kind": "amendment",
+      "dated": "2004-10-14",
+      "title": "- Loan Agreement",
+      "facility": "revolving",
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 5500000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Borrowers will maintain at all times a consolidated Tangible Net Worth of not less than $5,500,000, measured at the end of each calendar quarter."
+        },
+        {
+          "type": "net_worth",
+          "limit": 2.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Borrowers will maintain at all times a consolidated ratio of total liabilities minus Subordinated Debt to Tangible Net Worth of not greater than 2.75 to 1, measured at the end of each calendar quarter."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/61004/000006100409000039/f492688mtronloanagreement9.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2004-08-12",
+      "agreement_kind": "credit_agreement",
+      "dated": "2004-05-14",
+      "facility": "term loan",
+      "benchmarks": [
+        "Base Rate"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/61004/000095013504003950/b51118lcexv10wxppy.txt"
+    },
+    {
+      "kind": "agreement",
+      "date": "2004-08-12",
+      "agreement_kind": "amendment",
+      "dated": "2002-06-10",
+      "title": "Restated Credit Agreement",
+      "facility": "loan",
+      "maturity": "2005-05-31",
+      "url": "https://www.sec.gov/Archives/edgar/data/61004/000095013504003950/b51118lcexv10wxooy.txt"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-06-04",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001437749-25-019435",
+      "doc": "lglg20250513_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-04-17",
+      "items": "1.01,7.01,8.01",
+      "acc": "0001437749-25-012200",
+      "doc": "lglg20250407_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-12-31",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001437749-24-038627",
+      "doc": "lglg20241231_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-10-12",
+      "items": "1.01,2.01,5.01,8.01,9.01",
+      "acc": "0001564590-22-034098",
+      "doc": "lgl-8k_20221012.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-24",
+      "items": "1.01,9.01",
+      "acc": "0001564590-22-030054",
+      "doc": "lgl-8k_20220824.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-09",
+      "items": "1.01,9.01",
+      "acc": "0001564590-22-028732",
+      "doc": "lgl-8k_20220809.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-06-21",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-22-023779",
+      "doc": "lgl-8k_20220615.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-05-15",
+      "items": "1.01,1.02,2.02,2.03,7.01,9.01",
+      "acc": "0001564590-20-025849",
+      "doc": "lgl-8k_20200513.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-04-20",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001564590-20-017442",
+      "doc": "lgl-8k_20200415.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-01-23",
+      "items": "1.01,9.01",
+      "acc": "0000921895-20-000155",
+      "doc": "form8k03725043_01222020.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-10-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000061004-14-000061",
+      "doc": "lgl8k_20141002.htm",
+      "desc": "LGL 8-K 20141002"
+    },
+    {
+      "date": "2014-06-17",
+      "items": "1.01,5.02,5.03,9.01",
+      "acc": "0000921895-14-001433",
+      "doc": "form8k03725010_06112014.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-05-09",
+      "items": "1.01",
+      "acc": "0000061004-14-000022",
+      "doc": "lgl8k_20140509.htm",
+      "desc": "LGL 8-K 20140509 LOAN EXTENSION"
+    },
+    {
+      "date": "2014-02-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000061004-14-000003",
+      "doc": "lgl8k_20140203.htm",
+      "desc": "LGL 8-K 20140203"
+    },
+    {
+      "date": "2013-10-07",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0000061004-13-000091",
+      "doc": "lgl8k_20131007.htm",
+      "desc": "LGL 8K 20131007"
+    },
+    {
+      "date": "2013-09-23",
+      "items": "1.01,9.01",
+      "acc": "0000061004-13-000086",
+      "doc": "lgl8k_20130923.htm",
+      "desc": "LGL 8-K 20130923"
+    },
+    {
+      "date": "2013-09-19",
+      "items": "1.01,9.01",
+      "acc": "0000061004-13-000084",
+      "doc": "lgl8k_20130919.htm",
+      "desc": "LGL 8-K 20130919"
+    },
+    {
+      "date": "2013-07-02",
+      "items": "1.01,9.01",
+      "acc": "0000061004-13-000042",
+      "doc": "lgl_8k20130630.htm",
+      "desc": "LGL FORM 8-K 06/2013 CHASE LOAN SECOND RENEWAL PROMISSORY NOTE"
+    },
+    {
+      "date": "2012-10-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000061004-12-000048",
+      "doc": "form8k09282012.htm",
+      "desc": "FORM 8-K CHASE LOAN AMENDMENT"
+    },
+    {
+      "date": "2012-07-02",
+      "items": "1.01,9.01",
+      "acc": "0000061004-12-000033",
+      "doc": "lgl8k2012628_loanamendment.htm",
+      "desc": ""
+    },
+    {
+      "date": "2011-11-14",
+      "items": "1.01,5.02,9.01",
+      "acc": "0000061004-11-000057",
+      "doc": "lgl8-k11102011.htm",
+      "desc": "LGL FORM 8-K"
+    },
+    {
+      "date": "2011-07-07",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0000061004-11-000030",
+      "doc": "form8k06302011.htm",
+      "desc": "FORM 8-K CHASE LOAN"
+    },
+    {
+      "date": "2011-02-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000061004-11-000004",
+      "doc": "lgl8k_20110201.htm",
+      "desc": "LGL 8-K OFFERING AND UNDERWRITING AGREEMENT V20110201"
+    },
+    {
+      "date": "2010-08-05",
+      "items": "1.01,9.01",
+      "acc": "0000061004-10-000023",
+      "doc": "lgl8k_20100805.htm",
+      "desc": "LGL FORM 8-K 20100805"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2011-06-30",
+      536000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-09-30",
+      483000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-06-30",
+      231000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      145000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-31",
+      0,
+      null,
+      81000,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-30",
+      0,
+      null,
+      64000,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-09-30",
+      0,
+      null,
+      44000,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2011-08",
+      274.74,
+      3.286,
+      0.8091,
+      149.5
+    ],
+    [
+      "2011-09",
+      185.58,
+      3.792,
+      0.7667,
+      144.5
+    ],
+    [
+      "2011-10",
+      118.91,
+      4.204,
+      0.685,
+      140.5
+    ],
+    [
+      "2011-11",
+      84.01,
+      4.531,
+      0.6419,
+      137.5
+    ],
+    [
+      "2011-12",
+      80.81,
+      4.57,
+      0.6382,
+      137.1
+    ],
+    [
+      "2012-01",
+      38.72,
+      5.233,
+      0.5776,
+      131.1
+    ],
+    [
+      "2012-02",
+      36.56,
+      5.295,
+      0.5807,
+      130.6
+    ],
+    [
+      "2012-03",
+      28.31,
+      5.458,
+      0.5428,
+      129.2
+    ],
+    [
+      "2012-04",
+      25.93,
+      5.531,
+      0.5377,
+      128.5
+    ],
+    [
+      "2012-05",
+      13.5,
+      6.012,
+      0.4893,
+      124.4
+    ],
+    [
+      "2012-06",
+      12.8,
+      6.037,
+      0.481,
+      124.2
+    ],
+    [
+      "2012-07",
+      18.04,
+      5.749,
+      0.4869,
+      126.7
+    ],
+    [
+      "2012-08",
+      0.18,
+      8.671,
+      0.3293,
+      104.1
+    ],
+    [
+      "2012-09",
+      0.0,
+      10.983,
+      0.3252,
+      89.1
+    ],
+    [
+      "2012-10",
+      0.0,
+      11.309,
+      0.3092,
+      87.1
+    ],
+    [
+      "2012-11",
+      0.0,
+      12.051,
+      0.3167,
+      82.9
+    ],
+    [
+      "2012-12",
+      0.0,
+      12.191,
+      0.3142,
+      82.1
+    ],
+    [
+      "2013-01",
+      0.0,
+      12.321,
+      0.3118,
+      81.4
+    ],
+    [
+      "2013-02",
+      0.0,
+      12.939,
+      0.2979,
+      78.1
+    ],
+    [
+      "2013-03",
+      0.0,
+      13.451,
+      0.291,
+      75.5
+    ],
+    [
+      "2013-04",
+      0.0,
+      12.527,
+      0.3027,
+      80.3
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "cik": 775057,
+  "ticker": "ALTX",
+  "name": "ALTEX INDUSTRIES INC",
+  "sector": "energy",
+  "industry": "Crude Petroleum & Natural Gas",
+  "sic": "1311",
+  "docs": {
+    "xbrl:0001096906-25-001949": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2025-11-28",
+      "report": "2025-09-30"
+    },
+    "xbrl:0001096906-26-001153": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-07-31",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Crude Petroleum & Natural Gas",
+  "snapshot": {
+    "cash": 2474000,
+    "equity": 1286000,
+    "assets": 2670000,
+    "liabilities": 1384000,
+    "assets_current": 2515000,
+    "liabilities_current": 1278000,
+    "retained_earnings": -12508000,
+    "net_income": -88000,
+    "da": 2000,
+    "ocf": -141000,
+    "revenue": 21000,
+    "shares": 11187640,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001096906-25-001949",
+  "xbrl_10-Q": "xbrl:0001096906-26-001153",
+  "events": [],
+  "fetched_at": "2026-10-26T04:58:46+00:00",
+  "signature": "0001096906-26-001153",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "enue and net income, the Company is likely to experience net losses. With the exception of unanticipated asset retirement obligations, unanticipated environmental expense, and possible changes in interest rates and oil and gas prices, the Company is not aware of any other trends, ev",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690626001153/altx-20260630_10q.htm",
+        "accession": "0001096906-26-001153",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001096906-26-001153",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690626001153/altx-20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.2174,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 18000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001096906-25-001949",
+          "filed": "2025-11-28",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690625001949/"
+        },
+        {
+          "value_usd": 23000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001096906-25-001949",
+          "filed": "2025-11-28",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690625001949/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -99000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001096906-25-001949",
+          "filed": "2025-11-28",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690625001949/"
+        },
+        {
+          "value_usd": -78000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001096906-25-001949",
+          "filed": "2025-11-28",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690625001949/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -192000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001096906-25-001949",
+          "filed": "2025-11-28",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690625001949/"
+        },
+        {
+          "value_usd": 437000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001096906-25-001949",
+          "filed": "2025-11-28",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690625001949/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-09-30",
+      "2024-09-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "asset_retirement",
+      "label": "Asset retirement obligations",
+      "excerpt": "enue and net income, the Company is likely to experience net losses. With the exception of unanticipated asset retirement obligations, unanticipated environmental expense, and possible changes in interest rates and oil and gas prices, the Company is not aware of any other trends, ev",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/775057/000109690626001153/altx-20260630_10q.htm",
+      "accession": "0001096906-26-001153",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "classification": "unverified_text_lead",
+      "review_lane": "B/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001096906-26-001153",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001096906-26-001153",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001096906-26-001153"
+}

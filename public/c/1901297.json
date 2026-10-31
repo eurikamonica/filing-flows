@@ -1,0 +1,426 @@
+{
+  "cik": 1901297,
+  "ticker": null,
+  "name": "ZRCN Inc.",
+  "sector": "technology",
+  "industry": "Miscellaneous Electrical Machinery, Equipment & Supplies",
+  "sic": "3690",
+  "sic_description": "Miscellaneous Electrical Machinery, Equipment & Supplies",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:07:37+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 79000,
+    "operating_leases": 316000,
+    "revolver_available": 4300000,
+    "revolver_drawn": 8161000,
+    "equity": -4193000,
+    "assets": 18363000,
+    "liabilities": 20799000,
+    "assets_current": 15100000,
+    "liabilities_current": 11363000,
+    "retained_earnings": -12917000,
+    "interest_expense": 814000,
+    "interest_paid": 25000,
+    "operating_income": -5230000,
+    "pretax_income": -6618000,
+    "net_income": -6570000,
+    "da": 700000,
+    "ocf": 315000,
+    "capex": 249000,
+    "revenue": 26560000,
+    "effective_rate": 0.055,
+    "stated_rate": 0.18,
+    "fixed_share": 0.0236,
+    "shares": 10360924,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "Cash",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "fixed_share": "LongTermDebtPercentageBearingFixedInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 79000.0,
+    "net_debt": null,
+    "ebitda": -4530000,
+    "ebit": -5230000,
+    "interest_expense": 814000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -6.425061,
+    "ebitda_coverage": -5.565111,
+    "cash_coverage": 13.6,
+    "fcf": 66000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 4300000,
+    "liquidity": 4379000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 316000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226045059/form10-q.htm",
+        "accession": "0001493152-26-045059",
+        "form": "10-Q",
+        "filed": "2026-09-30",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 316000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-045059",
+            "filed": "2026-09-30",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226045059/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "eficit attributable to ZRCN Inc. stockholders | ( 4,193 | ) | ( 2,756 | ) | Non-controlling interests in variable interest entities | 1,757 | 1,664 | Total stockholders’ deficit | ( 2,436 | ) | ( 1,092 | ) | Total liabilities and stockholders’ equity | $ | 18,363 | $ | 20,321 | Th",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226045059/form10-q.htm",
+        "accession": "0001493152-26-045059",
+        "form": "10-Q",
+        "filed": "2026-09-30",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-045059",
+      "form": "10-Q",
+      "filed": "2026-09-30",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226045059/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0422,
+      "receivables_growth": -0.1105,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.9288,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 26889000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-044549",
+          "filed": "2026-09-28",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226044549/"
+        },
+        {
+          "value_usd": 28075000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-044549",
+          "filed": "2026-09-28",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226044549/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 5428000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-044549",
+          "filed": "2026-09-28",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226044549/"
+        },
+        {
+          "value_usd": 6102000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-044549",
+          "filed": "2026-09-28",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226044549/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1504000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-044549",
+          "filed": "2026-09-28",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226044549/"
+        },
+        {
+          "value_usd": 2153000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-044549",
+          "filed": "2026-09-28",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226044549/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -7049000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001493152-26-044549",
+          "filed": "2026-09-28",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226044549/"
+        },
+        {
+          "value_usd": -2890000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001493152-26-044549",
+          "filed": "2026-09-28",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226044549/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "e customer’s specified location. Transaction prices are allocated to performance obligations and adjusted for variable consideration such as rebates, returns, discounts, and allowances, which are estimated using historical experience and current conditions. Cooperative advertising",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226045059/form10-q.htm",
+        "accession": "0001493152-26-045059",
+        "form": "10-Q",
+        "filed": "2026-09-30"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "of operating lease liability | ( 220 | ) | Operating lease liability, net of current portion | $ | 96 | 14. Related Party Transactions Zircon is a member of a controlled group of companies and has revenue and cost-sharing activities with other members of the controlled group. Resul",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226045059/form10-q.htm",
+        "accession": "0001493152-26-045059",
+        "form": "10-Q",
+        "filed": "2026-09-30"
+      },
+      {
+        "key": "revenue_recognition_change",
+        "label": "Revenue recognition policy change",
+        "excerpt": "expenses were less than $ 0.1 million for the three months ended June 30, 2026 and 2025. There have been no changes in our revenue recognition policy since filing the Company’s audited, consolidated financial statements and related notes included in our Annual Report for the year ended March 31, 20",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1901297/000149315226045059/form10-q.htm",
+        "accession": "0001493152-26-045059",
+        "form": "10-Q",
+        "filed": "2026-09-30"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Senior Secured Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-03-17",
+      "capacity": 12500000.0,
+      "floating": true
+    },
+    {
+      "name": "Stauss Family Administrative Trust",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "face": 1200000.0,
+      "effective": 0.055,
+      "floating": false
+    },
+    {
+      "name": "Stauss Family Administrative Trust1",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "face": 500000.0,
+      "effective": 0.06,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-03-23",
+      "items": "1.01",
+      "acc": "0001493152-26-012118",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-25",
+      "items": "2.04,9.01",
+      "acc": "0001493152-25-014988",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-21",
+      "items": "1.01,9.01",
+      "acc": "0001641172-25-020310",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-14",
+      "items": "2.04",
+      "acc": "0001641172-25-019524",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-10-21",
+      "items": "1.01",
+      "acc": "0001493152-24-041754",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-06-06",
+      "items": "1.01",
+      "acc": "0001493152-24-022976",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2023-11-13",
+      "items": "1.01",
+      "acc": "0001493152-23-040212",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2023-10-19",
+      "items": "2.04",
+      "acc": "0001493152-23-037643",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2023-04-20",
+      "items": "1.01,2.01,3.02,3.03,5.01,5.02,5.03,9.01",
+      "acc": "0001493152-23-013006",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2022-09-16",
+      "items": "1.01,3.02,5.02,8.01,9.01",
+      "acc": "0001493152-22-026022",
+      "doc": "form8-k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,558 @@
+{
+  "cik": 2105398,
+  "ticker": "CSQR",
+  "name": "Csquare, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Programming, Data Processing, Etc.",
+  "sic": "7370",
+  "sic_description": "Services-Computer Programming, Data Processing, Etc.",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-25T23:11:04+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 4890179000,
+    "cash": 120843000,
+    "finance_leases": 435996000,
+    "operating_leases": 359683000,
+    "equity": -388617000,
+    "assets": 6003314000,
+    "liabilities": 6391931000,
+    "assets_current": 548341000,
+    "liabilities_current": 328274000,
+    "retained_earnings": -1469893000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 1021000000,
+      "rest_of_year": 0,
+      "y2": 102000000,
+      "y3": 881000000,
+      "y4": 1300000000
+    },
+    "shares": 166633984,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 4890179000,
+    "cash_and_investments": 120843000.0,
+    "net_debt": 4769336000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 120843000.0,
+    "due_12m": 1021000000,
+    "due_24m": 1123000000,
+    "liquidity_to_due12": 0.118357,
+    "liquidity_to_due24": 0.107607,
+    "floating_debt": 1617000000.0,
+    "floating_share": 0.330663,
+    "plus100bp_interest": 16170000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 359683000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2105398/000210539826000004/csqr-20260630.htm",
+        "accession": "0002105398-26-000004",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 359683000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0002105398-26-000004",
+            "filed": "2026-08-10",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2105398/000210539826000004/csqr-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ed entities or financial partnerships, including entities sometimes referred to as structured finance or special purpose entities, that were established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes. Critical A",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2105398/000210539826000004/csqr-20260630.htm",
+        "accession": "0002105398-26-000004",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002105398-26-000004",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2105398/000210539826000004/csqr-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "a summary of the opening and closing balances of accounts receivable, net, as well as current and non-current contract assets and contract liabilities (in thousands): | Accounts receivable, net | Contract assets, current | Contract assets, non-current | Contract liabilities,",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2105398/000210539826000004/csqr-20260630.htm",
+        "accession": "0002105398-26-000004",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "n. As of June 30, 2026 and December 31, 2025 , the Company has not accrued any material potential loss. 14. Related Party Transactions Related Party Revenues and Expenses An affiliate of the Parent pays certain expenses and interest obligations on behalf of the Company. Amounts a",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2105398/000210539826000004/csqr-20260630.htm",
+        "accession": "0002105398-26-000004",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "yable | $ | 47,933 | $ | 34,477 | Accrued expenses | 123,578 | 128,606 | Due to related parties | 3,335 | — | Contract liabilities, current | 100,653 | 96,358 | Operating lease liabilities, current | 39,566 | 41,755 | Finance lease liabilities, current | 13,209 | 15,020 | Total c",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2105398/000210539826000004/csqr-20260630.htm",
+        "accession": "0002105398-26-000004",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 771000000.0,
+      "floating": true
+    },
+    {
+      "name": "Asset-Backed Secured Note Seventeen",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.066,
+      "carrying": 575000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-7 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 575000000.0,
+      "carrying": 575000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Nine",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.066,
+      "carrying": 445000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-1 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 445000000.0,
+      "carrying": 445000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Ten",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0688,
+      "carrying": 440000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-2 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 440000000.0,
+      "carrying": 440000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Six",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0707,
+      "carrying": 400000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Seven",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0731,
+      "carrying": 400000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2024-1 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 400000000.0,
+      "carrying": 400000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2024-2 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 400000000.0,
+      "carrying": 400000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Twelve",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0646,
+      "carrying": 395000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-3 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 395000000.0,
+      "carrying": 395000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Thirteen",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0678,
+      "carrying": 390000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-4 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 390000000.0,
+      "carrying": 390000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Sixteen",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.064,
+      "carrying": 335000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-6 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 335000000.0,
+      "carrying": 335000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note One",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0513,
+      "carrying": 250000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2020-2 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 250000000.0,
+      "carrying": 250000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Fifteen",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.064,
+      "carrying": 150000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-5 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 150000000.0,
+      "carrying": 150000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Four",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0527,
+      "carrying": 120000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2022-1 A-2",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 120000000.0,
+      "carrying": 120000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Eight",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0777,
+      "carrying": 85000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2024-1 B",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 85000000.0,
+      "carrying": 85000000.0,
+      "floating": false
+    },
+    {
+      "name": "Variable Funding Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 75000000.0,
+      "capacity_max": 25000000.0,
+      "spread": 0.0245,
+      "floating": true
+    },
+    {
+      "name": "Asset-Backed Secured Note Two",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0595,
+      "carrying": 61000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2021-1 B",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 61000000.0,
+      "carrying": 61000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Eleven",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0724,
+      "carrying": 55000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-1 B",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 55000000.0,
+      "carrying": 55000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Five",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0596,
+      "carrying": 51000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2022-1 B",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 51000000.0,
+      "carrying": 51000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Three",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0839,
+      "carrying": 41000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2021-1 C",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 41000000.0,
+      "carrying": 41000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Eighteen",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.0739,
+      "carrying": 40000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-6 B",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 40000000.0,
+      "carrying": 40000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Note Fourteen",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "effective": 0.069,
+      "carrying": 30000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset-Backed Secured Notes2025-3 B",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "face": 30000000.0,
+      "carrying": 30000000.0,
+      "floating": false
+    },
+    {
+      "name": "Fund Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "fee": 0.5,
+      "spread": 0.0175,
+      "drawn": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Two Thousand Twenty Four Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.0425,
+      "capacity_min": 200000000.0,
+      "capacity_max": 300000000.0,
+      "spread_max": 0.0425,
+      "spread_min": 0.03,
+      "drawn": 771000000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-07-17",
+      "items": "1.01,5.03,9.01",
+      "acc": "0001104659-26-084616",
+      "doc": "tm264837d22_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      4890179000,
+      120843000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,459 @@
+{
+  "cik": 1736946,
+  "ticker": "ARLO",
+  "name": "Arlo Technologies, Inc.",
+  "sector": "industrials",
+  "industry": "Services-Detective, Guard & Armored Car Services",
+  "sic": "7381",
+  "sic_description": "Services-Detective, Guard & Armored Car Services",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T01:21:23+00:00",
+  "price": 13.03,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.598637,
+  "snapshot": {
+    "cash": 101382000,
+    "operating_leases": 7729000,
+    "equity": 158525000,
+    "assets": 374582000,
+    "liabilities": 216057000,
+    "assets_current": 272650000,
+    "liabilities_current": 194456000,
+    "retained_earnings": -365134000,
+    "operating_income": 15603000,
+    "pretax_income": 31882000,
+    "net_income": 30542000,
+    "da": 6869000,
+    "ocf": 78245000,
+    "revenue": 587145000,
+    "shares": 107613304,
+    "balance_date": "2026-06-28",
+    "latest_period": "2026-06-28"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 101382000.0,
+    "net_debt": null,
+    "ebitda": 22472000,
+    "ebit": 15603000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 78245000.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 101382000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 4.484715,
+    "market_cap": 1402201351.12,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2024-11-14",
+        "text": "The Consolidated Group shall not permit the Fixed Charge Coverage Ratio, determined as of the end of each of its fiscal quarters, for the Test Period ending with the end of such fiscal quarter, to be less than 1.50 to 1.00."
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-28",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 7729000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000060/arlo-20260628.htm",
+        "accession": "0001736946-26-000060",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-28",
+        "evidence": [
+          {
+            "value_usd": 7729000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001736946-26-000060",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-28",
+            "url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000060/arlo-20260628.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "deferred_acquisition",
+        "label": "Deferred acquisition consideration",
+        "excerpt": "eration transferred consisted of the following (in thousands): Cash paid at close | $ | 36,000 | Fixed deferred acquisition consideration | 12,907 | Total purchase consideration | $ | 48,907 | The purchase price allocation is as follows (in thousands): Assets acquired: | Inventory | $",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000060/arlo-20260628.htm",
+        "accession": "0001736946-26-000060",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001736946-26-000060",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000060/arlo-20260628.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-28",
+    "metrics": {
+      "revenue_growth": 0.036,
+      "receivables_growth": -0.3081,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.363,
+      "dsri": 0.6678,
+      "ocf_to_net_income": 5.2742
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 529297000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        },
+        {
+          "value_usd": 510886000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 39666000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        },
+        {
+          "value_usd": 57332000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 37139000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        },
+        {
+          "value_usd": 27248000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 78722000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        },
+        {
+          "value_usd": 51306000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 14926000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        },
+        {
+          "value_usd": -30504000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001736946-26-000031",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000031/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "Standards Update (“ASU”) No. 2025-05, Credit Losses: Measurement of Credit Losses for Accounts Receivable and Contract Assets, which provides a practical expedient permitting companies to assume that conditions at the balance sheet date remain unchanged over the life of the",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000060/arlo-20260628.htm",
+        "accession": "0001736946-26-000060",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "ns that will be recognized as revenue once fulfilled, which is expected to occur over the next six months . Variable consideration Revenue from all sales is recognized at transaction price, the amount we expect to be entitled to in exchange for providing services or transferrin",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000060/arlo-20260628.htm",
+        "accession": "0001736946-26-000060",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "channel_inventory",
+        "label": "Channel inventory / incentives",
+        "excerpt": "ctice. Sales returns are estimated by analyzing certain factors, including historical sales and returns data, channel inventory levels, current economic trends, and changes in customer demand for our products. Variable consideration estimates are based on predictive historical",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000060/arlo-20260628.htm",
+        "accession": "0001736946-26-000060",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| LIABILITIES AND STOCKHOLDERS ’ EQUITY | Current liabilities: | Accounts payable | $ | 50,832 | $ | 42,826 | Deferred revenue | 50,842 | 37,139 | Accrued liabilities | 92,782 | 92,372 | Total current liabilities | 194,456 | 172,337 | Non-current operating lease liabilities |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736946/000173694626000060/arlo-20260628.htm",
+        "accession": "0001736946-26-000060",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-28",
+      "available": 45000000.0,
+      "spread_min": 0.0225,
+      "spread_max": 0.0275,
+      "drawn": 0.0,
+      "reference": "Base Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-28"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-11-18",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-11-14",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "maturity": "2027-11-14",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Consolidated Group shall not permit the Fixed Charge Coverage Ratio, determined as of the end of each of its fiscal quarters, for the Test Period ending with the end of such fiscal quarter, to be less than 1.50 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Applicable Rate ” means, for any day, with respect to any Base Rate Loan or SOFR Loan, or with respect to the commitment fees or letter of credit fees payable hereunder, as the case may be, the applicable rate per annum set forth below under the caption “Base Rate Spread,” “SOFR Spread,” or “Commitment Fee Rate,” “LC Fee Rate” as the case may be, based upon the Total Net Leverage Ratio applicable on such date: | Pr"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "iately before and after giving effect to such Acquisition, no Default shall exist; (d) immediately before and after giving effect to such Acquisition, the Consolidated Group shall be in pro forma compliance with all the financial ratios and restrictions set forth in Section 6.1 ; provided that, the Total Net Leverage Ratio, on a pro forma basis for such Acquisition, shall not be greater than (i) with respect to the n"
+        },
+        {
+          "type": "liquidity",
+          "limit": 50000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "limitation, Investments by way of contributions to capital or purchases of Equity Interests by any Loan Party) so long as (i) the Total Net Leverage Ratio, on a pro forma basis after giving effect to such Investment, is no greater than 2.00 to 1.00 at such time and (ii) after giving effect thereto, Liquidity is not less than $50,000,000;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1736946/000119312524260928/d877028dex101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2024-11-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-24-260928",
+      "doc": "d877028d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-29",
+      "items": "1.01,1.02,2.03",
+      "acc": "0001736946-21-000051",
+      "doc": "arlo-20211027.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-02",
+      "items": "1.01",
+      "acc": "0001736946-21-000026",
+      "doc": "arlo-20210629.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-11-07",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-19-287318",
+      "doc": "d810346d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-05-01",
+      "items": "1.01,9.01",
+      "acc": "0001193125-19-133323",
+      "doc": "d693416d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-07",
+      "items": "1.01,3.02,5.02,5.03,5.05,7.01,9.01",
+      "acc": "0001193125-18-241205",
+      "doc": "d562019d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

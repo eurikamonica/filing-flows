@@ -1,0 +1,511 @@
+{
+  "cik": 771266,
+  "ticker": "KOPN",
+  "name": "KOPIN CORP",
+  "sector": "technology",
+  "industry": "Semiconductors & Related Devices",
+  "sic": "3674",
+  "sic_description": "Semiconductors & Related Devices",
+  "generated_at": "2026-10-31T14:35:16+00:00",
+  "fetched_at": "2026-10-26T03:17:12+00:00",
+  "price": 3.38,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.900762,
+  "snapshot": {
+    "cash": 24876516,
+    "operating_leases": 1162596,
+    "equity": 69211219,
+    "assets": 106259963,
+    "liabilities": 37048744,
+    "assets_current": 79286270,
+    "liabilities_current": 36388354,
+    "retained_earnings": -402342417,
+    "operating_income": -9975326,
+    "pretax_income": 6036568,
+    "net_income": 7908248,
+    "da": 815804,
+    "ocf": -13108218,
+    "capex": 5315406,
+    "revenue": 2390266,
+    "shares": 185872614,
+    "balance_date": "2026-06-27",
+    "latest_period": "2026-06-27"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 24876516.0,
+    "net_debt": null,
+    "ebitda": -9159522,
+    "ebit": -9975326,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -18423624,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 24876516.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 5.070619,
+    "market_cap": 628249435.32,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-27",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1162596.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "as_of": "2026-06-27",
+        "evidence": [
+          {
+            "value_usd": 1162596.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-037194",
+            "filed": "2026-08-11",
+            "form": "10-Q",
+            "as_of": "2026-06-27",
+            "url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "0,000 | — | $ | 5,363,561 | $ | — | $ | 5,454,094 | $ | — | On June 10, 2026, Kopin entered into a Share Repurchase Agreement with Lightning Silicon Technology, Inc. (“LST”) and LS Assets, Inc. (“LSA”). Under the Share Repurchase Agreement, LST repurchased 18,000,000 share",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "19,700,000 | Total current liabilities | 36,388,354 | 33,988,324 | Non-current contract liabilities, and asset retirement obligations | 1,780 | 3,675 | Operating lease liabilities, net of current portion | 488,106 | 831,507 | Accrued post-retirement benefits, net of current portion",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-037194",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-27",
+    "metrics": {
+      "revenue_growth": -0.2188,
+      "receivables_growth": -0.0948,
+      "contract_assets_growth": -0.1472,
+      "contract_liabilities_growth": 12.3103,
+      "dsri": 1.1586,
+      "ocf_to_net_income": -5.9613
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": -5.9613,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 39323731.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        },
+        {
+          "value_usd": 50335167.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 10726776.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        },
+        {
+          "value_usd": 11850654.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        }
+      ],
+      "contract_assets": [
+        {
+          "value_usd": 6032913.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        },
+        {
+          "value_usd": 7074020.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        }
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 1168009.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        },
+        {
+          "value_usd": 87752.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -15538486.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        },
+        {
+          "value_usd": -14226605.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 2606549.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        },
+        {
+          "value_usd": -43877896.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-016338",
+          "filed": "2026-04-13",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "of $ 19,300 and $ 19,000 at June 27, 2026 and December 27, 2025, respectively | 10,729,034 | 10,726,776 | Contract assets | 4,946,766 | 6,032,913 | Grant income receivable | 401,614 | — | Inventory | 4,725,211 | 5,505,775 | Other receivable, at fair value | 4,506,735 | 5",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "in exchange for transferring products to the customer. The Company historically does not have contracts with variable consideration but to the extent the transaction price includes variable consideration, the Company estimates the amount of variable consideration that should be",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "y $ 0.6 million and $ 0.3 million, respectively, in related interest within Other accrued liabilities. 18. RELATED PARTY TRANSACTIONS The Company may from time to time enter into agreements with shareholders, affiliates and other companies engaged in certain aspects of the display",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "for as one performance obligation. If there is a follow-on production contract it is assessed whether it is a contract modification or a new contract. In situations where control transfers over time, revenue is recognized based on the extent of progress towards completion of the",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "excess of revenue earned on the consolidated balance sheets. Advanced payments typically are not considered a significant financing component because it is used to meet working capital demands that can be higher in the early stages of a contract and to protect the Company from the other par",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| 5,315,998 | Accrued payroll and expenses | 3,268,744 | 2,231,848 | Accrued warranty | 52,000 | 1,165,000 | Contract liabilities | 6,955,245 | 1,168,009 | Deferred grant income | — | 2,688,627 | Operating lease liabilities | 674,490 | 648,469 | Accrued post-retirement benefits",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/771266/000149315226037194/form10-q.htm",
+        "accession": "0001493152-26-037194",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-27",
+      "2024-12-28"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-04-29",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001493152-26-019422",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-16",
+      "items": "1.01,3.02,5.03,7.01,9.01",
+      "acc": "0001493152-25-018325",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-10",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-017758",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-03",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-016852",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-30",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001493152-25-016294",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-05",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001493152-25-012729",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-14",
+      "items": "1.01",
+      "acc": "0001641172-25-024169",
+      "doc": "form8-ka.htm",
+      "desc": "8-K/A"
+    },
+    {
+      "date": "2025-08-12",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001493152-25-011855",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-01-24",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-003578",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-03-05",
+      "items": "1.01,9.01",
+      "acc": "0001193125-21-071638",
+      "doc": "d112452d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-04-27",
+      "items": "1.01,2.03",
+      "acc": "0001493152-20-007145",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-10-04",
+      "items": "1.01",
+      "acc": "0000771266-19-000080",
+      "doc": "kopn-2019930x8xk.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-02-08",
+      "items": "1.01,9.01",
+      "acc": "0000771266-19-000015",
+      "doc": "kopn-201928x8xk.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-01-10",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-13-009541",
+      "doc": "d465960d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-09-16",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001193125-11-250534",
+      "doc": "d233693d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-01-11",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001193125-11-005926",
+      "doc": "d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

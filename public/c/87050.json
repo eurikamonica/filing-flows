@@ -1,0 +1,423 @@
+{
+  "cik": 87050,
+  "ticker": "NEON",
+  "name": "Neonode Inc.",
+  "sector": "technology",
+  "industry": "Electronic Components, NEC",
+  "sic": "3679",
+  "sic_description": "Electronic Components, NEC",
+  "generated_at": "2026-10-31T14:35:17+00:00",
+  "fetched_at": "2026-10-26T03:22:34+00:00",
+  "price": 0.7539,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.695061,
+  "snapshot": {
+    "cash": 21320000,
+    "finance_leases": 27000,
+    "operating_leases": 344000,
+    "equity": 20760000,
+    "assets": 23634000,
+    "liabilities": 2874000,
+    "assets_current": 22376000,
+    "liabilities_current": 2061000,
+    "retained_earnings": -219561000,
+    "interest_paid": 0,
+    "operating_income": 7054000,
+    "pretax_income": 7822000,
+    "net_income": 8120000,
+    "da": 60000,
+    "ocf": -11146000,
+    "capex": 90000,
+    "revenue": 2041000,
+    "effective_rate": 0.05,
+    "stated_rate": 0.025,
+    "conversion_price": 6.5,
+    "shares": 16782922,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 21320000.0,
+    "net_debt": null,
+    "ebitda": 7114000,
+    "ebit": 7054000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -11236000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 21320000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -8.261813,
+    "market_cap": 12652644.8958,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-027162",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926027162/neon20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.3366,
+      "receivables_growth": null,
+      "contract_assets_growth": -1.0,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": -1.2073
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": -1.2073,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2062000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        },
+        {
+          "value_usd": 3108000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        },
+        {
+          "value_usd": 51000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        }
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 37000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -10254000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        },
+        {
+          "value_usd": -5592000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 8493000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        },
+        {
+          "value_usd": -6466000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-008759",
+          "filed": "2026-03-18",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926008759/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "Financial Instruments – Credit Losses (Topic 326 ) : Measurement of Credit Losses for Accounts Receivable and Contract Assets (\"ASU 2025 - 05\" ), which amends ASC 326 - 20 to provide a practical expedient for all entities when estimating expected credit losses for current ac",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926027162/neon20260630_10q.htm",
+        "accession": "0001437749-26-027162",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "evenue recognition timing differs from invoice timing, we have determined that our contracts do not include a significant financing component. Applying the practical expedient in Topic 606, the Company does not assess whether a significant financing component exists if the period between wh",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926027162/neon20260630_10q.htm",
+        "accession": "0001437749-26-027162",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "le | $ | 247 | $ | 464 | Accrued payroll and employee benefits | 1,019 | 865 | Accrued expenses | 498 | 459 | Contract liabilities | 60 | 37 | Current portion of finance lease obligations | 12 | 12 | Current portion of operating lease obligations | 225 | 344 | Total current liabi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/87050/000143774926027162/neon20260630_10q.htm",
+        "accession": "0001437749-26-027162",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2024-06-04",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001213900-24-049351",
+      "doc": "ea0207150-8k_neonode.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-10-21",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-21-054035",
+      "doc": "ea149188-8k_neonodeinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-05-12",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001213900-21-025725",
+      "doc": "ea140573-8k_neonodeinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-08-10",
+      "items": "1.01,3.02,3.03,5.03,8.01,9.01",
+      "acc": "0001213900-20-021054",
+      "doc": "ea125047-8k_neonode.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-06-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001213900-20-015490",
+      "doc": "ea123293-8k_neonodeinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2019-05-08",
+      "items": "1.01,9.01",
+      "acc": "0001213900-19-008018",
+      "doc": "f8k050619_neonodeinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2018-12-28",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-18-017994",
+      "doc": "f8k122018_neonodeinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2017-08-08",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-17-008334",
+      "doc": "f8k080217_neonodeinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2016-08-16",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-16-016119",
+      "doc": "f8k081116_neonodeinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2015-10-07",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-15-007510",
+      "doc": "f8k100415off_neonodeinc.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2014-05-19",
+      "items": "1.01,3.02,7.01,8.01,9.01",
+      "acc": "0001213900-14-003592",
+      "doc": "f8k050914a1_neonode.htm",
+      "desc": "AMENDED CURRENT REPORT"
+    },
+    {
+      "date": "2014-05-12",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-14-003092",
+      "doc": "f8k050914_neonode.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2013-09-11",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-13-005019",
+      "doc": "f8k091113_neonode.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2011-12-08",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-11-006541",
+      "doc": "f8k120811ii_neonode.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2010-10-18",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001213900-10-004216",
+      "doc": "f8k101510_neonode.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2010-02-23",
+      "items": "2.03,3.02,9.01",
+      "acc": "0001213900-10-000679",
+      "doc": "f8k022210_neonode.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

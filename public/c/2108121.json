@@ -1,0 +1,239 @@
+{
+  "cik": 2108121,
+  "ticker": null,
+  "name": "Ionetix Corp / DE /",
+  "sector": "health",
+  "industry": "In Vitro & In Vivo Diagnostic Substances",
+  "sic": "2835",
+  "sic_description": "In Vitro & In Vivo Diagnostic Substances",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:17:42+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 240000,
+    "cash": 10914000,
+    "operating_leases": 1366000,
+    "equity": 39348000,
+    "assets": 45323000,
+    "liabilities": 5975000,
+    "assets_current": 14252000,
+    "liabilities_current": 2748000,
+    "retained_earnings": -208803000,
+    "interest_paid": 892000,
+    "operating_income": -20367000,
+    "pretax_income": -51526000,
+    "net_income": -51530000,
+    "da": 3732000,
+    "ocf": -12887000,
+    "capex": 6809000,
+    "revenue": 4591000,
+    "shares": 106295716,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 240000,
+    "cash_and_investments": 10914000.0,
+    "net_debt": -10674000.0,
+    "ebitda": -16635000,
+    "ebit": -20367000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": -13.447309,
+    "fcf": -19696000,
+    "fcf_to_debt": -82.066667,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 10914000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1366000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026088309/ea0300237-10q_ionetix.htm",
+        "accession": "0001213900-26-088309",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 1366000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-088309",
+            "filed": "2026-08-12",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026088309/ea0300237-10q_ionetix.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ollows: | June 30, 2026 | December 31, 2025 | Accrued compensation and benefits | $ | 918 | $ | 569 | Customer deposits | 600 | 600 | Other accrued expenses and other current liabilities | 314 | 431 | Accrued interest | — | 390 | Total | $ | 1,832 | $ | 1,990 | 12 Io",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026088309/ea0300237-10q_ionetix.htm",
+        "accession": "0001213900-26-088309",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "| $ | — | Issuance of common stock to JDEV shareholders in connection with the Merger | $ | 20 | $ | — | Asset retirement obligations incurred and capitalized | $ | 11 | $ | 58 | The accompanying notes are an integral part of these condensed consolidated financial statements 4 I",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026088309/ea0300237-10q_ionetix.htm",
+        "accession": "0001213900-26-088309",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-088309",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026088309/ea0300237-10q_ionetix.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "sting investor of the Legacy Ionetix who is a related party. See Note 16 for additional information regarding related party transactions. The 2023 Term Loan matured in May 2026, as amended. In connection with the issuance of the 2023 Term Loan, the Company issued 220,000 warrants to",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026088309/ea0300237-10q_ionetix.htm",
+        "accession": "0001213900-26-088309",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-04-16",
+      "items": "1.01,2.01,3.02,3.03,4.01,5.01,5.02,5.03,5.06,9.01",
+      "acc": "0001213900-26-044239",
+      "doc": "ea0286092-8k_ionetix.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      6744000,
+      129000,
+      null,
+      -16425000,
+      -20120000,
+      null
+    ],
+    [
+      "2026-06-30",
+      240000,
+      10914000,
+      null,
+      -16635000,
+      -20367000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

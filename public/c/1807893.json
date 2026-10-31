@@ -1,0 +1,344 @@
+{
+  "cik": 1807893,
+  "ticker": "SPFX",
+  "name": "STANDARD PREMIUM FINANCE HOLDINGS, INC.",
+  "sector": "financials",
+  "industry": "Miscellaneous Business Credit Institution",
+  "sic": "6159",
+  "sic_description": "Miscellaneous Business Credit Institution",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:11:06+00:00",
+  "price": 3.046,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.907533,
+  "snapshot": {
+    "total_debt": 2832726,
+    "cash": 10970,
+    "finance_leases": 6303,
+    "operating_leases": 102416,
+    "revolver_drawn": 61835009,
+    "equity": 9015735,
+    "assets": 89860945,
+    "liabilities": 80845210,
+    "assets_current": 88191985,
+    "liabilities_current": 70515736,
+    "retained_earnings": 5498168,
+    "interest_expense": 4257562,
+    "interest_paid": 4234283,
+    "pretax_income": 1863055,
+    "net_income": 1403761,
+    "da": 44117,
+    "ocf": 1316830,
+    "capex": 58651,
+    "revenue": 13235780,
+    "effective_rate": 0.055,
+    "shares": 2930134,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "analysis": {
+    "total_debt": 2832726,
+    "cash_and_investments": 10970.0,
+    "net_debt": 2821756.0,
+    "ebitda": 6164734,
+    "ebit": 6120617,
+    "interest_expense": 4257562,
+    "leverage": 0.459505,
+    "net_leverage": 0.457726,
+    "interest_coverage": 1.437587,
+    "ebitda_coverage": 1.447949,
+    "cash_coverage": 1.310992,
+    "fcf": 1258179,
+    "fcf_to_debt": 0.444158,
+    "effective_rate": 1.502991,
+    "revolver_available": null,
+    "liquidity": 10970.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 0.760008,
+    "market_cap": 8925188.164,
+    "debt_to_ev": 0.241146,
+    "convertibles": null,
+    "implied": {
+      "dd": 2.171963,
+      "pd_1y": 0.014929,
+      "spread_5y_bps": 481.880612,
+      "asset_vol": 0.78953,
+      "calibrated_5y_bps": 161.087773,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 53
+  },
+  "hidden_leverage": {
+    "as_of": "2025-12-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 151823.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326001024/spfx_10q.htm",
+        "accession": "0001079973-26-001024",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "as_of": "2025-12-31",
+        "evidence": [
+          {
+            "value_usd": 151823.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001079973-26-001024",
+            "filed": "2026-08-10",
+            "form": "10-Q",
+            "as_of": "2025-12-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326001024/spfx_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001079973-26-001024",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326001024/spfx_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2025-12-31",
+    "metrics": {
+      "revenue_growth": 0.0269,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 2.3754
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 12469770.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001079973-26-000349",
+          "filed": "2026-03-20",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326000349/"
+        },
+        {
+          "value_usd": 12143143.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001079973-26-000349",
+          "filed": "2026-03-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326000349/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 2883599.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001079973-26-000349",
+          "filed": "2026-03-20",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326000349/"
+        },
+        {
+          "value_usd": 1842351.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001079973-26-000349",
+          "filed": "2026-03-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326000349/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 1213960.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001079973-26-000349",
+          "filed": "2026-03-20",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326000349/"
+        },
+        {
+          "value_usd": 979993.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001079973-26-000349",
+          "filed": "2026-03-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326000349/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ded June 30, 2026, respectively. The maximum potential combined payout under these awards is $ 460,000 . 13. Related Party Transactions The Company has engaged in transactions with related parties primarily shareholders, officers and directors and their relatives that involve financ",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997326001024/spfx_10q.htm",
+        "accession": "0001079973-26-001024",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "American Express",
+      "kind": "other",
+      "as_of": "2024-04-12",
+      "face": 43700.0,
+      "floating": false
+    },
+    {
+      "name": "Notes Payable, Other Payables",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 8826925.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes Payable",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "conv_price": 0.8,
+      "carrying": 2628500.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-10-01",
+      "agreement_kind": "amendment",
+      "dated": "2021-02-03",
+      "title": "Fifth Amendment To Loan Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1807893/000107997325001528/ex10x1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-05-28",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001079973-25-000935",
+      "doc": "spfx_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-12-05",
+      "items": "1.01,9.01",
+      "acc": "0001553350-22-000988",
+      "doc": "spfx_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-10-05",
+      "items": "2.03,9.01",
+      "acc": "0001553350-21-000884",
+      "doc": "spfh_8k.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

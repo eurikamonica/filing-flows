@@ -1,0 +1,856 @@
+{
+  "cik": 795266,
+  "ticker": "KBH",
+  "name": "KB HOME",
+  "sector": "industrials",
+  "industry": "Operative Builders",
+  "sic": "1531",
+  "sic_description": "Operative Builders",
+  "generated_at": "2026-10-31T14:35:16+00:00",
+  "fetched_at": "2026-10-25T21:13:12+00:00",
+  "price": 47.94,
+  "price_date": "2026-10-30",
+  "equity_vol": 0.382941,
+  "snapshot": {
+    "cash": 160058000,
+    "operating_leases": 30967000,
+    "equity": 3801509000,
+    "assets": 6969152000,
+    "retained_earnings": 3082822000,
+    "pretax_income": 287974000,
+    "net_income": 227574000,
+    "da": 40957000,
+    "ocf": 74962000,
+    "capex": 46301000,
+    "revenue": 5180925000,
+    "maturities": {
+      "as_of": "2026-08-31",
+      "next12m": 301100000,
+      "rest_of_year": 200000,
+      "y2": 800000,
+      "y3": 660400000,
+      "y4": 350000000
+    },
+    "stated_rate": 0.0638,
+    "conversion_price": 27.37,
+    "conversion_ratio": 0.03653,
+    "if_converted_shares": 0,
+    "converted_shares": 36.5297,
+    "shares": 60762736,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesDomestic (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1",
+    "conversion_ratio": "DebtInstrumentConvertibleConversionRatio1",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities",
+    "converted_shares": "DebtConversionConvertedInstrumentSharesIssued1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 160058000.0,
+    "net_debt": null,
+    "ebitda": 328931000.0,
+    "ebit": 287974000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 28661000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 783400000.0,
+    "liquidity": 943458000.0,
+    "due_12m": 301100000,
+    "due_24m": 301900000,
+    "liquidity_to_due12": 3.133371,
+    "liquidity_to_due24": 3.125068,
+    "floating_debt": 415000000.0,
+    "floating_share": null,
+    "plus100bp_interest": 4150000.0,
+    "plus100bp_share_of_ebit": 0.014411,
+    "market_cap": 2912965563.84,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-08-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 30967000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm",
+        "accession": "0000795266-26-000071",
+        "form": "10-Q",
+        "filed": "2026-10-08",
+        "as_of": "2026-08-31",
+        "evidence": [
+          {
+            "value_usd": 30967000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000795266-26-000071",
+            "filed": "2026-10-08",
+            "form": "10-Q",
+            "as_of": "2026-08-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "m those estimated, especially in periods of volatile housing market or broader economic conditions. 8. Variable Interest Entities Unconsolidated Joint Ventures. We participate in joint ventures from time to time that conduct land acquisition, land development and/or other home",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm",
+        "accession": "0000795266-26-000071",
+        "form": "10-Q",
+        "filed": "2026-10-08",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "al lenders and financial institutions, to meet their commitments to fund loans, extend credit or provide payment guarantees to or for us under those instruments. Mortgages and Land Contracts Due to Land Sellers and Other Loans. As of August 31, 2026, inventories having a",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm",
+        "accession": "0000795266-26-000071",
+        "form": "10-Q",
+        "filed": "2026-10-08",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "ictive covenants that, among other things, limit our ability to incur secured indebtedness, or engage in sale and leaseback transactions involving property above a certain specified value. In addition, the indenture contains certain limitations related to mergers, consolid",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm",
+        "accession": "0000795266-26-000071",
+        "form": "10-Q",
+        "filed": "2026-10-08",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "market investor commitments. Funding facilities . KBHS maintains warehouse lines of credit and master repurchase agreements with various financial institutions to fund its originated mortgage loans, with its mortgage loans held for sale pledged as collateral under these ag",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm",
+        "accession": "0000795266-26-000071",
+        "form": "10-Q",
+        "filed": "2026-10-08",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "| 101,245 | Inventory-related obligations (a) | 40,170 | 48,243 | Lease liabilities | 30,957 | 19,775 | Customer deposits | 29,689 | 28,033 | Accrued interest payable | 19,170 | 29,219 | Real estate and business taxes | 18,255 | 13,612 | Other | 52,885 | 44,542 | Total |",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm",
+        "accession": "0000795266-26-000071",
+        "form": "10-Q",
+        "filed": "2026-10-08",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000795266-26-000071",
+      "form": "10-Q",
+      "filed": "2026-10-08",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-31",
+    "metrics": {
+      "revenue_growth": -0.1001,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.3633,
+      "dsri": null,
+      "ocf_to_net_income": 0.7829
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 6236214000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000795266-26-000017",
+          "filed": "2026-01-23",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/"
+        },
+        {
+          "value_usd": 6930086000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000795266-26-000017",
+          "filed": "2026-01-23",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 28033000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0000795266-26-000017",
+          "filed": "2026-01-23",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/"
+        },
+        {
+          "value_usd": 44029000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0000795266-26-000017",
+          "filed": "2026-01-23",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 335682000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000795266-26-000017",
+          "filed": "2026-01-23",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/"
+        },
+        {
+          "value_usd": 362722000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000795266-26-000017",
+          "filed": "2026-01-23",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 428789000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000795266-26-000017",
+          "filed": "2026-01-23",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/"
+        },
+        {
+          "value_usd": 655018000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000795266-26-000017",
+          "filed": "2026-01-23",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "assets at August 31, 2026 and November 30, 2025 included $ 40.1 million and $ 39.1 million, respectively, of contract assets for estimated future renewal commissions. 12 4. Earnings Per Share Basic and diluted earnings per share were calculated as follows (in thousand",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000071/kbh-20260831.htm",
+        "accession": "0000795266-26-000071",
+        "form": "10-Q",
+        "filed": "2026-10-08"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-11-30",
+      "2024-11-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-08-31",
+      "capacity": 1700000000.0,
+      "drawn": 415000000.0,
+      "available": 783400000.0,
+      "rate_now": 0.05,
+      "floating": true
+    },
+    {
+      "name": "Senior unsecured term loan due November 12, 2029",
+      "kind": "loan",
+      "as_of": "2026-08-31",
+      "face": 360000000.0,
+      "floating": true
+    },
+    {
+      "name": "6.875% Senior notes due June 15, 2027",
+      "kind": "notes",
+      "as_of": "2026-08-31",
+      "coupon": 0.06875,
+      "floating": false
+    },
+    {
+      "name": "4.80% Senior notes due November 15, 2029",
+      "kind": "notes",
+      "as_of": "2026-08-31",
+      "coupon": 0.048,
+      "floating": false
+    },
+    {
+      "name": "7.25% Senior notes due July 15, 2030",
+      "kind": "notes",
+      "as_of": "2026-08-31",
+      "coupon": 0.0725,
+      "floating": false
+    },
+    {
+      "name": "4.00% Senior notes due June 15, 2031",
+      "kind": "notes",
+      "as_of": "2026-08-31",
+      "coupon": 0.04,
+      "floating": false
+    },
+    {
+      "name": "Letter of Credit",
+      "kind": "other",
+      "as_of": "2026-08-31",
+      "drawn": 1600000.0,
+      "available": 248400000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-08-31"
+  },
+  "issues": [
+    {
+      "title": "7.250% Senior Notes due 2030",
+      "floating": false,
+      "coupon": 7.25,
+      "principal": 350000000.0,
+      "currency": "USD",
+      "maturity": "2030-07-15",
+      "price": 100.0,
+      "yield": 7.25,
+      "trade_date": "2022-06-07",
+      "ratings": "Ba2 / BB",
+      "convertible": false,
+      "cusip": "48666K BA6",
+      "date": "2022-06-07",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312522169525/d340787dfwp.htm"
+    },
+    {
+      "title": "4.00% Senior Notes due 2031",
+      "floating": false,
+      "coupon": 4.0,
+      "principal": 390000000.0,
+      "currency": "USD",
+      "maturity": "2031-06-15",
+      "price": 100.0,
+      "yield": 4.0,
+      "trade_date": "2021-05-25",
+      "ratings": "Ba2 / BB",
+      "convertible": false,
+      "cusip": "48666K AZ2",
+      "date": "2021-05-25",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312521172701/d127288dfwp.htm"
+    },
+    {
+      "title": "4.800% Senior Notes due 2029",
+      "floating": false,
+      "coupon": 4.8,
+      "principal": 300000000.0,
+      "currency": "USD",
+      "maturity": "2029-11-15",
+      "price": 100.0,
+      "yield": 4.8,
+      "benchmark": "UST 1.625% due August 15, 2029",
+      "spread_bps": 300.0,
+      "trade_date": "2019-10-21",
+      "ratings": "Ba3 / BB-",
+      "convertible": false,
+      "cusip": "48666K AY5",
+      "date": "2019-10-21",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312519270909/d809439dfwp.htm"
+    },
+    {
+      "title": "6.875% Senior Notes due 2027",
+      "floating": false,
+      "coupon": 6.875,
+      "principal": 300000000.0,
+      "currency": "USD",
+      "maturity": "2027-06-15",
+      "price": 100.0,
+      "yield": 6.875,
+      "benchmark": "UST 2.375% due May 15, 2027",
+      "spread_bps": 422.0,
+      "trade_date": "2019-02-05",
+      "ratings": "B1/BB-",
+      "convertible": false,
+      "cusip": "48666K AX7",
+      "date": "2019-02-05",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312519028588/d638853dfwp.htm"
+    },
+    {
+      "title": "7.625% SENIOR NOTES DUE 2023",
+      "floating": false,
+      "coupon": 7.625,
+      "principal": 100000000.0,
+      "currency": "USD",
+      "maturity": "2023-05-15",
+      "price": 105.25,
+      "yield": 6.03,
+      "benchmark": "UST 1.750% due May 15, 2023",
+      "spread_bps": 367.0,
+      "trade_date": "2019-02-05",
+      "ratings": "B1/BB-",
+      "convertible": false,
+      "cusip": "48666K AV1",
+      "date": "2019-02-05",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312519028591/d638910dfwp.htm"
+    },
+    {
+      "title": "4.75% Senior Notes due 2019",
+      "floating": false,
+      "coupon": 4.75,
+      "principal": 400000000.0,
+      "currency": "USD",
+      "maturity": "2019-05-15",
+      "price": 100.0,
+      "yield": 4.748,
+      "benchmark": "UST 1.50% due February 28, 2019",
+      "spread_bps": 304.0,
+      "trade_date": "2014-03-20",
+      "convertible": false,
+      "cusip": "48666KAU3",
+      "date": "2014-03-20",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312514108105/d695956dfwp.htm"
+    },
+    {
+      "title": "7.000% Senior Notes due 2021",
+      "floating": false,
+      "coupon": 7.0,
+      "principal": 450000000.0,
+      "currency": "USD",
+      "maturity": "2021-12-15",
+      "price": 100.0,
+      "yield": 7.0,
+      "benchmark": "UST 2.000% due November 15, 2021",
+      "spread_bps": 460.0,
+      "trade_date": "2013-10-15",
+      "convertible": false,
+      "cusip": "48666K AT6",
+      "date": "2013-10-15",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312513400002/d612659dfwp.htm"
+    },
+    {
+      "title": "$200,000,000 1.375% Convertible Senior Notes due 2019",
+      "floating": false,
+      "coupon": 1.375,
+      "principal": 200000000.0,
+      "currency": "USD",
+      "maturity": "2019-02-01",
+      "trade_date": "2013-01-23",
+      "convertible": true,
+      "conv_price": 27.37,
+      "conv_rate": 36.5297,
+      "conv_premium": 50.0,
+      "cusip": "48666K AS8",
+      "date": "2013-01-23",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312513021381/d472121dfwp.htm"
+    },
+    {
+      "title": "$350,000,000 7.5% Senior Notes due 2022",
+      "floating": false,
+      "coupon": 7.5,
+      "principal": 350000000.0,
+      "currency": "USD",
+      "maturity": "2022-09-15",
+      "price": 100.0,
+      "yield": 7.5,
+      "benchmark": "UST 1.75% due May 15, 2022",
+      "spread_bps": 610.0,
+      "trade_date": "2012-07-24",
+      "convertible": false,
+      "cusip": "48666K AR0",
+      "date": "2012-07-24",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312512312324/d384039dfwp.htm"
+    },
+    {
+      "title": "$350,000,000 8.00% Senior Notes due 2020",
+      "floating": false,
+      "coupon": 8.0,
+      "principal": 350000000.0,
+      "currency": "USD",
+      "maturity": "2020-03-15",
+      "price": 98.523,
+      "yield": 8.25,
+      "benchmark": "UST 1.849% due November 15, 2021",
+      "spread_bps": 640.0,
+      "trade_date": "2012-02-01",
+      "convertible": false,
+      "cusip": "48666K AQ2",
+      "date": "2012-02-01",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000119312512034543/d295395dfwp.htm"
+    },
+    {
+      "title": "9.100% Senior Notes due 2017",
+      "floating": false,
+      "coupon": 9.1,
+      "principal": 265000000.0,
+      "currency": "USD",
+      "maturity": "2017-09-15",
+      "benchmark": "3.125% due May 15, 2019",
+      "bench_yield": 3.695,
+      "trade_date": "2009-07-23",
+      "ratings": "B1 by Moody’s Investors Service, Inc., BB- by",
+      "convertible": false,
+      "cusip": "48666K AP4",
+      "date": "2009-07-23",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000095012309024847/v53104fwfwp.htm"
+    },
+    {
+      "title": "4% Senior Notes due 2018",
+      "floating": false,
+      "coupon": 4.0,
+      "principal": 300000000.0,
+      "currency": "USD",
+      "maturity": "2018-06-15",
+      "yield": 7.283,
+      "benchmark": "4.500% due February 15, 2016",
+      "trade_date": "2006-03-27",
+      "convertible": false,
+      "cusip": "48666KAN9",
+      "date": "2006-03-27",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000095012906003114/v19021fpfwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-01-23",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-11-12",
+      "title": "Amended And Restated Term Loan Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Eurodollar"
+      ],
+      "floor_pct": 0.0,
+      "maturity": "2029-11-12",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 0.6,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Permit the Consolidated Leverage Ratio to be, at the end of any Fiscal Quarter, greater than 0.60 to 1.00. 6.11 Consolidated Interest Coverage Ratio or Minimum Liquidity ."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 0.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "(a) Make any payment with respect to any Subordinated Obligation in violation of the provisions in the instruments governing such Subordinated Obligation; or (b) At all times the Consolidated Interest Coverage Ratio is greater than or equal to 2:00 to 1:00, if a Default or Event of Default then exists or would result therefrom, (i) make an optional or unscheduled payment or prepayment of any principal (including an o"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 0.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "make an optional or unscheduled payment or prepayment of any principal (including an optional or unscheduled sinking fund payment), interest or any other amount with respect to any Subordinated Obligation, or (ii) make a purchase or redemption of any Subordinated Obligation; or (c) At all times the Consolidated Interest Coverage Ratio is less than 2:00 to 1:00, (i) make an optional or unscheduled payment or prepaymen"
+        },
+        {
+          "type": "net_worth",
+          "limit": 2701014000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Permit Consolidated Tangible Net Worth to be, at the end of any Fiscal Quarter, less than an amount equal to (a) $ 2,701,014,000, plus (b) an amount equal to 50% of positive Consolidated Net Income for each Fiscal Quarter commencing after August 31, 2025 and ending as of the last day of such Fiscal Quarter ( provided that there"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/kbh-113025x10kexhibit1025.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-01-23",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-11-12",
+      "size": 1700000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Eurodollar"
+      ],
+      "fee_pct": 0.25,
+      "maturity": "2030-11-12",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 0.6,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Permit the Consolidated Leverage Ratio to be, at the end of any Fiscal Quarter, greater than 0.60 to 1.00. 7.9 Consolidated Interest Coverage Ratio or Minimum Liquidity ."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 0.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "(a) Make any payment with respect to any Subordinated Obligation in violation of the provisions in the instruments governing such Subordinated Obligation; or (b) At all times the Consolidated Interest Coverage Ratio is greater than or equal to 2:00 to 1:00, if a Default or Event of Default then exists or would result therefrom, (i) make an optional or unscheduled payment or prepayment of any principal (including an o"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 0.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "make an optional or unscheduled payment or prepayment of any principal (including an optional or unscheduled sinking fund payment), interest or any other amount with respect to any Subordinated Obligation, or (ii) make a purchase or redemption of any Subordinated Obligation; or (c) At all times the Consolidated Interest Coverage Ratio is less than 2:00 to 1:00, (i) make an optional or unscheduled payment or prepaymen"
+        },
+        {
+          "type": "net_worth",
+          "limit": 2701014000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Permit Consolidated Tangible Net Worth to be, at the end of any Fiscal Quarter, less than an amount equal to (a) $2,701,014,000, plus (b) an amount equal to 50% of positive Consolidated Net Income for each Fiscal Quarter commencing after August 31, 2025 and ending as of the last day of such Fiscal Quarter (provided that there"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000079526626000017/kbh-113025x10kexhibit1024.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2022-10-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-08-25",
+      "title": "Term Loan Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Eurodollar",
+        "Base Rate"
+      ],
+      "floor_pct": 0.0,
+      "maturity": "2026-08-25",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 0.6,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Permit the Consolidated Leverage Ratio to be, at the end of any Fiscal Quarter, greater than 0.60 to 1.00. 6.11 Consolidated Interest Coverage Ratio or Minimum Liquidity ."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 0.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "(a) Make any payment with respect to any Subordinated Obligation in violation of the provisions in the instruments governing such Subordinated Obligation; or (b) At all times the Consolidated Interest Coverage Ratio is greater than or equal to 2:00 to 1:00, if a Default or Event of Default then exists or would result therefrom, (i) make an optional or unscheduled payment or prepayment of any principal (including an o"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 0.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "make an optional or unscheduled payment or prepayment of any principal (including an optional or unscheduled sinking fund payment), interest or any other amount with respect to any Subordinated Obligation, or (ii) make a purchase or redemption of any Subordinated Obligation; or (c) At all times the Consolidated Interest Coverage Ratio is less than 2:00 to 1:00, (i) make an optional or unscheduled payment or prepaymen"
+        },
+        {
+          "type": "net_worth",
+          "limit": 2089065000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Permit Consolidated Tangible Net Worth to be, at the end of any Fiscal Quarter, less than an amount equal to (a) $2,089,065,000, plus (b) an amount equal to 50% of aggregate of the cumulative Consolidated Net Income for each Fiscal Quarter commencing after November 30, 2021 and ending as of the last day of such Fiscal Quarter"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/795266/000079526622000090/kbh-08312022xex1034termloa.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-11-13",
+      "items": "1.01,1.02,2.03",
+      "acc": "0001193125-25-278147",
+      "doc": "d55326d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-31",
+      "items": "1.01,2.03",
+      "acc": "0001193125-22-235213",
+      "doc": "d348624d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-02-24",
+      "items": "1.01,2.03",
+      "acc": "0001193125-22-052042",
+      "doc": "d318197d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-12",
+      "items": "1.01,3.03,5.07,9.01",
+      "acc": "0000795266-21-000089",
+      "doc": "kbh-20210408.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-10-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000795266-19-000099",
+      "doc": "a2019arrcf.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-04-13",
+      "items": "1.01,3.03,5.07,9.01",
+      "acc": "0000795266-18-000037",
+      "doc": "a18amvote.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-07-31",
+      "items": "1.01,2.03",
+      "acc": "0000795266-17-000063",
+      "doc": "a2017arrcf.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-08-11",
+      "items": "1.01,2.03",
+      "acc": "0000795266-15-000050",
+      "doc": "arrcf8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-03-18",
+      "items": "1.01,2.03,8.01",
+      "acc": "0000795266-13-000016",
+      "doc": "rcff8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-06-16",
+      "items": "1.01",
+      "acc": "0000950123-11-059328",
+      "doc": "v59764e8vk.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-02-04",
+      "items": "2.04",
+      "acc": "0000950123-11-008939",
+      "doc": "v58553e8vk.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

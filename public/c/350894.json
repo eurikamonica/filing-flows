@@ -1,0 +1,734 @@
+{
+  "cik": 350894,
+  "ticker": "SEIC",
+  "name": "SEI INVESTMENTS CO",
+  "sector": "financials",
+  "industry": "Security Brokers, Dealers & Flotation Companies",
+  "sic": "6211",
+  "sic_description": "Security Brokers, Dealers & Flotation Companies",
+  "generated_at": "2026-10-31T14:35:15+00:00",
+  "fetched_at": "2026-10-25T22:52:23+00:00",
+  "price": 102.3,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.206612,
+  "snapshot": {
+    "total_debt": 32970000,
+    "current_debt": 3487000,
+    "cash": 395664000,
+    "equity": 2499698000,
+    "assets_current": 1343226000,
+    "liabilities_current": 265528000,
+    "retained_earnings": 813820000,
+    "interest_expense": 1367000,
+    "operating_income": 708081000,
+    "pretax_income": 911819000,
+    "net_income": 706850000,
+    "ocf": 712024000,
+    "capex": 25222000,
+    "revenue": 2450236000,
+    "shares": 120019182,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 32970000,
+    "cash_and_investments": 395664000.0,
+    "net_debt": -362694000.0,
+    "ebitda": 708081000.0,
+    "ebit": 708081000,
+    "interest_expense": 1367000,
+    "leverage": 0.046562,
+    "net_leverage": -0.512221,
+    "interest_coverage": 517.981712,
+    "ebitda_coverage": 517.981712,
+    "fcf": 686802000,
+    "fcf_to_debt": 20.831119,
+    "effective_rate": 0.041462,
+    "revolver_available": 350000000.0,
+    "liquidity": 745664000.0,
+    "due_12m": 3487000,
+    "due_24m": null,
+    "liquidity_to_due12": 213.841124,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 12277962318.6,
+    "debt_to_ev": 0.002767,
+    "convertibles": null,
+    "implied": {
+      "dd": 31.68693,
+      "pd_1y": 0.0,
+      "spread_5y_bps": -0.0,
+      "asset_vol": 0.206319,
+      "calibrated_5y_bps": 67.994701,
+      "rating_band": "A"
+    },
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": 0.046562,
+        "cushion": 0.984479,
+        "agreement": "Credit Agreement",
+        "dated": "2025-08-18",
+        "text": "As of the last day of any fiscal quarter ending during the term of this Agreement, permit the Leverage Ratio to be greater than 3.00 to 1.00."
+      }
+    ],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "f $ 688,085 and $ 669,896 | 227,215 | 234,272 | Investments | 318,909 | 428,004 | Assets of Consolidated Variable Interest Entities | 206,955 | 183,994 | Goodwill | 389,420 | 354,989 | Intangible Assets, net of accumulated amortization of $ 68,666 and $ 49,534 | 470,524 | 368,272",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000048/seic-20260630.htm",
+        "accession": "0000350894-26-000048",
+        "form": "10-Q",
+        "filed": "2026-07-27",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000350894-26-000048",
+      "form": "10-Q",
+      "filed": "2026-07-27",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000048/seic-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.081,
+      "receivables_growth": 0.2504,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.1072,
+      "dsri": 1.1566,
+      "ocf_to_net_income": 0.8495
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2297381000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        },
+        {
+          "value_usd": 2125151000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 709748000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        },
+        {
+          "value_usd": 567634000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 13307000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        },
+        {
+          "value_usd": 12019000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 607662000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        },
+        {
+          "value_usd": 622343000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 715305000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        },
+        {
+          "value_usd": 581191000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000350894-26-000013",
+          "filed": "2026-02-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000013/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "s acquired and liabilities assumed are recognized and measured in accordance with ASC 740, Income Taxes ; (2) contract assets and liabilities are measured and recognized in accordance with ASC 606, Revenue from Contracts with Customers ; and (3) certain lease related assets",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000048/seic-20260630.htm",
+        "accession": "0000350894-26-000048",
+        "form": "10-Q",
+        "filed": "2026-07-27"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "n of long-term debt | 3,487 | — | Current portion of long-term operating lease liabilities | 10,169 | 8,677 | Deferred revenue | 15,718 | 13,307 | Total Current Liabilities | 265,528 | 387,211 | Long-term Debt | 29,483 | — | Liabilities of Consolidated Variable Interest Entit",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000048/seic-20260630.htm",
+        "accession": "0000350894-26-000048",
+        "form": "10-Q",
+        "filed": "2026-07-27"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "2021 Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-08-17",
+      "capacity": 325000000.0,
+      "floating": false
+    },
+    {
+      "name": "2025 Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 25000000.0,
+      "spread_min": 0.0025,
+      "spread_max": 0.0125,
+      "spread": 0.005,
+      "reference": "SOFR",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-08-19",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-08-18",
+      "size": 500000000.0,
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.15,
+        2.25
+      ],
+      "grid_by": "leverage",
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter ending during the term of this Agreement, permit the Leverage Ratio to be greater than 3.00 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 0.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“Applicable Margin” means the corresponding percentages per annum as set forth below based on the Leverage Ratio: Applicable Margin Pricing Level Leverage Ratio Commitment Fee SOFR Loans Base Rate Loans I Less than or equal to 0.75 to 1.00 0.150% 1.250% 0.250% II Greater than 0.75 to 1.00, but less than or equal to 1.25 to 1.00 0.175% 1.375% 0.375% DB1/ 161233805.4 3 III Greater than 1.25 to 1.00, but less than or eq"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/350894/000035089425000106/ex101usbank-seiinvestmen.htm",
+      "all_in_pct": [
+        0.1889,
+        2.2889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2023-04-18",
+      "agreement_kind": "amendment",
+      "dated": "2023-04-17",
+      "title": "First Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "LIBOR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        0.15,
+        2.0
+      ],
+      "grid_by": "leverage",
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter ending during the term of this Agreement, permit the Leverage Ratio to be greater than 2.25 to 1.00. 15866857v3 24740.00076 84 ARTICLE X DEFAULT AND REMEDIES SECTION 10.1 Events of Default."
+        },
+        {
+          "type": "leverage",
+          "limit": 0.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“Applicable Margin” means the corresponding percentages per annum as set forth below based on the Leverage Ratio: Applicable Margin Pricing Level Leverage Ratio Commitment Fee SOFR Loans Base Rate Loans I Less than or equal to 0.50 to 1.00 0.150% 1.250% 0.250% 15866857v3 24740.00076 3 II Greater than 0.50 to 1.00, but less than or equal to 1.00 to 1.00 0.175% 1.375% 0.375% III Greater than 1.00 to 1.00, but less than"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/350894/000035089423000033/wellsfargo-seiinvestment.htm",
+      "all_in_pct": [
+        0.1889,
+        2.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-04-26",
+      "agreement_kind": "credit_agreement",
+      "dated": "2021-04-23",
+      "size": 325000000.0,
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        0.15,
+        2.0
+      ],
+      "grid_by": "leverage",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter ending during the term of this Agreement, permit the Leverage Ratio to be greater than 2.25 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 0.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“Applicable Margin” means the corresponding percentages per annum as set forth below based on the Leverage Ratio: Applicable Margin Pricing Level Leverage Ratio Commitment Fee LIBOR Rate Loans Base Rate Loans I Less than or equal to 0.50 to 1.00 0.150% 1.250% 0.250% II Greater than 0.50 to 1.00, but less than or equal to 1.00 to 1.00 0.175% 1.375% 0.375% 13802345v12 24740.00076 3 III Greater than 1.00 to 1.00, but le"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/350894/000035089421000023/sei-executioncreditagree.htm",
+      "all_in_pct": [
+        0.1889,
+        2.0389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-08-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000350894-25-000106",
+      "doc": "seic-20250818.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-04-18",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0000350894-23-000033",
+      "doc": "seic-20230417.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-06-14",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000350894-16-000125",
+      "doc": "form8-k6x13x2016.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2010-06-30",
+      150000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2010-09-30",
+      120000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-03-31",
+      60000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-06-30",
+      40000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-09-30",
+      20000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      32415000,
+      363149000,
+      897000,
+      659700000,
+      659700000,
+      0.02767
+    ],
+    [
+      "2026-06-30",
+      32970000,
+      395664000,
+      1367000,
+      708081000,
+      708081000,
+      0.04146
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2010-08",
+      0.0,
+      12.885,
+      0.2863,
+      78.4
+    ],
+    [
+      "2010-09",
+      0.0,
+      13.04,
+      0.2901,
+      77.6
+    ],
+    [
+      "2010-10",
+      0.0,
+      14.282,
+      0.2717,
+      71.4
+    ],
+    [
+      "2010-11",
+      0.0,
+      15.017,
+      0.2736,
+      68.0
+    ],
+    [
+      "2010-12",
+      0.0,
+      15.067,
+      0.2753,
+      68.0
+    ],
+    [
+      "2011-01",
+      0.0,
+      15.673,
+      0.2622,
+      68.0
+    ],
+    [
+      "2011-02",
+      0.0,
+      15.877,
+      0.2598,
+      68.0
+    ],
+    [
+      "2011-03",
+      0.0,
+      17.26,
+      0.2395,
+      68.0
+    ],
+    [
+      "2011-04",
+      0.0,
+      18.38,
+      0.2232,
+      68.0
+    ],
+    [
+      "2011-05",
+      -0.0,
+      22.486,
+      0.2128,
+      68.0
+    ],
+    [
+      "2011-06",
+      -0.0,
+      21.507,
+      0.2189,
+      68.0
+    ],
+    [
+      "2011-07",
+      -0.0,
+      21.59,
+      0.2148,
+      68.0
+    ],
+    [
+      "2011-08",
+      -0.0,
+      19.343,
+      0.2496,
+      68.0
+    ],
+    [
+      "2011-09",
+      0.0,
+      17.437,
+      0.2728,
+      68.0
+    ],
+    [
+      "2011-10",
+      0.0,
+      16.748,
+      0.2893,
+      68.0
+    ],
+    [
+      "2011-11",
+      0.0,
+      18.819,
+      0.2865,
+      68.0
+    ],
+    [
+      "2011-12",
+      0.0,
+      17.942,
+      0.3078,
+      68.0
+    ],
+    [
+      "2012-01",
+      0.0,
+      18.226,
+      0.3056,
+      68.0
+    ],
+    [
+      "2012-02",
+      0.0,
+      17.939,
+      0.3149,
+      68.0
+    ],
+    [
+      "2026-05",
+      -0.0,
+      30.446,
+      0.2135,
+      68.0
+    ],
+    [
+      "2026-06",
+      -0.0,
+      32.36,
+      0.201,
+      68.0
+    ],
+    [
+      "2026-07",
+      -0.0,
+      32.237,
+      0.2063,
+      68.0
+    ],
+    [
+      "2026-08",
+      -0.0,
+      32.584,
+      0.2065,
+      68.0
+    ],
+    [
+      "2026-09",
+      -0.0,
+      31.847,
+      0.2097,
+      68.0
+    ],
+    [
+      "2026-10",
+      -0.0,
+      32.169,
+      0.2066,
+      68.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

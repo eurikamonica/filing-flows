@@ -1,0 +1,588 @@
+{
+  "cik": 1782107,
+  "ticker": "ONCO",
+  "name": "Onconetix, Inc.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T04:57:32+00:00",
+  "price": 0.418,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.753758,
+  "snapshot": {
+    "cash": 5942249,
+    "equity": 13468509,
+    "assets": 16426341,
+    "liabilities": 2956108,
+    "assets_current": 6517810,
+    "liabilities_current": 2943793,
+    "retained_earnings": -138296736,
+    "interest_expense": 310949,
+    "interest_paid": 588417,
+    "operating_income": -16307200,
+    "pretax_income": -10195668,
+    "net_income": -10196193,
+    "da": 14753,
+    "ocf": -10307962,
+    "revenue": 645824,
+    "shares": 3949107,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 5942249.0,
+    "net_debt": null,
+    "ebitda": -16292447,
+    "ebit": -16307200,
+    "interest_expense": 310949,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -52.443327,
+    "ebitda_coverage": -52.395882,
+    "cash_coverage": -16.518124,
+    "fcf": -10307962.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 5942249.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -14.427495,
+    "market_cap": 1650726.726,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-089093",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026089093/ea0301022-10q_onconetix.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.677,
+      "receivables_growth": 10.5436,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 35.735,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 35.735,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 815371.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-027725",
+          "filed": "2026-03-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026027725/"
+        },
+        {
+          "value_usd": 2524116.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-027725",
+          "filed": "2026-03-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026027725/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 296866.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-027725",
+          "filed": "2026-03-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026027725/"
+        },
+        {
+          "value_usd": 25717.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-027725",
+          "filed": "2026-03-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026027725/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -9678390.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-027725",
+          "filed": "2026-03-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026027725/"
+        },
+        {
+          "value_usd": -10495816.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-027725",
+          "filed": "2026-03-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026027725/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -14032342.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-027725",
+          "filed": "2026-03-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026027725/"
+        },
+        {
+          "value_usd": -58691023.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-027725",
+          "filed": "2026-03-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026027725/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "NCONETIX, INC. Notes to Condensed Consolidated Financial Statements June 30, 2026 (Unaudited) Note 11 — Related Party Transactions On June 17, 2025, the Company entered into a separate consulting agreement with a firm affiliated with Dr. Meier. The agreement provides for the pa",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026089093/ea0301022-10q_onconetix.htm",
+        "accession": "0001213900-26-089093",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Insurance Financing",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-12-17",
+      "floating": false
+    },
+    {
+      "name": "April Veru Note",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "maturity": "2024-04-19",
+      "effective": 0.1,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "September Veru Note",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "maturity": "2024-09-30",
+      "effective": 0.1,
+      "face_min": 100000.0,
+      "face_max": 5200000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Veru Notes Payable",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.1,
+      "rate_now": 0.082,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "February Keystone Note",
+      "kind": "notes",
+      "as_of": "2025-02-12",
+      "maturity": "2025-11-12",
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "May Keystone Note",
+      "kind": "notes",
+      "as_of": "2025-05-16",
+      "maturity": "2026-02-16",
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "June Keystone Note",
+      "kind": "notes",
+      "as_of": "2025-06-05",
+      "maturity": "2026-03-05",
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "August 6 Keystone Note",
+      "kind": "notes",
+      "as_of": "2025-08-06",
+      "maturity": "2026-03-06",
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "August 28 Keystone Notes",
+      "kind": "notes",
+      "as_of": "2025-08-28",
+      "maturity": "2026-05-28",
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-14",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-26-099524",
+      "doc": "ea0305157-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-07-29",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-26-082879",
+      "doc": "ea0299510-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-02-12",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-26-015212",
+      "doc": "ea0276704-8k425_onconet.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-12-10",
+      "items": "1.01,9.01",
+      "acc": "0001213900-25-119898",
+      "doc": "ea0269052-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-10-03",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-25-095847",
+      "doc": "ea0259860-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-09-26",
+      "items": "1.01,1.02,3.02,7.01,9.01",
+      "acc": "0001213900-25-091966",
+      "doc": "ea0258830-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-09-22",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-25-089845",
+      "doc": "ea0258196-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-09-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001213900-25-084500",
+      "doc": "ea0255958-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-08-12",
+      "items": "1.01,2.03,5.02,9.01",
+      "acc": "0001213900-25-074952",
+      "doc": "ea0252759-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-07-16",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001213900-25-064469",
+      "doc": "ea0248815-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-06-11",
+      "items": "1.01,2.03,3.03,5.03,7.01,9.01",
+      "acc": "0001213900-25-053367",
+      "doc": "ea0245387-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-05-22",
+      "items": "1.01,2.03,3.01,9.01",
+      "acc": "0001213900-25-046909",
+      "doc": "ea0243287-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-02-28",
+      "items": "1.01,5.02,5.08,9.01",
+      "acc": "0001213900-25-018867",
+      "doc": "ea0232572-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-02-18",
+      "items": "1.01,2.03,4.01,5.02,9.01",
+      "acc": "0001213900-25-014928",
+      "doc": "ea0231345-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-12-03",
+      "items": "1.01,9.01",
+      "acc": "0001213900-24-105072",
+      "doc": "ea0223490-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-10-03",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001213900-24-084866",
+      "doc": "ea0216649-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-09-20",
+      "items": "1.01,9.01",
+      "acc": "0001213900-24-080705",
+      "doc": "ea0215265-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-07-11",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001213900-24-060635",
+      "doc": "ea0209277-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-04-26",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-24-036645",
+      "doc": "ea0204751-8k_oncone.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-01-29",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-24-007414",
+      "doc": "ea192391-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-12-27",
+      "items": "1.01,9.01",
+      "acc": "0001213900-23-098928",
+      "doc": "ea190756-8ka1_onconetix.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2023-12-21",
+      "items": "1.01,3.02,5.02,5.03,9.01",
+      "acc": "0001213900-23-097738",
+      "doc": "ea190395-8k_onconetix.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-10-03",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001013762-23-000742",
+      "doc": "ea186204-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-08-03",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-23-062922",
+      "doc": "ea182728-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-08-01",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001213900-23-061642",
+      "doc": "ea182607-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-06-14",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001213900-23-048740",
+      "doc": "ea180344-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-06-06",
+      "items": "1.01,5.02,5.03,5.07,9.01",
+      "acc": "0001213900-23-046841",
+      "doc": "ea179858-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-04-20",
+      "items": "1.01,2.01,7.01,9.01",
+      "acc": "0001213900-23-031189",
+      "doc": "ea177216-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-03-29",
+      "items": "1.01,9.01",
+      "acc": "0001213900-23-024177",
+      "doc": "ea175921-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-08-11",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-22-046943",
+      "doc": "ea164234-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-07-25",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-22-041300",
+      "doc": "ea163260-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-06-01",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-22-030666",
+      "doc": "ea160890-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-04-19",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001213900-22-020636",
+      "doc": "ea158617-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-03-04",
+      "items": "1.01,1.02,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0001213900-22-010779",
+      "doc": "ea156505-8ka1_bluewater.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2022-02-24",
+      "items": "1.01,1.02,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0001213900-22-009250",
+      "doc": "ea156152-8k_bluewater.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

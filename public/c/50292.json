@@ -1,0 +1,330 @@
+{
+  "cik": 50292,
+  "ticker": "IEHC",
+  "name": "IEH Corp",
+  "sector": "technology",
+  "industry": "Electronic Connectors",
+  "sic": "3678",
+  "sic_description": "Electronic Connectors",
+  "generated_at": "2026-10-31T14:35:15+00:00",
+  "fetched_at": "2026-10-26T03:01:22+00:00",
+  "price": 29.6,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.562081,
+  "snapshot": {
+    "cash": 9360045,
+    "operating_leases": 1734159,
+    "revolver_drawn": 324280,
+    "equity": 23534458,
+    "assets": 27630479,
+    "liabilities": 4096021,
+    "assets_current": 22903588,
+    "liabilities_current": 2497475,
+    "retained_earnings": 14166361,
+    "interest_paid": 5509,
+    "operating_income": -211771,
+    "pretax_income": 33758,
+    "net_income": 12300,
+    "da": 789042,
+    "ocf": -419869,
+    "capex": 995411,
+    "revenue": 33130891,
+    "shares": 2477749,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 9360045.0,
+    "net_debt": null,
+    "ebitda": 577271,
+    "ebit": -211771,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": -75.215103,
+    "fcf": -1415280,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 9360045.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 159667.0,
+    "floating_share": null,
+    "plus100bp_interest": 1596.67,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 13.521122,
+    "market_cap": 73341370.4,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1734159.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026086567/ea0300075-10q_iehcorp.htm",
+        "accession": "0001213900-26-086567",
+        "form": "10-Q",
+        "filed": "2026-08-07",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 1734159.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-086567",
+            "filed": "2026-08-07",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026086567/ea0300075-10q_iehcorp.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ities and Stockholders’ Equity | Current liabilities: | Accounts payable | $ | 959,093 | $ | 1,426,067 | Customer advance payments | 248,279 | 18,471 | Operating lease liabilities | 459,893 | 449,056 | Equipment financing line of credit | 76,370 | 256,257 | Other current liabilit",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026086567/ea0300075-10q_iehcorp.htm",
+        "accession": "0001213900-26-086567",
+        "form": "10-Q",
+        "filed": "2026-08-07",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-086567",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026086567/ea0300075-10q_iehcorp.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.022,
+      "receivables_growth": 0.4698,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.4381,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.4381,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 29417600.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-068122",
+          "filed": "2026-06-12",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026068122/"
+        },
+        {
+          "value_usd": 28783861.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-068122",
+          "filed": "2026-06-12",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026068122/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 4719223.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-068122",
+          "filed": "2026-06-12",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026068122/"
+        },
+        {
+          "value_usd": 3210840.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-068122",
+          "filed": "2026-06-12",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026068122/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -631130.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-068122",
+          "filed": "2026-06-12",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026068122/"
+        },
+        {
+          "value_usd": 4883619.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-068122",
+          "filed": "2026-06-12",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026068122/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1296784.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-068122",
+          "filed": "2026-06-12",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026068122/"
+        },
+        {
+          "value_usd": 999038.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-068122",
+          "filed": "2026-06-12",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/50292/000121390026068122/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "JPMorgan Chase Bank, N.A.",
+      "kind": "other",
+      "as_of": "2025-08-26",
+      "conv_ratio": 1.2,
+      "maturity": "2026-07-31",
+      "floating": false
+    },
+    {
+      "name": "Equipment Financing Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-03-31",
+      "drawn": 159667.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2020-12-03",
+      "items": "1.01",
+      "acc": "0001174947-20-001189",
+      "doc": "form8k-25120_iehcorp.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-27",
+      "items": "1.01,3.02,5.02,8.01,9.01",
+      "acc": "0001174947-20-000923",
+      "doc": "form8k-24682_iehc.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

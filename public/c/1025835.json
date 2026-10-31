@@ -1,0 +1,244 @@
+{
+  "cik": 1025835,
+  "ticker": "EFSC",
+  "name": "ENTERPRISE FINANCIAL SERVICES CORP",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-10-31T14:35:08+00:00",
+  "fetched_at": "2026-10-30T20:56:18+00:00",
+  "price": 61.81,
+  "price_date": "2026-10-30",
+  "equity_vol": 0.189187,
+  "snapshot": {
+    "cash": 487874000,
+    "equity": 1917326000,
+    "assets": 17792510000,
+    "liabilities": 15875184000,
+    "retained_earnings": 1064907000,
+    "deposits": 15126964000,
+    "interest_paid": 245415000,
+    "net_income": 187527000,
+    "ocf": 242740000,
+    "capex": 7304000,
+    "deposit_interest": 228668000,
+    "wavg_rate_all": 0.0317,
+    "stated_rate": 0.1,
+    "if_converted_shares": 0,
+    "converted_shares": 25060,
+    "shares": 35683235,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities",
+    "converted_shares": "DebtConversionConvertedInstrumentSharesIssued1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 487874000.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.9891,
+    "fcf": 235436000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 487874000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 2205580755.35,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001025835-26-000190",
+      "form": "10-Q",
+      "filed": "2026-10-30",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1025835/000102583526000190/efsc-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Unsecured Term Loan Agreement (\"Term Loan\")",
+      "kind": "loan",
+      "as_of": "2025-09-02",
+      "face": 63300000.0,
+      "spread": 0.025,
+      "floating": true
+    },
+    {
+      "name": "Various Other Borrowings",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "face": 36200000.0,
+      "coupon": 0.01,
+      "floating": false
+    },
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "available": 3000000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2009-03-16",
+      "agreement_kind": "credit_agreement",
+      "dated": "2008-04-30",
+      "size": 20000000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1025835/000120677409000498/exhibit10-16_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2005-01-19",
+      "agreement_kind": "credit_agreement",
+      "dated": "2005-01-19",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Prime Rate"
+      ],
+      "maturity": "2006-01-13",
+      "url": "https://www.sec.gov/Archives/edgar/data/1025835/000119312505008076/dex101.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2004-03-12",
+      "agreement_kind": "amendment",
+      "dated": "2003-01-10",
+      "title": "First Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1025835/000119312504040512/dex109.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-26-075113",
+      "doc": "tm2618148d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-11-12",
+      "items": "1.01,9.01",
+      "acc": "0001104659-21-137384",
+      "doc": "tm2132056d4_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-04-26",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001025835-21-000061",
+      "doc": "efsc-20210426.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-21",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001025835-20-000083",
+      "doc": "efsc-20200820.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-05-21",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-20-012149",
+      "doc": "nt10011833x6_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-11-02",
+      "items": "1.01,5.02,7.01,8.01,9.01",
+      "acc": "0001025835-18-000108",
+      "doc": "a2018-11announcement.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

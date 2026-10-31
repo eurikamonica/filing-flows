@@ -1,0 +1,975 @@
+{
+  "cik": 1298675,
+  "ticker": "CUBE",
+  "name": "CubeSmart",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-31T14:35:10+00:00",
+  "fetched_at": "2026-10-25T23:10:35+00:00",
+  "price": 40.16,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.225494,
+  "snapshot": {
+    "cash": 7258000,
+    "finance_leases": 65534000,
+    "operating_leases": 49604000,
+    "revolver_drawn": 415100000,
+    "equity": 2649263000,
+    "assets": 6598136000,
+    "liabilities": 3893477000,
+    "retained_earnings": -1657027000,
+    "interest_paid": 109291000,
+    "net_income": 325322000,
+    "da": 265249000,
+    "ocf": 611027000,
+    "revenue": 1132003000,
+    "debt_issued": 443952000,
+    "stated_rate": 0.04375,
+    "shares": 226413630,
+    "balance_date": "2026-03-31",
+    "latest_period": "2026-03-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfSeniorLongTermDebt (fiscal year)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 7258000.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 6.590826,
+    "fcf": 611027000.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 7258000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 9092771380.8,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 675000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2006-02-23",
+        "text": "(f) Minimum Tangible Net Worth. Tangible Net Worth at any time to be less than (i) $675,000,000 plus (ii) 75% of the Net Proceeds of all Equity Issuances by the Parent and its Subsidiaries after December 31, 2005 (other than Equity Issuances to the Parent, the Borrower or any other Subsidiary)."
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-03-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "o be expected for any future period or the full year. The Operating Partnership meets the criteria of a variable interest entity (“VIE”). The Parent Company’s sole significant asset is its investment in the Operating Partnership. As a result, substantially all of the Parent Com",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000038/cube-20260630x10q.htm",
+        "accession": "0001298675-26-000038",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "n the final trading day of the quarter. Based on the Company’s evaluation of the redemption value of the redeemable noncontrolling interests, the Company has reflected these interests at the greater of the carrying value based on the accumulation of historical cost or the redemption value",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000038/cube-20260630x10q.htm",
+        "accession": "0001298675-26-000038",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001298675-26-000038",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000038/cube-20260630x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-03-31",
+    "metrics": {
+      "revenue_growth": 0.0533,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.8366
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1123110000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001298675-26-000010",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000010/"
+        },
+        {
+          "value_usd": 1066231000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001298675-26-000010",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000010/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 608512000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001298675-26-000010",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000010/"
+        },
+        {
+          "value_usd": 631074000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001298675-26-000010",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000010/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 331317000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001298675-26-000010",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000010/"
+        },
+        {
+          "value_usd": 391885000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001298675-26-000010",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000010/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "n Accounts payable, accrued expenses and other liabilities on the Company’s consolidated balance sheets. 16. RELATED PARTY TRANSACTIONS The Company provides management services to certain joint ventures and other related parties. Management agreements provide for fee income to the C",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000038/cube-20260630x10q.htm",
+        "accession": "0001298675-26-000038",
+        "form": "10-Q",
+        "filed": "2026-07-31"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ble, accrued expenses and other liabilities | 241,816 | 229,666 | Distributions payable | 120,604 | 121,519 | Deferred revenue | 43,883 | 41,591 | Total liabilities | 3,947,803 | 3,861,117 | Noncontrolling interests in the Operating Partnership | 39,143 | 36,167 | Commitments",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000038/cube-20260630x10q.htm",
+        "accession": "0001298675-26-000038",
+        "form": "10-Q",
+        "filed": "2026-07-31"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Senior Notes 2.250 % Due 2028",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0225,
+      "face": 550000000.0,
+      "effective": 0.0233,
+      "maturity_year": 2028,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes 2.500 % Due 2032",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.025,
+      "face": 500000000.0,
+      "effective": 0.0259,
+      "maturity_year": 2032,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes 2.000 % Due 2031",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.02,
+      "face": 450000000.0,
+      "effective": 0.021,
+      "maturity_year": 2031,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes 5.125 Percent Due 2035",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.05125,
+      "face": 450000000.0,
+      "effective": 0.053,
+      "maturity_year": 2035,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes 4.375 % Due 2029",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.04375,
+      "face": 350000000.0,
+      "effective": 0.0446,
+      "maturity_year": 2029,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes 3.000 % Due 2030",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.03,
+      "face": 350000000.0,
+      "effective": 0.0304,
+      "maturity_year": 2030,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes 3.125% Due 2026",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.03125,
+      "face": 300000000.0,
+      "effective": 0.0318,
+      "maturity_year": 2026,
+      "floating": false
+    },
+    {
+      "name": "Mortgage Loans",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "face": 94675000.0,
+      "carrying": 94675000.0,
+      "floating": false
+    },
+    {
+      "name": "Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.00775,
+      "fee": 0.0015,
+      "floating": true
+    },
+    {
+      "name": "Revolver",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "rate_now": 0.0461,
+      "available": 548500000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "$450,000,000 of 5.125% Senior Notes due 2035",
+      "floating": false,
+      "coupon": 5.125,
+      "principal": 450000000.0,
+      "currency": "USD",
+      "maturity": "2035-11-01",
+      "price": 98.656,
+      "yield": 5.295,
+      "benchmark": "4.250% due August 15, 2035",
+      "bench_yield": 4.265,
+      "spread_bps": 103.0,
+      "trade_date": "2025-08-11",
+      "ratings": "Baa2 (Stable)/BBB (Stable)",
+      "convertible": false,
+      "cusip": "22966R AK2",
+      "date": "2025-08-11",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465925076173/tm2523055d3_fwp.htm"
+    },
+    {
+      "title": "$550,000,000 of 2.25% Senior Notes due 2028",
+      "floating": false,
+      "coupon": 2.25,
+      "principal": 550000000.0,
+      "currency": "USD",
+      "maturity": "2028-12-15",
+      "price": 99.515,
+      "yield": 2.325,
+      "benchmark": "UST 1.375% due October 31, 2028",
+      "spread_bps": 85.0,
+      "trade_date": "2021-11-18",
+      "convertible": false,
+      "cusip": "22966R AH9",
+      "date": "2021-11-18",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465921141237/tm2132894d5_fwp.htm"
+    },
+    {
+      "title": "$450,000,000 of 2.000% Senior Notes due 2031",
+      "floating": false,
+      "coupon": 2.0,
+      "principal": 450000000.0,
+      "currency": "USD",
+      "maturity": "2031-02-15",
+      "price": 99.074,
+      "yield": 2.1,
+      "benchmark": "UST 0.625% due August 15, 2030",
+      "bench_yield": 0.65,
+      "spread_bps": 145.0,
+      "trade_date": "2020-09-29",
+      "ratings": "Baa2 (Stable) / BBB (Stable)",
+      "convertible": false,
+      "cusip": "22966R AG1",
+      "date": "2020-09-29",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465920109920/a20-31622_3fwp.htm"
+    },
+    {
+      "title": "$350,000,000 of 3.000% Senior Notes due 2030",
+      "floating": false,
+      "coupon": 3.0,
+      "principal": 350000000.0,
+      "currency": "USD",
+      "maturity": "2030-02-15",
+      "price": 99.623,
+      "yield": 3.043,
+      "benchmark": "UST 1.625% due August 15, 2029",
+      "bench_yield": 1.543,
+      "spread_bps": 150.0,
+      "trade_date": "2019-10-08",
+      "ratings": "Baa2 (Stable) / BBB (Stable)",
+      "convertible": false,
+      "cusip": "22966R AF3",
+      "date": "2019-10-08",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465919053388/a19-19779_1fwp.htm"
+    },
+    {
+      "title": "$350,000,000 of 4.375% Senior Notes due 2029",
+      "floating": false,
+      "coupon": 4.375,
+      "principal": 350000000.0,
+      "currency": "USD",
+      "maturity": "2029-02-15",
+      "price": 99.356,
+      "yield": 4.455,
+      "benchmark": "UST 3.125% due November 15, 2028",
+      "bench_yield": 2.705,
+      "spread_bps": 175.0,
+      "trade_date": "2019-01-24",
+      "ratings": "Baa2 (Stable) / BBB (Stable)",
+      "convertible": false,
+      "cusip": "22966R AE6",
+      "date": "2019-01-24",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465919003160/a19-3403_3fwp.htm"
+    },
+    {
+      "title": "$50,000,000 of 4.375% Senior Notes due 2023",
+      "floating": false,
+      "coupon": 4.375,
+      "principal": 50000000.0,
+      "currency": "USD",
+      "maturity": "2023-12-15",
+      "price": 105.04,
+      "yield": 3.495,
+      "benchmark": "UST 1.875% due February 28, 2022",
+      "spread_bps": 155.0,
+      "trade_date": "2017-03-30",
+      "convertible": false,
+      "cusip": "22966R AB2",
+      "date": "2017-03-30",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465917020346/a17-9922_3fwp.htm"
+    },
+    {
+      "title": "$300,000,000 of 3.125% Senior Notes due 2026",
+      "floating": false,
+      "coupon": 3.125,
+      "principal": 300000000.0,
+      "currency": "USD",
+      "maturity": "2026-09-01",
+      "price": 99.504,
+      "yield": 3.183,
+      "benchmark": "1.625% due May 15, 2026",
+      "spread_bps": 160.0,
+      "trade_date": "2016-08-08",
+      "ratings": "Baa2 (Stable)/BBB (Stable)",
+      "convertible": false,
+      "cusip": "22966R AD8",
+      "date": "2016-08-08",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465916138022/a16-16340_4fwp.htm"
+    },
+    {
+      "title": "$250,000,000 of 4.000% Senior Notes due 2025",
+      "floating": false,
+      "coupon": 4.0,
+      "principal": 250000000.0,
+      "currency": "USD",
+      "maturity": "2025-11-15",
+      "price": 99.735,
+      "yield": 4.032,
+      "benchmark": "2.00% due August 15, 2025",
+      "bench_yield": 2.032,
+      "spread_bps": 200.0,
+      "trade_date": "2015-10-19",
+      "ratings": "Baa2/BBB",
+      "convertible": false,
+      "cusip": "22966R AC0",
+      "date": "2015-10-19",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465915071327/a15-21302_5fwp.htm"
+    },
+    {
+      "title": "$250,000,000 of 4.80% Senior Notes due 2022",
+      "floating": false,
+      "coupon": 4.8,
+      "principal": 250000000.0,
+      "currency": "USD",
+      "maturity": "2022-07-15",
+      "price": 99.855,
+      "yield": 4.818,
+      "benchmark": "1.75% due May 15, 2022",
+      "spread_bps": 320.0,
+      "trade_date": "2012-06-19",
+      "ratings": "Baa3 / BBB-",
+      "convertible": false,
+      "cusip": "22966R AA4",
+      "date": "2012-06-19",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000110465912044532/a12-14821_7fwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-06-24",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-24",
+      "size": 100000000.0,
+      "title": "Third Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        0.725,
+        1.4
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.125,
+      "floor_pct": 0.0,
+      "maturity": "2030-06-24",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000033/cube-20260624xex10d1.htm",
+      "all_in_pct": [
+        0.7639,
+        1.4389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2022-10-28",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-10-26",
+      "size": 100000000.0,
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        0.725,
+        1.4
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.125,
+      "floor_pct": 0.0,
+      "maturity": "2027-02-15",
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000129867522000054/cube-20220930xex10d1.htm",
+      "all_in_pct": [
+        0.7639,
+        1.4389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2006-03-01",
+      "agreement_kind": "credit_agreement",
+      "dated": "2006-02-23",
+      "size": 100000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        1.6,
+        1.6
+      ],
+      "fee_pct": 0.25,
+      "maturity": "2009-02-22",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 675000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(f) Minimum Tangible Net Worth. Tangible Net Worth at any time to be less than (i) $675,000,000 plus (ii) 75% of the Net Proceeds of all Equity Issuances by the Parent and its Subsidiaries after December 31, 2005 (other than Equity Issuances to the Parent, the Borrower or any other Subsidiary)."
+        },
+        {
+          "type": "net_worth",
+          "limit": 500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "\"ELIGIBLE ASSIGNEE\" means any Person who is, at the time of determination: (i) a Lender or an affiliate of a Lender; (ii) a commercial bank, trust, trust company, insurance company, investment bank or pension fund organized under the laws of the United States of America, or any state thereof, and having total assets in excess of $5,000,000,000; (iii) a savings and loan association or savings bank organized under the"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1298675/000095015206001547/l18827aexv10w4.txt",
+      "all_in_pct": [
+        1.6389,
+        1.6389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-24",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001298675-26-000033",
+      "doc": "cube-20260624x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-080958",
+      "doc": "tm2523819d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-08-12",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-25-076934",
+      "doc": "tm2523233d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-03-03",
+      "items": "1.01,1.02,3.02,9.01",
+      "acc": "0001104659-25-019866",
+      "doc": "tm257956d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-05-17",
+      "items": "1.01,5.02,5.07,9.01",
+      "acc": "0001298675-22-000028",
+      "doc": "cube-20220517x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-21-145031",
+      "doc": "tm2132894d8_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-11-22",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-21-142631",
+      "doc": "tm2132894d7_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-11-19",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-21-141926",
+      "doc": "tm2133352d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-11-15",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-21-139328",
+      "doc": "tm2132921d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-06",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-20-112656",
+      "doc": "tm2031622-6_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-01",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-20-110678",
+      "doc": "tm2031622-5_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-03-04",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-20-029277",
+      "doc": "tm2011021-4_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-10-11",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001410578-19-001639",
+      "doc": "tv530814_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-10-09",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001410578-19-001592",
+      "doc": "tv530812_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-06-21",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-19-037036",
+      "doc": "a19-11793_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-01-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-19-004486",
+      "doc": "a19-3403_58k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-01-25",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-19-003440",
+      "doc": "a19-3463_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-27",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-18-047770",
+      "doc": "a18-17805_18k.htm",
+      "desc": "8-K ATM REFRESH"
+    },
+    {
+      "date": "2017-04-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-17-021673",
+      "doc": "a17-10847_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-04-03",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-17-021012",
+      "doc": "a17-10242_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-03-17",
+      "items": "1.01,3.02,5.03,9.01",
+      "acc": "0001104659-17-017317",
+      "doc": "a17-8437_48k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-08-15",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-16-139764",
+      "doc": "a16-16340_68k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-08-09",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-16-138337",
+      "doc": "a16-16340_58k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-12-30",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-15-087368",
+      "doc": "a15-25615_38k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-10-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-15-072767",
+      "doc": "a15-21669_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-10-19",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-15-071408",
+      "doc": "a15-21302_38k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-04-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-15-030576",
+      "doc": "a15-9863_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-10-20",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-14-072469",
+      "doc": "a14-22374_38k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-10-02",
+      "items": "1.01,9.01",
+      "acc": "0001104659-14-069772",
+      "doc": "a14-21847_28k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-08-25",
+      "items": "1.01",
+      "acc": "0001104659-14-062918",
+      "doc": "a14-19962_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-05-05",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-14-034663",
+      "doc": "a14-11805_38k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-12-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-13-090624",
+      "doc": "a13-25906_88k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-12-12",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001104659-13-089703",
+      "doc": "a13-25906_78k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-12-10",
+      "items": "1.01,9.01",
+      "acc": "0001104659-13-089271",
+      "doc": "a13-25906_38k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-11-01",
+      "items": "1.01,8.01",
+      "acc": "0001104659-13-080058",
+      "doc": "a13-23407_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-06-19",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-13-050178",
+      "doc": "a13-15267_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-05-07",
+      "items": "1.01,1.02,3.02,9.01",
+      "acc": "0001104659-13-037861",
+      "doc": "a13-11487_38k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-06-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-12-045905",
+      "doc": "a12-15385_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-06-20",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-12-044772",
+      "doc": "a12-14821_48k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-12-14",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001104659-11-069452",
+      "doc": "a11-31631_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-10-31",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-11-059223",
+      "doc": "a11-28438_68k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-10-26",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-11-057765",
+      "doc": "a11-28438_58k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-10-24",
+      "items": "1.01,2.02,3.02,7.01,9.01",
+      "acc": "0001104659-11-057418",
+      "doc": "a11-28438_48k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-09-16",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001104659-11-052142",
+      "doc": "a11-26430_48k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-06-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-11-036205",
+      "doc": "a11-15452_18k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

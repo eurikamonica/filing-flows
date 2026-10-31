@@ -1,0 +1,319 @@
+{
+  "cik": 1603793,
+  "ticker": "NRIS",
+  "name": "Norris Industries, Inc.",
+  "sector": "energy",
+  "industry": "Crude Petroleum & Natural Gas",
+  "sic": "1311",
+  "sic_description": "Crude Petroleum & Natural Gas",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T04:54:59+00:00",
+  "price": 0.1311,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.012062,
+  "snapshot": {
+    "total_debt": 4100000,
+    "cash": 134836,
+    "equity": -5252352,
+    "assets": 223714,
+    "liabilities": 5476066,
+    "assets_current": 161084,
+    "liabilities_current": 243708,
+    "retained_earnings": -13019648,
+    "interest_expense": 129521,
+    "operating_income": -616234,
+    "net_income": -745755,
+    "da": 36554,
+    "ocf": -505487,
+    "revenue": 284291,
+    "shares": 108245688,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "Cash",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 4100000,
+    "cash_and_investments": 134836.0,
+    "net_debt": 3965164.0,
+    "ebitda": -579680,
+    "ebit": -616234,
+    "interest_expense": 129521,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -4.757792,
+    "ebitda_coverage": -4.475568,
+    "fcf": -505487.0,
+    "fcf_to_debt": -0.12329,
+    "effective_rate": 0.03159,
+    "revolver_available": null,
+    "liquidity": 134836.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -88.184421,
+    "market_cap": 14191009.6968,
+    "debt_to_ev": 0.225819,
+    "convertibles": null,
+    "implied": {
+      "dd": 1.916673,
+      "pd_1y": 0.02764,
+      "spread_5y_bps": 614.226098,
+      "asset_vol": 0.892237,
+      "calibrated_5y_bps": 163.876698,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 15
+  },
+  "hidden_leverage": {
+    "as_of": "2026-08-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "00 | 3,700,000 | Accounts payable and accrued expenses - related parties-long term | 825,091 | 756,683 | Asset retirement obligations | 307,267 | 416,334 | Total Liabilities | 5,476,066 | 5,101,180 | Stockholders’ Deficit | Preferred stock, $ 0.001 par value per share 20,000,000 sha",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226046710/form10-q.htm",
+        "accession": "0001493152-26-046710",
+        "form": "10-Q",
+        "filed": "2026-10-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-046710",
+      "form": "10-Q",
+      "filed": "2026-10-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226046710/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-31",
+    "metrics": {
+      "revenue_growth": -0.1313,
+      "receivables_growth": -0.1257,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.0064,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 286086.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-026291",
+          "filed": "2026-05-29",
+          "end": "2026-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226026291/"
+        },
+        {
+          "value_usd": 329334.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-026291",
+          "filed": "2026-05-29",
+          "end": "2025-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226026291/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 23800.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-026291",
+          "filed": "2026-05-29",
+          "end": "2026-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226026291/"
+        },
+        {
+          "value_usd": 27223.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-026291",
+          "filed": "2026-05-29",
+          "end": "2025-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226026291/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -440251.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-026291",
+          "filed": "2026-05-29",
+          "end": "2026-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226026291/"
+        },
+        {
+          "value_usd": -368590.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-026291",
+          "filed": "2026-05-29",
+          "end": "2025-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226026291/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -661431.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-026291",
+          "filed": "2026-05-29",
+          "end": "2026-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226026291/"
+        },
+        {
+          "value_usd": -601076.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-026291",
+          "filed": "2026-05-29",
+          "end": "2025-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226026291/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "s ended August 31, 2025, the Company recognized accretion expense of $- 0 and $ 0 , respectively. Note 5 – Related Party Transactions Promissory Note to JBB, Inc On December 28, 2017, the Company borrowed $ 1,550,000 from JBB to complete the purchases of a series of oil and gas",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226046710/form10-q.htm",
+        "accession": "0001493152-26-046710",
+        "form": "10-Q",
+        "filed": "2026-10-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "29,776 | $ | 40,984 | Total | $ | 85,005 | $ | 84,388 | $ | 175,363 | $ | 177,158 | There were no significant contract liabilities or transaction price allocations to any remaining performance obligations as of August 31, 2026 and February 28, 2026. F- 6 | Note 3 – Oil and Gas",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1603793/000149315226046710/form10-q.htm",
+        "accession": "0001493152-26-046710",
+        "form": "10-Q",
+        "filed": "2026-10-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-02-28",
+      "2025-02-28"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "JBB Partners Inc",
+      "kind": "other",
+      "as_of": "2026-08-31",
+      "available": 600000.0,
+      "floating": false
+    },
+    {
+      "name": "Loan Note",
+      "kind": "loan",
+      "as_of": "2026-08-31",
+      "coupon": 0.05,
+      "conv_price": 0.08,
+      "maturity": "2023-09-30",
+      "drawn": 600000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-08-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2017-08-07",
+      "items": "1.01,3.02,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0001493152-17-008575",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-05-20",
+      "items": "1.01,2.01,8.01,9.01",
+      "acc": "0001493152-15-002153",
+      "doc": "form8k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

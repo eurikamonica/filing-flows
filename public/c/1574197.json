@@ -1,0 +1,617 @@
+{
+  "cik": 1574197,
+  "ticker": "FPH",
+  "name": "Five Point Holdings, LLC",
+  "sector": "real-estate",
+  "industry": "Real Estate",
+  "sic": "6500",
+  "sic_description": "Real Estate",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T02:57:49+00:00",
+  "price": 4.2,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.236907,
+  "snapshot": {
+    "total_debt": 444399000,
+    "cash": 358716000,
+    "operating_leases": 7900000,
+    "equity": 2332587000,
+    "assets": 3227523000,
+    "liabilities": 825009000,
+    "retained_earnings": 234097000,
+    "pretax_income": 93356000,
+    "net_income": 141913000,
+    "da": 8895000,
+    "ocf": 6346000,
+    "capex": 336000,
+    "revenue": 118000000,
+    "debt_issued": 0,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfSeniorLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 444399000,
+    "cash_and_investments": 358716000.0,
+    "net_debt": 85683000.0,
+    "ebitda": 102251000.0,
+    "ebit": 93356000.0,
+    "interest_expense": null,
+    "leverage": 4.346158,
+    "net_leverage": 0.837967,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 6010000,
+    "fcf_to_debt": 0.013524,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 358716000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "interest_coverage",
+        "direction": "max",
+        "limit": 1.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Second Amended And Restated Credit Agreement",
+        "dated": "2025-10-21",
+        "text": "Fail to maintain as of the last day of any fiscal quarter of Holdings (commencing with the fiscal quarter ending September 30, 2025) either (i) a Consolidated Interest Coverage Ratio equal to or greater than 1.50 to 1.0 or (ii) Liquidity equal to at least $81,562,000.00."
+      },
+      {
+        "type": "liquidity",
+        "direction": "min",
+        "limit": 81562000.0,
+        "unit": "usd",
+        "actual": 358716000.0,
+        "cushion": 0.772628,
+        "agreement": "Second Amended And Restated Credit Agreement",
+        "dated": "2025-10-21",
+        "text": "Fail to maintain as of the last day of any fiscal quarter of Holdings (commencing with the fiscal quarter ending September 30, 2025) either (i) a Consolidated Interest Coverage Ratio equal to or greater than 1.50 to 1.0 or (ii) Liquidity equal to at least $81,562,000.00."
+      },
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 1500000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Second Amended And Restated Credit Agreement",
+        "dated": "2025-10-21",
+        "text": "Permit the Consolidated Tangible Net Worth (monitored and tested quarterly as of the last day of each fiscal quarter) to be less than (i) $1,500,000,000 plus (ii) 50% of the cumulative Consolidated Net Income for each fiscal quarter commencing on or after September 30, 2025 (excluding any quarter in which there is a loss but applying Consolidated Net"
+      }
+    ],
+    "cushion_score": 95
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 7900000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm",
+        "accession": "0001574197-26-000035",
+        "form": "10-Q",
+        "filed": "2026-10-23",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 7900000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001574197-26-000035",
+            "filed": "2026-10-23",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ll subsidiaries in which the Holding Company has a controlling interest and the consolidated accounts of variable interest entities (“VIEs”) in which the Holding Company is deemed to be the primary beneficiary. All intercompany transactions and balances have been eliminated in con",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm",
+        "accession": "0001574197-26-000035",
+        "form": "10-Q",
+        "filed": "2026-10-23",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "8 | 181,544 | Total liabilities | 825,009 | 860,407 | COMMITMENTS AND CONTINGENT LIABILITIES (Note 12) | REDEEMABLE NONCONTROLLING INTERESTS | 69,927 | 70,155 | CAPITAL: | Class A common shares; No par value; Issued and outstanding: September 30, 2026— 71,920,334 shares; December 31, 2025—",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm",
+        "accession": "0001574197-26-000035",
+        "form": "10-Q",
+        "filed": "2026-10-23",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001574197-26-000035",
+      "form": "10-Q",
+      "filed": "2026-10-23",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": -0.5417,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.4828
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 108159000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001574197-26-000005",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000005/"
+        },
+        {
+          "value_usd": 235984000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001574197-26-000005",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000005/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 105230000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001574197-26-000005",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000005/"
+        },
+        {
+          "value_usd": 115986000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001574197-26-000005",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000005/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 70966000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001574197-26-000005",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000005/"
+        },
+        {
+          "value_usd": 68297000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001574197-26-000005",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000005/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "e assets acquired and liabilities assumed | Cash and cash equivalents | 2,255 | Related party receivables and contract assets | 10,653 | Investment in funds | 16,508 | Intangible assets | 13,672 | Other assets | 1,113 | Total assets | 44,201 | Accounts payable and other liab",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm",
+        "accession": "0001574197-26-000035",
+        "form": "10-Q",
+        "filed": "2026-10-23"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": ". During the three months ended September 30, 2026 and 2025, revenues also included changes in estimates of variable consideration, including profit participation and price participation, from those amounts previously recorded by the Great Park Venture. During the three months en",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm",
+        "accession": "0001574197-26-000035",
+        "form": "10-Q",
+        "filed": "2026-10-23"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "nsolidated statements of operations and is included in the Hearthstone segment. 17 Table of Contents 9. RELATED PARTY TRANSACTIONS Related party assets and liabilities included in the Company’s condensed consolidated balance sheets as of September 30, 2026 and December 31, 2025",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm",
+        "accession": "0001574197-26-000035",
+        "form": "10-Q",
+        "filed": "2026-10-23"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "(see Note 9). At September 30, 2026 and December 31, 2025, the Company had a $ 2.7 million and $ 5.1 million contract liability, respectively, for incentive compensation payments received under the A&R DMA that were received prior to the satisfaction of the associated performa",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1574197/000157419726000035/fph-20260930.htm",
+        "accession": "0001574197-26-000035",
+        "form": "10-Q",
+        "filed": "2026-10-23"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "8.000% Senior Notes due 2030",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "coupon": 0.08,
+      "carrying": 450000000.0,
+      "maturity_year": 2030,
+      "floating": false
+    },
+    {
+      "name": "Unsecured Debt",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "capacity": 217500000.0,
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due 2030, 8.000%",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon": 0.08,
+      "carrying": 450000000.0,
+      "maturity_year": 2030,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "10.500% initial rate Senior Notes due 2028",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon": 0.105,
+      "carrying": 0.0,
+      "maturity_year": 2028,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-10-23",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-10-21",
+      "size": 217500000.0,
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "maturity": "2029-07-15",
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Fail to maintain as of the last day of any fiscal quarter of Holdings (commencing with the fiscal quarter ending September 30, 2025) either (i) a Consolidated Interest Coverage Ratio equal to or greater than 1.50 to 1.0 or (ii) Liquidity equal to at least $81,562,000.00."
+        },
+        {
+          "type": "liquidity",
+          "limit": 81562000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Fail to maintain as of the last day of any fiscal quarter of Holdings (commencing with the fiscal quarter ending September 30, 2025) either (i) a Consolidated Interest Coverage Ratio equal to or greater than 1.50 to 1.0 or (ii) Liquidity equal to at least $81,562,000.00."
+        },
+        {
+          "type": "net_worth",
+          "limit": 1500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Tangible Net Worth (monitored and tested quarterly as of the last day of each fiscal quarter) to be less than (i) $1,500,000,000 plus (ii) 50% of the cumulative Consolidated Net Income for each fiscal quarter commencing on or after September 30, 2025 (excluding any quarter in which there is a loss but applying Consolidated Net"
+        },
+        {
+          "type": "net_worth",
+          "limit": 250000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "r purchasing loans, or an Affiliate thereof organized under the laws of any State of the United States or any other country which is a member of OECD, and licensed or qualified to conduct such business under the laws of any such State and having (1) total assets of at least $1,000,000,000 and (2) a net worth of at least $250,000,000;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1574197/000119312525247581/d58049dex102.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-10-23",
+      "agreement_kind": "amendment",
+      "dated": "2023-10-19",
+      "size": 125000000.0,
+      "title": "Second Amendment To Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1574197/000119312525247581/d58049dex101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-09-30",
+      "items": "1.01,9.01",
+      "acc": "0001574197-26-000029",
+      "doc": "fph-20260929.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-23",
+      "items": "1.01,9.01",
+      "acc": "0001193125-25-247581",
+      "doc": "d58049d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-26",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-25-218100",
+      "doc": "d936070d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-12",
+      "items": "1.01,9.01",
+      "acc": "0001574197-25-000075",
+      "doc": "fph-20250806.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-06-20",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-25-143291",
+      "doc": "d934817d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-09-18",
+      "items": "1.01,9.01",
+      "acc": "0001574197-24-000076",
+      "doc": "fph-20240916.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-24",
+      "items": "1.01,9.01",
+      "acc": "0001193125-24-147060",
+      "doc": "d51732d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-16",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-24-008643",
+      "doc": "d728537d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-26",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-23-303125",
+      "doc": "d641305d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-10-20",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-259537",
+      "doc": "d549969d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-01-04",
+      "items": "1.01,9.01",
+      "acc": "0001574197-23-000003",
+      "doc": "fph-20221228.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-06-16",
+      "items": "1.01,9.01",
+      "acc": "0001574197-22-000061",
+      "doc": "fph-20220610.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-20",
+      "items": "1.01,9.01",
+      "acc": "0001574197-21-000013",
+      "doc": "fph-20210419.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-07-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-19-204105",
+      "doc": "d779267d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-05-16",
+      "items": "1.01,9.01",
+      "acc": "0001193125-19-149441",
+      "doc": "d747507d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-02-20",
+      "items": "1.01,1.02",
+      "acc": "0001193125-19-044645",
+      "doc": "d701220d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-16",
+      "items": "1.01,9.01",
+      "acc": "0001193125-18-250428",
+      "doc": "d607251d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-11-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-17-357476",
+      "doc": "d469527d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-11-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-17-350738",
+      "doc": "d434570d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-10-02",
+      "items": "1.01,1.02,8.01,9.01",
+      "acc": "0001193125-17-301029",
+      "doc": "d642716d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-08-10",
+      "items": "1.01,2.02,2.03,8.01,9.01",
+      "acc": "0001193125-17-254529",
+      "doc": "d418396d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-05-19",
+      "items": "1.01,3.02,5.03,8.01,9.01",
+      "acc": "0001193125-17-176779",
+      "doc": "d400591d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-09-30",
+      444399000,
+      358716000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

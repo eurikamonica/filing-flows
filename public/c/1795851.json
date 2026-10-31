@@ -1,0 +1,342 @@
+{
+  "cik": 1795851,
+  "ticker": "SWRD",
+  "name": "Stewards, Inc.",
+  "sector": "financials",
+  "industry": "Short-Term Business Credit Institutions",
+  "sic": "6153",
+  "sic_description": "Short-Term Business Credit Institutions",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:11:03+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 1096000,
+    "operating_leases": 15000,
+    "equity": 29464000,
+    "assets": 173976000,
+    "liabilities": 136050000,
+    "assets_current": 16525000,
+    "liabilities_current": 19371000,
+    "retained_earnings": -71639000,
+    "shares": 211149963,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1096000.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1096000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": 73600000.0,
+    "floating_share": null,
+    "plus100bp_interest": 736000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 15000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795851/000179585126000003/swrd-20260630.htm",
+        "accession": "0001795851-26-000003",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 15000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001795851-26-000003",
+            "filed": "2026-08-14",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1795851/000179585126000003/swrd-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "conducted on terms consistent with those offered to other EB-5 investors participating in the program. Variable Interest Entity Effective August 1, 2025, the Company transferred its 100 % interest in FC Sub Fund LLC (the “VIE”) to Forfront Capital LLC for a consideration of",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795851/000179585126000003/swrd-20260630.htm",
+        "accession": "0001795851-26-000003",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "ter the lease term. Further, such new leases would be evaluated to consider whether they would be failed sale-leaseback transactions and accounted for as financing transactions by the lessor, if applicable. As of June 30, 2026 and December 31, 2025, we did not have a",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795851/000179585126000003/swrd-20260630.htm",
+        "accession": "0001795851-26-000003",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "royalty_revenue_financing",
+        "label": "Royalty / revenue-based financing",
+        "excerpt": "nd three secondary partners, all of whom operate in the Merchant Cash Advance (MCA) industry and provide revenue-based financing solutions. Pursuant to Master Participation Agreements and related agreements, we participate in approved transactions with these partners at levels",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795851/000179585126000003/swrd-20260630.htm",
+        "accession": "0001795851-26-000003",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "all be reported on the condensed consolidated balance sheets within total equity of the Company. Certain redeemable noncontrolling interests are reported on the condensed consolidated balance sheets as mezzanine equity. Topic 810 also requires revenues, expenses, gains, losses, net income",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795851/000179585126000003/swrd-20260630.htm",
+        "accession": "0001795851-26-000003",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001795851-26-000003",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1795851/000179585126000003/swrd-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "aining lease term (in years) | 0.50 | 1.58 | Weighted average discount rate | 5.52 | % | 5.52 | % | Note 10 - Related-Party Transactions From time to time, the Company enters into transactions with its affiliates that are considered to be related-party transactions. As of June 30, 20",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795851/000179585126000003/swrd-20260630.htm",
+        "accession": "0001795851-26-000003",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Mortgages",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "carrying": 77625000.0,
+      "floating": false
+    },
+    {
+      "name": "Block 40 Mortgage Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "spread": 0.03,
+      "carrying": 73600000.0,
+      "effective": 0.0686,
+      "floating": true
+    },
+    {
+      "name": "Notes Payable",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 45476000.0,
+      "floating": false
+    },
+    {
+      "name": "15% notes payable",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.15,
+      "carrying": 31829000.0,
+      "floating": false
+    },
+    {
+      "name": "Notes payable with Stewards International Funds PCC",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 9900000.0,
+      "floating": false
+    },
+    {
+      "name": "Plantation Mortgage Loan",
+      "kind": "loan",
+      "as_of": "2026-03-11",
+      "face": 4000000.0,
+      "coupon": 0.12,
+      "floating": false
+    },
+    {
+      "name": "Others",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 2422000.0,
+      "floating": false
+    },
+    {
+      "name": "13% notes payable",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.13,
+      "carrying": 815000.0,
+      "floating": false
+    },
+    {
+      "name": "12% notes payable",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.12,
+      "carrying": 510000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-10-07",
+      "items": "1.01,9.01",
+      "acc": "0001663577-26-000321",
+      "doc": "swrd8ka_100726.htm",
+      "desc": "FORM 8-K AMENDMENT NO. 1"
+    },
+    {
+      "date": "2026-09-29",
+      "items": "1.01,2.01,2.03,3.02,9.01",
+      "acc": "0001663577-26-000311",
+      "doc": "swrd_8k092326.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001663577-26-000303",
+      "doc": "swrd_8k092126.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-04",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001795851-26-000013",
+      "doc": "swrd-20260903.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001795851-26-000010",
+      "doc": "swrd-20260902.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-07",
+      "items": "1.01,5.03,9.01",
+      "acc": "0001663577-26-000243",
+      "doc": "swrd_8k080526.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-07-30",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001663577-26-000236",
+      "doc": "swrd_8k07272026.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-02-04",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001213900-20-002531",
+      "doc": "f8k013120_favorealtyinc.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

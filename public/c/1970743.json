@@ -1,0 +1,314 @@
+{
+  "cik": 1970743,
+  "ticker": "RMXI",
+  "name": "RMX INDUSTRIES, INC.",
+  "sector": "technology",
+  "industry": "Services-Computer Programming, Data Processing, Etc.",
+  "sic": "7370",
+  "sic_description": "Services-Computer Programming, Data Processing, Etc.",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T04:59:12+00:00",
+  "price": 4.3,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.499587,
+  "snapshot": {
+    "total_debt": 2945000,
+    "current_debt": 2945000,
+    "cash": 248333,
+    "operating_leases": 70352,
+    "convertible": 2945000,
+    "equity": 30668522,
+    "assets": 35874283,
+    "liabilities": 5205761,
+    "assets_current": 2191667,
+    "liabilities_current": 5147686,
+    "retained_earnings": -57916272,
+    "net_income": -33697348,
+    "conversion_price": 0.82,
+    "shares": 8460544,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebt",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "analysis": {
+    "total_debt": 2945000,
+    "cash_and_investments": 248333.0,
+    "net_debt": 2696667.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 248333.0,
+    "due_12m": 2945000,
+    "due_24m": null,
+    "liquidity_to_due12": 0.084324,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 36380339.2,
+    "debt_to_ev": 0.075364,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible notes (company total)",
+          "face": 2945000,
+          "carrying": 2945000,
+          "conv_price": 0.82,
+          "moneyness": 5.243902,
+          "in_the_money": true,
+          "shares": 3591463.414634
+        }
+      ],
+      "total_face": 2945000,
+      "in_the_money_face": 2945000,
+      "in_the_money_carrying": 2945000,
+      "shares_if_converted": 3591463.414634,
+      "coupon_saved": 0,
+      "dilution": 0.424496
+    },
+    "implied": {
+      "dd": 1.170899,
+      "pd_1y": 0.12082,
+      "spread_5y_bps": 1196.008183,
+      "asset_vol": 1.404049,
+      "calibrated_5y_bps": 172.303596,
+      "rating_band": "BB"
+    },
+    "if_converted": {
+      "total_debt": 0.0,
+      "shares_added": 3591463.414634,
+      "dilution": 0.424496,
+      "leverage": null,
+      "interest_coverage": null,
+      "implied_5y_bps": 0.0,
+      "dd": null
+    },
+    "covenants": [],
+    "cushion_score": 15
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 70352.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1970743/000121390026088751/ea0301076-10q_rmxindus.htm",
+        "accession": "0001213900-26-088751",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 70352.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-088751",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1970743/000121390026088751/ea0301076-10q_rmxindus.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-088751",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1970743/000121390026088751/ea0301076-10q_rmxindus.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "fees are billed based on customer consumption during the period and revenue is recognized under the Company’s variable consideration policy as the underlying usage occurs, consistent with ASC 606’s guidance on usage-based royalties and consumption-based pricing. Because inferencing",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1970743/000121390026088751/ea0301076-10q_rmxindus.htm",
+        "accession": "0001213900-26-088751",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| $ | 1,044,126 | $ | 1,005,611 | Accounts payable and accrued expenses, related party | 168,064 | 185,443 | Deferred revenue | 9,128 | - | ROU, current liability | 29,773 | 28,745 | Derivative liability | 638,382 | 1,974,046 | Notes payable and interest (net of discount) |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1970743/000121390026088751/ea0301076-10q_rmxindus.htm",
+        "accession": "0001213900-26-088751",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-10-23",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001213900-26-112184",
+      "doc": "ea0309532-8k_rmx.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-10-02",
+      "items": "1.01",
+      "acc": "0001213900-26-106475",
+      "doc": "ea0307140-8k_rmx.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-06-26",
+      "items": "1.01",
+      "acc": "0001213900-26-072651",
+      "doc": "ea0295949-8k_rmx.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-05-14",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001213900-26-058408",
+      "doc": "ea0287659-8k_rmxindustries.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      3382225,
+      109233,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      2945000,
+      248333,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-05",
+      1101.5,
+      2.02,
+      1.6749,
+      162.7
+    ],
+    [
+      "2026-06",
+      1018.4,
+      2.112,
+      1.5984,
+      161.7
+    ],
+    [
+      "2026-07",
+      1020.95,
+      2.105,
+      1.6005,
+      161.8
+    ],
+    [
+      "2026-08",
+      1155.94,
+      1.522,
+      1.5538,
+      168.3
+    ],
+    [
+      "2026-09",
+      1157.25,
+      1.534,
+      1.5638,
+      168.1
+    ],
+    [
+      "2026-10",
+      1104.78,
+      1.55,
+      1.4996,
+      168.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

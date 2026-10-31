@@ -1,0 +1,294 @@
+{
+  "cik": 2079720,
+  "ticker": "BUDA",
+  "name": "BUDA JUICE, INC.",
+  "sector": "consumer-staples",
+  "industry": "Beverages",
+  "sic": "2080",
+  "docs": {
+    "xbrl:0001493152-26-012988": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001493152-26-038347": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Beverages",
+  "snapshot": {
+    "total_debt": 755000,
+    "cash": 18819000,
+    "operating_leases": 717000,
+    "equity": 21635000,
+    "assets": 23808000,
+    "liabilities": 2173000,
+    "assets_current": 21561000,
+    "liabilities_current": 1418000,
+    "retained_earnings": 2042000,
+    "operating_income": 2539000,
+    "net_income": 2414000,
+    "da": 203000,
+    "ocf": 2257000,
+    "revenue": 14078000,
+    "effective_rate": 1.25,
+    "shares": 12566666,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "history": [
+    {
+      "end": "2026-03-31",
+      "filed": "2026-05-14",
+      "total_debt": 792000,
+      "cash": 19828000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 3239000,
+      "da": 209000,
+      "ocf": 3551000,
+      "revenue": 13137000,
+      "shares": 12566666,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-14",
+      "total_debt": 755000,
+      "cash": 18819000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 2539000,
+      "da": 203000,
+      "ocf": 2257000,
+      "revenue": 14078000,
+      "shares": 12566666,
+      "convertible": null,
+      "equity": 21635000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001493152-26-012988",
+  "xbrl_10-Q": "xbrl:0001493152-26-038347",
+  "events": [
+    {
+      "date": "2026-01-09",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001493152-26-001094",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T03:09:29+00:00",
+  "signature": "0001493152-26-038347",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 717000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226038347/form10-q.htm",
+        "accession": "0001493152-26-038347",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 717000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-038347",
+            "filed": "2026-08-14",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226038347/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-038347",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226038347/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1184,
+      "receivables_growth": -0.0228,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.8738,
+      "ocf_to_net_income": 0.8916
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 12609000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-012988",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226012988/"
+        },
+        {
+          "value_usd": 11274000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-012988",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226012988/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 386000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-012988",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226012988/"
+        },
+        {
+          "value_usd": 395000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-012988",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226012988/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 3150000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-012988",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226012988/"
+        },
+        {
+          "value_usd": 3974000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-012988",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226012988/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 3533000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-012988",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226012988/"
+        },
+        {
+          "value_usd": 3574000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-012988",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226012988/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ct primarily relates to timing differences and is not material to the Company’s financial statements. 10. | RELATED PARTY TRANSACTIONS | On May 15, 2026, the Company acquired the private-label fresh ranch dressing business and inventory of Texas Harvest, LLC’s (“Texas Harvest”), a re",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226038347/form10-q.htm",
+        "accession": "0001493152-26-038347",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001493152-26-038347",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-038347",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "ct primarily relates to timing differences and is not material to the Company’s financial statements. 10. | RELATED PARTY TRANSACTIONS | On May 15, 2026, the Company acquired the private-label fresh ranch dressing business and inventory of Texas Harvest, LLC’s (“Texas Harvest”), a re",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2079720/000149315226038347/form10-q.htm",
+      "accession": "0001493152-26-038347",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-038347"
+}

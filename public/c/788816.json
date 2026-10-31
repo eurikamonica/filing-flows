@@ -1,0 +1,1391 @@
+{
+  "cik": 788816,
+  "ticker": null,
+  "name": "OGLETHORPE POWER CORP",
+  "sector": "utilities",
+  "industry": "Electric Services",
+  "sic": "4911",
+  "sic_description": "Electric Services",
+  "generated_at": "2026-10-31T14:35:16+00:00",
+  "fetched_at": "2026-10-25T22:54:01+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 12082135000,
+    "current_debt": 1134761000,
+    "cash": 121592000,
+    "investments": 66161000,
+    "short_term_borrowings": 732809000,
+    "finance_leases": 27531000,
+    "operating_leases": 6293000,
+    "assets": 17440848000,
+    "assets_current": 1039396000,
+    "liabilities_current": 1578874000,
+    "interest_expense": 542075000,
+    "interest_paid": 510272000,
+    "operating_income": 528014000,
+    "net_income": 56427000,
+    "ocf": 448741000,
+    "capex": 1125987000,
+    "revenue": 2556394000,
+    "debt_issued": 282873000,
+    "debt_repaid": 652221000,
+    "wavg_rate_short": 0.0405,
+    "shares": 0,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent+ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (four quarters)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": 12082135000,
+    "cash_and_investments": 187753000,
+    "net_debt": 11894382000,
+    "ebitda": 528014000.0,
+    "ebit": 528014000,
+    "interest_expense": 542075000,
+    "leverage": 22.882225,
+    "net_leverage": 22.526641,
+    "interest_coverage": 0.974061,
+    "ebitda_coverage": 0.974061,
+    "cash_coverage": 1.879415,
+    "fcf": -677246000,
+    "fcf_to_debt": -0.056054,
+    "effective_rate": 0.044866,
+    "revolver_available": 647648000.0,
+    "liquidity": 835401000.0,
+    "due_12m": 1134761000,
+    "due_24m": null,
+    "liquidity_to_due12": 0.736191,
+    "liquidity_to_due24": null,
+    "floating_debt": 1077352000.0,
+    "floating_share": 0.089169,
+    "plus100bp_interest": 10773520.0,
+    "plus100bp_share_of_ebit": 0.020404,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": 13
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 6293000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000046/opc-20260630.htm",
+        "accession": "0000788816-26-000046",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 6293000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000788816-26-000046",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000046/opc-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "215,193 | Total current liabilities | 1,578,874 | 1,434,530 | Deferred credits and other liabilities: | Asset retirement obligations | 1,290,636 | 1,280,941 | Member power bill prepayments, non-current | 34,400 | 38,300 | Regulatory liabilities | 931,187 | 869,860 | Other | 20,603",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000046/opc-20260630.htm",
+        "accession": "0000788816-26-000046",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000788816-26-000046",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000046/opc-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1647,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.0897,
+      "dsri": null,
+      "ocf_to_net_income": 9.0701
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2541192000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000788816-26-000009",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000009/"
+        },
+        {
+          "value_usd": 2181847000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000788816-26-000009",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000009/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 28453000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000788816-26-000009",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000009/"
+        },
+        {
+          "value_usd": 31258000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000788816-26-000009",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000009/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 502074000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000788816-26-000009",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000009/"
+        },
+        {
+          "value_usd": 428871000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000788816-26-000009",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000009/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 55355000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000788816-26-000009",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000009/"
+        },
+        {
+          "value_usd": 70501000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000788816-26-000009",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000009/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 1725000000.0,
+      "drawn": 1077352000.0,
+      "floating": false
+    },
+    {
+      "name": "First mortgage notes payable to the Federal Financing Bank at interest rates varying from 1.44% to 4.01% (average rate of 2.94% at December 31, 2025) due in quarterly installments through 2044",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon_min": 0.0144,
+      "coupon_max": 0.0401,
+      "rate_now": 0.0294,
+      "carrying": 3917257000.0,
+      "coupon": 0.0144,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "FFB",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 3917257000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage notes payable to the Federal Financing Bank at interest rates varying from 1.03% to 5.97% (average rate of 3.57% at December 31, 2025) due in quarterly installments through 2053",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon_min": 0.0103,
+      "coupon_max": 0.0597,
+      "rate_now": 0.0357,
+      "carrying": 2819612000.0,
+      "coupon": 0.0103,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2018A First Mortgage Bonds, 5.05% due 2048",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0505,
+      "carrying": 500000000.0,
+      "maturity_year": 2048,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable Series 2022A First Mortgage Bonds, 4.50% due 2047",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.045,
+      "carrying": 500000000.0,
+      "maturity_year": 2047,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2010A First Mortgage Bonds, 5.375% due 2040",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.05375,
+      "carrying": 450000000.0,
+      "maturity_year": 2040,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2020A First Mortgage Bonds, 3.75% due 2048",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0375,
+      "carrying": 450000000.0,
+      "maturity_year": 2048,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2009B First Mortgage Bonds, 5.95%, due 2039",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0595,
+      "carrying": 400000000.0,
+      "maturity_year": 2039,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2022A First Mortgage Bonds 6.20% due 2053",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.062,
+      "carrying": 400000000.0,
+      "maturity_year": 2053,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First Mortgage Bonds Payable Series 2024A First Mortgage Bonds 5.80% Due 2054",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.058,
+      "carrying": 350000000.0,
+      "maturity_year": 2054,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First Mortgage Bonds Payable Series 2025A First Mortgage Bonds 5.90% Due 2055",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.059,
+      "carrying": 350000000.0,
+      "maturity_year": 2055,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series 2025A First Mortgage Bonds",
+      "kind": "mortgage",
+      "as_of": "2025-01-31",
+      "face": 350000000.0,
+      "coupon": 0.059,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2006 First Mortgage Bonds, 5.534%, due 2031 through 2035",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.05534,
+      "carrying": 300000000.0,
+      "maturity_year": 2031,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2011A First Mortgage Bonds, 5.25% due 2050",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0525,
+      "carrying": 300000000.0,
+      "maturity_year": 2050,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Burke and Monroe Bonds",
+      "kind": "notes",
+      "as_of": "2025-02-28",
+      "face": 272230000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2012A First Mortgage Bonds, 4.20% due 2042",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.042,
+      "carrying": 250000000.0,
+      "maturity_year": 2042,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2014A First Mortgage Bonds, 4.55% due 2044",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0455,
+      "carrying": 250000000.0,
+      "maturity_year": 2044,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage bonds payable: Series 2016A First Mortgage Bonds, 4.25% due 2046",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0425,
+      "carrying": 250000000.0,
+      "maturity_year": 2046,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage notes issued in connection with the sale of pollution control revenue bonds: Series 2017 C, D Burke, Remarketed in 2018 to fixed rate bonds, 4.125%, due 2041 through 2045",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.04125,
+      "carrying": 200000000.0,
+      "maturity_year": 2041,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage notes issued in connection with the sale of pollution control revenue bonds: 2013 Burke and Monroe Term rate bonds, 3.60% through February 1, 2030, due 2038 through 2040",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.036,
+      "carrying": 172230000.0,
+      "maturity_year": 2038,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage notes issued in connection with the sale of pollution control revenue bonds: Series 2017E Burke, Remarketed in 2018 to term rate bonds, 3.60% through February 3, 2025, due 2041 through 2045",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.036,
+      "carrying": 100000000.0,
+      "maturity_year": 2041,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage notes issued in connection with the sale of pollution control revenue bonds: Series2017F Burke indexed put bonds-weekly reset, 4.52% due 2040 through 2045",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0452,
+      "carrying": 99785000.0,
+      "maturity_year": 2040,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage notes issued in connection with the sale of pollution control revenue bonds: Series 2017 A, B Burke, Indexed put bonds - weekly reset, 4.27% due 2045",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0427,
+      "carrying": 91645000.0,
+      "maturity_year": 2045,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage notes issued in connection with the sale of pollution control revenue bonds: 2013 Appling Weekly rate bonds, 2.50% due 2038",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.025,
+      "carrying": 40530000.0,
+      "maturity_year": 2038,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "PCRBs",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 40530000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First mortgage notes issued in connection with the sale of pollution control revenue bonds: 2013A Appling, Burke and Monroe, Term rate bonds, 1.50% through April 1, 2020, due 2038 through 2040",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.015,
+      "carrying": 0.0,
+      "maturity_year": 2038,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "floating": false,
+      "coupon": 4.25,
+      "principal": 250000000.0,
+      "currency": "USD",
+      "maturity": "2046-04-01",
+      "price": 98.37,
+      "yield": 4.348,
+      "benchmark": "3.00% due November 15, 2045",
+      "spread_bps": 180.0,
+      "trade_date": "2016-04-15",
+      "convertible": false,
+      "cusip": "677050AL0",
+      "date": "2016-04-15",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/788816/000110465916111892/a16-8435_3fwp.htm"
+    },
+    {
+      "floating": false,
+      "coupon": 4.55,
+      "principal": 250000000.0,
+      "currency": "USD",
+      "maturity": "2044-06-01",
+      "price": 99.37,
+      "yield": 4.589,
+      "benchmark": "3.625% due February 15, 2044",
+      "spread_bps": 115.0,
+      "trade_date": "2014-06-09",
+      "convertible": false,
+      "cusip": "677050 AK2",
+      "date": "2014-06-09",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/788816/000110465914044786/a14-15007_3fwp.htm"
+    },
+    {
+      "floating": false,
+      "coupon": 4.2,
+      "principal": 250000000.0,
+      "currency": "USD",
+      "maturity": "2042-12-01",
+      "yield": 4.234,
+      "benchmark": "2.750% due August 2042",
+      "spread_bps": 145.0,
+      "trade_date": "2012-11-27",
+      "convertible": false,
+      "cusip": "677050 AJ5",
+      "date": "2012-11-27",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/788816/000110465912080267/a12-27955_3fwp.htm"
+    },
+    {
+      "floating": false,
+      "coupon": 5.25,
+      "principal": 300000000.0,
+      "currency": "USD",
+      "maturity": "2050-09-01",
+      "price": 99.8,
+      "yield": 5.262,
+      "benchmark": "4.375% due May 2041",
+      "spread_bps": 163.0,
+      "trade_date": "2011-08-16",
+      "convertible": false,
+      "cusip": "677050AH9",
+      "date": "2011-08-16",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/788816/000110465911047246/a11-24365_2fwp.htm"
+    },
+    {
+      "floating": false,
+      "coupon": 5.375,
+      "principal": 450000000.0,
+      "currency": "USD",
+      "yield": 4.042,
+      "benchmark": "4.375%",
+      "trade_date": "2010-11-04",
+      "convertible": false,
+      "cusip": "677052AA0",
+      "date": "2010-11-04",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/788816/000110465910056158/a10-20023_2fwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-10-06",
+      "agreement_kind": "amendment",
+      "dated": "2026-10-02",
+      "size": 25000000.0,
+      "title": "To Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 1.0,
+      "floor_pct": 0.0,
+      "maturity": "2029-05-23",
+      "url": "https://www.sec.gov/Archives/edgar/data/788816/000078881626000054/exhibit101_amendmentno3t.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-05-30",
+      "agreement_kind": "amendment",
+      "dated": "2024-05-23",
+      "size": 25000000.0,
+      "title": "To Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.25,
+      "floor_pct": 0.0,
+      "maturity": "2024-12-11",
+      "url": "https://www.sec.gov/Archives/edgar/data/788816/000162828024025692/exhibit101_cfcxopc-amend.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2023-08-10",
+      "agreement_kind": "amendment",
+      "dated": "2023-05-31",
+      "size": 25000000.0,
+      "title": "To Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "fee_pct": 0.1,
+      "floor_pct": 0.0,
+      "maturity": "2024-12-11",
+      "url": "https://www.sec.gov/Archives/edgar/data/788816/000162828023028916/exhibit101-cfcoglethorpe.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-10-06",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0000788816-26-000054",
+      "doc": "opc-20261002.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-01-24",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-25-002441",
+      "doc": "opc-20250122.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-24-029075",
+      "doc": "opc-20240618.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-24-025692",
+      "doc": "opc-20240523.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-23-040379",
+      "doc": "opc-20231128.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-11-17",
+      "items": "1.01,9.01",
+      "acc": "0001628280-23-039404",
+      "doc": "opc-20231115.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-10-06",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001628280-23-034009",
+      "doc": "opc-20231005.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-22-008738",
+      "doc": "opc-20220404.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-20-012820",
+      "doc": "a8kq320taxablebondoffe.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-12-11",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-19-071875",
+      "doc": "tm1924910d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-03-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-19-017788",
+      "doc": "a19-7052_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-03-13",
+      "items": "1.01,9.01",
+      "acc": "0001104659-19-014583",
+      "doc": "a19-6353_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-02-20",
+      "items": "1.01,9.01",
+      "acc": "0001104659-19-009476",
+      "doc": "a19-4999_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-10-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-18-064655",
+      "doc": "a18-37208_28k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-09-26",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-18-058784",
+      "doc": "a18-36033_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-09-10",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-18-055964",
+      "doc": "a18-27009_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-12-11",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-072729",
+      "doc": "a17-28187_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-11-07",
+      "items": "1.01,8.01",
+      "acc": "0001104659-17-066691",
+      "doc": "a17-26131_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-10-20",
+      "items": "1.01,8.01",
+      "acc": "0001104659-17-063154",
+      "doc": "a17-24258_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-07-28",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-047638",
+      "doc": "a17-18553_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-07-21",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-046223",
+      "doc": "a17-18244_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-29",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-042445",
+      "doc": "a17-15942_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-23",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-041222",
+      "doc": "a17-15694_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-12",
+      "items": "1.01,8.01",
+      "acc": "0001104659-17-038606",
+      "doc": "a17-15081_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-06",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-037632",
+      "doc": "a17-14742_28k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-05",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-037375",
+      "doc": "a17-14742_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-05-15",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-032651",
+      "doc": "a17-13122_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-05-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-028279",
+      "doc": "a17-12176_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-03-29",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-17-020005",
+      "doc": "a17-10129_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-04-19",
+      "items": "2.03,8.01,9.01",
+      "acc": "0001047469-16-012337",
+      "doc": "a2228319z8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-01-14",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001047469-16-009702",
+      "doc": "a2227103z8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-06-11",
+      "items": "2.03,8.01,9.01",
+      "acc": "0001104659-14-045170",
+      "doc": "a14-15007_48k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-02-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001047469-14-001104",
+      "doc": "a2218360z8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-11-28",
+      "items": "2.03,8.01,9.01",
+      "acc": "0001047469-12-010837",
+      "doc": "a2211990z8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-08-17",
+      "items": "2.03,8.01,9.01",
+      "acc": "0001047469-11-007485",
+      "doc": "a2205325z8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-06-10",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001047469-11-005792",
+      "doc": "a2204457z8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2010-11-08",
+      "items": "2.03,8.01,9.01",
+      "acc": "0001047469-10-009423",
+      "doc": "a2200852z8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2010-04-01",
+      "items": "2.03,5.07",
+      "acc": "0001047469-10-003146",
+      "doc": "a2197811z8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2010-03-01",
+      "items": "1.01,8.01",
+      "acc": "0001047469-10-001638",
+      "doc": "a2196955z8-k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2011-06-30",
+      5244443000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-09-30",
+      5519630000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-03-31",
+      5604783000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-06-30",
+      5589065000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      5591898000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-31",
+      5776039000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-30",
+      5770689000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-09-30",
+      6076645000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      6795655000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      6893755000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      6881522000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      7196761000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      7326478000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      7316504000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      7403407000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      7865127000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      7885428000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      7876337000,
+      278551000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      7853581000,
+      286106000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      7991307000,
+      342064000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      7573810000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      7779704000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      8286205000,
+      717914000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      8879245000,
+      341398000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      8875366000,
+      410556000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      8871910000,
+      427039000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      9759415000,
+      360081000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      9765244000,
+      371854000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      10151505000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      10434701000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      10623536000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      10330910000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      10945787000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      11053441000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      11005830000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      11392980000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      11350650000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      11269483000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      11474583000,
+      null,
+      521546000,
+      null,
+      null,
+      0.04545
+    ],
+    [
+      "2024-06-30",
+      11756561000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      11798281000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      12137161000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      12096778000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      12084244000,
+      396260000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      12049503000,
+      163775000,
+      540834000,
+      538327000,
+      538327000,
+      0.04488
+    ],
+    [
+      "2026-06-30",
+      12082135000,
+      187753000,
+      542075000,
+      528014000,
+      528014000,
+      0.04487
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

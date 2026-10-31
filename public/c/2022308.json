@@ -1,0 +1,618 @@
+{
+  "cik": 2022308,
+  "ticker": "KIDZ",
+  "name": "KIDZ AI Inc.",
+  "sector": "industrials",
+  "industry": "Services-Educational Services",
+  "sic": "8200",
+  "sic_description": "Services-Educational Services",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:22:32+00:00",
+  "price": 1.67,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.422332,
+  "snapshot": {
+    "cash": 5878823,
+    "operating_leases": 1213413,
+    "convertible": 667413,
+    "equity": 9949689,
+    "assets": 14002892,
+    "liabilities": 4053203,
+    "assets_current": 8919637,
+    "liabilities_current": 2294787,
+    "retained_earnings": -18328197,
+    "deposits": 5875677,
+    "interest_paid": 0,
+    "operating_income": -3639853,
+    "pretax_income": -9603457,
+    "net_income": -9565097,
+    "da": 562687,
+    "ocf": -4653626,
+    "capex": 32583,
+    "revenue": 2825786,
+    "debt_issued": 3089400,
+    "conversion_price": 5.13,
+    "shares": 1174718,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleLongTermNotesPayable",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromConvertibleDebt (fiscal year)",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 5878823.0,
+    "net_debt": null,
+    "ebitda": -3077166,
+    "ebit": -3639853,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -4686209,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 5878823.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -1.630298,
+    "market_cap": 1961779.06,
+    "debt_to_ev": null,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible notes (company total)",
+          "face": 667413,
+          "carrying": 667413,
+          "conv_price": 5.13,
+          "moneyness": 0.325536,
+          "in_the_money": false,
+          "shares": 130100.0
+        }
+      ],
+      "total_face": 667413,
+      "in_the_money_face": 0,
+      "in_the_money_carrying": 0,
+      "shares_if_converted": 0,
+      "coupon_saved": 0
+    },
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1213413.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226004932/class_10q.htm",
+        "accession": "0001477932-26-004932",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 1213413.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001477932-26-004932",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226004932/class_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001477932-26-004932",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226004932/class_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0841,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 3366421.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001477932-26-001941",
+          "filed": "2026-04-01",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226001941/"
+        },
+        {
+          "value_usd": 3675604.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001477932-26-001941",
+          "filed": "2026-04-01",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226001941/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -3826755.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477932-26-001941",
+          "filed": "2026-04-01",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226001941/"
+        },
+        {
+          "value_usd": -781265.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477932-26-001941",
+          "filed": "2026-04-01",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226001941/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -7044865.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477932-26-001941",
+          "filed": "2026-04-01",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226001941/"
+        },
+        {
+          "value_usd": -843048.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477932-26-001941",
+          "filed": "2026-04-01",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226001941/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "y federal and state tax authorities. Note 9. Related parties As of June 30, 2026 and 2025, The Company has related party transactions with the following affiliates and affiliated entities: Related Party Name | Relationship | Hui Luo | Majority owner of the Company | Liu Yi | Spouse",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226004932/class_10q.htm",
+        "accession": "0001477932-26-004932",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "vestor as consideration for waving specific financing restrictions under the PIPE agreement. Shares issued as contract modifications are recorded at fair value and $ 66,500 expense was recorded when the waiver becomes effective, per ASC 470 and ASC 505. 2024 Incentive Plan In co",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226004932/class_10q.htm",
+        "accession": "0001477932-26-004932",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "nt, valuation of deferred tax assets and liabilities, operating lease right-of-use assets and liabilities and deferred revenue. Actual results may differ materially from such estimates. Management believes that the estimates, and judgments upon which they rely, are reasonable",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226004932/class_10q.htm",
+        "accession": "0001477932-26-004932",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Convertible Notes Payable One",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Two",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Three",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Four",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Five",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Six",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Seven",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Eight",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Nine",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Ten",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Eleven",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twelve",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Thirteen",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Fourteen",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Fifteen",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-03-03",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Sixteen",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Seventeen",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Eighteen",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Ninteen",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twenty",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twenty One",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-04-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twenty Two",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2028-12-06",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twenty Three",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2029-03-15",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twenty Four",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2029-03-15",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twenty Five",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twenty Six",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    },
+    {
+      "name": "Convertible Notes Payable Twenty Seven",
+      "kind": "convertible",
+      "as_of": "2025-12-31",
+      "maturity": "2027-02-07",
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-17",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001477932-26-005667",
+      "doc": "kidz_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-07-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001477932-26-004422",
+      "doc": "kidz_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-29",
+      "items": "1.01,2.03,3.02,5.03,7.01,9.01",
+      "acc": "0001477932-26-003478",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-22",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001477932-26-003412",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-14",
+      "items": "1.01,9.01",
+      "acc": "0001477932-26-003134",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-30",
+      "items": "1.01,3.02,3.03,5.03,9.01",
+      "acc": "0001477932-25-009247",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-10-15",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001477932-25-007592",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-09-17",
+      "items": "1.01,9.01",
+      "acc": "0001477932-25-006832",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-07-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001477932-25-005176",
+      "doc": "class_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2025-07-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001477932-25-005160",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-07-07",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001477932-25-004929",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-06-12",
+      "items": "1.01,2.03,3.02,3.03,7.01,9.01",
+      "acc": "0001477932-25-004518",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-06-02",
+      "items": "1.01,2.03,3.02,7.01,9.01",
+      "acc": "0001477932-25-004289",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-05-14",
+      "items": "1.01,9.01",
+      "acc": "0001929980-25-000430",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-05-01",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001929980-25-000353",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-04-10",
+      "items": "1.01,1.02,2.01,3.02,3.03,5.01,5.02,5.03,5.06,9.01",
+      "acc": "0001929980-25-000257",
+      "doc": "class_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

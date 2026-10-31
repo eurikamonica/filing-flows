@@ -1,0 +1,235 @@
+{
+  "cik": 1813603,
+  "ticker": "HSTA",
+  "name": "Hestia Insight Inc.",
+  "sector": "industrials",
+  "industry": "Services-Management Consulting Services",
+  "sic": "8742",
+  "docs": {
+    "xbrl:0001829126-26-001812": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-02",
+      "report": "2025-11-30"
+    },
+    "xbrl:0001683168-26-005655": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-07-20",
+      "report": "2026-05-31"
+    }
+  },
+  "sic_description": "Services-Management Consulting Services",
+  "snapshot": {
+    "cash": 19141,
+    "revolver_drawn": 0,
+    "equity": -362088,
+    "assets": 473594,
+    "liabilities": 835682,
+    "assets_current": 473594,
+    "liabilities_current": 835682,
+    "retained_earnings": -1536740,
+    "interest_expense": 9571,
+    "operating_income": -632413,
+    "pretax_income": -869545,
+    "net_income": -777658,
+    "da": 116,
+    "ocf": -138496,
+    "revenue": 24000,
+    "stated_rate": 0.06,
+    "shares": 27939260,
+    "balance_date": "2026-05-31",
+    "latest_period": "2026-05-31"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001829126-26-001812",
+  "xbrl_10-Q": "xbrl:0001683168-26-005655",
+  "events": [
+    {
+      "date": "2026-08-03",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001683168-26-005916",
+      "doc": "hestia_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-29",
+      "items": "1.01,9.01",
+      "acc": "0001683168-26-003294",
+      "doc": "hestiainsight_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T04:57:37+00:00",
+  "signature": "0001683168-26-005916",
+  "hidden_leverage": {
+    "as_of": "2026-05-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001683168-26-005655",
+      "form": "10-Q",
+      "filed": "2026-07-20",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000168316826005655/hestia_i10q-053126.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-05-31",
+    "metrics": {
+      "revenue_growth": -0.9936,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 8000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001829126-26-001812",
+          "filed": "2026-03-02",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000182912626001812/"
+        },
+        {
+          "value_usd": 1249884.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001829126-26-001812",
+          "filed": "2026-03-02",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000182912626001812/"
+        }
+      ],
+      "receivables": [
+        null,
+        {
+          "value_usd": 14660.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001829126-26-001812",
+          "filed": "2026-03-02",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000182912626001812/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -134272.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001829126-26-001812",
+          "filed": "2026-03-02",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000182912626001812/"
+        },
+        {
+          "value_usd": -168805.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001829126-26-001812",
+          "filed": "2026-03-02",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000182912626001812/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -943444.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001829126-26-001812",
+          "filed": "2026-03-02",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000182912626001812/"
+        },
+        {
+          "value_usd": 642205.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001829126-26-001812",
+          "filed": "2026-03-02",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000182912626001812/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "various state and local jurisdictions. All tax years from 2017 to 2024 are subject to examination. Note 5 – Related Party Transactions On January 15, 2024, the Company entered into a $ 50,000 note payable to ECL Capital Partners Corp, a related party. The loan was to be repaid in f",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000168316826005655/hestia_i10q-053126.htm",
+        "accession": "0001683168-26-005655",
+        "form": "10-Q",
+        "filed": "2026-07-20"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-11-30",
+      "2024-11-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001683168-26-005655",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001683168-26-005655",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "various state and local jurisdictions. All tax years from 2017 to 2024 are subject to examination. Note 5 – Related Party Transactions On January 15, 2024, the Company entered into a $ 50,000 note payable to ECL Capital Partners Corp, a related party. The loan was to be repaid in f",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1813603/000168316826005655/hestia_i10q-053126.htm",
+      "accession": "0001683168-26-005655",
+      "form": "10-Q",
+      "filed": "2026-07-20"
+    }
+  ],
+  "revenue_quality_text_source": "0001683168-26-005655"
+}

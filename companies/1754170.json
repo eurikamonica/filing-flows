@@ -1,0 +1,682 @@
+{
+  "cik": 1754170,
+  "ticker": "ASLE",
+  "name": "AerSale Corp",
+  "sector": "industrials",
+  "industry": "Wholesale-Machinery, Equipment & Supplies",
+  "sic": "5080",
+  "docs": {
+    "xbrl:0001104659-26-025574": {
+      "instruments": [
+        {
+          "name": "Revolving Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "face": 180000000.0,
+          "carrying": 110053000.0,
+          "available": 67200000.0,
+          "spread_min": 0.0225,
+          "spread_max": 0.0275,
+          "effective": 0.0662,
+          "floating": true
+        },
+        {
+          "name": "Equipment Loan",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "face": 10000000.0,
+          "carrying": 2277000.0,
+          "spread": 0.03,
+          "capacity": 1200000.0,
+          "effective": 0.0684,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-10",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001104659-26-092710": {
+      "instruments": [
+        {
+          "name": "Revolving Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "face": 180000000.0,
+          "carrying": 146152000.0,
+          "spread_min": 0.0225,
+          "spread_max": 0.0275,
+          "effective": 0.0651,
+          "floating": true
+        },
+        {
+          "name": "Equipment Loan",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "face": 10000000.0,
+          "carrying": 1781000.0,
+          "spread": 0.03,
+          "effective": 0.0662,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-07",
+      "report": "2026-06-30"
+    },
+    "0001558370-21-016096:tmb-20211116x424b3.htm": {
+      "kind": "424b",
+      "date": "2021-11-16",
+      "tranches": []
+    },
+    "0001104659-21-103006:tm2124691d1_424b3.htm": {
+      "kind": "424b",
+      "date": "2021-08-11",
+      "tranches": []
+    },
+    "0001104659-21-064113:tm2115538d2_424b3.htm": {
+      "kind": "424b",
+      "date": "2021-05-11",
+      "tranches": []
+    },
+    "0001104659-21-044226:tm2110154-5_424b3.htm": {
+      "kind": "424b",
+      "date": "2021-03-31",
+      "tranches": []
+    },
+    "0001104659-21-019914:tm213226-4_424b3.htm": {
+      "kind": "424b",
+      "date": "2021-02-10",
+      "tranches": []
+    },
+    "0001558370-23-014056:asle-20230630xex10d23.htm": {
+      "kind": "agreement",
+      "date": "2023-08-09",
+      "agreement_kind": "amendment",
+      "dated": "2018-07-20",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "floor_pct": 0.0,
+      "maturity": "2024-03-12",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Have a Fixed Charge Coverage Ratio, measured on a quarter-end basis (beginning with the fiscal quarter ending September 30, 2018), of at least 1.50 to 1.00 for the four fiscal quarter period then ending. 8."
+        }
+      ]
+    },
+    "0001104659-21-037098:tm211117d1_ex10-24.htm": {
+      "kind": "agreement",
+      "date": "2021-03-16",
+      "agreement_kind": "amendment",
+      "dated": "2021-03-12",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR"
+      ]
+    },
+    "0001104659-21-037098:tm211117d1_ex10-23.htm": {
+      "kind": "agreement",
+      "date": "2021-03-16",
+      "agreement_kind": "amendment",
+      "dated": "2020-09-08",
+      "facility": "loan"
+    }
+  },
+  "sic_description": "Wholesale-Machinery, Equipment & Supplies",
+  "snapshot": {
+    "total_debt": 147933000,
+    "current_debt": 993000,
+    "cash": 2201000,
+    "equity": 418668000,
+    "assets": 687061000,
+    "liabilities": 268393000,
+    "assets_current": 296407000,
+    "liabilities_current": 90660000,
+    "retained_earnings": 138677000,
+    "interest_paid": 9070000,
+    "operating_income": 1841000,
+    "pretax_income": -5457000,
+    "net_income": -3743000,
+    "da": 21642000,
+    "ocf": -31010000,
+    "capex": 4290000,
+    "revenue": 303674000,
+    "debt_repaid": 904000,
+    "shares": 52990947,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2022-12-31",
+      "filed": "2023-03-07",
+      "total_debt": 0,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 51774665,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-06-30",
+      "filed": "2023-08-09",
+      "total_debt": 8559000,
+      "cash": 34644000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 51328800,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-09-30",
+      "filed": "2023-11-08",
+      "total_debt": 7927000,
+      "cash": 3154000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 51328800,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-03-31",
+      "filed": "2024-05-09",
+      "total_debt": 56529000,
+      "cash": 2637000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 52990947,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-06-30",
+      "filed": "2024-08-07",
+      "total_debt": 81570000,
+      "cash": 4285000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 52990947,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-09-30",
+      "filed": "2024-11-08",
+      "total_debt": 79082000,
+      "cash": 9787000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 52990947,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-03-31",
+      "filed": "2025-05-08",
+      "total_debt": 134961000,
+      "cash": 4691000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 52990947,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-06-30",
+      "filed": "2025-08-07",
+      "total_debt": 116241000,
+      "cash": 5747000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 52990947,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-09-30",
+      "filed": "2025-11-07",
+      "total_debt": 126330000,
+      "cash": 5267000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 52990947,
+      "convertible": null,
+      "equity": 417081000,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-03-31",
+      "filed": "2026-05-08",
+      "total_debt": 139825000,
+      "cash": 2085000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 19105000,
+      "da": 20529000,
+      "ocf": -4411000,
+      "revenue": 340124000,
+      "shares": 52990947,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 8998000
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-07",
+      "total_debt": 147933000,
+      "cash": 2201000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 1841000,
+      "da": 21642000,
+      "ocf": -31010000,
+      "revenue": 303674000,
+      "shares": 52990947,
+      "convertible": null,
+      "equity": 418668000,
+      "interest_paid": 9070000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001104659-26-025574",
+  "xbrl_10-Q": "xbrl:0001104659-26-092710",
+  "events": [
+    {
+      "date": "2025-03-17",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001104659-25-024199",
+      "doc": "tm259198d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-10-25",
+      "items": "1.01,9.01",
+      "acc": "0001558370-24-013693",
+      "doc": "asle-20241025x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-15",
+      "items": "1.01,9.01",
+      "acc": "0001104659-23-126390",
+      "doc": "tm2332758d3_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-08-01",
+      "items": "1.01,9.01",
+      "acc": "0001558370-23-012588",
+      "doc": "asle-20230725x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-06-02",
+      "items": "1.01,9.01",
+      "acc": "0001558370-23-010768",
+      "doc": "asle-20230530x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-11-18",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-120274",
+      "doc": "tm2230780d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-11-16",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-119537",
+      "doc": "tm2230555-1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-08-18",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-092548",
+      "doc": "tm2223722d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-12-23",
+      "items": "1.01,2.01,3.03,4.01,5.01,5.02,5.03,5.06,9.01",
+      "acc": "0001104659-20-139143",
+      "doc": "tm2039148d1_8k12b.htm",
+      "desc": "FORM 8-K12B"
+    },
+    {
+      "date": "2020-12-17",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-20-136508",
+      "doc": "tm2038647d1_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-09-08",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001104659-20-103066",
+      "doc": "tm2029921d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-01-27",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-20-007202",
+      "doc": "tm205900d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-12-09",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001104659-19-070782",
+      "doc": "tm1924738d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:32:24+00:00",
+  "signature": "0001104659-26-111023",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-092710",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926092710/asle-20260630x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0283,
+      "receivables_growth": 0.2311,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.7024,
+      "dsri": 1.267,
+      "ocf_to_net_income": -2.6786
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.267,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      },
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": -2.6786,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 335286000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        },
+        {
+          "value_usd": 345066000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 42654000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        },
+        {
+          "value_usd": 34646000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 530000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        },
+        {
+          "value_usd": 1781000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -22969000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        },
+        {
+          "value_usd": 11184000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 8575000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        },
+        {
+          "value_usd": 5851000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-025574",
+          "filed": "2026-03-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926025574/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "s. NOTE C – REVENUE The timing of revenue recognition, customer billings, and cash collections results in a contract asset or contract liability at the end of each reporting period. Contract assets consist of unbilled receivables or costs incurred where revenue recognized",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926092710/asle-20260630x10q.htm",
+        "accession": "0001104659-26-092710",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "th fixed and variable amounts, is allocated to each performance obligation identified. Some contracts contain variable consideration, which could include incremental fees or penalty provisions related to performance. Variable consideration that can be reasonably estimated based on",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926092710/asle-20260630x10q.htm",
+        "accession": "0001104659-26-092710",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| 780 | Current operating lease liabilities | 3,828 | 4,313 | Current portion of long-term debt | 993 | 993 | Deferred revenue | 817 | 530 | Deferred insurance proceeds | 28,610 | 28,610 | Total current liabilities | 90,660 | 72,433 | Revolving credit facility | 146,152 | 110",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926092710/asle-20260630x10q.htm",
+        "accession": "0001104659-26-092710",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001104659-26-092710",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001104659-26-092710",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "s. NOTE C – REVENUE The timing of revenue recognition, customer billings, and cash collections results in a contract asset or contract liability at the end of each reporting period. Contract assets consist of unbilled receivables or costs incurred where revenue recognized",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926092710/asle-20260630x10q.htm",
+      "accession": "0001104659-26-092710",
+      "form": "10-Q",
+      "filed": "2026-08-07"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "th fixed and variable amounts, is allocated to each performance obligation identified. Some contracts contain variable consideration, which could include incremental fees or penalty provisions related to performance. Variable consideration that can be reasonably estimated based on",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926092710/asle-20260630x10q.htm",
+      "accession": "0001104659-26-092710",
+      "form": "10-Q",
+      "filed": "2026-08-07"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "| 780 | Current operating lease liabilities | 3,828 | 4,313 | Current portion of long-term debt | 993 | 993 | Deferred revenue | 817 | 530 | Deferred insurance proceeds | 28,610 | 28,610 | Total current liabilities | 90,660 | 72,433 | Revolving credit facility | 146,152 | 110",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1754170/000110465926092710/asle-20260630x10q.htm",
+      "accession": "0001104659-26-092710",
+      "form": "10-Q",
+      "filed": "2026-08-07"
+    }
+  ],
+  "revenue_quality_text_source": "0001104659-26-092710"
+}

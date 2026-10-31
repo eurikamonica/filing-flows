@@ -1,0 +1,288 @@
+{
+  "cik": 1893657,
+  "ticker": "RLEA",
+  "name": "Rubber Leaf Inc",
+  "sector": "consumer-disc",
+  "industry": "Motor Vehicle Parts & Accessories",
+  "sic": "3714",
+  "docs": {
+    "xbrl:0001493152-26-005480": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-02-06",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001493152-26-036879": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-10",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Motor Vehicle Parts & Accessories",
+  "snapshot": {
+    "cash": 1361,
+    "equity": 470686,
+    "assets": 11375449,
+    "liabilities": 10904763,
+    "assets_current": 8546511,
+    "liabilities_current": 10840821,
+    "retained_earnings": -2370445,
+    "interest_expense": -192621,
+    "operating_income": -1570692,
+    "pretax_income": -1521890,
+    "net_income": 3738055,
+    "ocf": -195807,
+    "revenue": 4904381,
+    "effective_rate": 0.01,
+    "shares": 41109458,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (fiscal year)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "history": [
+    {
+      "end": "2023-03-31",
+      "filed": "2023-05-15",
+      "total_debt": 649333,
+      "cash": 5098,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 40983458,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001493152-26-005480",
+  "xbrl_10-Q": "xbrl:0001493152-26-036879",
+  "events": [
+    {
+      "date": "2025-12-09",
+      "items": "1.01,2.01,8.01,9.01",
+      "acc": "0001493152-25-026792",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T03:12:29+00:00",
+  "signature": "0001493152-26-036879",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-036879",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226036879/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 934.0583,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": -0.0536
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": -0.0536,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 4904381.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001493152-26-005480",
+          "filed": "2026-02-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226005480/"
+        },
+        {
+          "value_usd": 5245.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001641172-25-000072",
+          "filed": "2025-03-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000164117225000072/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        {
+          "value_usd": 344271.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001641172-25-000072",
+          "filed": "2025-03-20",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000164117225000072/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -153846.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-005480",
+          "filed": "2026-02-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226005480/"
+        },
+        {
+          "value_usd": -508429.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-005480",
+          "filed": "2026-02-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226005480/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 2867644.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-005480",
+          "filed": "2026-02-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226005480/"
+        },
+        {
+          "value_usd": -2203628.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-005480",
+          "filed": "2026-02-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226005480/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "customer_acceptance",
+        "label": "Customer acceptance terms",
+        "excerpt": "K can objectively determine, prior to shipment, that the goods conform to the agreed-upon specifications, end-customer acceptance provisions are administrative in nature and do not represent a barrier to the transfer of control. RLHK maintains pricing discretion, establishes selling prices",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226036879/form10-q.htm",
+        "accession": "0001493152-26-036879",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "mpany follows ASC 850, Related Party Disclosures, for the identification of related parties and disclosure of related party transactions. Foreign Currency Amounts reported in the condensed consolidated financial statements are stated in United States dollars, unless stated otherwis",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226036879/form10-q.htm",
+        "accession": "0001493152-26-036879",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "erest—Imputation of Interest, the Company evaluates long-term receivables to determine whether they contain a significant financing component. When applicable, such receivables are initially recognized at the present value of the future cash flows using a discount rate that reflects the mar",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226036879/form10-q.htm",
+        "accession": "0001493152-26-036879",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001493152-26-036879",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-036879",
+  "revenue_quality_text_leads": [
+    {
+      "key": "customer_acceptance",
+      "label": "Customer acceptance terms",
+      "excerpt": "K can objectively determine, prior to shipment, that the goods conform to the agreed-upon specifications, end-customer acceptance provisions are administrative in nature and do not represent a barrier to the transfer of control. RLHK maintains pricing discretion, establishes selling prices",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226036879/form10-q.htm",
+      "accession": "0001493152-26-036879",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "mpany follows ASC 850, Related Party Disclosures, for the identification of related parties and disclosure of related party transactions. Foreign Currency Amounts reported in the condensed consolidated financial statements are stated in United States dollars, unless stated otherwis",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226036879/form10-q.htm",
+      "accession": "0001493152-26-036879",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    },
+    {
+      "key": "significant_financing",
+      "label": "Significant financing component",
+      "excerpt": "erest—Imputation of Interest, the Company evaluates long-term receivables to determine whether they contain a significant financing component. When applicable, such receivables are initially recognized at the present value of the future cash flows using a discount rate that reflects the mar",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1893657/000149315226036879/form10-q.htm",
+      "accession": "0001493152-26-036879",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-036879"
+}

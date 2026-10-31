@@ -1,0 +1,252 @@
+{
+  "cik": 1690455,
+  "ticker": null,
+  "name": "Feel The World, Inc.",
+  "sector": "materials",
+  "industry": "Rubber & Plastics Footwear",
+  "sic": "3021",
+  "sic_description": "Rubber & Plastics Footwear",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T02:56:40+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 6169920,
+    "operating_leases": 2013797,
+    "revolver_drawn": 1856294,
+    "equity": -4959498,
+    "assets": 36811483,
+    "liabilities": 15605127,
+    "assets_current": 31647433,
+    "liabilities_current": 14458723,
+    "retained_earnings": -4846803,
+    "shares": 5748187,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 6169920.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 6169920.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 1856294.0,
+    "floating_share": null,
+    "plus100bp_interest": 18562.94,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2013797.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ftw_10q-063026.htm",
+        "accession": "0001079973-26-001298",
+        "form": "10-Q",
+        "filed": "2026-09-28",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 2013797.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001079973-26-001298",
+            "filed": "2026-09-28",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ftw_10q-063026.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ICIT) | Current liabilities: | Accounts payable and accrued expenses | $ | 11,659,657 | $ | 14,584,878 | Customer deposits | 15,987 | 433,234 | Deferred revenue | 59,392 | 46,607 | Operating lease liability, current portion | 867,393 | 807,749 | Lines of credit, current p",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ftw_10q-063026.htm",
+        "accession": "0001079973-26-001298",
+        "form": "10-Q",
+        "filed": "2026-09-28",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001079973-26-001298",
+      "form": "10-Q",
+      "filed": "2026-09-28",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ftw_10q-063026.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "unts are recorded as a liability until all revenue recognition conditions have been met. Contract Balances Contract assets arise when the revenue associated prior to the Company’s unconditional right to receive a payment under a contract with a customer ( i.e ., unbilled",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ftw_10q-063026.htm",
+        "accession": "0001079973-26-001298",
+        "form": "10-Q",
+        "filed": "2026-09-28"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "t have a material impact on the Company’s condensed consolidated financial statements upon adoption. NOTE 3: RELATED PARTY TRANSACTIONS Equity Sale to TZP On March 21, 2025, the Board of Directors approved an equity financing and issued 500,000 shares of Senior Preferred Stock to",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ftw_10q-063026.htm",
+        "accession": "0001079973-26-001298",
+        "form": "10-Q",
+        "filed": "2026-09-28"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ounts payable and accrued expenses | $ | 11,659,657 | $ | 14,584,878 | Customer deposits | 15,987 | 433,234 | Deferred revenue | 59,392 | 46,607 | Operating lease liability, current portion | 867,393 | 807,749 | Lines of credit, current portion | 1,856,294 | 4,000,000 | Total",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ftw_10q-063026.htm",
+        "accession": "0001079973-26-001298",
+        "form": "10-Q",
+        "filed": "2026-09-28"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Wells Fargo revolving commitment",
+      "kind": "revolver",
+      "as_of": "2026-02-05",
+      "available": 4000000.0,
+      "floating": true
+    },
+    {
+      "name": "Revolving commitment",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 1856294.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-09-28",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-02-05",
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        2.25,
+        2.25
+      ],
+      "maturity": "2029-02-05",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ing July 1, 2025 through the last day of such 11 | immediately preceding month (or, if such period would exceed twelve (12) months, for the trailing twelve (12) month period) (with any such payment treated as a Fixed Charge as of the last day of the applicable period for purposes of calculating the Fixed Charge Coverage Ratio under this clause (x) and as calculated for any subsequent proposed payment) shall be at lea"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ex10x1.htm",
+      "all_in_pct": [
+        2.2889,
+        2.2889
+      ]
+    }
+  ],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,490 @@
+{
+  "cik": 1903508,
+  "ticker": "PPHC",
+  "name": "Public Policy Holding Company, Inc.",
+  "sector": "industrials",
+  "industry": "Services-Management Consulting Services",
+  "sic": "8742",
+  "sic_description": "Services-Management Consulting Services",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T01:36:46+00:00",
+  "price": 9.77,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.6115,
+  "snapshot": {
+    "total_debt": 42153000,
+    "current_debt": 9867000,
+    "cash": 36923000,
+    "operating_leases": 30103000,
+    "equity": 110943000,
+    "assets": 240756000,
+    "liabilities": 129813000,
+    "assets_current": 79889000,
+    "liabilities_current": 49798000,
+    "retained_earnings": -185653000,
+    "interest_expense": 3429000,
+    "interest_paid": 3227000,
+    "operating_income": -35185000,
+    "pretax_income": -34482000,
+    "net_income": -37885000,
+    "da": 5879000,
+    "ocf": 15998000,
+    "capex": 550000,
+    "revenue": 200908000,
+    "shares": 30216533,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 42153000,
+    "cash_and_investments": 36923000.0,
+    "net_debt": 5230000.0,
+    "ebitda": -29306000,
+    "ebit": -35185000,
+    "interest_expense": 3429000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -10.261009,
+    "ebitda_coverage": -8.546515,
+    "cash_coverage": 5.957546,
+    "fcf": 15448000,
+    "fcf_to_debt": 0.366475,
+    "effective_rate": 0.081347,
+    "revolver_available": null,
+    "liquidity": 36923000.0,
+    "due_12m": 9867000,
+    "due_24m": null,
+    "liquidity_to_due12": 3.74207,
+    "liquidity_to_due24": null,
+    "floating_debt": 39659000.0,
+    "floating_share": 0.940835,
+    "plus100bp_interest": 396590.0,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 0.787117,
+    "market_cap": 295215527.41,
+    "debt_to_ev": 0.140302,
+    "convertibles": null,
+    "implied": {
+      "dd": 4.248213,
+      "pd_1y": 1.1e-05,
+      "spread_5y_bps": 75.876646,
+      "asset_vol": 0.563992,
+      "calibrated_5y_bps": 140.098877,
+      "rating_band": "BBB"
+    },
+    "covenants": [],
+    "cushion_score": 55
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 30103000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026055678/pphc-20260630.htm",
+        "accession": "0001628280-26-055678",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 30103000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-055678",
+            "filed": "2026-08-11",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026055678/pphc-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "that are adjusted periodically for inflation. The Company’s lease agreements do not contain any material residual value guarantees or material restrictive covenants. The Company also subleases office space to third parties under separate sublease agreements, which are generally m",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026055678/pphc-20260630.htm",
+        "accession": "0001628280-26-055678",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "earnouts",
+        "label": "Contingent earn-outs",
+        "excerpt": "spectively. This increase is primarily the result of a non-cash remeasurement of the acquisition-related earn-out liabilities that were revised based on updated performance forecasts and valuation assumptions that occurred in 2025 Q4. Gain on bargain purchase",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026055678/pphc-20260630.htm",
+        "accession": "0001628280-26-055678",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-055678",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026055678/pphc-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.2472,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.0508,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 186541000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-022359",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026022359/"
+        },
+        {
+          "value_usd": 149563000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-022359",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026022359/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 3310000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001628280-26-022359",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026022359/"
+        },
+        {
+          "value_usd": 3150000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001628280-26-022359",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026022359/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 24770000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-022359",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026022359/"
+        },
+        {
+          "value_usd": 16403000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-022359",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026022359/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -39001000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-022359",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026022359/"
+        },
+        {
+          "value_usd": -23957000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-022359",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026022359/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "Gain on bargain purchase | ( 898 ) | — | Expected credit losses | 1,371 | 1,021 | Decrease in: | Contract and unbilled receivables | ( 10,267 ) | ( 7,899 ) | Prepaid post-combination expense | ( 9,566 ) | ( 10,306 ) | Prepaid expenses and other assets | ( 1,767 ) | ( 1,578 ) | In",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026055678/pphc-20260630.htm",
+        "accession": "0001628280-26-055678",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "obligations and should be accounted for separately, and how to allocate the transaction price, including any variable consideration, to the separate performance obligations. When a contract contains multiple performance obligations, the Company allocates the transaction price to e",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026055678/pphc-20260630.htm",
+        "accession": "0001628280-26-055678",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ses | $ | 20,828 | $ | 30,819 | Income taxes payable | 2,880 | — | Amounts owed to related parties | 14 | — | Deferred revenue | 6,245 | 3,310 | Operating lease liability, current portion | 5,271 | 5,070 | Contingent consideration, current portion | 2,098 | 3,134 | Other liab",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1903508/000162828026055678/pphc-20260630.htm",
+        "accession": "0001628280-26-055678",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Secured Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "face": 63000000.0,
+      "carrying": 42226000.0,
+      "floating": false
+    },
+    {
+      "name": "2025 Term Loan C",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "spread": 0.026,
+      "face": 24000000.0,
+      "carrying": 20909000.0,
+      "floating": true
+    },
+    {
+      "name": "2024 Term Loan B",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "spread": 0.026,
+      "face": 19000000.0,
+      "carrying": 14250000.0,
+      "floating": true
+    },
+    {
+      "name": "2024 Term Loan A",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "spread": 0.026,
+      "face": 6000000.0,
+      "carrying": 4500000.0,
+      "floating": true
+    },
+    {
+      "name": "2023 Facility 2",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "face": 14000000.0,
+      "carrying": 2567000.0,
+      "floating": false
+    },
+    {
+      "name": "Other debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 106000.0,
+      "floating": false
+    },
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.0225,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-02-02",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001628280-26-004430",
+      "doc": "pphc-closing8xk.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-12-31",
+      32045000,
+      14536000,
+      3402000,
+      -28237000,
+      -33913000,
+      0.10616
+    ],
+    [
+      "2026-03-31",
+      44622000,
+      42852000,
+      3568000,
+      -30208000,
+      -36198000,
+      0.07996
+    ],
+    [
+      "2026-06-30",
+      42153000,
+      36923000,
+      3429000,
+      -29306000,
+      -35185000,
+      0.08135
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-04",
+      4.05,
+      6.541,
+      0.4437,
+      120.1
+    ],
+    [
+      "2026-05",
+      29.97,
+      5.104,
+      0.5424,
+      132.3
+    ],
+    [
+      "2026-06",
+      84.63,
+      4.125,
+      0.6021,
+      141.3
+    ],
+    [
+      "2026-07",
+      79.54,
+      4.309,
+      0.6385,
+      139.5
+    ],
+    [
+      "2026-08",
+      50.25,
+      4.724,
+      0.6032,
+      135.7
+    ],
+    [
+      "2026-09",
+      63.49,
+      4.521,
+      0.6309,
+      137.6
+    ],
+    [
+      "2026-10",
+      60.37,
+      4.519,
+      0.6115,
+      137.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,362 @@
+{
+  "cik": 1414953,
+  "ticker": "MOJO",
+  "name": "EQUATOR Beverage Co",
+  "sector": "consumer-staples",
+  "industry": "Beverages",
+  "sic": "2080",
+  "sic_description": "Beverages",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T03:17:16+00:00",
+  "price": 0.78,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.186696,
+  "snapshot": {
+    "cash": 0,
+    "equity": 1822652,
+    "assets": 2381931,
+    "liabilities": 559279,
+    "assets_current": 1615934,
+    "liabilities_current": 559279,
+    "retained_earnings": -23385356,
+    "interest_expense": 29532,
+    "interest_paid": 29532,
+    "operating_income": 143327,
+    "pretax_income": 231059,
+    "net_income": 987937,
+    "ocf": 530684,
+    "revenue": 4491661,
+    "effective_rate": 0.01,
+    "converted_shares": 1977085,
+    "shares": 9569655,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage",
+    "converted_shares": "DebtConversionConvertedInstrumentSharesIssued1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": null,
+    "net_debt": null,
+    "ebitda": 143327.0,
+    "ebit": 143327,
+    "interest_expense": 29532,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 4.853278,
+    "ebitda_coverage": 4.853278,
+    "cash_coverage": 18.969795,
+    "fcf": 530684.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": null,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -3.120505,
+    "market_cap": 7464330.9,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001575872-26-000564",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000157587226000564/mojo003_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.2908,
+      "receivables_growth": 0.7821,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.3807,
+      "ocf_to_net_income": 4.3009
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.3807,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 4191049.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001477932-26-001536",
+          "filed": "2026-03-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000147793226001536/"
+        },
+        {
+          "value_usd": 3246913.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001477932-26-001536",
+          "filed": "2026-03-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000147793226001536/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 349822.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001477932-26-001536",
+          "filed": "2026-03-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000147793226001536/"
+        },
+        {
+          "value_usd": 196294.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001477932-26-001536",
+          "filed": "2026-03-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000147793226001536/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 211658.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477932-26-001536",
+          "filed": "2026-03-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000147793226001536/"
+        },
+        {
+          "value_usd": 50460.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477932-26-001536",
+          "filed": "2026-03-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000147793226001536/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 49213.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477932-26-001536",
+          "filed": "2026-03-23",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000147793226001536/"
+        },
+        {
+          "value_usd": -801144.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477932-26-001536",
+          "filed": "2026-03-23",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000147793226001536/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "chase order and reflects the consideration the Company expects to receive. The Company does not have material variable consideration, significant financing components, or multiple performance obligations. Payments are typically due within 30 days of delivery. For sales shipped FOB",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000157587226000564/mojo003_10q.htm",
+        "accession": "0001575872-26-000564",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "000 shares of its common stock from s tock holders during the six months ended June 30, 2025. F-9 | NOTE 6 – RELATED PARTY TRANSACTIONS The Company engages in transactions with related parties in the ordinary course of business. Related parties include the Company’s directors, execut",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1414953/000157587226000564/mojo003_10q.htm",
+        "accession": "0001575872-26-000564",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2015-12-15",
+      "items": "1.01,3.02,5.02",
+      "acc": "0001607062-15-000551",
+      "doc": "mojo121515form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-12-09",
+      "items": "1.01,3.02,5.02",
+      "acc": "0001607062-15-000533",
+      "doc": "mojo12815form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-08-25",
+      "items": "1.01,3.02,5.02,9.01",
+      "acc": "0001607062-15-000379",
+      "doc": "mojo082415form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-06-30",
+      "items": "1.01,3.02,5.02,9.01",
+      "acc": "0001607062-15-000296",
+      "doc": "mojo63015form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-04-02",
+      "items": "1.01",
+      "acc": "0001607062-15-000160",
+      "doc": "mojo040215form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-02-01",
+      "items": "1.01,2.03,3.02,5.02,9.01",
+      "acc": "0001213900-13-000470",
+      "doc": "f8k111412_mojoorganic.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2012-08-17",
+      "items": "1.01,9.01",
+      "acc": "0001144204-12-046690",
+      "doc": "v321855_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2012-06-04",
+      "items": "1.01",
+      "acc": "0001144204-12-033097",
+      "doc": "v315177_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2011-11-02",
+      "items": "1.01,2.01,5.02,9.01",
+      "acc": "0001144204-11-060911",
+      "doc": "v238993_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2011-08-12",
+      "items": "1.01,9.01",
+      "acc": "0001144204-11-045846",
+      "doc": "v231805_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-06-08",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001255294-11-000339",
+      "doc": "mainbody.htm",
+      "desc": "MAINBODY"
+    },
+    {
+      "date": "2011-05-18",
+      "items": "1.01,2.01,3.02,5.01,5.02,5.06,9.01",
+      "acc": "0001255294-11-000303",
+      "doc": "mainbody.htm",
+      "desc": "MAINBODY"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

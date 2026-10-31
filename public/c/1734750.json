@@ -1,0 +1,436 @@
+{
+  "cik": 1734750,
+  "ticker": "MOVE",
+  "name": "Corvex, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:10:27+00:00",
+  "price": 8.46,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.751456,
+  "snapshot": {
+    "cash": 21695000,
+    "finance_leases": 9471000,
+    "operating_leases": 5491000,
+    "equity": 573251000,
+    "assets": 599323000,
+    "liabilities": 26072000,
+    "assets_current": 28262000,
+    "liabilities_current": 15680000,
+    "retained_earnings": -184162000,
+    "interest_expense": 2965000,
+    "interest_paid": 4000,
+    "operating_income": -27068000,
+    "pretax_income": -27632000,
+    "net_income": -27652000,
+    "da": 3887000,
+    "ocf": -13431000,
+    "revenue": 4436000,
+    "debt_issued": 1500000,
+    "stated_rate": 0.01,
+    "conversion_price": 2.5736,
+    "shares": 27647305,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseDebt (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (fiscal year)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 21695000.0,
+    "net_debt": null,
+    "ebitda": -23181000,
+    "ebit": -27068000,
+    "interest_expense": 2965000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -9.129174,
+    "ebitda_coverage": -7.818212,
+    "cash_coverage": -3356.75,
+    "fcf": -13431000.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 21695000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 4.836054,
+    "market_cap": 233896200.3,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 5491000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm",
+        "accession": "0001213900-26-090091",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 5491000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-090091",
+            "filed": "2026-08-14",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "s subsidiaries that it controls due to ownership of a majority voting interest or if the subsidiary is a variable interest entity (“VIE”) where the Company has been determined to be the primary beneficiary. For controlled subsidiaries that are not wholly owned, the third-party o",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm",
+        "accession": "0001213900-26-090091",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "uncommenced_leases",
+        "label": "Uncommenced leases",
+        "excerpt": "5,826 | Less: Present value discount | ( 602 | ) | ( 335 | ) | Lease liability | $ | 9,471 | $ | 5,491 | Leases Not Yet Commenced As of June 30, 2026, the Company had executed a lease agreement for additional data center capacity that had not yet commenced. The aggregate amoun",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm",
+        "accession": "0001213900-26-090091",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-090091",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.5726,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.6667,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 433000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-036609",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026036609/"
+        },
+        {
+          "value_usd": 1013000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-036609",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026036609/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 12000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001213900-26-036609",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026036609/"
+        },
+        {
+          "value_usd": 36000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001213900-26-036609",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026036609/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -11268000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-036609",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026036609/"
+        },
+        {
+          "value_usd": -22533000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-036609",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026036609/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -18285000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-036609",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026036609/"
+        },
+        {
+          "value_usd": -23727000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-036609",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026036609/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "fferings, product-specific business objectives and the estimated cost to provide the performance obligation. Contract assets represent the Company’s rights to consideration in exchange for goods or computing services that the Company has transferred to a customer but where",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm",
+        "accession": "0001213900-26-090091",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "immaterial for the three and six months ended June 30, 2026. The Company’s contracts with customers include variable consideration in the form of service level agreement (“SLA”) credits, which may reduce the transaction price if availability thresholds are not met. Such credits a",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm",
+        "accession": "0001213900-26-090091",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "t terms where the time period between payment and service delivery is one year or less for the existence of a significant financing component. If the period between transfer of the promised services and payment is more than one year, the Company analyzes whether a significant financing comp",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm",
+        "accession": "0001213900-26-090091",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ITY (DEFICIT) | Current liabilities: | Accounts payable | 3,870 | 3,477 | Accrued liabilities | 3,499 | 665 | Deferred revenue, current | 1,810 | 12 | Bridge loan (related party) | — | 4,382 | Operating lease liabilities, current | 2,591 | 253 | Finance lease liabilities, cur",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026090091/ea0301480-10q_corvex.htm",
+        "accession": "0001213900-26-090091",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Bridge Loan Second Amendment",
+      "kind": "loan",
+      "as_of": "2025-11-06",
+      "maturity": "2026-03-31",
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-10-14",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-109462",
+      "doc": "ea0308409-8k_corvex.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-09-02",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001213900-26-096776",
+      "doc": "ea0304343-8k_corvex.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-03-19",
+      "items": "1.01,3.01,3.02,3.03,5.02,5.03,7.01,9.01",
+      "acc": "0001213900-26-031846",
+      "doc": "ea0282032-8k_movano.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-11-10",
+      "items": "1.01,2.03,3.02,5.01,5.03,7.01,9.01",
+      "acc": "0001213900-25-107857",
+      "doc": "ea0264486-8k425_movano.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-11-07",
+      "items": "1.01",
+      "acc": "0001213900-25-107646",
+      "doc": "ea0264566-8k_movano.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-08-07",
+      "items": "1.01,2.03",
+      "acc": "0001213900-25-073070",
+      "doc": "ea0252309-8k_movano.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-05-29",
+      "items": "1.01,9.01",
+      "acc": "0001213900-24-047533",
+      "doc": "ea0207053-8k_movano.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-04-03",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-24-029886",
+      "doc": "ea0203109-8k_movano.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-11-15",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-23-087246",
+      "doc": "ea188305-8k_movano.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-06-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-23-048353",
+      "doc": "ea180164-8k_movano.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-01-31",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-23-006456",
+      "doc": "ea172434-8k_movanoinc.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

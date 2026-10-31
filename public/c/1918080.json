@@ -1,0 +1,392 @@
+{
+  "cik": 1918080,
+  "ticker": "DBHL",
+  "name": "Deep Isolation Nuclear, Inc.",
+  "sector": "utilities",
+  "industry": "Refuse Systems",
+  "sic": "4953",
+  "sic_description": "Refuse Systems",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T03:16:53+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 19379000,
+    "finance_leases": 10000,
+    "operating_leases": 216000,
+    "equity": 19666000,
+    "assets": 21650000,
+    "liabilities": 1984000,
+    "assets_current": 20944000,
+    "liabilities_current": 1893000,
+    "retained_earnings": -40955000,
+    "operating_income": -13071000,
+    "pretax_income": -1589000,
+    "net_income": -12259000,
+    "da": 106000,
+    "ocf": -11357000,
+    "capex": 148000,
+    "revenue": 5748000,
+    "shares": 57667113,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "Cash",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 19379000.0,
+    "net_debt": null,
+    "ebitda": -12965000,
+    "ebit": -13071000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -11505000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 19379000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 216000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm",
+        "accession": "0001918080-26-000016",
+        "form": "10-Q",
+        "filed": "2026-08-07",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 216000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001918080-26-000016",
+            "filed": "2026-08-07",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "t is reasonably certain that the option will be exercised. The Company’s lease agreements do not contain residual value guarantees or covenants. Warrants The Company accounts for its warrants as equity-classified based on an assessment of the warrant’s specific terms and appl",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm",
+        "accession": "0001918080-26-000016",
+        "form": "10-Q",
+        "filed": "2026-08-07",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001918080-26-000016",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.13,
+      "receivables_growth": -0.5606,
+      "contract_assets_growth": 1.4775,
+      "contract_liabilities_growth": null,
+      "dsri": 0.5051,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "unbilled_growth",
+        "label": "Contract assets grow materially faster than revenue",
+        "value": 1.6075,
+        "rule": "Contract asset growth - revenue growth > 30pp"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 6136000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        },
+        {
+          "value_usd": 7053000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 439000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        },
+        {
+          "value_usd": 999000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        }
+      ],
+      "contract_assets": [
+        {
+          "value_usd": 275000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        },
+        {
+          "value_usd": 111000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        }
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 150000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -3931000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        },
+        {
+          "value_usd": -1201000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -5336000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        },
+        {
+          "value_usd": -994000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001918080-26-000004",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000004/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "434 | Accounts receivable, net of allowance for credit losses of $ 124 and $ 118 , respectively | 465 | 439 | Contract assets | 527 | 275 | Other current assets | 573 | 672 | Total current assets | 20,944 | 28,820 | Property, plant and equipment, net | 194 | 128 | Intangible",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm",
+        "accession": "0001918080-26-000016",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "in an amount that reflects the consideration the Company expects to receive in exchange for those services. Variable Consideration The Company’s contracts generally do not give rise to variable consideration. However, from time to time, the Company may submit requests for equit",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm",
+        "accession": "0001918080-26-000016",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "rued expenses | 16 | 10 | Total other current liabilities | 252 | 101 | Totals | $ | 542 | $ | 875 | Note 10. Related Party Transactions Deep Borehole Demonstration Center. Deep Isolation is a member of the Deep Borehole Demonstration Center (“DBDC”). The DBDC is a 501(c)(3) organiza",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm",
+        "accession": "0001918080-26-000016",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "ess than one year, we have elected the practical expedient, and we have not assessed whether a contract has a significant financing component. We report any tax assessed by a governmental authority that we collect from our customers that is both imposed on and concurrent with our revenue-pr",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm",
+        "accession": "0001918080-26-000016",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ers’ Equity | Current liabilities: | Accounts payable | $ | 1,216 | $ | 1,113 | Accrued payroll | 290 | 774 | Contract liabilities | — | 150 | Finance lease liabilities, current | 3 | 3 | Operating lease liabilities, current | 132 | 125 | Other current liabilities | 252 | 101 | T",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1918080/000191808026000016/din-20260630.htm",
+        "accession": "0001918080-26-000016",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-02-03",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-011418",
+      "doc": "ea0275367-8k_deep.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-07-28",
+      "items": "1.01,2.01,3.02,3.03,4.01,5.01,5.02,5.03,5.06,9.01",
+      "acc": "0001213900-25-068196",
+      "doc": "ea0250348-8k_deep.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

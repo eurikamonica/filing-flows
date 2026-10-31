@@ -1,0 +1,238 @@
+{
+  "cik": 2064765,
+  "ticker": null,
+  "name": "Essence Array Inc",
+  "sector": "health",
+  "industry": "Wholesale-Drugs, Proprietaries & Druggists' Sundries",
+  "sic": "5122",
+  "sic_description": "Wholesale-Drugs, Proprietaries & Druggists' Sundries",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T04:58:41+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 40009,
+    "equity": 38381,
+    "assets": 44581,
+    "liabilities": 6200,
+    "assets_current": 40126,
+    "retained_earnings": -4514,
+    "net_income": 5080,
+    "ocf": -4293,
+    "revenue": 40318,
+    "shares": 7344095,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 40009.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -4293.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 40009.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001477932-26-006332",
+      "form": "10-Q",
+      "filed": "2026-10-20",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226006332/eai_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": null,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 18430.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001477932-26-002514",
+          "filed": "2026-04-24",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226002514/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001477932-26-002514",
+          "filed": "2026-04-24",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226002514/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -2592.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477932-26-002514",
+          "filed": "2026-04-24",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226002514/"
+        },
+        {
+          "value_usd": -473.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001477932-26-002514",
+          "filed": "2026-04-24",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226002514/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -2592.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477932-26-002514",
+          "filed": "2026-04-24",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226002514/"
+        },
+        {
+          "value_usd": -473.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001477932-26-002514",
+          "filed": "2026-04-24",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226002514/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "30, 2026, the Company had 7,344,095 shares issued and outstanding for total proceeds of $ 42,895 . NOTE 6 – RELATED PARTY TRANSACTIONS From inception (March 29, 2024) through September 30, 2026, the Company relied on funding from its sole officer and director for its initial operati",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226006332/eai_10q.htm",
+        "accession": "0001477932-26-006332",
+        "form": "10-Q",
+        "filed": "2026-10-20"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "25, net cash flows provided by operating activities were $629 comprised of net loss of $9,121 and increase in deferred revenue of $9,750. Cash Flows from Financing Activities For the six-month period ended September 30, 2026, net cash flows from financing activities were",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2064765/000147793226006332/eai_10q.htm",
+        "accession": "0001477932-26-006332",
+        "form": "10-Q",
+        "filed": "2026-10-20"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

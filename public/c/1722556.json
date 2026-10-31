@@ -1,0 +1,246 @@
+{
+  "cik": 1722556,
+  "ticker": "BGFR",
+  "name": "BestGofer Inc.",
+  "sector": "consumer-disc",
+  "industry": "Services-Personal Services",
+  "sic": "7200",
+  "sic_description": "Services-Personal Services",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T04:58:29+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 8906,
+    "equity": -140783,
+    "assets": 45753,
+    "liabilities": 186536,
+    "assets_current": 45753,
+    "retained_earnings": -321889,
+    "interest_paid": 0,
+    "net_income": -121336,
+    "ocf": 55344,
+    "revenue": 17752,
+    "shares": 5900000,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaid (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 8906.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 55344.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 8906.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-08-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001722556-26-000036",
+      "form": "10-Q",
+      "filed": "2026-09-30",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000036/bgfr-20260831_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-31",
+    "metrics": {
+      "revenue_growth": null,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 5260.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001722556-26-000004",
+          "filed": "2026-03-13",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000004/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001722556-26-000004",
+          "filed": "2026-03-13",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000004/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 779.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001722556-26-000004",
+          "filed": "2026-03-13",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000004/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001722556-26-000004",
+          "filed": "2026-03-13",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000004/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 3140.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001722556-26-000004",
+          "filed": "2026-03-13",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000004/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001722556-26-000004",
+          "filed": "2026-03-13",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000004/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -25748.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001722556-26-000004",
+          "filed": "2026-03-13",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000004/"
+        },
+        {
+          "value_usd": -27562.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001722556-26-000004",
+          "filed": "2026-03-13",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000004/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "t. All revenue in all periods presented was recognized at a point in time and in the United States. NOTE D - RELATED PARTY TRANSACTIONS The Company has identified the following related parties at August 31, 2026: 1. Director, President and Chief Executive Officer (Mohammad Hasan Ha",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1722556/000172255626000036/bgfr-20260831_10q.htm",
+        "accession": "0001722556-26-000036",
+        "form": "10-Q",
+        "filed": "2026-09-30"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-11-30",
+      "2024-11-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

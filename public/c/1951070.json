@@ -1,0 +1,661 @@
+{
+  "cik": 1951070,
+  "ticker": "MH",
+  "name": "McGraw Hill, Inc.",
+  "sector": "communication",
+  "industry": "Miscellaneous Publishing",
+  "sic": "2741",
+  "sic_description": "Miscellaneous Publishing",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-25T22:55:30+00:00",
+  "price": 14.62,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.557652,
+  "snapshot": {
+    "total_debt": 2574440000,
+    "current_debt": 13170000,
+    "cash": 193637000,
+    "equity": 788390000,
+    "assets": 5378652000,
+    "liabilities": 4590262000,
+    "assets_current": 888062000,
+    "liabilities_current": 1145206000,
+    "retained_earnings": -1188020000,
+    "interest_paid": 194988000,
+    "operating_income": 294837000,
+    "pretax_income": 74849000,
+    "net_income": 136018000,
+    "da": 357540000,
+    "ocf": 428426000,
+    "capex": 92508000,
+    "revenue": 2116974000,
+    "maturities": {
+      "as_of": "2026-03-31",
+      "next12m": 13170000,
+      "y2": 13170000,
+      "y3": 841636000,
+      "y4": 612204000,
+      "y5": 1152160000,
+      "after5": 0
+    },
+    "shares": 191308814,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 2574440000,
+    "cash_and_investments": 193637000.0,
+    "net_debt": 2380803000.0,
+    "ebitda": 652377000,
+    "ebit": 294837000,
+    "interest_expense": null,
+    "leverage": 3.946246,
+    "net_leverage": 3.649428,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 3.197192,
+    "fcf": 335918000,
+    "fcf_to_debt": 0.130482,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 193637000.0,
+    "due_12m": 13170000,
+    "due_24m": 26340000,
+    "liquidity_to_due12": 14.702885,
+    "liquidity_to_due24": 7.351443,
+    "floating_debt": 551547000.0,
+    "floating_share": 0.21424,
+    "plus100bp_interest": 5515470.0,
+    "plus100bp_share_of_ebit": 0.018707,
+    "altman_z": 0.573475,
+    "market_cap": 2796934860.68,
+    "debt_to_ev": 0.497213,
+    "convertibles": null,
+    "implied": {
+      "dd": 2.861581,
+      "pd_1y": 0.002108,
+      "spread_5y_bps": 158.35826,
+      "asset_vol": 0.386899,
+      "calibrated_5y_bps": 153.788989,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.064479,
+    "covenants": [],
+    "cushion_score": 62
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001951070-26-000039",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000039/mh-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0007,
+      "receivables_growth": 0.0711,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.052,
+      "dsri": 1.0703,
+      "ocf_to_net_income": 9.3764
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2102781000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        },
+        {
+          "value_usd": 2101299000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 362483000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        },
+        {
+          "value_usd": 338426000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 835357000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        },
+        {
+          "value_usd": 794031000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 331173000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        },
+        {
+          "value_usd": 646284000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 35320000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        },
+        {
+          "value_usd": -85839000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001951070-26-000022",
+          "filed": "2026-06-11",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000022/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "“Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets” on a prospective basis . This ASU provides a practical expedient to assume that conditions as of the balance sheet date remain unchanged over the re",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000039/mh-20260630.htm",
+        "accession": "0001951070-26-000039",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "$ | 118,740 | $ | 126,701 | Accrued royalties | 100,656 | 81,436 | Accrued compensation | 33,569 | 108,434 | Deferred revenue | 732,926 | 835,357 | Current portion of long-term debt | 13,170 | 13,170 | Operating lease liabilities | 7,592 | 8,365 | Other current liabilities |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1951070/000195107026000039/mh-20260630.htm",
+        "accession": "0001951070-26-000039",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "2022 Secured Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 828466000.0,
+      "floating": false
+    },
+    {
+      "name": "2024 Secured Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 650000000.0,
+      "floating": false
+    },
+    {
+      "name": "2022 Unsecured Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 599034000.0,
+      "floating": false
+    },
+    {
+      "name": "A&E Term Loan Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 551547000.0,
+      "rate_now": 0.06394,
+      "floating": true
+    },
+    {
+      "name": "A&E Cash Flow Revolving Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "available": 111250000.0,
+      "drawn": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Non-Extended Cash Flow Revolver Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "available": 38750000.0,
+      "drawn": 0.0,
+      "floating": true
+    },
+    {
+      "name": "A&E ABL Revolving Credit Facilities",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "available": 300000000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-10-09",
+      "agreement_kind": "amendment",
+      "dated": "2026-10-09",
+      "title": "To The Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        1.25,
+        1.75
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.3,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "of the Lead Borrower or a Restricted Subsidiary assumed at the time of a Permitted Acquisition of an asset securing such Indebtedness); provided that (x) such Indebtedness was not incurred in connection with, or in anticipation or contemplation of, such Permitted Acquisition and (y) either (I) the Consolidated Total Net Leverage Ratio, determined on a Pro Forma Basis as of the last day of the most recently ended Tes"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ate Commitments or (b) over the 30 consecutive days prior to the consummation of such action (assuming such action occurred on the first day of such 30 day prior period), Adjusted Availability averaged less than 25% of the Aggregate Commitments on a Pro Forma Basis for such action, the Consolidated Fixed Charge Coverage Ratio would be at least 1.0 to 1.0 on a Pro Forma Basis for such action by reference to the most r"
+        },
+        {
+          "type": "liquidity",
+          "limit": 15000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Liquidity Event ” shall mean the occurrence of a date when (a) Adjusted Availability shall have been less than the greater of (i) 10% of the Line Cap and (ii) $15,000,000, in either case for five consecutive Business Days, until such date as (b) Adjusted Availability shall have been at least equal to the greater of (i) 10% of the Line Cap and (ii) $15,000,000 for 30 consecutive calendar days."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1951070/000119312526419151/d147687dex102.htm",
+      "all_in_pct": [
+        1.2889,
+        1.7889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-10-09",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-10-09",
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        2.75,
+        2.75
+      ],
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.55,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "om the relevant Recovery Event, Borrower shall have delivered to the Administrative Agent a certificate of a Responsible Officer certifying that on a Pro Forma Basis immediately after giving effect to such Asset Sale or Recovery Event, as applicable, and the application of the proceeds thereof, the Consolidated First Lien Net Leverage Ratio is (i) less than or equal to 3.55:1.00 but greater than 3.05:1.00, the Applic"
+        },
+        {
+          "type": "leverage",
+          "limit": 4.05,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "to such date (clauses (a), (b) and (c), collectively, the “ Fixed Incremental Amount ”), plus (d) an unlimited amount so long as either (A) in the case of any Indebtedness secured by a Lien on the Collateral that is pari passu with any Lien on the Collateral securing the Obligations, either (1) the Consolidated First Lien Net Leverage Ratio, determined on a Pro Forma Basis as of such date, would not exceed (x) 4.05:1"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "greement, the Consolidated Secured Net Leverage Ratio in effect immediately prior to the consummation of such transaction calculated on a Pro Forma Basis as of the most recently ended Test Period and (2) in the case of any Permitted Junior Debt consisting of unsecured Indebtedness, the Consolidated Fixed Charge Coverage Ratio, determined on a Pro Forma Basis as of such date, would not be less than either (x) 2.00:1.0"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1951070/000119312526419151/d147687dex101.htm",
+      "all_in_pct": [
+        2.7889,
+        2.7889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-09-09",
+      "agreement_kind": "amendment",
+      "dated": "2025-09-08",
+      "title": "To The Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        2.5,
+        4.0
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.55,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "om the relevant Recovery Event, Borrower shall have delivered to the Administrative Agent a certificate of a Responsible Officer certifying that on a Pro Forma Basis immediately after giving effect to such Asset Sale or Recovery Event, as applicable, and the application of the proceeds thereof, the Consolidated First Lien Net Leverage Ratio is (i) less than or equal to 3.55:1.00 but greater than 3.05:1.00, the Applic"
+        },
+        {
+          "type": "leverage",
+          "limit": 4.05,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "to such date (clauses (a), (b) and (c), collectively, the “ Fixed Incremental Amount ”), plus (d) an unlimited amount so long as either (A) in the case of any Indebtedness secured by a Lien on the Collateral that is pari passu with any Lien on the Collateral securing the Obligations, either (1) the Consolidated First Lien Net Leverage Ratio, determined on a Pro Forma Basis as of such date, would not exceed (x) 4.05:1"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "greement, the Consolidated Secured Net Leverage Ratio in effect immediately prior to the consummation of such transaction calculated on a Pro Forma Basis as of the most recently ended Test Period and (2) in the case of any Permitted Junior Debt consisting of unsecured Indebtedness, the Consolidated Fixed Charge Coverage Ratio, determined on a Pro Forma Basis as of such date, would not be less than either (x) 2.00:1.0"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1951070/000119312525198855/d84268dex101.htm",
+      "all_in_pct": [
+        2.5389,
+        4.0389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-10-09",
+      "items": "1.01,2.03,7.01,8.01,9.01",
+      "acc": "0001193125-26-419151",
+      "doc": "d147687d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-09",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-25-198855",
+      "doc": "d84268d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-25",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001628280-25-036062",
+      "doc": "mcgrawhill-closing8xk.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-06-30",
+      3178511000,
+      247331000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      2810128000,
+      463187000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      2618812000,
+      514392000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      2574440000,
+      193637000,
+      null,
+      652377000,
+      294837000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-10",
+      164.61,
+      2.647,
+      0.5337,
+      156.0
+    ],
+    [
+      "2025-11",
+      411.97,
+      1.959,
+      0.7751,
+      163.4
+    ],
+    [
+      "2025-12",
+      327.28,
+      2.209,
+      0.7015,
+      160.7
+    ],
+    [
+      "2026-01",
+      275.17,
+      2.334,
+      0.6496,
+      159.3
+    ],
+    [
+      "2026-02",
+      271.6,
+      2.356,
+      0.6473,
+      159.1
+    ],
+    [
+      "2026-03",
+      229.93,
+      2.48,
+      0.6107,
+      157.8
+    ],
+    [
+      "2026-04",
+      216.25,
+      2.547,
+      0.5962,
+      157.1
+    ],
+    [
+      "2026-05",
+      194.28,
+      2.611,
+      0.5738,
+      156.4
+    ],
+    [
+      "2026-06",
+      209.34,
+      2.408,
+      0.5836,
+      158.6
+    ],
+    [
+      "2026-07",
+      198.85,
+      2.52,
+      0.5793,
+      157.4
+    ],
+    [
+      "2026-08",
+      182.74,
+      2.7,
+      0.5726,
+      155.5
+    ],
+    [
+      "2026-09",
+      177.94,
+      2.683,
+      0.5712,
+      155.6
+    ],
+    [
+      "2026-10",
+      158.09,
+      2.866,
+      0.5577,
+      153.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

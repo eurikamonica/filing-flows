@@ -1,0 +1,289 @@
+{
+  "cik": 1699963,
+  "ticker": "LIME",
+  "name": "Neutron Holdings, Inc.",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "docs": {
+    "xbrl:0001628280-26-055698": {
+      "instruments": [
+        {
+          "name": "2020 Notes",
+          "kind": "convertible",
+          "as_of": "2026-06-30",
+          "coupon": 0.04,
+          "effective": 0.0405,
+          "conv_price": 16.73,
+          "carrying": 211400000.0,
+          "floating": false
+        },
+        {
+          "name": "Term Loan",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "carrying": 115000000.0,
+          "floating": true
+        },
+        {
+          "name": "2021 Notes",
+          "kind": "convertible",
+          "as_of": "2026-06-30",
+          "coupon": 0.08,
+          "conv_price": 20.0,
+          "floating": false
+        },
+        {
+          "name": "Convertible Notes",
+          "kind": "convertible",
+          "as_of": "2026-06-30",
+          "carrying": 0.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-11",
+      "report": "2026-06-30"
+    },
+    "0001628280-26-047289:exhibit101-closing8xk.htm": {
+      "kind": "agreement",
+      "date": "2026-07-06",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-07-02",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "maturity": "2031-07-02",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Commencing with the first full fiscal quarter ending after the Closing Date, the Borrower will not permit the Total Net Leverage Ratio, as of the last day of any Test Period, to be greater than 3.25 to 1.00;"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Commencing with the first full fiscal quarter ending after the Closing Date, the Borrower will not permit the Fixed Charge Coverage Ratio, determined as of the end of any Test Period, to be less than 1.25 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Restricted Payment Requirements ” means, with respect to any Restricted Payment made by the Borrower or any Subsidiary in reliance upon Section 6.07(h), the following: (a) no Default or Event of Default has occurred and is continuing prior to making such Restricted Payment or would arise after giving effect (including giving effect on a pro forma basis) thereto; and (b) with respect to any Restricted Payment made i"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "orma basis) to such Restricted Payment (based on the most recently delivered compliance certificate under Section 5.01(c)); provided , that if the Total Net Leverage Ratio falls below 2.25 to 1.00 in a subsequent reporting period, such $15,000,000 limitation shall cease; provided , further , if the Total Net Leverage Ratio shall return to being equal to or greater than 2.25 to 1.00, a new twelve-month period shall be"
+        }
+      ]
+    }
+  },
+  "sic_description": "Services-Prepackaged Software",
+  "snapshot": {
+    "total_debt": 115000000,
+    "cash": 278065000,
+    "convertible": 0,
+    "convertible_current": 0,
+    "equity": 682177000,
+    "assets": 1175734000,
+    "liabilities": 379530000,
+    "assets_current": 476811000,
+    "liabilities_current": 298733000,
+    "retained_earnings": -511083000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "rest_of_year": 115000000
+    },
+    "shares": 64984190,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "convertible_current": "ConvertibleDebtCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-11",
+      "total_debt": 115000000,
+      "cash": 278065000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 64984190,
+      "convertible": 0,
+      "equity": 682177000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0001628280-26-055698",
+  "events": [
+    {
+      "date": "2026-07-06",
+      "items": "1.01,1.02,2.03,5.03,8.01,9.01",
+      "acc": "0001628280-26-047289",
+      "doc": "neutronholdingsinc-closing.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T23:09:28+00:00",
+  "signature": "0001628280-26-055698",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ed entities or financial partnerships, including entities sometimes referred to as structured finance or special purpose entities, that were established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes. Critical A",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+        "accession": "0001628280-26-055698",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "and asset sales, investments, negative pledges, repurchase of stock, dividends and other distributions, sale and leaseback transactions, and transactions with affiliates. In addition, the Credit Agreement also contains financial covenants that require us to not exceed a m",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+        "accession": "0001628280-26-055698",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-055698",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "tion | 25 | Note 10. Warrants | 27 | Note 11. Other Expense, Net | 28 | Note 12. Income Taxes | 28 | Note 13. Related Party Transactions | 29 | Note 14. Net Loss Per Share | 30 | Note 15. Segments | 31 | Note 16. Subsequent Events | 32 | 7 Table of Contents NEUTRON HOLDINGS, INC.",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+        "accession": "0001628280-26-055698",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "14,565 | 21,245 | Accrued taxes | 36,203 | 25,559 | Operating lease liabilities, current | 11,508 | 10,783 | Contract liabilities | 5,661 | 6,301 | Term loan, current | 114,622 | 113,866 | 2021 Notes, current | — | 660,324 | Total current liabilities | 298,733 | 928,350 | 2020 N",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+        "accession": "0001628280-26-055698",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "ed entities or financial partnerships, including entities sometimes referred to as structured finance or special purpose entities, that were established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes. Critical A",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+      "accession": "0001628280-26-055698",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "sale_leaseback",
+      "label": "Sale-and-leaseback",
+      "excerpt": "and asset sales, investments, negative pledges, repurchase of stock, dividends and other distributions, sale and leaseback transactions, and transactions with affiliates. In addition, the Credit Agreement also contains financial covenants that require us to not exceed a m",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+      "accession": "0001628280-26-055698",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001628280-26-055698",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001628280-26-055698",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "tion | 25 | Note 10. Warrants | 27 | Note 11. Other Expense, Net | 28 | Note 12. Income Taxes | 28 | Note 13. Related Party Transactions | 29 | Note 14. Net Loss Per Share | 30 | Note 15. Segments | 31 | Note 16. Subsequent Events | 32 | 7 Table of Contents NEUTRON HOLDINGS, INC.",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+      "accession": "0001628280-26-055698",
+      "form": "10-Q",
+      "filed": "2026-08-11"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "14,565 | 21,245 | Accrued taxes | 36,203 | 25,559 | Operating lease liabilities, current | 11,508 | 10,783 | Contract liabilities | 5,661 | 6,301 | Term loan, current | 114,622 | 113,866 | 2021 Notes, current | — | 660,324 | Total current liabilities | 298,733 | 928,350 | 2020 N",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026055698/lime-20260630.htm",
+      "accession": "0001628280-26-055698",
+      "form": "10-Q",
+      "filed": "2026-08-11"
+    }
+  ],
+  "revenue_quality_text_source": "0001628280-26-055698"
+}

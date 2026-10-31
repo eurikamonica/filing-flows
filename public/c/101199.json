@@ -1,0 +1,486 @@
+{
+  "cik": 101199,
+  "ticker": "UFCS",
+  "name": "UNITED FIRE GROUP INC",
+  "sector": "financials",
+  "industry": "Fire, Marine & Casualty Insurance",
+  "sic": "6331",
+  "sic_description": "Fire, Marine & Casualty Insurance",
+  "generated_at": "2026-10-31T14:35:08+00:00",
+  "fetched_at": "2026-10-25T23:04:33+00:00",
+  "price": 57.38,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.323221,
+  "snapshot": {
+    "total_debt": 146350000,
+    "cash": 139445000,
+    "revolver_drawn": 0,
+    "equity": 977337000,
+    "assets": 4014366000,
+    "liabilities": 3037029000,
+    "retained_earnings": 775379000,
+    "interest_expense": 12669000,
+    "interest_paid": 12617000,
+    "pretax_income": 176836000,
+    "net_income": 140961000,
+    "da": 11379000,
+    "ocf": 271554000,
+    "revenue": 1472992000,
+    "shares": 25705439,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 146350000,
+    "cash_and_investments": 139445000.0,
+    "net_debt": 6905000.0,
+    "ebitda": 200884000,
+    "ebit": 189505000,
+    "interest_expense": 12669000,
+    "leverage": 0.72853,
+    "net_leverage": 0.034373,
+    "interest_coverage": 14.958166,
+    "ebitda_coverage": 15.856342,
+    "cash_coverage": 22.522866,
+    "fcf": 271554000.0,
+    "fcf_to_debt": 1.855511,
+    "effective_rate": 0.086566,
+    "revolver_available": null,
+    "liquidity": 139445000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 1.084523,
+    "market_cap": 1474978089.82,
+    "debt_to_ev": 0.098759,
+    "convertibles": null,
+    "implied": {
+      "dd": 9.874687,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.006484,
+      "asset_vol": 0.308584,
+      "calibrated_5y_bps": 95.970498,
+      "rating_band": "BBB"
+    },
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 700000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Third Amendment To Credit Agreement",
+        "dated": "2023-08-07",
+        "text": "Maintain Consolidated Net Worth as of the last day of each fiscal quarter of Holdings (commencing with the fiscal quarter ending September 30, 2023) in an amount less than $700,000,000. 1.2."
+      }
+    ],
+    "cushion_score": 97
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000101199-26-000052",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/101199/000010119926000052/ufcs-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1062,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 2.2823
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1386412000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000101199-26-000015",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101199/000010119926000015/"
+        },
+        {
+          "value_usd": 1253307000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000101199-26-000015",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101199/000010119926000015/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 269743000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000101199-26-000015",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101199/000010119926000015/"
+        },
+        {
+          "value_usd": 340304000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000101199-26-000015",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101199/000010119926000015/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 118191000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000101199-26-000015",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101199/000010119926000015/"
+        },
+        {
+          "value_usd": 61957000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000101199-26-000015",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101199/000010119926000015/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Federal Home Loan Bank Advances",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "capacity": 526400000.0,
+      "floating": false
+    },
+    {
+      "name": "9% UFG Notes - Series A & B",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.09,
+      "carrying": 96350000.0,
+      "floating": false
+    },
+    {
+      "name": "2020 Notes due 2040",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 50000000.0,
+      "maturity_year": 2040,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2023-11-02",
+      "agreement_kind": "amendment",
+      "dated": "2023-08-07",
+      "title": "Third Amendment To Credit Agreement",
+      "facility": "loan",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 700000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Maintain Consolidated Net Worth as of the last day of each fiscal quarter of Holdings (commencing with the fiscal quarter ending September 30, 2023) in an amount less than $700,000,000. 1.2."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/101199/000010119923000089/a20230807-ufccxthirdamen.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2011-12-23",
+      "agreement_kind": "credit_agreement",
+      "dated": "2011-12-22",
+      "size": 100000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 582638000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower shall not permit its Consolidated Net Worth (a) as of the end of the Fiscal Quarter ending December 31, 2011, to be less than $582,638,000 and (b) as of the end of any Fiscal Quarter thereafter, to be less than an amount equal to (i) the Minimum Net Worth for the immediately preceding Fiscal Quarter, plus (ii) the Fiscal Quarter Increase for such immediately preceding Fiscal Quarter."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/101199/000010119911000045/exhibit101creditagreement.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-07-10",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0000101199-25-000041",
+      "doc": "ufcs-20250710.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-06",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0000101199-24-000043",
+      "doc": "ufcs-20240531.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-02-01",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001104659-24-009465",
+      "doc": "tm244699d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-12-29",
+      "items": "1.02,2.03",
+      "acc": "0001104659-23-130477",
+      "doc": "tm2333969d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-08-09",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000101199-23-000069",
+      "doc": "ufcs-20230809.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-04-02",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0000101199-20-000066",
+      "doc": "ufg8-k4x2x20.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-09-19",
+      "items": "1.01,7.01,9.01",
+      "acc": "0000101199-17-000125",
+      "doc": "a8kseptember2017.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-02-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000101199-16-000405",
+      "doc": "ufg8-k2x5x16.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2012-06-30",
+      45000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      146274000,
+      162029000,
+      11967000,
+      null,
+      null,
+      0.08181
+    ],
+    [
+      "2026-06-30",
+      146350000,
+      139445000,
+      12669000,
+      null,
+      null,
+      0.08657
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2012-08",
+      5.31,
+      6.675,
+      0.4427,
+      119.0
+    ],
+    [
+      "2012-09",
+      2.6,
+      7.175,
+      0.4276,
+      115.1
+    ],
+    [
+      "2012-10",
+      2.24,
+      7.261,
+      0.4188,
+      114.4
+    ],
+    [
+      "2026-05",
+      0.04,
+      9.084,
+      0.326,
+      101.2
+    ],
+    [
+      "2026-06",
+      0.03,
+      9.177,
+      0.3382,
+      100.6
+    ],
+    [
+      "2026-07",
+      0.03,
+      9.206,
+      0.3353,
+      100.4
+    ],
+    [
+      "2026-08",
+      0.01,
+      9.759,
+      0.3212,
+      96.7
+    ],
+    [
+      "2026-09",
+      0.01,
+      9.657,
+      0.3241,
+      97.4
+    ],
+    [
+      "2026-10",
+      0.01,
+      9.875,
+      0.3232,
+      96.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

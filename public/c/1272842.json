@@ -1,0 +1,324 @@
+{
+  "cik": 1272842,
+  "ticker": "AIRG",
+  "name": "AIRGAIN INC",
+  "sector": "technology",
+  "industry": "Radio & Tv Broadcasting & Communications Equipment",
+  "sic": "3663",
+  "sic_description": "Radio & Tv Broadcasting & Communications Equipment",
+  "generated_at": "2026-10-31T14:35:10+00:00",
+  "fetched_at": "2026-10-26T02:58:25+00:00",
+  "price": 4.05,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.518951,
+  "snapshot": {
+    "cash": 7611000,
+    "operating_leases": 4701000,
+    "equity": 29314000,
+    "assets": 46822000,
+    "liabilities": 17508000,
+    "assets_current": 27704000,
+    "liabilities_current": 13760000,
+    "retained_earnings": -97238000,
+    "operating_income": -7185000,
+    "pretax_income": -6929000,
+    "net_income": -7008000,
+    "da": 422000,
+    "ocf": -2767000,
+    "capex": 198000,
+    "revenue": 51352000,
+    "shares": 13100234,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 7611000.0,
+    "net_debt": null,
+    "ebitda": -6763000,
+    "ebit": -7185000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -2965000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 7611000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -0.141509,
+    "market_cap": 53055947.7,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-335336",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526335336/airg-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.1455,
+      "receivables_growth": 0.0946,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.281,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.281,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 51779000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-076752",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526076752/"
+        },
+        {
+          "value_usd": 60599000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-076752",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526076752/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 12775000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-076752",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526076752/"
+        },
+        {
+          "value_usd": 11671000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-076752",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526076752/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -1113000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-076752",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526076752/"
+        },
+        {
+          "value_usd": -3527000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-076752",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526076752/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -6426000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-076752",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526076752/"
+        },
+        {
+          "value_usd": -8688000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-076752",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526076752/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ements. In July 2025, the FASB issued ASU 2025-05, Measurement of Credit Losses for Accounts Receivable and Contract Assets. The amendments provide a practical expedient that allows all entities to assume that conditions at the balance-sheet date will remain unchanged for",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526335336/airg-20260630.htm",
+        "accession": "0001193125-26-335336",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": ", 2025 | Accrued expenses | $ | 569 | $ | 554 | Customer deposit | 1,029 | — | Accrued income taxes | 7 | 3 | Contract liabilities | 147 | 129 | Goods received not invoiced | 1,756 | 775 | Other current liabilities | 553 | 329 | Accrued liabilities and other | $ | 4,061 | $ | 1,7",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1272842/000119312526335336/airg-20260630.htm",
+        "accession": "0001193125-26-335336",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-01-07",
+      "items": "1.01,2.03",
+      "acc": "0000950170-25-003047",
+      "doc": "airg-20241231.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-03-07",
+      "items": "1.01,9.01",
+      "acc": "0001193125-24-060908",
+      "doc": "d536558d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-02-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-22-001802",
+      "doc": "airg-20220218.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-01-07",
+      "items": "1.01,2.01,2.02,7.01,9.01",
+      "acc": "0001564590-21-000563",
+      "doc": "airg-8k_20210107.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-02-18",
+      "items": "1.01,2.03",
+      "acc": "0001564590-20-005070",
+      "doc": "airg-8k_20200213.htm",
+      "desc": "8-K AMENDED LEASE AGREEMENT HQ"
+    },
+    {
+      "date": "2018-02-06",
+      "items": "1.01,2.03",
+      "acc": "0001193125-18-033331",
+      "doc": "d522321d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-04-10",
+      "items": "1.01",
+      "acc": "0001564590-17-006238",
+      "doc": "airg-8k_20170407.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

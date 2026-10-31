@@ -1,0 +1,1105 @@
+{
+  "cik": 1839285,
+  "ticker": "HCTI",
+  "name": "Healthcare Triangle, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Integrated Systems Design",
+  "sic": "7373",
+  "sic_description": "Services-Computer Integrated Systems Design",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:02:16+00:00",
+  "price": 0.3355,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.301504,
+  "snapshot": {
+    "total_debt": 17268000,
+    "current_debt": 14606000,
+    "cash": 1906000,
+    "short_term_borrowings": 9165000,
+    "operating_leases": 1173000,
+    "revolver_capacity": 10000000,
+    "revolver_drawn": 2662000,
+    "equity": 49099000,
+    "assets": 73640000,
+    "liabilities": 24541000,
+    "assets_current": 9646000,
+    "liabilities_current": 15990000,
+    "retained_earnings": -53489000,
+    "operating_income": -14728000,
+    "pretax_income": -16999000,
+    "net_income": -17023000,
+    "da": 2032000,
+    "ocf": -16028000,
+    "revenue": 25674000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 2286000,
+      "rest_of_year": 3462000,
+      "y2": 188000,
+      "y3": 1598000,
+      "y4": 569000
+    },
+    "revolver_rate": 0.085,
+    "shares": 14974322,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt+ShortTermBorrowings",
+    "current_debt": "LongTermDebtCurrent+ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd"
+  },
+  "analysis": {
+    "total_debt": 17268000,
+    "cash_and_investments": 1906000.0,
+    "net_debt": 15362000.0,
+    "ebitda": -12696000,
+    "ebit": -14728000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -16028000.0,
+    "fcf_to_debt": -0.928191,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1906000.0,
+    "due_12m": 2286000,
+    "due_24m": 2474000,
+    "liquidity_to_due12": 0.833771,
+    "liquidity_to_due24": 0.770412,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -1.308809,
+    "market_cap": 5023885.031,
+    "debt_to_ev": 0.847057,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible notes",
+          "face": 3724000.0,
+          "carrying": 3724000.0,
+          "coupon": null,
+          "conv_price": null,
+          "maturity": null
+        }
+      ],
+      "total_face": 3724000.0,
+      "in_the_money_face": 0,
+      "in_the_money_carrying": 0,
+      "shares_if_converted": 0,
+      "coupon_saved": 0
+    },
+    "implied": {
+      "dd": 0.149196,
+      "pd_1y": 0.4407,
+      "spread_5y_bps": 853.06189,
+      "asset_vol": 0.482693,
+      "calibrated_5y_bps": 184.556254,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.067556,
+    "covenants": [],
+    "cushion_score": 18
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1173000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+        "accession": "0001213900-26-089241",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 1173000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-089241",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "relationships with unconsolidated organizations or financial partnerships, such as structured finance or special purpose entities that would have been established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes as",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+        "accession": "0001213900-26-089241",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "earnouts",
+        "label": "Contingent earn-outs",
+        "excerpt": "ration; and (3) up to $ 1,200 (having a fair value of nil as of June 30, 2026, and December 31, 2025) in earn-out payments contingent on first-year financial performance targets to be agreed mutually. The transaction resulted in recognition of goodwill with a c",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+        "accession": "0001213900-26-089241",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-089241",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1877,
+      "receivables_growth": 0.8649,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.5702,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.5702,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 13891000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-044671",
+          "filed": "2026-04-16",
+          "end": "2025-12-31",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026044671/"
+        },
+        {
+          "value_usd": 11696000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-044671",
+          "filed": "2026-04-16",
+          "end": "2024-12-31",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026044671/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 2070000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-044671",
+          "filed": "2026-04-16",
+          "end": "2025-12-31",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026044671/"
+        },
+        {
+          "value_usd": 1110000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-044671",
+          "filed": "2026-04-16",
+          "end": "2024-12-31",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026044671/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -16523000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-044671",
+          "filed": "2026-04-16",
+          "end": "2025-12-31",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026044671/"
+        },
+        {
+          "value_usd": -1081000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-044671",
+          "filed": "2026-04-16",
+          "end": "2024-12-31",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026044671/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -9476000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-044671",
+          "filed": "2026-04-16",
+          "end": "2025-12-31",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026044671/"
+        },
+        {
+          "value_usd": -5969000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-044671",
+          "filed": "2026-04-16",
+          "end": "2024-12-31",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026044671/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets. The amendments in this update provide a practical expedient permitting an entity to assume that conditions at the balance sheet date remain unchange",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+        "accession": "0001213900-26-089241",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "gnized immediately in the period in which the loss becomes probable and estimable. Certain contracts include variable consideration such as rate adjustments, which is estimated using the most likely amount method and included in the transaction price only to the extent that a sign",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+        "accession": "0001213900-26-089241",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ensed Consolidated Financial Statements (Unaudited) (In thousands except share and per share data) | A. | Related party transactions: | Following are the transactions with related parties during the periods presented: Related Parties | Nature of transactions | Quarter ended Ju",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+        "accession": "0001213900-26-089241",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "customer’s credit profile, past payment behavior, and the nature and geography of the customer relationship. Contract modifications, such as changes in scope, rates, or duration, are assessed to determine whether they should be accounted for as a separate contract or as part of th",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+        "accession": "0001213900-26-089241",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "reign currency. Deferred Revenues Advanced billings to clients in excess of revenue earned are recorded as deferred revenue until the revenue recognition criteria are met. Results of Operations The following tables set forth selected unaudited condensed consolidated st",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1839285/000121390026089241/ea0299879-10q_healthcare.htm",
+        "accession": "0001213900-26-089241",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Debt with credit institutions – current",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 5441000.0,
+      "floating": false
+    },
+    {
+      "name": "Convertible notes",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "carrying": 3724000.0,
+      "floating": false
+    },
+    {
+      "name": "Teyame and Datono",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 2662000.0,
+      "coupon_min": 0.013,
+      "coupon_max": 0.0524,
+      "floating": false
+    },
+    {
+      "name": "Recourse Financing",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "carrying": 161000.0,
+      "floating": false
+    },
+    {
+      "name": "Others",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": false
+    },
+    {
+      "name": "SBF Facility",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "rate_now": 0.085,
+      "floating": false
+    },
+    {
+      "name": "2026 Convertible Notes",
+      "kind": "convertible",
+      "as_of": "2026-06-12",
+      "conv_price": 0.452,
+      "floating": false
+    },
+    {
+      "name": "Bankia",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-04-27",
+      "floating": false
+    },
+    {
+      "name": "Bsantander",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-05-11",
+      "floating": false
+    },
+    {
+      "name": "Bsantander One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-05-13",
+      "floating": false
+    },
+    {
+      "name": "Targobank",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-05-29",
+      "floating": false
+    },
+    {
+      "name": "Bankinter",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-07-23",
+      "floating": false
+    },
+    {
+      "name": "Bankinter One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-07-23",
+      "floating": false
+    },
+    {
+      "name": "Bankinter Three",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-07-23",
+      "floating": false
+    },
+    {
+      "name": "Bankinter Línea Pago Impuestos",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-07-23",
+      "floating": false
+    },
+    {
+      "name": "BBVA",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-10-05",
+      "floating": false
+    },
+    {
+      "name": "BBVA One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-10-05",
+      "floating": false
+    },
+    {
+      "name": "Caixabank",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-10-22",
+      "floating": false
+    },
+    {
+      "name": "Caixabank One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-10-22",
+      "floating": false
+    },
+    {
+      "name": "Caixabank Two",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-10-26",
+      "floating": false
+    },
+    {
+      "name": "Caixabank Three",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-10-26",
+      "floating": false
+    },
+    {
+      "name": "Deutsche",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-11-23",
+      "floating": false
+    },
+    {
+      "name": "Caixabank Four",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-11-27",
+      "floating": false
+    },
+    {
+      "name": "Caixabank Five",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2026-11-27",
+      "floating": false
+    },
+    {
+      "name": "Ibercaja Multiproducto Multiempresa",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-03-15",
+      "floating": false
+    },
+    {
+      "name": "Ibercaja Multiproducto Multiempresa One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-03-15",
+      "floating": false
+    },
+    {
+      "name": "Ibercaja",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-03-15",
+      "floating": false
+    },
+    {
+      "name": "Abanca",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-05-20",
+      "floating": false
+    },
+    {
+      "name": "BBVA Click & Pay",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-06-21",
+      "floating": false
+    },
+    {
+      "name": "BBVA Click & Pay One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-06-21",
+      "floating": false
+    },
+    {
+      "name": "Unicaja",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-06-23",
+      "floating": false
+    },
+    {
+      "name": "Abanca One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-07-05",
+      "drawn": 228000.0,
+      "floating": false
+    },
+    {
+      "name": "Deutsche Two",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-09-05",
+      "drawn": 171000.0,
+      "floating": false
+    },
+    {
+      "name": "Deutsche Three",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2027-09-05",
+      "drawn": 114000.0,
+      "floating": false
+    },
+    {
+      "name": "Bsabadell",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2028-04-29",
+      "drawn": 87000.0,
+      "floating": false
+    },
+    {
+      "name": "Deutsche Four",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2029-07-04",
+      "drawn": 1370000.0,
+      "floating": false
+    },
+    {
+      "name": "Deutsche Five",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2029-07-04",
+      "drawn": 228000.0,
+      "floating": false
+    },
+    {
+      "name": "BBVA Two",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "maturity": "2031-06-03",
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-25",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-103604",
+      "doc": "ea0306547-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-09-08",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-097953",
+      "doc": "ea0304854-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-06-26",
+      "items": "1.01,3.02,5.03,9.01",
+      "acc": "0001213900-26-072674",
+      "doc": "ea0296054-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-06-15",
+      "items": "1.01,2.03,3.02,7.01,9.01",
+      "acc": "0001213900-26-068871",
+      "doc": "ea0294780-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-04-10",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-042597",
+      "doc": "ea0285959-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-02-27",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-26-021740",
+      "doc": "ea0279059-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-01-28",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001213900-26-008594",
+      "doc": "ea0274373-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-12-10",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-25-119878",
+      "doc": "ea0269106-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-11-21",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001213900-25-113672",
+      "doc": "ea0266767-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-11-19",
+      "items": "1.01,9.01",
+      "acc": "0001213900-25-112546",
+      "doc": "ea0265944-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-10-08",
+      "items": "1.01,3.02,3.03,8.01,9.01",
+      "acc": "0001213900-25-097464",
+      "doc": "ea0260718-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-09-02",
+      "items": "1.01,9.01",
+      "acc": "0001213900-25-082708",
+      "doc": "ea0255323-8ka1_health.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2025-06-23",
+      "items": "1.01,2.01,2.03,3.02,7.01,9.01",
+      "acc": "0001213900-25-056774",
+      "doc": "ea0246603-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-03-03",
+      "items": "1.01,3.01,8.01,9.01",
+      "acc": "0001213900-25-018926",
+      "doc": "ea0232552-8k_health.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-12-03",
+      "items": "1.01,9.01",
+      "acc": "0001213900-24-104742",
+      "doc": "ea0223379-8ka1_health.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2024-10-25",
+      "items": "1.01,2.03,2.04,3.02,5.03,9.01",
+      "acc": "0001213900-24-090797",
+      "doc": "ea0218708-8k_health.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-09-10",
+      "items": "2.04,5.02",
+      "acc": "0001213900-24-077409",
+      "doc": "ea0214159-8k_healthcare.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-01-12",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001213900-24-003375",
+      "doc": "ea191572-8ka1_health.htm",
+      "desc": "AMENDMENT NO. 1 TO FORM 8-K"
+    },
+    {
+      "date": "2024-01-02",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001607062-24-000003",
+      "doc": "hcti010224form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-09-05",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001607062-23-000427",
+      "doc": "hcti090523form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-06-29",
+      "items": "2.04",
+      "acc": "0001607062-23-000352",
+      "doc": "hcti062823form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-04-06",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001607062-23-000174",
+      "doc": "hcti040623form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-07-13",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001607062-22-000451",
+      "doc": "hcti071322form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-01",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001607062-22-000239",
+      "doc": "hcti040122form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-12-14",
+      "items": "1.01,2.01,3.02,9.01",
+      "acc": "0001607062-21-000612",
+      "doc": "hcti121421form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-19",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001607062-21-000435",
+      "doc": "htci101921form8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-03-31",
+      2683000,
+      301000,
+      38406000,
+      null,
+      null,
+      14.31457
+    ],
+    [
+      "2024-09-30",
+      658000,
+      28000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      17555000,
+      4315000,
+      null,
+      -10511000,
+      -12014000,
+      null
+    ],
+    [
+      "2026-06-30",
+      17268000,
+      1906000,
+      null,
+      -12696000,
+      -14728000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2024-05",
+      0.05,
+      10.495,
+      0.9777,
+      92.1
+    ],
+    [
+      "2024-06",
+      0.12,
+      10.08,
+      0.9868,
+      94.7
+    ],
+    [
+      "2024-07",
+      0.01,
+      11.191,
+      0.9152,
+      87.8
+    ],
+    [
+      "2024-08",
+      0.12,
+      10.161,
+      1.0068,
+      94.1
+    ],
+    [
+      "2024-09",
+      12.52,
+      7.562,
+      1.2583,
+      112.1
+    ],
+    [
+      "2024-10",
+      15.89,
+      7.439,
+      1.3028,
+      113.0
+    ],
+    [
+      "2024-11",
+      63.01,
+      6.749,
+      1.607,
+      118.4
+    ],
+    [
+      "2024-12",
+      108.27,
+      6.342,
+      1.7062,
+      121.7
+    ],
+    [
+      "2025-01",
+      159.92,
+      5.982,
+      1.7686,
+      124.7
+    ],
+    [
+      "2025-02",
+      142.54,
+      6.003,
+      1.7054,
+      124.5
+    ],
+    [
+      "2025-03",
+      196.92,
+      5.654,
+      1.7443,
+      127.5
+    ],
+    [
+      "2025-04",
+      275.53,
+      5.22,
+      1.7706,
+      131.2
+    ],
+    [
+      "2025-05",
+      1789.82,
+      1.057,
+      3.6542,
+      173.6
+    ],
+    [
+      "2025-06",
+      1769.99,
+      1.409,
+      3.8578,
+      169.6
+    ],
+    [
+      "2025-07",
+      1741.42,
+      1.775,
+      4.0849,
+      165.4
+    ],
+    [
+      "2025-08",
+      1787.92,
+      1.1,
+      4.266,
+      173.1
+    ],
+    [
+      "2025-09",
+      1786.5,
+      1.13,
+      4.2035,
+      172.8
+    ],
+    [
+      "2025-10",
+      1784.43,
+      1.169,
+      4.0944,
+      172.3
+    ],
+    [
+      "2025-11",
+      1788.32,
+      1.095,
+      4.0906,
+      173.2
+    ],
+    [
+      "2025-12",
+      1798.29,
+      0.872,
+      4.0654,
+      175.8
+    ],
+    [
+      "2026-01",
+      1813.69,
+      0.378,
+      4.0736,
+      181.7
+    ],
+    [
+      "2026-02",
+      1821.92,
+      -0.063,
+      4.0952,
+      187.2
+    ],
+    [
+      "2026-03",
+      1823.72,
+      -0.204,
+      4.096,
+      189.0
+    ],
+    [
+      "2026-04",
+      1824.53,
+      -0.273,
+      4.0915,
+      189.9
+    ],
+    [
+      "2026-05",
+      1808.16,
+      -1.133,
+      2.5989,
+      201.2
+    ],
+    [
+      "2026-06",
+      1739.93,
+      -0.918,
+      2.2737,
+      198.3
+    ],
+    [
+      "2026-07",
+      874.54,
+      0.043,
+      1.3463,
+      185.9
+    ],
+    [
+      "2026-08",
+      1055.11,
+      0.538,
+      1.3078,
+      179.8
+    ],
+    [
+      "2026-09",
+      1025.24,
+      0.538,
+      1.2907,
+      179.8
+    ],
+    [
+      "2026-10",
+      951.73,
+      0.277,
+      1.3015,
+      183.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

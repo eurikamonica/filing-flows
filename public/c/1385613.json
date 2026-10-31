@@ -1,0 +1,849 @@
+{
+  "cik": 1385613,
+  "ticker": "GLRE",
+  "name": "GREENLIGHT CAPITAL RE, LTD.",
+  "sector": "financials",
+  "industry": "Fire, Marine & Casualty Insurance",
+  "sic": "6331",
+  "sic_description": "Fire, Marine & Casualty Insurance",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T01:23:14+00:00",
+  "price": 15.1,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.241432,
+  "snapshot": {
+    "total_debt": 8753000,
+    "cash": 76322000,
+    "revolver_drawn": 9000000,
+    "equity": 697682000,
+    "assets": 2238584000,
+    "liabilities": 1540902000,
+    "retained_earnings": 231831000,
+    "interest_paid": 2418000,
+    "net_income": 51030000,
+    "ocf": 200057000,
+    "revenue": 683485000,
+    "debt_repaid": 53438000,
+    "deposit_interest": 226000,
+    "shares": 32641344,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 8753000,
+    "cash_and_investments": 76322000.0,
+    "net_debt": -67569000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 83.736559,
+    "fcf": 200057000.0,
+    "fcf_to_debt": 22.855821,
+    "effective_rate": null,
+    "revolver_available": 50000000.0,
+    "liquidity": 126322000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 492884294.4,
+    "debt_to_ev": 0.02058,
+    "convertibles": null,
+    "implied": {
+      "dd": 19.836001,
+      "pd_1y": 0.0,
+      "spread_5y_bps": -0.0,
+      "asset_vol": 0.239399,
+      "calibrated_5y_bps": 67.994701,
+      "rating_band": "A"
+    },
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "can be terminated by any of the parties upon 30 days’ prior written notice to the other parties. Share Repurchase Agreement On June 1, 2026, the Company entered into an Ordinary Share Repurchase Agreement (the “Ordinary Share Agreement”) with David Einhorn 2021-07 Family",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000098/glre-20260630.htm",
+        "accession": "0001385613-26-000098",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001385613-26-000098",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000098/glre-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0485,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 2.8091
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 729777000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001385613-26-000010",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000010/"
+        },
+        {
+          "value_usd": 696026000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001385613-26-000010",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000010/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 210212000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001385613-26-000010",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000010/"
+        },
+        {
+          "value_usd": 111504000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001385613-26-000010",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000010/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 74832000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001385613-26-000010",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000010/"
+        },
+        {
+          "value_usd": 42816000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001385613-26-000010",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000010/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "32 | 13,921 | Total investment income (loss) | $ | ( 23,781 ) | $ | ( 7,806 ) | $ | 16,639 | $ | 32,678 | 15. RELATED PARTY TRANSACTIONS Investment Advisory Agreement For the six months ended June 30, 2026, there was no material change to the Company’s investment advisory agreement",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1385613/000138561326000098/glre-20260630.htm",
+        "accession": "0001385613-26-000098",
+        "form": "10-Q",
+        "filed": "2026-08-04"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Financial Standby Letter of Credit",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 675000000.0,
+      "floating": false
+    },
+    {
+      "name": "CIBC",
+      "kind": "other",
+      "as_of": "2026-04-01",
+      "capacity": 300000000.0,
+      "floating": false
+    },
+    {
+      "name": "Citibank",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 275000000.0,
+      "floating": false
+    },
+    {
+      "name": "HSBC",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 100000000.0,
+      "floating": false
+    },
+    {
+      "name": "Citibank FAL",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 60000000.0,
+      "floating": false
+    },
+    {
+      "name": "Amended Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-09-03",
+      "capacity": 50000000.0,
+      "spread": 0.0325,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2025-09-03",
+      "capacity": 50000000.0,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2007-06-08",
+      "agreement_kind": "credit_agreement",
+      "dated": "2007-06-08",
+      "title": "Letter Of Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Base Rate"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1385613/000095013607004031/file2.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-08-04",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001385613-26-000097",
+      "doc": "glre-20260804.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-01",
+      "items": "1.01",
+      "acc": "0001385613-26-000078",
+      "doc": "glre-20260601.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-06",
+      "items": "1.01,2.03,5.02,9.01",
+      "acc": "0001385613-26-000044",
+      "doc": "glre-20260331.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-09",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001385613-25-000103",
+      "doc": "glre-20250903.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001385613-24-000125",
+      "doc": "glre-20241217.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-08-06",
+      "items": "1.01,9.01",
+      "acc": "0001385613-24-000091",
+      "doc": "glre-20240801.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-30",
+      "items": "1.01,9.01",
+      "acc": "0001385613-24-000059",
+      "doc": "glre-20240530.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001385613-23-000119",
+      "doc": "glre-20231222.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-06-22",
+      "items": "1.01,9.01",
+      "acc": "0001385613-23-000074",
+      "doc": "glre-20230616.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-12-21",
+      "items": "1.01,9.01",
+      "acc": "0001385613-22-000134",
+      "doc": "glre-20221215.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-30",
+      "items": "1.01,9.01",
+      "acc": "0001385613-21-000074",
+      "doc": "glre-20210630.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-01-12",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001385613-21-000005",
+      "doc": "glre-20210107.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-12-30",
+      "items": "1.01,9.01",
+      "acc": "0001385613-19-000108",
+      "doc": "form8k2019silpletteragreem.htm",
+      "desc": "8-K LETTER AGREEMENT DEC 2019"
+    },
+    {
+      "date": "2018-09-04",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001385613-18-000128",
+      "doc": "solasglas8-k_2099361588.htm",
+      "desc": "8-K - INVESTMENT AGREEMENTS"
+    },
+    {
+      "date": "2018-08-07",
+      "items": "1.01,2.03,3.02,7.01,9.01",
+      "acc": "0001193125-18-241143",
+      "doc": "d591393d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-06-29",
+      "items": "1.01,9.01",
+      "acc": "0001385613-18-000091",
+      "doc": "a8k-101xregistrationrights.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-10-06",
+      "items": "1.01,9.01",
+      "acc": "0001385613-16-000206",
+      "doc": "form8kamendedjvagreement20.htm",
+      "desc": "8-K JV AGREEMENT"
+    },
+    {
+      "date": "2015-06-04",
+      "items": "1.01,2.03",
+      "acc": "0001385613-15-000067",
+      "doc": "form8-kbobloc.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-05-13",
+      "items": "1.01,2.03",
+      "acc": "0001385613-15-000063",
+      "doc": "form8-kloc.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-01-07",
+      "items": "1.01,9.01",
+      "acc": "0001385613-14-000004",
+      "doc": "form8k-2ndamendedjvagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-12-21",
+      "items": "1.01",
+      "acc": "0001385613-11-000059",
+      "doc": "form8k_locs.htm",
+      "desc": "FORM 8-K LOC AMENDMENTS"
+    },
+    {
+      "date": "2011-02-03",
+      "items": "1.01",
+      "acc": "0001385613-11-000003",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-09-07",
+      "items": "1.01",
+      "acc": "0001385613-10-000036",
+      "doc": "form8_jv.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-08-24",
+      "items": "1.01,1.02,2.03",
+      "acc": "0001385613-10-000033",
+      "doc": "form8k_citi.htm",
+      "desc": "FORM 8K"
+    },
+    {
+      "date": "2010-08-16",
+      "items": "1.01",
+      "acc": "0001385613-10-000031",
+      "doc": "citiextension.htm",
+      "desc": "8-K/A FOR EXTENSION OF CITI LOC FACILITY"
+    },
+    {
+      "date": "2010-06-23",
+      "items": "1.01",
+      "acc": "0001385613-10-000023",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-06-16",
+      "items": "1.01",
+      "acc": "0001385613-10-000021",
+      "doc": "form8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-09-30",
+      74879000,
+      41302000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      72466000,
+      61598000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      61595000,
+      52240000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      62582000,
+      54642000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      59834000,
+      47477000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      58889000,
+      82362000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      34745000,
+      68789000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      4739000,
+      75088000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      8753000,
+      76322000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2023-11",
+      0.0,
+      10.769,
+      0.2506,
+      90.4
+    ],
+    [
+      "2023-12",
+      0.0,
+      10.887,
+      0.2484,
+      89.7
+    ],
+    [
+      "2024-01",
+      0.0,
+      11.56,
+      0.2343,
+      85.7
+    ],
+    [
+      "2024-02",
+      0.0,
+      11.874,
+      0.2312,
+      83.9
+    ],
+    [
+      "2024-03",
+      0.0,
+      11.709,
+      0.2372,
+      84.8
+    ],
+    [
+      "2024-04",
+      0.0,
+      11.753,
+      0.2342,
+      84.6
+    ],
+    [
+      "2024-05",
+      0.0,
+      12.295,
+      0.2323,
+      81.6
+    ],
+    [
+      "2024-06",
+      0.0,
+      12.349,
+      0.2303,
+      81.3
+    ],
+    [
+      "2024-07",
+      0.0,
+      11.188,
+      0.2557,
+      87.9
+    ],
+    [
+      "2024-08",
+      0.0,
+      11.992,
+      0.2516,
+      83.2
+    ],
+    [
+      "2024-09",
+      0.0,
+      12.146,
+      0.2469,
+      82.4
+    ],
+    [
+      "2024-10",
+      0.0,
+      11.965,
+      0.2485,
+      83.4
+    ],
+    [
+      "2024-11",
+      0.0,
+      12.224,
+      0.2493,
+      81.9
+    ],
+    [
+      "2024-12",
+      0.0,
+      11.855,
+      0.2517,
+      84.0
+    ],
+    [
+      "2025-01",
+      0.0,
+      11.653,
+      0.2542,
+      85.2
+    ],
+    [
+      "2025-02",
+      0.0,
+      11.707,
+      0.2552,
+      84.8
+    ],
+    [
+      "2025-03",
+      0.0,
+      11.665,
+      0.2542,
+      85.1
+    ],
+    [
+      "2025-04",
+      0.0,
+      11.483,
+      0.2556,
+      86.1
+    ],
+    [
+      "2025-05",
+      0.0,
+      11.808,
+      0.2581,
+      84.3
+    ],
+    [
+      "2025-06",
+      0.0,
+      12.133,
+      0.2511,
+      82.5
+    ],
+    [
+      "2025-07",
+      0.0,
+      12.764,
+      0.2337,
+      79.0
+    ],
+    [
+      "2025-08",
+      0.0,
+      13.431,
+      0.2207,
+      75.6
+    ],
+    [
+      "2025-09",
+      0.0,
+      13.657,
+      0.2171,
+      74.4
+    ],
+    [
+      "2025-10",
+      0.0,
+      13.74,
+      0.2121,
+      74.0
+    ],
+    [
+      "2025-11",
+      0.0,
+      17.118,
+      0.2005,
+      68.0
+    ],
+    [
+      "2025-12",
+      0.0,
+      17.31,
+      0.2027,
+      68.0
+    ],
+    [
+      "2026-01",
+      0.0,
+      16.854,
+      0.2061,
+      68.0
+    ],
+    [
+      "2026-02",
+      0.0,
+      17.579,
+      0.1988,
+      68.0
+    ],
+    [
+      "2026-03",
+      0.0,
+      16.689,
+      0.2182,
+      68.0
+    ],
+    [
+      "2026-04",
+      0.0,
+      17.194,
+      0.2183,
+      68.0
+    ],
+    [
+      "2026-05",
+      -0.0,
+      22.294,
+      0.2434,
+      68.0
+    ],
+    [
+      "2026-06",
+      -0.0,
+      22.072,
+      0.2488,
+      68.0
+    ],
+    [
+      "2026-07",
+      -0.0,
+      23.315,
+      0.2355,
+      68.0
+    ],
+    [
+      "2026-08",
+      -0.0,
+      19.654,
+      0.2443,
+      68.0
+    ],
+    [
+      "2026-09",
+      -0.0,
+      19.605,
+      0.2436,
+      68.0
+    ],
+    [
+      "2026-10",
+      -0.0,
+      19.836,
+      0.2414,
+      68.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

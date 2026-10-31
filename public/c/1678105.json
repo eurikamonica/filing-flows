@@ -1,0 +1,281 @@
+{
+  "cik": 1678105,
+  "ticker": "CAHO",
+  "name": "Caro Holdings Inc.",
+  "sector": "consumer-disc",
+  "industry": "Retail-Catalog & Mail-Order Houses",
+  "sic": "5961",
+  "sic_description": "Retail-Catalog & Mail-Order Houses",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T04:59:19+00:00",
+  "price": 0.37,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.418243,
+  "snapshot": {
+    "total_debt": 28900,
+    "cash": 597,
+    "convertible": 6679,
+    "convertible_current": 770500,
+    "equity": 7169033,
+    "assets": 8227746,
+    "liabilities": 1058713,
+    "assets_current": 8061886,
+    "liabilities_current": 1058713,
+    "retained_earnings": -2478922,
+    "interest_expense": 122965,
+    "interest_paid": 0,
+    "operating_income": -415831,
+    "pretax_income": -646705,
+    "net_income": -646705,
+    "ocf": -117833,
+    "revenue": 6258,
+    "debt_issued": 73300,
+    "shares": 60652429,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "convertible": "ConvertibleDebt",
+    "convertible_current": "ConvertibleNotesPayableCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromConvertibleDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 28900,
+    "cash_and_investments": 597.0,
+    "net_debt": 28303.0,
+    "ebitda": -415831.0,
+    "ebit": -415831,
+    "interest_expense": 122965,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -3.381702,
+    "ebitda_coverage": -3.381702,
+    "fcf": -117833.0,
+    "fcf_to_debt": -4.077266,
+    "effective_rate": 4.254844,
+    "revolver_available": null,
+    "liquidity": 597.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 13.151694,
+    "market_cap": 22441398.73,
+    "debt_to_ev": 0.001286,
+    "convertibles": null,
+    "implied": {
+      "dd": 17.479352,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.0,
+      "asset_vol": 0.417986,
+      "calibrated_5y_bps": 67.994701,
+      "rating_band": "A"
+    },
+    "covenants": [],
+    "cushion_score": 52
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001640334-26-001355",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001355/caro_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.6901,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 11254.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001640334-26-001184",
+          "filed": "2026-07-15",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001184/"
+        },
+        {
+          "value_usd": 36319.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001640334-26-001184",
+          "filed": "2026-07-15",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001184/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -105126.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001640334-26-001184",
+          "filed": "2026-07-15",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001184/"
+        },
+        {
+          "value_usd": -373809.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001640334-26-001184",
+          "filed": "2026-07-15",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001184/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -407797.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001640334-26-001184",
+          "filed": "2026-07-15",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001184/"
+        },
+        {
+          "value_usd": -692956.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001640334-26-001184",
+          "filed": "2026-07-15",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001184/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments – Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025-05”). ASU 2025-05 provides a practical expedient that all entities can use when estimating expected credit losses for current accounts rec",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001355/caro_10q.htm",
+        "accession": "0001640334-26-001355",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "We follow ASC 850, “Related Party Disclosures”, for the identification of related parties and disclosure of related party transactions. (Note 11) Fair Value of Financial Instruments The Company adopted the provisions of ASC Topic 820, “Fair Value Measurements and Disclosures,” whi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1678105/000164033426001355/caro_10q.htm",
+        "accession": "0001640334-26-001355",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Convertible Notes Payable",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "spread": 0.1,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-06-12",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001640334-26-001043",
+      "doc": "caro_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,656 @@
+{
+  "cik": 1528356,
+  "ticker": "GNE",
+  "name": "Genie Energy Ltd.",
+  "sector": "utilities",
+  "industry": "Electric & Other Services Combined",
+  "sic": "4931",
+  "sic_description": "Electric & Other Services Combined",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T01:27:58+00:00",
+  "price": 16.71,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.194465,
+  "snapshot": {
+    "total_debt": 6847000,
+    "current_debt": 370000,
+    "cash": 184841000,
+    "investments": 9319000,
+    "operating_leases": 947000,
+    "equity": 261637000,
+    "assets": 369719000,
+    "liabilities": 114484000,
+    "assets_current": 305079000,
+    "liabilities_current": 105517000,
+    "retained_earnings": 146357000,
+    "interest_expense": 570000,
+    "operating_income": 19905000,
+    "pretax_income": 32332000,
+    "net_income": 25711000,
+    "da": 1239000,
+    "ocf": 19938000,
+    "revenue": 502354000,
+    "shares": 26171000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (four quarters)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (four quarters)"
+  },
+  "analysis": {
+    "total_debt": 6847000,
+    "cash_and_investments": 194160000,
+    "net_debt": -187313000,
+    "ebitda": 21144000,
+    "ebit": 19905000,
+    "interest_expense": 570000,
+    "leverage": 0.323827,
+    "net_leverage": -8.85892,
+    "interest_coverage": 34.921053,
+    "ebitda_coverage": 37.094737,
+    "fcf": 19938000.0,
+    "fcf_to_debt": 2.911932,
+    "effective_rate": 0.083248,
+    "revolver_available": null,
+    "liquidity": 194160000.0,
+    "due_12m": 370000,
+    "due_24m": null,
+    "liquidity_to_due12": 524.756757,
+    "liquidity_to_due24": null,
+    "floating_debt": 6847000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 68470.0,
+    "plus100bp_share_of_ebit": 0.00344,
+    "altman_z": 5.030275,
+    "market_cap": 437317410.0,
+    "debt_to_ev": 0.027388,
+    "convertibles": null,
+    "implied": {
+      "dd": 25.041147,
+      "pd_1y": 0.0,
+      "spread_5y_bps": -0.0,
+      "asset_vol": 0.192943,
+      "calibrated_5y_bps": 67.994701,
+      "rating_band": "A"
+    },
+    "covenants": [],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase",
+        "label": "Unconditional purchase obligations",
+        "class": "operating_commitment",
+        "amount_usd": 129900000.0,
+        "reported_total": true,
+        "schedule": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+        "accession": "0001437749-26-026209",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 129900000.0,
+            "tag": "us-gaap:UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount",
+            "accession": "0001437749-26-026209",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "purchase_broad",
+        "label": "Purchase obligations, gross (potential overlap)",
+        "class": "operating_commitment",
+        "amount_usd": 129887000.0,
+        "reported_total": true,
+        "schedule": [
+          44447000.0,
+          4368000.0,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+        "accession": "0001437749-26-026209",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 129887000.0,
+            "tag": "us-gaap:PurchaseObligation",
+            "accession": "0001437749-26-026209",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm"
+          },
+          {
+            "value_usd": 44447000.0,
+            "tag": "us-gaap:PurchaseObligationDueInNextTwelveMonths",
+            "accession": "0001437749-26-026209",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm"
+          },
+          {
+            "value_usd": 4368000.0,
+            "tag": "us-gaap:PurchaseObligationDueInSecondYear",
+            "accession": "0001437749-26-026209",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 947000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+        "accession": "0001437749-26-026209",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 947000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-026209",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "cognized over a weighted-average period of approximately 1.2 years. 23 Table of Contents Note 14 — Variable Interest Entity Citizens Choice Energy, LLC (“CCE”) is a REP that resells electricity and natural gas to residential and small business customers in the State of N",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+        "accession": "0001437749-26-026209",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-026209",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1805,
+      "receivables_growth": 0.1326,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.965,
+      "dsri": 0.9594,
+      "ocf_to_net_income": 1.9301
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 501971000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        },
+        {
+          "value_usd": 425202000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 70062000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        },
+        {
+          "value_usd": 61858000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 7807000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        },
+        {
+          "value_usd": 3973000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 46335000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        },
+        {
+          "value_usd": 70742000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 24006000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        },
+        {
+          "value_usd": 35509000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-014294",
+          "filed": "2026-05-01",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926014294/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "Financial Instruments — Credit Losses (Topic 326 ): Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025 - 05” ) . ASU 2025 - 05 provides a practical expedient permitting entities to assume that conditions at the balance sheet date remain unch",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+        "accession": "0001437749-26-026209",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "ograms, and GRE’s REPs participate in POR programs for a majority of their receivables. The Company estimates variable consideration related to its rebate programs using the expected value method and a portfolio approach. The Company’s estimates related to rebate programs are based",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+        "accession": "0001437749-26-026209",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ngs per share for the three and six months ended June 30, 2026 and 2025 . 25 Table of Contents Note 17 — Related Party Transactions In the third quarter of 2024, Howard Jonas contributed $ 0.9 million to a majority-owned subsidiary of the Company, related to an acquisition of an",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+        "accession": "0001437749-26-026209",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "— | 40,468 | Other | — | — | 10,594 | 10,594 | Total | $ | 193,948 | $ | 37,516 | $ | 10,594 | $ | 242,058 | Contract liabilities Certain revenue generating contracts at GREW include provisions that require advance payment from customers. These advance payments are recognized",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528356/000143774926026209/gne20260630_10q.htm",
+        "accession": "0001437749-26-026209",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 7028000.0,
+      "spread": 0.02,
+      "fee": 0.01,
+      "rate_now": 0.057,
+      "floating": true
+    },
+    {
+      "name": "Note to Acquire Investment Property",
+      "kind": "notes",
+      "as_of": "2026-01-31",
+      "coupon": 0.05,
+      "carrying": 1800000.0,
+      "effective": 0.05,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2017-04-05",
+      "items": "2.03,7.01,9.01",
+      "acc": "0001213900-17-003353",
+      "doc": "f8k040417_genieenergy.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-03-31",
+      9005000,
+      112949000,
+      621000,
+      null,
+      null,
+      0.06896
+    ],
+    [
+      "2025-06-30",
+      9013000,
+      106023000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      8849000,
+      109752000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      6838000,
+      191095000,
+      605000,
+      17239000,
+      16113000,
+      0.08848
+    ],
+    [
+      "2026-06-30",
+      6847000,
+      194160000,
+      570000,
+      21144000,
+      19905000,
+      0.08325
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      0.0,
+      17.133,
+      0.2845,
+      68.0
+    ],
+    [
+      "2025-06",
+      0.0,
+      16.939,
+      0.3029,
+      68.0
+    ],
+    [
+      "2025-07",
+      0.0,
+      13.482,
+      0.3554,
+      75.3
+    ],
+    [
+      "2025-08",
+      0.0,
+      10.746,
+      0.4204,
+      90.5
+    ],
+    [
+      "2025-09",
+      0.0,
+      11.012,
+      0.4107,
+      88.9
+    ],
+    [
+      "2025-10",
+      0.0,
+      11.039,
+      0.4081,
+      88.7
+    ],
+    [
+      "2025-11",
+      0.0,
+      11.233,
+      0.3978,
+      87.6
+    ],
+    [
+      "2025-12",
+      0.0,
+      11.351,
+      0.3903,
+      86.9
+    ],
+    [
+      "2026-01",
+      0.0,
+      11.353,
+      0.3896,
+      86.9
+    ],
+    [
+      "2026-02",
+      0.0,
+      11.407,
+      0.3925,
+      86.6
+    ],
+    [
+      "2026-03",
+      0.0,
+      11.334,
+      0.3909,
+      87.0
+    ],
+    [
+      "2026-04",
+      0.0,
+      11.247,
+      0.394,
+      87.5
+    ],
+    [
+      "2026-05",
+      0.0,
+      12.802,
+      0.3658,
+      78.8
+    ],
+    [
+      "2026-06",
+      0.0,
+      14.221,
+      0.3336,
+      71.7
+    ],
+    [
+      "2026-07",
+      0.0,
+      16.326,
+      0.2887,
+      68.0
+    ],
+    [
+      "2026-08",
+      -0.0,
+      25.287,
+      0.19,
+      68.0
+    ],
+    [
+      "2026-09",
+      -0.0,
+      25.342,
+      0.1923,
+      68.0
+    ],
+    [
+      "2026-10",
+      -0.0,
+      25.302,
+      0.1945,
+      68.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,326 @@
+{
+  "cik": 2026053,
+  "ticker": "PS",
+  "name": "PERSHING SQUARE INC.",
+  "sector": "financials",
+  "industry": "Investment Advice",
+  "sic": "6282",
+  "sic_description": "Investment Advice",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T01:36:19+00:00",
+  "price": 44.05,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.715689,
+  "snapshot": {
+    "total_debt": 231985236,
+    "cash": 8907987,
+    "operating_leases": 21060002,
+    "equity": 1409179576,
+    "assets": 1812657825,
+    "liabilities": 403478249,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "y3": 231985236
+    },
+    "shares": 400000000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities"
+  },
+  "analysis": {
+    "total_debt": 231985236,
+    "cash_and_investments": 8907987.0,
+    "net_debt": 223077249.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 8907987.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 231985236,
+    "floating_share": 1.0,
+    "plus100bp_interest": 2319852.36,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 17620000000.0,
+    "debt_to_ev": 0.013001,
+    "convertibles": null,
+    "implied": {
+      "dd": 6.779308,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 7.285801,
+      "asset_vol": 0.711212,
+      "calibrated_5y_bps": 118.174816,
+      "rating_band": "BBB"
+    },
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 21060002.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2026053/000119312526349628/ps-20260630.htm",
+        "accession": "0001193125-26-349628",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 21060002.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-349628",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2026053/000119312526349628/ps-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ital | 1,335,576,463 | — | Retained earnings | 24,961,996 | — | Non-controlling interest in consolidated variable interest entities (1) | 48,241,117 | 62,694,884 | Partners’ capital controlling interests | — | 1,016,418,004 | Total equity | 1,409,179,576 | 1,079,112,888 | Total li",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2026053/000119312526349628/ps-20260630.htm",
+        "accession": "0001193125-26-349628",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "uncommenced_leases",
+        "label": "Uncommenced leases",
+        "excerpt": "covenants. For details on PSCM’s leases with related parties, refer to Note 4. The Company does not have leases that have not yet commenced that create significant rights and obligations for the lessee. When determining the lease term, the Company does not include renewal options unless",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2026053/000119312526349628/ps-20260630.htm",
+        "accession": "0001193125-26-349628",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "are recorded in general and administrative expense. PSCM’s lease agreements do not contain any material residual value guarantees or material restrictive financial covenants. For details on PSCM’s leases with related parties, refer to Note 4. The Company does not have leases tha",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2026053/000119312526349628/ps-20260630.htm",
+        "accession": "0001193125-26-349628",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-349628",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2026053/000119312526349628/ps-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "8,931 | 2028 | 14,638,500 | 61,156,024 | 2029 | 14,638,500 | 60,988,931 | 2030 | 14,638,500 | 60,988,931 | 4. RELATED PARTY TRANSACTIONS Management Fees The Company earns all of its management fees from the Pershing Square Funds and HHH. The Pershing Square Funds are considered rel",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2026053/000119312526349628/ps-20260630.htm",
+        "accession": "0001193125-26-349628",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "compensation and benefits (1) | $ | 13,202,513 | $ | 426,093,557 | Accounts payable | 7,919,980 | 8,620,401 | Deferred revenue | 3,786,000 | 3,786,000 | Loans payable | 231,985,236 | 34,800,000 | Deferred tax liability | 125,524,518 | — | Operating lease liabilities | 21,060,",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2026053/000119312526349628/ps-20260630.htm",
+        "accession": "0001193125-26-349628",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Two Thousand Twenty Six Revolver",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 134809000.0,
+      "floating": true
+    },
+    {
+      "name": "Two Thousand Twenty Six Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 100000000.0,
+      "floating": true
+    },
+    {
+      "name": "Two Thousand And Fourteen Line Of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "coupon": 0.022,
+      "floating": false
+    },
+    {
+      "name": "Two Thousand And Twenty One Line Of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "coupon": 0.0235,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-05-01",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-04-30",
+      "size": 250000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "maturity": "2029-04-30",
+      "url": "https://www.sec.gov/Archives/edgar/data/2026053/000114036126018597/ny20040230x31_ex10-4.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-05-01",
+      "items": "1.01,2.03,3.02,5.02,8.01,9.01",
+      "acc": "0001140361-26-018597",
+      "doc": "ny20040230x31_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      34800000,
+      46845139,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      231985236,
+      8907987,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-07",
+      0.0,
+      12.464,
+      0.5256,
+      80.6
+    ],
+    [
+      "2026-08",
+      0.12,
+      9.101,
+      0.54,
+      101.1
+    ],
+    [
+      "2026-09",
+      2.92,
+      7.406,
+      0.6892,
+      113.3
+    ],
+    [
+      "2026-10",
+      7.29,
+      6.779,
+      0.7157,
+      118.2
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

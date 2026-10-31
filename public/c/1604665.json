@@ -1,0 +1,766 @@
+{
+  "cik": 1604665,
+  "ticker": "WLKP",
+  "name": "Westlake Chemical Partners LP",
+  "sector": "materials",
+  "industry": "Industrial Organic Chemicals",
+  "sic": "2860",
+  "sic_description": "Industrial Organic Chemicals",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-25T23:09:47+00:00",
+  "price": 21.15,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.155051,
+  "snapshot": {
+    "cash": 49321000,
+    "debt_fair_value": 408177000,
+    "assets": 1217348000,
+    "liabilities": 447935000,
+    "assets_current": 157537000,
+    "liabilities_current": 45768000,
+    "interest_expense": 21659000,
+    "interest_paid": 23237000,
+    "operating_income": 355618000,
+    "pretax_income": 335079000,
+    "net_income": 57599000,
+    "da": 137753000,
+    "ocf": 465662000,
+    "capex": 56518000,
+    "revenue": 1234722000,
+    "wavg_rate_long": 0.055,
+    "shares": 35245879,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "wavg_rate_long": "LongtermDebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 49321000.0,
+    "net_debt": null,
+    "ebitda": 493371000,
+    "ebit": 355618000,
+    "interest_expense": 21659000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 16.418948,
+    "ebitda_coverage": 22.77903,
+    "cash_coverage": 21.039678,
+    "fcf": 409144000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 49321000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 3.086977,
+    "market_cap": 745450340.85,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "act that OpCo exhibits disproportionality of voting rights to economic interest, OpCo was deemed to be a variable interest entity. The Partnership, through its ownership of OpCo's general partner, has the power to direct the activities that most significantly impact the economic",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000027/wlkp-20260630.htm",
+        "accession": "0001604665-26-000027",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001604665-26-000027",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000027/wlkp-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0271,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 5.7594
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1166695000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001604665-26-000010",
+          "filed": "2026-03-04",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000010/"
+        },
+        {
+          "value_usd": 1135896000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001604665-26-000010",
+          "filed": "2026-03-04",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000010/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 280469000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001604665-26-000010",
+          "filed": "2026-03-04",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000010/"
+        },
+        {
+          "value_usd": 485001000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001604665-26-000010",
+          "filed": "2026-03-04",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000010/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 48698000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001604665-26-000010",
+          "filed": "2026-03-04",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000010/"
+        },
+        {
+          "value_usd": 62392000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001604665-26-000010",
+          "filed": "2026-03-04",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000010/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ments. Recently Adopted Accounting Pronouncement Measurement of Credit Losses for Accounts Receivable and Contract Assets (ASU No. 2025-05) In July 2025, the Financial Accounting Standards Board (\"FASB\") issued an accounting standards update to add a practical expedien",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000027/wlkp-20260630.htm",
+        "accession": "0001604665-26-000027",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "STATEMENTS — Continued (Unaudited) (in thousands of dollars, except unit amounts and per unit data) 8. Related Party Transactions Related party transactions between the Partnership, OpCo and Westlake are primarily based on agreements such as the Ethylene Sales Agreement, the F",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000027/wlkp-20260630.htm",
+        "accession": "0001604665-26-000027",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-08-05",
+      "agreement_kind": "amendment",
+      "dated": "2017-06-01",
+      "title": "Third Amendment To Amended And Restated Senior Unsecured Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "SOFR",
+        "Base Rate"
+      ],
+      "maturity": "2031-07-11",
+      "url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000027/exhibit101_20260630thirdam.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-08-05",
+      "agreement_kind": "amendment",
+      "dated": "2015-04-29",
+      "title": "Fifth Amendment To Senior Unsecured Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "SOFR",
+        "Base Rate"
+      ],
+      "maturity": "2031-07-11",
+      "url": "https://www.sec.gov/Archives/edgar/data/1604665/000160466526000027/exhibit102_20260630fiftham.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2022-07-15",
+      "agreement_kind": "amendment",
+      "dated": "2015-04-29",
+      "title": "Fourth Amendment To Senior Unsecured Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "SOFR",
+        "LIBOR",
+        "Base Rate"
+      ],
+      "maturity": "2027-07-12",
+      "url": "https://www.sec.gov/Archives/edgar/data/1604665/000119312522195001/d278975dex102.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-10-30",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001604665-25-000038",
+      "doc": "wlkp-20251030.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-07-15",
+      "items": "1.01,9.01",
+      "acc": "0001193125-22-195001",
+      "doc": "d278975d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-03-27",
+      "items": "2.03,3.02,7.01,9.01",
+      "acc": "0001193125-19-087886",
+      "doc": "d929398d8ka.htm",
+      "desc": "8-K/A"
+    },
+    {
+      "date": "2019-03-27",
+      "items": "2.03,3.02,7.01,9.01",
+      "acc": "0001193125-19-087399",
+      "doc": "d929398d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-10-03",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001193125-17-302283",
+      "doc": "d281120d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-04-30",
+      "items": "2.01,2.03,7.01,9.01",
+      "acc": "0001193125-15-162335",
+      "doc": "d919736d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-08-08",
+      "items": "1.01,5.02,5.03,9.01",
+      "acc": "0001193125-14-303305",
+      "doc": "d756630d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-08-04",
+      "items": "1.01,2.01,3.02,9.01",
+      "acc": "0001193125-14-293774",
+      "doc": "d767793d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2022-03-31",
+      399674000,
+      19234000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      399674000,
+      18369000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2022-05",
+      0.0,
+      9.908,
+      0.1938,
+      95.8
+    ],
+    [
+      "2022-06",
+      0.2,
+      7.768,
+      0.2385,
+      110.6
+    ],
+    [
+      "2022-07",
+      0.21,
+      7.712,
+      0.2419,
+      111.0
+    ],
+    [
+      "2022-08",
+      0.11,
+      7.977,
+      0.2358,
+      109.0
+    ],
+    [
+      "2022-09",
+      1.46,
+      6.402,
+      0.279,
+      121.2
+    ],
+    [
+      "2022-10",
+      1.15,
+      6.498,
+      0.2806,
+      120.4
+    ],
+    [
+      "2022-11",
+      1.19,
+      6.452,
+      0.2833,
+      120.8
+    ],
+    [
+      "2022-12",
+      1.2,
+      6.473,
+      0.2853,
+      120.6
+    ],
+    [
+      "2023-01",
+      1.21,
+      6.528,
+      0.2907,
+      120.2
+    ],
+    [
+      "2023-02",
+      1.5,
+      6.31,
+      0.2942,
+      122.0
+    ],
+    [
+      "2023-03",
+      1.98,
+      6.174,
+      0.2946,
+      123.1
+    ],
+    [
+      "2023-04",
+      1.57,
+      6.293,
+      0.2909,
+      122.1
+    ],
+    [
+      "2023-05",
+      0.91,
+      6.507,
+      0.2796,
+      120.4
+    ],
+    [
+      "2023-06",
+      0.14,
+      7.455,
+      0.2464,
+      112.9
+    ],
+    [
+      "2023-07",
+      0.11,
+      7.594,
+      0.2461,
+      111.9
+    ],
+    [
+      "2023-08",
+      0.11,
+      7.603,
+      0.2459,
+      111.8
+    ],
+    [
+      "2023-09",
+      0.0,
+      9.594,
+      0.1937,
+      97.8
+    ],
+    [
+      "2023-10",
+      0.0,
+      9.754,
+      0.1894,
+      96.8
+    ],
+    [
+      "2023-11",
+      0.0,
+      10.0,
+      0.1881,
+      95.2
+    ],
+    [
+      "2023-12",
+      0.0,
+      10.968,
+      0.1702,
+      89.2
+    ],
+    [
+      "2024-01",
+      0.0,
+      11.52,
+      0.1656,
+      85.9
+    ],
+    [
+      "2024-02",
+      0.0,
+      12.63,
+      0.1505,
+      79.7
+    ],
+    [
+      "2024-03",
+      0.0,
+      13.491,
+      0.1406,
+      75.3
+    ],
+    [
+      "2024-04",
+      0.0,
+      14.305,
+      0.1323,
+      71.2
+    ],
+    [
+      "2024-05",
+      0.0,
+      14.805,
+      0.1311,
+      68.9
+    ],
+    [
+      "2024-06",
+      0.0,
+      14.058,
+      0.1365,
+      72.4
+    ],
+    [
+      "2024-07",
+      0.0,
+      14.517,
+      0.1329,
+      70.2
+    ],
+    [
+      "2024-08",
+      0.0,
+      14.585,
+      0.1325,
+      69.9
+    ],
+    [
+      "2024-09",
+      0.0,
+      14.897,
+      0.1289,
+      68.5
+    ],
+    [
+      "2024-10",
+      0.0,
+      15.049,
+      0.1279,
+      68.0
+    ],
+    [
+      "2024-11",
+      0.0,
+      15.849,
+      0.1243,
+      68.0
+    ],
+    [
+      "2024-12",
+      0.0,
+      16.36,
+      0.1197,
+      68.0
+    ],
+    [
+      "2025-01",
+      -0.0,
+      17.292,
+      0.1148,
+      68.0
+    ],
+    [
+      "2025-02",
+      0.0,
+      16.824,
+      0.118,
+      68.0
+    ],
+    [
+      "2025-03",
+      0.0,
+      15.84,
+      0.1239,
+      68.0
+    ],
+    [
+      "2025-04",
+      0.0,
+      15.331,
+      0.1288,
+      68.0
+    ],
+    [
+      "2025-05",
+      0.0,
+      15.85,
+      0.123,
+      68.0
+    ],
+    [
+      "2025-06",
+      0.0,
+      16.698,
+      0.1168,
+      68.0
+    ],
+    [
+      "2025-07",
+      -0.0,
+      16.883,
+      0.1154,
+      68.0
+    ],
+    [
+      "2025-08",
+      0.0,
+      16.569,
+      0.1183,
+      68.0
+    ],
+    [
+      "2025-09",
+      0.0,
+      16.083,
+      0.1199,
+      68.0
+    ],
+    [
+      "2025-10",
+      0.0,
+      13.264,
+      0.1408,
+      76.4
+    ],
+    [
+      "2025-11",
+      0.0,
+      13.324,
+      0.1414,
+      76.1
+    ],
+    [
+      "2025-12",
+      0.0,
+      13.009,
+      0.1441,
+      77.7
+    ],
+    [
+      "2026-01",
+      0.0,
+      12.298,
+      0.1587,
+      81.5
+    ],
+    [
+      "2026-02",
+      0.0,
+      12.187,
+      0.1624,
+      82.2
+    ],
+    [
+      "2026-03",
+      0.0,
+      12.317,
+      0.1602,
+      81.4
+    ],
+    [
+      "2026-04",
+      0.0,
+      12.605,
+      0.1583,
+      79.9
+    ],
+    [
+      "2026-05",
+      0.0,
+      12.783,
+      0.1578,
+      78.9
+    ],
+    [
+      "2026-06",
+      0.0,
+      12.472,
+      0.1612,
+      80.6
+    ],
+    [
+      "2026-07",
+      0.0,
+      12.187,
+      0.1628,
+      82.2
+    ],
+    [
+      "2026-08",
+      0.0,
+      12.268,
+      0.1628,
+      81.7
+    ],
+    [
+      "2026-09",
+      0.0,
+      12.305,
+      0.1624,
+      81.5
+    ],
+    [
+      "2026-10",
+      0.0,
+      12.814,
+      0.1551,
+      78.8
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

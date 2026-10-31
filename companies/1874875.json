@@ -1,0 +1,352 @@
+{
+  "cik": 1874875,
+  "ticker": "HOUR",
+  "name": "Hour Loop, Inc",
+  "sector": "consumer-disc",
+  "industry": "Retail-Catalog & Mail-Order Houses",
+  "sic": "5961",
+  "docs": {
+    "xbrl:0001493152-26-012278": {
+      "instruments": [
+        {
+          "name": "Taishin International Bank",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "drawn": 637348.0,
+          "rate_now": 0.0342,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-24",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001493152-26-037151": {
+      "instruments": [
+        {
+          "name": "Taishin International Bank",
+          "kind": "other",
+          "as_of": "2026-06-30",
+          "drawn": 628931.0,
+          "rate_now": 0.0342,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-11",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Retail-Catalog & Mail-Order Houses",
+  "snapshot": {
+    "cash": 985404,
+    "operating_leases": 129499,
+    "revolver_drawn": 628931,
+    "equity": 8885368,
+    "assets": 26181319,
+    "liabilities": 17295951,
+    "assets_current": 25687578,
+    "liabilities_current": 17257048,
+    "retained_earnings": 2984841,
+    "interest_expense": 173710,
+    "interest_paid": 183747,
+    "operating_income": 2345728,
+    "pretax_income": 2269784,
+    "net_income": 1748498,
+    "da": 42569,
+    "ocf": -49878,
+    "capex": 83017,
+    "revenue": 153374573,
+    "stated_rate": 0.02,
+    "fixed_share": 0.0475,
+    "shares": 35199820,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "Cash",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "fixed_share": "LongTermDebtPercentageBearingFixedInterestRate"
+  },
+  "history": [
+    {
+      "end": "2020-12-31",
+      "filed": "2022-04-01",
+      "total_debt": 27012,
+      "cash": 4968064,
+      "investments": null,
+      "interest_expense": 43269,
+      "operating_income": 3840569,
+      "da": null,
+      "ocf": 3824729,
+      "revenue": 62792981,
+      "shares": 35032753,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 15273
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001493152-26-012278",
+  "xbrl_10-Q": "xbrl:0001493152-26-037151",
+  "events": [
+    {
+      "date": "2022-01-11",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001493152-22-000957",
+      "doc": "form8-k.htm",
+      "desc": ""
+    }
+  ],
+  "fetched_at": "2026-10-26T01:41:17+00:00",
+  "signature": "0001493152-26-037151",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 129499.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm",
+        "accession": "0001493152-26-037151",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 129499.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-037151",
+            "filed": "2026-08-11",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "s that create relationships with unconsolidated entities or financial partnerships, often referred to as variable interest entities, which would have been established for the purpose of facilitating off-balance sheet arrangements. We have not entered into any off-balance sheet fin",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm",
+        "accession": "0001493152-26-037151",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-037151",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0303,
+      "receivables_growth": -0.857,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.1388,
+      "ocf_to_net_income": 1.5141
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 142440236.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-012278",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226012278/"
+        },
+        {
+          "value_usd": 138252861.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-012278",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226012278/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 235959.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-012278",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226012278/"
+        },
+        {
+          "value_usd": 1650547.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-012278",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226012278/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 2581256.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-012278",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226012278/"
+        },
+        {
+          "value_usd": 313140.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-012278",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226012278/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 1704849.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-012278",
+          "filed": "2026-03-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226012278/"
+        },
+        {
+          "value_usd": 657447.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-012278",
+          "filed": "2026-03-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226012278/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "05, Financial Instruments—Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets, which provides a practical expedient to assume that conditions as of the balance sheet date remain unchanged over the life of the asset when estimat",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm",
+        "accession": "0001493152-26-037151",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "in connection with loss contingencies are expensed as incurred. Related Parties - The Company accounts for related party transactions in accordance with FASB ASC Topic 850 (Related Party Disclosures). A party is considered to be related to the Company if the party directly or indire",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm",
+        "accession": "0001493152-26-037151",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "s that create relationships with unconsolidated entities or financial partnerships, often referred to as variable interest entities, which would have been established for the purpose of facilitating off-balance sheet arrangements. We have not entered into any off-balance sheet fin",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm",
+      "accession": "0001493152-26-037151",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001493152-26-037151",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-037151",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "05, Financial Instruments—Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets, which provides a practical expedient to assume that conditions as of the balance sheet date remain unchanged over the life of the asset when estimat",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm",
+      "accession": "0001493152-26-037151",
+      "form": "10-Q",
+      "filed": "2026-08-11"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "in connection with loss contingencies are expensed as incurred. Related Parties - The Company accounts for related party transactions in accordance with FASB ASC Topic 850 (Related Party Disclosures). A party is considered to be related to the Company if the party directly or indire",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1874875/000149315226037151/form10-q.htm",
+      "accession": "0001493152-26-037151",
+      "form": "10-Q",
+      "filed": "2026-08-11"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-037151"
+}

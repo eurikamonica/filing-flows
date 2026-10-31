@@ -1,0 +1,270 @@
+{
+  "cik": 1781629,
+  "ticker": "ANKM",
+  "name": "Ankam, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Programming Services",
+  "sic": "7371",
+  "docs": {
+    "xbrl:0001683168-26-001925": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-17",
+      "report": "2025-11-30"
+    },
+    "xbrl:0001683168-26-007830": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-10-14",
+      "report": "2026-08-31"
+    }
+  },
+  "sic_description": "Services-Computer Programming Services",
+  "snapshot": {
+    "cash": 8321,
+    "equity": -760617,
+    "assets": 22921,
+    "liabilities": 783538,
+    "assets_current": 8321,
+    "liabilities_current": 783538,
+    "retained_earnings": -934247,
+    "interest_paid": 0,
+    "operating_income": -421152,
+    "pretax_income": -421063,
+    "net_income": -610503,
+    "ocf": -171734,
+    "revenue": 129900,
+    "shares": 4558063,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaid (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesDomestic (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001683168-26-001925",
+  "xbrl_10-Q": "xbrl:0001683168-26-007830",
+  "events": [
+    {
+      "date": "2024-12-31",
+      "items": "1.01",
+      "acc": "0001683168-24-009063",
+      "doc": "ankam_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-09-19",
+      "items": "1.01",
+      "acc": "0001683168-24-006534",
+      "doc": "ankam_8k.htm",
+      "desc": "AMENDMENT NO. 1"
+    },
+    {
+      "date": "2024-09-19",
+      "items": "1.01",
+      "acc": "0001683168-24-006531",
+      "doc": "ankam_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-07-31",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001781629-24-000016",
+      "doc": "ankm_8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-01-08",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001781629-24-000002",
+      "doc": "ankm_8k.htm",
+      "desc": ""
+    }
+  ],
+  "fetched_at": "2026-10-26T04:56:10+00:00",
+  "signature": "0001683168-26-007830",
+  "hidden_leverage": {
+    "as_of": "2026-08-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001683168-26-007830",
+      "form": "10-Q",
+      "filed": "2026-10-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826007830/ankam_i10q-083126.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-31",
+    "metrics": {
+      "revenue_growth": 2.1115,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 325000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001683168-26-001925",
+          "filed": "2026-03-17",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826001925/"
+        },
+        {
+          "value_usd": 104450.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001683168-26-001925",
+          "filed": "2026-03-17",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826001925/"
+        }
+      ],
+      "receivables": [
+        null,
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001683168-25-001603",
+          "filed": "2025-03-14",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316825001603/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 109446.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001683168-26-001925",
+          "filed": "2026-03-17",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826001925/"
+        },
+        {
+          "value_usd": -157541.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001683168-26-001925",
+          "filed": "2026-03-17",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826001925/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -67152.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001683168-26-001925",
+          "filed": "2026-03-17",
+          "end": "2025-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826001925/"
+        },
+        {
+          "value_usd": -136846.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001683168-26-001925",
+          "filed": "2026-03-17",
+          "end": "2024-11-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826001925/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ended August 31, 2026 and 2025, the amortization expense was $ 37,242 and $ 39,511 , respectively. NOTE 5 – RELATED PARTY TRANSACTIONS The Company owed its sole director $ 561,706 and $ 447,418 as of August 31, 2026 and November 30, 2025, respectively, for unpaid operating advance",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826007830/ankam_i10q-083126.htm",
+        "accession": "0001683168-26-007830",
+        "form": "10-Q",
+        "filed": "2026-10-14"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "55,000 | ) | Prepaid expenses | – | ( 42,000 | ) | Accounts payable and accrued expenses | 94,437 | 96,437 | Deferred revenue | – | 20,000 | Net cash used in operating activities | ( 237,677 | ) | 43,503 | Cash Flow from Investing Activities: | Capitalized Software Costs | –",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826007830/ankam_i10q-083126.htm",
+        "accession": "0001683168-26-007830",
+        "form": "10-Q",
+        "filed": "2026-10-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-11-30",
+      "2024-11-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001683168-26-007830",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001683168-26-007830",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "ended August 31, 2026 and 2025, the amortization expense was $ 37,242 and $ 39,511 , respectively. NOTE 5 – RELATED PARTY TRANSACTIONS The Company owed its sole director $ 561,706 and $ 447,418 as of August 31, 2026 and November 30, 2025, respectively, for unpaid operating advance",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826007830/ankam_i10q-083126.htm",
+      "accession": "0001683168-26-007830",
+      "form": "10-Q",
+      "filed": "2026-10-14"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "55,000 | ) | Prepaid expenses | – | ( 42,000 | ) | Accounts payable and accrued expenses | 94,437 | 96,437 | Deferred revenue | – | 20,000 | Net cash used in operating activities | ( 237,677 | ) | 43,503 | Cash Flow from Investing Activities: | Capitalized Software Costs | –",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1781629/000168316826007830/ankam_i10q-083126.htm",
+      "accession": "0001683168-26-007830",
+      "form": "10-Q",
+      "filed": "2026-10-14"
+    }
+  ],
+  "revenue_quality_text_source": "0001683168-26-007830"
+}

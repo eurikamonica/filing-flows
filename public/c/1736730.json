@@ -1,0 +1,338 @@
+{
+  "cik": 1736730,
+  "ticker": "CAMP",
+  "name": "Camp4 Therapeutics Corp",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:15:29+00:00",
+  "price": 3.3,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.122543,
+  "snapshot": {
+    "cash": 86398000,
+    "operating_leases": 2372000,
+    "equity": -693000,
+    "assets": 93428000,
+    "liabilities": 94121000,
+    "assets_current": 90027000,
+    "liabilities_current": 19142000,
+    "retained_earnings": -344017000,
+    "operating_income": -52878000,
+    "net_income": -107244000,
+    "da": 1823000,
+    "ocf": -28591000,
+    "capex": 129000,
+    "revenue": 4216000,
+    "shares": 62753200,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 86398000.0,
+    "net_debt": null,
+    "ebitda": -51055000,
+    "ebit": -52878000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -28720000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 86398000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -4.747043,
+    "market_cap": 207085560.0,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2372000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000162828026056760/camp-20260630.htm",
+        "accession": "0001628280-26-056760",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 2372000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-056760",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1736730/000162828026056760/camp-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-056760",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000162828026056760/camp-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 4.365,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 23.3818,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 3498000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001736730-26-000016",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000173673026000016/"
+        },
+        {
+          "value_usd": 652000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001736730-26-000016",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000173673026000016/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 9387000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001736730-26-000016",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000173673026000016/"
+        },
+        {
+          "value_usd": 385000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001736730-26-000016",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000173673026000016/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -29553000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001736730-26-000016",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000173673026000016/"
+        },
+        {
+          "value_usd": -45562000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001736730-26-000016",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000173673026000016/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -80403000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001736730-26-000016",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000173673026000016/"
+        },
+        {
+          "value_usd": -51791000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001736730-26-000016",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000173673026000016/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "270 | 270 | Research and development tax credit receivable | 217 | — | Prepaid insurance costs | 214 | 559 | Unbilled receivable | — | 155 | Other | 331 | 342 | Total prepaid expenses and other current assets | $ | 2,899 | $ | 3,232 | 12 Table of Contents Property and Equip",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000162828026056760/camp-20260630.htm",
+        "accession": "0001628280-26-056760",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "r of control of the licenses at a point in time upon contract execution. The arrangement included significant variable consideration, primarily in the form of milestone payments, which was fully constrained at the inception of the contract. The sales-based royalty fee qualified for",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000162828026056760/camp-20260630.htm",
+        "accession": "0001628280-26-056760",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "e | $ | 1,093 | $ | 182 | Accrued expenses and other current liabilities | 4,237 | 5,659 | Current portion of deferred revenue | 13,010 | 9,387 | Operating lease liabilities, current portion | 802 | 286 | Total current liabilities | 19,142 | 15,514 | Deferred revenue, net of",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1736730/000162828026056760/camp-20260630.htm",
+        "accession": "0001628280-26-056760",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-08-04",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001628280-26-052150",
+      "doc": "camp-20260803.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-23",
+      "items": "1.01,1.02",
+      "acc": "0001736730-25-000116",
+      "doc": "camp-20251222.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-18",
+      "items": "1.01,9.01",
+      "acc": "0001628280-25-058009",
+      "doc": "camp-20251218.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-18",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001736730-25-000111",
+      "doc": "camp-20251217.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-10",
+      "items": "1.01,3.02,5.02,7.01,9.01",
+      "acc": "0001736730-25-000072",
+      "doc": "camp-20250909.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

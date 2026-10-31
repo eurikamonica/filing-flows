@@ -1,0 +1,195 @@
+{
+  "cik": 2016167,
+  "name": "Transit Pro Tech Inc.",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "docs": {
+    "xbrl:0001753926-25-002005": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2025-12-31",
+      "report": "2025-09-30"
+    },
+    "xbrl:0001753926-26-001504": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Prepackaged Software",
+  "snapshot": {
+    "cash": 6620,
+    "operating_leases": 101538,
+    "equity": -1287288,
+    "assets": 143762,
+    "liabilities": 1431050,
+    "assets_current": 21448,
+    "liabilities_current": 1377314,
+    "retained_earnings": -2214748,
+    "interest_expense": 13062,
+    "operating_income": -648067,
+    "pretax_income": -653199,
+    "net_income": -653199,
+    "ocf": -444685,
+    "revenue": 358329,
+    "shares": 20236794,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001753926-25-002005",
+  "xbrl_10-Q": "xbrl:0001753926-26-001504",
+  "events": [],
+  "fetched_at": "2026-10-26T04:55:20+00:00",
+  "signature": "0001753926-26-001826",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 101538.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001663/g085906_10q.htm",
+        "accession": "0001753926-26-001663",
+        "form": "10-Q/A",
+        "filed": "2026-08-28",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 101538.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001753926-26-001663",
+            "filed": "2026-08-28",
+            "form": "10-Q/A",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001663/g085906_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "penses of $647,766 due to third parties. Off-Balance Sheet Arrangements We have not entered into any financial guarantees or other commitments to guarantee the obligations of any third parties. We have not entered into any derivative contracts that are indexed to our sha",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001504/g085848_10q.htm",
+        "accession": "0001753926-26-001504",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001753926-26-001504",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001504/g085848_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": ", (ii) identify the performance obligations in the contract, (iii) determine the transaction price, including variable consideration to the extent that it is probable that a significant future reversal will not occur, (iv) allocate the transaction price to the respective performanc",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001504/g085848_10q.htm",
+        "accession": "0001753926-26-001504",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": ", concluding on December 31, 2026, at a monthly salary and bonus of RMB52,200 (approximately US$7,357). The related party transactions of the Group are as follows: Schedule of related party transactions | For the three months ended June 30, | For the nine months ended June 30, | 20",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001504/g085848_10q.htm",
+        "accession": "0001753926-26-001504",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "guarantee_support",
+      "label": "Guarantees / keepwell support",
+      "excerpt": "penses of $647,766 due to third parties. Off-Balance Sheet Arrangements We have not entered into any financial guarantees or other commitments to guarantee the obligations of any third parties. We have not entered into any derivative contracts that are indexed to our sha",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001504/g085848_10q.htm",
+      "accession": "0001753926-26-001504",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001753926-26-001504",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001753926-26-001504",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": ", (ii) identify the performance obligations in the contract, (iii) determine the transaction price, including variable consideration to the extent that it is probable that a significant future reversal will not occur, (iv) allocate the transaction price to the respective performanc",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001504/g085848_10q.htm",
+      "accession": "0001753926-26-001504",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": ", concluding on December 31, 2026, at a monthly salary and bonus of RMB52,200 (approximately US$7,357). The related party transactions of the Group are as follows: Schedule of related party transactions | For the three months ended June 30, | For the nine months ended June 30, | 20",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2016167/000175392626001504/g085848_10q.htm",
+      "accession": "0001753926-26-001504",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    }
+  ],
+  "revenue_quality_text_source": "0001753926-26-001504"
+}

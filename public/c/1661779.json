@@ -1,0 +1,334 @@
+{
+  "cik": 1661779,
+  "ticker": null,
+  "name": "StartEngine Inc.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "sic_description": "Finance Services",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T01:38:38+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 20382534,
+    "investments": 105853,
+    "equity": 76543958,
+    "assets": 91867278,
+    "liabilities": 15323320,
+    "assets_current": 31061731,
+    "liabilities_current": 15323320,
+    "retained_earnings": -60108866,
+    "operating_income": -4776576,
+    "pretax_income": -3529356,
+    "net_income": -3930130,
+    "da": 8849,
+    "ocf": -7478573,
+    "capex": 25525,
+    "revenue": 108687239,
+    "shares": 758349621,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 20488387,
+    "net_debt": null,
+    "ebitda": -4767727,
+    "ebit": -4776576,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -7504098,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 20488387.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "e accounts of StartEngine, Inc., its subsidiaries where we have controlling financial interests, and any variable interest entities for which we are deemed to be the primary beneficiary. All intercompany balances and transactions have been eliminated. The accompanying condensed co",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926093341/stgc-20260630x10q.htm",
+        "accession": "0001104659-26-093341",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-093341",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926093341/stgc-20260630x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 1.2536,
+      "receivables_growth": -0.611,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.2393,
+      "dsri": 0.1726,
+      "ocf_to_net_income": 8.3413
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 109580580.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        },
+        {
+          "value_usd": 48625508.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1108093.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        },
+        {
+          "value_usd": 2848880.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 3569450.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        },
+        {
+          "value_usd": 2880316.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 12285480.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        },
+        {
+          "value_usd": -4275484.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 1472852.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        },
+        {
+          "value_usd": -16536658.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-037922",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926037922/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "2025, respectively, related to performance obligations yet to be fulfilled. The Company had no other customer contract assets. During the three and six months ended June 30, 2026 and 2025, disaggregated revenue was made up of the following categories associated with the abo",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926093341/stgc-20260630x10q.htm",
+        "accession": "0001104659-26-093341",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "instances, as a practical expedient , the Company does not adjust the transaction price for the effects of a significant financing component if, at contract inception, the period between customer payment and the transfer of goods or services is expected to be one year or less. The Company",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926093341/stgc-20260630x10q.htm",
+        "accession": "0001104659-26-093341",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "abilities: | Accounts payable | $ | 1,385,811 | $ | 990,993 | Accrued liabilities | 10,237,301 | 10,196,824 | Deferred revenue | 3,700,208 | 3,569,450 | Total current liabilities | 15,323,320 | 14,757,267 | Total liabilities | $ | 15,323,320 | $ | 14,757,267 | Commitments and",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1661779/000110465926093341/stgc-20260630x10q.htm",
+        "accession": "0001104659-26-093341",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-03-23",
+      "items": "1.01,2.01,7.01,9.01",
+      "acc": "0001104659-26-033376",
+      "doc": "tm269376d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-05-09",
+      "items": "1.01,9.01",
+      "acc": "0001104659-23-057776",
+      "doc": "tm2315140d1_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2022-11-28",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-122400",
+      "doc": "tm2231329d1_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2022-10-27",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-111658",
+      "doc": "tm2229033d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

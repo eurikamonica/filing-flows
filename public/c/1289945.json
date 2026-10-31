@@ -1,0 +1,737 @@
+{
+  "cik": 1289945,
+  "ticker": "SPOK",
+  "name": "Spok Holdings, Inc",
+  "sector": "communication",
+  "industry": "Radiotelephone Communications",
+  "sic": "4812",
+  "sic_description": "Radiotelephone Communications",
+  "generated_at": "2026-10-31T14:35:10+00:00",
+  "fetched_at": "2026-10-26T01:40:55+00:00",
+  "price": 10.3,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.27049,
+  "snapshot": {
+    "cash": 16592000,
+    "operating_leases": 5746000,
+    "equity": 139867000,
+    "assets": 195611000,
+    "liabilities": 55744000,
+    "assets_current": 50632000,
+    "liabilities_current": 46306000,
+    "retained_earnings": 32460000,
+    "operating_income": 16169000,
+    "pretax_income": 17060000,
+    "net_income": 12240000,
+    "da": 3637000,
+    "ocf": 28581000,
+    "capex": 3174000,
+    "revenue": 135965000,
+    "shares": 20918137,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 16592000.0,
+    "net_debt": null,
+    "ebitda": 19806000,
+    "ebit": 16169000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 25407000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 16592000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 3.545777,
+    "market_cap": 215456811.1,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 5746000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm",
+        "accession": "0001289945-26-000050",
+        "form": "10-Q",
+        "filed": "2026-07-30",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 5746000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001289945-26-000050",
+            "filed": "2026-07-30",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "olidated entities or financial partnerships, such as entities often referred to as structured finance or special purpose entities, which would have been established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes.",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm",
+        "accession": "0001289945-26-000050",
+        "form": "10-Q",
+        "filed": "2026-07-30",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "our corporate offices, include options to terminate the lease within one year . Variable lease payments, residual value guarantees or purchase options are not generally present in these leases. Lease costs are included in technology operations and general and administrative exp",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm",
+        "accession": "0001289945-26-000050",
+        "form": "10-Q",
+        "filed": "2026-07-30",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "t liabilities | 3,505 | 4,645 | Total current liabilities | 46,306 | 49,109 | Non-current liabilities: | Asset retirement obligations | 4,955 | 4,902 | Operating lease liabilities | 3,386 | 4,263 | Other non-current liabilities | 1,097 | 1,458 | Total non-current liabilities | 9,438",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm",
+        "accession": "0001289945-26-000050",
+        "form": "10-Q",
+        "filed": "2026-07-30",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001289945-26-000050",
+      "form": "10-Q",
+      "filed": "2026-07-30",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0149,
+      "receivables_growth": 0.0316,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.0735,
+      "dsri": 1.0164,
+      "ocf_to_net_income": 1.8229
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 139708000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        },
+        {
+          "value_usd": 137653000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 22644000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        },
+        {
+          "value_usd": 21950000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 30452000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        },
+        {
+          "value_usd": 28366000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 28949000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        },
+        {
+          "value_usd": 28922000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 15881000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        },
+        {
+          "value_usd": 14965000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001289945-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000010/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "e at end of period | $ | 854 | $ | 669 | Accounts receivable, net included $ 8.6 million and $ 6.3 million of unbilled receivables at June 30, 2026 and December 31, 2025, respectively. Unbilled receivables are defined as the Company's right to consideration in exchange for goods",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm",
+        "accession": "0001289945-26-000050",
+        "form": "10-Q",
+        "filed": "2026-07-30"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "to Condensed Consolidated Financial Statements for further discussion on our commitments and contingencies. Related Party Transactions See Note 13, \"Related Parties\" in the Notes to Condensed Consolidated Financial Statements for a discussion regarding our related party transaction",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm",
+        "accession": "0001289945-26-000050",
+        "form": "10-Q",
+        "filed": "2026-07-30"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "liabilities: | Accounts payable | $ | 4,460 | $ | 3,975 | Accrued compensation and benefits | 5,687 | 7,361 | Deferred revenue | 30,294 | 30,452 | Operating lease liabilities | 2,360 | 2,676 | Other current liabilities | 3,505 | 4,645 | Total current liabilities | 46,306 | 49",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289945/000128994526000050/spok-20260630.htm",
+        "accession": "0001289945-26-000050",
+        "form": "10-Q",
+        "filed": "2026-07-30"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2011-11-08",
+      "agreement_kind": "amendment",
+      "dated": "2011-03-03",
+      "title": "First Amendment To Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1289945/000119312511302234/d253576dex101.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2011-03-04",
+      "agreement_kind": "credit_agreement",
+      "dated": "2011-03-03",
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1289945/000095012311022177/w81853exv10w1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2005-03-17",
+      "agreement_kind": "amendment",
+      "dated": "2004-12-08",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1289945/000095013305001090/w06567exv10w4.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2022-06-15",
+      "items": "1.01,1.02,3.03,9.01",
+      "acc": "0001104659-22-071491",
+      "doc": "tm2218516d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-03-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-22-035847",
+      "doc": "tm229822d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-09-03",
+      "items": "1.01,3.03,5.03,9.01",
+      "acc": "0001104659-21-112921",
+      "doc": "tm2126921d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-06-19",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001289945-20-000047",
+      "doc": "spok-8kx2020directorappoin.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2011-06-30",
+      25947000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-09-30",
+      17000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-03-31",
+      3250000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2011-07",
+      0.42,
+      8.152,
+      0.3265,
+      107.8
+    ],
+    [
+      "2011-08",
+      0.23,
+      8.481,
+      0.3074,
+      105.4
+    ],
+    [
+      "2011-09",
+      0.54,
+      7.977,
+      0.3145,
+      109.0
+    ],
+    [
+      "2011-10",
+      0.48,
+      8.132,
+      0.3475,
+      107.9
+    ],
+    [
+      "2011-11",
+      0.64,
+      7.959,
+      0.3552,
+      109.2
+    ],
+    [
+      "2011-12",
+      0.35,
+      8.316,
+      0.3461,
+      106.6
+    ],
+    [
+      "2012-01",
+      0.19,
+      8.68,
+      0.3347,
+      104.0
+    ],
+    [
+      "2012-02",
+      0.07,
+      9.18,
+      0.316,
+      100.6
+    ],
+    [
+      "2012-03",
+      0.0,
+      10.5,
+      0.2778,
+      92.0
+    ],
+    [
+      "2012-04",
+      0.01,
+      10.41,
+      0.2738,
+      92.6
+    ],
+    [
+      "2012-05",
+      0.0,
+      15.723,
+      0.2748,
+      68.0
+    ],
+    [
+      "2012-06",
+      0.0,
+      14.204,
+      0.3045,
+      71.7
+    ],
+    [
+      "2012-07",
+      0.0,
+      14.191,
+      0.3076,
+      71.8
+    ],
+    [
+      "2012-08",
+      0.0,
+      11.785,
+      0.3569,
+      84.4
+    ],
+    [
+      "2012-09",
+      0.0,
+      12.241,
+      0.3469,
+      81.9
+    ],
+    [
+      "2012-10",
+      0.0,
+      13.7,
+      0.3067,
+      74.2
+    ],
+    [
+      "2012-11",
+      0.0,
+      14.646,
+      0.2902,
+      69.6
+    ],
+    [
+      "2012-12",
+      0.0,
+      14.014,
+      0.3011,
+      72.7
+    ],
+    [
+      "2013-01",
+      0.0,
+      13.962,
+      0.3031,
+      72.9
+    ],
+    [
+      "2013-02",
+      0.0,
+      14.115,
+      0.3015,
+      72.2
+    ],
+    [
+      "2013-03",
+      0.0,
+      13.872,
+      0.3159,
+      73.4
+    ],
+    [
+      "2013-04",
+      0.0,
+      13.795,
+      0.3172,
+      73.7
+    ],
+    [
+      "2013-05",
+      0.0,
+      14.427,
+      0.3056,
+      70.7
+    ],
+    [
+      "2013-06",
+      0.0,
+      14.908,
+      0.2963,
+      68.4
+    ],
+    [
+      "2013-07",
+      0.0,
+      15.274,
+      0.2966,
+      68.0
+    ],
+    [
+      "2013-08",
+      -0.0,
+      19.894,
+      0.2253,
+      68.0
+    ],
+    [
+      "2013-09",
+      -0.0,
+      19.314,
+      0.2315,
+      68.0
+    ],
+    [
+      "2013-10",
+      -0.0,
+      19.849,
+      0.2292,
+      68.0
+    ],
+    [
+      "2013-11",
+      -0.0,
+      19.672,
+      0.2301,
+      68.0
+    ],
+    [
+      "2013-12",
+      0.0,
+      18.578,
+      0.2438,
+      68.0
+    ],
+    [
+      "2014-01",
+      0.0,
+      17.792,
+      0.2525,
+      68.0
+    ],
+    [
+      "2014-02",
+      0.0,
+      17.959,
+      0.2509,
+      68.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

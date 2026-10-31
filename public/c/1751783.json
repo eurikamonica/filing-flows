@@ -1,0 +1,311 @@
+{
+  "cik": 1751783,
+  "ticker": "RBKB",
+  "name": "Rhinebeck Bancorp, Inc.",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:20:24+00:00",
+  "price": 12.93,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.291773,
+  "snapshot": {
+    "cash": 304563000,
+    "operating_leases": 6049000,
+    "debt_fair_value": 5155000,
+    "equity": 139603000,
+    "assets": 1470052000,
+    "liabilities": 1330449000,
+    "retained_earnings": 105976000,
+    "deposits": 1282972000,
+    "time_deposits": 384601000,
+    "interest_paid": 22441000,
+    "pretax_income": 12499000,
+    "net_income": 9863000,
+    "da": 1298000,
+    "ocf": 14112000,
+    "capex": 1394000,
+    "revenue": 2991000,
+    "deposit_interest": 21366000,
+    "shares": 15635966,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 304563000.0,
+    "net_debt": null,
+    "ebitda": 13797000.0,
+    "ebit": 12499000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.628849,
+    "fcf": 12718000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 304563000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 202173040.38,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 6049000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000040/rbkb-20260630x10q.htm",
+        "accession": "0001751783-26-000040",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 6049000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001751783-26-000040",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000040/rbkb-20260630x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001751783-26-000040",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000040/rbkb-20260630x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.006,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.169
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2984000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001751783-26-000005",
+          "filed": "2026-03-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000005/"
+        },
+        {
+          "value_usd": 3002000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001751783-26-000005",
+          "filed": "2026-03-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000005/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 11743000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001751783-26-000005",
+          "filed": "2026-03-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000005/"
+        },
+        {
+          "value_usd": 8470000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001751783-26-000005",
+          "filed": "2026-03-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000005/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 10045000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001751783-26-000005",
+          "filed": "2026-03-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000005/"
+        },
+        {
+          "value_usd": -8620000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001751783-26-000005",
+          "filed": "2026-03-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1751783/000175178326000005/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Federal Reserve Bank Advances",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 136838000.0,
+      "floating": false
+    },
+    {
+      "name": "Pacific Coast Bankers Bank",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 50000000.0,
+      "floating": false
+    },
+    {
+      "name": "Zions Bank",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 10000000.0,
+      "floating": false
+    },
+    {
+      "name": "Subordinated Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "spread": 0.02,
+      "maturity": "2035-05-23",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-05-14",
+      "items": "1.01,9.01",
+      "acc": "0001104659-26-061328",
+      "doc": "tm2614362d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-01-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-19-002473",
+      "doc": "tv511384_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-11-14",
+      "items": "1.01,9.01",
+      "acc": "0001144204-18-059878",
+      "doc": "tv507145_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

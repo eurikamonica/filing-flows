@@ -1,0 +1,1426 @@
+{
+  "cik": 1289419,
+  "ticker": "MORN",
+  "name": "Morningstar, Inc.",
+  "sector": "financials",
+  "industry": "Investment Advice",
+  "sic": "6282",
+  "sic_description": "Investment Advice",
+  "generated_at": "2026-10-31T14:35:10+00:00",
+  "fetched_at": "2026-10-25T22:52:17+00:00",
+  "price": 224.89,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.452366,
+  "snapshot": {
+    "total_debt": 1713300000,
+    "current_debt": 18200000,
+    "cash": 489500000,
+    "investments": 34300000,
+    "short_term_borrowings": 18200000,
+    "operating_leases": 191500000,
+    "equity": 1023800000,
+    "assets": 3945700000,
+    "liabilities": 2921900000,
+    "assets_current": 1034900000,
+    "liabilities_current": 980300000,
+    "retained_earnings": 2383300000,
+    "interest_paid": 49800000,
+    "operating_income": 603900000,
+    "pretax_income": 562800000,
+    "net_income": 421600000,
+    "da": 199300000,
+    "ocf": 646900000,
+    "capex": 149400000,
+    "revenue": 2566500000,
+    "shares": 37513571,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt+ShortTermBorrowings",
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "investments": "MarketableSecuritiesCurrent",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 1713300000,
+    "cash_and_investments": 523800000,
+    "net_debt": 1189500000,
+    "ebitda": 803200000,
+    "ebit": 603900000,
+    "interest_expense": null,
+    "leverage": 2.133093,
+    "net_leverage": 1.480951,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 13.98996,
+    "fcf": 497500000,
+    "fcf_to_debt": 0.290375,
+    "effective_rate": null,
+    "revolver_available": 1500000000.0,
+    "liquidity": 2023800000.0,
+    "due_12m": 18200000,
+    "due_24m": null,
+    "liquidity_to_due12": 111.197802,
+    "liquidity_to_due24": null,
+    "floating_debt": 1713300000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 17133000.0,
+    "plus100bp_share_of_ebit": 0.028371,
+    "altman_z": 3.750154,
+    "market_cap": 8436426982.19,
+    "debt_to_ev": 0.177988,
+    "convertibles": null,
+    "implied": {
+      "dd": 5.656933,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 11.103335,
+      "asset_vol": 0.411948,
+      "calibrated_5y_bps": 127.438031,
+      "rating_band": "BBB"
+    },
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 3.5,
+        "unit": "x",
+        "actual": 1.480951,
+        "cushion": 0.576871,
+        "agreement": "Credit Agreement",
+        "dated": "2025-10-31",
+        "text": "Permit the Consolidated Net Leverage Ratio as of the end of any Measurement Period to be greater than 3.50 to 1.00;"
+      },
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2025-10-31",
+        "text": "Permit the Consolidated Interest Coverage Ratio as of the end of any Measurement Period to be less than 3.00 to 1.00. 7.14 Canadian Defined Benefit Pension Plans ."
+      }
+    ],
+    "cushion_score": 91
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 191500000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000041/morn-20260630.htm",
+        "accession": "0001289419-26-000041",
+        "form": "10-Q",
+        "filed": "2026-07-29",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 191500000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001289419-26-000041",
+            "filed": "2026-07-29",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000041/morn-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "ly certain we will exercise that option. We do not have lease agreements with residual value guarantees, sale leaseback terms, or material restrictive covenants. The following table presents the components of lease cost: Three months ended June 30, | Six months end",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000041/morn-20260630.htm",
+        "accession": "0001289419-26-000041",
+        "form": "10-Q",
+        "filed": "2026-07-29",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "e lease when it is reasonably certain we will exercise that option. We do not have lease agreements with residual value guarantees, sale leaseback terms, or material restrictive covenants. The following table presents the components of lease cost: Three months ended June 30,",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000041/morn-20260630.htm",
+        "accession": "0001289419-26-000041",
+        "form": "10-Q",
+        "filed": "2026-07-29",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001289419-26-000041",
+      "form": "10-Q",
+      "filed": "2026-07-29",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000041/morn-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0749,
+      "receivables_growth": 0.0902,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.0779,
+      "dsri": 1.0142,
+      "ocf_to_net_income": 1.5759
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2445500000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        },
+        {
+          "value_usd": 2275100000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 390400000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        },
+        {
+          "value_usd": 358100000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 607100000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        },
+        {
+          "value_usd": 563200000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 589700000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        },
+        {
+          "value_usd": 591600000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 374200000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        },
+        {
+          "value_usd": 369900000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001289419-26-000013",
+          "filed": "2026-02-13",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000013/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "e exercised causing the contract term to be less than one year from June 30, 2026. 15 Table of Contents Contract Assets Our contract assets represent accounts receivable, less allowance for credit losses, and deferred commissions. The following table summarizes our",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000041/morn-20260630.htm",
+        "accession": "0001289419-26-000041",
+        "form": "10-Q",
+        "filed": "2026-07-29"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "f this balance in 2028, and the remaining amount thereafter. The percentages in the prior paragraph exclude variable consideration for unsatisfied performance obligations related to certain of our license-based, asset-based, and transaction-based contracts as we apply the optiona",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000041/morn-20260630.htm",
+        "accession": "0001289419-26-000041",
+        "form": "10-Q",
+        "filed": "2026-07-29"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ts | 22.4 | 12.1 | Total assets | $ | 3,945.7 | $ | 3,590.2 | Liabilities and equity | Current liabilities: | Deferred revenue | $ | 628.4 | $ | 586.1 | Accrued compensation | 181.3 | 294.2 | Accounts payable and accrued liabilities | 91.9 | 97.9 | Current portion of long-ter",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000041/morn-20260630.htm",
+        "accession": "0001289419-26-000041",
+        "form": "10-Q",
+        "filed": "2026-07-29"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 744100000.0,
+      "floating": true
+    },
+    {
+      "name": "October 2025 Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 620000000.0,
+      "floating": true
+    },
+    {
+      "name": "October 2025 Delayed Draw Term Facility",
+      "kind": "notes",
+      "as_of": "2025-10-31",
+      "capacity": 375000000.0,
+      "floating": false
+    },
+    {
+      "name": "October 2025 Term Facility -A2",
+      "kind": "notes",
+      "as_of": "2025-10-31",
+      "capacity": 375000000.0,
+      "floating": false
+    },
+    {
+      "name": "October 2025 Term Facility -A1",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 370300000.0,
+      "floating": false
+    },
+    {
+      "name": "Private Placement",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0232,
+      "carrying": 349200000.0,
+      "floating": false
+    },
+    {
+      "name": "October 2025 Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "available": 130000000.0,
+      "floating": false
+    },
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread_min": 0.0105,
+      "spread_max": 0.01425,
+      "reference": "SOFR Overnight Index Swap Rate",
+      "floating": true
+    },
+    {
+      "name": "October 31, 2025 Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-10-31",
+      "capacity": 1500000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "October 2025 Term Facility",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 373500000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "May 2022 Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "carrying": 350000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Private Placement Financing",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 349100000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "July 2019 Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2024-12-31",
+      "carrying": 0.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "October 2025 Deayed Draw Term Facility",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "available": 375000000.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-10-31",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-10-31",
+      "size": 250000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "EURIBOR",
+        "SONIA"
+      ],
+      "maturity": "2030-10-31",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Net Leverage Ratio as of the end of any Measurement Period to be greater than 3.50 to 1.00;"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Interest Coverage Ratio as of the end of any Measurement Period to be less than 3.00 to 1.00. 7.14 Canadian Defined Benefit Pension Plans ."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1289419/000110465925104692/tm2529887d1_ex10-1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-07-26",
+      "agreement_kind": "amendment",
+      "dated": "2022-05-06",
+      "size": 250000000.0,
+      "title": "Third Amendment To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        0.1,
+        1.375
+      ],
+      "grid_by": "leverage",
+      "fee_pct": 0.1,
+      "maturity": "2027-09-13",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Leverage Ratio as of the end of any Measurement Period ending as of the end of any fiscal quarter of the Company to be greater than 3.50 to 1.00;"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Interest Coverage Ratio as of the end of any Measurement Period ending as of the end of any fiscal quarter of the Borrower to be less than 3.00 to 1.00. 7.14 Canadian Defined Benefit Pension Plans."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941924000059/morn_exhibitx105x0630202.htm",
+      "all_in_pct": [
+        0.1389,
+        1.4139
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2022-10-28",
+      "agreement_kind": "amendment",
+      "dated": "2022-05-06",
+      "size": 250000000.0,
+      "title": "Version Second Amendment To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "maturity": "2027-09-13",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Leverage Ratio as of the end of any Measurement Period ending as of the end of any fiscal quarter of the Company to be greater than 3.50 to 1.00;"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Interest Coverage Ratio as of the end of any Measurement Period ending as of the end of any fiscal quarter of the Borrower to be less than 3.00 to 1.00. 7.14 Canadian Defined Benefit Pension Plans ."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1289419/000128941922000019/morn_exhibitx102x09302022.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-10-31",
+      "items": "1.01,1.02,2.03,3.03,9.01",
+      "acc": "0001104659-25-104692",
+      "doc": "tm2529887d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-05-10",
+      "items": "1.01,2.03,3.03",
+      "acc": "0001104659-22-058246",
+      "doc": "tm2214974d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-04-04",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001104659-22-042328",
+      "doc": "tm2211481d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-20-118214",
+      "doc": "tm2034154-1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-07-06",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-20-080899",
+      "doc": "tm2024070d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2019-09-30",
+      545800000,
+      352800000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      530400000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      487700000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      484900000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      404200000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      374300000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      374300000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      504400000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      1176400000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      1157600000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      1131500000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      1153500000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      1055500000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      949400000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      899600000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      864700000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      803700000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      838800000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      848900000,
+      514500000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1712800000,
+      532200000,
+      null,
+      762700000,
+      568400000,
+      null
+    ],
+    [
+      "2026-06-30",
+      1713300000,
+      523800000,
+      null,
+      803200000,
+      603900000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2019-11",
+      0.0,
+      13.169,
+      0.2519,
+      76.9
+    ],
+    [
+      "2019-12",
+      0.0,
+      13.469,
+      0.2442,
+      75.4
+    ],
+    [
+      "2020-01",
+      0.0,
+      14.03,
+      0.2366,
+      72.6
+    ],
+    [
+      "2020-02",
+      0.0,
+      12.697,
+      0.2563,
+      79.4
+    ],
+    [
+      "2020-03",
+      0.08,
+      9.17,
+      0.331,
+      100.6
+    ],
+    [
+      "2020-04",
+      0.15,
+      8.858,
+      0.3584,
+      102.8
+    ],
+    [
+      "2020-05",
+      0.22,
+      8.679,
+      0.3772,
+      104.0
+    ],
+    [
+      "2020-06",
+      0.36,
+      8.393,
+      0.3829,
+      106.0
+    ],
+    [
+      "2020-07",
+      0.17,
+      8.852,
+      0.3872,
+      102.8
+    ],
+    [
+      "2020-08",
+      0.2,
+      8.767,
+      0.3871,
+      103.4
+    ],
+    [
+      "2020-09",
+      0.14,
+      8.924,
+      0.3772,
+      102.3
+    ],
+    [
+      "2020-10",
+      0.04,
+      9.619,
+      0.369,
+      97.6
+    ],
+    [
+      "2020-11",
+      0.05,
+      9.529,
+      0.3765,
+      98.2
+    ],
+    [
+      "2020-12",
+      0.03,
+      9.72,
+      0.379,
+      97.0
+    ],
+    [
+      "2021-01",
+      0.06,
+      9.421,
+      0.3938,
+      98.9
+    ],
+    [
+      "2021-02",
+      0.09,
+      9.261,
+      0.398,
+      100.0
+    ],
+    [
+      "2021-03",
+      0.0,
+      11.045,
+      0.3365,
+      88.7
+    ],
+    [
+      "2021-04",
+      0.0,
+      13.237,
+      0.3052,
+      76.6
+    ],
+    [
+      "2021-05",
+      0.0,
+      13.045,
+      0.3016,
+      77.5
+    ],
+    [
+      "2021-06",
+      0.0,
+      13.879,
+      0.2876,
+      73.3
+    ],
+    [
+      "2021-07",
+      0.0,
+      14.314,
+      0.2848,
+      71.2
+    ],
+    [
+      "2021-08",
+      0.0,
+      14.761,
+      0.2785,
+      69.1
+    ],
+    [
+      "2021-09",
+      0.0,
+      14.799,
+      0.2817,
+      68.9
+    ],
+    [
+      "2021-10",
+      0.0,
+      14.739,
+      0.291,
+      69.2
+    ],
+    [
+      "2021-11",
+      0.0,
+      15.166,
+      0.2818,
+      68.0
+    ],
+    [
+      "2021-12",
+      0.0,
+      16.084,
+      0.2716,
+      68.0
+    ],
+    [
+      "2022-01",
+      0.0,
+      14.624,
+      0.2849,
+      69.7
+    ],
+    [
+      "2022-02",
+      0.0,
+      15.258,
+      0.2748,
+      68.0
+    ],
+    [
+      "2022-03",
+      0.0,
+      14.493,
+      0.2863,
+      70.4
+    ],
+    [
+      "2022-04",
+      0.0,
+      13.421,
+      0.2846,
+      75.6
+    ],
+    [
+      "2022-05",
+      0.0,
+      13.508,
+      0.2852,
+      75.2
+    ],
+    [
+      "2022-06",
+      0.0,
+      12.208,
+      0.3116,
+      82.0
+    ],
+    [
+      "2022-07",
+      0.01,
+      9.769,
+      0.3153,
+      96.7
+    ],
+    [
+      "2022-08",
+      0.03,
+      9.232,
+      0.3249,
+      100.2
+    ],
+    [
+      "2022-09",
+      0.08,
+      8.687,
+      0.3372,
+      103.9
+    ],
+    [
+      "2022-10",
+      0.02,
+      9.208,
+      0.3292,
+      100.4
+    ],
+    [
+      "2022-11",
+      0.03,
+      9.191,
+      0.3344,
+      100.5
+    ],
+    [
+      "2022-12",
+      0.08,
+      8.595,
+      0.3447,
+      104.6
+    ],
+    [
+      "2023-01",
+      0.03,
+      9.067,
+      0.337,
+      101.3
+    ],
+    [
+      "2023-02",
+      0.16,
+      8.208,
+      0.3565,
+      107.4
+    ],
+    [
+      "2023-03",
+      0.28,
+      7.959,
+      0.3648,
+      109.2
+    ],
+    [
+      "2023-04",
+      0.93,
+      7.27,
+      0.3871,
+      114.3
+    ],
+    [
+      "2023-05",
+      0.54,
+      7.569,
+      0.3851,
+      112.1
+    ],
+    [
+      "2023-06",
+      0.27,
+      7.902,
+      0.3673,
+      109.6
+    ],
+    [
+      "2023-07",
+      0.3,
+      7.926,
+      0.383,
+      109.4
+    ],
+    [
+      "2023-08",
+      0.32,
+      7.853,
+      0.3806,
+      109.9
+    ],
+    [
+      "2023-09",
+      0.18,
+      8.164,
+      0.3719,
+      107.7
+    ],
+    [
+      "2023-10",
+      0.15,
+      8.291,
+      0.3695,
+      106.8
+    ],
+    [
+      "2023-11",
+      0.07,
+      8.726,
+      0.3725,
+      103.7
+    ],
+    [
+      "2023-12",
+      0.03,
+      9.171,
+      0.3579,
+      100.6
+    ],
+    [
+      "2024-01",
+      0.03,
+      9.197,
+      0.3536,
+      100.4
+    ],
+    [
+      "2024-02",
+      0.0,
+      10.14,
+      0.3286,
+      94.3
+    ],
+    [
+      "2024-03",
+      0.0,
+      11.237,
+      0.2998,
+      87.6
+    ],
+    [
+      "2024-04",
+      0.0,
+      13.137,
+      0.2596,
+      77.1
+    ],
+    [
+      "2024-05",
+      0.0,
+      13.218,
+      0.2585,
+      76.6
+    ],
+    [
+      "2024-06",
+      0.0,
+      13.759,
+      0.2501,
+      73.9
+    ],
+    [
+      "2024-07",
+      0.0,
+      15.212,
+      0.2353,
+      68.0
+    ],
+    [
+      "2024-08",
+      0.0,
+      15.71,
+      0.2255,
+      68.0
+    ],
+    [
+      "2024-09",
+      0.0,
+      16.739,
+      0.2121,
+      68.0
+    ],
+    [
+      "2024-10",
+      0.0,
+      17.352,
+      0.2095,
+      68.0
+    ],
+    [
+      "2024-11",
+      0.0,
+      17.92,
+      0.206,
+      68.0
+    ],
+    [
+      "2024-12",
+      0.0,
+      17.727,
+      0.2061,
+      68.0
+    ],
+    [
+      "2025-01",
+      0.0,
+      17.139,
+      0.2114,
+      68.0
+    ],
+    [
+      "2025-02",
+      -0.0,
+      18.509,
+      0.1937,
+      68.0
+    ],
+    [
+      "2025-03",
+      0.0,
+      16.911,
+      0.2087,
+      68.0
+    ],
+    [
+      "2025-04",
+      0.0,
+      15.411,
+      0.2258,
+      68.0
+    ],
+    [
+      "2025-05",
+      0.0,
+      15.708,
+      0.2302,
+      68.0
+    ],
+    [
+      "2025-06",
+      0.0,
+      15.366,
+      0.236,
+      68.0
+    ],
+    [
+      "2025-07",
+      0.0,
+      14.987,
+      0.2351,
+      68.1
+    ],
+    [
+      "2025-08",
+      0.0,
+      14.644,
+      0.2343,
+      69.6
+    ],
+    [
+      "2025-09",
+      0.0,
+      13.607,
+      0.2448,
+      74.7
+    ],
+    [
+      "2025-10",
+      0.0,
+      13.383,
+      0.2403,
+      75.8
+    ],
+    [
+      "2025-11",
+      0.0,
+      14.245,
+      0.2266,
+      71.5
+    ],
+    [
+      "2025-12",
+      0.0,
+      14.263,
+      0.2274,
+      71.4
+    ],
+    [
+      "2026-01",
+      0.0,
+      14.118,
+      0.225,
+      72.1
+    ],
+    [
+      "2026-02",
+      0.03,
+      9.24,
+      0.3318,
+      100.2
+    ],
+    [
+      "2026-03",
+      0.14,
+      8.416,
+      0.3487,
+      105.9
+    ],
+    [
+      "2026-04",
+      0.25,
+      8.165,
+      0.3705,
+      107.7
+    ],
+    [
+      "2026-05",
+      2.93,
+      6.51,
+      0.3748,
+      120.3
+    ],
+    [
+      "2026-06",
+      6.65,
+      5.911,
+      0.3924,
+      125.3
+    ],
+    [
+      "2026-07",
+      7.72,
+      5.88,
+      0.4184,
+      125.5
+    ],
+    [
+      "2026-08",
+      6.43,
+      6.041,
+      0.4221,
+      124.2
+    ],
+    [
+      "2026-09",
+      9.18,
+      5.735,
+      0.4309,
+      126.8
+    ],
+    [
+      "2026-10",
+      10.88,
+      5.675,
+      0.4524,
+      127.3
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,294 @@
+{
+  "cik": 1625641,
+  "ticker": "LAW",
+  "name": "CS Disco, Inc.",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "docs": {
+    "xbrl:0001625641-26-000044": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-02-25",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001625641-26-000162": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-05",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Prepackaged Software",
+  "snapshot": {
+    "cash": 10887000,
+    "investments": 90507000,
+    "finance_leases": 116000,
+    "operating_leases": 6855000,
+    "equity": 120159000,
+    "assets": 161388000,
+    "liabilities": 41229000,
+    "assets_current": 141577000,
+    "liabilities_current": 37513000,
+    "retained_earnings": -360078000,
+    "operating_income": -43013000,
+    "pretax_income": -39771000,
+    "net_income": -40443000,
+    "da": 3402000,
+    "ocf": -12974000,
+    "capex": 3415000,
+    "revenue": 167118000,
+    "shares": 64919765,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001625641-26-000044",
+  "xbrl_10-Q": "xbrl:0001625641-26-000162",
+  "events": [
+    {
+      "date": "2022-05-24",
+      "items": "1.01,2.03",
+      "acc": "0001625641-22-000065",
+      "doc": "law-20220519.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:39:07+00:00",
+  "signature": "0001625641-26-000162",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001625641-26-000162",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000162/law-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0829,
+      "receivables_growth": 0.1084,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.2528,
+      "dsri": 1.0235,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 156849000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        },
+        {
+          "value_usd": 144841000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 25622000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        },
+        {
+          "value_usd": 23117000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 5382000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        },
+        {
+          "value_usd": 4296000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -14936000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        },
+        {
+          "value_usd": -8749000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -44372000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        },
+        {
+          "value_usd": -55774000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001625641-26-000044",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000044/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ounts receivable was $ 1.0 million and $ 1.8 million as of June 30, 2026 and December 31, 2025, respectively. Unbilled receivables were $ 2.7 million and $ 2.8 million as of June 30, 2026 and December 31, 2025, respectively, and were included within accounts receivable on the una",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000162/law-20260630.htm",
+        "accession": "0001625641-26-000162",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "ive standalone selling price basis. Revenue is recognized over time as performance obligations are satisfied. Variable consideration is evaluated on a contract-by-contract basis, and a constraint is applied using the facts and circumstances of the contract when applicable. On a lim",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000162/law-20260630.htm",
+        "accession": "0001625641-26-000162",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": ",243 | 6,533 | Accrued legal loss (Note 8) | 11,500 | 11,500 | Accrued salary and benefits | 8,564 | 10,457 | Deferred revenue | 4,189 | 5,382 | Operating leases | 2,738 | 2,624 | Finance leases | 44 | 44 | Total current liabilities | 37,513 | 40,428 | Operating leases, non-c",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000162/law-20260630.htm",
+        "accession": "0001625641-26-000162",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001625641-26-000162",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001625641-26-000162",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "ounts receivable was $ 1.0 million and $ 1.8 million as of June 30, 2026 and December 31, 2025, respectively. Unbilled receivables were $ 2.7 million and $ 2.8 million as of June 30, 2026 and December 31, 2025, respectively, and were included within accounts receivable on the una",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000162/law-20260630.htm",
+      "accession": "0001625641-26-000162",
+      "form": "10-Q",
+      "filed": "2026-08-05"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "ive standalone selling price basis. Revenue is recognized over time as performance obligations are satisfied. Variable consideration is evaluated on a contract-by-contract basis, and a constraint is applied using the facts and circumstances of the contract when applicable. On a lim",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000162/law-20260630.htm",
+      "accession": "0001625641-26-000162",
+      "form": "10-Q",
+      "filed": "2026-08-05"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": ",243 | 6,533 | Accrued legal loss (Note 8) | 11,500 | 11,500 | Accrued salary and benefits | 8,564 | 10,457 | Deferred revenue | 4,189 | 5,382 | Operating leases | 2,738 | 2,624 | Finance leases | 44 | 44 | Total current liabilities | 37,513 | 40,428 | Operating leases, non-c",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1625641/000162564126000162/law-20260630.htm",
+      "accession": "0001625641-26-000162",
+      "form": "10-Q",
+      "filed": "2026-08-05"
+    }
+  ],
+  "revenue_quality_text_source": "0001625641-26-000162"
+}

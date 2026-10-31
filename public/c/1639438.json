@@ -1,0 +1,343 @@
+{
+  "cik": 1639438,
+  "ticker": "CAVA",
+  "name": "CAVA GROUP, INC.",
+  "sector": "consumer-disc",
+  "industry": "Retail-Eating  Places",
+  "sic": "5812",
+  "sic_description": "Retail-Eating  Places",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-25T23:05:16+00:00",
+  "price": 53.48,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.627901,
+  "snapshot": {
+    "cash": 322763000,
+    "operating_leases": 466248000,
+    "equity": 841276000,
+    "assets": 1499773000,
+    "liabilities": 658497000,
+    "assets_current": 479866000,
+    "liabilities_current": 193228000,
+    "retained_earnings": -207018000,
+    "interest_paid": 164000,
+    "operating_income": 72033000,
+    "pretax_income": 87362000,
+    "net_income": 66251000,
+    "da": 82467000,
+    "ocf": 220465000,
+    "capex": 171443000,
+    "revenue": 1373929000,
+    "debt_issued": 0,
+    "debt_repaid": 0,
+    "shares": 116806198,
+    "balance_date": "2026-07-12",
+    "latest_period": "2026-07-12"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (fiscal year)",
+    "debt_repaid": "RepaymentsOfDebt (fiscal year)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 322763000.0,
+    "net_debt": null,
+    "ebitda": 154500000,
+    "ebit": 72033000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1345.29878,
+    "fcf": 49022000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 149100000.0,
+    "liquidity": 471863000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 6.802554,
+    "market_cap": 6246795469.04,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "liquidity",
+        "direction": "min",
+        "limit": 15000000.0,
+        "unit": "usd",
+        "actual": 471863000.0,
+        "cushion": 0.968211,
+        "agreement": "Credit Agreement",
+        "dated": "2026-03-20",
+        "text": "On the last day of any Test Period (commencing with the Test Period ending December 26, 2021), the Borrower shall not permit Liquidity to be less than $15,000,000. [Reserved.] (d) Notwithstanding anything to the contrary in this Agreement (including Article VII ), upon any failure by the Borrower to comply with Section 6.10(a) , Section 6.10(b) and/or Section"
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-07-12",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-055864",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026055864/cava-20260712.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-12",
+    "metrics": {
+      "revenue_growth": 0.2241,
+      "receivables_growth": 0.3178,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.0058,
+      "dsri": 1.0765,
+      "ocf_to_net_income": 2.8998
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1179664000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2025-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        },
+        {
+          "value_usd": 963713000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2024-12-29",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 6324000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2025-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        },
+        {
+          "value_usd": 4799000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2024-12-29",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 6775000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2025-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        },
+        {
+          "value_usd": 6736000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2024-12-29",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 184840000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2025-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        },
+        {
+          "value_usd": 161027000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2024-12-29",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 63743000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2025-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        },
+        {
+          "value_usd": 130319000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-011296",
+          "filed": "2026-02-25",
+          "end": "2024-12-29",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026011296/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-28",
+      "2024-12-29"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "2022 Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-07-12",
+      "capacity": 149100000.0,
+      "spread_min": 0.0,
+      "spread_max": 0.0125,
+      "drawn": 0.0,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Delayed Draw Facility",
+      "kind": "revolver",
+      "as_of": "2026-07-12",
+      "fee_min": 0.002,
+      "fee_max": 0.003,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-07-12"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-03-25",
+      "agreement_kind": "amendment",
+      "dated": "2026-03-20",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "liquidity",
+          "limit": 15000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "On the last day of any Test Period (commencing with the Test Period ending December 26, 2021), the Borrower shall not permit Liquidity to be less than $15,000,000. [Reserved.] (d) Notwithstanding anything to the contrary in this Agreement (including Article VII ), upon any failure by the Borrower to comply with Section 6.10(a) , Section 6.10(b) and/or Section"
+        },
+        {
+          "type": "leverage",
+          "limit": 4.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Available Amount ” means, at any time, an amount equal to, without duplication: (a) the sum of: (i) an amount, not less than zero for any period, equal to the CNI Growth Amount ( provided that no amount shall be available pursuant to this clause (ii) (x) unless the Total Rent Adjusted Net Leverage Ratio does not exceed 4.50:1.00 on a Pro Forma Basis and (y) for any Restricted Payment made in reliance on Section 6.0"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1639438/000162828026020983/exhibit101cava-amendmentno.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-03-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-26-020983",
+      "doc": "cava-20260320.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

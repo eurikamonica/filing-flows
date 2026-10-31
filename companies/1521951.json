@@ -1,0 +1,215 @@
+{
+  "cik": 1521951,
+  "ticker": "FBIZ",
+  "name": "FIRST BUSINESS FINANCIAL SERVICES, INC.",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0001193125-26-071523": {
+      "instruments": [
+        {
+          "name": "Line Of Credit",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "capacity": 10500000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-25",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001193125-26-328468": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-07-31",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "total_debt": 346794000,
+    "cash": 163358000,
+    "operating_leases": 6698000,
+    "equity": 395307000,
+    "assets": 4410004000,
+    "liabilities": 4014697000,
+    "retained_earnings": 327028000,
+    "deposits": 3592165000,
+    "time_deposits": 612085000,
+    "interest_paid": 111146000,
+    "pretax_income": 64800000,
+    "net_income": 55506000,
+    "da": 3850000,
+    "ocf": 81395000,
+    "capex": 484000,
+    "deposit_interest": 98968000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 10000000,
+      "rest_of_year": 240912000,
+      "y2": 10450000,
+      "y3": 23543000,
+      "y4": 0
+    },
+    "shares": 8368320,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtAndCapitalLeaseObligations",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (four quarters)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2012-06-30",
+      "filed": "2012-07-27",
+      "total_debt": 52711000,
+      "cash": 13954000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 2629352,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2012-09-30",
+      "filed": "2012-10-26",
+      "total_debt": 49797000,
+      "cash": 17494000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 2656102,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2013-03-31",
+      "filed": "2013-04-26",
+      "total_debt": 37251000,
+      "cash": 12769000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 3918758,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 6698000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1521951/000119312526328468/fbiz-20260630.htm",
+        "accession": "0001193125-26-328468",
+        "form": "10-Q",
+        "filed": "2026-07-31",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 6698000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-328468",
+            "filed": "2026-07-31",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1521951/000119312526328468/fbiz-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-328468",
+      "form": "10-Q",
+      "filed": "2026-07-31",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1521951/000119312526328468/fbiz-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001193125-26-328468",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001193125-26-328468",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001193125-26-328468",
+  "xbrl_10-K": "xbrl:0001193125-26-071523",
+  "xbrl_10-Q": "xbrl:0001193125-26-328468",
+  "events": [
+    {
+      "date": "2019-08-15",
+      "items": "2.03,9.01",
+      "acc": "0001521951-19-000056",
+      "doc": "fbiz081519subdebt8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-06-15",
+      "items": "2.03,9.01",
+      "acc": "0000892712-17-000499",
+      "doc": "fbfs8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-29T22:55:55+00:00",
+  "signature": "0001193125-26-437781",
+  "fdic": {
+    "matched": false
+  }
+}

@@ -1,0 +1,786 @@
+{
+  "cik": 1668397,
+  "ticker": "MEDP",
+  "name": "Medpace Holdings, Inc.",
+  "sector": "industrials",
+  "industry": "Services-Commercial Physical & Biological Research",
+  "sic": "8731",
+  "docs": {
+    "xbrl:0001668397-26-000006": {
+      "instruments": [
+        {
+          "name": "Credit Facility",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "spread": 0.01,
+          "carrying": 0.0,
+          "reference": "Daily Simple Secured Overnight Financing Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-10",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001668397-26-000025": {
+      "instruments": [
+        {
+          "name": "Credit facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "spread": 0.01,
+          "carrying": 0.0,
+          "reference": "Daily Simple Secured Overnight Financing Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-07-23",
+      "report": "2026-06-30"
+    },
+    "0001564590-17-017945:medp-ex101_8.htm": {
+      "kind": "agreement",
+      "date": "2017-08-22",
+      "agreement_kind": "other"
+    },
+    "0001564590-16-030015:medp-ex101_42.htm": {
+      "kind": "agreement",
+      "date": "2016-12-08",
+      "agreement_kind": "credit_agreement",
+      "dated": "2016-12-08",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "EURIBOR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        2.25
+      ],
+      "margin_text": " a percentage per annum equal to, with respect to the Initial Term Loans and Revolving Credit Loans (a) from the Closing Date until the first Business Day that immediately follows the date on which a Compliance Certificate is delivered pursuant to Section 6.02(b) in respect of the first full fiscal quarter ending after the Closing Date, 1.50% per annum for Eurocurrency Rate Loans and Letter of Credit fees, and 0.50% per annum for Base Rate Loans, and (b) thereafter, for any day, the applicable percentage per annum set forth below, as determined by reference to the Total Net Leverage Ratio, as ",
+      "grid_by": "leverage",
+      "maturity": "2021-12-08",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "As of the end of each fiscal quarter of the Borrower (commencing with the first full fiscal quarter after the Closing Date), permit the Total Net Leverage Ratio as of the end of such fiscal quarter of the Borrower to be greater than 4.00:1.00."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "As of the end of each fiscal quarter of the Borrower (commencing with the first full fiscal quarter after the Closing Date), permit the Interest Coverage Ratio to be less than 3.00:1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "on which it objects)); and (d) the Restricted Group shall be in compliance, on a Pro Forma Basis after giving effect to the incurrence of such Indebtedness and any substantially concurrent prepayment or repayment of Indebtedness with all or a portion of the proceeds of such Indebtedness, with (i) a Secured Net Leverage Ratio of no greater than 3.00:1.00 and (ii) the financial covenants set forth in Section 7.10 , in"
+        }
+      ]
+    },
+    "xbrl:0001668397-26-000036": {
+      "instruments": [
+        {
+          "name": "Credit facility",
+          "kind": "revolver",
+          "as_of": "2026-09-30",
+          "spread": 0.01,
+          "carrying": 0.0,
+          "reference": "Daily Simple Secured Overnight Financing Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-10-22",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "Services-Commercial Physical & Biological Research",
+  "snapshot": {
+    "cash": 705315000,
+    "operating_leases": 171458000,
+    "equity": 584939000,
+    "assets": 2302595000,
+    "liabilities": 1717656000,
+    "assets_current": 1245000000,
+    "liabilities_current": 1496097000,
+    "retained_earnings": -373573000,
+    "operating_income": 607136000,
+    "pretax_income": 626993000,
+    "net_income": 517825000,
+    "da": 26625000,
+    "ocf": 723048000,
+    "capex": 55422000,
+    "revenue": 2838385000,
+    "stated_rate": 0.049,
+    "revolver_rate": 0.053,
+    "shares": 27971686,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd"
+  },
+  "history": [
+    {
+      "end": "2016-09-30",
+      "filed": "2016-11-03",
+      "total_debt": 154620000,
+      "cash": 14636000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 40719891,
+      "convertible": null,
+      "equity": 610540000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-03-31",
+      "filed": "2017-05-02",
+      "total_debt": 160636000,
+      "cash": 29316000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 40745840,
+      "convertible": null,
+      "equity": 620980000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-06-30",
+      "filed": "2017-08-01",
+      "total_debt": 157629000,
+      "cash": 29055000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 39486848,
+      "convertible": null,
+      "equity": 607358000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-09-30",
+      "filed": "2017-10-31",
+      "total_debt": 184621000,
+      "cash": 24168000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 37606244,
+      "convertible": null,
+      "equity": 550250000,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-03-31",
+      "filed": "2018-05-01",
+      "total_debt": 197567000,
+      "cash": 22245000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": 121358000,
+      "revenue": 492618000,
+      "shares": 35507414,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-06-30",
+      "filed": "2018-07-31",
+      "total_debt": 163521000,
+      "cash": 22230000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 35555874,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-09-30",
+      "filed": "2018-10-30",
+      "total_debt": 113689000,
+      "cash": 22244000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 35605064,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-03-31",
+      "filed": "2019-04-30",
+      "total_debt": 55781000,
+      "cash": 30127000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 35818819,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-06-30",
+      "filed": "2019-07-30",
+      "total_debt": 0,
+      "cash": 20098000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 35896510,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-09-30",
+      "filed": "2019-10-29",
+      "total_debt": 0,
+      "cash": 79290000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 36030398,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-12-31",
+      "filed": "2020-02-25",
+      "total_debt": 0,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 36092497,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001668397-26-000006",
+  "xbrl_10-Q": "xbrl:0001668397-26-000036",
+  "events": [
+    {
+      "date": "2025-07-21",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001668397-25-000085",
+      "doc": "medp-20250717.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-21",
+      "items": "1.01,2.02,8.01,9.01",
+      "acc": "0001668397-25-000056",
+      "doc": "medp-20250417.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-31",
+      "items": "1.01,9.01",
+      "acc": "0001668397-25-000037",
+      "doc": "medp-20250328.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-03-29",
+      "items": "1.01,9.01",
+      "acc": "0001668397-24-000066",
+      "doc": "medp-20240328.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-31",
+      "items": "1.01,9.01",
+      "acc": "0001668397-23-000012",
+      "doc": "medp-20230331.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-16",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000950170-22-003943",
+      "doc": "medp-20220315.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-12-29",
+      "items": "1.01,9.01",
+      "acc": "0000950170-21-005380",
+      "doc": "medp-20211227.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-03-30",
+      "items": "1.01,9.01",
+      "acc": "0001564590-21-016736",
+      "doc": "medp-8k_20210329.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-04-01",
+      "items": "1.01,9.01",
+      "acc": "0001564590-20-014790",
+      "doc": "medp-8k_20200330.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-10-01",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001564590-19-036111",
+      "doc": "medp-8k_20190930.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-24",
+      "items": "1.01,9.01",
+      "acc": "0001193125-18-257686",
+      "doc": "d613165d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-09",
+      "items": "1.01,9.01",
+      "acc": "0001193125-18-244499",
+      "doc": "d590002d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-06-13",
+      "items": "1.01,9.01",
+      "acc": "0001193125-18-191680",
+      "doc": "d607333d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-05-04",
+      "items": "1.01,9.01",
+      "acc": "0001193125-18-152812",
+      "doc": "d581478d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-12-05",
+      "items": "1.01,9.01",
+      "acc": "0001193125-17-361620",
+      "doc": "d698954d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-08-22",
+      "items": "1.01,9.01",
+      "acc": "0001564590-17-017945",
+      "doc": "medp-8k_20170816.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-12-08",
+      "items": "1.01,9.01",
+      "acc": "0001564590-16-030015",
+      "doc": "medp-8k_20161208.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T22:50:57+00:00",
+  "signature": "0001668397-26-000036",
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase",
+        "label": "Unconditional purchase obligations",
+        "class": "operating_commitment",
+        "amount_usd": 400000.0,
+        "reported_total": true,
+        "schedule": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+        "accession": "0001668397-26-000036",
+        "form": "10-Q",
+        "filed": "2026-10-22",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 400000.0,
+            "tag": "us-gaap:UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount",
+            "accession": "0001668397-26-000036",
+            "filed": "2026-10-22",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 171458000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+        "accession": "0001668397-26-000036",
+        "form": "10-Q",
+        "filed": "2026-10-22",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 171458000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001668397-26-000036",
+            "filed": "2026-10-22",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "pany has evaluated its relationship with the related party and concluded that the related party is not a variable interest entity because the Company has no direct ownership interest or relationship other than the lease. The lease was renewed in the first quarter of fiscal year",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+        "accession": "0001668397-26-000036",
+        "form": "10-Q",
+        "filed": "2026-10-22",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [
+      {
+        "key": "uncommenced_leases",
+        "label": "Additional uncommenced lease commitments (narrative total)",
+        "review_lane": "B",
+        "amount_kind": "disclosed_nominal_lease_commitment",
+        "amount_usd": 400000.0,
+        "payments": [],
+        "status": "narrative_amount_needs_review",
+        "confidence": "provisional",
+        "currency": "USD",
+        "as_of": "2026-09-30",
+        "filed": "2026-10-22",
+        "form": "10-Q",
+        "accession": "0001668397-26-000036",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+        "context": "As of September 30, 2026 , we have an additional lease with contractual obligations, which have not yet commenced , with future payments of $ 0.4 million",
+        "warning": "Narrative gross lease commitment, not commenced/recognized; no annual amounts reported here. Conditions and overlaps require review."
+      }
+    ],
+    "footnote_status": "candidate_tables_review_required",
+    "text_filing": {
+      "accession": "0001668397-26-000036",
+      "form": "10-Q",
+      "filed": "2026-10-22",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": 0.1997,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.2024,
+      "dsri": null,
+      "ocf_to_net_income": 1.581
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2530234000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001668397-26-000006",
+          "filed": "2026-02-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/"
+        },
+        {
+          "value_usd": 2109054000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001668397-26-000006",
+          "filed": "2026-02-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 854390000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001668397-26-000006",
+          "filed": "2026-02-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/"
+        },
+        {
+          "value_usd": 710585000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001668397-26-000006",
+          "filed": "2026-02-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 713223000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001668397-26-000006",
+          "filed": "2026-02-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/"
+        },
+        {
+          "value_usd": 608815000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001668397-26-000006",
+          "filed": "2026-02-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 451123000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001668397-26-000006",
+          "filed": "2026-02-10",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/"
+        },
+        {
+          "value_usd": 404386000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001668397-26-000006",
+          "filed": "2026-02-10",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "between Level 1, Level 2 or Level 3 during the three and nine months ended September 30, 2026 and 2025. (4) Contract Assets and Contract Liabilities Contract assets and liabilities are reflected in the Company’s condensed consolidated balance sheets within the accounts r",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+        "accession": "0001668397-26-000036",
+        "form": "10-Q",
+        "filed": "2026-10-22"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "mmitment, Medpace receives preferential pricing. The commitments expire at various times through 2030. (12) Related Party Transactions Employee Loans The Company periodically extends short term loans or advances to employees, typically upon commencement of employment. Total recei",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+        "accession": "0001668397-26-000036",
+        "form": "10-Q",
+        "filed": "2026-10-22"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "el 2 or Level 3 during the three and nine months ended September 30, 2026 and 2025. (4) Contract Assets and Contract Liabilities Contract assets and liabilities are reflected in the Company’s condensed consolidated balance sheets within the accounts reflected below. Contrac",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+        "accession": "0001668397-26-000036",
+        "form": "10-Q",
+        "filed": "2026-10-22"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "pany has evaluated its relationship with the related party and concluded that the related party is not a variable interest entity because the Company has no direct ownership interest or relationship other than the lease. The lease was renewed in the first quarter of fiscal year",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+      "accession": "0001668397-26-000036",
+      "form": "10-Q",
+      "filed": "2026-10-22",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001668397-26-000036",
+  "hidden_footnote_tables": [
+    {
+      "key": "uncommenced_leases",
+      "label": "Additional uncommenced lease commitments (narrative total)",
+      "review_lane": "B",
+      "amount_kind": "disclosed_nominal_lease_commitment",
+      "amount_usd": 400000.0,
+      "payments": [],
+      "status": "narrative_amount_needs_review",
+      "confidence": "provisional",
+      "currency": "USD",
+      "as_of": "2026-09-30",
+      "filed": "2026-10-22",
+      "form": "10-Q",
+      "accession": "0001668397-26-000036",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+      "context": "As of September 30, 2026 , we have an additional lease with contractual obligations, which have not yet commenced , with future payments of $ 0.4 million",
+      "warning": "Narrative gross lease commitment, not commenced/recognized; no annual amounts reported here. Conditions and overlaps require review."
+    }
+  ],
+  "hidden_leverage_phase2_source": "0001668397-26-000036",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "between Level 1, Level 2 or Level 3 during the three and nine months ended September 30, 2026 and 2025. (4) Contract Assets and Contract Liabilities Contract assets and liabilities are reflected in the Company’s condensed consolidated balance sheets within the accounts r",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+      "accession": "0001668397-26-000036",
+      "form": "10-Q",
+      "filed": "2026-10-22"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "mmitment, Medpace receives preferential pricing. The commitments expire at various times through 2030. (12) Related Party Transactions Employee Loans The Company periodically extends short term loans or advances to employees, typically upon commencement of employment. Total recei",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+      "accession": "0001668397-26-000036",
+      "form": "10-Q",
+      "filed": "2026-10-22"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "el 2 or Level 3 during the three and nine months ended September 30, 2026 and 2025. (4) Contract Assets and Contract Liabilities Contract assets and liabilities are reflected in the Company’s condensed consolidated balance sheets within the accounts reflected below. Contrac",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000036/medp-20260930.htm",
+      "accession": "0001668397-26-000036",
+      "form": "10-Q",
+      "filed": "2026-10-22"
+    }
+  ],
+  "revenue_quality_text_source": "0001668397-26-000036"
+}

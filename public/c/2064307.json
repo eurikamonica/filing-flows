@@ -1,0 +1,611 @@
+{
+  "cik": 2064307,
+  "ticker": "LOGC",
+  "name": "ContextLogic Holdings Inc.",
+  "sector": "materials",
+  "industry": "Mining & Quarrying of  Nonmetallic Minerals (No Fuels)",
+  "sic": "1400",
+  "sic_description": "Mining & Quarrying of  Nonmetallic Minerals (No Fuels)",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T01:41:41+00:00",
+  "price": 15.25,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.288164,
+  "snapshot": {
+    "total_debt": 211500000,
+    "current_debt": 2100000,
+    "cash": 11000000,
+    "finance_leases": 400000,
+    "operating_leases": 800000,
+    "equity": 291800000,
+    "assets": 968200000,
+    "liabilities": 232700000,
+    "assets_current": 39700000,
+    "liabilities_current": 21200000,
+    "retained_earnings": -3343800000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 2200000,
+      "rest_of_year": 1100000,
+      "y2": 2200000,
+      "y3": 2200000,
+      "y4": 2200000
+    },
+    "shares": 45753716,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 211500000,
+    "cash_and_investments": 11000000.0,
+    "net_debt": 200500000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 25000000.0,
+    "liquidity": 36000000.0,
+    "due_12m": 2200000,
+    "due_24m": 4400000,
+    "liquidity_to_due12": 16.363636,
+    "liquidity_to_due24": 8.181818,
+    "floating_debt": 211500000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 2115000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 697744169.0,
+    "debt_to_ev": 0.235459,
+    "convertibles": null,
+    "implied": {
+      "dd": 8.062723,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.129139,
+      "asset_vol": 0.251376,
+      "calibrated_5y_bps": 108.404754,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.05994,
+    "covenants": [],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 800000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000206430726000017/logc-20260630.htm",
+        "accession": "0002064307-26-000017",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 800000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0002064307-26-000017",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2064307/000206430726000017/logc-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "relationships with unconsolidated organizations or financial partnerships, such as structured finance or special purpose entities that would have been established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes.",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000206430726000017/logc-20260630.htm",
+        "accession": "0002064307-26-000017",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "subsidiary membership units - Rights Offering backstop | — | — | — | — | — | 89.3 | 89.3 | Conversion of redeemable noncontrolling interest to noncontrolling interest | — | — | — | — | — | 153.0 | 153.0 | Deferred taxes arising from changes in ownership | — | — | 1.3 | — | — | — | 1.3 | B",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000206430726000017/logc-20260630.htm",
+        "accession": "0002064307-26-000017",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "on of operating lease liability | 0.2 | 0.5 | Long-term portion of finance lease liability | 0.3 | 0.3 | Asset retirement obligations | 0.8 | 0.8 | Other noncurrent liabilities | 0.8 | — | Total liabilities | 232.7 | 222.6 | Commitments and contingencies (Note 14) | Members' equity",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000206430726000017/logc-20260630.htm",
+        "accession": "0002064307-26-000017",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002064307-26-000017",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000206430726000017/logc-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -1.0,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-094012",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000119312526094012/"
+        },
+        {
+          "value_usd": 43000000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-094012",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000119312526094012/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -16000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-094012",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000119312526094012/"
+        },
+        {
+          "value_usd": -94000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-094012",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000119312526094012/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -23000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-094012",
+          "filed": "2026-03-05",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000119312526094012/"
+        },
+        {
+          "value_usd": -75000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-094012",
+          "filed": "2026-03-05",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000119312526094012/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets, which amends the guidance in ASC 326 to simplify the estimation of credit losses on current accounts receivable and current contract assets arising",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000206430726000017/logc-20260630.htm",
+        "accession": "0002064307-26-000017",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "Company’s revenue is reported as net sales and is measured as the determinable transaction price, net of any variable consideration such as discounts, sales incentives, rights to return product, and any taxes collected from customers and remitted to governmental authorities. Refer",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2064307/000206430726000017/logc-20260630.htm",
+        "accession": "0002064307-26-000017",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 215000000.0,
+      "floating": true
+    },
+    {
+      "name": "Ares Capital Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "effective": 0.094,
+      "spread": 0.054,
+      "spread_min": 0.055,
+      "spread_max": 0.0565,
+      "maturity": "2026-07-19",
+      "drawn": 0.0,
+      "reference": "Interest Rate Floor",
+      "floating": true
+    },
+    {
+      "name": "Wilmington Trust Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "effective": 0.0798,
+      "spread_min": 0.04,
+      "spread_max": 0.045,
+      "maturity": "2033-02-26",
+      "drawn": 0.0,
+      "reference": "SOFR Overnight Index Swap Rate",
+      "floating": true
+    },
+    {
+      "name": "Senior Secured Debt",
+      "kind": "notes",
+      "as_of": "2025-12-08",
+      "spread": 0.015,
+      "fee": 0.015,
+      "face": 215000000.0,
+      "reference": "Base Rate",
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-08",
+      "capacity": 25000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Letter Of Credit",
+      "kind": "other",
+      "as_of": "2025-12-08",
+      "capacity": 10000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "coupon_min": 0.04,
+      "coupon_max": 0.045,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-03-05",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-02-26",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.375,
+        4.5
+      ],
+      "grid_by": "leverage",
+      "floor_pct": 0.75,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Applicable Discount ” has the meaning set forth in Section 2.05(a)(v)(C)(2) . 3 “ Applicable ECF Percentage ” means, for any Fiscal Year, (a) 50%, if the Consolidated First Lien Net Leverage Ratio as of the last day of such Fiscal Year is greater than 3.00:1.00, (b) 25%, if the Consolidated First Lien Net Leverage Ratio as of the last day of such Fiscal Year is less than or equal to 3.00:1.00 and greater than 2.50:"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Applicable Discount ” has the meaning set forth in Section 2.05(a)(v)(C)(2) . 3 “ Applicable ECF Percentage ” means, for any Fiscal Year, (a) 50%, if the Consolidated First Lien Net Leverage Ratio as of the last day of such Fiscal Year is greater than 3.00:1.00, (b) 25%, if the Consolidated First Lien Net Leverage Ratio as of the last day of such Fiscal Year is less than or equal to 3.00:1.00 and greater than 2.50:"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2064307/000119312526094012/logc-ex10_26.htm",
+      "all_in_pct": [
+        0.4139,
+        4.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-02-26",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-02-26",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.375,
+        4.5
+      ],
+      "grid_by": "leverage",
+      "floor_pct": 0.75,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Applicable Discount ” has the meaning set forth in Section 2.05(a)(v)(C)(2) . 3 “ Applicable ECF Percentage ” means, for any Fiscal Year, (a) 50%, if the Consolidated First Lien Net Leverage Ratio as of the last day of such Fiscal Year is greater than 3.00:1.00, (b) 25%, if the Consolidated First Lien Net Leverage Ratio as of the last day of such Fiscal Year is less than or equal to 3.00:1.00 and greater than 2.50:"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Applicable Discount ” has the meaning set forth in Section 2.05(a)(v)(C)(2) . 3 “ Applicable ECF Percentage ” means, for any Fiscal Year, (a) 50%, if the Consolidated First Lien Net Leverage Ratio as of the last day of such Fiscal Year is greater than 3.00:1.00, (b) 25%, if the Consolidated First Lien Net Leverage Ratio as of the last day of such Fiscal Year is less than or equal to 3.00:1.00 and greater than 2.50:"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2064307/000114036126006990/ef20066612_ex10-6.htm",
+      "all_in_pct": [
+        0.4139,
+        4.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-12-11",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-12-08",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.5,
+        4.5
+      ],
+      "grid_by": "leverage",
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ined by the Declining Lenders as described in this Term Sheet); provided that (A) after giving pro forma effect to any restricted payment or prepayment of Junior Debt, (x) no event of default has occurred and is continuing and (y) solely to the extent made in reliance on the Retained ECF Prong, the Consolidated Net Leverage Ratio does not exceed 3.50:1.00 and (B) after giving effect to any investment made in reliance"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2064307/000114036125045178/ef20060968_ex10-4.htm",
+      "all_in_pct": [
+        0.5389,
+        4.5389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-10-22",
+      "items": "1.01,8.01,9.01",
+      "acc": "0002064307-26-000020",
+      "doc": "logc-20261022.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-05",
+      "items": "1.01,2.02,8.01,9.01",
+      "acc": "0001193125-26-333861",
+      "doc": "logc-20260804.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-26",
+      "items": "1.01,2.01,2.03,3.02,5.02,8.01,9.01",
+      "acc": "0001140361-26-006990",
+      "doc": "ef20066612_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-11",
+      "items": "1.01,3.02,5.02,9.01",
+      "acc": "0001140361-25-045178",
+      "doc": "ef20060968_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-07",
+      "items": "1.01,2.01,3.03,5.01,5.02,7.01,8.01,9.01",
+      "acc": "0000950170-25-104267",
+      "doc": "logc-20250806.htm",
+      "desc": "8-K12G3"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      211400000,
+      12000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      211500000,
+      11000000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-05",
+      5.45,
+      5.819,
+      0.3387,
+      126.1
+    ],
+    [
+      "2026-06",
+      0.17,
+      7.779,
+      0.2564,
+      110.5
+    ],
+    [
+      "2026-07",
+      0.02,
+      8.726,
+      0.2341,
+      103.7
+    ],
+    [
+      "2026-08",
+      0.17,
+      7.891,
+      0.2804,
+      109.7
+    ],
+    [
+      "2026-09",
+      0.17,
+      7.914,
+      0.2914,
+      109.5
+    ],
+    [
+      "2026-10",
+      0.12,
+      8.087,
+      0.2882,
+      108.2
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

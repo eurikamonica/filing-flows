@@ -1,0 +1,612 @@
+{
+  "cik": 1528396,
+  "ticker": "GWRE",
+  "name": "Guidewire Software, Inc.",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "docs": {
+    "xbrl:0001528396-26-000046": {
+      "instruments": [
+        {
+          "name": "2029 Convertible Senior Notes",
+          "kind": "convertible",
+          "as_of": "2026-07-31",
+          "conv_ratio": 0.0040875,
+          "coupon": 0.0125,
+          "conv_price": 244.65,
+          "fair_value": 709900000.0,
+          "carrying": 690000000.0,
+          "effective": 0.018,
+          "floating": false
+        },
+        {
+          "name": "Convertible Debt",
+          "kind": "convertible",
+          "as_of": "2026-07-31",
+          "carrying": 678094000.0,
+          "floating": false
+        },
+        {
+          "name": "2025 Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-07-31",
+          "spread_min": 0.0025,
+          "spread_max": 0.0125,
+          "fee_min": 0.00175,
+          "fee_max": 0.003,
+          "drawn": 0.0,
+          "reference": "Alternative Currency Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-09-11",
+      "report": "2026-07-31"
+    },
+    "0001193125-18-075962:d549810dfwp.htm": {
+      "kind": "fwp",
+      "date": "2018-03-09",
+      "tranches": [
+        {
+          "title": "$360,000,000 Aggregate Principal Amount of 1.250% Convertible Senior Notes due 2025",
+          "floating": false,
+          "coupon": 1.25,
+          "principal": 360000000.0,
+          "currency": "USD",
+          "maturity": "2025-03-15",
+          "trade_date": "2018-03-08",
+          "convertible": true,
+          "conv_price": 113.75,
+          "conv_rate": 8.7912,
+          "conv_premium": 30.0,
+          "cusip": "40171V AA8"
+        }
+      ]
+    },
+    "0001528396-24-000160:exhibit101toxcreditagreeme.htm": {
+      "kind": "agreement",
+      "date": "2024-12-05",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-12-02",
+      "size": 300000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "maturity": "2029-12-02",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Leverage Ratio as of the end of any fiscal quarter of the Borrower, commencing with the first fiscal quarter of the Borrower ending on or after the Effective Date, to be greater than 3.75:1.00;"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Interest Coverage Ratio as of the end of any fiscal quarter of the Borrower, commencing with the first fiscal quarter of the Borrower ending on or after the Effective Date, to be less than 3.00:1.00. 124 8.12 Other Indebtedness ."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "or related series of Indebtedness (including the Existing Convertible Notes), taken in the aggregate, exceeds the greater of (x) $107,500,000 and (y) 50% of TTM Consolidated EBITDA; provided , that , if on such 91 st day and each subsequent day until such Indebtedness is paid in full either (x) the Consolidated Leverage Ratio does not exceed 2.00:1.00 (recalculated as of the last day of the most recently ended period"
+        }
+      ]
+    }
+  },
+  "sic_description": "Services-Prepackaged Software",
+  "snapshot": {
+    "cash": 372887000,
+    "investments": 380175000,
+    "operating_leases": 36893000,
+    "equity": 1193687000,
+    "assets": 2576946000,
+    "liabilities": 1383258000,
+    "assets_current": 1186977000,
+    "liabilities_current": 664497000,
+    "retained_earnings": -1024396000,
+    "interest_expense": 13324000,
+    "interest_paid": 9298000,
+    "operating_income": 149874000,
+    "pretax_income": 164117000,
+    "net_income": 139283000,
+    "da": 27952000,
+    "ocf": 389716000,
+    "capex": 12056000,
+    "revenue": 1475363000,
+    "maturities": {
+      "as_of": "2026-07-31",
+      "next12m": 8625000,
+      "y2": 8625000,
+      "y3": 8625000,
+      "y4": 694313000
+    },
+    "effective_rate": 0.0553,
+    "conversion_price": 113.75,
+    "if_converted_shares": 785004,
+    "shares": 81992669,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "ProfitLoss (fiscal year)",
+    "da": "DepreciationAndAmortization (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (fiscal year)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "history": [
+    {
+      "end": "2024-07-31",
+      "filed": "2024-09-16",
+      "total_debt": 398903000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 83025888,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001528396-26-000046",
+  "events": [
+    {
+      "date": "2024-12-05",
+      "items": "1.01,2.02,2.03,9.01",
+      "acc": "0001528396-24-000160",
+      "doc": "gwre-20241202.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-10-18",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001193125-24-239688",
+      "doc": "d869983d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-03",
+      "items": "1.01,9.01",
+      "acc": "0001528396-23-000024",
+      "doc": "gwre-20230302.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T23:02:42+00:00",
+  "signature": "0001528396-26-000057",
+  "hidden_leverage": {
+    "as_of": "2026-07-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase_broad",
+        "label": "Purchase obligations, gross (potential overlap)",
+        "class": "operating_commitment",
+        "amount_usd": 283701000.0,
+        "reported_total": true,
+        "schedule": [
+          218069000.0,
+          55100000.0,
+          9437000.0,
+          592000.0,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+        "accession": "0001528396-26-000046",
+        "form": "10-K",
+        "filed": "2026-09-11",
+        "as_of": "2026-07-31",
+        "evidence": [
+          {
+            "value_usd": 283701000.0,
+            "tag": "us-gaap:PurchaseObligation",
+            "accession": "0001528396-26-000046",
+            "filed": "2026-09-11",
+            "form": "10-K",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm"
+          },
+          {
+            "value_usd": 218069000.0,
+            "tag": "us-gaap:PurchaseObligationDueInNextTwelveMonths",
+            "accession": "0001528396-26-000046",
+            "filed": "2026-09-11",
+            "form": "10-K",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm"
+          },
+          {
+            "value_usd": 55100000.0,
+            "tag": "us-gaap:PurchaseObligationDueInSecondYear",
+            "accession": "0001528396-26-000046",
+            "filed": "2026-09-11",
+            "form": "10-K",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm"
+          },
+          {
+            "value_usd": 9437000.0,
+            "tag": "us-gaap:PurchaseObligationDueInThirdYear",
+            "accession": "0001528396-26-000046",
+            "filed": "2026-09-11",
+            "form": "10-K",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm"
+          },
+          {
+            "value_usd": 592000.0,
+            "tag": "us-gaap:PurchaseObligationDueInFourthYear",
+            "accession": "0001528396-26-000046",
+            "filed": "2026-09-11",
+            "form": "10-K",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 36893000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+        "accession": "0001528396-26-000046",
+        "form": "10-K",
+        "filed": "2026-09-11",
+        "as_of": "2026-07-31",
+        "evidence": [
+          {
+            "value_usd": 36893000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001528396-26-000046",
+            "filed": "2026-09-11",
+            "form": "10-K",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "olidated entities or financial partnerships, such as entities often referred to as structured finance or special purpose entities, which would have been established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes.",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+        "accession": "0001528396-26-000046",
+        "form": "10-K",
+        "filed": "2026-09-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001528396-26-000046",
+      "form": "10-K",
+      "filed": "2026-09-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-31",
+    "metrics": {
+      "revenue_growth": 0.227,
+      "receivables_growth": 0.3774,
+      "contract_assets_growth": 0.0754,
+      "contract_liabilities_growth": 0.2727,
+      "dsri": 1.1226,
+      "ocf_to_net_income": 2.798
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1475363000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        },
+        {
+          "value_usd": 1202459000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 193720000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        },
+        {
+          "value_usd": 140639000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        }
+      ],
+      "contract_assets": [
+        {
+          "value_usd": 140832000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        },
+        {
+          "value_usd": 130959000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        }
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 438814000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        },
+        {
+          "value_usd": 344786000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 389716000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        },
+        {
+          "value_usd": 300867000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 139283000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        },
+        {
+          "value_usd": 69804000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001528396-26-000046",
+          "filed": "2026-09-11",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "attrition, hiring and onboarding necessary personnel, allowance for collectibility of accounts receivable and unbilled receivables, and the change in fair value of strategic investments. Additionally, inflation levels and political uncertainty are impacting the global economy and",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+        "accession": "0001528396-26-000046",
+        "form": "10-K",
+        "filed": "2026-09-11"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "deration may vary due to discounts, incentives, and potential service level credits or contractual penalties. Variable consideration is estimated and included in the transaction price if, in the Company’s judgment, it is probable that there will not be a significant future reversal",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+        "accession": "0001528396-26-000046",
+        "form": "10-K",
+        "filed": "2026-09-11"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "ces, which may require an allocation of the transaction price to each performance obligation. Additionally, contract modifications for products that are distinct but are not priced commensurate with their SSP or are not distinct from the existing contract may affect the initial t",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+        "accession": "0001528396-26-000046",
+        "form": "10-K",
+        "filed": "2026-09-11"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "evenue reversal is not probable to occur. The Company elected the practical expedient to evaluate whether a significant financing component exists when the contract term is greater than one year and the timing of revenue recognition occurs in advance of invoicing. This timing difference o",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+        "accession": "0001528396-26-000046",
+        "form": "10-K",
+        "filed": "2026-09-11"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "hen compared to term license sales, the revenue we recognize in the initial fiscal year of an order is lower, deferred revenue is higher, and our total reported revenue growth may be adversely affected in the near term due to the ratable nature of these arrangements. Over tim",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+        "accession": "0001528396-26-000046",
+        "form": "10-K",
+        "filed": "2026-09-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-07-31",
+      "2025-07-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "olidated entities or financial partnerships, such as entities often referred to as structured finance or special purpose entities, which would have been established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes.",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+      "accession": "0001528396-26-000046",
+      "form": "10-K",
+      "filed": "2026-09-11",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001528396-26-000046",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001528396-26-000046",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "attrition, hiring and onboarding necessary personnel, allowance for collectibility of accounts receivable and unbilled receivables, and the change in fair value of strategic investments. Additionally, inflation levels and political uncertainty are impacting the global economy and",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+      "accession": "0001528396-26-000046",
+      "form": "10-K",
+      "filed": "2026-09-11"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "deration may vary due to discounts, incentives, and potential service level credits or contractual penalties. Variable consideration is estimated and included in the transaction price if, in the Company’s judgment, it is probable that there will not be a significant future reversal",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+      "accession": "0001528396-26-000046",
+      "form": "10-K",
+      "filed": "2026-09-11"
+    },
+    {
+      "key": "contract_modification",
+      "label": "Contract modifications",
+      "excerpt": "ces, which may require an allocation of the transaction price to each performance obligation. Additionally, contract modifications for products that are distinct but are not priced commensurate with their SSP or are not distinct from the existing contract may affect the initial t",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+      "accession": "0001528396-26-000046",
+      "form": "10-K",
+      "filed": "2026-09-11"
+    },
+    {
+      "key": "significant_financing",
+      "label": "Significant financing component",
+      "excerpt": "evenue reversal is not probable to occur. The Company elected the practical expedient to evaluate whether a significant financing component exists when the contract term is greater than one year and the timing of revenue recognition occurs in advance of invoicing. This timing difference o",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+      "accession": "0001528396-26-000046",
+      "form": "10-K",
+      "filed": "2026-09-11"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "hen compared to term license sales, the revenue we recognize in the initial fiscal year of an order is lower, deferred revenue is higher, and our total reported revenue growth may be adversely affected in the near term due to the ratable nature of these arrangements. Over tim",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1528396/000152839626000046/gwre-20260731.htm",
+      "accession": "0001528396-26-000046",
+      "form": "10-K",
+      "filed": "2026-09-11"
+    }
+  ],
+  "revenue_quality_text_source": "0001528396-26-000046"
+}

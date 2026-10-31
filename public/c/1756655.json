@@ -1,0 +1,722 @@
+{
+  "cik": 1756655,
+  "ticker": "ARDT",
+  "name": "Ardent Health, Inc.",
+  "sector": "health",
+  "industry": "Services-General Medical & Surgical Hospitals, NEC",
+  "sic": "8062",
+  "sic_description": "Services-General Medical & Surgical Hospitals, NEC",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-25T21:09:02+00:00",
+  "price": 12.03,
+  "price_date": "2026-10-30",
+  "equity_vol": 0.589394,
+  "snapshot": {
+    "total_debt": 1101782000,
+    "current_debt": 28572000,
+    "cash": 724476000,
+    "finance_leases": 20749000,
+    "equity": 1350548000,
+    "assets": 5280078000,
+    "liabilities": 3538674000,
+    "assets_current": 2054876000,
+    "liabilities_current": 976323000,
+    "retained_earnings": 558356000,
+    "pretax_income": 207962000,
+    "net_income": 78227000,
+    "da": 164521000,
+    "ocf": 514320000,
+    "revenue": 6405940000,
+    "debt_repaid": 12029000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 23444000,
+      "y2": 15121000,
+      "y3": 12546000,
+      "y4": 311558000,
+      "y5": 8605000,
+      "after5": 744687000
+    },
+    "shares": 141045907,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 1101782000,
+    "cash_and_investments": 724476000.0,
+    "net_debt": 377306000.0,
+    "ebitda": 372483000.0,
+    "ebit": 207962000.0,
+    "interest_expense": null,
+    "leverage": 2.957939,
+    "net_leverage": 1.012948,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 514320000.0,
+    "fcf_to_debt": 0.466807,
+    "effective_rate": null,
+    "revolver_available": 325000000.0,
+    "liquidity": 1049476000.0,
+    "due_12m": 23444000,
+    "due_24m": 38565000,
+    "liquidity_to_due12": 44.765228,
+    "liquidity_to_due24": 27.213173,
+    "floating_debt": 1101782000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 11017820.0,
+    "plus100bp_share_of_ebit": 0.05298,
+    "altman_z": 2.024069,
+    "market_cap": 1696782261.21,
+    "debt_to_ev": 0.531213,
+    "convertibles": null,
+    "implied": {
+      "dd": 2.953208,
+      "pd_1y": 0.001572,
+      "spread_5y_bps": 169.714106,
+      "asset_vol": 0.447201,
+      "calibrated_5y_bps": 152.844452,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.064384,
+    "covenants": [],
+    "cushion_score": 75
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "1, 2025 , the unaudited condensed consolidated balance sheets included total liabilities of consolidated variable interest entities of $ 331.2 million and $ 335.1 million , respectively. Refer to Note 2 , Summary of Significant Accounting Policies , for further discussion. The",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026055215/ardt-20260630.htm",
+        "accession": "0001628280-26-055215",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "824 | 76,636 | Total liabilities | 3,538,674 | 3,605,244 | Commitments and contingencies (see Note 9 ) | Redeemable noncontrolling interests | ( 4,658 ) | ( 1,250 ) | Equity: | Preferred stock, par value $ 0.01 per share; 50,000,000 shares authorized; no shares issued and outstanding | — |",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026055215/ardt-20260630.htm",
+        "accession": "0001628280-26-055215",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-055215",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026055215/ardt-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0601,
+      "receivables_growth": -0.0766,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.8711,
+      "ocf_to_net_income": 3.4644
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 6324339000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001628280-26-018174",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026018174/"
+        },
+        {
+          "value_usd": 5966072000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001628280-26-018174",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026018174/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 686102000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001628280-26-018174",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026018174/"
+        },
+        {
+          "value_usd": 743031000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001628280-26-018174",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026018174/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 470510000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-018174",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026018174/"
+        },
+        {
+          "value_usd": 315026000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001628280-26-018174",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026018174/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 135811000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-018174",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026018174/"
+        },
+        {
+          "value_usd": 210343000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001628280-26-018174",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026018174/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "nal shares that would have been outstanding if the potential shares had been issued and were dilutive. 3. Related Party Transactions Effective August 4, 2015, Ventas, Inc. (\"Ventas\"), through certain wholly-owned affiliates, acquired ownership of the Company’s real estate in ex",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026055215/ardt-20260630.htm",
+        "accession": "0001628280-26-055215",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Senior Secured Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 766987000.0,
+      "fair_value": 770821000.0,
+      "floating": true
+    },
+    {
+      "name": "5.75% Senior Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0575,
+      "carrying": 299731000.0,
+      "fair_value": 295610000.0,
+      "floating": false
+    },
+    {
+      "name": "Other debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 24491000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior secured term loan facility",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "carrying": 770499000.0,
+      "fair_value": 770499000.0,
+      "floating": true,
+      "spread": 0.0125,
+      "reference": "SOFR",
+      "from_10k": true
+    },
+    {
+      "name": "2021 ABL Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 325000000.0,
+      "spread": 0.005,
+      "coupon": 0.01,
+      "coupon_max": 0.0,
+      "reference": "Federal Funds Effective Swap Rate",
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-09-23",
+      "agreement_kind": "amendment",
+      "dated": "2025-09-18",
+      "title": "Amended And Restated Abl Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        2.5,
+        3.0
+      ],
+      "fee_pct": 0.375,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Permitted Merger ” has the meaning set forth in Section 8.04 . -44- “ Permitted Sale Leaseback ” means any Sale and Leaseback Transaction consummated by any Borrower or any Restricted Subsidiary after the Original Closing Date; provided that (a) no Default or Event of Default shall have occurred or be continuing or would result therefrom, (b) after giving pro forma effect thereto, the Senior Secured Net Leverage Ra"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "iary, provided further that the Company shall only be permitted to so designate a new Unrestricted Subsidiary after the Effective Date so long as (a) no Default or Event of Default has occurred and is continuing or would result therefrom, (b) immediately after giving effect to such designation, the Fixed Charge Coverage Ratio shall not be less than 2.00:1.00, (c) such Subsidiary or any of its Subsidiaries has not Gua"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828025042486/ex102-amendment5toablcredi.htm",
+      "all_in_pct": [
+        2.5389,
+        3.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-09-23",
+      "agreement_kind": "amendment",
+      "dated": "2025-09-18",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        2.25,
+        3.5
+      ],
+      "fee_pct": 1.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Permitted Sale Leaseback ” means any Sale and Leaseback Transaction consummated by the Borrower or any Restricted Subsidiary after the Original Closing Date; provided that (a) no Default or Event of Default shall have occurred or be continuing or would result therefrom, (b) after giving pro forma effect thereto, the Senior Secured Net Leverage Ratio (calculated on a Pro Forma Basis) does not exceed 3.75:1.00, (c) n"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "s in reimbursement of, or otherwise in connection with, costs incurred by the Loan Parties in support of the recovery of the Bay Medical facility); provided that such percentage shall be reduced to (i) fifty percent (50%) if on the date such Disposition or Involuntary Disposition is consummated the Senior Secured Net Leverage Ratio (calculated on a Pro Forma Basis) is less than or equal to 2.25:1:00 as of the last da"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "provided further that the Borrower shall only be permitted to so designate a new Unrestricted Subsidiary after the Effective Date so long as (a) no Default or Event of Default has occurred and is continuing or -46- would result therefrom, (b) immediately after giving effect to such designation, the Fixed Charge Coverage Ratio shall not be less than 2.00:1.00, (c) such Subsidiary or any of its Subsidiaries has not Gua"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828025042486/ex101-amendment3totermloan.htm",
+      "all_in_pct": [
+        2.2889,
+        3.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-11-07",
+      "agreement_kind": "amendment",
+      "dated": "2024-09-18",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        0.25,
+        3.5
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Permitted Sale Leaseback ” means any Sale and Leaseback Transaction consummated by the Borrower or any Restricted Subsidiary after the Original Closing Date; provided that (a) no Default or Event of Default shall have occurred or be continuing or would result therefrom, (b) after giving pro forma effect thereto, the Senior Secured Net Leverage Ratio (calculated on a Pro Forma Basis) does not exceed 3.75:1.00, (c) n"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1756655/000175665524000017/ardt-exhibit1014xq324.htm",
+      "all_in_pct": [
+        0.2889,
+        3.5389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-09-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-25-042486",
+      "doc": "ardt-20250918.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-06-30",
+      1092688000,
+      334538000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      1095892000,
+      563142000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      1108308000,
+      495044000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1109723000,
+      540629000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1106365000,
+      609441000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1110400000,
+      609692000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      1101782000,
+      724476000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2024-10",
+      41.54,
+      4.396,
+      0.464,
+      138.7
+    ],
+    [
+      "2024-11",
+      26.72,
+      4.689,
+      0.4241,
+      136.0
+    ],
+    [
+      "2024-12",
+      17.74,
+      5.026,
+      0.4038,
+      133.0
+    ],
+    [
+      "2025-01",
+      23.17,
+      4.779,
+      0.4092,
+      135.2
+    ],
+    [
+      "2025-02",
+      19.31,
+      4.912,
+      0.3962,
+      134.0
+    ],
+    [
+      "2025-03",
+      17.08,
+      4.956,
+      0.3813,
+      133.6
+    ],
+    [
+      "2025-04",
+      18.21,
+      4.895,
+      0.3801,
+      134.1
+    ],
+    [
+      "2025-05",
+      17.71,
+      4.962,
+      0.39,
+      133.5
+    ],
+    [
+      "2025-06",
+      22.59,
+      4.771,
+      0.3981,
+      135.3
+    ],
+    [
+      "2025-07",
+      63.34,
+      3.847,
+      0.4588,
+      143.9
+    ],
+    [
+      "2025-08",
+      56.28,
+      4.031,
+      0.4557,
+      142.2
+    ],
+    [
+      "2025-09",
+      55.46,
+      4.077,
+      0.4563,
+      141.7
+    ],
+    [
+      "2025-10",
+      47.86,
+      4.238,
+      0.4519,
+      140.2
+    ],
+    [
+      "2025-11",
+      258.95,
+      2.449,
+      0.6432,
+      158.1
+    ],
+    [
+      "2025-12",
+      253.75,
+      2.5,
+      0.6396,
+      157.6
+    ],
+    [
+      "2026-01",
+      251.64,
+      2.454,
+      0.6311,
+      158.1
+    ],
+    [
+      "2026-02",
+      252.27,
+      2.515,
+      0.6392,
+      157.4
+    ],
+    [
+      "2026-03",
+      263.34,
+      2.412,
+      0.6482,
+      158.5
+    ],
+    [
+      "2026-04",
+      258.61,
+      2.492,
+      0.6493,
+      157.7
+    ],
+    [
+      "2026-05",
+      250.41,
+      2.496,
+      0.6407,
+      157.6
+    ],
+    [
+      "2026-06",
+      247.48,
+      2.524,
+      0.6431,
+      157.3
+    ],
+    [
+      "2026-07",
+      194.18,
+      2.806,
+      0.602,
+      154.4
+    ],
+    [
+      "2026-08",
+      175.75,
+      2.908,
+      0.5865,
+      153.3
+    ],
+    [
+      "2026-09",
+      172.9,
+      2.884,
+      0.5854,
+      153.6
+    ],
+    [
+      "2026-10",
+      167.85,
+      2.976,
+      0.5894,
+      152.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

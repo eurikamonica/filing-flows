@@ -1,0 +1,689 @@
+{
+  "cik": 1718500,
+  "ticker": "AXIL",
+  "name": "Axil Brands, Inc.",
+  "sector": "consumer-staples",
+  "industry": "Perfumes, Cosmetics & Other Toilet Preparations",
+  "sic": "2844",
+  "sic_description": "Perfumes, Cosmetics & Other Toilet Preparations",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:06:48+00:00",
+  "price": 5.7,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.751299,
+  "snapshot": {
+    "total_debt": 138459,
+    "cash": 5518989,
+    "operating_leases": 352476,
+    "equity": 13737511,
+    "assets": 18583710,
+    "liabilities": 4696529,
+    "assets_current": 14729674,
+    "liabilities_current": 4454273,
+    "retained_earnings": 3841659,
+    "interest_expense": 2587,
+    "interest_paid": 3757,
+    "operating_income": 3002332,
+    "pretax_income": 3210468,
+    "net_income": 2785626,
+    "da": 250174,
+    "ocf": 4492318,
+    "capex": 126351,
+    "revenue": 30081735,
+    "maturities": {
+      "as_of": "2026-02-28",
+      "next12m": 1804,
+      "y2": 3712,
+      "y3": 3852,
+      "y4": 3999,
+      "y5": 4152,
+      "after5": 120940
+    },
+    "shares": 6822681,
+    "balance_date": "2026-02-28",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 138459,
+    "cash_and_investments": 5518989.0,
+    "net_debt": -5380530.0,
+    "ebitda": 3252506,
+    "ebit": 3002332,
+    "interest_expense": 2587,
+    "leverage": 0.04257,
+    "net_leverage": -1.654272,
+    "interest_coverage": 1160.545806,
+    "ebitda_coverage": 1257.250097,
+    "cash_coverage": 1196.719457,
+    "fcf": 4365967,
+    "fcf_to_debt": 31.532562,
+    "effective_rate": 0.018684,
+    "revolver_available": null,
+    "liquidity": 5518989.0,
+    "due_12m": 1804,
+    "due_24m": 5516,
+    "liquidity_to_due12": 3059.306541,
+    "liquidity_to_due24": 1000.541878,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 8.073033,
+    "market_cap": 38889281.7,
+    "debt_to_ev": 0.004132,
+    "convertibles": null,
+    "implied": {
+      "dd": 8.128261,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 1.279106,
+      "asset_vol": 0.750023,
+      "calibrated_5y_bps": 107.928109,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.059893,
+    "refi_extra_interest": 227.306525,
+    "covenants": [],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-02-28",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 458570.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000104/axil-20260228_10q.htm",
+        "accession": "0001520138-26-000104",
+        "form": "10-Q",
+        "filed": "2026-04-08",
+        "as_of": "2026-02-28",
+        "evidence": [
+          {
+            "value_usd": 458570.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001520138-26-000104",
+            "filed": "2026-04-08",
+            "form": "10-Q",
+            "as_of": "2026-02-28",
+            "url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000104/axil-20260228_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "commitments with respect to providing a source of liquidity in the form of cash advances, loans, and/or financial guarantees. We have no present plan or commitment to obtain additional financing, and we anticipate that our existing cash and cash equivalents and cash expecte",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000410/axil-20260831_10q.htm",
+        "accession": "0001520138-26-000410",
+        "form": "10-Q",
+        "filed": "2026-10-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "discounted cash flows expected from the use of the asset. The Company’s lease agreements do not include residual value guarantees or restrictive covenants. The Company does not act as a lessor and does not have any finance leases at this time. Segment Reporting The Company fo",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000410/axil-20260831_10q.htm",
+        "accession": "0001520138-26-000410",
+        "form": "10-Q",
+        "filed": "2026-10-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": ", May 31, 2026 | Cash Received in Advance | Revenue Recognized | Ending Balance, August 31, 2026 | Customer deposits | $ | 59,027 | $ | 18,213 | $ | ( 59,027 | ) | $ | 18,213 | Deferred warranty revenue | 424,698 | 45,053 | ( 116,151 | ) | 353,600 | Gift cards | 6,9",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000410/axil-20260831_10q.htm",
+        "accession": "0001520138-26-000410",
+        "form": "10-Q",
+        "filed": "2026-10-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001520138-26-000410",
+      "form": "10-Q",
+      "filed": "2026-10-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000410/axil-20260831_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-02-28",
+    "metrics": {
+      "revenue_growth": -0.0451,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.2188,
+      "dsri": null,
+      "ocf_to_net_income": 2.2558
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 26257522.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001520138-26-000360",
+          "filed": "2026-08-18",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000360/"
+        },
+        {
+          "value_usd": 27498539.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001520138-25-000275",
+          "filed": "2025-08-21",
+          "end": "2024-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013825000275/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 707207.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001520138-26-000360",
+          "filed": "2026-08-18",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000360/"
+        },
+        {
+          "value_usd": 905311.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001520138-25-000275",
+          "filed": "2025-08-21",
+          "end": "2024-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013825000275/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1928661.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001520138-26-000360",
+          "filed": "2026-08-18",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000360/"
+        },
+        {
+          "value_usd": 2677.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001520138-25-000275",
+          "filed": "2025-08-21",
+          "end": "2024-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013825000275/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 854988.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001520138-26-000360",
+          "filed": "2026-08-18",
+          "end": "2025-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000360/"
+        },
+        {
+          "value_usd": 2003134.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001520138-25-000275",
+          "filed": "2025-08-21",
+          "end": "2024-05-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013825000275/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "05, Financial Instruments—Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets, which provides a practical expedient for estimating expected credit losses on current accounts receivable and current contract assets arising from t",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000410/axil-20260831_10q.htm",
+        "accession": "0001520138-26-000410",
+        "form": "10-Q",
+        "filed": "2026-10-06"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "erformance obligations . The transaction price in the Company’s customer contracts consists of both fixed and variable consideration. Fixed consideration includes amounts contractually billed to customers. Variable consideration primarily relates to estimated product returns, as cu",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000410/axil-20260831_10q.htm",
+        "accession": "0001520138-26-000410",
+        "form": "10-Q",
+        "filed": "2026-10-06"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "a particular period, depending upon the size of the loss or our income for that particular period. Note 10 – Related Party Transactions The Company’s Chairman and Chief Executive Officer, Jeff Toghraie, is the managing director of Intrepid Global Advisors (“Intrepid”). Intrepid has,",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000410/axil-20260831_10q.htm",
+        "accession": "0001520138-26-000410",
+        "form": "10-Q",
+        "filed": "2026-10-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": ",957,235 | LIABILITIES AND EQUITY | CURRENT LIABILITIES: | Accounts payable | $ | 2,440,224 | $ | 1,989,048 | Contract liabilities, current | 297,724 | 389,333 | Due to related party | — | 152,177 | Lease liabilities, current | 191,297 | 195,563 | Income tax liability | 958,744 |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1718500/000152013826000410/axil-20260831_10q.htm",
+        "accession": "0001520138-26-000410",
+        "form": "10-Q",
+        "filed": "2026-10-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-05-31",
+      "2024-05-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Economic Injury Disaster Loan Program",
+      "kind": "loan",
+      "as_of": "2020-05-31",
+      "face": 150000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2026-05-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2024-03-11",
+      "items": "1.01,9.01",
+      "acc": "0001520138-24-000102",
+      "doc": "rviv20240305_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-03",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001520138-23-000122",
+      "doc": "rviv-20230302_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-11-09",
+      "items": "1.01,9.01",
+      "acc": "0001520138-22-000504",
+      "doc": "rviv-20221109_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-05-05",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001520138-22-000187",
+      "doc": "rviv-20220505_8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-05-31",
+      172588,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-08-31",
+      144257,
+      4148724,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-11-30",
+      143342,
+      5213897,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-02-28",
+      140958,
+      4743470,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-08-31",
+      139199,
+      4086624,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-11-30",
+      138305,
+      4975968,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-02-28",
+      138459,
+      5518989,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2024-05",
+      -0.0,
+      21.453,
+      0.435,
+      68.0
+    ],
+    [
+      "2024-06",
+      0.02,
+      10.673,
+      0.8379,
+      91.0
+    ],
+    [
+      "2024-07",
+      0.01,
+      11.181,
+      0.7884,
+      87.9
+    ],
+    [
+      "2024-08",
+      0.04,
+      10.344,
+      0.8298,
+      93.0
+    ],
+    [
+      "2024-09",
+      0.02,
+      10.701,
+      0.7883,
+      90.8
+    ],
+    [
+      "2024-10",
+      2.58,
+      7.642,
+      0.7454,
+      111.5
+    ],
+    [
+      "2024-11",
+      2.44,
+      7.681,
+      0.7452,
+      111.2
+    ],
+    [
+      "2024-12",
+      1.4,
+      7.99,
+      0.7112,
+      108.9
+    ],
+    [
+      "2025-01",
+      4.38,
+      7.422,
+      0.8149,
+      113.2
+    ],
+    [
+      "2025-02",
+      4.61,
+      7.455,
+      0.8445,
+      112.9
+    ],
+    [
+      "2025-03",
+      19.15,
+      6.434,
+      0.907,
+      121.0
+    ],
+    [
+      "2025-04",
+      20.47,
+      6.445,
+      0.9374,
+      120.9
+    ],
+    [
+      "2025-05",
+      19.55,
+      6.457,
+      0.9273,
+      120.8
+    ],
+    [
+      "2025-06",
+      5.44,
+      7.284,
+      0.822,
+      114.2
+    ],
+    [
+      "2025-07",
+      8.4,
+      7.081,
+      0.886,
+      115.8
+    ],
+    [
+      "2025-08",
+      12.75,
+      6.738,
+      0.8812,
+      118.5
+    ],
+    [
+      "2025-09",
+      19.56,
+      6.455,
+      0.9179,
+      120.8
+    ],
+    [
+      "2025-10",
+      34.67,
+      6.04,
+      0.9726,
+      124.2
+    ],
+    [
+      "2025-11",
+      34.93,
+      6.016,
+      0.963,
+      124.4
+    ],
+    [
+      "2025-12",
+      85.72,
+      5.398,
+      1.1126,
+      129.7
+    ],
+    [
+      "2026-01",
+      59.67,
+      5.677,
+      1.0561,
+      127.3
+    ],
+    [
+      "2026-02",
+      57.34,
+      5.709,
+      1.0509,
+      127.0
+    ],
+    [
+      "2026-03",
+      42.11,
+      5.955,
+      1.023,
+      124.9
+    ],
+    [
+      "2026-04",
+      35.1,
+      6.082,
+      0.9967,
+      123.8
+    ],
+    [
+      "2026-05",
+      35.21,
+      6.072,
+      0.9959,
+      123.9
+    ],
+    [
+      "2026-06",
+      36.25,
+      6.029,
+      0.9916,
+      124.3
+    ],
+    [
+      "2026-07",
+      16.81,
+      6.567,
+      0.9159,
+      119.9
+    ],
+    [
+      "2026-08",
+      8.94,
+      7.0,
+      0.8734,
+      116.4
+    ],
+    [
+      "2026-09",
+      4.08,
+      7.474,
+      0.8221,
+      112.8
+    ],
+    [
+      "2026-10",
+      1.28,
+      8.127,
+      0.7513,
+      107.9
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

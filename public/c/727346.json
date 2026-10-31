@@ -1,0 +1,1100 @@
+{
+  "cik": 727346,
+  "ticker": "GBCS",
+  "name": "SELECTIS HEALTH, INC.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-31T14:35:16+00:00",
+  "fetched_at": "2026-10-26T03:09:17+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 17199815,
+    "current_debt": 5386507,
+    "cash": 7733684,
+    "debt_fair_value": 17199815,
+    "equity": 7973202,
+    "assets": 31450441,
+    "liabilities": 23477239,
+    "assets_current": 11975317,
+    "liabilities_current": 11751364,
+    "retained_earnings": -6610148,
+    "interest_expense": 2093976,
+    "interest_paid": 1462829,
+    "operating_income": -4056477,
+    "pretax_income": 15479942,
+    "net_income": 14597984,
+    "da": 1311337,
+    "ocf": -3401408,
+    "capex": 469654,
+    "revenue": 32528448,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 3011068,
+      "rest_of_year": 3544801,
+      "y2": 456873,
+      "y3": 472334,
+      "y4": 483699
+    },
+    "shares": 3067059,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtLongtermAndShorttermCombinedAmount",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 17199815,
+    "cash_and_investments": 7733684.0,
+    "net_debt": 9466131.0,
+    "ebitda": -2745140,
+    "ebit": -4056477,
+    "interest_expense": 2093976,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -1.937213,
+    "ebitda_coverage": -1.31097,
+    "cash_coverage": -1.325226,
+    "fcf": -3871062,
+    "fcf_to_debt": -0.225064,
+    "effective_rate": 0.121744,
+    "revolver_available": null,
+    "liquidity": 7733684.0,
+    "due_12m": 3011068,
+    "due_24m": 3467941,
+    "liquidity_to_due12": 2.568419,
+    "liquidity_to_due24": 2.230051,
+    "floating_debt": 325192.0,
+    "floating_share": 0.018907,
+    "plus100bp_interest": 3251.92,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": -251925.453334,
+    "covenants": [],
+    "cushion_score": 45
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-039909",
+      "form": "10-Q",
+      "filed": "2026-08-24",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226039909/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0494,
+      "receivables_growth": -0.1298,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.8293,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 41441030.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-016827",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226016827/"
+        },
+        {
+          "value_usd": 39492012.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-016827",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226016827/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 2277235.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-016827",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226016827/"
+        },
+        {
+          "value_usd": 2616929.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-016827",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226016827/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1882030.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-016827",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226016827/"
+        },
+        {
+          "value_usd": -1824437.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-016827",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226016827/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1015752.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-016827",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226016827/"
+        },
+        {
+          "value_usd": -2423961.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-016827",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226016827/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Mortgage Loans",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "face": 27870539.0,
+      "carrying": 16768043.0,
+      "floating": false
+    },
+    {
+      "name": "Unsecured Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "face": 2575952.0,
+      "floating": false
+    },
+    {
+      "name": "Ten Percentage Senior Secured Promissory Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.1,
+      "face": 1255000.0,
+      "maturity": "2026-02-28",
+      "floating": false
+    },
+    {
+      "name": "Promissory Note Southern Bank",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "face": 545952.0,
+      "maturity": "2030-12-12",
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon": 0.1,
+      "maturity": "2024-12-31",
+      "effective": 0.13,
+      "floating": false
+    },
+    {
+      "name": "Other Debt",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "face": 2180000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "drawn": 325192.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-09-09",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-17",
+      "title": "Credit Agreement This Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/727346/000149315226041840/ex10-1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-10-09",
+      "items": "2.01,2.03,3.03,5.01,5.02,5.03,8.01,9.01",
+      "acc": "0001493152-26-046568",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-09",
+      "items": "1.01,2.01,3.03,5.01,5.02,7.01,9.01",
+      "acc": "0001493152-26-041840",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-24",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001493152-26-029837",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-09",
+      "items": "1.01,9.01",
+      "acc": "0001493152-26-009320",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-30",
+      "items": "2.03,3.03,9.01",
+      "acc": "0001493152-25-029572",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-09",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-026960",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2025-02-13",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-006371",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-05-08",
+      "items": "1.01,9.01",
+      "acc": "0001493152-24-018264",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-04-23",
+      "items": "2.03,9.01",
+      "acc": "0001493152-24-015664",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2023-12-05",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001493152-23-043689",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-10-04",
+      "items": "2.03,7.01,9.01",
+      "acc": "0001493152-21-024447",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-06-21",
+      "items": "1.01,1.02",
+      "acc": "0001493152-21-014878",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-04-09",
+      "items": "2.03,7.01,9.01",
+      "acc": "0001493152-21-008405",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-01-06",
+      "items": "2.01,2.03,7.01,9.01",
+      "acc": "0001493152-21-000299",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-07-27",
+      "items": "1.01,9.01",
+      "acc": "0001493152-20-014040",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-05-07",
+      "items": "2.03,8.01",
+      "acc": "0001493152-20-007921",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-03-05",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001493152-20-003437",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-02-04",
+      "items": "2.03,3.02,8.01",
+      "acc": "0001493152-20-001524",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-08-14",
+      "items": "1.01,9.01",
+      "acc": "0001493152-19-012269",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-07-11",
+      "items": "2.03,9.01",
+      "acc": "0001493152-19-010503",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-04-16",
+      "items": "1.01,9.01",
+      "acc": "0001493152-19-005457",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2018-10-22",
+      "items": "2.03,3.02,9.01",
+      "acc": "0001493152-18-014739",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2018-10-10",
+      "items": "2.03",
+      "acc": "0001493152-18-014329",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2018-04-17",
+      "items": "1.01,9.01",
+      "acc": "0001493152-18-005297",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-11-17",
+      "items": "2.03,3.02,7.01,9.01",
+      "acc": "0001493152-17-013436",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-11-06",
+      "items": "2.03,9.01",
+      "acc": "0001493152-17-012480",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-04-07",
+      "items": "2.01,2.03,8.01",
+      "acc": "0001493152-17-003668",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-03-31",
+      "items": "2.03,3.02,7.01",
+      "acc": "0001493152-17-003150",
+      "doc": "form8-ka.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-01-17",
+      "items": "2.03,3.02,7.01",
+      "acc": "0001493152-17-000487",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-01-05",
+      "items": "2.03,3.02,7.01,8.01",
+      "acc": "0001493152-17-000170",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2016-11-29",
+      "items": "2.03,3.02,7.01,9.01",
+      "acc": "0001011034-16-000261",
+      "doc": "global_8k.htm",
+      "desc": "GLOBAL HEALTHCARE REIT, INC."
+    },
+    {
+      "date": "2016-08-30",
+      "items": "1.01,9.01",
+      "acc": "0001493152-16-013002",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2016-07-05",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001493152-16-011259",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-11-12",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001376474-15-000431",
+      "doc": "glhc_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-08-20",
+      "items": "1.01,2.02,7.01,8.01",
+      "acc": "0001376474-15-000294",
+      "doc": "glc_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-01-27",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001011034-15-000013",
+      "doc": "f8k101amendlonghorn.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-12-17",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001011034-14-000137",
+      "doc": "f8k101longhornv2clean.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-10-02",
+      "items": "1.01,3.02,7.01,8.01,9.01",
+      "acc": "0001011034-14-000121",
+      "doc": "f8k101302meadowviewppmv1.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-05-23",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001011034-14-000083",
+      "doc": "f8ka101goodwill.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-05-23",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001011034-14-000082",
+      "doc": "f8k101goodwillv2.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-02-13",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001011034-14-000023",
+      "doc": "f8k101tulsav2clean.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-02-03",
+      "items": "1.01,2.01,3.02,9.01",
+      "acc": "0001011034-14-000017",
+      "doc": "f8ka101201302warrenton.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-01-30",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001011034-14-000015",
+      "doc": "f8k101scottsburg.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-01-07",
+      "items": "1.01,2.01,3.02",
+      "acc": "0001011034-14-000006",
+      "doc": "f8k101201302warrentonfirstcl.htm",
+      "desc": ""
+    },
+    {
+      "date": "2013-05-06",
+      "items": "1.01,9.01",
+      "acc": "0001011034-13-000062",
+      "doc": "f8k101102restatedsplitoff.htm",
+      "desc": ""
+    },
+    {
+      "date": "2013-04-12",
+      "items": "1.01,1.02,8.01,9.01",
+      "acc": "0001011034-13-000054",
+      "doc": "f8k101102reitv1cln.htm",
+      "desc": ""
+    },
+    {
+      "date": "2012-12-20",
+      "items": "2.03,9.01",
+      "acc": "0001011034-12-000248",
+      "doc": "f8k203allongerestatedbloomqu.htm",
+      "desc": ""
+    },
+    {
+      "date": "2012-11-13",
+      "items": "2.03,9.01",
+      "acc": "0001011034-12-000231",
+      "doc": "f8k203montrose1112.htm",
+      "desc": ""
+    },
+    {
+      "date": "2012-10-16",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001011034-12-000206",
+      "doc": "f8k101allongerestated1012.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-07-03",
+      "items": "1.01,9.01",
+      "acc": "0001011034-12-000131",
+      "doc": "f8ka1101reitloanv1markedcln.htm",
+      "desc": ""
+    },
+    {
+      "date": "2012-06-28",
+      "items": "1.01,9.01",
+      "acc": "0001011034-12-000123",
+      "doc": "f8k101reitloanv3clean.htm",
+      "desc": ""
+    },
+    {
+      "date": "2012-06-06",
+      "items": "1.01,9.01",
+      "acc": "0001376474-12-000159",
+      "doc": "glb_8k.htm",
+      "desc": "GLOBAL CASINOS, INC. - FORM 8-K"
+    },
+    {
+      "date": "2012-02-14",
+      "items": "2.03,3.02,9.01",
+      "acc": "0001011034-12-000039",
+      "doc": "f8k203302offering0212.htm",
+      "desc": ""
+    },
+    {
+      "date": "2012-01-13",
+      "items": "1.01",
+      "acc": "0001011034-12-000007",
+      "doc": "f8k101railmartinez.htm",
+      "desc": ""
+    },
+    {
+      "date": "2011-12-20",
+      "items": "2.03,3.02,9.01",
+      "acc": "0001011034-11-000159",
+      "doc": "f8k203302offering12113md.htm",
+      "desc": ""
+    },
+    {
+      "date": "2010-07-20",
+      "items": "2.03,3.02,9.01",
+      "acc": "0001011034-10-000115",
+      "doc": "f8k203302offering.htm",
+      "desc": ""
+    },
+    {
+      "date": "2010-03-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001011034-10-000053",
+      "doc": "f8k101shuppallonge.htm",
+      "desc": ""
+    },
+    {
+      "date": "2010-01-05",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001011034-10-000001",
+      "doc": "f8k101bloomquist1209.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2011-09-30",
+      152252,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-12-31",
+      149546,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-03-31",
+      146786,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      832228,
+      687405,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-12-31",
+      594585,
+      397192,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-31",
+      547338,
+      463258,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-30",
+      532876,
+      238566,
+      502699,
+      706709,
+      -11424,
+      0.94337
+    ],
+    [
+      "2015-06-30",
+      37386147,
+      968179,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      36469384,
+      456464,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      36408752,
+      280551,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      34796576,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      32792989,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      32720011,
+      434175,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      35090635,
+      267188,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      35256555,
+      105485,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      35757279,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      36099724,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      35978284,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      37102647,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      38606009,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      38594653,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      39709642,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      40688426,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      40888274,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      37718638,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      38377249,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      38706017,
+      2791585,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      38839206,
+      2959189,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      38346641,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      38928797,
+      1157413,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      38331646,
+      625598,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      37492320,
+      1971732,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      37397152,
+      1265613,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      33556085,
+      3220581,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      32582388,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      32402517,
+      1288779,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      31949635,
+      559983,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      31565929,
+      417125,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      22590873,
+      1286452,
+      2107356,
+      -960810,
+      -2405418,
+      0.09328
+    ],
+    [
+      "2026-06-30",
+      17199815,
+      7733684,
+      2093976,
+      -2745140,
+      -4056477,
+      0.12174
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

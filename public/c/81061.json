@@ -1,0 +1,974 @@
+{
+  "cik": 81061,
+  "ticker": null,
+  "name": "PUBLIX SUPER MARKETS INC",
+  "sector": "consumer-staples",
+  "industry": "Retail-Grocery Stores",
+  "sic": "5411",
+  "sic_description": "Retail-Grocery Stores",
+  "generated_at": "2026-10-31T14:35:16+00:00",
+  "fetched_at": "2026-10-25T20:48:54+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 2000000,
+    "cash": 632000000,
+    "investments": 2597000000,
+    "finance_leases": 875000000,
+    "operating_leases": 2777000000,
+    "equity": 25901000000,
+    "assets": 42393000000,
+    "liabilities": 11027000000,
+    "assets_current": 7305000000,
+    "liabilities_current": 5737000000,
+    "retained_earnings": 25958000000,
+    "operating_income": 4510000000,
+    "net_income": 4799000000,
+    "da": 1163000000,
+    "ocf": 6391000000,
+    "capex": 2702000000,
+    "revenue": 63713000000,
+    "debt_repaid": 47000000,
+    "shares": 3194000000,
+    "balance_date": "2025-12-27",
+    "latest_period": "2026-06-27"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "investments": "ShortTermInvestments",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 2000000,
+    "cash_and_investments": 3229000000,
+    "net_debt": -3227000000,
+    "ebitda": 5673000000,
+    "ebit": 4510000000,
+    "interest_expense": null,
+    "leverage": 0.000353,
+    "net_leverage": -0.568835,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 3689000000,
+    "fcf_to_debt": 1844.5,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 3229000000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2025-12-27",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2777000000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/ck0000081061-20251227.htm",
+        "accession": "0000081061-26-000038",
+        "form": "10-K",
+        "filed": "2026-03-02",
+        "as_of": "2025-12-27",
+        "evidence": [
+          {
+            "value_usd": 2777000000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000081061-26-000038",
+            "filed": "2026-03-02",
+            "form": "10-K",
+            "as_of": "2025-12-27",
+            "url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/ck0000081061-20251227.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000081061-26-000089",
+      "form": "10-Q",
+      "filed": "2026-08-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000089/ck0000081061-20260627.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2025-12-27",
+    "metrics": {
+      "revenue_growth": 0.0504,
+      "receivables_growth": 0.1124,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.059,
+      "ocf_to_net_income": 1.248
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 62749000000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0000081061-26-000038",
+          "filed": "2026-03-02",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/"
+        },
+        {
+          "value_usd": 59736000000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0000081061-26-000038",
+          "filed": "2026-03-02",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1366000000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000081061-26-000038",
+          "filed": "2026-03-02",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/"
+        },
+        {
+          "value_usd": 1228000000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000081061-26-000038",
+          "filed": "2026-03-02",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 5908000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000081061-26-000038",
+          "filed": "2026-03-02",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/"
+        },
+        {
+          "value_usd": 5568000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000081061-26-000038",
+          "filed": "2026-03-02",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 4734000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000081061-26-000038",
+          "filed": "2026-03-02",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/"
+        },
+        {
+          "value_usd": 4635000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000081061-26-000038",
+          "filed": "2026-03-02",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/81061/000008106126000038/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-27",
+      "2024-12-28"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-07-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-26-000080",
+      "doc": "ck0000081061-20260701.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-02",
+      "items": "1.01",
+      "acc": "0000081061-26-000031",
+      "doc": "ck0000081061-20260201.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-01-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-26-000003",
+      "doc": "ck0000081061-20260101.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-25-000036",
+      "doc": "ck0000081061-20251001.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-01-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-25-000002",
+      "doc": "ck0000081061-20250101.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-17",
+      "items": "1.01,5.07",
+      "acc": "0000081061-24-000018",
+      "doc": "ck0000081061-20240416.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-24-000015",
+      "doc": "ck0000081061-20240401.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-24-000003",
+      "doc": "ck0000081061-20240101.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-04-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-23-000015",
+      "doc": "ck0000081061-20230401.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-01",
+      "items": "1.01,2.02,9.01",
+      "acc": "0000081061-23-000008",
+      "doc": "ck0000081061-20230301.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-01-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-23-000002",
+      "doc": "ck0000081061-20230101.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-13",
+      "items": "1.01,5.07",
+      "acc": "0000081061-22-000019",
+      "doc": "ck0000081061-20220412.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-01",
+      "items": "1.01,5.03,8.01,9.01",
+      "acc": "0000081061-22-000016",
+      "doc": "ck0000081061-20220401.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-01",
+      "items": "1.01,2.02,9.01",
+      "acc": "0000081061-22-000010",
+      "doc": "ck0000081061-20220301.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-01-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-22-000004",
+      "doc": "ck0000081061-20220101.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-21-000033",
+      "doc": "ck0000081061-20210701.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-05-01",
+      "items": "1.01,2.02,9.01",
+      "acc": "0000081061-20-000018",
+      "doc": "a8-k1q2020earningsmay12020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-04-15",
+      "items": "1.01,5.07",
+      "acc": "0000081061-20-000013",
+      "doc": "a8k2020annualmeeting.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-01-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-20-000002",
+      "doc": "a8-k01022020dividenddeclar.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-05-01",
+      "items": "1.01,2.02,9.01",
+      "acc": "0000081061-19-000028",
+      "doc": "a8-k1q2019earningsmay12019ia.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-04-22",
+      "items": "1.01,5.07",
+      "acc": "0000081061-19-000019",
+      "doc": "a8k2019annualmeeting.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-01-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-19-000002",
+      "doc": "a8-k01022019dividenddeclar.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-06-04",
+      "items": "1.01",
+      "acc": "0000081061-18-000023",
+      "doc": "a8-k06012018indemnificatio.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-01-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-18-000002",
+      "doc": "a8-k01012018dividenddeclar.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-09-01",
+      "items": "1.01",
+      "acc": "0000081061-17-000036",
+      "doc": "a8-kindemnificationagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-06-12",
+      "items": "1.01",
+      "acc": "0000081061-17-000023",
+      "doc": "a8-kindemnificationagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-04-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-17-000013",
+      "doc": "a8-kindemnificatoinagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-01-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-17-000002",
+      "doc": "a8-kindemnificatoinagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-05-04",
+      "items": "1.01",
+      "acc": "0000081061-16-000060",
+      "doc": "a8-kindemnificatoinagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-04-12",
+      "items": "1.01,5.07",
+      "acc": "0000081061-16-000053",
+      "doc": "a8k2016annualmeeting.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-01-04",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-16-000036",
+      "doc": "a8-kindemnificatoinagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-07-07",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000081061-15-000021",
+      "doc": "a8-kindemnificatoinagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-04-16",
+      "items": "1.01,5.07",
+      "acc": "0000081061-15-000012",
+      "doc": "a8k2015annualmeeting.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-05-05",
+      "items": "1.01",
+      "acc": "0000081061-14-000020",
+      "doc": "a8-kindemnificatoinagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-04-04",
+      "items": "1.01",
+      "acc": "0000081061-14-000012",
+      "doc": "a8-kindemnificatoinagreeme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-04-18",
+      "items": "1.01,5.07",
+      "acc": "0000081061-13-000004",
+      "doc": "a8kannualmeeting.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-04-02",
+      "items": "1.01",
+      "acc": "0000081061-13-000002",
+      "doc": "a8k-april12013.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-01-07",
+      "items": "1.01",
+      "acc": "0001193125-13-004907",
+      "doc": "d462319d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-12-20",
+      "items": "1.01,9.01",
+      "acc": "0001193125-11-346680",
+      "doc": "d270980d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-01-04",
+      "items": "1.01",
+      "acc": "0001193125-11-000772",
+      "doc": "d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2010-03-27",
+      155960000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2010-06-26",
+      157123000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2010-09-25",
+      157807000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-03-26",
+      148902000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-06-25",
+      168832000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-09-24",
+      153785000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-03-31",
+      140366000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-06-30",
+      139132000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-29",
+      135947000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-30",
+      157593000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-29",
+      155894000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-09-28",
+      142608000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-29",
+      170025000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-28",
+      176088000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-27",
+      169893000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-28",
+      245184000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-27",
+      234528000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-26",
+      232560000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-26",
+      217649000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-25",
+      239816000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-24",
+      259586000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-04-01",
+      242998000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-07-01",
+      224417000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      218603000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      175168000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      187177000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-29",
+      168823000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-30",
+      166649000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-29",
+      171997000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-28",
+      171654000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-28",
+      175116000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-27",
+      178118000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-26",
+      178493000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-27",
+      159215000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-26",
+      154214000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-25",
+      148288000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-26",
+      126644000,
+      1584876000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-25",
+      125454000,
+      1765973000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-24",
+      123370000,
+      2132798000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-04-01",
+      65000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-07-01",
+      60000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      60000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-30",
+      58000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-29",
+      51000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-28",
+      44000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-27",
+      2000000,
+      null,
+      null,
+      5715000000,
+      4624000000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

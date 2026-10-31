@@ -1,0 +1,388 @@
+{
+  "cik": 1664710,
+  "ticker": "KROS",
+  "name": "Keros Therapeutics, Inc.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T04:56:41+00:00",
+  "price": 11.28,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.535818,
+  "snapshot": {
+    "cash": 257606000,
+    "operating_leases": 16883000,
+    "equity": 262320000,
+    "assets": 287600000,
+    "liabilities": 25280000,
+    "assets_current": 266883000,
+    "liabilities_current": 12153000,
+    "retained_earnings": -534183000,
+    "operating_income": -101468000,
+    "pretax_income": -86097000,
+    "net_income": -83159000,
+    "da": 1600000,
+    "ocf": -47993000,
+    "capex": 494000,
+    "revenue": 14536000,
+    "shares": 19827188,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 257606000.0,
+    "net_debt": null,
+    "ebitda": -99868000,
+    "ebit": -101468000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -48487000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 257606000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 2.656953,
+    "market_cap": 223650680.64,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase_broad",
+        "label": "Purchase obligations, gross (potential overlap)",
+        "class": "operating_commitment",
+        "amount_usd": 7000000.0,
+        "reported_total": true,
+        "schedule": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000049/kros-20260630.htm",
+        "accession": "0001664710-26-000049",
+        "form": "10-Q",
+        "filed": "2026-08-03",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 7000000.0,
+            "tag": "us-gaap:PurchaseObligation",
+            "accession": "0001664710-26-000049",
+            "filed": "2026-08-03",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000049/kros-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "ch stock purchase agreements for each of the Pontifax and ADAR1 Parties are collectively referred to as “Repurchase Agreements”. Pursuant to the terms and conditions of the Repurchase Agreements, the ADAR1 Parties and the Pontifax Parties sold all of the shares of common stoc",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000049/kros-20260630.htm",
+        "accession": "0001664710-26-000049",
+        "form": "10-Q",
+        "filed": "2026-08-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001664710-26-000049",
+      "form": "10-Q",
+      "filed": "2026-08-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000049/kros-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 67.7496,
+      "receivables_growth": 0.3009,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.0189,
+      "ocf_to_net_income": 1.2355
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 244061000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001664710-26-000018",
+          "filed": "2026-03-04",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000018/"
+        },
+        {
+          "value_usd": 3550000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001664710-26-000018",
+          "filed": "2026-03-04",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000018/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 3567000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001664710-26-000018",
+          "filed": "2026-03-04",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000018/"
+        },
+        {
+          "value_usd": 2742000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001664710-26-000018",
+          "filed": "2026-03-04",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000018/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 107505000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001664710-26-000018",
+          "filed": "2026-03-04",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000018/"
+        },
+        {
+          "value_usd": -160869000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001664710-26-000018",
+          "filed": "2026-03-04",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000018/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 87014000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001664710-26-000018",
+          "filed": "2026-03-04",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000018/"
+        },
+        {
+          "value_usd": -187353000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001664710-26-000018",
+          "filed": "2026-03-04",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000018/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "consisting of the upfront fee of $ 200.0 million. The transaction price at inception also included estimated variable consideration of $ 51.4 million relating to the Transition Services revenue that was not constrained. The transaction price has been allocated to the License and K",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000049/kros-20260630.htm",
+        "accession": "0001664710-26-000049",
+        "form": "10-Q",
+        "filed": "2026-08-03"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "er changes in circumstances occur. The Company determined that the Takeda Agreement and TSA did not contain a significant financing component. Accounts receivable due from Takeda were zero as of June 30, 2026 and $ 3.6 million as of December 31, 2025. 18 Revenue recognized from Takeda",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000049/kros-20260630.htm",
+        "accession": "0001664710-26-000049",
+        "form": "10-Q",
+        "filed": "2026-08-03"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| Accounts payable | 215 | 651 | Right-of-use assets and operating lease liabilities | ( 1,159 ) | ( 907 ) | Deferred revenue | — | 925 | Current tax liability | — | 6,321 | Accrued expenses and other current liabilities | ( 2,999 ) | ( 906 ) | Net cash provided by (used in)",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1664710/000166471026000049/kros-20260630.htm",
+        "accession": "0001664710-26-000049",
+        "form": "10-Q",
+        "filed": "2026-08-03"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-10-15",
+      "items": "1.01,2.02,5.02,7.01,8.01,9.01",
+      "acc": "0001104659-25-099512",
+      "doc": "tm2528773d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-04-18",
+      "items": "1.01,9.01",
+      "acc": "0001664710-25-000038",
+      "doc": "kros-20250417.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-10",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001664710-25-000033",
+      "doc": "kros-20250409.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001664710-24-000097",
+      "doc": "kros-20241203.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-01-06",
+      "items": "1.01",
+      "acc": "0001664710-23-000003",
+      "doc": "kros-20230106.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-12-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001664710-21-000074",
+      "doc": "kros-20211212.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-09-09",
+      "items": "1.01,2.03",
+      "acc": "0001664710-21-000057",
+      "doc": "kros-20210907.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-08-05",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001664710-21-000052",
+      "doc": "keros-form8xkq22021earning.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

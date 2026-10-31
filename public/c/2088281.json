@@ -1,0 +1,346 @@
+{
+  "cik": 2088281,
+  "ticker": "MFP",
+  "name": "Midera Food Processing, Inc.",
+  "sector": "industrials",
+  "industry": "Refrigeration & Service Industry Machinery",
+  "sic": "3580",
+  "sic_description": "Refrigeration & Service Industry Machinery",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-25T23:13:54+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 258600000,
+    "current_debt": 4500000,
+    "cash": 50500000,
+    "finance_leases": 7900000,
+    "operating_leases": 5000000,
+    "revolver_drawn": 228000000,
+    "equity": 785500000,
+    "assets": 1407000000,
+    "assets_current": 551800000,
+    "liabilities_current": 300400000,
+    "revolver_rate": 0.0382,
+    "shares": 45230455,
+    "balance_date": "2026-07-04",
+    "latest_period": "2026-07-04"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd"
+  },
+  "analysis": {
+    "total_debt": 258600000,
+    "cash_and_investments": 50500000.0,
+    "net_debt": 208100000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 772000000.0,
+    "liquidity": 822500000.0,
+    "due_12m": 4500000,
+    "due_24m": null,
+    "liquidity_to_due12": 182.777778,
+    "liquidity_to_due24": null,
+    "floating_debt": 233000000.0,
+    "floating_share": 0.901005,
+    "plus100bp_interest": 2330000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 4.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2026-06-29",
+        "text": "“ Most Recent Total Net Leverage Ratio ” means, at any date, the Net Leverage Ratio as of the end of the most recent Test Period; provided , however , that if Company fails to deliver such financial statements as required by Section 7.1 and further fails to remedy such default within 5 days of notice thereof from the Administrative Agent, then, until Company delivers such financial statements, without prejudice to an"
+      },
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2026-06-29",
+        "text": "Company will not permit the Consolidated Interest Coverage Ratio for any Test Period ending on or after the first full Fiscal Quarter ending after the Spin - Off Effective Date to be less than 3.00 to 1.00."
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-07-04",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 5000000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2088281/000119312526354735/ck0002088281-20260704.htm",
+        "accession": "0001193125-26-354735",
+        "form": "10-Q",
+        "filed": "2026-08-18",
+        "as_of": "2026-07-04",
+        "evidence": [
+          {
+            "value_usd": 5000000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-354735",
+            "filed": "2026-08-18",
+            "form": "10-Q",
+            "as_of": "2026-07-04",
+            "url": "https://www.sec.gov/Archives/edgar/data/2088281/000119312526354735/ck0002088281-20260704.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-354735",
+      "form": "10-Q",
+      "filed": "2026-08-18",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2088281/000119312526354735/ck0002088281-20260704.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-07-04",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ntract Balances Payments on equipment contracts are typically due based on contractually stated milestones. Contract assets primarily relate to the Company’s right to consideration for work completed but not billed at the reporting date and are recorded in prepaid expenses",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2088281/000119312526354735/ck0002088281-20260704.htm",
+        "accession": "0001193125-26-354735",
+        "form": "10-Q",
+        "filed": "2026-08-18"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "as of July 4, 2026 and January 3, 2026 , respectively. (13) RELATIONSHIP WITH PARENT AND RELATED ENTITIES Related Party Transactions Throughout the periods covered by the Condensed Combined Financial Statements, Midera engaged in sales and purchases of finished goods to and from",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2088281/000119312526354735/ck0002088281-20260704.htm",
+        "accession": "0001193125-26-354735",
+        "form": "10-Q",
+        "filed": "2026-08-18"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "nsferred to receivables when the right to consideration becomes unconditional. Changes in contract assets and contract liabilities associated with the timing of payments and status of over time revenue contracts are recorded in prepaid expenses and other assets and accrued expens",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2088281/000119312526354735/ck0002088281-20260704.htm",
+        "accession": "0001193125-26-354735",
+        "form": "10-Q",
+        "filed": "2026-08-18"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Senior Secured Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-29",
+      "face": 1000000000.0,
+      "floating": false
+    },
+    {
+      "name": "US Dollar Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-29",
+      "face": 750000000.0,
+      "floating": true
+    },
+    {
+      "name": "Multi-Currency Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-29",
+      "face": 250000000.0,
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-07-04",
+      "capacity": 228000000.0,
+      "maturity": "2031-06-29",
+      "spread_min": 0.01125,
+      "spread_max": 0.02,
+      "available": 772000000.0,
+      "reference": "Base Rate",
+      "floating": true
+    },
+    {
+      "name": "Middleby Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-29",
+      "drawn": 233000000.0,
+      "floating": false
+    },
+    {
+      "name": "Foreign Term Loan",
+      "kind": "loan",
+      "as_of": "2026-07-04",
+      "maturity": "2035-09-30",
+      "spread": 0.0083,
+      "rate_now": 0.0285,
+      "reference": "Euro Interbank Offered Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-07-04"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-06-29",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-29",
+      "size": 750000000.0,
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        1.25,
+        1.25
+      ],
+      "grid_by": "leverage",
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "“ Most Recent Total Net Leverage Ratio ” means, at any date, the Net Leverage Ratio as of the end of the most recent Test Period; provided , however , that if Company fails to deliver such financial statements as required by Section 7.1 and further fails to remedy such default within 5 days of notice thereof from the Administrative Agent, then, until Company delivers such financial statements, without prejudice to an"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Company will not permit the Consolidated Interest Coverage Ratio for any Test Period ending on or after the first full Fiscal Quarter ending after the Spin - Off Effective Date to be less than 3.00 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "z) an amount such that, at the time of the incurrence of the applicable Additional Facility, (i) to the extent such amount is secured by a Lien that is pari passu with or junior to (or, in the case of Incremental Equivalent Debt, pari passu with or junior to) the Liens securing the Obligations, the Secured Net Leverage Ratio of Company and its Subsidiaries does not exceed 3.00 to 1.00 or (ii) to the extent such amoun"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2088281/000119312526288554/d70874dex101.htm",
+      "all_in_pct": [
+        1.2889,
+        1.2889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-06",
+      "items": "1.01,3.03,5.01,5.02,5.03,5.05,7.01,9.01",
+      "acc": "0001193125-26-295649",
+      "doc": "d25601d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-29",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-26-288554",
+      "doc": "d70874d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-07-04",
+      258600000,
+      50500000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

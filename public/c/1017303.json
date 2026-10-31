@@ -1,0 +1,519 @@
+{
+  "cik": 1017303,
+  "ticker": "TACT",
+  "name": "TRANSACT TECHNOLOGIES INC",
+  "sector": "technology",
+  "industry": "Computer Peripheral Equipment, NEC",
+  "sic": "3577",
+  "sic_description": "Computer Peripheral Equipment, NEC",
+  "generated_at": "2026-10-31T14:35:08+00:00",
+  "fetched_at": "2026-10-26T02:58:13+00:00",
+  "price": 5.27,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.41248,
+  "snapshot": {
+    "cash": 19387000,
+    "operating_leases": 3230000,
+    "revolver_drawn": 3000000,
+    "equity": 32675000,
+    "assets": 51022000,
+    "liabilities": 18347000,
+    "assets_current": 40562000,
+    "liabilities_current": 15297000,
+    "retained_earnings": 3991000,
+    "interest_expense": 339000,
+    "interest_paid": 317000,
+    "operating_income": -425000,
+    "pretax_income": -282000,
+    "net_income": -400000,
+    "da": 624000,
+    "ocf": 5448000,
+    "capex": 217000,
+    "revenue": 52992000,
+    "shares": 10324471,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (four quarters)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 19387000.0,
+    "net_debt": null,
+    "ebitda": 199000,
+    "ebit": -425000,
+    "interest_expense": 339000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -1.253687,
+    "ebitda_coverage": 0.587021,
+    "cash_coverage": 18.18612,
+    "fcf": 5231000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 19387000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 3.49421,
+    "market_cap": 54409962.17,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 3230000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126033093/ef20075479_10q.htm",
+        "accession": "0001140361-26-033093",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 3230000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001140361-26-033093",
+            "filed": "2026-08-14",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126033093/ef20075479_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "nsolidated Balance Sheets. Contract liabilities consist of customer pre-payments and deferred revenue. Customer prepayments are reported as “Accrued liabilities” in current liabilities in the Condensed Consolidated Balance Sheets and represent customer payments made in ad",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126033093/ef20075479_10q.htm",
+        "accession": "0001140361-26-033093",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001140361-26-033093",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126033093/ef20075479_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1866,
+      "receivables_growth": -0.022,
+      "contract_assets_growth": -0.7075,
+      "contract_liabilities_growth": 0.2647,
+      "dsri": 0.8242,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 51480000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        },
+        {
+          "value_usd": 43384000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 6364000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        },
+        {
+          "value_usd": 6507000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        }
+      ],
+      "contract_assets": [
+        {
+          "value_usd": 31000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        },
+        {
+          "value_usd": 106000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        }
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 1400000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        },
+        {
+          "value_usd": 1107000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 7673000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        },
+        {
+          "value_usd": 1861000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1240000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        },
+        {
+          "value_usd": -9863000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001140361-26-009238",
+          "filed": "2026-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126009238/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "| $ | 22,948 | $ | 5,415 | $ | 28,363 | $ | 22,228 | $ | 4,623 | $ | 26,851 | 10 Index Contract balances Contract assets consist of unbilled receivables. Pursuant to the over-time revenue recognition model, revenue may be recognized prior to the customer being invoiced.",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126033093/ef20075479_10q.htm",
+        "accession": "0001140361-26-033093",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "00 | Accounts payable | 5,034 | 3,539 | Accrued liabilities | 4,907 | 4,763 | Lease liabilities | 506 | 346 | Deferred revenue | 1,850 | 1,400 | Total current liabilities | 15,297 | 13,048 | Deferred revenue, net of current portion | 292 | 355 | Lease liabilities, net of curr",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1017303/000114036126033093/ef20075479_10q.htm",
+        "accession": "0001140361-26-033093",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility, Siena Lending Group Llc",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.0175,
+      "coupon": 0.065,
+      "rate_now": 0.085,
+      "available": 2800000.0,
+      "reference": "Federal Funds Effective Swap Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2012-09-11",
+      "agreement_kind": "amendment",
+      "dated": "2006-11-28",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1017303/000101730312000044/exhibit1026.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2007-11-09",
+      "agreement_kind": "amendment",
+      "dated": "2006-11-28",
+      "title": "Amendment To Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1017303/000095012307015233/y42402exv10w20.txt"
+    },
+    {
+      "kind": "agreement",
+      "date": "2006-03-15",
+      "agreement_kind": "amendment",
+      "dated": "2003-08-06",
+      "title": "Amendment To Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1017303/000095012306003185/y18554exv10w21.txt"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-04-03",
+      "items": "1.01,9.01",
+      "acc": "0001214659-26-004335",
+      "doc": "i432608k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2026-02-13",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001214659-26-001731",
+      "doc": "y2122628k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2025-11-07",
+      "items": "1.01,9.01",
+      "acc": "0001214659-25-016104",
+      "doc": "u1162518k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2025-08-06",
+      "items": "1.01,2.02,8.01,9.01",
+      "acc": "0001214659-25-011612",
+      "doc": "w862508k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-11-21",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001214659-24-019481",
+      "doc": "p11242428k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2023-05-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001214659-23-006506",
+      "doc": "o542308k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2022-07-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001214659-22-009128",
+      "doc": "p7222208k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2022-03-31",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001214659-22-004610",
+      "doc": "g3312228k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-08-16",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001214659-21-008684",
+      "doc": "r8122108k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-07-26",
+      "items": "1.01,9.01",
+      "acc": "0001017303-21-000061",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-16",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001214659-20-008670",
+      "doc": "ta10142008k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-05-05",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001017303-20-000029",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-03-16",
+      "items": "1.01,1.02,2.03,7.01,9.01",
+      "acc": "0001017303-20-000010",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-03-04",
+      "items": "1.01,9.01",
+      "acc": "0001017303-20-000006",
+      "doc": "form8kithacalease.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-11-22",
+      "items": "1.01,9.01",
+      "acc": "0001017303-17-000075",
+      "doc": "form8k.htm",
+      "desc": "AMENDED CREDIT FACILITY"
+    },
+    {
+      "date": "2015-06-04",
+      "items": "1.01",
+      "acc": "0001017303-15-000040",
+      "doc": "form8kgtech.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-12-01",
+      "items": "1.01,9.01",
+      "acc": "0001017303-14-000058",
+      "doc": "form8k.htm",
+      "desc": "AMENDED CREDIT FACILITY"
+    },
+    {
+      "date": "2012-09-11",
+      "items": "1.01,8.01",
+      "acc": "0001017303-12-000044",
+      "doc": "form8kqtrlydividend.htm",
+      "desc": "FORM 8-K - QTRLY DIVIDEND ANNOUNCEMENT"
+    },
+    {
+      "date": "2011-11-23",
+      "items": "1.01",
+      "acc": "0001017303-11-000036",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

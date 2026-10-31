@@ -1,0 +1,256 @@
+{
+  "cik": 1740604,
+  "ticker": "BTGO",
+  "name": "BITGO HOLDINGS, INC.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "sic_description": "Finance Services",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-25T20:56:31+00:00",
+  "price": 5.31,
+  "price_date": "2026-10-30",
+  "equity_vol": 0.921936,
+  "snapshot": {
+    "current_debt": 133169000,
+    "cash": 158963000,
+    "short_term_borrowings": 133169000,
+    "operating_leases": 6005000,
+    "equity": 423059000,
+    "assets": 6047795000,
+    "liabilities": 5624736000,
+    "assets_current": 6025935000,
+    "liabilities_current": 5621283000,
+    "retained_earnings": -17593000,
+    "wavg_rate_short": 0.072,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 158963000.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 158963000.0,
+    "due_12m": 133169000,
+    "due_24m": null,
+    "liquidity_to_due12": 1.193694,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase_broad",
+        "label": "Purchase obligations, gross (potential overlap)",
+        "class": "operating_commitment",
+        "amount_usd": 2200000.0,
+        "reported_total": true,
+        "schedule": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm",
+        "accession": "0001740604-26-000050",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 2200000.0,
+            "tag": "us-gaap:PurchaseObligation",
+            "accession": "0001740604-26-000050",
+            "filed": "2026-08-12",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 6005000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm",
+        "accession": "0001740604-26-000050",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 6005000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001740604-26-000050",
+            "filed": "2026-08-12",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "he Korea JV is consolidated under the voting interest entity consolidation model as it does not meet the variable interest entity characteristics, and BitGo controls the board with 3 out of 5 directors, making all board decisions subject to majority approval. Consequently, inter",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm",
+        "accession": "0001740604-26-000050",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "The Company’s leases have remaining terms which expire through 2030. The Company’s leases do not include residual value guarantees or covenants. The following table presents various components of the lease costs (in thousands): Three Months Ended June 30, | Six Months Ended J",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm",
+        "accession": "0001740604-26-000050",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001740604-26-000050",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "n taxes, partially offset by executive compensation limitations and other non-deductible expenses. Note 20. Related Party Transactions For the three and six months ended June 30, 2026, there were $ 69.4 million and $ 436.4 million, respectively, of revenue transactions with executi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm",
+        "accession": "0001740604-26-000050",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "67 | LIABILITIES AND STOCKHOLDERS’ EQUITY | Current liabilities: | Accounts payable | $ | 9,347 | $ | 9,955 | Deferred revenue, current | 4,507 | 4,710 | Deposits from stablecoin holders | 4,634,863 | 3,313,527 | Borrowings | 133,169 | 118,848 | Borrowings of digital intangib",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1740604/000174060426000050/btgo-20260630.htm",
+        "accession": "0001740604-26-000050",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-08-28",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001740604-26-000056",
+      "doc": "btgo-20260827.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

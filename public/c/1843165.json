@@ -1,0 +1,526 @@
+{
+  "cik": 1843165,
+  "ticker": "YHC",
+  "name": "LQR House Inc.",
+  "sector": "consumer-staples",
+  "industry": "Beverages",
+  "sic": "2080",
+  "sic_description": "Beverages",
+  "generated_at": "2026-10-31T14:35:13+00:00",
+  "fetched_at": "2026-10-26T03:23:27+00:00",
+  "price": 3.0,
+  "price_date": "2026-10-23",
+  "equity_vol": 3.360106,
+  "snapshot": {
+    "total_debt": 47189557,
+    "current_debt": 7189557,
+    "cash": 144642,
+    "investments": 7189557,
+    "short_term_borrowings": 7189557,
+    "operating_leases": 51651,
+    "equity": 31268339,
+    "assets": 140189099,
+    "liabilities": 50117162,
+    "assets_current": 9750340,
+    "liabilities_current": 10117162,
+    "retained_earnings": -66058548,
+    "operating_income": -10950380,
+    "net_income": -19159713,
+    "ocf": -28558461,
+    "revenue": 1205613,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "y3": 40000000
+    },
+    "shares": 1303857,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt+ShortTermBorrowings",
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 47189557,
+    "cash_and_investments": 7334199,
+    "net_debt": 39855358,
+    "ebitda": -10950380.0,
+    "ebit": -10950380,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -28558461.0,
+    "fcf_to_debt": -0.605186,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 7334199.0,
+    "due_12m": 7189557,
+    "due_24m": null,
+    "liquidity_to_due12": 1.020118,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -0.865173,
+    "market_cap": 3911571.0,
+    "debt_to_ev": 1.078201,
+    "convertibles": null,
+    "implied": {
+      "dd": -1.987612,
+      "pd_1y": 0.976573,
+      "spread_5y_bps": 1831.776612,
+      "asset_vol": 2.907434,
+      "calibrated_5y_bps": 213.071333,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 32
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 51651.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026091661/ea0301268-10q_lqrhouse.htm",
+        "accession": "0001213900-26-091661",
+        "form": "10-Q",
+        "filed": "2026-08-19",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 51651.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-091661",
+            "filed": "2026-08-19",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026091661/ea0301268-10q_lqrhouse.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "omponent of equity in the unaudited condensed consolidated balance sheets. The Company does not have any variable interest entities. Fusion Five’s fiscal year ends March 31, which differs from the Company’s fiscal year end of December 31 by three months, within the threshold per",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026091661/ea0301268-10q_lqrhouse.htm",
+        "accession": "0001213900-26-091661",
+        "form": "10-Q",
+        "filed": "2026-08-19",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "payments adjusted periodically for inflation. The Company’s lease agreements do not contain any material residual value guarantees or material restrictive covenants. All of the Company’s leases are classified as operating leases. The Company has elected not to recognize right-of-",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026091661/ea0301268-10q_lqrhouse.htm",
+        "accession": "0001213900-26-091661",
+        "form": "10-Q",
+        "filed": "2026-08-19",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-091661",
+      "form": "10-Q",
+      "filed": "2026-08-19",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026091661/ea0301268-10q_lqrhouse.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.3745,
+      "receivables_growth": -0.146,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.3653,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.3653,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1564823.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        },
+        {
+          "value_usd": 2501660.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 23946.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        },
+        {
+          "value_usd": 28040.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 10423.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        },
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -33817140.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        },
+        {
+          "value_usd": -6618417.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -25522618.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        },
+        {
+          "value_usd": -22754178.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-044131",
+          "filed": "2026-04-15",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026044131/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "l instruments measured at amortized cost and receivables resulting from the application of ASC 606, including contract assets. 11 The Company maintains an allowance for credit losses and records the allowance for credit losses as an offset to accounts receivable and the e",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026091661/ea0301268-10q_lqrhouse.htm",
+        "accession": "0001213900-26-091661",
+        "form": "10-Q",
+        "filed": "2026-08-19"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "d Parties The Company follows ASC 850, Related Party Disclosures , for the identification and disclosure of related party transactions. Related parties include principal owners, management, members of their immediate families, affiliates, and other parties that can significantly infl",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026091661/ea0301268-10q_lqrhouse.htm",
+        "accession": "0001213900-26-091661",
+        "form": "10-Q",
+        "filed": "2026-08-19"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ed and other payables | 1,392,050 | 982,739 | Accrued and other payables, related party | 393,906 | 760,975 | Contract liabilities | 11,251 | 10,423 | Payables - Client funds | 316,932 | - | Payable - Broker dealer | 7,189,557 | - | Payable - External trust company | 409,340 | -",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390026091661/ea0301268-10q_lqrhouse.htm",
+        "accession": "0001213900-26-091661",
+        "form": "10-Q",
+        "filed": "2026-08-19"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Promissory Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.06,
+      "maturity": "2028-05-20",
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-10-16",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001213900-26-110367",
+      "doc": "ea0308914-8k_lqr.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-06-02",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-26-063829",
+      "doc": "ea0293191-8k_lqr.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-05-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001213900-26-060557",
+      "doc": "ea0292013-8k_lqr.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-04-15",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001213900-26-044043",
+      "doc": "ea0286448-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-03-12",
+      "items": "1.01,9.01",
+      "acc": "0001213900-26-026510",
+      "doc": "ea0281104-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-12-19",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-25-123834",
+      "doc": "ea0270386-8k_lqr.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-04-07",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001213900-25-029127",
+      "doc": "ea0237181-8k_lqr.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-01-03",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-25-000780",
+      "doc": "ea0226681-8k_lqr.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-10-18",
+      "items": "1.01,2.03,3.02,5.02,7.01,9.01",
+      "acc": "0001213900-24-088992",
+      "doc": "ea0217961-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-06-13",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-24-052477",
+      "doc": "ea0207673-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-05-23",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001213900-24-046257",
+      "doc": "ea0206750-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-11-28",
+      "items": "1.01,9.01",
+      "acc": "0001213900-23-090548",
+      "doc": "ea189078-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-11-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-23-086122",
+      "doc": "ea188229-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-11-06",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001213900-23-083853",
+      "doc": "ea187659-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-11-02",
+      "items": "1.01,9.01",
+      "acc": "0001213900-23-082764",
+      "doc": "ea187613-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-10-17",
+      "items": "1.01,9.01",
+      "acc": "0001013762-23-004407",
+      "doc": "ea186890-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-10-16",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001013762-23-004170",
+      "doc": "ea186834-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-08-11",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-23-066290",
+      "doc": "ea183300-8k_lqrhouse.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      47189557,
+      7334199,
+      null,
+      -10950380,
+      -10950380,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-08",
+      1831.34,
+      -2.049,
+      3.3118,
+      213.2
+    ],
+    [
+      "2026-09",
+      1831.09,
+      -2.098,
+      3.3037,
+      213.2
+    ],
+    [
+      "2026-10",
+      1831.81,
+      -1.957,
+      3.3601,
+      212.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,542 @@
+{
+  "cik": 2018064,
+  "ticker": "TTGT",
+  "name": "TechTarget, Inc.",
+  "sector": "communication",
+  "industry": "Telegraph & Other Message Communications",
+  "sic": "4822",
+  "sic_description": "Telegraph & Other Message Communications",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-26T01:25:21+00:00",
+  "price": 3.7,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.704149,
+  "snapshot": {
+    "cash": 45820000,
+    "investments": 0,
+    "operating_leases": 11570000,
+    "convertible": 0,
+    "revolver_capacity": 250000000,
+    "revolver_available": 143300000,
+    "equity": 506856000,
+    "assets": 853443000,
+    "liabilities": 346587000,
+    "assets_current": 144160000,
+    "liabilities_current": 125357000,
+    "retained_earnings": -1176759000,
+    "operating_income": -225698000,
+    "pretax_income": -232365000,
+    "net_income": -178772000,
+    "da": 2449000,
+    "ocf": 5930000,
+    "capex": 2374000,
+    "revenue": 485157000,
+    "debt_repaid": 0,
+    "shares": 72332660,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebt",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 45820000.0,
+    "net_debt": null,
+    "ebitda": -223249000,
+    "ebit": -225698000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 3556000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 143300000,
+    "liquidity": 189120000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 13400000.0,
+    "floating_share": null,
+    "plus100bp_interest": 134000.0,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -1.744854,
+    "market_cap": 267630842.0,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2024-12-02",
+        "text": "The Borrower will not permit the Consolidated Interest Coverage Ratio as of the end of any fiscal quarter, commencing with the fiscal quarter ending March 31, 2025, to be less than 3.00:1.00."
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 11570000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526338065/ttgt-20260630.htm",
+        "accession": "0001193125-26-338065",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 11570000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-338065",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526338065/ttgt-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-338065",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526338065/ttgt-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.7087,
+      "receivables_growth": 0.0605,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.1272,
+      "dsri": 0.6206,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 486791000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        },
+        {
+          "value_usd": 284897000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 83819000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        },
+        {
+          "value_usd": 79039000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 50526000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        },
+        {
+          "value_usd": 44825000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 16337000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        },
+        {
+          "value_usd": -64854000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1008306000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        },
+        {
+          "value_usd": -116863000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-102183",
+          "filed": "2026-03-11",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526102183/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "| 72,301,012 | 71,476,670 | Diluted | 72,308,647 | 71,487,725 | 72,301,012 | 71,476,670 | (1) Amounts include related party transactions as follows (a) : | Revenues | $ | 45 | $ | 347 | $ | 107 | 571 | Cost of revenues | 5 | 323 | 15 | 600 | General and administrative | 5,406 | 4,917 |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526338065/ttgt-20260630.htm",
+        "accession": "0001193125-26-338065",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "from the timing of invoicing, Informa TechTarget has determined that its contracts generally do not include a significant financing component. The primary purpose of Informa TechTarget’s invoicing terms is to provide clients with simplified and predictable ways of purchasing products and se",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526338065/ttgt-20260630.htm",
+        "accession": "0001193125-26-338065",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "Current liabilities: | Accounts payable | $ | 18,006 | $ | 21,160 | Related party payables | 5,051 | 5,671 | Contract liabilities | 62,522 | 50,526 | Operating lease liabilities | 2,434 | 3,112 | Accrued expenses and other current liabilities | 15,300 | 22,572 | Accrued compensa",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312526338065/ttgt-20260630.htm",
+        "accession": "0001193125-26-338065",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "fee_min": 0.003,
+      "fee_max": 0.005,
+      "drawn": 13400000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-12-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-12-02",
+      "size": 250000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "floor_pct": 0.0,
+      "maturity": "2029-12-02",
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower will not permit the Consolidated Interest Coverage Ratio as of the end of any fiscal quarter, commencing with the fiscal quarter ending March 31, 2025, to be less than 3.00:1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "h in the following table under the heading “ABR Margin”, (iii) SOFR Revolving Borrowings, the percentage set forth in the following table under the heading “SOFR Margin”, and (iv) Commitment Fees, the percentage set forth in the following table under the heading “Commitment Fees”: | Pricing Level | Consolidated Total Net Leverage Ratio | ABR Margin | SOFR Margin | Commitment Fees | I | Greater than or equal to 2.50:1"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "he full committed amount of any Incremental Commitment (including any Incremental Delayed Draw Term Loan Commitments) then being incurred is fully drawn and (b) the cash proceeds of such Incremental Commitment then being incurred shall not be netted from Indebtedness for purposes of calculating the Consolidated Senior Secured Net Leverage Ratio) shall be less than or equal to 2.50:1.00 for the most recently ended Mea"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2018064/000119312524269931/d913820dex109.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2024-12-03",
+      "items": "1.01,2.01,2.03,2.04,3.01,3.02,3.03,5.01,5.02,5.03,5.05,8.01,9.01",
+      "acc": "0001193125-24-269931",
+      "doc": "d913820d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-12-31",
+      417040000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      271.26,
+      2.464,
+      0.6722,
+      158.0
+    ],
+    [
+      "2025-06",
+      289.14,
+      2.338,
+      0.6777,
+      159.3
+    ],
+    [
+      "2025-07",
+      324.01,
+      2.301,
+      0.7203,
+      159.7
+    ],
+    [
+      "2025-08",
+      373.93,
+      1.984,
+      0.7405,
+      163.1
+    ],
+    [
+      "2025-09",
+      414.06,
+      1.858,
+      0.7706,
+      164.5
+    ],
+    [
+      "2025-10",
+      389.92,
+      1.909,
+      0.7498,
+      164.0
+    ],
+    [
+      "2025-11",
+      398.34,
+      1.867,
+      0.7544,
+      164.4
+    ],
+    [
+      "2025-12",
+      354.75,
+      2.001,
+      0.7151,
+      163.0
+    ],
+    [
+      "2026-01",
+      353.0,
+      2.01,
+      0.7136,
+      162.9
+    ],
+    [
+      "2026-02",
+      413.63,
+      1.644,
+      0.763,
+      166.9
+    ],
+    [
+      "2026-03",
+      407.81,
+      1.672,
+      0.7627,
+      166.6
+    ],
+    [
+      "2026-04",
+      344.08,
+      2.064,
+      0.7112,
+      162.3
+    ],
+    [
+      "2026-05",
+      356.32,
+      1.921,
+      0.7186,
+      163.8
+    ],
+    [
+      "2026-06",
+      368.39,
+      1.781,
+      0.7308,
+      165.4
+    ],
+    [
+      "2026-07",
+      358.35,
+      1.889,
+      0.725,
+      164.2
+    ],
+    [
+      "2026-08",
+      369.0,
+      1.783,
+      0.735,
+      165.4
+    ],
+    [
+      "2026-09",
+      327.3,
+      1.885,
+      0.7038,
+      164.2
+    ],
+    [
+      "2026-10",
+      327.74,
+      1.867,
+      0.7041,
+      164.4
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

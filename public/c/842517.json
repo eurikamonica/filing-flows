@@ -1,0 +1,3771 @@
+{
+  "cik": 842517,
+  "ticker": "ISBA",
+  "name": "ISABELLA BANK CORP",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-10-31T14:35:17+00:00",
+  "fetched_at": "2026-10-30T20:56:27+00:00",
+  "price": 39.64,
+  "price_date": "2026-10-30",
+  "equity_vol": 0.371071,
+  "snapshot": {
+    "cash": 138540000,
+    "equity": 245585000,
+    "assets": 2240515000,
+    "liabilities": 1994930000,
+    "retained_earnings": 124341000,
+    "deposits": 1892608000,
+    "time_deposits": 358801000,
+    "interest_paid": 33514000,
+    "pretax_income": 27213000,
+    "net_income": 21328000,
+    "da": 2264000,
+    "ocf": 29590000,
+    "capex": 2373000,
+    "deposit_interest": 28105000,
+    "wavg_rate_all": 0.0142,
+    "stated_rate": 0.0325,
+    "shares": 7651045,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 138540000.0,
+    "net_debt": null,
+    "ebitda": 29477000.0,
+    "ebit": 27213000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.882915,
+    "fcf": 27217000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 138540000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 303287423.8,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "Note 4 – Borrowed Funds Short-term borrowings Short-term borrowings include securities sold under repurchase agreements without stated maturity dates, federal funds purchased, and FRB Discount Window advances, which all generally mature within one to three days from th",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251726000236/isba-20260930.htm",
+        "accession": "0000842517-26-000236",
+        "form": "10-Q",
+        "filed": "2026-10-30",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000842517-26-000236",
+      "form": "10-Q",
+      "filed": "2026-10-30",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251726000236/isba-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": 0.0501,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.5664
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 5655000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000842517-19-000052",
+          "filed": "2019-03-14",
+          "end": "2018-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251719000052/"
+        },
+        {
+          "value_usd": 5385000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000842517-19-000052",
+          "filed": "2019-03-14",
+          "end": "2017-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251719000052/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 21963000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000842517-21-000069",
+          "filed": "2021-03-10",
+          "end": "2018-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251721000069/"
+        },
+        {
+          "value_usd": 19668000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000842517-20-000040",
+          "filed": "2020-03-16",
+          "end": "2017-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251720000040/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 14021000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000842517-21-000069",
+          "filed": "2021-03-10",
+          "end": "2018-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251721000069/"
+        },
+        {
+          "value_usd": 13237000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000842517-20-000040",
+          "filed": "2020-03-16",
+          "end": "2017-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251720000040/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ll of our performance obligations pursuant to contracts with customers. As a result, we have not recorded any contract assets or liabilities. We estimate no returns or allowances for the three and nine month periods ended September 30, 2026 and 2025. Our contracts with cus",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/842517/000084251726000236/isba-20260930.htm",
+        "accession": "0000842517-26-000236",
+        "form": "10-Q",
+        "filed": "2026-10-30"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2018-12-31",
+      "2017-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Subordinated Debt",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "face": 30000000.0,
+      "spread": 0.0256,
+      "floating": true
+    },
+    {
+      "name": "Securities sold under agreements to repurchase without stated maturity dates",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0305,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-06-16",
+      "items": "1.01,9.01",
+      "acc": "0000842517-26-000163",
+      "doc": "isba-20260616.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-15",
+      "items": "1.01,9.01",
+      "acc": "0000842517-26-000158",
+      "doc": "isba-20260611.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-02",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0000842517-21-000122",
+      "doc": "isba_x2021xsubordinateddeb.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2013-09-30",
+      266001000,
+      20255000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      272536000,
+      17745000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      279457000,
+      26484000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      290438000,
+      22431000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      283321000,
+      19243000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      307599000,
+      20955000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      297610000,
+      16975000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      307896000,
+      16670000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      318596000,
+      19673000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      325409000,
+      19274000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      327375000,
+      17525000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      360940000,
+      21485000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      367027000,
+      20650000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      303113000,
+      15739000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      362496000,
+      22055000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      359776000,
+      21864000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      311684000,
+      19911000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      320462000,
+      21935000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      277386000,
+      26122000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      263171000,
+      96751000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      236268000,
+      109384000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      238349000,
+      165749000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      141967000,
+      321567000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      161395000,
+      248189000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      156655000,
+      206482000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      90534000,
+      161186000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      86450000,
+      82017000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      81704000,
+      98912000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      61262000,
+      98723000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      121392000,
+      29880000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      146642000,
+      115879000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      72355000,
+      25218000,
+      26581000,
+      null,
+      null,
+      0.36737
+    ],
+    [
+      "2024-06-30",
+      118574000,
+      23559000,
+      30303000,
+      null,
+      null,
+      0.25556
+    ],
+    [
+      "2024-09-30",
+      96836000,
+      27378000,
+      32973000,
+      null,
+      null,
+      0.3405
+    ],
+    [
+      "2025-03-31",
+      76757000,
+      69179000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      72677000,
+      108554000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      91514000,
+      161301000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      142514000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2013-11",
+      0.08,
+      8.623,
+      0.1519,
+      104.4
+    ],
+    [
+      "2013-12",
+      0.17,
+      8.2,
+      0.1604,
+      107.4
+    ],
+    [
+      "2014-01",
+      0.07,
+      8.673,
+      0.1522,
+      104.0
+    ],
+    [
+      "2014-02",
+      0.04,
+      8.979,
+      0.1469,
+      101.9
+    ],
+    [
+      "2014-03",
+      0.02,
+      9.254,
+      0.1425,
+      100.1
+    ],
+    [
+      "2014-04",
+      0.02,
+      9.293,
+      0.141,
+      99.8
+    ],
+    [
+      "2014-05",
+      0.02,
+      9.436,
+      0.1381,
+      98.8
+    ],
+    [
+      "2014-06",
+      0.02,
+      9.472,
+      0.1381,
+      98.6
+    ],
+    [
+      "2014-07",
+      0.0,
+      10.262,
+      0.1268,
+      93.5
+    ],
+    [
+      "2014-08",
+      0.01,
+      9.994,
+      0.1304,
+      95.2
+    ],
+    [
+      "2014-09",
+      0.01,
+      9.619,
+      0.1367,
+      97.6
+    ],
+    [
+      "2014-10",
+      0.01,
+      9.903,
+      0.1323,
+      95.8
+    ],
+    [
+      "2014-11",
+      0.0,
+      10.651,
+      0.1213,
+      91.1
+    ],
+    [
+      "2014-12",
+      0.0,
+      13.784,
+      0.0945,
+      73.8
+    ],
+    [
+      "2015-01",
+      0.0,
+      11.461,
+      0.1137,
+      86.3
+    ],
+    [
+      "2015-02",
+      0.0,
+      11.162,
+      0.1165,
+      88.0
+    ],
+    [
+      "2015-03",
+      0.0,
+      11.119,
+      0.1171,
+      88.3
+    ],
+    [
+      "2015-04",
+      0.0,
+      11.254,
+      0.1159,
+      87.5
+    ],
+    [
+      "2015-05",
+      0.0,
+      11.418,
+      0.1147,
+      86.5
+    ],
+    [
+      "2015-06",
+      0.0,
+      11.337,
+      0.1165,
+      87.0
+    ],
+    [
+      "2015-07",
+      0.0,
+      11.289,
+      0.1153,
+      87.3
+    ],
+    [
+      "2015-08",
+      0.0,
+      11.909,
+      0.1088,
+      83.7
+    ],
+    [
+      "2015-09",
+      0.0,
+      12.649,
+      0.103,
+      79.6
+    ],
+    [
+      "2015-10",
+      0.0,
+      12.673,
+      0.1034,
+      79.5
+    ],
+    [
+      "2015-11",
+      0.0,
+      11.399,
+      0.1178,
+      86.6
+    ],
+    [
+      "2015-12",
+      0.0,
+      11.554,
+      0.1172,
+      85.7
+    ],
+    [
+      "2016-01",
+      0.02,
+      9.283,
+      0.1466,
+      99.9
+    ],
+    [
+      "2016-02",
+      0.01,
+      9.293,
+      0.1459,
+      99.8
+    ],
+    [
+      "2016-03",
+      0.01,
+      9.249,
+      0.1466,
+      100.1
+    ],
+    [
+      "2016-04",
+      0.02,
+      9.119,
+      0.1492,
+      101.0
+    ],
+    [
+      "2016-05",
+      0.02,
+      9.055,
+      0.1491,
+      101.4
+    ],
+    [
+      "2016-06",
+      0.02,
+      9.079,
+      0.1489,
+      101.2
+    ],
+    [
+      "2016-07",
+      0.02,
+      9.1,
+      0.1485,
+      101.1
+    ],
+    [
+      "2016-08",
+      0.01,
+      9.211,
+      0.1459,
+      100.4
+    ],
+    [
+      "2016-09",
+      0.01,
+      9.369,
+      0.1436,
+      99.3
+    ],
+    [
+      "2016-10",
+      0.01,
+      9.391,
+      0.1431,
+      99.1
+    ],
+    [
+      "2016-11",
+      0.0,
+      10.595,
+      0.1267,
+      91.4
+    ],
+    [
+      "2016-12",
+      0.0,
+      15.332,
+      0.0879,
+      68.0
+    ],
+    [
+      "2017-01",
+      -0.0,
+      25.077,
+      0.0538,
+      68.0
+    ],
+    [
+      "2017-02",
+      -0.0,
+      28.582,
+      0.0471,
+      68.0
+    ],
+    [
+      "2017-03",
+      -0.0,
+      38.427,
+      0.0351,
+      68.0
+    ],
+    [
+      "2017-04",
+      -0.0,
+      43.126,
+      0.0313,
+      68.0
+    ],
+    [
+      "2017-05",
+      -0.0,
+      36.759,
+      0.0368,
+      68.0
+    ],
+    [
+      "2017-06",
+      -0.0,
+      31.293,
+      0.0432,
+      68.0
+    ],
+    [
+      "2017-07",
+      -0.0,
+      29.637,
+      0.0456,
+      68.0
+    ],
+    [
+      "2017-08",
+      -0.0,
+      28.995,
+      0.0459,
+      68.0
+    ],
+    [
+      "2017-09",
+      -0.0,
+      22.619,
+      0.0592,
+      68.0
+    ],
+    [
+      "2017-10",
+      -0.0,
+      22.082,
+      0.0604,
+      68.0
+    ],
+    [
+      "2017-11",
+      -0.0,
+      19.091,
+      0.0697,
+      68.0
+    ],
+    [
+      "2017-12",
+      -0.0,
+      18.353,
+      0.0724,
+      68.0
+    ],
+    [
+      "2018-01",
+      -0.0,
+      17.673,
+      0.0749,
+      68.0
+    ],
+    [
+      "2018-02",
+      -0.0,
+      17.303,
+      0.0762,
+      68.0
+    ],
+    [
+      "2018-03",
+      0.0,
+      13.82,
+      0.0958,
+      73.6
+    ],
+    [
+      "2018-04",
+      0.0,
+      13.348,
+      0.0988,
+      76.0
+    ],
+    [
+      "2018-05",
+      0.0,
+      14.157,
+      0.097,
+      72.0
+    ],
+    [
+      "2018-06",
+      0.0,
+      14.424,
+      0.0953,
+      70.7
+    ],
+    [
+      "2018-07",
+      0.0,
+      14.352,
+      0.0958,
+      71.0
+    ],
+    [
+      "2018-08",
+      0.0,
+      13.366,
+      0.0996,
+      75.9
+    ],
+    [
+      "2018-09",
+      0.0,
+      14.279,
+      0.0929,
+      71.4
+    ],
+    [
+      "2018-10",
+      0.0,
+      12.867,
+      0.1019,
+      78.5
+    ],
+    [
+      "2018-11",
+      0.0,
+      12.23,
+      0.1069,
+      81.9
+    ],
+    [
+      "2018-12",
+      0.17,
+      6.928,
+      0.1852,
+      117.0
+    ],
+    [
+      "2019-01",
+      0.2,
+      6.828,
+      0.1874,
+      117.8
+    ],
+    [
+      "2019-02",
+      0.4,
+      6.542,
+      0.197,
+      120.1
+    ],
+    [
+      "2019-03",
+      0.98,
+      6.155,
+      0.2105,
+      123.2
+    ],
+    [
+      "2019-04",
+      1.05,
+      6.073,
+      0.2112,
+      123.9
+    ],
+    [
+      "2019-05",
+      1.16,
+      6.214,
+      0.213,
+      122.8
+    ],
+    [
+      "2019-06",
+      1.32,
+      6.26,
+      0.2126,
+      122.4
+    ],
+    [
+      "2019-07",
+      1.24,
+      6.254,
+      0.2119,
+      122.4
+    ],
+    [
+      "2019-08",
+      1.38,
+      6.241,
+      0.2098,
+      122.5
+    ],
+    [
+      "2019-09",
+      1.5,
+      6.225,
+      0.2122,
+      122.7
+    ],
+    [
+      "2019-10",
+      1.6,
+      6.244,
+      0.2118,
+      122.5
+    ],
+    [
+      "2019-11",
+      1.11,
+      6.569,
+      0.2102,
+      119.9
+    ],
+    [
+      "2019-12",
+      0.0,
+      9.641,
+      0.144,
+      97.5
+    ],
+    [
+      "2020-01",
+      0.0,
+      10.453,
+      0.133,
+      92.3
+    ],
+    [
+      "2020-02",
+      0.0,
+      11.735,
+      0.118,
+      84.7
+    ],
+    [
+      "2020-03",
+      14.23,
+      5.23,
+      0.247,
+      131.1
+    ],
+    [
+      "2020-04",
+      20.06,
+      4.907,
+      0.2598,
+      134.0
+    ],
+    [
+      "2020-05",
+      32.35,
+      4.504,
+      0.2851,
+      137.7
+    ],
+    [
+      "2020-06",
+      47.47,
+      4.17,
+      0.3128,
+      140.8
+    ],
+    [
+      "2020-07",
+      70.83,
+      3.801,
+      0.3443,
+      144.4
+    ],
+    [
+      "2020-08",
+      73.92,
+      3.751,
+      0.3475,
+      144.9
+    ],
+    [
+      "2020-09",
+      72.35,
+      3.777,
+      0.3462,
+      144.6
+    ],
+    [
+      "2020-10",
+      71.56,
+      3.783,
+      0.345,
+      144.6
+    ],
+    [
+      "2020-11",
+      76.0,
+      3.766,
+      0.358,
+      144.7
+    ],
+    [
+      "2020-12",
+      78.78,
+      3.744,
+      0.3637,
+      144.9
+    ],
+    [
+      "2021-01",
+      82.33,
+      3.708,
+      0.3699,
+      145.3
+    ],
+    [
+      "2021-02",
+      85.93,
+      3.671,
+      0.3743,
+      145.6
+    ],
+    [
+      "2021-03",
+      30.13,
+      4.687,
+      0.2987,
+      136.0
+    ],
+    [
+      "2021-04",
+      10.98,
+      5.652,
+      0.2874,
+      127.5
+    ],
+    [
+      "2021-05",
+      6.72,
+      6.024,
+      0.2704,
+      124.3
+    ],
+    [
+      "2021-06",
+      2.22,
+      6.8,
+      0.2432,
+      118.0
+    ],
+    [
+      "2021-07",
+      0.26,
+      8.11,
+      0.1961,
+      108.1
+    ],
+    [
+      "2021-08",
+      0.16,
+      8.383,
+      0.1901,
+      106.1
+    ],
+    [
+      "2021-09",
+      0.43,
+      7.825,
+      0.2108,
+      110.2
+    ],
+    [
+      "2021-10",
+      0.37,
+      7.895,
+      0.2091,
+      109.6
+    ],
+    [
+      "2021-11",
+      0.11,
+      8.584,
+      0.1938,
+      104.7
+    ],
+    [
+      "2021-12",
+      0.23,
+      8.11,
+      0.2023,
+      108.1
+    ],
+    [
+      "2022-01",
+      0.1,
+      8.438,
+      0.1937,
+      105.7
+    ],
+    [
+      "2022-02",
+      0.03,
+      8.889,
+      0.1858,
+      102.5
+    ],
+    [
+      "2022-03",
+      0.01,
+      9.273,
+      0.1769,
+      99.9
+    ],
+    [
+      "2022-04",
+      0.0,
+      11.519,
+      0.1663,
+      85.9
+    ],
+    [
+      "2022-05",
+      0.0,
+      11.27,
+      0.1699,
+      87.4
+    ],
+    [
+      "2022-06",
+      0.0,
+      10.778,
+      0.1789,
+      90.3
+    ],
+    [
+      "2022-07",
+      0.0,
+      10.697,
+      0.1803,
+      90.8
+    ],
+    [
+      "2022-08",
+      0.0,
+      10.723,
+      0.1805,
+      90.6
+    ],
+    [
+      "2022-09",
+      0.0,
+      11.654,
+      0.1618,
+      85.1
+    ],
+    [
+      "2022-10",
+      0.0,
+      11.794,
+      0.1622,
+      84.4
+    ],
+    [
+      "2022-11",
+      0.0,
+      11.661,
+      0.1666,
+      85.1
+    ],
+    [
+      "2022-12",
+      0.0,
+      12.352,
+      0.1605,
+      81.2
+    ],
+    [
+      "2023-01",
+      0.0,
+      11.643,
+      0.1691,
+      85.2
+    ],
+    [
+      "2023-02",
+      0.0,
+      11.049,
+      0.1815,
+      88.7
+    ],
+    [
+      "2023-03",
+      0.0,
+      9.501,
+      0.212,
+      98.4
+    ],
+    [
+      "2023-04",
+      0.01,
+      8.85,
+      0.2235,
+      102.8
+    ],
+    [
+      "2023-05",
+      0.05,
+      8.207,
+      0.2507,
+      107.4
+    ],
+    [
+      "2023-06",
+      0.44,
+      7.117,
+      0.2902,
+      115.5
+    ],
+    [
+      "2023-07",
+      3.29,
+      5.618,
+      0.3013,
+      127.8
+    ],
+    [
+      "2023-08",
+      3.24,
+      5.624,
+      0.3021,
+      127.7
+    ],
+    [
+      "2023-09",
+      3.02,
+      5.673,
+      0.3009,
+      127.3
+    ],
+    [
+      "2023-10",
+      4.41,
+      5.346,
+      0.3041,
+      130.1
+    ],
+    [
+      "2023-11",
+      5.01,
+      5.245,
+      0.3046,
+      131.0
+    ],
+    [
+      "2023-12",
+      7.44,
+      5.126,
+      0.3177,
+      132.1
+    ],
+    [
+      "2024-01",
+      6.49,
+      5.212,
+      0.3125,
+      131.3
+    ],
+    [
+      "2024-02",
+      5.99,
+      5.199,
+      0.3096,
+      131.4
+    ],
+    [
+      "2024-03",
+      3.55,
+      5.48,
+      0.2912,
+      129.0
+    ],
+    [
+      "2024-04",
+      2.81,
+      5.547,
+      0.2839,
+      128.4
+    ],
+    [
+      "2024-05",
+      0.07,
+      7.943,
+      0.2448,
+      109.3
+    ],
+    [
+      "2024-06",
+      0.0,
+      9.518,
+      0.204,
+      98.3
+    ],
+    [
+      "2024-07",
+      0.0,
+      10.38,
+      0.1917,
+      92.8
+    ],
+    [
+      "2024-08",
+      0.0,
+      9.158,
+      0.1863,
+      100.7
+    ],
+    [
+      "2024-09",
+      0.0,
+      9.151,
+      0.1916,
+      100.8
+    ],
+    [
+      "2024-10",
+      0.01,
+      8.751,
+      0.2018,
+      103.5
+    ],
+    [
+      "2024-11",
+      0.0,
+      9.267,
+      0.2109,
+      100.0
+    ],
+    [
+      "2024-12",
+      0.0,
+      10.787,
+      0.1844,
+      90.3
+    ],
+    [
+      "2025-01",
+      0.0,
+      10.73,
+      0.1849,
+      90.6
+    ],
+    [
+      "2025-02",
+      0.0,
+      11.551,
+      0.1703,
+      85.7
+    ],
+    [
+      "2025-03",
+      0.0,
+      10.726,
+      0.1808,
+      90.6
+    ],
+    [
+      "2025-04",
+      0.02,
+      8.746,
+      0.2273,
+      103.5
+    ],
+    [
+      "2025-05",
+      0.01,
+      9.401,
+      0.2301,
+      99.1
+    ],
+    [
+      "2025-06",
+      4.46,
+      6.11,
+      0.3652,
+      123.6
+    ],
+    [
+      "2025-07",
+      7.55,
+      5.76,
+      0.3877,
+      126.6
+    ],
+    [
+      "2025-08",
+      6.28,
+      5.946,
+      0.3863,
+      125.0
+    ],
+    [
+      "2025-09",
+      6.93,
+      5.915,
+      0.3936,
+      125.2
+    ],
+    [
+      "2025-10",
+      5.56,
+      6.063,
+      0.3863,
+      124.0
+    ],
+    [
+      "2025-11",
+      9.22,
+      5.706,
+      0.4007,
+      127.0
+    ],
+    [
+      "2025-12",
+      15.73,
+      5.421,
+      0.4461,
+      129.5
+    ],
+    [
+      "2026-01",
+      20.65,
+      5.196,
+      0.4551,
+      131.4
+    ],
+    [
+      "2026-02",
+      26.04,
+      5.017,
+      0.4685,
+      133.0
+    ],
+    [
+      "2026-03",
+      45.72,
+      4.36,
+      0.4669,
+      139.0
+    ],
+    [
+      "2026-04",
+      49.68,
+      4.26,
+      0.4645,
+      140.0
+    ],
+    [
+      "2026-05",
+      55.14,
+      4.155,
+      0.4727,
+      141.0
+    ],
+    [
+      "2026-06",
+      13.01,
+      5.24,
+      0.3801,
+      131.1
+    ],
+    [
+      "2026-07",
+      11.02,
+      5.336,
+      0.3727,
+      130.2
+    ],
+    [
+      "2026-08",
+      11.92,
+      5.271,
+      0.3763,
+      130.8
+    ],
+    [
+      "2026-09",
+      9.4,
+      5.384,
+      0.3666,
+      129.8
+    ],
+    [
+      "2026-10",
+      9.8,
+      5.376,
+      0.3711,
+      129.9
+    ]
+  ],
+  "bank": {
+    "bank": "Isabella Bank",
+    "holding": "ISABELLA BANK CORP",
+    "latest": {
+      "date": "2026-06-30",
+      "deposits": 1845402000.0,
+      "domestic": 1845402000.0,
+      "time": 389401000.0,
+      "time_over_250k": 130136000.0,
+      "time_100_250k": 120641000.0,
+      "time_small": 138624000.0,
+      "money_market": 368896000.0,
+      "brokered": 0.0,
+      "uninsured": 673868000.0,
+      "insured": 1172340000.0,
+      "interest_bearing": 1059163000.0,
+      "deposit_cost": 0.014917,
+      "cost_of_funds": 0.015715,
+      "nim": 0.034687,
+      "asset_yield": 0.050402
+    },
+    "series": [
+      {
+        "date": "2009-12-31",
+        "deposits": 803844000.0,
+        "domestic": 803844000.0,
+        "time": 420647000.0,
+        "time_over_250k": 187450000.0,
+        "time_100_250k": null,
+        "time_small": 233197000.0,
+        "money_market": 73456000.0,
+        "brokered": 50933000.0,
+        "uninsured": 133701000.0,
+        "insured": 670891000.0,
+        "interest_bearing": 752263000.0,
+        "deposit_cost": 0.06756,
+        "cost_of_funds": 0.020173,
+        "nim": 0.03888,
+        "asset_yield": 0.059053
+      },
+      {
+        "date": "2010-03-31",
+        "deposits": 820957000.0,
+        "domestic": 820957000.0,
+        "time": 421304000.0,
+        "time_over_250k": 73581000.0,
+        "time_100_250k": 113227000.0,
+        "time_small": 234496000.0,
+        "money_market": 82796000.0,
+        "brokered": 52225000.0,
+        "uninsured": 136112000.0,
+        "insured": 685598000.0,
+        "interest_bearing": 772767000.0,
+        "deposit_cost": 0.014028,
+        "cost_of_funds": 0.017531,
+        "nim": 0.038779,
+        "asset_yield": 0.056309
+      },
+      {
+        "date": "2010-06-30",
+        "deposits": 826248000.0,
+        "domestic": 826248000.0,
+        "time": 429593000.0,
+        "time_over_250k": 72079000.0,
+        "time_100_250k": 118658000.0,
+        "time_small": 238856000.0,
+        "money_market": 73303000.0,
+        "brokered": 52711000.0,
+        "uninsured": 131138000.0,
+        "insured": 695848000.0,
+        "interest_bearing": 780123000.0,
+        "deposit_cost": 0.013904,
+        "cost_of_funds": 0.017241,
+        "nim": 0.039151,
+        "asset_yield": 0.056393
+      },
+      {
+        "date": "2010-09-30",
+        "deposits": 863306000.0,
+        "domestic": 863306000.0,
+        "time": 442807000.0,
+        "time_over_250k": 74270000.0,
+        "time_100_250k": 122289000.0,
+        "time_small": 246248000.0,
+        "money_market": 78893000.0,
+        "brokered": 53699000.0,
+        "uninsured": 131211000.0,
+        "insured": 732853000.0,
+        "interest_bearing": 812338000.0,
+        "deposit_cost": 0.01333,
+        "cost_of_funds": 0.016917,
+        "nim": 0.038833,
+        "asset_yield": 0.05575
+      },
+      {
+        "date": "2010-12-31",
+        "deposits": 878851000.0,
+        "domestic": 878851000.0,
+        "time": 452361000.0,
+        "time_over_250k": 75699000.0,
+        "time_100_250k": 126577000.0,
+        "time_small": 250085000.0,
+        "money_market": 87100000.0,
+        "brokered": 53748000.0,
+        "uninsured": 151736000.0,
+        "insured": 727817000.0,
+        "interest_bearing": 826471000.0,
+        "deposit_cost": 0.013108,
+        "cost_of_funds": 0.016631,
+        "nim": 0.03883,
+        "asset_yield": 0.055461
+      },
+      {
+        "date": "2011-03-31",
+        "deposits": 924829000.0,
+        "domestic": 924829000.0,
+        "time": 460790000.0,
+        "time_over_250k": 78798000.0,
+        "time_100_250k": 131478000.0,
+        "time_small": 250514000.0,
+        "money_market": 100685000.0,
+        "brokered": 52147000.0,
+        "uninsured": 171639000.0,
+        "insured": 753911000.0,
+        "interest_bearing": 872347000.0,
+        "deposit_cost": 0.012032,
+        "cost_of_funds": 0.014801,
+        "nim": 0.037289,
+        "asset_yield": 0.05209
+      },
+      {
+        "date": "2011-06-30",
+        "deposits": 926623000.0,
+        "domestic": 926623000.0,
+        "time": 466847000.0,
+        "time_over_250k": 76490000.0,
+        "time_100_250k": 140474000.0,
+        "time_small": 249883000.0,
+        "money_market": 94321000.0,
+        "brokered": 51008000.0,
+        "uninsured": 169116000.0,
+        "insured": 758200000.0,
+        "interest_bearing": 868970000.0,
+        "deposit_cost": 0.011957,
+        "cost_of_funds": 0.014721,
+        "nim": 0.037576,
+        "asset_yield": 0.052297
+      },
+      {
+        "date": "2011-09-30",
+        "deposits": 944986000.0,
+        "domestic": 944986000.0,
+        "time": 474158000.0,
+        "time_over_250k": 80656000.0,
+        "time_100_250k": 145109000.0,
+        "time_small": 248393000.0,
+        "money_market": 91504000.0,
+        "brokered": 51540000.0,
+        "uninsured": 182946000.0,
+        "insured": 762674000.0,
+        "interest_bearing": 886475000.0,
+        "deposit_cost": 0.011509,
+        "cost_of_funds": 0.014498,
+        "nim": 0.037113,
+        "asset_yield": 0.051611
+      },
+      {
+        "date": "2011-12-31",
+        "deposits": 960935000.0,
+        "domestic": 960935000.0,
+        "time": 481537000.0,
+        "time_over_250k": 91163000.0,
+        "time_100_250k": 143059000.0,
+        "time_small": 247315000.0,
+        "money_market": 89656000.0,
+        "brokered": 54325000.0,
+        "uninsured": 179761000.0,
+        "insured": 781820000.0,
+        "interest_bearing": 902493000.0,
+        "deposit_cost": 0.010998,
+        "cost_of_funds": 0.014255,
+        "nim": 0.036772,
+        "asset_yield": 0.051027
+      },
+      {
+        "date": "2012-03-31",
+        "deposits": 990702000.0,
+        "domestic": 990702000.0,
+        "time": 478564000.0,
+        "time_over_250k": 89386000.0,
+        "time_100_250k": 144621000.0,
+        "time_small": 244557000.0,
+        "money_market": 104369000.0,
+        "brokered": 53704000.0,
+        "uninsured": 192004000.0,
+        "insured": 799302000.0,
+        "interest_bearing": 931068000.0,
+        "deposit_cost": 0.01013,
+        "cost_of_funds": 0.01232,
+        "nim": 0.034912,
+        "asset_yield": 0.047232
+      },
+      {
+        "date": "2012-06-30",
+        "deposits": 980983000.0,
+        "domestic": 980983000.0,
+        "time": 478926000.0,
+        "time_over_250k": 97052000.0,
+        "time_100_250k": 143245000.0,
+        "time_small": 238629000.0,
+        "money_market": 97547000.0,
+        "brokered": 62419000.0,
+        "uninsured": 180267000.0,
+        "insured": 801268000.0,
+        "interest_bearing": 918800000.0,
+        "deposit_cost": 0.009631,
+        "cost_of_funds": 0.011758,
+        "nim": 0.035078,
+        "asset_yield": 0.046836
+      },
+      {
+        "date": "2012-09-30",
+        "deposits": 991740000.0,
+        "domestic": 991740000.0,
+        "time": 466850000.0,
+        "time_over_250k": 97819000.0,
+        "time_100_250k": 136881000.0,
+        "time_small": 232150000.0,
+        "money_market": 103633000.0,
+        "brokered": 59871000.0,
+        "uninsured": 197705000.0,
+        "insured": 794592000.0,
+        "interest_bearing": 934147000.0,
+        "deposit_cost": 0.008865,
+        "cost_of_funds": 0.011338,
+        "nim": 0.03522,
+        "asset_yield": 0.046559
+      },
+      {
+        "date": "2012-12-31",
+        "deposits": 1019501000.0,
+        "domestic": 1019501000.0,
+        "time": 464335000.0,
+        "time_over_250k": 103447000.0,
+        "time_100_250k": 132935000.0,
+        "time_small": 227953000.0,
+        "money_market": 104237000.0,
+        "brokered": 55848000.0,
+        "uninsured": 210136000.0,
+        "insured": 809859000.0,
+        "interest_bearing": 953479000.0,
+        "deposit_cost": 0.00802,
+        "cost_of_funds": 0.010901,
+        "nim": 0.034942,
+        "asset_yield": 0.045843
+      },
+      {
+        "date": "2013-03-31",
+        "deposits": 1031599000.0,
+        "domestic": 1031599000.0,
+        "time": 460503000.0,
+        "time_over_250k": 105088000.0,
+        "time_100_250k": 130845000.0,
+        "time_small": 224570000.0,
+        "money_market": 112543000.0,
+        "brokered": 59082000.0,
+        "uninsured": 209329000.0,
+        "insured": 822775000.0,
+        "interest_bearing": 969186000.0,
+        "deposit_cost": 0.007255,
+        "cost_of_funds": 0.008794,
+        "nim": 0.033386,
+        "asset_yield": 0.04218
+      },
+      {
+        "date": "2013-06-30",
+        "deposits": 1023345000.0,
+        "domestic": 1023345000.0,
+        "time": 460200000.0,
+        "time_over_250k": 106431000.0,
+        "time_100_250k": 133219000.0,
+        "time_small": 220550000.0,
+        "money_market": 116458000.0,
+        "brokered": 66708000.0,
+        "uninsured": 210766000.0,
+        "insured": 813019000.0,
+        "interest_bearing": 961047000.0,
+        "deposit_cost": 0.00709,
+        "cost_of_funds": 0.008696,
+        "nim": 0.033214,
+        "asset_yield": 0.04191
+      },
+      {
+        "date": "2013-09-30",
+        "deposits": 1025054000.0,
+        "domestic": 1025054000.0,
+        "time": 449071000.0,
+        "time_over_250k": 103302000.0,
+        "time_100_250k": 128269000.0,
+        "time_small": 217500000.0,
+        "money_market": 116578000.0,
+        "brokered": 62138000.0,
+        "uninsured": 214118000.0,
+        "insured": 811394000.0,
+        "interest_bearing": 958947000.0,
+        "deposit_cost": 0.006774,
+        "cost_of_funds": 0.008604,
+        "nim": 0.033209,
+        "asset_yield": 0.041813
+      },
+      {
+        "date": "2013-12-31",
+        "deposits": 1044995000.0,
+        "domestic": 1044995000.0,
+        "time": 450013000.0,
+        "time_over_250k": 110443000.0,
+        "time_100_250k": 126889000.0,
+        "time_small": 212681000.0,
+        "money_market": 112686000.0,
+        "brokered": 66163000.0,
+        "uninsured": 217808000.0,
+        "insured": 827599000.0,
+        "interest_bearing": 979178000.0,
+        "deposit_cost": 0.006477,
+        "cost_of_funds": 0.008473,
+        "nim": 0.033177,
+        "asset_yield": 0.04165
+      },
+      {
+        "date": "2014-03-31",
+        "deposits": 1067288000.0,
+        "domestic": 1067288000.0,
+        "time": 451842000.0,
+        "time_over_250k": 117882000.0,
+        "time_100_250k": 125109000.0,
+        "time_small": 208851000.0,
+        "money_market": 122509000.0,
+        "brokered": 76700000.0,
+        "uninsured": 218591000.0,
+        "insured": 849129000.0,
+        "interest_bearing": 999673000.0,
+        "deposit_cost": 0.006034,
+        "cost_of_funds": 0.007438,
+        "nim": 0.032377,
+        "asset_yield": 0.039815
+      },
+      {
+        "date": "2014-06-30",
+        "deposits": 1063128000.0,
+        "domestic": 1063128000.0,
+        "time": 451649000.0,
+        "time_over_250k": 121921000.0,
+        "time_100_250k": 125720000.0,
+        "time_small": 204008000.0,
+        "money_market": 116316000.0,
+        "brokered": 84966000.0,
+        "uninsured": 199494000.0,
+        "insured": 864012000.0,
+        "interest_bearing": 994272000.0,
+        "deposit_cost": 0.005948,
+        "cost_of_funds": 0.007359,
+        "nim": 0.032344,
+        "asset_yield": 0.039703
+      },
+      {
+        "date": "2014-09-30",
+        "deposits": 1084493000.0,
+        "domestic": 1084493000.0,
+        "time": 444570000.0,
+        "time_over_250k": 121319000.0,
+        "time_100_250k": 123529000.0,
+        "time_small": 199722000.0,
+        "money_market": 125042000.0,
+        "brokered": 87975000.0,
+        "uninsured": 223113000.0,
+        "insured": 861786000.0,
+        "interest_bearing": 1013267000.0,
+        "deposit_cost": 0.005735,
+        "cost_of_funds": 0.007313,
+        "nim": 0.032178,
+        "asset_yield": 0.039491
+      },
+      {
+        "date": "2014-12-31",
+        "deposits": 1075803000.0,
+        "domestic": 1075803000.0,
+        "time": 440261000.0,
+        "time_over_250k": 123399000.0,
+        "time_100_250k": 121101000.0,
+        "time_small": 195761000.0,
+        "money_market": 114991000.0,
+        "brokered": 81851000.0,
+        "uninsured": 220340000.0,
+        "insured": 855837000.0,
+        "interest_bearing": 1000360000.0,
+        "deposit_cost": 0.005633,
+        "cost_of_funds": 0.007284,
+        "nim": 0.032237,
+        "asset_yield": 0.039521
+      },
+      {
+        "date": "2015-03-31",
+        "deposits": 1099436000.0,
+        "domestic": 1099436000.0,
+        "time": 438390000.0,
+        "time_over_250k": 125561000.0,
+        "time_100_250k": 120487000.0,
+        "time_small": 192342000.0,
+        "money_market": 132508000.0,
+        "brokered": 86223000.0,
+        "uninsured": 230455000.0,
+        "insured": 869375000.0,
+        "interest_bearing": 1029454000.0,
+        "deposit_cost": 0.005319,
+        "cost_of_funds": 0.007093,
+        "nim": 0.031162,
+        "asset_yield": 0.038255
+      },
+      {
+        "date": "2015-06-30",
+        "deposits": 1094537000.0,
+        "domestic": 1094537000.0,
+        "time": 436427000.0,
+        "time_over_250k": 125768000.0,
+        "time_100_250k": 119399000.0,
+        "time_small": 191260000.0,
+        "money_market": 128052000.0,
+        "brokered": 90113000.0,
+        "uninsured": 212509000.0,
+        "insured": 882369000.0,
+        "interest_bearing": 1018173000.0,
+        "deposit_cost": 0.005306,
+        "cost_of_funds": 0.007091,
+        "nim": 0.031491,
+        "asset_yield": 0.038582
+      },
+      {
+        "date": "2015-09-30",
+        "deposits": 1130761000.0,
+        "domestic": 1130761000.0,
+        "time": 432155000.0,
+        "time_over_250k": 121811000.0,
+        "time_100_250k": 120120000.0,
+        "time_small": 190224000.0,
+        "money_market": 160227000.0,
+        "brokered": 90702000.0,
+        "uninsured": 223567000.0,
+        "insured": 907564000.0,
+        "interest_bearing": 1059510000.0,
+        "deposit_cost": 0.005204,
+        "cost_of_funds": 0.007102,
+        "nim": 0.031418,
+        "asset_yield": 0.038519
+      },
+      {
+        "date": "2015-12-31",
+        "deposits": 1168948000.0,
+        "domestic": 1168948000.0,
+        "time": 422881000.0,
+        "time_over_250k": 118360000.0,
+        "time_100_250k": 119650000.0,
+        "time_small": 184871000.0,
+        "money_market": 177891000.0,
+        "brokered": 87004000.0,
+        "uninsured": 231487000.0,
+        "insured": 937792000.0,
+        "interest_bearing": 1082268000.0,
+        "deposit_cost": 0.004907,
+        "cost_of_funds": 0.007047,
+        "nim": 0.028785,
+        "asset_yield": 0.035832
+      },
+      {
+        "date": "2016-03-31",
+        "deposits": 1177448000.0,
+        "domestic": 1177448000.0,
+        "time": 422245000.0,
+        "time_over_250k": 108046000.0,
+        "time_100_250k": 131293000.0,
+        "time_small": 182906000.0,
+        "money_market": 184127000.0,
+        "brokered": 89819000.0,
+        "uninsured": 250312000.0,
+        "insured": 927499000.0,
+        "interest_bearing": 1100425000.0,
+        "deposit_cost": 0.004725,
+        "cost_of_funds": 0.006879,
+        "nim": 0.027691,
+        "asset_yield": 0.03457
+      },
+      {
+        "date": "2016-06-30",
+        "deposits": 1159740000.0,
+        "domestic": 1159740000.0,
+        "time": 435943000.0,
+        "time_over_250k": 108861000.0,
+        "time_100_250k": 148096000.0,
+        "time_small": 178986000.0,
+        "money_market": 158762000.0,
+        "brokered": 94531000.0,
+        "uninsured": 220931000.0,
+        "insured": 939144000.0,
+        "interest_bearing": 1080610000.0,
+        "deposit_cost": 0.004874,
+        "cost_of_funds": 0.006954,
+        "nim": 0.027738,
+        "asset_yield": 0.034692
+      },
+      {
+        "date": "2016-09-30",
+        "deposits": 1177390000.0,
+        "domestic": 1177390000.0,
+        "time": 436797000.0,
+        "time_over_250k": 141262000.0,
+        "time_100_250k": 119797000.0,
+        "time_small": 175738000.0,
+        "money_market": 158036000.0,
+        "brokered": 99896000.0,
+        "uninsured": 239606000.0,
+        "insured": 938116000.0,
+        "interest_bearing": 1096261000.0,
+        "deposit_cost": 0.005065,
+        "cost_of_funds": 0.007009,
+        "nim": 0.027913,
+        "asset_yield": 0.034922
+      },
+      {
+        "date": "2016-12-31",
+        "deposits": 1196672000.0,
+        "domestic": 1196672000.0,
+        "time": 433414000.0,
+        "time_over_250k": 142246000.0,
+        "time_100_250k": 117536000.0,
+        "time_small": 173632000.0,
+        "money_market": 170114000.0,
+        "brokered": 98504000.0,
+        "uninsured": 236520000.0,
+        "insured": 960489000.0,
+        "interest_bearing": 1118656000.0,
+        "deposit_cost": 0.005047,
+        "cost_of_funds": 0.007064,
+        "nim": 0.027978,
+        "asset_yield": 0.035042
+      },
+      {
+        "date": "2017-03-31",
+        "deposits": 1231907000.0,
+        "domestic": 1231907000.0,
+        "time": 441351000.0,
+        "time_over_250k": 67257000.0,
+        "time_100_250k": 204346000.0,
+        "time_small": 169748000.0,
+        "money_market": 174348000.0,
+        "brokered": 107292000.0,
+        "uninsured": 258789000.0,
+        "insured": 973460000.0,
+        "interest_bearing": 1149719000.0,
+        "deposit_cost": 0.004961,
+        "cost_of_funds": 0.007129,
+        "nim": 0.027967,
+        "asset_yield": 0.035096
+      },
+      {
+        "date": "2017-06-30",
+        "deposits": 1211681000.0,
+        "domestic": 1211681000.0,
+        "time": 429909000.0,
+        "time_over_250k": 60382000.0,
+        "time_100_250k": 203337000.0,
+        "time_small": 166190000.0,
+        "money_market": 168581000.0,
+        "brokered": 103160000.0,
+        "uninsured": 240060000.0,
+        "insured": 971929000.0,
+        "interest_bearing": 1124637000.0,
+        "deposit_cost": 0.005312,
+        "cost_of_funds": 0.007342,
+        "nim": 0.028347,
+        "asset_yield": 0.035689
+      },
+      {
+        "date": "2017-09-30",
+        "deposits": 1217387000.0,
+        "domestic": 1217387000.0,
+        "time": 424495000.0,
+        "time_over_250k": 60477000.0,
+        "time_100_250k": 200774000.0,
+        "time_small": 163244000.0,
+        "money_market": 173563000.0,
+        "brokered": 107126000.0,
+        "uninsured": 251033000.0,
+        "insured": 966733000.0,
+        "interest_bearing": 1134641000.0,
+        "deposit_cost": 0.005602,
+        "cost_of_funds": 0.007527,
+        "nim": 0.02865,
+        "asset_yield": 0.036177
+      },
+      {
+        "date": "2017-12-31",
+        "deposits": 1265840000.0,
+        "domestic": 1265840000.0,
+        "time": 453266000.0,
+        "time_over_250k": 67991000.0,
+        "time_100_250k": 218445000.0,
+        "time_small": 166830000.0,
+        "money_market": 162224000.0,
+        "brokered": 112876000.0,
+        "uninsured": 279037000.0,
+        "insured": 987219000.0,
+        "interest_bearing": 1170533000.0,
+        "deposit_cost": 0.006086,
+        "cost_of_funds": 0.007743,
+        "nim": 0.028635,
+        "asset_yield": 0.036378
+      },
+      {
+        "date": "2018-03-31",
+        "deposits": 1299690000.0,
+        "domestic": 1299690000.0,
+        "time": 472062000.0,
+        "time_over_250k": 72781000.0,
+        "time_100_250k": 233375000.0,
+        "time_small": 165906000.0,
+        "money_market": 177160000.0,
+        "brokered": 124200000.0,
+        "uninsured": 289188000.0,
+        "insured": 1010950000.0,
+        "interest_bearing": 1212449000.0,
+        "deposit_cost": 0.006281,
+        "cost_of_funds": 0.008281,
+        "nim": 0.028647,
+        "asset_yield": 0.036928
+      },
+      {
+        "date": "2018-06-30",
+        "deposits": 1278191000.0,
+        "domestic": 1278191000.0,
+        "time": 453321000.0,
+        "time_over_250k": 72643000.0,
+        "time_100_250k": 214908000.0,
+        "time_small": 165770000.0,
+        "money_market": 177274000.0,
+        "brokered": 107910000.0,
+        "uninsured": 270497000.0,
+        "insured": 1008107000.0,
+        "interest_bearing": 1189847000.0,
+        "deposit_cost": 0.006966,
+        "cost_of_funds": 0.008645,
+        "nim": 0.028783,
+        "asset_yield": 0.037428
+      },
+      {
+        "date": "2018-09-30",
+        "deposits": 1279518000.0,
+        "domestic": 1279518000.0,
+        "time": 452288000.0,
+        "time_over_250k": 72150000.0,
+        "time_100_250k": 216094000.0,
+        "time_small": 164044000.0,
+        "money_market": 175184000.0,
+        "brokered": 107641000.0,
+        "uninsured": 284457000.0,
+        "insured": 995557000.0,
+        "interest_bearing": 1193144000.0,
+        "deposit_cost": 0.007578,
+        "cost_of_funds": 0.009157,
+        "nim": 0.02901,
+        "asset_yield": 0.038167
+      },
+      {
+        "date": "2018-12-31",
+        "deposits": 1295637000.0,
+        "domestic": 1295637000.0,
+        "time": 433620000.0,
+        "time_over_250k": 75928000.0,
+        "time_100_250k": 192187000.0,
+        "time_small": 165505000.0,
+        "money_market": 205304000.0,
+        "brokered": 62148000.0,
+        "uninsured": 292017000.0,
+        "insured": 1004135000.0,
+        "interest_bearing": 1209486000.0,
+        "deposit_cost": 0.007842,
+        "cost_of_funds": 0.009423,
+        "nim": 0.029214,
+        "asset_yield": 0.038638
+      },
+      {
+        "date": "2019-03-31",
+        "deposits": 1281071000.0,
+        "domestic": 1281071000.0,
+        "time": 425482000.0,
+        "time_over_250k": 83862000.0,
+        "time_100_250k": 176524000.0,
+        "time_small": 165096000.0,
+        "money_market": 200086000.0,
+        "brokered": 50273000.0,
+        "uninsured": 305725000.0,
+        "insured": 975950000.0,
+        "interest_bearing": 1192390000.0,
+        "deposit_cost": 0.008468,
+        "cost_of_funds": 0.010398,
+        "nim": 0.02965,
+        "asset_yield": 0.040048
+      },
+      {
+        "date": "2019-06-30",
+        "deposits": 1283750000.0,
+        "domestic": 1283750000.0,
+        "time": 429485000.0,
+        "time_over_250k": 85614000.0,
+        "time_100_250k": 181707000.0,
+        "time_small": 162164000.0,
+        "money_market": 195889000.0,
+        "brokered": 57773000.0,
+        "uninsured": 289779000.0,
+        "insured": 994559000.0,
+        "interest_bearing": 1194843000.0,
+        "deposit_cost": 0.008915,
+        "cost_of_funds": 0.010674,
+        "nim": 0.029732,
+        "asset_yield": 0.040406
+      },
+      {
+        "date": "2019-09-30",
+        "deposits": 1311545000.0,
+        "domestic": 1311545000.0,
+        "time": 426084000.0,
+        "time_over_250k": 86279000.0,
+        "time_100_250k": 178918000.0,
+        "time_small": 160887000.0,
+        "money_market": 232301000.0,
+        "brokered": 52744000.0,
+        "uninsured": 309141000.0,
+        "insured": 1003020000.0,
+        "interest_bearing": 1222522000.0,
+        "deposit_cost": 0.009079,
+        "cost_of_funds": 0.010807,
+        "nim": 0.030088,
+        "asset_yield": 0.040895
+      },
+      {
+        "date": "2019-12-31",
+        "deposits": 1315557000.0,
+        "domestic": 1315557000.0,
+        "time": 407620000.0,
+        "time_over_250k": 95811000.0,
+        "time_100_250k": 151342000.0,
+        "time_small": 160467000.0,
+        "money_market": 247594000.0,
+        "brokered": 27458000.0,
+        "uninsured": 336399000.0,
+        "insured": 979749000.0,
+        "interest_bearing": 1223532000.0,
+        "deposit_cost": 0.009243,
+        "cost_of_funds": 0.010826,
+        "nim": 0.030078,
+        "asset_yield": 0.040905
+      },
+      {
+        "date": "2020-03-31",
+        "deposits": 1322587000.0,
+        "domestic": 1322587000.0,
+        "time": 400062000.0,
+        "time_over_250k": 95342000.0,
+        "time_100_250k": 148095000.0,
+        "time_small": 156625000.0,
+        "money_market": 249401000.0,
+        "brokered": 27458000.0,
+        "uninsured": 346322000.0,
+        "insured": 976851000.0,
+        "interest_bearing": 1234865000.0,
+        "deposit_cost": 0.008435,
+        "cost_of_funds": 0.010166,
+        "nim": 0.029153,
+        "asset_yield": 0.039318
+      },
+      {
+        "date": "2020-06-30",
+        "deposits": 1441179000.0,
+        "domestic": 1441179000.0,
+        "time": 378622000.0,
+        "time_over_250k": 90595000.0,
+        "time_100_250k": 133108000.0,
+        "time_small": 154919000.0,
+        "money_market": 247744000.0,
+        "brokered": 14029000.0,
+        "uninsured": 383302000.0,
+        "insured": 1058339000.0,
+        "interest_bearing": 1340030000.0,
+        "deposit_cost": 0.006209,
+        "cost_of_funds": 0.009211,
+        "nim": 0.028953,
+        "asset_yield": 0.038164
+      },
+      {
+        "date": "2020-09-30",
+        "deposits": 1496046000.0,
+        "domestic": 1496046000.0,
+        "time": 379722000.0,
+        "time_over_250k": 99795000.0,
+        "time_100_250k": 128700000.0,
+        "time_small": 151227000.0,
+        "money_market": 255662000.0,
+        "brokered": 14029000.0,
+        "uninsured": 437402000.0,
+        "insured": 1059103000.0,
+        "interest_bearing": 854207000.0,
+        "deposit_cost": 0.005315,
+        "cost_of_funds": 0.008526,
+        "nim": 0.028738,
+        "asset_yield": 0.037264
+      },
+      {
+        "date": "2020-12-31",
+        "deposits": 1569399000.0,
+        "domestic": 1569399000.0,
+        "time": 382980000.0,
+        "time_over_250k": 107192000.0,
+        "time_100_250k": 127622000.0,
+        "time_small": 148166000.0,
+        "money_market": 268360000.0,
+        "brokered": 14029000.0,
+        "uninsured": 461859000.0,
+        "insured": 1107949000.0,
+        "interest_bearing": 888479000.0,
+        "deposit_cost": 0.004685,
+        "cost_of_funds": 0.007988,
+        "nim": 0.029234,
+        "asset_yield": 0.037222
+      },
+      {
+        "date": "2021-03-31",
+        "deposits": 1646317000.0,
+        "domestic": 1646317000.0,
+        "time": 354743000.0,
+        "time_over_250k": 86515000.0,
+        "time_100_250k": 123768000.0,
+        "time_small": 144460000.0,
+        "money_market": 294829000.0,
+        "brokered": 14029000.0,
+        "uninsured": 483323000.0,
+        "insured": 1163382000.0,
+        "interest_bearing": 911519000.0,
+        "deposit_cost": 0.004019,
+        "cost_of_funds": 0.004561,
+        "nim": 0.029096,
+        "asset_yield": 0.033657
+      },
+      {
+        "date": "2021-06-30",
+        "deposits": 1664945000.0,
+        "domestic": 1664945000.0,
+        "time": 331990000.0,
+        "time_over_250k": 84952000.0,
+        "time_100_250k": 105492000.0,
+        "time_small": 141546000.0,
+        "money_market": 303567000.0,
+        "brokered": 0.0,
+        "uninsured": 520026000.0,
+        "insured": 1145207000.0,
+        "interest_bearing": 908793000.0,
+        "deposit_cost": 0.00345,
+        "cost_of_funds": 0.004264,
+        "nim": 0.028408,
+        "asset_yield": 0.032672
+      },
+      {
+        "date": "2021-09-30",
+        "deposits": 1718584000.0,
+        "domestic": 1718584000.0,
+        "time": 315092000.0,
+        "time_over_250k": 81044000.0,
+        "time_100_250k": 99044000.0,
+        "time_small": 135004000.0,
+        "money_market": 315040000.0,
+        "brokered": 0.0,
+        "uninsured": 570298000.0,
+        "insured": 1148541000.0,
+        "interest_bearing": 912704000.0,
+        "deposit_cost": 0.002898,
+        "cost_of_funds": 0.003933,
+        "nim": 0.028538,
+        "asset_yield": 0.032471
+      },
+      {
+        "date": "2021-12-31",
+        "deposits": 1722405000.0,
+        "domestic": 1722405000.0,
+        "time": 300763000.0,
+        "time_over_250k": 78583000.0,
+        "time_100_250k": 93958000.0,
+        "time_small": 128222000.0,
+        "money_market": 314679000.0,
+        "brokered": 0.0,
+        "uninsured": 548213000.0,
+        "insured": 1174425000.0,
+        "interest_bearing": 908524000.0,
+        "deposit_cost": 0.002487,
+        "cost_of_funds": 0.003643,
+        "nim": 0.02881,
+        "asset_yield": 0.032453
+      },
+      {
+        "date": "2022-03-31",
+        "deposits": 1774708000.0,
+        "domestic": 1774708000.0,
+        "time": 280308000.0,
+        "time_over_250k": 72160000.0,
+        "time_100_250k": 83986000.0,
+        "time_small": 124162000.0,
+        "money_market": 339276000.0,
+        "brokered": 0.0,
+        "uninsured": 585046000.0,
+        "insured": 1189863000.0,
+        "interest_bearing": 925170000.0,
+        "deposit_cost": 0.002087,
+        "cost_of_funds": 0.002142,
+        "nim": 0.029336,
+        "asset_yield": 0.031478
+      },
+      {
+        "date": "2022-06-30",
+        "deposits": 1770012000.0,
+        "domestic": 1770012000.0,
+        "time": 266075000.0,
+        "time_over_250k": 66539000.0,
+        "time_100_250k": 79733000.0,
+        "time_small": 119803000.0,
+        "money_market": 335571000.0,
+        "brokered": 0.0,
+        "uninsured": 562475000.0,
+        "insured": 1207708000.0,
+        "interest_bearing": 910770000.0,
+        "deposit_cost": 0.001901,
+        "cost_of_funds": 0.002025,
+        "nim": 0.030895,
+        "asset_yield": 0.03292
+      },
+      {
+        "date": "2022-09-30",
+        "deposits": 1800342000.0,
+        "domestic": 1800342000.0,
+        "time": 261241000.0,
+        "time_over_250k": 70288000.0,
+        "time_100_250k": 76179000.0,
+        "time_small": 114774000.0,
+        "money_market": 338801000.0,
+        "brokered": 0.0,
+        "uninsured": 616223000.0,
+        "insured": 1184277000.0,
+        "interest_bearing": 920770000.0,
+        "deposit_cost": 0.001993,
+        "cost_of_funds": 0.002015,
+        "nim": 0.032026,
+        "asset_yield": 0.034041
+      },
+      {
+        "date": "2022-12-31",
+        "deposits": 1753341000.0,
+        "domestic": 1753341000.0,
+        "time": 252041000.0,
+        "time_over_250k": 67133000.0,
+        "time_100_250k": 74897000.0,
+        "time_small": 110011000.0,
+        "money_market": 328728000.0,
+        "brokered": 0.0,
+        "uninsured": 585901000.0,
+        "insured": 1167696000.0,
+        "interest_bearing": 885820000.0,
+        "deposit_cost": 0.003002,
+        "cost_of_funds": 0.002248,
+        "nim": 0.032952,
+        "asset_yield": 0.0352
+      },
+      {
+        "date": "2023-03-31",
+        "deposits": 1824202000.0,
+        "domestic": 1824202000.0,
+        "time": 288603000.0,
+        "time_over_250k": 83662000.0,
+        "time_100_250k": 87404000.0,
+        "time_small": 117537000.0,
+        "money_market": 372550000.0,
+        "brokered": 0.0,
+        "uninsured": 642966000.0,
+        "insured": 1181673000.0,
+        "interest_bearing": 958162000.0,
+        "deposit_cost": 0.006223,
+        "cost_of_funds": 0.006372,
+        "nim": 0.03335,
+        "asset_yield": 0.039722
+      },
+      {
+        "date": "2023-06-30",
+        "deposits": 1729595000.0,
+        "domestic": 1729595000.0,
+        "time": 313537000.0,
+        "time_over_250k": 95909000.0,
+        "time_100_250k": 95166000.0,
+        "time_small": 122462000.0,
+        "money_market": 333436000.0,
+        "brokered": 0.0,
+        "uninsured": 566694000.0,
+        "insured": 1163448000.0,
+        "interest_bearing": 933783000.0,
+        "deposit_cost": 0.009526,
+        "cost_of_funds": 0.008076,
+        "nim": 0.032745,
+        "asset_yield": 0.040821
+      },
+      {
+        "date": "2023-09-30",
+        "deposits": 1789960000.0,
+        "domestic": 1789960000.0,
+        "time": 332079000.0,
+        "time_over_250k": 106882000.0,
+        "time_100_250k": 102563000.0,
+        "time_small": 122634000.0,
+        "money_market": 361411000.0,
+        "brokered": 0.0,
+        "uninsured": 615633000.0,
+        "insured": 1175023000.0,
+        "interest_bearing": 980330000.0,
+        "deposit_cost": 0.011305,
+        "cost_of_funds": 0.009588,
+        "nim": 0.032051,
+        "asset_yield": 0.041639
+      },
+      {
+        "date": "2023-12-31",
+        "deposits": 1749223000.0,
+        "domestic": 1749223000.0,
+        "time": 346375000.0,
+        "time_over_250k": 116685000.0,
+        "time_100_250k": 104777000.0,
+        "time_small": 124913000.0,
+        "money_market": 369150000.0,
+        "brokered": 0.0,
+        "uninsured": 600381000.0,
+        "insured": 1149714000.0,
+        "interest_bearing": 999046000.0,
+        "deposit_cost": 0.014784,
+        "cost_of_funds": 0.011054,
+        "nim": 0.031428,
+        "asset_yield": 0.042482
+      },
+      {
+        "date": "2024-03-31",
+        "deposits": 1796752000.0,
+        "domestic": 1796752000.0,
+        "time": 366143000.0,
+        "time_over_250k": 124106000.0,
+        "time_100_250k": 112191000.0,
+        "time_small": 129846000.0,
+        "money_market": 381478000.0,
+        "brokered": 0.0,
+        "uninsured": 658564000.0,
+        "insured": 1139129000.0,
+        "interest_bearing": 1033185000.0,
+        "deposit_cost": 0.016162,
+        "cost_of_funds": 0.017024,
+        "nim": 0.028716,
+        "asset_yield": 0.04574
+      },
+      {
+        "date": "2024-06-30",
+        "deposits": 1754172000.0,
+        "domestic": 1754172000.0,
+        "time": 368447000.0,
+        "time_over_250k": 121223000.0,
+        "time_100_250k": 115849000.0,
+        "time_small": 131375000.0,
+        "money_market": 354414000.0,
+        "brokered": 0.0,
+        "uninsured": 623245000.0,
+        "insured": 1131814000.0,
+        "interest_bearing": 1002709000.0,
+        "deposit_cost": 0.016931,
+        "cost_of_funds": 0.017458,
+        "nim": 0.029012,
+        "asset_yield": 0.04647
+      },
+      {
+        "date": "2024-09-30",
+        "deposits": 1815520000.0,
+        "domestic": 1815520000.0,
+        "time": 383597000.0,
+        "time_over_250k": 130031000.0,
+        "time_100_250k": 119135000.0,
+        "time_small": 134431000.0,
+        "money_market": 353625000.0,
+        "brokered": 0.0,
+        "uninsured": 687990000.0,
+        "insured": 1128501000.0,
+        "interest_bearing": 1013317000.0,
+        "deposit_cost": 0.017093,
+        "cost_of_funds": 0.01773,
+        "nim": 0.029589,
+        "asset_yield": 0.047319
+      },
+      {
+        "date": "2024-12-31",
+        "deposits": 1782102000.0,
+        "domestic": 1782102000.0,
+        "time": 387590000.0,
+        "time_over_250k": 132191000.0,
+        "time_100_250k": 120247000.0,
+        "time_small": 135152000.0,
+        "money_market": 354432000.0,
+        "brokered": 0.0,
+        "uninsured": 645764000.0,
+        "insured": 1137385000.0,
+        "interest_bearing": 1023686000.0,
+        "deposit_cost": 0.017332,
+        "cost_of_funds": 0.017769,
+        "nim": 0.029946,
+        "asset_yield": 0.047716
+      },
+      {
+        "date": "2025-03-31",
+        "deposits": 1830808000.0,
+        "domestic": 1830808000.0,
+        "time": 390239000.0,
+        "time_over_250k": 126451000.0,
+        "time_100_250k": 125142000.0,
+        "time_small": 138646000.0,
+        "money_market": 377658000.0,
+        "brokered": 0.0,
+        "uninsured": 687341000.0,
+        "insured": 1144465000.0,
+        "interest_bearing": 1054296000.0,
+        "deposit_cost": 0.016616,
+        "cost_of_funds": 0.016763,
+        "nim": 0.030818,
+        "asset_yield": 0.047582
+      },
+      {
+        "date": "2025-06-30",
+        "deposits": 1878183000.0,
+        "domestic": 1878183000.0,
+        "time": 395931000.0,
+        "time_over_250k": 126912000.0,
+        "time_100_250k": 127118000.0,
+        "time_small": 141901000.0,
+        "money_market": 365065000.0,
+        "brokered": 0.0,
+        "uninsured": 726240000.0,
+        "insured": 1152880000.0,
+        "interest_bearing": 1050741000.0,
+        "deposit_cost": 0.015994,
+        "cost_of_funds": 0.016587,
+        "nim": 0.031181,
+        "asset_yield": 0.047768
+      },
+      {
+        "date": "2025-09-30",
+        "deposits": 1950278000.0,
+        "domestic": 1950278000.0,
+        "time": 404798000.0,
+        "time_over_250k": 126971000.0,
+        "time_100_250k": 134285000.0,
+        "time_small": 143542000.0,
+        "money_market": 431201000.0,
+        "brokered": 0.0,
+        "uninsured": 726514000.0,
+        "insured": 1224744000.0,
+        "interest_bearing": 1128898000.0,
+        "deposit_cost": 0.016619,
+        "cost_of_funds": 0.016683,
+        "nim": 0.031571,
+        "asset_yield": 0.048254
+      },
+      {
+        "date": "2025-12-31",
+        "deposits": 1850654000.0,
+        "domestic": 1850654000.0,
+        "time": 410064000.0,
+        "time_over_250k": 137892000.0,
+        "time_100_250k": 130124000.0,
+        "time_small": 142048000.0,
+        "money_market": 341386000.0,
+        "brokered": 0.0,
+        "uninsured": 695537000.0,
+        "insured": 1156133000.0,
+        "interest_bearing": 1031880000.0,
+        "deposit_cost": 0.016137,
+        "cost_of_funds": 0.016675,
+        "nim": 0.032114,
+        "asset_yield": 0.048789
+      },
+      {
+        "date": "2026-03-31",
+        "deposits": 1890688000.0,
+        "domestic": 1890688000.0,
+        "time": 406398000.0,
+        "time_over_250k": 138560000.0,
+        "time_100_250k": 126282000.0,
+        "time_small": 141556000.0,
+        "money_market": 368655000.0,
+        "brokered": 0.0,
+        "uninsured": 727884000.0,
+        "insured": 1163746000.0,
+        "interest_bearing": 1075785000.0,
+        "deposit_cost": 0.015292,
+        "cost_of_funds": 0.015845,
+        "nim": 0.033392,
+        "asset_yield": 0.049236
+      },
+      {
+        "date": "2026-06-30",
+        "deposits": 1845402000.0,
+        "domestic": 1845402000.0,
+        "time": 389401000.0,
+        "time_over_250k": 130136000.0,
+        "time_100_250k": 120641000.0,
+        "time_small": 138624000.0,
+        "money_market": 368896000.0,
+        "brokered": 0.0,
+        "uninsured": 673868000.0,
+        "insured": 1172340000.0,
+        "interest_bearing": 1059163000.0,
+        "deposit_cost": 0.014917,
+        "cost_of_funds": 0.015715,
+        "nim": 0.034687,
+        "asset_yield": 0.050402
+      }
+    ],
+    "cd_share": 0.211011,
+    "uninsured_share": 0.365161
+  },
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  },
+  "market_series": {
+    "fedfunds": [
+      [
+        "2010-01",
+        0.11
+      ],
+      [
+        "2010-02",
+        0.126
+      ],
+      [
+        "2010-03",
+        0.165
+      ],
+      [
+        "2010-04",
+        0.198
+      ],
+      [
+        "2010-05",
+        0.201
+      ],
+      [
+        "2010-06",
+        0.177
+      ],
+      [
+        "2010-07",
+        0.183
+      ],
+      [
+        "2010-08",
+        0.189
+      ],
+      [
+        "2010-09",
+        0.195
+      ],
+      [
+        "2010-10",
+        0.191
+      ],
+      [
+        "2010-11",
+        0.194
+      ],
+      [
+        "2010-12",
+        0.183
+      ],
+      [
+        "2011-01",
+        0.168
+      ],
+      [
+        "2011-02",
+        0.157
+      ],
+      [
+        "2011-03",
+        0.139
+      ],
+      [
+        "2011-04",
+        0.098
+      ],
+      [
+        "2011-05",
+        0.094
+      ],
+      [
+        "2011-06",
+        0.092
+      ],
+      [
+        "2011-07",
+        0.071
+      ],
+      [
+        "2011-08",
+        0.096
+      ],
+      [
+        "2011-09",
+        0.084
+      ],
+      [
+        "2011-10",
+        0.071
+      ],
+      [
+        "2011-11",
+        0.081
+      ],
+      [
+        "2011-12",
+        0.072
+      ],
+      [
+        "2012-01",
+        0.082
+      ],
+      [
+        "2012-02",
+        0.104
+      ],
+      [
+        "2012-03",
+        0.127
+      ],
+      [
+        "2012-04",
+        0.139
+      ],
+      [
+        "2012-05",
+        0.156
+      ],
+      [
+        "2012-06",
+        0.162
+      ],
+      [
+        "2012-07",
+        0.156
+      ],
+      [
+        "2012-08",
+        0.132
+      ],
+      [
+        "2012-09",
+        0.144
+      ],
+      [
+        "2012-10",
+        0.158
+      ],
+      [
+        "2012-11",
+        0.161
+      ],
+      [
+        "2012-12",
+        0.165
+      ],
+      [
+        "2013-01",
+        0.143
+      ],
+      [
+        "2013-02",
+        0.145
+      ],
+      [
+        "2013-03",
+        0.144
+      ],
+      [
+        "2013-04",
+        0.145
+      ],
+      [
+        "2013-05",
+        0.109
+      ],
+      [
+        "2013-06",
+        0.094
+      ],
+      [
+        "2013-07",
+        0.093
+      ],
+      [
+        "2013-08",
+        0.083
+      ],
+      [
+        "2013-09",
+        0.08
+      ],
+      [
+        "2013-10",
+        0.087
+      ],
+      [
+        "2013-11",
+        0.084
+      ],
+      [
+        "2013-12",
+        0.085
+      ],
+      [
+        "2014-01",
+        0.072
+      ],
+      [
+        "2014-02",
+        0.066
+      ],
+      [
+        "2014-03",
+        0.078
+      ],
+      [
+        "2014-04",
+        0.09
+      ],
+      [
+        "2014-05",
+        0.087
+      ],
+      [
+        "2014-06",
+        0.096
+      ],
+      [
+        "2014-07",
+        0.091
+      ],
+      [
+        "2014-08",
+        0.088
+      ],
+      [
+        "2014-09",
+        0.088
+      ],
+      [
+        "2014-10",
+        0.089
+      ],
+      [
+        "2014-11",
+        0.092
+      ],
+      [
+        "2014-12",
+        0.123
+      ],
+      [
+        "2015-01",
+        0.115
+      ],
+      [
+        "2015-02",
+        0.111
+      ],
+      [
+        "2015-03",
+        0.113
+      ],
+      [
+        "2015-04",
+        0.125
+      ],
+      [
+        "2015-05",
+        0.123
+      ],
+      [
+        "2015-06",
+        0.129
+      ],
+      [
+        "2015-07",
+        0.13
+      ],
+      [
+        "2015-08",
+        0.138
+      ],
+      [
+        "2015-09",
+        0.136
+      ],
+      [
+        "2015-10",
+        0.124
+      ],
+      [
+        "2015-11",
+        0.118
+      ],
+      [
+        "2015-12",
+        0.241
+      ],
+      [
+        "2016-01",
+        0.343
+      ],
+      [
+        "2016-02",
+        0.375
+      ],
+      [
+        "2016-03",
+        0.362
+      ],
+      [
+        "2016-04",
+        0.365
+      ],
+      [
+        "2016-05",
+        0.365
+      ],
+      [
+        "2016-06",
+        0.378
+      ],
+      [
+        "2016-07",
+        0.392
+      ],
+      [
+        "2016-08",
+        0.397
+      ],
+      [
+        "2016-09",
+        0.396
+      ],
+      [
+        "2016-10",
+        0.396
+      ],
+      [
+        "2016-11",
+        0.407
+      ],
+      [
+        "2016-12",
+        0.54
+      ],
+      [
+        "2017-01",
+        0.65
+      ],
+      [
+        "2017-02",
+        0.657
+      ],
+      [
+        "2017-03",
+        0.786
+      ],
+      [
+        "2017-04",
+        0.896
+      ],
+      [
+        "2017-05",
+        0.907
+      ],
+      [
+        "2017-06",
+        1.04
+      ],
+      [
+        "2017-07",
+        1.151
+      ],
+      [
+        "2017-08",
+        1.157
+      ],
+      [
+        "2017-09",
+        1.153
+      ],
+      [
+        "2017-10",
+        1.154
+      ],
+      [
+        "2017-11",
+        1.157
+      ],
+      [
+        "2017-12",
+        1.302
+      ],
+      [
+        "2018-01",
+        1.415
+      ],
+      [
+        "2018-02",
+        1.417
+      ],
+      [
+        "2018-03",
+        1.506
+      ],
+      [
+        "2018-04",
+        1.692
+      ],
+      [
+        "2018-05",
+        1.7
+      ],
+      [
+        "2018-06",
+        1.82
+      ],
+      [
+        "2018-07",
+        1.91
+      ],
+      [
+        "2018-08",
+        1.915
+      ],
+      [
+        "2018-09",
+        1.955
+      ],
+      [
+        "2018-10",
+        2.188
+      ],
+      [
+        "2018-11",
+        2.198
+      ],
+      [
+        "2018-12",
+        2.274
+      ],
+      [
+        "2019-01",
+        2.4
+      ],
+      [
+        "2019-02",
+        2.4
+      ],
+      [
+        "2019-03",
+        2.405
+      ],
+      [
+        "2019-04",
+        2.424
+      ],
+      [
+        "2019-05",
+        2.391
+      ],
+      [
+        "2019-06",
+        2.378
+      ],
+      [
+        "2019-07",
+        2.403
+      ],
+      [
+        "2019-08",
+        2.126
+      ],
+      [
+        "2019-09",
+        2.043
+      ],
+      [
+        "2019-10",
+        1.83
+      ],
+      [
+        "2019-11",
+        1.553
+      ],
+      [
+        "2019-12",
+        1.551
+      ],
+      [
+        "2020-01",
+        1.551
+      ],
+      [
+        "2020-02",
+        1.583
+      ],
+      [
+        "2020-03",
+        0.652
+      ],
+      [
+        "2020-04",
+        0.049
+      ],
+      [
+        "2020-05",
+        0.05
+      ],
+      [
+        "2020-06",
+        0.078
+      ],
+      [
+        "2020-07",
+        0.093
+      ],
+      [
+        "2020-08",
+        0.095
+      ],
+      [
+        "2020-09",
+        0.09
+      ],
+      [
+        "2020-10",
+        0.09
+      ],
+      [
+        "2020-11",
+        0.086
+      ],
+      [
+        "2020-12",
+        0.09
+      ],
+      [
+        "2021-01",
+        0.085
+      ],
+      [
+        "2021-02",
+        0.076
+      ],
+      [
+        "2021-03",
+        0.07
+      ],
+      [
+        "2021-04",
+        0.069
+      ],
+      [
+        "2021-05",
+        0.058
+      ],
+      [
+        "2021-06",
+        0.078
+      ],
+      [
+        "2021-07",
+        0.098
+      ],
+      [
+        "2021-08",
+        0.092
+      ],
+      [
+        "2021-09",
+        0.079
+      ],
+      [
+        "2021-10",
+        0.079
+      ],
+      [
+        "2021-11",
+        0.08
+      ],
+      [
+        "2021-12",
+        0.08
+      ],
+      [
+        "2022-01",
+        0.079
+      ],
+      [
+        "2022-02",
+        0.08
+      ],
+      [
+        "2022-03",
+        0.201
+      ],
+      [
+        "2022-04",
+        0.33
+      ],
+      [
+        "2022-05",
+        0.765
+      ],
+      [
+        "2022-06",
+        1.205
+      ],
+      [
+        "2022-07",
+        1.676
+      ],
+      [
+        "2022-08",
+        2.33
+      ],
+      [
+        "2022-09",
+        2.555
+      ],
+      [
+        "2022-10",
+        3.08
+      ],
+      [
+        "2022-11",
+        3.78
+      ],
+      [
+        "2022-12",
+        4.104
+      ],
+      [
+        "2023-01",
+        4.33
+      ],
+      [
+        "2023-02",
+        4.57
+      ],
+      [
+        "2023-03",
+        4.649
+      ],
+      [
+        "2023-04",
+        4.83
+      ],
+      [
+        "2023-05",
+        5.056
+      ],
+      [
+        "2023-06",
+        5.076
+      ],
+      [
+        "2023-07",
+        5.12
+      ],
+      [
+        "2023-08",
+        5.33
+      ],
+      [
+        "2023-09",
+        5.33
+      ],
+      [
+        "2023-10",
+        5.33
+      ],
+      [
+        "2023-11",
+        5.33
+      ],
+      [
+        "2023-12",
+        5.33
+      ],
+      [
+        "2024-01",
+        5.33
+      ],
+      [
+        "2024-02",
+        5.33
+      ],
+      [
+        "2024-03",
+        5.33
+      ],
+      [
+        "2024-04",
+        5.33
+      ],
+      [
+        "2024-05",
+        5.33
+      ],
+      [
+        "2024-06",
+        5.33
+      ],
+      [
+        "2024-07",
+        5.33
+      ],
+      [
+        "2024-08",
+        5.33
+      ],
+      [
+        "2024-09",
+        5.13
+      ],
+      [
+        "2024-10",
+        4.83
+      ],
+      [
+        "2024-11",
+        4.638
+      ],
+      [
+        "2024-12",
+        4.475
+      ],
+      [
+        "2025-01",
+        4.33
+      ],
+      [
+        "2025-02",
+        4.33
+      ],
+      [
+        "2025-03",
+        4.33
+      ],
+      [
+        "2025-04",
+        4.33
+      ],
+      [
+        "2025-05",
+        4.33
+      ],
+      [
+        "2025-06",
+        4.33
+      ],
+      [
+        "2025-07",
+        4.33
+      ],
+      [
+        "2025-08",
+        4.33
+      ],
+      [
+        "2025-09",
+        4.225
+      ],
+      [
+        "2025-10",
+        4.088
+      ],
+      [
+        "2025-11",
+        3.876
+      ],
+      [
+        "2025-12",
+        3.721
+      ],
+      [
+        "2026-01",
+        3.64
+      ],
+      [
+        "2026-02",
+        3.64
+      ],
+      [
+        "2026-03",
+        3.64
+      ],
+      [
+        "2026-04",
+        3.64
+      ],
+      [
+        "2026-05",
+        3.628
+      ],
+      [
+        "2026-06",
+        3.625
+      ],
+      [
+        "2026-07",
+        3.628
+      ],
+      [
+        "2026-08",
+        3.63
+      ],
+      [
+        "2026-09",
+        3.747
+      ],
+      [
+        "2026-10",
+        3.88
+      ]
+    ]
+  }
+}

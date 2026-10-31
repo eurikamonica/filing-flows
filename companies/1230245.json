@@ -1,0 +1,862 @@
+{
+  "cik": 1230245,
+  "ticker": "PIPR",
+  "name": "PIPER SANDLER COMPANIES",
+  "sector": "financials",
+  "industry": "Security Brokers, Dealers & Flotation Companies",
+  "sic": "6211",
+  "docs": {
+    "xbrl:0001230245-26-000013": {
+      "instruments": [
+        {
+          "name": "Revolving credit facility",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "capacity": 120000000.0,
+          "carrying": 10000000.0,
+          "rate_now": 0.0564,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001230245-26-000032": {
+      "instruments": [
+        {
+          "name": "Revolving credit facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 120000000.0,
+          "carrying": 10000000.0,
+          "rate_now": 0.0563,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-05",
+      "report": "2026-06-30"
+    },
+    "0001230245-26-000013:pscq42025ex1011.htm": {
+      "kind": "agreement",
+      "date": "2026-02-26",
+      "agreement_kind": "amendment",
+      "dated": "2022-12-20",
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        2.0,
+        2.0
+      ],
+      "margin_text": " (i) 2.00% in the case of a Federal Funds Borrowing and (ii) 1.00% in the case of a Base Rate Borrowing. ",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "(b) The Borrower will maintain, as of the end of each fiscal quarter commencing with the fiscal quarter ending December 31, 2022, an Adjusted Leverage Ratio of not more than 5.50 to 1.00."
+        }
+      ]
+    },
+    "0001230245-25-000038:pscq42024ex1013.htm": {
+      "kind": "agreement",
+      "date": "2025-02-27",
+      "agreement_kind": "amendment",
+      "dated": "2022-12-20",
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        2.0,
+        2.0
+      ],
+      "margin_text": " (i) 2.00% in the case of a Federal Funds Borrowing and (ii) 1.00% in the case of a Base Rate Borrowing. ",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "(b) The Borrower will maintain, as of the end of each fiscal quarter commencing with the fiscal quarter ending December 31, 2022, an Adjusted Leverage Ratio of not more than 5.50 to 1.00."
+        }
+      ]
+    },
+    "0001230245-24-000179:pscq32024ex102.htm": {
+      "kind": "agreement",
+      "date": "2024-11-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-08-23",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "floor_pct": 0.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "The Borrower shall not permit the Adjusted Leverage Ratio, as of the last day of any fiscal quarter of the Borrower, commencing with the fiscal quarter ending September 30, 2024, to be greater than 5.50 to 1.00."
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower shall not permit the Fixed Charge Coverage Ratio, as of the last day of any fiscal quarter of the Borrower, commencing with the fiscal quarter ending September 30, 2024 to be less than 2.00 to 1.00."
+        }
+      ]
+    }
+  },
+  "sic_description": "Security Brokers, Dealers & Flotation Companies",
+  "snapshot": {
+    "current_debt": 15000000,
+    "cash": 304231000,
+    "short_term_borrowings": 15000000,
+    "operating_leases": 160009000,
+    "equity": 1372749000,
+    "assets": 2326856000,
+    "liabilities": 759432000,
+    "retained_earnings": 733988000,
+    "interest_paid": 3370000,
+    "pretax_income": 484556000,
+    "net_income": 307321000,
+    "da": 18713000,
+    "ocf": 506243000,
+    "revenue": 2118485000,
+    "debt_repaid": 0,
+    "wavg_rate_long": 0.0305,
+    "revolver_fee": 0.005,
+    "shares": 70670291,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (four quarters)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (four quarters)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (fiscal year)",
+    "wavg_rate_long": "LongtermDebtWeightedAverageInterestRate",
+    "revolver_fee": "LineOfCreditFacilityCommitmentFeePercentage"
+  },
+  "history": [
+    {
+      "end": "2011-03-31",
+      "filed": "2011-05-05",
+      "total_debt": 247713000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 19339489,
+      "convertible": null,
+      "equity": 833578000,
+      "interest_paid": null
+    },
+    {
+      "end": "2011-06-30",
+      "filed": "2011-08-04",
+      "total_debt": 344628000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 19217382,
+      "convertible": null,
+      "equity": 842123000,
+      "interest_paid": null
+    },
+    {
+      "end": "2011-09-30",
+      "filed": "2011-11-03",
+      "total_debt": 313327000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 19170470,
+      "convertible": null,
+      "equity": 839139000,
+      "interest_paid": null
+    },
+    {
+      "end": "2012-03-31",
+      "filed": "2012-05-03",
+      "total_debt": 448901000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 18869848,
+      "convertible": null,
+      "equity": 721779000,
+      "interest_paid": null
+    },
+    {
+      "end": "2012-06-30",
+      "filed": "2012-08-02",
+      "total_debt": 517282000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17759917,
+      "convertible": null,
+      "equity": 703385000,
+      "interest_paid": null
+    },
+    {
+      "end": "2012-09-30",
+      "filed": "2012-11-02",
+      "total_debt": 529960000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17681150,
+      "convertible": null,
+      "equity": 724616000,
+      "interest_paid": null
+    },
+    {
+      "end": "2015-03-31",
+      "filed": "2015-05-01",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15975385,
+      "convertible": null,
+      "equity": 830951000,
+      "interest_paid": null
+    },
+    {
+      "end": "2015-06-30",
+      "filed": "2015-08-05",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15102958,
+      "convertible": null,
+      "equity": 789635000,
+      "interest_paid": null
+    },
+    {
+      "end": "2015-09-30",
+      "filed": "2015-10-30",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15187330,
+      "convertible": null,
+      "equity": 795385000,
+      "interest_paid": null
+    },
+    {
+      "end": "2016-03-31",
+      "filed": "2016-05-04",
+      "total_debt": 175000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 16094194,
+      "convertible": null,
+      "equity": 805180000,
+      "interest_paid": null
+    },
+    {
+      "end": "2016-06-30",
+      "filed": "2016-08-05",
+      "total_debt": 175000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15214792,
+      "convertible": null,
+      "equity": 775011000,
+      "interest_paid": null
+    },
+    {
+      "end": "2016-09-30",
+      "filed": "2016-10-28",
+      "total_debt": 175000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15129897,
+      "convertible": null,
+      "equity": 784480000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-03-31",
+      "filed": "2017-05-09",
+      "total_debt": 175000000,
+      "cash": 18879000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15052049,
+      "convertible": null,
+      "equity": 778165000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-06-30",
+      "filed": "2017-08-04",
+      "total_debt": 125000000,
+      "cash": 26170000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15114175,
+      "convertible": null,
+      "equity": 789575000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-09-30",
+      "filed": "2017-11-08",
+      "total_debt": 125000000,
+      "cash": 40916000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15109138,
+      "convertible": null,
+      "equity": 738266000,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-03-31",
+      "filed": "2018-05-04",
+      "total_debt": 125000000,
+      "cash": 27642000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15198317,
+      "convertible": null,
+      "equity": 687992000,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-06-30",
+      "filed": "2018-08-08",
+      "total_debt": 125000000,
+      "cash": 26025000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15168629,
+      "convertible": null,
+      "equity": 685524000,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-09-30",
+      "filed": "2018-11-05",
+      "total_debt": 125000000,
+      "cash": 68774000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 14827021,
+      "convertible": null,
+      "equity": 700211000,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-03-31",
+      "filed": "2020-05-08",
+      "total_debt": 175000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17949955,
+      "convertible": null,
+      "equity": 729559000,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-06-30",
+      "filed": "2020-08-06",
+      "total_debt": 294990000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17929341,
+      "convertible": null,
+      "equity": 745956000,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-09-30",
+      "filed": "2020-11-05",
+      "total_debt": 269966000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17868182,
+      "convertible": null,
+      "equity": 769494000,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-03-31",
+      "filed": "2021-05-06",
+      "total_debt": 175000000,
+      "cash": 151810000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 18262786,
+      "convertible": null,
+      "equity": 888481000,
+      "interest_paid": 13204000
+    },
+    {
+      "end": "2021-06-30",
+      "filed": "2021-08-05",
+      "total_debt": 175000000,
+      "cash": 397510000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 18042719,
+      "convertible": null,
+      "equity": 955054000,
+      "interest_paid": 12528000
+    },
+    {
+      "end": "2021-09-30",
+      "filed": "2021-11-04",
+      "total_debt": 175000000,
+      "cash": 571068000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17878195,
+      "convertible": null,
+      "equity": 980205000,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-03-31",
+      "filed": "2022-05-06",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17809945,
+      "convertible": null,
+      "equity": 1017214000,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-06-30",
+      "filed": "2022-08-02",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17436145,
+      "convertible": null,
+      "equity": 996639000,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-09-30",
+      "filed": "2022-11-01",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17832955,
+      "convertible": null,
+      "equity": 1000486000,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-03-31",
+      "filed": "2023-05-04",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17742031,
+      "convertible": null,
+      "equity": 1036844000,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-06-30",
+      "filed": "2023-08-02",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17749427,
+      "convertible": null,
+      "equity": 1032752000,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-09-30",
+      "filed": "2023-11-03",
+      "total_debt": 125000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17709568,
+      "convertible": null,
+      "equity": 1034376000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001230245-26-000013",
+  "xbrl_10-Q": "xbrl:0001230245-26-000032",
+  "events": [
+    {
+      "date": "2019-12-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-19-074980",
+      "doc": "tm1926653-1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-10-15",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001230245-19-000100",
+      "doc": "form8-kpimcoclassaandc.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-07-10",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001104659-19-039758",
+      "doc": "a19-12533_28k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-10-02",
+      "items": "2.03,9.01",
+      "acc": "0001104659-17-060251",
+      "doc": "a17-22671_18k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T22:57:59+00:00",
+  "signature": "0001230245-26-000034",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 160009000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000032/pipr-20260630.htm",
+        "accession": "0001230245-26-000032",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 160009000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001230245-26-000032",
+            "filed": "2026-08-05",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000032/pipr-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "Note 7 | Financial Instruments and Other Inventory Positions | 21 | Note 8 | Investments | 23 | Note 9 | Variable Interest Entities | 23 | Note 10 | Other Assets | 25 | Note 11 | Short-Term Financing | 25 | Note 12 | Leases | 26 | Note 13 | Legal Contingencies | 26 | Note 14 | Sha",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000032/pipr-20260630.htm",
+        "accession": "0001230245-26-000032",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001230245-26-000032",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000032/pipr-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.2174,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 2.0852
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1834064000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001230245-26-000013",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000013/"
+        },
+        {
+          "value_usd": 1506577000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001230245-26-000013",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000013/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 586627000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001230245-26-000013",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000013/"
+        },
+        {
+          "value_usd": 313255000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001230245-26-000013",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000013/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 281331000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001230245-26-000013",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000013/"
+        },
+        {
+          "value_usd": 181114000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001230245-26-000013",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000013/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "Note 7 | Financial Instruments and Other Inventory Positions | 21 | Note 8 | Investments | 23 | Note 9 | Variable Interest Entities | 23 | Note 10 | Other Assets | 25 | Note 11 | Short-Term Financing | 25 | Note 12 | Leases | 26 | Note 13 | Legal Contingencies | 26 | Note 14 | Sha",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1230245/000123024526000032/pipr-20260630.htm",
+      "accession": "0001230245-26-000032",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001230245-26-000032",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001230245-26-000032",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001230245-26-000032"
+}

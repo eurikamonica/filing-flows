@@ -1,0 +1,401 @@
+{
+  "cik": 56701,
+  "ticker": "KOSS",
+  "name": "KOSS CORP",
+  "sector": "technology",
+  "industry": "Household Audio & Video Equipment",
+  "sic": "3651",
+  "sic_description": "Household Audio & Video Equipment",
+  "generated_at": "2026-10-31T14:35:15+00:00",
+  "fetched_at": "2026-10-26T03:11:29+00:00",
+  "price": 3.455,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.330617,
+  "snapshot": {
+    "cash": 3020840,
+    "investments": 16803056,
+    "finance_leases": 21949,
+    "operating_leases": 2289155,
+    "equity": 30159655,
+    "assets": 36658764,
+    "liabilities": 6499109,
+    "assets_current": 26002033,
+    "liabilities_current": 1863271,
+    "retained_earnings": 16429905,
+    "interest_expense": 2116,
+    "operating_income": -1512451,
+    "pretax_income": -380572,
+    "net_income": -391464,
+    "da": 295154,
+    "ocf": 439207,
+    "capex": 316486,
+    "revenue": 13020773,
+    "shares": 9466438,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "da": "Depreciation (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (fiscal year)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 19823896,
+    "net_debt": null,
+    "ebitda": -1217297,
+    "ebit": -1512451,
+    "interest_expense": 2116,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -714.768904,
+    "ebitda_coverage": -575.282136,
+    "fcf": 122721,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 6000000.0,
+    "liquidity": 25823896.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 4.656143,
+    "market_cap": 32706543.29,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2289155.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/koss-20260630x10k.htm",
+        "accession": "0000056701-26-000034",
+        "form": "10-K",
+        "filed": "2026-08-28",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 2289155.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000056701-26-000034",
+            "filed": "2026-08-28",
+            "form": "10-K",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/koss-20260630x10k.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000056701-26-000034",
+      "form": "10-K",
+      "filed": "2026-08-28",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/koss-20260630x10k.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0314,
+      "receivables_growth": 0.0758,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.005,
+      "dsri": 1.043,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 13020773.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        },
+        {
+          "value_usd": 12624170.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1221760.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        },
+        {
+          "value_usd": 1135672.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 241432.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        },
+        {
+          "value_usd": 242644.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 439207.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        },
+        {
+          "value_usd": -214908.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -391464.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        },
+        {
+          "value_usd": -874831.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000056701-26-000034",
+          "filed": "2026-08-28",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "the products at their facility. Revenue from product sales is adjusted for estimated warranty obligations and variable consideration, which are detailed below. The Company uses a five-step analysis to determine how revenue is recognized. The underlying principle is to recognize rev",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/koss-20260630x10k.htm",
+        "accession": "0000056701-26-000034",
+        "form": "10-K",
+        "filed": "2026-08-28"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ng lease term (in years) | 2 | — | Weighted-average discount rate | 7.75 % | — | 52 Table of Contents 16. RELATED PARTY TRANSACTIONS The Company leases its facility in Milwaukee, Wisconsin from Koss Holdings, LLC, which is controlled by five equal ownership interests in trusts he",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/koss-20260630x10k.htm",
+        "accession": "0000056701-26-000034",
+        "form": "10-K",
+        "filed": "2026-08-28"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "se countries. The Company defers revenue to recognize the future obligations related to these warranties. The deferred revenue is based on historical analysis of warranty claims relative to sales. This deferred revenue reflects the Company’s best estimates of the amount of wa",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/56701/000005670126000034/koss-20260630x10k.htm",
+        "accession": "0000056701-26-000034",
+        "form": "10-K",
+        "filed": "2026-08-28"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-06-30",
+      "2025-06-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 5000000.0,
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Amended Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 1000000.0,
+      "spread": 0.015,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2018-05-11",
+      "agreement_kind": "amendment",
+      "dated": "2010-05-12",
+      "title": "Eighth Amendment To Credit Agreement",
+      "facility": "loan",
+      "maturity": "2019-07-31",
+      "url": "https://www.sec.gov/Archives/edgar/data/56701/000005670118000014/exhibit1016eighthamendment.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2017-08-25",
+      "agreement_kind": "amendment",
+      "dated": "2010-05-12",
+      "title": "Seventh Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/56701/000005670117000038/exhibit1015seventhamendmen.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2017-01-26",
+      "agreement_kind": "amendment",
+      "dated": "2010-05-12",
+      "title": "Sixth Amendment To The Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/56701/000005670117000006/exhibit1014sixthamendmentt.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2019-05-16",
+      "items": "1.01,9.01",
+      "acc": "0000056701-19-000018",
+      "doc": "a8-kcovercreditagreement.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-02-12",
+      "items": "1.01",
+      "acc": "0000056701-16-000057",
+      "doc": "a8-kcoveramexsettlementpre.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2013-07-05",
+      "items": "1.01,9.01",
+      "acc": "0000056701-13-000021",
+      "doc": "a8-kcover07032013.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    },
+    {
+      "date": "2010-05-17",
+      "items": "1.01,2.03,3.01,9.01",
+      "acc": "0001104659-10-029146",
+      "doc": "a10-10341_18k.htm",
+      "desc": "CURRENT REPORT OF MATERIAL EVENTS OR CORPORATE CHANGES"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

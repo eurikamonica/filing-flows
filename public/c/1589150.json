@@ -1,0 +1,601 @@
+{
+  "cik": 1589150,
+  "ticker": "RGBP",
+  "name": "Regen BioPharma Inc",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-26T04:55:44+00:00",
+  "price": 0.0001,
+  "price_date": "2026-10-23",
+  "equity_vol": 2.410417,
+  "snapshot": {
+    "cash": 239,
+    "convertible": 726291,
+    "convertible_current": 729763,
+    "equity": -5878206,
+    "assets": 287587,
+    "liabilities": 6165793,
+    "assets_current": 287587,
+    "liabilities_current": 6165793,
+    "retained_earnings": -22305331,
+    "interest_expense": 170267,
+    "operating_income": -803860,
+    "pretax_income": -1186180,
+    "net_income": -1186180,
+    "ocf": -445249,
+    "revenue": 236560,
+    "effective_rate": 0.6,
+    "stated_rate": 0.1,
+    "conversion_price": 0.0001,
+    "converted_shares": 3976642,
+    "shares": 1675277503,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "convertible": "ConvertibleNotesPayable",
+    "convertible_current": "ConvertibleNotesPayableCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1",
+    "converted_shares": "DebtConversionConvertedInstrumentSharesIssued1"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 239.0,
+    "net_debt": null,
+    "ebitda": -803860.0,
+    "ebit": -803860,
+    "interest_expense": 170267,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -4.721173,
+    "ebitda_coverage": -4.721173,
+    "fcf": -445249.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 239.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -141.497357,
+    "market_cap": 167527.7503,
+    "debt_to_ev": null,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible notes (company total)",
+          "face": 726291,
+          "carrying": 726291,
+          "conv_price": 0.0001,
+          "moneyness": 1.0,
+          "in_the_money": true,
+          "shares": 7262910000.0
+        }
+      ],
+      "total_face": 726291,
+      "in_the_money_face": 726291,
+      "in_the_money_carrying": 726291,
+      "shares_if_converted": 7262910000.0,
+      "coupon_saved": 0,
+      "dilution": 4.335347
+    },
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-038576",
+      "form": "10-Q",
+      "filed": "2026-08-17",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315226038576/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0,
+      "receivables_growth": 1.1594,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 2.1594,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 2.1594,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 236561.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-25-029526",
+          "filed": "2025-12-30",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315225029526/"
+        },
+        {
+          "value_usd": 236560.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-25-029526",
+          "filed": "2025-12-30",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315225029526/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 204873.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-25-029526",
+          "filed": "2025-12-30",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315225029526/"
+        },
+        {
+          "value_usd": 94873.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-25-029526",
+          "filed": "2025-12-30",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315225029526/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -383591.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-25-029526",
+          "filed": "2025-12-30",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315225029526/"
+        },
+        {
+          "value_usd": -751536.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-25-029526",
+          "filed": "2025-12-30",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315225029526/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1274502.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-25-029526",
+          "filed": "2025-12-30",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315225029526/"
+        },
+        {
+          "value_usd": -668255.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-25-029526",
+          "filed": "2025-12-30",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315225029526/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "727 Series A Preferred shares as a dividend to all shareholders of record as of February 3, 2026. 18 | 10. RELATED PARTY TRANSACTIONS The Company had the following related party transactions: | ● | Revenue Transaction | On June 23, 2015 the Company entered into an agreement (“Agr",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1589150/000149315226038576/form10-q.htm",
+        "accession": "0001493152-26-038576",
+        "form": "10-Q",
+        "filed": "2026-08-17"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-09-30",
+      "2024-09-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "May Five Two Thousand Seventeen",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "effective": 0.1,
+      "maturity": "2020-05-05",
+      "conv_price": 37.5,
+      "face": 200000.0,
+      "floating": false
+    },
+    {
+      "name": "Effective September Four Two Thousand Twenty Four",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "effective": 0.1,
+      "face": 127494.0,
+      "floating": false
+    },
+    {
+      "name": "Regen Biopharma Inc",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "effective": 0.06,
+      "face": 38700.0,
+      "maturity": "2026-07-28",
+      "floating": false
+    },
+    {
+      "name": "Labrys Fund IILP",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "effective": 0.06,
+      "face": 35189.0,
+      "floating": false
+    },
+    {
+      "name": "October Twenty Eight Two Thousand Twenty Four",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "conv_price": 0.04,
+      "face": 28500.0,
+      "floating": false
+    },
+    {
+      "name": "Guaranted Interest",
+      "kind": "other",
+      "as_of": "2025-09-30",
+      "effective": 0.1,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Effective First Quarter Two Thousand Twenty Five",
+      "kind": "other",
+      "as_of": "2025-09-30",
+      "effective": 0.18,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "March Eight Two Thousand Sixteen",
+      "kind": "other",
+      "as_of": "2025-09-30",
+      "effective": 0.08,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "April Six Two Thousand Sixteen",
+      "kind": "other",
+      "as_of": "2025-09-30",
+      "effective": 0.08,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "December Twenty Two Thousand Seventeen",
+      "kind": "other",
+      "as_of": "2025-09-30",
+      "effective": 0.1,
+      "conv_price": 37.5,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "October Thirty One Two Thousand Sixteen",
+      "kind": "other",
+      "as_of": "2025-09-30",
+      "effective": 0.1,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-07-15",
+      "items": "1.01,4.01,8.01,9.01",
+      "acc": "0001493152-26-033364",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-03",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001493152-25-016767",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-07",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001641172-25-022575",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-01",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001641172-25-021882",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-09-13",
+      "items": "1.01,9.01",
+      "acc": "0001493152-24-036161",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-04-29",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001607062-24-000150",
+      "doc": "rgbp042924form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-09-18",
+      "items": "1.01,9.01",
+      "acc": "0001607062-23-000434",
+      "doc": "rgbp091823form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-01-14",
+      "items": "2.03,9.01",
+      "acc": "0001607062-22-000013",
+      "doc": "rgbp011322form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-19",
+      "items": "1.01,9.01",
+      "acc": "0001607062-21-000431",
+      "doc": "rgbp101821form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-09-24",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001607062-21-000349",
+      "doc": "rgbp092421form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-09-16",
+      "items": "1.01,9.01",
+      "acc": "0001607062-21-000331",
+      "doc": "rgbp091521form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-16",
+      "items": "1.01,9.01",
+      "acc": "0001607062-21-000085",
+      "doc": "rgbp041621form8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-08",
+      "items": "1.01,9.01",
+      "acc": "0001607062-21-000077",
+      "doc": "rgbp040721form8l.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-11-20",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001607062-18-000447",
+      "doc": "rgbp112018form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-02-09",
+      "items": "1.01,9.01",
+      "acc": "0001607062-17-000056",
+      "doc": "rgbp020817form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-07-07",
+      "items": "1.01,9.01",
+      "acc": "0001607062-16-000894",
+      "doc": "rgbp070716form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-06-08",
+      "items": "1.01,9.01",
+      "acc": "0001607062-16-000862",
+      "doc": "rgbp060816form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-04-11",
+      "items": "1.01,9.01",
+      "acc": "0001607062-16-000778",
+      "doc": "rgbp040816form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-12-17",
+      "items": "1.01,9.01",
+      "acc": "0001607062-15-000559",
+      "doc": "rgbp121615form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-11-05",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001607062-15-000478",
+      "doc": "rgbp11515form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-08-26",
+      "items": "1.01,9.01",
+      "acc": "0001607062-15-000383",
+      "doc": "rgbp082615form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-06-26",
+      "items": "1.01,9.01",
+      "acc": "0001607062-15-000281",
+      "doc": "rgbp20150625form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-03-30",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001607062-15-000142",
+      "doc": "rgbp20150326form8ka1.htm",
+      "desc": "FORM 8-K/A #1"
+    },
+    {
+      "date": "2015-03-27",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001607062-15-000136",
+      "doc": "rgbp20150326form8ka2.htm",
+      "desc": "FORM 8-K/A #2"
+    },
+    {
+      "date": "2015-03-25",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001607062-15-000129",
+      "doc": "rgbp20150324form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-03-25",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001607062-15-000127",
+      "doc": "rgbp20150324form8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2015-03-10",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001607062-15-000089",
+      "doc": "rgbp20150309form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-01-22",
+      "items": "1.01,5.03,8.01,9.01",
+      "acc": "0001607062-15-000015",
+      "doc": "rgbp20150120form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-12-18",
+      "items": "1.01,9.01",
+      "acc": "0001607062-14-000206",
+      "doc": "rgbp20141217form8k.htm",
+      "desc": "FORM8-K"
+    },
+    {
+      "date": "2014-12-18",
+      "items": "1.01",
+      "acc": "0001607062-14-000204",
+      "doc": "rgbp20141217form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-11-25",
+      "items": "1.01,9.01",
+      "acc": "0001607062-14-000194",
+      "doc": "rgbp20141124form8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,424 @@
+{
+  "cik": 1422930,
+  "ticker": "PUBM",
+  "name": "PubMatic, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Programming, Data Processing, Etc.",
+  "sic": "7370",
+  "sic_description": "Services-Computer Programming, Data Processing, Etc.",
+  "generated_at": "2026-10-31T14:35:11+00:00",
+  "fetched_at": "2026-10-26T01:31:06+00:00",
+  "price": 17.24,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.631894,
+  "snapshot": {
+    "cash": 119971000,
+    "investments": 17536000,
+    "finance_leases": 270000,
+    "operating_leases": 40637000,
+    "equity": 238728000,
+    "assets": 700042000,
+    "liabilities": 461314000,
+    "assets_current": 537866000,
+    "liabilities_current": 422118000,
+    "retained_earnings": 121211000,
+    "operating_income": -14589000,
+    "pretax_income": -11790000,
+    "net_income": -13018000,
+    "da": 16700000,
+    "ocf": 88038000,
+    "capex": 14530000,
+    "revenue": 289166000,
+    "shares": 46611000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 137507000,
+    "net_debt": null,
+    "ebitda": 2111000,
+    "ebit": -14589000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 73508000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 137507000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 1.830272,
+    "market_cap": 803573640.0,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 3.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Senior Secured Credit Facilities Credit Agreement",
+        "dated": "2022-10-17",
+        "text": "Permit the Consolidated Leverage Ratio as at the last day of any Fiscal Quarter, commencing with the Fiscal Quarter ending December 31, 2022, to be greater than3.50:1.00."
+      },
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Senior Secured Credit Facilities Credit Agreement",
+        "dated": "2022-10-17",
+        "text": "Permit the Consolidated Interest Coverage Ratio as at the last day of any Fiscal Quarter, commencing with the Fiscal Quarter ending December 31, 2022, to be less than 3.00:1.00."
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 40637000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000030/pubm-20260630.htm",
+        "accession": "0001422930-26-000030",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 40637000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001422930-26-000030",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000030/pubm-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ns”) acquired substantially all of the loans and certain other assets of the former SVB, and assumed all customer deposits and certain other liabilities of the former SVB. As such, First Citizens assumed SVB’s obligations under the Credit Agreement. Note 6 – Leases Op",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000030/pubm-20260630.htm",
+        "accession": "0001422930-26-000030",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001422930-26-000030",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000030/pubm-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0286,
+      "receivables_growth": -0.1567,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.8681,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 282926000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001422930-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000010/"
+        },
+        {
+          "value_usd": 291256000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001422930-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000010/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 358240000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001422930-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000010/"
+        },
+        {
+          "value_usd": 424814000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001422930-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000010/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 81059000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001422930-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000010/"
+        },
+        {
+          "value_usd": 73425000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001422930-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000010/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -14462000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001422930-26-000010",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000010/"
+        },
+        {
+          "value_usd": 12504000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001422930-26-000010",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000010/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "“Financial Instruments - Credit Losses (Topic 326) - Measurement of Credit Losses for Accounts Receivable and Contract Assets” (“ASU 2025-05”), which provides a practical expedient to measure credit losses on current accounts receivable. The practical expedient allows compan",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293026000030/pubm-20260630.htm",
+        "accession": "0001422930-26-000030",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.0775,
+      "spread_min": 0.02,
+      "spread_max": 0.0275,
+      "fee_min": 0.0025,
+      "fee_max": 0.0035,
+      "reference": "Applicable Interest Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2022-10-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-10-17",
+      "title": "Senior Secured Credit Facilities Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.25,
+        2.75
+      ],
+      "grid_by": "leverage",
+      "maturity": "2027-10-17",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Leverage Ratio as at the last day of any Fiscal Quarter, commencing with the Fiscal Quarter ending December 31, 2022, to be greater than3.50:1.00."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Interest Coverage Ratio as at the last day of any Fiscal Quarter, commencing with the Fiscal Quarter ending December 31, 2022, to be less than 3.00:1.00."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1422930/000142293022000048/ex101-svbcreditagreement.htm",
+      "all_in_pct": [
+        0.2889,
+        2.7889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2022-10-17",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001422930-22-000048",
+      "doc": "pubm-20221017.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-09-14",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001422930-22-000045",
+      "doc": "pubm-20220914.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-25",
+      "items": "1.01,2.03",
+      "acc": "0001422930-21-000047",
+      "doc": "pubm-20211020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001422930-21-000037",
+      "doc": "pubm-20210604.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-09",
+      "items": "1.01,9.01",
+      "acc": "0001422930-21-000015",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-03-25",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001422930-21-000006",
+      "doc": "form8-kxmarch25.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

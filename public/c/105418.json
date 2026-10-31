@@ -1,0 +1,652 @@
+{
+  "cik": 105418,
+  "ticker": "WMK",
+  "name": "WEIS MARKETS INC",
+  "sector": "consumer-staples",
+  "industry": "Retail-Grocery Stores",
+  "sic": "5411",
+  "sic_description": "Retail-Grocery Stores",
+  "generated_at": "2026-10-31T14:35:09+00:00",
+  "fetched_at": "2026-10-25T21:13:40+00:00",
+  "price": 74.41,
+  "price_date": "2026-10-30",
+  "equity_vol": 0.252523,
+  "snapshot": {
+    "cash": 103529000,
+    "investments": 104528000,
+    "operating_leases": 172094000,
+    "equity": 1386203000,
+    "assets": 2044387000,
+    "liabilities": 658184000,
+    "assets_current": 677787000,
+    "liabilities_current": 333534000,
+    "retained_earnings": 1669857000,
+    "interest_expense": 52000,
+    "interest_paid": 52000,
+    "operating_income": 126452000,
+    "pretax_income": 132070000,
+    "net_income": 99574000,
+    "da": 128080000,
+    "ocf": 241087000,
+    "capex": 201986000,
+    "revenue": 5069357000,
+    "shares": 24744597,
+    "balance_date": "2026-06-27",
+    "latest_period": "2026-06-27"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseDebt (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 208057000,
+    "net_debt": null,
+    "ebitda": 254532000,
+    "ebit": 126452000,
+    "interest_expense": 52000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 2431.769231,
+    "ebitda_coverage": 4894.846154,
+    "cash_coverage": 4637.288462,
+    "fcf": 39101000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 100000000.0,
+    "liquidity": 308057000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 6700000.0,
+    "floating_share": null,
+    "plus100bp_interest": 67000.0,
+    "plus100bp_share_of_ebit": 0.00053,
+    "altman_z": 5.707828,
+    "market_cap": 1841245462.77,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.75,
+        "unit": "x",
+        "actual": 4894.846154,
+        "cushion": 0.999642,
+        "agreement": "-H Revolving Credit Agreement",
+        "dated": "2002-10-15",
+        "text": "The Borrower shall not permit its Fixed Charge Coverage Ratio to be less than 1.75 to 1 at the end of any Fiscal Quarter. 7.2 Liens ."
+      },
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 488000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "-H Revolving Credit Agreement",
+        "dated": "2002-10-15",
+        "text": "The Borrower shall not permit Consolidated Net Worth at any time to be less than $488,000,000.00 plus 50% of cumulative Consolidated Net Income for all fiscal quarters ending after June 29, 2002 and prior to the date of determination;"
+      }
+    ],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-27",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000105418-26-000051",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000051/wmk-20260627x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-27",
+    "metrics": {
+      "revenue_growth": 0.0346,
+      "receivables_growth": 0.1698,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.0791,
+      "dsri": 1.1306,
+      "ocf_to_net_income": 2.2116
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 4957709000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        },
+        {
+          "value_usd": 4791730000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 95416000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        },
+        {
+          "value_usd": 81567000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 14072000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        },
+        {
+          "value_usd": 13040000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 207206000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        },
+        {
+          "value_usd": 187467000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 93691000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2025-12-27",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        },
+        {
+          "value_usd": 106024000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000105418-26-000024",
+          "filed": "2026-03-12",
+          "end": "2024-12-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000024/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "expenses | 30,091 | 41,458 | Operating leases | 39,946 | 39,640 | Accrued self-insurance | 15,785 | 20,186 | Deferred revenue, net | 10,279 | 14,072 | Total current liabilities | 333,534 | 352,727 | Postretirement benefit obligations | 35,583 | 33,391 | Accrued self-insuranc",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/105418/000010541826000051/wmk-20260627x10q.htm",
+        "accession": "0000105418-26-000051",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-27",
+      "2024-12-28"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Agreement, Wells Fargo Bank, National Association, Revolving Credit Facility, Discretionary",
+      "kind": "revolver",
+      "as_of": "2026-06-27",
+      "capacity": 70000000.0,
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Agreement, Wells Fargo Bank, National Association, Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-27",
+      "capacity": 30000000.0,
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Agreement, Wells Fargo Bank, National Association",
+      "kind": "revolver",
+      "as_of": "2026-06-27",
+      "maturity": "2027-10-01",
+      "available": 23300000.0,
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Agreement, Wells Fargo Bank, National Association, Letters of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-27",
+      "drawn": 6700000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-27"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2023-10-02",
+      "agreement_kind": "amendment",
+      "dated": "2016-09-01",
+      "title": "Third Amendment To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR"
+      ],
+      "fee_pct": 0.25,
+      "url": "https://www.sec.gov/Archives/edgar/data/105418/000010541823000038/wmk-20230929xex10d1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-10-04",
+      "agreement_kind": "amendment",
+      "dated": "2016-09-01",
+      "title": "Second Amendment To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR",
+        "Base Rate"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/105418/000010541821000043/wmk-20210929ex101ec68ef.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2003-03-11",
+      "agreement_kind": "amendment",
+      "dated": "2002-10-15",
+      "title": "-H Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "fee_pct": 0.15,
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower shall not permit its Fixed Charge Coverage Ratio to be less than 1.75 to 1 at the end of any Fiscal Quarter. 7.2 Liens ."
+        },
+        {
+          "type": "net_worth",
+          "limit": 488000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower shall not permit Consolidated Net Worth at any time to be less than $488,000,000.00 plus 50% of cumulative Consolidated Net Income for all fiscal quarters ending after June 29, 2002 and prior to the date of determination;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/105418/000010541803000016/creditagreement.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-06-06",
+      "items": "1.01,9.01",
+      "acc": "0000105418-25-000032",
+      "doc": "wmk-20250606x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-10-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000105418-23-000038",
+      "doc": "wmk-20230929x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000105418-21-000043",
+      "doc": "wmk-20210929x8k.htm",
+      "desc": "WEIS MARKETS, INC. FORM 8-K AMENDMENT TO REVOLVING CREDIT AGREEMENT"
+    },
+    {
+      "date": "2019-08-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000105418-19-000034",
+      "doc": "wmk-20190827x8k.htm",
+      "desc": "WEIS MARKETS, INC. FORM 8-K AMENDMENT TO REVOLVING CREDIT AGREEMENT"
+    },
+    {
+      "date": "2016-09-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000105418-16-000090",
+      "doc": "wmk8k09082016.htm",
+      "desc": "WEIS MARKETS, INC. FORM 8-K REVOLVING CREDIT AGREEMENT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2016-09-24",
+      40139000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-04-01",
+      70874000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-07-01",
+      51951000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      52086000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      17912000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-29",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-12-29",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2016-11",
+      0.0,
+      16.282,
+      0.257,
+      68.0
+    ],
+    [
+      "2016-12",
+      0.0,
+      17.01,
+      0.2546,
+      68.0
+    ],
+    [
+      "2017-01",
+      0.0,
+      16.734,
+      0.2521,
+      68.0
+    ],
+    [
+      "2017-02",
+      0.0,
+      17.221,
+      0.2498,
+      68.0
+    ],
+    [
+      "2017-03",
+      0.0,
+      16.174,
+      0.2612,
+      68.0
+    ],
+    [
+      "2017-04",
+      0.0,
+      15.572,
+      0.2693,
+      68.0
+    ],
+    [
+      "2017-05",
+      0.0,
+      13.131,
+      0.2751,
+      77.1
+    ],
+    [
+      "2017-06",
+      0.0,
+      12.329,
+      0.2856,
+      81.4
+    ],
+    [
+      "2017-07",
+      0.0,
+      12.395,
+      0.2826,
+      81.0
+    ],
+    [
+      "2017-08",
+      0.0,
+      13.129,
+      0.2845,
+      77.1
+    ],
+    [
+      "2017-09",
+      0.0,
+      12.789,
+      0.2895,
+      78.9
+    ],
+    [
+      "2017-10",
+      0.0,
+      11.661,
+      0.3092,
+      85.1
+    ],
+    [
+      "2017-11",
+      0.0,
+      10.862,
+      0.3279,
+      89.8
+    ],
+    [
+      "2017-12",
+      0.0,
+      11.302,
+      0.3235,
+      87.2
+    ],
+    [
+      "2018-01",
+      0.0,
+      11.592,
+      0.3161,
+      85.5
+    ],
+    [
+      "2018-02",
+      0.0,
+      11.254,
+      0.3194,
+      87.5
+    ],
+    [
+      "2018-03",
+      0.0,
+      11.585,
+      0.3159,
+      85.5
+    ],
+    [
+      "2018-04",
+      0.0,
+      11.866,
+      0.3173,
+      83.9
+    ],
+    [
+      "2018-05",
+      0.0,
+      14.854,
+      0.3307,
+      68.7
+    ],
+    [
+      "2018-06",
+      0.0,
+      15.129,
+      0.3246,
+      68.0
+    ],
+    [
+      "2018-07",
+      0.0,
+      14.941,
+      0.327,
+      68.3
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

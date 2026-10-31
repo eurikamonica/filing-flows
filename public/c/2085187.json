@@ -1,0 +1,379 @@
+{
+  "cik": 2085187,
+  "ticker": "BOBS",
+  "name": "Bob's Discount Furniture, Inc.",
+  "sector": "consumer-disc",
+  "industry": "Retail-Furniture Stores",
+  "sic": "5712",
+  "sic_description": "Retail-Furniture Stores",
+  "generated_at": "2026-10-31T14:35:14+00:00",
+  "fetched_at": "2026-10-25T22:53:11+00:00",
+  "price": 16.28,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.800812,
+  "snapshot": {
+    "total_debt": 0,
+    "current_debt": 0,
+    "cash": 32022000,
+    "finance_leases": 86201000,
+    "operating_leases": 807498000,
+    "equity": 531172000,
+    "assets": 1923617000,
+    "liabilities": 1392445000,
+    "assets_current": 504997000,
+    "liabilities_current": 563130000,
+    "retained_earnings": 91718000,
+    "shares": 130687076,
+    "balance_date": "2026-06-28",
+    "latest_period": "2026-06-28"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 0.0,
+    "cash_and_investments": 32022000.0,
+    "net_debt": -32022000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 144600000.0,
+    "liquidity": 176622000.0,
+    "due_12m": 0,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 2127585597.28,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "To Revolving Credit Agreement",
+        "dated": "2026-04-29",
+        "text": "If either (a) Excess Availability at any time is less than the greater of (x) 10.0% of the Line Cap and (y) $10,000,000 or ( b) any Overadvance Loans are outstanding at any time (each of the events in clauses (a) and (b), a “ Financial Covenant Trigger Event ”), Borrowers shall not permit the Fixed Charge Coverage Ratio to be less than 1.00 to 1.00 as of the last day of any Test Period, commencing with the Test Perio"
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-28",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase",
+        "label": "Unconditional purchase obligations",
+        "class": "operating_commitment",
+        "amount_usd": 258600000.0,
+        "reported_total": true,
+        "schedule": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm",
+        "accession": "0001628280-26-054345",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-28",
+        "evidence": [
+          {
+            "value_usd": 258600000.0,
+            "tag": "us-gaap:UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount",
+            "accession": "0001628280-26-054345",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-28",
+            "url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 807498000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm",
+        "accession": "0001628280-26-054345",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-28",
+        "evidence": [
+          {
+            "value_usd": 807498000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-054345",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-28",
+            "url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "leases include options to extend the lease term for up to 20 years. The Company's leases do not have any residual value guarantees or any restrictions or covenants imposed by the leases. At June 28, 2026, the Company had 19 non-cancellable leases for retail stores and one non-c",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm",
+        "accession": "0001628280-26-054345",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "279,131 | $ | 260,610 | Self-insurance reserves | 30,061 | 27,959 | Accrued expenses | 52,947 | 66,211 | Customer deposits | 80,387 | 70,740 | Current portion of Term Loan | — | 1,750 | Finance lease liabilities, current portion | 14,158 | 15,201 | Operating lease liabili",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm",
+        "accession": "0001628280-26-054345",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-054345",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-28",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "tements For the Three and Six-Month Fiscal Periods Ended June 28, 2026 and June 29, 2025 (Unaudited) 5. Related Party Transactions Leases The Company had no related party lease activity in the six-month fiscal period ended June 28, 2026. In the three and six-month fiscal peri",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm",
+        "accession": "0001628280-26-054345",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "of debt issuance costs of $ 10.7 million in connection with the repayment of the $ 350.0 million Term Loan. Contract Liabilities The Company defers revenue when cash payments are received in advance of performance for unsatisfied gift cards and customer deposit obligations. G",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026054345/bobs-20260628.htm",
+        "accession": "0001628280-26-054345",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Asset Based Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-28",
+      "carrying": 0.0,
+      "capacity": 200000000.0,
+      "available": 144600000.0,
+      "floating": true
+    },
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-28",
+      "carrying": 0.0,
+      "spread": 0.04,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-28"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-04-30",
+      "agreement_kind": "amendment",
+      "dated": "2026-04-29",
+      "title": "To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        5.0
+      ],
+      "fee_pct": 0.375,
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "If either (a) Excess Availability at any time is less than the greater of (x) 10.0% of the Line Cap and (y) $10,000,000 or ( b) any Overadvance Loans are outstanding at any time (each of the events in clauses (a) and (b), a “ Financial Covenant Trigger Event ”), Borrowers shall not permit the Fixed Charge Coverage Ratio to be less than 1.00 to 1.00 as of the last day of any Test Period, commencing with the Test Perio"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "described in this clause (n), the aggregate amount of Indebtedness, Disqualified Stock or preferred stock incurred pursuant to this clause (n) shall not to exceed the sum of (A) $25,000,000 plus (B) unlimited additional amounts if, after giving effect thereto (calculated on a Pro Forma Basis), the Interest Coverage Ratio of the Company and the Restricted Subsidiaries is at least 2.00 to 1.00 for the most recently en"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Pro Forma Availability Condition ” means, for any date of calculation with respect to any transaction or payment, that either (i) (a) the (x) Pro Forma Availability on such date and (y) average daily Excess Availability for a period of thirty (30) consecutive days immediately preceding such transaction or payment is greater than 12.5% of the Line Cap (or, solely in connection with a Restricted Payment (other than a"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2085187/000162828026028946/exhibit101_ablamendmentno10.htm",
+      "all_in_pct": [
+        1.5389,
+        5.0389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-04-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-26-028946",
+      "doc": "bobs-20260429.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-29",
+      25000000,
+      27738000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-28",
+      0,
+      32022000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-05",
+      187.66,
+      4.268,
+      1.0512,
+      139.9
+    ],
+    [
+      "2026-06",
+      136.51,
+      4.61,
+      1.0173,
+      136.7
+    ],
+    [
+      "2026-07",
+      70.31,
+      5.189,
+      0.9266,
+      131.5
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

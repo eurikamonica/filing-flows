@@ -1,0 +1,336 @@
+{
+  "cik": 101295,
+  "ticker": "UG",
+  "name": "UNITED GUARDIAN INC",
+  "sector": "consumer-staples",
+  "industry": "Perfumes, Cosmetics & Other Toilet Preparations",
+  "sic": "2844",
+  "sic_description": "Perfumes, Cosmetics & Other Toilet Preparations",
+  "generated_at": "2026-10-31T14:35:08+00:00",
+  "fetched_at": "2026-10-26T03:11:48+00:00",
+  "price": 6.67,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.280634,
+  "snapshot": {
+    "cash": 2390738,
+    "investments": 7203057,
+    "equity": 11630913,
+    "assets": 13592579,
+    "liabilities": 1961666,
+    "assets_current": 12714767,
+    "liabilities_current": 1737315,
+    "retained_earnings": 11171481,
+    "operating_income": 2333547,
+    "pretax_income": 3095197,
+    "net_income": 2465498,
+    "da": 116390,
+    "ocf": 3466027,
+    "capex": 66778,
+    "revenue": 11206605,
+    "shares": 4594319,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 9593795,
+    "net_debt": null,
+    "ebitda": 2449937,
+    "ebit": 2333547,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 3399249,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 9593795.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 12.883646,
+    "market_cap": 30644107.73,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001171843-26-005409",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326005409/ug20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.1343,
+      "receivables_growth": 0.1109,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.2833,
+      "ocf_to_net_income": 0.934
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.2833,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 10545468.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        },
+        {
+          "value_usd": 12181971.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1586889.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        },
+        {
+          "value_usd": 1428455.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 12177.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1966819.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        },
+        {
+          "value_usd": 3466251.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 2105738.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        },
+        {
+          "value_usd": 3250875.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001171843-26-001973",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326001973/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "accounting policy election when estimating expected credit losses for current accounts receivable and current contract assets arising from transactions accounted for under Topic 606, Revenue from Contracts with Customers. The practical expedient allows an entity to assume th",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326005409/ug20260630_10q.htm",
+        "accession": "0001171843-26-005409",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "uption in this manufacturer’s operations could have a material impact on the Company’s revenue stream. 18. | Related-Party Transactions | For the three- and- six-month periods ended June 30, 2026, the Company made payments of $ 4,399 and $ 14,231 , respectively, to the accounting firm",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326005409/ug20260630_10q.htm",
+        "accession": "0001171843-26-005409",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ayable | $ | 499,754 | $ | 480,791 | Accrued expenses and other current liabilities | 1,219,333 | 1,164,948 | Deferred revenue | 8,135 | 12,177 | Dividends payable | 10,093 | 11,405 | Total current liabilities | 1,737,315 | 1,669,321 | Deferred income taxes, net | 224,351 | 2",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/101295/000117184326005409/ug20260630_10q.htm",
+        "accession": "0001171843-26-005409",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2024-03-01",
+      "items": "1.01,9.01",
+      "acc": "0001171843-24-001119",
+      "doc": "f8k_022924.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-10-25",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001171843-22-006727",
+      "doc": "f8k_102422.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-11-18",
+      "items": "1.01,9.01",
+      "acc": "0001171843-13-004695",
+      "doc": "f8k_111413.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-01-23",
+      "items": "1.01,9.01",
+      "acc": "0001171843-13-000221",
+      "doc": "f8k_012413.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-05-18",
+      "items": "1.01,9.01",
+      "acc": "0001171843-10-000942",
+      "doc": "f8k_051710.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

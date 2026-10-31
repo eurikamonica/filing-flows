@@ -1,0 +1,337 @@
+{
+  "cik": 1160420,
+  "ticker": "ADIA",
+  "name": "Adia Med, Inc.",
+  "sector": "health",
+  "industry": "Medicinal Chemicals & Botanical Products",
+  "sic": "2833",
+  "sic_description": "Medicinal Chemicals & Botanical Products",
+  "generated_at": "2026-10-31T14:35:10+00:00",
+  "fetched_at": "2026-10-26T03:22:31+00:00",
+  "price": 0.11,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.468929,
+  "snapshot": {
+    "cash": 128115,
+    "finance_leases": 76455,
+    "operating_leases": 82010,
+    "revolver_drawn": 835312,
+    "equity": -379781,
+    "assets": 744054,
+    "liabilities": 1123835,
+    "assets_current": 342598,
+    "liabilities_current": 1056897,
+    "retained_earnings": -16095589,
+    "interest_expense": 41277,
+    "interest_paid": 0,
+    "operating_income": -239453,
+    "pretax_income": -277355,
+    "net_income": -277355,
+    "da": 4921,
+    "ocf": -175765,
+    "capex": 5496,
+    "revenue": 1172258,
+    "shares": 94404696,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 128115.0,
+    "net_debt": null,
+    "ebitda": -234532,
+    "ebit": -239453,
+    "interest_expense": 41277,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -5.801124,
+    "ebitda_coverage": -5.681905,
+    "fcf": -181261,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 128115.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -25.379574,
+    "market_cap": 10384516.56,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 82010.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826006313/adia_i10q-063026.htm",
+        "accession": "0001683168-26-006313",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 82010.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001683168-26-006313",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826006313/adia_i10q-063026.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "g arrangements require fixed payments and also include an amount that is probable and will be owed under residual value guarantees, if applicable. Lease payments also include payments related to purchase or termination options when the lessee is reasonably certain to exercise the",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826006313/adia_i10q-063026.htm",
+        "accession": "0001683168-26-006313",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001683168-26-006313",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826006313/adia_i10q-063026.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 108.7975,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 700508.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001683168-26-002531",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826002531/"
+        },
+        {
+          "value_usd": 6380.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001683168-26-002531",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826002531/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 33360.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001683168-26-002531",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826002531/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001683168-26-002531",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826002531/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -179228.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001683168-26-002531",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826002531/"
+        },
+        {
+          "value_usd": -335476.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001683168-26-002531",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826002531/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -395464.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001683168-26-002531",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826002531/"
+        },
+        {
+          "value_usd": -181067.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001683168-26-002531",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826002531/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "follows ASC 850-10, “Related Party Disclosures,” for the identification of related parties and disclosure of related party transactions. The Company leases office space from an entity that is controlled by the CEO and Director of the Company. In addition this related party has provide",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826006313/adia_i10q-063026.htm",
+        "accession": "0001683168-26-006313",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| 5,224 | $ | 2,393 | Payroll liabilities | 153 | 153 | Accrued interest – related party | 60,681 | 37,915 | Deferred revenue | 64,000 | 14,000 | Line of credit | 835,312 | 600,000 | Lease liability – current portion | Operating | 64,743 | 63,950 | Finance | 26,784 | 26,784",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1160420/000168316826006313/adia_i10q-063026.htm",
+        "accession": "0001683168-26-006313",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-10-19",
+      "items": "1.01,9.01",
+      "acc": "0001683168-26-007951",
+      "doc": "adia_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-10-06",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001683168-26-007632",
+      "doc": "adia_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-08-24",
+      "items": "1.01,9.01",
+      "acc": "0001683168-26-006679",
+      "doc": "adia_8k.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,936 @@
+{
+  "cik": 1679688,
+  "ticker": "DBRG",
+  "name": "DigitalBridge Group, Inc.",
+  "sector": "financials",
+  "industry": "Investment Advice",
+  "sic": "6282",
+  "sic_description": "Investment Advice",
+  "generated_at": "2026-10-31T14:35:12+00:00",
+  "fetched_at": "2026-10-25T22:57:15+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 291766000,
+    "cash": 508221000,
+    "operating_leases": 27918000,
+    "equity": 2345465000,
+    "assets": 3763519000,
+    "liabilities": 1117240000,
+    "retained_earnings": -6547204000,
+    "interest_expense": 18181000,
+    "interest_paid": 13936000,
+    "pretax_income": 265719000,
+    "net_income": 174901000,
+    "da": 24458000,
+    "ocf": 179259000,
+    "capex": 571000,
+    "revenue": 632634000,
+    "shares": 187495281,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseDebt (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 291766000,
+    "cash_and_investments": 508221000.0,
+    "net_debt": -216455000.0,
+    "ebitda": 308358000,
+    "ebit": 283900000,
+    "interest_expense": 18181000,
+    "leverage": 0.946192,
+    "net_leverage": -0.70196,
+    "interest_coverage": 15.615203,
+    "ebitda_coverage": 16.960453,
+    "cash_coverage": 13.863017,
+    "fcf": 178688000,
+    "fcf_to_debt": 0.612436,
+    "effective_rate": 0.062314,
+    "revolver_available": 100000000.0,
+    "liquidity": 608221000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.5,
+        "unit": "x",
+        "actual": 16.960453,
+        "cushion": 0.911559,
+        "agreement": "Second Amended And Restated Credit Agreement",
+        "dated": "2020-12-09",
+        "text": "t to Eurodollar Loans, 2.75% and (b) with respect to ABR Loans, 1.75%. \\\\DC - 036150/000014 - 15261895 v8 9 “ Applicable Percentage ”: at any time (x) during the period from and after the Closing Date and prior to the Initial Revolving Termination Date 100% (or, if at any such time the Consolidated Fixed Charge Coverage Ratio is less than 1.50 to 1.00, 90%) and (y) during the period from and after the Initial Revolvi"
+      },
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 1740000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Second Amended And Restated Credit Agreement",
+        "dated": "2020-12-09",
+        "text": "Permit Consolidated Tangible Net Worth at any time to be less than the sum of (i) $1,740,000,000 and (ii) 50% of the Net Cash Proceeds received by the Parent Borrower (x) from any offering by the Parent Borrower of its common equity and (y) from any offering by the REIT Listed Entity of its comm"
+      }
+    ],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 27918000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000115/dbrg-20260630.htm",
+        "accession": "0001679688-26-000115",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 27918000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001679688-26-000115",
+            "filed": "2026-08-04",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000115/dbrg-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "lue | 22 | 10. Earnings per Share | 24 | 11. Fee Revenue | 25 | 12. Equity-Based Compensation | 25 | 13. Variable Interest Entities | 27 | 14. Transactions with Affiliates | 28 | 15. Segment Reporting | 30 | 16. Commitments and Contingencies | 32 | 17. Subsequent Events | 33 | Ite",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000115/dbrg-20260630.htm",
+        "accession": "0001679688-26-000115",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "825,474 | 670,155 | Total liabilities | 1,117,240 | 968,959 | Commitments and contingencies (Note 16) | Redeemable noncontrolling interests | 42,749 | 33,226 | Equity | Stockholders’ equity: | Preferred stock, $ 0.01 par value per share; $ 821,899 liquidation preference; 250,000 shares au",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000115/dbrg-20260630.htm",
+        "accession": "0001679688-26-000115",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001679688-26-000115",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000115/dbrg-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1357,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.8279
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 374447000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001679688-26-000021",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000021/"
+        },
+        {
+          "value_usd": 329693000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001679688-26-000021",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000021/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 259329000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001679688-26-000021",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000021/"
+        },
+        {
+          "value_usd": 60122000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001679688-26-000021",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000021/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 141874000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001679688-26-000021",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000021/"
+        },
+        {
+          "value_usd": 70522000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001679688-26-000021",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000021/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ocus. Recently Adopted Accounting Pronouncements Measurement of Credit Losses for Accounts Receivable and Contract Assets In July 2025, the FASB issued ASU 2025-05, Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968826000115/dbrg-20260630.htm",
+        "accession": "0001679688-26-000115",
+        "form": "10-Q",
+        "filed": "2026-08-04"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Securitized financing facility",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "carrying": 300000000.0,
+      "floating": false
+    },
+    {
+      "name": "VFN Notes, Series 2026-1, Class A-1",
+      "kind": "revolver",
+      "as_of": "2026-05-31",
+      "capacity": 100000000.0,
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Class A-2 Notes",
+      "kind": "notes",
+      "as_of": "2026-05-31",
+      "coupon": 0.06326,
+      "floating": false
+    },
+    {
+      "name": "Series 2021-1 Secured Fund Fee Revenue Notes",
+      "kind": "notes",
+      "as_of": "2026-05-31",
+      "coupon": 0.03933,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2021-05-26",
+      "agreement_kind": "amendment",
+      "dated": "2021-05-20",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968821000057/clny8-k05202021exhibit101.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-03-01",
+      "agreement_kind": "amendment",
+      "dated": "2020-12-09",
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        2.5,
+        2.75
+      ],
+      "fee_pct": 0.35,
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "t to Eurodollar Loans, 2.75% and (b) with respect to ABR Loans, 1.75%. \\\\DC - 036150/000014 - 15261895 v8 9 “ Applicable Percentage ”: at any time (x) during the period from and after the Closing Date and prior to the Initial Revolving Termination Date 100% (or, if at any such time the Consolidated Fixed Charge Coverage Ratio is less than 1.50 to 1.00, 90%) and (y) during the period from and after the Initial Revolvi"
+        },
+        {
+          "type": "net_worth",
+          "limit": 1740000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit Consolidated Tangible Net Worth at any time to be less than the sum of (i) $1,740,000,000 and (ii) 50% of the Net Cash Proceeds received by the Parent Borrower (x) from any offering by the Parent Borrower of its common equity and (y) from any offering by the REIT Listed Entity of its comm"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Permit the Interest Coverage Ratio for any quarter to be less than 3.00 to 1.00."
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "n Date 100% (or, if at any such time the Consolidated Fixed Charge Coverage Ratio is less than 1.50 to 1.00, 90%) and (y) during the period from and after the Initial Revolving Termination Date when the Parent Borrower has exercised an Extension Option, 90% (or, if at any such time the Consolidated Fixed Charge Coverage Ratio is less than 1.50 to 1.00, 81%)."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968821000018/exhibit1045clny2020q4.htm",
+      "all_in_pct": [
+        2.5389,
+        2.7889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2019-03-01",
+      "agreement_kind": "amendment",
+      "dated": "2019-01-08",
+      "title": "Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1679688/000167968819000015/exhibit109amendmenttocredi.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-05-27",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-26-066617",
+      "doc": "tm2615653d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-15",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001679688-26-000059",
+      "doc": "dbrg-20260511.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-30",
+      "items": "1.01,9.01",
+      "acc": "0001104659-25-125221",
+      "doc": "tm2534410d3_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-12-22",
+      "items": "1.01,9.01",
+      "acc": "0001679688-22-000149",
+      "doc": "dbrg-20221219.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-12-09",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001679688-22-000146",
+      "doc": "dbrg-20221209.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-10-03",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001679688-22-000125",
+      "doc": "dbrg-20220927.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-24",
+      "items": "1.01,1.02,2.01,3.02,9.01",
+      "acc": "0001679688-22-000077",
+      "doc": "dbrg-20220523.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-29",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001679688-22-000049",
+      "doc": "dbrg-20220427.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-18",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001679688-22-000040",
+      "doc": "dbrg-20220414.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001679688-22-000033",
+      "doc": "dbrg-20220401.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-31",
+      "items": "1.01,9.01",
+      "acc": "0001679688-22-000031",
+      "doc": "dbrg-20220325.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-03",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001679688-22-000011",
+      "doc": "dbrg-20220228.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-09-10",
+      "items": "1.01,9.01",
+      "acc": "0001679688-21-000090",
+      "doc": "dbrg-20210906.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-15",
+      "items": "1.01,1.02,2.03,8.01,9.01",
+      "acc": "0001679688-21-000074",
+      "doc": "dbrg-20210709.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-10",
+      "items": "1.01,9.01",
+      "acc": "0001679688-21-000060",
+      "doc": "clny-20210605.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-05-26",
+      "items": "1.01,9.01",
+      "acc": "0001679688-21-000057",
+      "doc": "clny-20210520.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-05-04",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001679688-21-000045",
+      "doc": "clny-20210430.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-07",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001679688-21-000041",
+      "doc": "clny-20210404.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-03-17",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001679688-21-000029",
+      "doc": "clny-20210311.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-01-05",
+      "items": "1.01,5.02",
+      "acc": "0001679688-21-000005",
+      "doc": "clny-20201230.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-09-28",
+      "items": "1.01,9.01",
+      "acc": "0001679688-20-000075",
+      "doc": "clny8-k09222020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-07-28",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001679688-20-000050",
+      "doc": "clny8-k07222020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-07-23",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001679688-20-000047",
+      "doc": "clny8-k07172020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-07-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001679688-20-000044",
+      "doc": "clny8-k07072020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-07-01",
+      "items": "1.01,2.03,5.02,8.01,9.01",
+      "acc": "0001679688-20-000039",
+      "doc": "clny8-k06292020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-03-25",
+      "items": "1.01,9.01",
+      "acc": "0001679688-20-000022",
+      "doc": "form8-k03192020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-03-16",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001193125-20-074926",
+      "doc": "d897811d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-10-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001679688-19-000050",
+      "doc": "clny8-kindustrial09292.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-07-30",
+      "items": "1.01,3.02,5.02,9.01",
+      "acc": "0001679688-19-000041",
+      "doc": "clny8-k07252019.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-04-11",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001679688-19-000022",
+      "doc": "clny8-kcreditfacilityamend.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-02-14",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001679688-19-000007",
+      "doc": "form8-k21419.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-01-18",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001679688-19-000002",
+      "doc": "form8-k119.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-12-21",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001679688-18-000062",
+      "doc": "form8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-02-01",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001193125-18-029387",
+      "doc": "d514676d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-01-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-18-014804",
+      "doc": "d524339d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-12-27",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-17-378840",
+      "doc": "d513907d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-11-21",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-17-348359",
+      "doc": "d493941d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-11-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-17-339997",
+      "doc": "d476364d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-08-28",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-17-269286",
+      "doc": "d423836d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-01-25",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001679688-17-000006",
+      "doc": "clns8-khealthcarejv01192017.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-01-10",
+      "items": "1.01,2.01,2.03,4.01,5.02,5.03,8.01,9.01",
+      "acc": "0001193125-17-006878",
+      "doc": "d305175d8k12b.htm",
+      "desc": "8-K12B"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2017-03-31",
+      10249548000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      10418978000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      10791975000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      10495429000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      9994115000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      9867976000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      8739667000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      8666108000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      9453338000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      9211114000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      7085994000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      6877291000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      3877664000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      4571210000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      5123246000,
+      null,
+      191199000,
+      null,
+      null,
+      0.03732
+    ],
+    [
+      "2022-06-30",
+      5539732000,
+      null,
+      199649000,
+      null,
+      null,
+      0.03604
+    ],
+    [
+      "2022-09-30",
+      5325615000,
+      null,
+      212786000,
+      null,
+      null,
+      0.03996
+    ],
+    [
+      "2024-03-31",
+      366506000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      295315000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      295838000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      296886000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      297992000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      327945000,
+      358416000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      299210000,
+      411327000,
+      17267000,
+      null,
+      null,
+      0.05771
+    ],
+    [
+      "2026-06-30",
+      291766000,
+      508221000,
+      18181000,
+      null,
+      null,
+      0.06231
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}
