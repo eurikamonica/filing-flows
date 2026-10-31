@@ -531,7 +531,7 @@
     return list.slice(0, 4).map(([d, hm, form, items, head, q, topics, acc, g]) => {
       const its = String(items || '').split(',').filter((x) => x && x !== '9.01');
       const chips = (form.startsWith('8-K') ? its.map((x) => `<span class="mv-chip${HOT.has(x) ? ' hot' : ''}">${esc(ITEM_WORD[x] || 'Item ' + x)}</span>`) : [`<span class="mv-chip">${esc(FORM_WORD(form))}</span>`])
-        .concat((topics || []).filter((t) => t !== 'earnings').map((t) => `<span class="mv-chip hot">${esc(String(t).replace(/_/g, ' '))}</span>`))
+        .concat((topics || []).filter((t) => t !== 'earnings' && !(g && t === 'guidance')).map((t) => `<span class="mv-chip hot">${esc(String(t).replace(/_/g, ' '))}</span>`))
         .concat(g ? [`<span class="mv-chip hot">guidance ${esc(g)}</span>`] : []).join('');
       const url = cik && acc ? `https://www.sec.gov/Archives/edgar/data/${+cik}/${String(acc).replace(/-/g, '')}/` : '';
       const when = `${mdy(d)}${hm ? ' ' + hm + ' ET' : ''}`;
