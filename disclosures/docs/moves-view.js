@@ -19,7 +19,7 @@
   const my = (e) => { const m = /^(\d{4})-(\d{2})/.exec(e || ''); return m ? `${MON[+m[2] - 1]} ${m[1]}` : String(e || ''); };
   const tk = (t) => String(t || '').trim().toUpperCase().replace(/[./]/g, '-');
   const COL = { up: 'var(--mk-profit, #17734a)', down: 'var(--mk-cost, #c0392b)', band: 'var(--rot-1, #2a78d6)', ink: 'var(--ink, #222)',
-    mute: 'var(--muted, #888)', line: 'var(--line, #e3e3e3)', all: 'var(--muted, #9a9a9a)', warn: 'var(--q-warm, #d9822b)' };
+    mute: 'var(--muted, #888)', line: 'var(--line, #e3e3e3)', all: 'var(--muted, #9a9a9a)', warn: 'var(--q-warm, #d9822b)', calm: '#5b7fa6' };
   const QS = [5, 10, 25, 50, 75, 90, 95];
   const H = [[1, 'Next day'], [5, 'Next week'], [10, 'Next 2 weeks'], [21, 'Next month']];
   const RGRID = [5, 10, 21, 63, 126, 252, 504];                                  // a week, two, a month, 3 and 6 months, a year, two
@@ -144,22 +144,34 @@
 
   /* The whole analysis. A: a decoded asset; Mk: the market's (for the beta measure); o: {w, measure: raw | vol | beta,
      mode: latest | date | whatif, date, whatif (% or σ), band, before (only the history before the day)}. */
-  function analyze(A, o, Mk) {
-    const w = o.w || 1, c = cum(A.r), N = c.length - 1;
-    const x = o.measure === 'vol' ? volScaled(A.r, w) : o.measure === 'beta' && Mk ? residual(A, Mk, w) : moves(c, w);
+  // the annualized standard deviation of the n daily log returns ending at each day (NaN before): realized volatility
+  function realized(r, n) {
+    const c1 = cum(r), c2 = cum(Float64Array.from(r, (v) => v * v)), out = new Float64Array(r.length + 1).fill(NaN);
+    for (let j = n; j <= r.length; j++) { const t1 = c1[j] - c1[j - n], t2 = c2[j] - c2[j - n]; out[j] = Math.sqrt(Math.max((t2 - t1 * t1 / n) / (n - 1), 0) * 252); }
+    return out;
+  }
+  /* The whole analysis. A: a decoded asset (A.last: its last close); Mk: the market's (for the beta measure); Out: the
+     outcome's (a volatility index is judged by what the S&P 500 did next); o: {w, measure: raw | vol | beta | rv |
+     level, mode: latest | date | whatif, date, whatif (%, σ or a level), band, before (only the history before the
+     day), vreg (similar: only days whose volatility before the move ranked within ±15 points of this one's)}. */
+  function analyze(A, o, Mk, Out) {
+    const lvl = o.measure === 'level', rvm = o.measure === 'rv';
+    const w = lvl || rvm ? 1 : (o.w || 1), c = cum(A.r), N = c.length - 1;
+    o._lv = { last: A.last || 1, cN: c[N] };
+    const x = o.measure === 'vol' ? volScaled(A.r, w) : o.measure === 'beta' && Mk ? residual(A, Mk, w) : lvl ? Float64Array.from(c) : rvm ? realized(A.r, 21) : moves(c, w);
     let t = N, value;
     if (o.mode === 'date' && o.date) {
       t = -1;
       for (let j = N; j >= 0; j--) if (A.days[j] <= o.date && Number.isFinite(x[j])) { t = j; break; }
-      if (t < 0) return { error: 'There is no move of this length on or before ' + mdy(o.date) + '.' };
+      if (t < 0) return { error: 'There is nothing to look at on or before ' + mdy(o.date) + '.' };
     } else if (o.mode !== 'whatif') {
       while (t >= 0 && !Number.isFinite(x[t])) t--;
       if (t < 0) return { error: 'Not enough history for this measure.' };
     }
     if (o.mode === 'whatif') {
       if (!fin(o.whatif)) return { error: 'Type a move to look at.' };
-      value = o.measure === 'vol' ? +o.whatif : Math.log1p(+o.whatif / 100);
-      if (!Number.isFinite(value)) return { error: 'That move is not possible.' };
+      value = o.measure === 'vol' ? +o.whatif : lvl ? Math.log(+o.whatif / (A.last || 1)) + c[N] : rvm ? +o.whatif / 100 : Math.log1p(+o.whatif / 100);
+      if (!Number.isFinite(value)) return { error: lvl ? 'Type a level above zero.' : 'That move is not possible.' };
       t = -1;
     } else value = x[t];
     const before = o.before && t >= 0;
@@ -171,13 +183,24 @@
     const at = pctOf(s, value), side = at >= 50 ? 1 : -1;
     const p = new Float64Array(N + 1).fill(NaN);
     for (let j = 0; j <= N; j++) if (inS[j]) p[j] = pctOf(s, x[j]);
+    // the volatility then: the 63 days before each move, as a percentile, when only similar regimes are to be compared
+    let reg = null, regAt = null;
+    if (o.vreg === 'similar' && !lvl) {
+      const v63 = realized(A.r, 63), pre = new Float64Array(N + 1).fill(NaN), pv = [];
+      for (let j = w; j <= N; j++) { pre[j] = v63[j - w]; if (Number.isFinite(pre[j]) && inS[j]) pv.push(pre[j]); }
+      const ps = Float64Array.from(pv).sort();
+      reg = new Float64Array(N + 1).fill(NaN);
+      for (let j = 0; j <= N; j++) if (Number.isFinite(pre[j])) reg[j] = pctOf(ps, pre[j]);
+      regAt = reg[t >= 0 ? t : N];
+      if (!Number.isFinite(regAt)) reg = null;
+    }
     const sim = new Uint8Array(N + 1), ext = new Uint8Array(N + 1), all = new Uint8Array(N + 1);
     let k = 0, lastAs = null;
     for (let j = 0; j <= N; j++) {
       if (!inS[j]) continue;
       const far = side > 0 ? p[j] >= at : p[j] <= at;
       if (far) { k++; if (j < (t >= 0 ? t : N + 1)) lastAs = j; }
-      if (j === t) continue;
+      if (j === t || (reg && !(Math.abs(reg[j] - regAt) <= 15))) continue;
       all[j] = 1;
       if (Math.abs(p[j] - at) <= o.band) sim[j] = 1;
       if (far) ext[j] = 1;
@@ -187,14 +210,32 @@
     for (let j = 0; j <= N; j++) if (inS[j] && (side > 0 ? p[j] >= at : p[j] <= at)) { if (j - prev > w) kEp++; prev = j; }
     const years = Math.max((Date.parse(A.days[N]) - Date.parse(A.days[0])) / (365.25 * 864e5), 0.1);
     const out = { A, x, t, value, at, side, n: s.length, every: k ? (s.length + (o.mode === 'whatif' ? 1 : 0)) / k : null, k, kEp, years, lastAs, sim, ext, all, h: {}, actual: {}, s,
-      raw: t >= w ? Math.expm1(c[t] - c[t - w]) : null };
+      raw: t >= w && !lvl && !rvm ? Math.expm1(c[t] - c[t - w]) : null, reg: reg ? regAt : null, out: Out ? Out.name || 'the S&P 500' : null };
+    // what came next: the asset's own returns, or the outcome's on the same days
+    const oAt = Out ? new Map(Out.days.map((d, i) => [d, i])) : null, co = Out ? cum(Out.r) : null;
+    const ahead2 = (h) => {
+      if (!Out) return ahead(c, h);
+      const f = new Float64Array(N + 1).fill(NaN);
+      for (let j = 0; j <= N; j++) { const q = oAt.get(A.days[j]); if (q != null && q + h < co.length) f[j] = co[q + h] - co[q]; }
+      return f;
+    };
     for (const [h] of H) {
-      const f = ahead(c, h);
+      const f = ahead2(h);
       if (before) for (let j = 0; j <= N; j++) if (j + h > t) f[j] = NaN;   // only what was known on the day
       const gap = Math.max(h, w);
       out.h[h] = { sim: stats(f, sim, gap), ext: stats(f, ext, gap), all: stats(f, all, gap), f };
-      if (t >= 0 && t + h <= N) out.actual[h] = Math.expm1(c[t + h] - c[t]);
+      if (t >= 0) {
+        if (!Out && t + h <= N) out.actual[h] = Math.expm1(c[t + h] - c[t]);
+        if (Out) { const q = oAt.get(A.days[t]); if (q != null && q + h < co.length) out.actual[h] = Math.expm1(co[q + h] - co[q]); }
+      }
     }
+    if (!Out && !lvl) {                                  // the volatility of the month after: shocks come in clusters
+      const rv = realized(A.r, 21), fv = new Float64Array(N + 1).fill(NaN);
+      for (let j = 0; j + 21 <= N; j++) if (!before || j + 21 <= t) fv[j] = rv[j + 21];
+      const med = (mask) => { const v = []; for (let j = 0; j <= N; j++) if (mask[j] && Number.isFinite(fv[j])) v.push(fv[j]); return v.length ? { n: v.length, median: quantile(Float64Array.from(v).sort(), 50) } : null; };
+      out.fvol = { sim: med(sim), ext: med(ext), all: med(all), now: rv[t >= 0 ? t : N], next: t >= 0 && t + 21 <= N ? rv[t + 21] : null };
+    }
+    if (Out || lvl || rvm) return out;                   // how long it took: for moves of a price only
     // how long it took: days like it, at least as extreme, and every day that moved the same way (the raw move's sign)
     const T = { up: sparse(c), dn: sparse(Array.from(c, (v) => -v)), peak: new Float64Array(N + 1) };
     for (let j = 0, m = -Infinity; j <= N; j++) { m = Math.max(m, c[j]); T.peak[j] = m; }
@@ -213,11 +254,26 @@
   }
 
   /* ---------- formatting ---------- */
-  const unit = (o) => (o.measure === 'vol' ? 'σ' : '%');
-  const disp = (o, v) => (o.measure === 'vol' ? v : Math.expm1(v) * 100);            // the measure as shown: σ, or %
-  const fmtX = (o, v, d) => (o.measure === 'vol' ? sgn(v, d == null ? 1 : d, 'σ') : sgn(Math.expm1(v) * 100, d == null ? 1 : d));
+  const unit = (o) => (o.measure === 'vol' ? 'σ' : o.measure === 'level' ? '' : '%');
+  const disp = (o, v) => (o.measure === 'vol' ? v : o.measure === 'level' ? (o._lv ? o._lv.last * Math.exp(v - o._lv.cN) : Math.exp(v))
+    : o.measure === 'rv' ? v * 100 : Math.expm1(v) * 100);                                    // the measure as shown
+  const fmtX = (o, v, d) => {
+    if (o.measure === 'vol') return sgn(v, d == null ? 1 : d, 'σ');
+    if (o.measure === 'level') { const l = disp(o, v); return num(l, d == null ? (l < 10 ? 2 : 1) : d); }
+    if (o.measure === 'rv') return num(v * 100, d == null ? 0 : d) + '%';
+    return sgn(Math.expm1(v) * 100, d == null ? 1 : d);
+  };
+  const tickFmt = (o, v) => (o.measure === 'level' || o.measure === 'rv' ? num(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + unit(o) : sgn(v, Math.abs(v) < 1 && v !== 0 ? 1 : 0, unit(o)));
+  // the side's colour: for a price, up green and down red; for a level of volatility (an index's level, a stock's own
+  // volatility), high orange and low slate — high volatility is no good news, low no bad
+  const lvlm = (o) => o.measure === 'level' || o.measure === 'rv';
+  const sideCol = (R, o) => (lvlm(o) ? (R.side > 0 ? COL.warn : COL.calm) : R.side > 0 ? COL.up : COL.down);
+  const sideCls = (R, o) => (lvlm(o) ? (R.side > 0 ? 'mv-warn' : 'mv-calm') : R.side > 0 ? 'mv-up' : 'mv-down');
+  const sidePC = (R, o) => (lvlm(o) ? (R.side > 0 ? PC.warn : PC.calm) : R.side > 0 ? PC.up : PC.down);
   const rankWords = (at) => (at >= 50 ? `top ${num(Math.max(100 - at, 0.05), 100 - at < 1 ? 2 : 1)}%` : `bottom ${num(Math.max(at, 0.05), at < 1 ? 2 : 1)}%`);
-  const measureName = (o, kind) => (o.measure === 'vol' ? 'against its own recent volatility' : o.measure === 'beta' ? (kind === 'stock' ? 'beyond what the market\'s move implied' : 'beyond what the market\'s move implied') : '% change');
+  const measureName = (o) => (o.measure === 'vol' ? 'against its own recent volatility' : o.measure === 'beta' ? 'beyond what the market\'s move implied' : o.measure === 'level' ? 'its level' : o.measure === 'rv' ? 'its own volatility over the last month' : '% change');
+  const what = (o) => (o.measure === 'level' ? 'level' : o.measure === 'rv' ? 'one-month volatility' : `${win(o.w)} move`);
+  const whats = (o) => (o.measure === 'level' ? 'daily levels' : o.measure === 'rv' ? 'readings of its one-month volatility' : `${win(o.w)} moves`);
   const win = (w) => (w === 1 ? 'one-day' : w === 5 ? 'one-week (5-day)' : 'one-month (21-day)');
   const tone = (v) => (fin(v) ? (v > 0 ? 'mv-up' : v < 0 ? 'mv-down' : '') : '');
 
@@ -239,7 +295,7 @@
 .mv-wrap{overflow-x:auto;max-width:100%}.mv-tbl{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 8px}.mv-tbl th,.mv-tbl td{padding:5px 8px;border-bottom:1px solid var(--line,#e5e5e5);text-align:left;vertical-align:middle;white-space:nowrap}
 .mv-tbl .n{text-align:right;font-variant-numeric:tabular-nums}.mv-tbl th{font-weight:600;color:var(--muted,#666);font-size:12px}.mv-tbl td.box{padding:2px 6px;width:220px;min-width:160px}
 .mv-tbl tr.grp td{font-weight:650;background:color-mix(in srgb,var(--ink,#222) 4%,transparent)}.mv-tbl td.box svg{width:100%;height:22px}
-.mv-up{color:var(--mk-profit,#17734a)}.mv-down{color:var(--mk-cost,#c0392b)}
+.mv-up{color:var(--mk-profit,#17734a)}.mv-down{color:var(--mk-cost,#c0392b)}.mv-warn{color:var(--q-warm,#d9822b)}.mv-calm{color:#5b7fa6}
 .mv-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted,#777);margin:4px 0 8px}.mv-legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 .mv-g{stroke:var(--line,#e3e3e3);stroke-width:1}.mv-t{fill:var(--muted,#777);font-size:12px}.mv-l{fill:var(--ink,#222);font-size:12.5px;paint-order:stroke;stroke:var(--surface,#fff);stroke-width:3px}
 .mv-note{font-size:12px;color:var(--muted,#777);line-height:1.55;margin-top:10px;max-width:92ch}.mv-apx{border:1px solid var(--line,#ddd);border-radius:10px;padding:6px 12px;margin:10px 0;max-width:980px}
@@ -269,20 +325,20 @@
     const Hh = o.narrow ? 220 : 230, L = 14, Rr = 14, T = 26, B = 34, mx = Math.max(...cnt) || 1;
     const sx = (v) => L + (v - lo) / (hi - lo) * (W - L - Rr), sy = (n) => T + (1 - n / mx) * (Hh - T - B);
     const tb = Math.min(nb - 1, Math.max(0, Math.floor((tv - lo) / bw)));
-    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Every ${esc(win(o.w))} move on file, with the move looked at marked">`;
-    ticks(lo, hi, o.narrow ? 4 : 7).forEach((v) => { g += `<line class="mv-g" x1="${sx(v)}" x2="${sx(v)}" y1="${T}" y2="${Hh - B}"/><text class="mv-t" x="${sx(v)}" y="${Hh - B + 16}" text-anchor="middle">${esc(sgn(v, Math.abs(v) < 1 && v !== 0 ? 1 : 0, u))}</text>`; });
+    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Every ${esc(what(o))} on file, with the one looked at marked">`;
+    ticks(lo, hi, o.narrow ? 4 : 7).forEach((v) => { g += `<line class="mv-g" x1="${sx(v)}" x2="${sx(v)}" y1="${T}" y2="${Hh - B}"/><text class="mv-t" x="${sx(v)}" y="${Hh - B + 16}" text-anchor="middle">${esc(tickFmt(o, v))}</text>`; });
     cnt.forEach((n, i) => {
       if (!n) return;
       const x0 = sx(lo + i * bw), x1 = sx(lo + (i + 1) * bw), mid = lo + (i + 0.5) * bw;
       const tail = R.side > 0 ? mid >= tv : mid <= tv;
-      const col = i === tb ? COL.ink : tail ? (R.side > 0 ? COL.up : COL.down) : COL.all;
+      const col = i === tb ? COL.ink : tail ? sideCol(R, o) : COL.all;
       g += `<rect x="${(x0 + 0.5).toFixed(1)}" y="${sy(n).toFixed(1)}" width="${Math.max(0.8, x1 - x0 - 1).toFixed(1)}" height="${(Hh - B - sy(n)).toFixed(1)}" style="fill:${col};opacity:${i === tb ? 1 : tail ? 0.75 : 0.45}"/>`;
     });
     const xt = sx(tv);
     g += `<line x1="${xt}" x2="${xt}" y1="${T - 8}" y2="${Hh - B}" style="stroke:${COL.ink};stroke-width:1.5;stroke-dasharray:4 3"/>`;
     const lab = `${o.mode === 'whatif' ? 'what if' : esc(mdy(R.A.days[R.t]))}: ${esc(fmtX(o, R.value))} · ${rankWords(R.at)}`;
     g += `<text class="mv-l" x="${Math.min(Math.max(xt, L + 110), W - Rr - 110)}" y="${T - 12}" text-anchor="middle" style="font-weight:600">${lab}</text>`;
-    g += `<text class="mv-t" x="${L}" y="${Hh - 4}">${esc(num(R.n))} ${esc(win(o.w))} moves since ${esc(my(R.A.days[0]))}</text></svg>`;
+    g += `<text class="mv-t" x="${L}" y="${Hh - 4}">${esc(num(R.n))} ${esc(whats(o))} since ${esc(my(R.A.days[0]))}</text></svg>`;
     return g;
   }
   // what came next, for one horizon: the chosen days' returns and every day's, as share-of-days histograms
@@ -330,15 +386,15 @@
     let lo = Math.min(quantile(vs, 0.15), disp(o, R.value)), hi = Math.max(quantile(vs, 99.85), disp(o, R.value));
     const W = o.narrow ? 440 : 720, Hh = 210, L = 46, Rr = 12, T = 12, B = 26, pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
     const sx = (d) => L + (Date.parse(d) - t0) / (t1 - t0 || 1) * (W - L - Rr), sy = (v) => T + (hi - Math.min(hi, Math.max(lo, v))) / (hi - lo) * (Hh - T - B);
-    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Every ${esc(win(o.w))} move over time, the days like the one looked at coloured">`;
-    ticks(lo, hi, 4).forEach((v) => { g += `<line class="mv-g" x1="${L}" x2="${W - Rr}" y1="${sy(v)}" y2="${sy(v)}"/><text class="mv-t" x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${esc(sgn(v, 0, unit(o)))}</text>`; });
+    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Every ${esc(what(o))} over time, the days like the one looked at coloured">`;
+    ticks(lo, hi, 4).forEach((v) => { g += `<line class="mv-g" x1="${L}" x2="${W - Rr}" y1="${sy(v)}" y2="${sy(v)}"/><text class="mv-t" x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${esc(tickFmt(o, v))}</text>`; });
     const y0 = +A.days[0].slice(0, 4), y1 = new Date(t1).getUTCFullYear(), step = Math.max(1, Math.ceil((y1 - y0) / (o.narrow ? 5 : 10)));
     for (let y = y0 + 1; y <= y1; y += step) { const x = sx(`${y}-01-01`); g += `<text class="mv-t" x="${x}" y="${Hh - 8}" text-anchor="middle">${y}</text>`; }
     let grey = '', hot = '';
     for (let j = 0; j <= N; j++) {
       if (!R.all[j]) continue;
       const v = disp(o, R.x[j]), cx = sx(A.days[j]).toFixed(1), cy = sy(v).toFixed(1);
-      if (R.sim[j] || R.ext[j]) hot += `<circle cx="${cx}" cy="${cy}" r="${R.sim[j] ? 2.6 : 2}" style="fill:${R.side > 0 ? COL.up : COL.down};opacity:${R.sim[j] ? 0.95 : 0.55}"/>`;
+      if (R.sim[j] || R.ext[j]) hot += `<circle cx="${cx}" cy="${cy}" r="${R.sim[j] ? 2.6 : 2}" style="fill:${sideCol(R, o)};opacity:${R.sim[j] ? 0.95 : 0.55}"/>`;
       else if (j % (N > 6000 ? 3 : 1) === 0) grey += `<circle cx="${cx}" cy="${cy}" r="1.2" style="fill:${COL.all};opacity:.35"/>`;
     }
     g += grey + hot;
@@ -349,28 +405,36 @@
   /* ---------- sections ---------- */
   function headline(R, o, doc) {
     const name = esc(doc.ticker || doc.name), A = R.A, span = o.w === 1 ? '' : o.w === 5 ? ' over a week (5 trading days)' : ' over a month (21 trading days)';
+    const lv = o.measure === 'level', rv = o.measure === 'rv';
     let lead;
     if (o.mode === 'whatif') {
-      lead = `If ${name} moved ${esc(fmtX(o, R.value))}${o.measure === 'vol' ? ' of its own recent volatility' : o.measure === 'beta' ? " beyond what the market's move implied" : ''} in ${o.w === 1 ? 'a day' : o.w === 5 ? 'a week' : 'a month'}`;
+      lead = lv ? `If ${name} stood at ${esc(fmtX(o, R.value))}` : rv ? `If ${name}'s volatility over a month were ${esc(fmtX(o, R.value))} a year`
+        : `If ${name} moved ${esc(fmtX(o, R.value))}${o.measure === 'vol' ? ' of its own recent volatility' : o.measure === 'beta' ? " beyond what the market's move implied" : ''} in ${o.w === 1 ? 'a day' : o.w === 5 ? 'a week' : 'a month'}`;
+    } else if (lv) {
+      lead = `${esc(mdy(A.days[R.t]))}: ${name} closed at ${esc(fmtX(o, R.value))}`;
+    } else if (rv) {
+      lead = `${esc(mdy(A.days[R.t]))}: ${name}'s volatility over the last month was ${esc(fmtX(o, R.value))} a year`;
     } else {
       const raw = R.raw, verb = !fin(raw) || raw === 0 ? 'was flat' : raw > 0 ? 'rose' : 'fell';
       lead = `${esc(mdy(A.days[R.t]))}: ${name} ${verb}${fin(raw) && raw !== 0 ? ' ' + esc(num(Math.abs(raw) * 100, 1)) + '%' : ''}${span}`
         + (o.measure === 'vol' ? `, ${esc(fmtX(o, R.value))} against its own recent volatility` : o.measure === 'beta' ? `, ${esc(fmtX(o, R.value))} beyond what the market's move implied` : '');
     }
     const p = R.side > 0 ? 100 - R.at : R.at;
-    return `<p class="mv-head">${lead}: a <b class="${R.side > 0 ? 'mv-up' : 'mv-down'}">${rankWords(R.at)}</b> ${o.w === 1 ? 'day' : 'move'} — `
-      + `of the ${num(R.n)} ${esc(win(o.w))} moves since ${esc(mdy(A.days[0]))}, ${num(p, p < 1 ? 2 : 1)}% were this ${R.side > 0 ? 'high' : 'low'} or ${R.side > 0 ? 'higher' : 'lower'}.</p>`;
+    return `<p class="mv-head">${lead}: a <b class="${sideCls(R, o)}">${rankWords(R.at)}</b> ${lv || rv ? 'level' : o.w === 1 ? 'day' : 'move'} — `
+      + `of the ${num(R.n)} ${esc(whats(o))} since ${esc(mdy(A.days[0]))}, ${num(p, p < 1 ? 2 : 1)}% were this ${R.side > 0 ? 'high' : 'low'} or ${R.side > 0 ? 'higher' : 'lower'}.</p>`;
   }
   function cards(R, o) {
-    const every = R.every, a = R.side > 0 ? 'rise' : 'fall';
+    const every = R.every, a = R.side > 0 ? 'rise' : 'fall', lv = o.measure === 'level' || o.measure === 'rv';
     const perYear = (o.w === 1 ? R.k : R.kEp) / R.years;
     const card = (l, v, note, cls) => `<div class="mv-card"><span>${l}</span><b class="${cls || ''}">${v}</b>${note ? `<i>${note}</i>` : ''}</div>`;
-    const sim = R.h[21].sim, all = R.h[21].all;
-    return `<div class="mv-cards">${card('Percentile', num(R.at, R.at < 1 || R.at > 99 ? 2 : 1), `${rankWords(R.at)} of ${num(R.n)} moves`, R.side > 0 ? 'mv-up' : 'mv-down')}`
-      + (o.w === 1 ? card(`A ${a} this large or larger`, fin(every) ? `1 in ${num(every, every < 10 ? 1 : 0)}` : '—', `trading days · about ${num(perYear, perYear < 10 ? 1 : 0)} a year`)
+    const sim = R.h[21].sim, all = R.h[21].all, then = R.out ? ` (${esc(R.out)})` : '';
+    return `<div class="mv-cards">${card('Percentile', num(R.at, R.at < 1 || R.at > 99 ? 2 : 1), `${rankWords(R.at)} of ${num(R.n)} ${lv ? 'days' : 'moves'}`, sideCls(R, o))}`
+      + (lv ? card(`A level this ${R.side > 0 ? 'high' : 'low'} or ${R.side > 0 ? 'higher' : 'lower'}`, fin(every) ? `1 in ${num(every, every < 10 ? 1 : 0)}` : '—', `days · in ${num(R.kEp)} separate stretches`)
+        : o.w === 1 ? card(`A ${a} this large or larger`, fin(every) ? `1 in ${num(every, every < 10 ? 1 : 0)}` : '—', `trading days · about ${num(perYear, perYear < 10 ? 1 : 0)} a year`)
         : card(`${o.w === 5 ? 'Weeks' : 'Months'} with a ${a} this large`, num(R.kEp), `separate episodes in ${num(R.years, 0)} years · about ${num(perYear, perYear < 10 ? 1 : 0)} a year`))
-      + card('Last time before', R.lastAs != null ? esc(mdy(R.A.days[R.lastAs])) : 'never', R.lastAs != null ? `${num(Math.round((Date.parse(R.A.days[R.t >= 0 ? R.t : R.A.days.length - 1]) - Date.parse(R.A.days[R.lastAs])) / 864e5))} days earlier` : 'not on file')
-      + card('Next month after days like it', sim ? sp(sim.median) : '—', sim ? `median · ${share(sim.up)} rose · every day: ${sp(all && all.median)}, ${share(all && all.up)}` : '', sim ? tone(sim.median) : '')
+      + card('Last time before', R.lastAs != null ? esc(mdy(R.A.days[R.lastAs])) : 'never', R.lastAs != null ? ((d) => `${num(d)} day${d === 1 ? '' : 's'} earlier`)(Math.round((Date.parse(R.A.days[R.t >= 0 ? R.t : R.A.days.length - 1]) - Date.parse(R.A.days[R.lastAs])) / 864e5)) : 'not on file')
+      + card(`Next month after days like it${then}`, sim ? sp(sim.median) : '—', sim ? `median · ${share(sim.up)} rose · every day: ${sp(all && all.median)}, ${share(all && all.up)}` : '', sim ? tone(sim.median) : '')
+      + (R.fvol && R.fvol.sim ? card('Volatility the month after', `${num(R.fvol.sim.median * 100, 0)}%`, `a year, median after days like it · every day: ${num(R.fvol.all && R.fvol.all.median * 100, 0)}% · now ${num(R.fvol.now * 100, 0)}%`) : '')
       + '</div>';
   }
   function verdict(S, A) {
@@ -381,14 +445,14 @@
   }
   function nextTable(R, o) {
     const label = { sim: `Days like it (±${o.band} pts)`, ext: `At least as ${R.side > 0 ? 'high' : 'low'}`, all: 'Every day' };
-    const col = { sim: COL.band, ext: R.side > 0 ? COL.up : COL.down, all: COL.all };
+    const col = { sim: COL.band, ext: sideCol(R, o), all: COL.all };
     let h = '<div class="mv-wrap"><table class="mv-tbl"><thead><tr><th></th><th class="n">Median</th><th class="n">Rose</th><th>Range: 5–95% (line), 25–75% (box), median</th><th class="n">Mean</th><th class="n">5% worst</th><th class="n">5% best</th><th class="n">Days</th><th class="n">Episodes</th><th>vs every day</th></tr></thead><tbody>';
     for (const [hz, hl] of H) {
       const g = R.h[hz], qs = ['sim', 'ext', 'all'].map((k) => g[k]).filter(Boolean);
       if (!qs.length) continue;
       const act = fin(R.actual[hz]) ? [R.actual[hz]] : [];
       const lo = Math.min(0, ...act, ...qs.map((S) => S.q[0])), hi = Math.max(0, ...act, ...qs.map((S) => S.q[6]));
-      h += `<tr class="grp"><td colspan="10">${hl}${fin(R.actual[hz]) ? ` · <span style="font-weight:500">what happened: <span class="${tone(R.actual[hz])}">${sp(R.actual[hz])}</span></span>` : ''}</td></tr>`;
+      h += `<tr class="grp"><td colspan="10">${hl}${R.out ? ` · ${esc(R.out)}` : ''}${fin(R.actual[hz]) ? ` · <span style="font-weight:500">what happened: <span class="${tone(R.actual[hz])}">${sp(R.actual[hz])}</span></span>` : ''}</td></tr>`;
       for (const k of ['sim', 'ext', 'all']) {
         const S = g[k];
         if (!S) { h += `<tr><td>${label[k]}</td><td colspan="9" class="mv-sub">none</td></tr>`; continue; }
@@ -411,15 +475,24 @@
   }
   function controls(st, doc) {
     const pill = (k, v, l, on, dis) => `<button type="button" class="mv-pill${on ? ' on' : ''}" data-mv="${k}" data-v="${esc(v)}"${dis ? ' disabled' : ''}>${esc(l)}</button>`;
-    const beta = doc.key !== 'SPY' && doc.kind !== 'index' && doc.kind !== 'market';
-    return `<div class="mv-bar"><div><label>Move</label><div class="mv-pills">${WIN.map(([w, l]) => pill('w', w, l, st.w === w)).join('')}</div></div>`
-      + `<div><label>Measured as</label><div class="mv-pills">${pill('measure', 'raw', '% change', st.measure === 'raw')}${pill('measure', 'vol', 'vs own volatility (σ)', st.measure === 'vol')}${beta ? pill('measure', 'beta', 'beyond the market', st.measure === 'beta') : ''}</div></div>`
-      + `<div><label>Days like it: within</label><div class="mv-pills">${BANDS.map((b) => pill('band', b, '±' + b + ' pts', st.band === b)).join('')}</div></div></div>`
-      + `<div class="mv-bar"><div><label>Look at</label><div class="mv-pills">${pill('mode', 'latest', 'the latest move', st.mode === 'latest')}${pill('mode', 'date', 'a past day', st.mode === 'date')}${pill('mode', 'whatif', 'what if…', st.mode === 'whatif')}</div></div>`
+    const volIdx = doc.kind === 'volatility', beta = !volIdx && doc.key !== 'SPY' && doc.kind !== 'index' && doc.kind !== 'market';
+    const lv = st.measure === 'level' || st.measure === 'rv';
+    const measures = volIdx ? pill('measure', 'level', 'its level', st.measure === 'level') + pill('measure', 'raw', '% change', st.measure === 'raw')
+      : pill('measure', 'raw', '% change', st.measure === 'raw') + pill('measure', 'vol', 'vs own volatility (σ)', st.measure === 'vol')
+        + (beta ? pill('measure', 'beta', 'beyond the market', st.measure === 'beta') : '') + pill('measure', 'rv', 'its volatility (1 month)', st.measure === 'rv');
+    const unitIn = st.measure === 'vol' ? 'σ' : st.measure === 'level' ? 'level' : st.measure === 'rv' ? '% a year' : '%';
+    const eg = st.measure === 'vol' ? 'e.g. -3' : st.measure === 'level' ? 'e.g. 30' : st.measure === 'rv' ? 'e.g. 60' : 'e.g. -5';
+    return `<div class="mv-bar"><div><label>Move</label><div class="mv-pills">${WIN.map(([w, l]) => pill('w', w, l, st.w === w && !lv, lv)).join('')}</div></div>`
+      + `<div><label>Measured as</label><div class="mv-pills">${measures}</div></div>`
+      + `<div><label>Days like it: within</label><div class="mv-pills">${BANDS.map((b) => pill('band', b, '±' + b + ' pts', st.band === b)).join('')}</div></div>`
+      + (volIdx ? `<div><label>Then</label><div class="mv-pills">${pill('outcome', 'spx', 'the S&P 500', st.outcome !== 'self')}${pill('outcome', 'self', 'the index itself', st.outcome === 'self')}</div></div>`
+        : `<div><label>Volatility then</label><div class="mv-pills">${pill('vreg', 'any', 'any', st.vreg !== 'similar')}${pill('vreg', 'similar', 'similar (±15 pts)', st.vreg === 'similar')}</div></div>`) + '</div>'
+      + `<div class="mv-bar"><div><label>Look at</label><div class="mv-pills">${pill('mode', 'latest', lv ? 'the latest' : 'the latest move', st.mode === 'latest')}${pill('mode', 'date', 'a past day', st.mode === 'date')}${pill('mode', 'whatif', 'what if…', st.mode === 'whatif')}</div></div>`
       + (st.mode === 'date' ? `<div><label>Day</label><input class="mv-in" type="date" data-mvin="date" value="${esc(st.date || '')}" min="${esc(doc.d0)}" max="${esc(doc.as_of)}"></div><div><label>History used</label><div class="mv-pills">${pill('before', '0', 'all days', !st.before)}${pill('before', '1', 'only before that day', st.before)}</div></div>` : '')
-      + (st.mode === 'whatif' ? `<div><label>Move (${st.measure === 'vol' ? 'σ' : '%'})</label><input class="mv-in" type="number" step="0.1" data-mvin="whatif" value="${esc(st.whatif)}" placeholder="${st.measure === 'vol' ? 'e.g. -3' : 'e.g. -5'}"></div>` : '')
+      + (st.mode === 'whatif' ? `<div><label>${lv ? 'Level' : 'Move'} (${unitIn})</label><input class="mv-in" type="number" step="0.1" data-mvin="whatif" value="${esc(st.whatif)}" placeholder="${eg}"></div>` : '')
       + '</div>';
   }
+
 
   /* ---------- how long it took: climbing back, a new high ---------- */
   const RLAB = (rs, kind) => (kind === 'high' ? (rs < 0 ? 'back to a new high' : 'the next new high') : (rs < 0 ? 'back to the close before the move' : 'gave the rise back'));
@@ -485,9 +558,54 @@
     return h + recoveryTable(R, o, kind);
   }
 
+
+  /* ---------- volatility: realized over the whole history, and the VIX next to the market ---------- */
+  function volData(R) {
+    const A = R.A, N = A.days.length - 1, t = R.t >= 0 ? R.t : N, rv = realized(A.r, 21), r3 = realized(A.r, 63);
+    const vs = Float64Array.from(Array.from(rv).filter(Number.isFinite)).sort();
+    const out = { rv, r3, t, now: rv[t], now3: r3[t], pct: pctOf(vs, rv[t]), med: quantile(vs, 50), hi: quantile(vs, 99.5), vix: null };
+    if (R.vix) {
+      const V = R.vix, cv = cum(V.r), at = new Map(V.days.map((d, i) => [d, i])), lv = (k) => (V.last || 1) * Math.exp(cv[k] - cv[cv.length - 1]) / 100;
+      out.vix = new Float64Array(N + 1).fill(NaN);
+      for (let j = 0; j <= N; j++) { const k = at.get(A.days[j]); if (k != null) out.vix[j] = lv(k); }
+      out.vixNow = out.vix[t];
+      const vv = Float64Array.from(Array.from(out.vix).filter(Number.isFinite)).sort();
+      out.vixPct = pctOf(vv, out.vixNow);
+    }
+    return out;
+  }
+  function volSvg(R, o, V) {
+    const A = R.A, N = A.days.length - 1, W = o.narrow ? 440 : 720, Hh = 230, L = 44, Rr = 14, T = 12, B = 26;
+    const top = Math.max(V.hi, Number.isFinite(V.now) ? V.now : 0, V.vix && Number.isFinite(V.vixNow) ? V.vixNow : 0) * 1.08;
+    const t0 = Date.parse(A.days[0]), t1 = Date.parse(A.days[N]);
+    const sx = (j) => L + (Date.parse(A.days[j]) - t0) / (t1 - t0 || 1) * (W - L - Rr), sy = (v) => T + (1 - Math.min(v, top) / top) * (Hh - T - B);
+    const step = Math.max(1, Math.floor(N / 1400));
+    const line = (arr, col, wd, op) => { let d = '', on = false; for (let j = 0; j <= N; j += step) { const v = arr[j]; if (!Number.isFinite(v)) { on = false; continue; } d += `${on ? 'L' : 'M'}${sx(j).toFixed(1)},${sy(v).toFixed(1)}`; on = true; } return `<path d="${d}" style="fill:none;stroke:${col};stroke-width:${wd};opacity:${op}"/>`; };
+    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Realized volatility over one month, every day on file${V.vix ? ', with the VIX' : ''}">`;
+    ticks(0, top, 4).forEach((v) => { g += `<line class="mv-g" x1="${L}" x2="${W - Rr}" y1="${sy(v)}" y2="${sy(v)}"/><text class="mv-t" x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${num(v * 100, 0)}%</text>`; });
+    const y0 = +A.days[0].slice(0, 4), y1 = +A.days[N].slice(0, 4), st = Math.max(1, Math.ceil((y1 - y0) / (o.narrow ? 5 : 10)));
+    for (let y = Math.ceil((y0 + 1) / st) * st; y <= y1; y += st) { const x = L + (Date.parse(`${y}-01-01`) - t0) / (t1 - t0 || 1) * (W - L - Rr); g += `<text class="mv-t" x="${x}" y="${Hh - 8}" text-anchor="middle">${y}</text>`; }
+    g += `<line x1="${L}" x2="${W - Rr}" y1="${sy(V.med)}" y2="${sy(V.med)}" style="stroke:${COL.mute};stroke-dasharray:3 3"/>`;
+    if (V.vix) g += line(V.vix, COL.warn, 1.2, 0.85);
+    g += line(V.rv, COL.band, 1.3, 0.95);
+    if (Number.isFinite(V.now)) g += `<circle cx="${sx(V.t)}" cy="${sy(V.now)}" r="4.5" style="fill:${COL.band};stroke:#fff;stroke-width:1.5"/>`;
+    return g + '</svg>';
+  }
+  function volSection(R, o, doc) {
+    if (R.volIdx) return '';
+    const V = volData(R), A = R.A, name = esc(doc.ticker || doc.name);
+    if (!Number.isFinite(V.now)) return '';
+    let h = `<h3>Volatility</h3><p class="mv-head" style="font-size:16px">${name}'s volatility over the last month: <b>${num(V.now * 100, 0)}% a year</b> — ${rankWords(V.pct)} of its days since ${esc(my(A.days[0]))} (the typical day: ${num(V.med * 100, 0)}%); over three months ${num(V.now3 * 100, 0)}%.`
+      + (V.vix && Number.isFinite(V.vixNow) ? ` The VIX, what options expect of the S&P 500 over the next month: <b>${num(V.vixNow * 100, 1)}</b> (${rankWords(V.vixPct)} since 1990).` : '') + '</p>';
+    h += `<p class="mv-sub">The standard deviation of the 21 daily returns up to each day, annualized${V.vix ? '; the orange line is the VIX on the same days' : ''}. "Measured as: its volatility" ranks it like a move, and "Volatility then: similar" compares only days that came in a similar stretch.</p>`;
+    h += volSvg(R, o, V) + `<div class="mv-legend"><span><b style="background:${COL.band}"></b>realized, one month</span>${V.vix ? `<span><b style="background:${COL.warn}"></b>VIX (implied)</span>` : ''}<span><b style="background:none;border-top:2px dashed ${COL.mute};height:0"></b>the typical day</span></div>`;
+    return h;
+  }
+
   /* ---------- a picture to share: the chosen panels in one PNG ---------- */
-  const PANELS = [['now', 'Now'], ['1', 'Next day'], ['5', '1 week'], ['10', '2 weeks'], ['21', '1 month'], ['back', 'Climb back'], ['high', 'New high']];
-  const PC = { bg: '#fcfcfb', card: '#ffffff', ink: '#1d1d1b', ink2: '#3d3c39', muted: '#6b6a66', line: '#e3e1dc', up: '#17734a', down: '#c0392b', band: '#2a78d6', warn: '#d9822b', grey: '#9a9893' };
+  const PANELS = [['now', 'Now'], ['1', 'Next day'], ['5', '1 week'], ['10', '2 weeks'], ['21', '1 month'], ['back', 'Climb back'], ['high', 'New high'], ['vol', 'Volatility']];
+  const canDraw = (R, k) => ((k !== 'back' && k !== 'high') || !!R.rec) && (k !== 'vol' || !R.volIdx);
+  const PC = { bg: '#fcfcfb', card: '#ffffff', ink: '#1d1d1b', ink2: '#3d3c39', muted: '#6b6a66', line: '#e3e1dc', up: '#17734a', down: '#c0392b', band: '#2a78d6', warn: '#d9822b', calm: '#5b7fa6', grey: '#9a9893' };
   // a Gaussian kernel density of sorted values over n points from lo to hi (Silverman's bandwidth)
   function kde(vals, lo, hi, n = 180) {
     const m = vals.length; if (m < 3) return null;
@@ -530,18 +648,18 @@
   function drawNow(x, box, R, o) {
     const vals = Array.from(R.s, (v) => disp(o, v)), tv = disp(o, R.value), u = unit(o), sv = Float64Array.from(vals);
     let lo = Math.min(quantile(sv, 0.3), tv), hi = Math.max(quantile(sv, 99.7), tv); const pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
-    const P = card(x, box.x, box.y, box.w, box.h, `Now: where the ${win(o.w)} move ranks`, `${num(R.n)} ${win(o.w)} moves since ${my(R.A.days[0])}${o.measure === 'raw' ? '' : ' · ' + measureName(o, 'stock')} · the coloured tail: moves at least as ${R.side > 0 ? 'high' : 'low'}`);
+    const P = card(x, box.x, box.y, box.w, box.h, `Now: where the ${what(o)} ranks`, `${num(R.n)} ${whats(o)} since ${my(R.A.days[0])}${o.measure === 'raw' ? '' : ' · ' + measureName(o, 'stock')} · the coloured tail: moves at least as ${R.side > 0 ? 'high' : 'low'}`);
     const K = kde(vals, lo, hi); if (!K) return;
     const top = P.y + 26, bot = P.y + P.h - 22, mx = Math.max(...K.ys) || 1;
-    const sx = axisX(x, P, lo, hi, (v) => sgn(v, Math.abs(v) < 1 && v !== 0 ? 1 : 0, u), 8), sy = (v) => bot - v / mx * (bot - top);
+    const sx = axisX(x, P, lo, hi, (v) => tickFmt(o, v), 8), sy = (v) => bot - v / mx * (bot - top);
     curve(x, K, sx, sy, PC.grey, PC.grey, 0.28, 1.6);
     const tail = { xs: [], ys: [] };
     K.xs.forEach((v, i) => { if (R.side > 0 ? v >= tv : v <= tv) { tail.xs.push(v); tail.ys.push(K.ys[i]); } });
-    if (tail.xs.length > 1) curve(x, tail, sx, sy, R.side > 0 ? PC.up : PC.down, R.side > 0 ? PC.up : PC.down, 0.7, 2);
+    if (tail.xs.length > 1) curve(x, tail, sx, sy, sidePC(R, o), sidePC(R, o), 0.7, 2);
     vline(x, sx(tv), top - 8, bot, PC.ink, [5, 4]);
     const lab = `${o.mode === 'whatif' ? 'What if' : mdy(R.A.days[R.t])}: ${fmtX(o, R.value)} · ${rankWords(R.at)}`;
     x.font = pngFont(15, 650); const lw = x.measureText(lab).width;
-    label(x, lab, Math.min(Math.max(sx(tv) - lw / 2, P.x), P.x + P.w - lw), top - 12, R.side > 0 ? PC.up : PC.down, pngFont(15, 650));
+    label(x, lab, Math.min(Math.max(sx(tv) - lw / 2, P.x), P.x + P.w - lw), top - 12, sidePC(R, o), pngFont(15, 650));
     const rare = R.every ? `a ${R.side > 0 ? 'rise' : 'fall'} this large or larger: 1 in ${num(R.every, R.every < 10 ? 1 : 0)} ${o.w === 1 ? 'trading days' : 'days'}` : '';
     label(x, rare, P.x + P.w, P.y + 8, PC.muted, pngFont(12.5), 'right');
   }
@@ -557,7 +675,7 @@
     const top = P.y + 46, bot = P.y + P.h - 22, mx = Math.max(...Ks.ys, ...Ka.ys) || 1;
     const sx = axisX(x, P, lo, hi, (v) => sgn(v, Math.abs(v) < 1 && v !== 0 ? 1 : 0), 6), sy = (v) => bot - v / mx * (bot - top);
     vline(x, sx(0), top, bot, PC.line);
-    const col = which === 'sim' ? PC.band : (R.side > 0 ? PC.up : PC.down);
+    const col = which === 'sim' ? PC.band : sidePC(R, o);
     curve(x, Ka, sx, sy, null, PC.grey, 1, 1.8);
     curve(x, Ks, sx, sy, col, col, 0.3, 2.2);
     vline(x, sx(S.median * 100), top, bot, col, [5, 4]); vline(x, sx(A.median * 100), top, bot, PC.grey, [2, 3]);
@@ -600,10 +718,31 @@
       label(x, txt, P.x + P.w, P.y + 10, PC.warn, pngFont(13, 650), 'right');
     }
   }
+  function drawVol(x, box, R, o, doc) {
+    const V = volData(R), A = R.A, N = A.days.length - 1;
+    const P = card(x, box.x, box.y, box.w, box.h, 'Volatility over a month, every day on file', `realized: the standard deviation of 21 daily returns, annualized${V.vix ? ' · orange: the VIX (implied)' : ''}`);
+    if (!Number.isFinite(V.now)) return;
+    const top = Math.max(V.hi, V.now, V.vix && Number.isFinite(V.vixNow) ? V.vixNow : 0) * 1.08, L = P.x + 40, Wd = P.w - 40, y0 = P.y + 30, y1 = P.y + P.h - 22;
+    const t0 = Date.parse(A.days[0]), t1 = Date.parse(A.days[N]);
+    const sx = (j) => L + (Date.parse(A.days[j]) - t0) / (t1 - t0 || 1) * Wd, sy = (v) => y1 - Math.min(v, top) / top * (y1 - y0);
+    x.font = pngFont(12); x.fillStyle = PC.muted; x.strokeStyle = PC.line; x.lineWidth = 1;
+    ticks(0, top, 4).forEach((v) => { x.beginPath(); x.moveTo(L, sy(v)); x.lineTo(L + Wd, sy(v)); x.stroke(); x.textAlign = 'right'; x.fillText(num(v * 100, 0) + '%', L - 6, sy(v) + 4); });
+    x.textAlign = 'center';
+    const ya = +A.days[0].slice(0, 4), yb = +A.days[N].slice(0, 4), stp = Math.max(1, Math.ceil((yb - ya) / 8));
+    for (let y = Math.ceil((ya + 1) / stp) * stp; y <= yb; y += stp) x.fillText(String(y), L + (Date.parse(`${y}-01-01`) - t0) / (t1 - t0 || 1) * Wd, P.y + P.h - 2);
+    x.textAlign = 'left';
+    const step = Math.max(1, Math.floor(N / 1600));
+    const path = (arr, col, wd) => { x.beginPath(); let on = false; for (let j = 0; j <= N; j += step) { const v = arr[j]; if (!Number.isFinite(v)) { on = false; continue; } if (on) x.lineTo(sx(j), sy(v)); else x.moveTo(sx(j), sy(v)); on = true; } x.strokeStyle = col; x.lineWidth = wd; x.stroke(); };
+    x.save(); x.setLineDash([3, 3]); x.strokeStyle = PC.grey; x.beginPath(); x.moveTo(L, sy(V.med)); x.lineTo(L + Wd, sy(V.med)); x.stroke(); x.restore();
+    if (V.vix) path(V.vix, PC.warn, 1.2);
+    path(V.rv, PC.band, 1.4);
+    x.beginPath(); x.arc(sx(V.t), sy(V.now), 4.5, 0, 2 * Math.PI); x.fillStyle = PC.band; x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke();
+    label(x, `now ${num(V.now * 100, 0)}% a year · ${rankWords(V.pct)} · typical ${num(V.med * 100, 0)}%${V.vix && Number.isFinite(V.vixNow) ? ` · VIX ${num(V.vixNow * 100, 1)}` : ''}`, P.x + P.w, P.y + 10, PC.band, pngFont(13, 650), 'right');
+  }
   async function picture(R, o, doc, picks, hub) {
     if (typeof document === 'undefined') return null;
     if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) { /* draw with what is loaded */ } }
-    const order = PANELS.map(([k]) => k).filter((k) => picks.includes(k) && (k !== 'back' && k !== 'high' || R.rec));
+    const order = PANELS.map(([k]) => k).filter((k) => picks.includes(k) && canDraw(R, k));
     if (!order.length) return null;
     const Wd = 1200, M = 32, G = 22, full = Wd - 2 * M, half = (full - G) / 2, ph = 300;
     const rows = []; let rest = order.slice();
@@ -615,17 +754,21 @@
     x.fillStyle = PC.bg; x.fillRect(0, 0, Wd, Hh);
     const name = doc.ticker || doc.name;
     const raw = R.raw, verb = o.mode === 'whatif' ? 'If it moved' : raw > 0 ? 'rose' : raw < 0 ? 'fell' : 'was flat';
-    const title = o.mode === 'whatif' ? `What if ${name} moved ${fmtX(o, R.value)} in ${o.w === 1 ? 'a day' : o.w === 5 ? 'a week' : 'a month'}? A ${rankWords(R.at)} ${o.w === 1 ? 'day' : 'move'}`
-      : `${name} ${verb} ${num(Math.abs(raw) * 100, 1)}%${o.w === 1 ? '' : o.w === 5 ? ' in a week' : ' in a month'} on ${mdy(R.A.days[R.t])}: a ${rankWords(R.at)} ${o.w === 1 ? 'day' : 'move'}`;
+    const lv = o.measure === 'level', rvm = o.measure === 'rv', when = o.mode === 'whatif' ? '' : ` on ${mdy(R.A.days[R.t])}`;
+    const title = lv ? `${o.mode === 'whatif' ? `What if ${name} stood at` : `${name} closed at`} ${fmtX(o, R.value)}${when}: a ${rankWords(R.at)} level`
+      : rvm ? `${name}'s volatility over a month${o.mode === 'whatif' ? ' at' : ':'} ${fmtX(o, R.value)} a year${when}: a ${rankWords(R.at)} level`
+      : o.mode === 'whatif' ? `What if ${name} moved ${fmtX(o, R.value)} in ${o.w === 1 ? 'a day' : o.w === 5 ? 'a week' : 'a month'}? A ${rankWords(R.at)} ${o.w === 1 ? 'day' : 'move'}`
+      : `${name} ${verb} ${num(Math.abs(raw) * 100, 1)}%${o.w === 1 ? '' : o.w === 5 ? ' in a week' : ' in a month'}${when}: a ${rankWords(R.at)} ${o.w === 1 ? 'day' : 'move'}`;
     x.fillStyle = PC.ink; x.font = pngFont(27, 650); x.fillText(title, M, 46);
     x.fillStyle = PC.muted; x.font = pngFont(14.5);
-    x.fillText(`${doc.name || name}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''} · ${win(o.w)} move${o.measure === 'raw' ? '' : ', ' + measureName(o, doc.kind)} · ranked among ${num(R.n)} since ${mdy(R.A.days[0])} · days like it: within ±${o.band} percentile points`, M, 74);
+    x.fillText(`${doc.name || name}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''} · ${what(o)}${o.measure === 'raw' || o.measure === 'level' || o.measure === 'rv' ? '' : ', ' + measureName(o, doc.kind)}${R.out ? ` · then: ${R.out}` : ''} · ranked among ${num(R.n)} since ${mdy(R.A.days[0])} · days like it: within ±${o.band} percentile points`, M, 74);
     let y = headH;
     for (const row of rows) {
       row.forEach((k, i) => {
         const box = { x: M + i * (half + G), y, w: row.length === 1 ? full : half, h: ph };
         if (k === 'now') drawNow(x, box, R, o);
         else if (k === 'back' || k === 'high') drawRecovery(x, box, R, o, k, doc);
+        else if (k === 'vol') drawVol(x, box, R, o, doc);
         else drawHorizon(x, box, R, o, +k, o.set === 'ext' ? 'ext' : 'sim');
       });
       y += ph + G;
@@ -643,24 +786,25 @@
     } catch (e) { /* the wordmark alone */ }
     return c;
   }
-  function pngBar(st) {
+  function pngBar(st, R) {
     const on = (k) => (st.png || []).includes(k);
-    return `<div class="mv-png"><span class="mv-png-l">Picture to share (PNG):</span>${PANELS.map(([k, l]) => `<label><input type="checkbox" data-mvp="${k}"${on(k) ? ' checked' : ''}> ${esc(l)}</label>`).join('')}`
+    return `<div class="mv-png"><span class="mv-png-l">Picture to share (PNG):</span>${PANELS.filter(([k]) => canDraw(R, k)).map(([k, l]) => `<label><input type="checkbox" data-mvp="${k}"${on(k) ? ' checked' : ''}> ${esc(l)}</label>`).join('')}`
       + `<button type="button" class="mv-pill on" data-mvpng="1">Make the picture</button><span class="mv-sub" data-mvmsg style="margin:0"></span></div><div class="mv-png-out"></div>`;
   }
 
   function body(R, st, doc) {
     if (R.error) return `<p class="mv-err">${esc(R.error)}</p>`;
     const which = st.set === 'ext' ? 'ext' : 'sim';
-    let h = headline(R, st, doc) + cards(R, st) + pngBar(st);
-    h += `<h3>Where it ranks</h3><p class="mv-sub">Every ${esc(win(st.w))} move ${st.measure === 'raw' ? '' : esc(measureName(st, doc.kind)) + ' '}on file. The coloured bars are the moves at least as ${R.side > 0 ? 'high' : 'low'}; the dashed line is the move looked at.${st.before && st.mode === 'date' ? ' Only the days up to it are counted.' : ''}</p>${rankSvg(R, st)}`;
-    h += `<h3>What came next</h3><p class="mv-sub">Close-to-close returns from the day of each move: after the days whose move ranked within ±${st.band} percentile points of this one, after the days at least as ${R.side > 0 ? 'high' : 'low'}, and after every day. An episode groups chosen days that fall within the horizon of each other: they are the independent tries, and what "within chance" is judged on.</p>`;
+    let h = headline(R, st, doc) + cards(R, st) + pngBar(st, R);
+    h += `<h3>Where it ranks</h3><p class="mv-sub">Every ${esc(what(st))} ${st.measure === 'raw' || st.measure === 'level' || st.measure === 'rv' ? '' : esc(measureName(st, doc.kind)) + ' '}on file. The coloured bars are the ${st.measure === 'level' || st.measure === 'rv' ? 'days' : 'moves'} at least as ${R.side > 0 ? 'high' : 'low'}; the dashed line is the one looked at.${st.before && st.mode === 'date' ? ' Only the days up to it are counted.' : ''}</p>${rankSvg(R, st)}`;
+    h += `<h3>What came next${R.out ? ` for ${esc(R.out)}` : ''}</h3><p class="mv-sub">${R.out ? `${esc(R.out)}'s close-to-close returns from each day:` : 'Close-to-close returns from the day of each move:'} after the days whose ${st.measure === 'level' ? 'level' : st.measure === 'rv' ? 'volatility' : 'move'} ranked within ±${st.band} percentile points of this one, after the days at least as ${R.side > 0 ? 'high' : 'low'}, and after every day. An episode groups chosen days that fall within the horizon of each other: they are the independent tries, and what "within chance" is judged on.</p>`;
     h += nextTable(R, st);
     h += `<div class="mv-bar"><div><label>Distribution</label><div class="mv-pills">${H.map(([hz, l]) => `<button type="button" class="mv-pill${st.h === hz ? ' on' : ''}" data-mv="h" data-v="${hz}">${esc(l)}</button>`).join('')}</div></div>`
       + `<div><label>Compared with every day</label><div class="mv-pills"><button type="button" class="mv-pill${which === 'sim' ? ' on' : ''}" data-mv="set" data-v="sim">days like it</button><button type="button" class="mv-pill${which === 'ext' ? ' on' : ''}" data-mv="set" data-v="ext">at least as ${R.side > 0 ? 'high' : 'low'}</button></div></div></div>`;
     h += nextSvg(R, st, st.h, which) + `<div class="mv-legend"><span><b style="background:${COL.up};opacity:.6"></b><b style="background:${COL.down};opacity:.6"></b>after the ${which === 'sim' ? 'days like it' : 'more extreme days'} (share of those days)</span><span><b style="background:none;border:1.5px solid ${COL.ink}"></b>after every day</span>${fin(R.actual[st.h]) ? `<span><b style="background:${COL.warn}"></b>what happened after this day</span>` : ''}</div>`;
     h += recoverySection(R, st, doc);
-    h += `<h3>When moves like this happened</h3><p class="mv-sub">Every ${esc(win(st.w))} move over time; the coloured dots are the days like this one (larger) and the days at least as ${R.side > 0 ? 'high' : 'low'}. Big moves come in clusters, in volatile years.</p>${timeSvg(R, st)}`;
+    h += volSection(R, st, doc);
+    h += `<h3>When ${st.measure === 'level' ? 'levels' : st.measure === 'rv' ? 'volatility' : 'moves'} like this happened</h3><p class="mv-sub">Every ${esc(what(st))} over time; the coloured dots are the days like this one (larger) and the days at least as ${R.side > 0 ? 'high' : 'low'}. Big moves come in clusters, in volatile years.</p>${timeSvg(R, st)}`;
     h += `<h3>The latest days like it</h3><p class="mv-sub">${which === 'sim' ? `Moves within ±${st.band} percentile points of this one` : `Moves at least as ${R.side > 0 ? 'high' : 'low'}`}, most recent first, and what followed.</p>${recentTable(R, st, which)}`;
     h += `<details class="mv-apx"><summary>How this is worked out</summary>`
       + `<p><b>The move.</b> The close-to-close change over one day, a week (5 trading days) or a month (21), on prices adjusted for dividends and splits (the indices: price only). Measured against its own volatility, it is divided by the standard deviation of the 63 daily returns before the move began (scaled to its length), so a 3% day counts for more in a calm stretch than in a wild one. Beyond the market, it is the move less beta times the S&P 500's move over the same days, beta from the year of daily returns before it.</p>`
@@ -686,8 +830,9 @@
       if (here()) el.innerHTML = `<p class="mv-sub">No daily price history for ${esc(home)} yet: it is collected for the valued companies, the market, its sectors and industries (refreshed after every US close).</p>`;
       return;
     }
-    const st = Object.assign({ key: home, w: 1, measure: 'raw', mode: 'latest', date: '', whatif: '', band: 2.5, before: false, h: 21, set: 'sim', rk: 'back',
-      png: ['now', '5', '10', '21', 'back', 'high'] }, opts.state || {});
+    const st = Object.assign({ key: home, w: 1, measure: homeDoc.kind === 'volatility' ? 'level' : 'raw', mode: 'latest', date: '', whatif: '', band: 2.5, before: false,
+      h: 21, set: 'sim', rk: 'back', outcome: 'spx', vreg: 'any', png: ['now', '5', '10', '21', 'back', 'high'] }, opts.state || {});
+    const egOf = (m) => (m === 'vol' ? -3 : m === 'level' ? 30 : m === 'rv' ? 60 : -5);
     const docs = { [home]: homeDoc }, dec = {};
     const assets = [[home, homeDoc.kind === 'stock' ? homeDoc.ticker || home : homeDoc.name, homeDoc.kind === 'stock' ? 'this company' : homeDoc.kind]];
     const ln = homeDoc.links || {};
@@ -700,29 +845,35 @@
       if (!doc) { try { doc = docs[st.key] = await get(url(st.key)); } catch (e) { doc = null; } }
       if (!here()) return;
       if (!doc) { st.key = home; doc = homeDoc; }
-      const A = dec[st.key] || (dec[st.key] = decode(doc));
+      const A = dec[st.key] || (dec[st.key] = Object.assign(decode(doc), { last: doc.last }));
+      const volIdx = doc.kind === 'volatility';
+      if (volIdx && !['level', 'raw'].includes(st.measure)) st.measure = 'level';
+      if (!volIdx && st.measure === 'level') st.measure = 'raw';
       if (st.measure === 'beta' && (doc.key === 'SPY' || doc.kind === 'index' || doc.kind === 'market')) st.measure = 'raw';
-      let Mk = null;
-      if (st.measure === 'beta') {
-        try { const m = docs.SPY || (docs.SPY = await get(url('SPY'))); Mk = dec.SPY || (dec.SPY = decode(m)); } catch (e) { st.measure = 'raw'; }
-      }
+      const load = async (k) => { try { const m = docs[k] || (docs[k] = await get(url(k))); return dec[k] || (dec[k] = Object.assign(decode(m), { last: m.last, name: m.name })); } catch (e) { return null; } };
+      let Mk = null, Out = null, Vix = null;
+      if (st.measure === 'beta') { Mk = await load('SPY'); if (!Mk) st.measure = 'raw'; }
+      if (volIdx && st.outcome !== 'self' && doc.links && doc.links.outcome) Out = await load(doc.links.outcome);
+      if (!volIdx && ['market', 'index'].includes(doc.kind)) Vix = await load('IDX-VIX');      // implied next to realized
       if (!here()) return;
       st.narrow = (el.clientWidth || 800) < 600;
-      const R = analyze(A, st, Mk);
+      const R = analyze(A, st, Mk, Out);
+      R.vix = Vix;
+      R.volIdx = volIdx;
       const names = assets.map(([k, l, role]) => [k, l || (homeDoc.names || {})[k] || (docs[k] && docs[k].name) || k, role]);
       let h = '<div class="mv">';
       if (names.length > 1) h += `<div class="mv-assets" role="group" aria-label="What to look at">${names.map(([k, l, role]) => `<button type="button" class="mv-asset${k === st.key ? ' on' : ''}" data-mva="${esc(k)}"><small>${esc(role)}</small>${esc(l)}</button>`).join('')}</div>`;
       h += `<p class="mv-sub">${esc(doc.name || doc.key)} · daily closes ${esc(mdy(doc.d0))} – ${esc(mdy(doc.as_of))}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''}${doc.kind === 'index' ? ' · price only' : ''}</p>`;
       h += controls(st, doc) + body(R, st, doc) + '</div>';
       el.innerHTML = h;
-      el.querySelectorAll('[data-mva]').forEach((b) => { b.onclick = () => { st.key = b.dataset.mva; draw(); }; });
+      el.querySelectorAll('[data-mva]').forEach((b) => { b.onclick = () => { st.key = b.dataset.mva; if (st.mode === 'whatif') st.whatif = egOf(st.measure); draw(); }; });
       el.querySelectorAll('[data-mv]').forEach((b) => {
         b.onclick = () => {
           const k = b.dataset.mv, v = b.dataset.v;
           st[k] = k === 'w' || k === 'h' ? +v : k === 'band' ? +v : k === 'before' ? v === '1' : v;
           if (k === 'mode' && v === 'date' && !st.date) st.date = (dec[st.key] || A).days[Math.max(0, (dec[st.key] || A).days.length - 22)];
-          if (k === 'mode' && v === 'whatif' && !fin(st.whatif)) st.whatif = st.measure === 'vol' ? -3 : -5;
-          if (k === 'measure' && st.mode === 'whatif') st.whatif = v === 'vol' ? -3 : -5;
+          if (k === 'mode' && v === 'whatif' && !fin(st.whatif)) st.whatif = egOf(st.measure);
+          if (k === 'measure' && st.mode === 'whatif') st.whatif = egOf(v);
           draw();
         };
       });
@@ -749,7 +900,7 @@
     await draw();
   }
 
-  const api = { render, decode, cum, moves, ahead, pctOf, quantile, volScaled, residual, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS };
+  const api = { render, decode, cum, moves, ahead, pctOf, quantile, volScaled, residual, realized, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw };
   if (typeof window !== 'undefined') window.MovesView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

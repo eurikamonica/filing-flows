@@ -22,6 +22,15 @@ waiting count for as long as they were watched), with what the day looked at sti
 weeks (10 trading days). A picture to share: pick any of Now (the bell of every move with the day marked), the next
 day, 1 week, 2 weeks, 1 month, climb back and new high, and the view draws them into one PNG (title, panels, footer,
 the Filing Flows mark) to preview, download or copy.
+More history and volatility: paths.py long fetches every company's and ETF's daily bars before the ten years on file,
+once (from 1962 for the oldest; joined by their returns, so later dividends and splits do not matter; an index first
+collected from a later date gets its earlier years the same way); the S&P 500 index goes back to 1928, the Nasdaq to
+1971; the volatility indices are collected (VIX, VIX9D, VIX3M, VVIX, VXN, SKEW, OVX, GVZ,
+and the VIX term structure, VIX ÷ VIX3M). The view adds a volatility section (one-month realized volatility over the
+whole history and its rank, the VIX beside the market's), "its volatility" as a measure, "volatility then: similar" (only
+days that came in a like stretch), the volatility of the month after, and a volatility panel for the picture; a
+volatility index is ranked by its level and judged by what the S&P 500 did next. The hub adds the volatility cards and a
+volatility column in the stocks table.
 
 ## Notes: what each note changed against last year's annual report (年度变化)
 

@@ -21,7 +21,6 @@ the move. Industry composites hold today's companies only (survivors).
 
     python app/paths.py moves --root P --universe val/public/index.json
 """
-import datetime as dt
 import json
 import math
 import re
@@ -83,32 +82,20 @@ def series(bars):
     return days, closes
 
 
-def encode(days, closes):
-    """{'d0', 'gaps' | 'dates', 'r'}: the first trading day, the calendar days from each trading day to the next (one
-    base-36 character each; the dates themselves when a gap exceeds 35 days) and each day's log return in whole basis
-    points (r[k] is the return into day k + 1)."""
-    r = np.rint(np.diff(np.log(np.asarray(closes, float))) * 1e4).astype(int)
-    ds = [dt.date.fromisoformat(d) for d in days]
-    gaps = [(b - a).days for a, b in zip(ds, ds[1:])]
-    doc = {'d0': days[0], 'r': r.tolist()}
-    if all(1 <= g <= 35 for g in gaps):
-        doc['gaps'] = ''.join(np.base_repr(g, 36).lower() for g in gaps)
-    else:
-        doc['dates'] = list(days)
-    return doc
+encode, decode = P.encode_returns, P.decode_returns      # the compact form (shared with paths.py's cache/long/)
 
 
-def decode(doc):
-    """encode()'s inverse: (trading days, daily log returns as fractions)."""
-    if doc.get('dates'):
-        days = list(doc['dates'])
-    else:
-        d = dt.date.fromisoformat(doc['d0'])
-        days = [doc['d0']]
-        for ch in doc.get('gaps') or '':
-            d += dt.timedelta(days=int(ch, 36))
-            days.append(d.isoformat())
-    return days, np.asarray(doc['r'], float) / 1e4
+def stitch(root, ticker, days, closes):
+    """The older daily bars of cache/long/ (paths.py long) joined before (days, closes) at the first day on file: their
+    returns, levelled to that day's close. As they were when there are none, or they do not end on that day."""
+    doc = P.read_long(root, ticker)
+    if not doc or not days or doc.get('end') != days[0]:
+        return days, closes
+    old, r = decode(doc)
+    if len(old) < 2 or old[-1] != days[0]:
+        return days, closes
+    below = np.concatenate([np.cumsum(r[::-1])[::-1], [0.0]])          # each older day's log distance under the join
+    return old[:-1] + list(days), list(closes[0] * np.exp(-below[:-1])) + list(closes)
 
 
 # ------------------------------------------------------------------ the arithmetic (docs/moves-view.js does the same)
@@ -265,6 +252,40 @@ def summary(days, r, band=BAND):
         out[f'all{h}'] = a[1:] if a else None
     bt, be, ht, he = recovery(c, np.flatnonzero(sim & (np.arange(len(c)) != last)), 1, -1 if x <= 0 else 1)
     out['back'], out['high'] = km(bt, be), km(ht, he)
+    rv = realized(r, 21)
+    out['rv21'] = float(rv[last]) if np.isfinite(rv[last]) else None
+    out['rvpct'] = float(pct_ranks(rv)[last]) if np.isfinite(rv[last]) else None
+    return out
+
+
+def realized(r, n=21):
+    """The annualized standard deviation of the n daily log returns ending at each day (NaN for the first n days): the
+    asset's own realized volatility."""
+    r = np.asarray(r, float)
+    c1, c2 = cum(r), cum(r * r)
+    out = np.full(len(r) + 1, np.nan)
+    j = np.arange(n, len(r) + 1)
+    if len(j):
+        t1, t2 = c1[j] - c1[j - n], c2[j] - c2[j - n]
+        out[j] = np.sqrt(np.maximum((t2 - t1 * t1 / n) / (n - 1), 0.0) * 252)
+    return out
+
+
+def level_summary(days, r, last, outcome=None, band=BAND):
+    """A volatility index: summary() of its changes, plus its level, the level's percentile among every day, and what
+    the outcome (the S&P 500: (days, cumulative log levels)) did over the next week and month after the days at a
+    similar level."""
+    out = summary(days, r, band)
+    c = cum(r)
+    p = pct_ranks(c)                                    # levels and cumulative log returns rank alike
+    out['level'], out['lpct'] = last, float(p[-1])
+    if outcome:
+        od, oc = outcome
+        at = {d: i for i, d in enumerate(od)}
+        sim = np.flatnonzero(chosen(p, p[-1], band) & (np.arange(len(c)) != len(c) - 1))
+        for h in (5, 21):
+            f = [oc[at[days[j]] + h] - oc[at[days[j]]] for j in sim if days[j] in at and at[days[j]] + h < len(oc)]
+            out[f'out{h}'] = brief(f)
     return out
 
 
@@ -330,7 +351,8 @@ def _r(v, n=4):
 
 
 FIELDS = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members', 'as_of', 'd0', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every',
-          'last_as', 'move5', 'pct5', 'move21', 'pct21'] + [f'{s}{h}' for s in ('sim', 'ext', 'all') for h in HORIZONS] + ['back', 'high']
+          'last_as', 'move5', 'pct5', 'move21', 'pct21'] + [f'{s}{h}' for s in ('sim', 'ext', 'all') for h in HORIZONS] + ['back', 'high',
+          'rv21', 'rvpct', 'level', 'lpct', 'out5', 'out21']
 
 
 def build(root, universe_path, val_dir=None, limit=0):
@@ -349,6 +371,8 @@ def build(root, universe_path, val_dir=None, limit=0):
         name = MARKET.get(t) or INDEX_NAMES.get(t) or (SECTOR_NAME.get(t) and f'{SECTOR_NAME[t]} sector ({t})') or f'{STYLE_NAME.get(t, t)} ({t})'
         assets.append({'key': t, 'ticker': None if kind == 'index' else t, 'name': name, 'kind': kind,
                        'sector': next((k for x, k, _ in RH.SECTOR_ETFS if x == t), None)})
+    for t, _, name in P.VOL_INDEXES:                     # the volatility indices: their level, and the S&P 500 after it
+        assets.append({'key': t, 'ticker': None, 'name': name, 'kind': 'volatility'})
     # every valued company, with its industry
     sics = {}
     for c in comps:
@@ -362,8 +386,16 @@ def build(root, universe_path, val_dir=None, limit=0):
         if not bars:
             continue
         ds, cs = series(bars)
+        ds, cs = stitch(root, a['key'], ds, cs)                          # its whole history (paths.py long)
         if len(ds) > MIN_DAYS:
             data[a['key']] = (ds, cs, (bars.get('c') or [None])[-1])
+    if 'IDX-VIX' in data and 'IDX-VIX3M' in data:                      # the VIX term structure: above 1, stress
+        v, v3 = dict(zip(*data['IDX-VIX'][:2])), dict(zip(*data['IDX-VIX3M'][:2]))
+        common = sorted(set(v) & set(v3))
+        if len(common) > MIN_DAYS:
+            ratio = [v[d] / v3[d] for d in common]
+            data['VIX-TERM'] = (common, ratio, round(ratio[-1], 4))
+            assets.append({'key': 'VIX-TERM', 'ticker': None, 'name': 'VIX term structure (VIX ÷ VIX3M; above 1 = stress)', 'kind': 'volatility'})
     # composites: SIC industries (four digits) and major groups (two), five companies or more
     groups = {}
     for a in assets:
@@ -381,22 +413,29 @@ def build(root, universe_path, val_dir=None, limit=0):
         name = (sics.get(mem[0]['key'], (None, None))[1] if len(code) == 4 else SIC2.get(code)) or f'SIC {code}'
         secs = [m.get('sector') for m in mem if m.get('sector')]
         top = [m['key'] for m in sorted(mem, key=lambda m: -(m.get('mcap') or 0))[:12]]
-        assets.append({'key': key, 'ticker': None, 'name': f'{name} (SIC {code})', 'kind': 'industry', 'level': len(code),
+        assets.append({'key': key, 'ticker': None, 'name': f'{name} (SIC {code})', 'kind': 'industry', 'sic_level': len(code),
                        'sector': max(set(secs), key=secs.count) if secs else None, 'members': len(mem), 'top': top})
         data[key] = (comp[0], comp[1], None)
         for m in mem:
             if len(code) == 4 or m['key'] not in links:
                 links[m['key']] = key
     names = {a['key']: a.get('name') for a in assets}
-    rows, written = [], set()
+    rows, written, out_cum = [], set(), {}
     for a in assets:
         if a['key'] not in data:
             continue
         ds, cs, last = data[a['key']]
+        outcome = ('IDX-GSPC' if 'IDX-GSPC' in data else 'SPY' if 'SPY' in data else None) if a['kind'] == 'volatility' else None
         try:
             enc = encode(ds, cs)
             days, r = decode(enc)
-            s = summary(days, r)
+            if a['kind'] == 'volatility':
+                if outcome and outcome not in out_cum:
+                    od, orr = decode(encode(*data[outcome][:2]))
+                    out_cum[outcome] = (od, cum(orr))
+                s = level_summary(days, r, last if last else cs[-1], out_cum.get(outcome))
+            else:
+                s = summary(days, r)
         except Exception as exc:                                        # noqa: BLE001
             errors.append(f"{a['key']}: {str(exc)[:160]}")
             continue
@@ -409,9 +448,11 @@ def build(root, universe_path, val_dir=None, limit=0):
                 if etf and etf in data:
                     ln['sector'] = etf
             ln['market'] = 'SPY'
+        if outcome:
+            ln['outcome'] = outcome
         doc = {'format': FORMAT, 'key': a['key'], 'ticker': a.get('ticker'), 'name': a.get('name'), 'kind': a['kind'], 'sector': a.get('sector'),
                'cik': a.get('cik'), 'as_of': ds[-1], 'last': last, 'links': ln, 'names': {k: names.get(k, k) for k in ln.values()}, **enc}
-        for k in ('members', 'top', 'level', 'sic'):
+        for k in ('members', 'top', 'sic_level', 'sic'):
             if a.get(k) is not None:
                 doc[k] = a[k]
         _dump(out / 'a' / f"{a['key']}.json", doc)

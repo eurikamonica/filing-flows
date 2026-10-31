@@ -138,10 +138,40 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   const vals = Float64Array.from({ length: 2000 }, () => normal()).sort();
   const D = V.kde(vals, -6, 6, 241);
   near(D.ys.reduce((a, y) => a + y, 0) * (12 / 240), 1, 'the density integrates to one', 0.01);
-  ok(V.PANELS.map((p) => p[0]).join() === 'now,1,5,10,21,back,high', 'the panels a picture can hold');
+  ok(V.PANELS.map((p) => p[0]).join() === 'now,1,5,10,21,back,high,vol', 'the panels a picture can hold');
 }
 
-// 6. the hub tab from an index file
+// 6. volatility: realized, a stock ranked by its own volatility, a similar-volatility filter, an index judged by the S&P 500
+{
+  const rets = [];
+  for (let i = 0; i < 700; i++) rets.push((i > 600 ? 0.03 : 0.01) * normal());
+  const A = Object.assign(V.decode(doc(rets).doc), { last: 50 });
+  const rv = V.realized(A.r, 21);
+  const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / (a.length - 1)); };
+  near(rv[700], sd(Array.from(A.r).slice(679, 700)) * Math.sqrt(252), 'realized volatility of the last 21 days', 1e-9);
+  ok(Number.isNaN(rv[20]) && Number.isFinite(rv[21]), '21 returns before the first');
+  const R = V.analyze(A, { w: 1, measure: 'rv', mode: 'latest', band: 2.5 });
+  near(R.value, rv[700], 'ranked by its own volatility', 1e-12);
+  ok(R.at > 85 && R.rec === undefined && R.fvol && R.fvol.sim, 'a volatile stretch ranks high; no recovery for a level; the month after measured');
+  const st = { w: 1, measure: 'raw', mode: 'latest', band: 10 };
+  const Any = V.analyze(A, st), Sim = V.analyze(A, Object.assign({}, st, { vreg: 'similar' }));
+  ok(Number.isFinite(Sim.reg) && Sim.h[1].all.n < Any.h[1].all.n && Sim.h[1].all.n > 0, 'similar volatility: fewer days, every one from a like stretch');
+  // a volatility index: its level, and the S&P 500's returns on the same days
+  const lv = [], sp = [];
+  for (let i = 0; i < 500; i++) { lv.push(0.05 * normal()); sp.push(0.0005 + 0.01 * normal()); }
+  const VX = Object.assign(V.decode(doc(lv).doc), { last: 20 }), SP = Object.assign(V.decode(doc(sp).doc), { name: 'S&P 500 index' });
+  const L = V.analyze(VX, { w: 1, measure: 'level', mode: 'latest', band: 5 }, null, SP);
+  const cv = V.cum(VX.r), cs = V.cum(SP.r), sorted = Float64Array.from(cv).sort();
+  near(L.at, V.pctOf(sorted, cv[500]), 'the level ranked among every day');
+  ok(L.out === 'S&P 500 index' && L.rec === undefined && L.fvol === undefined, 'judged by the S&P 500; no recovery, no volatility of the index');
+  const f = []; for (let j = 0; j < 500; j++) if (L.sim[j] && j + 21 <= 500) f.push(Math.expm1(cs[j + 21] - cs[j]));
+  ok(L.h[21].sim.n === f.length, 'the S&P 500 a month after each day at a like level');
+  const W = V.analyze(VX, { w: 1, measure: 'level', mode: 'whatif', whatif: 40, band: 5 }, null, SP);
+  near(W.value, Math.log(40 / 20) + cv[500], 'a what-if level', 1e-12);
+  ok(!V.canDraw({ volIdx: true, rec: null }, 'vol') && !V.canDraw({ rec: null }, 'back') && V.canDraw({ rec: {} }, 'high') && V.canDraw({}, 'now'), 'a picture holds only the panels that apply');
+}
+
+// 7. the hub tab from an index file
 {
   const fields = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members', 'as_of', 'd0', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every', 'last_as', 'move5', 'pct5', 'move21', 'pct21',
     'sim1', 'sim5', 'sim21', 'ext1', 'ext5', 'ext21', 'all1', 'all5', 'all21'];

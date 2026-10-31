@@ -133,6 +133,145 @@ class Recovery(unittest.TestCase):
         self.assertIn('back', M.FIELDS)
 
 
+class HistoryAndVolatility(unittest.TestCase):
+    def test_older_bars_join_at_the_first_day_on_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old = weekdays('2000-01-03', 30)
+            old_closes = [10 * (1.01 ** i) for i in range(30)]
+            P._write_gz(P.long_path(tmp, 'ABC'), {'ticker': 'ABC', 'end': old[-1], **P.encode_returns(old, old_closes)})
+            days = [old[-1]] + weekdays('2000-02-15', 5)
+            closes = [50.0, 51, 52, 53, 54, 55]                  # a later basis (a split since): returns are what count
+            d, c = M.stitch(tmp, 'ABC', days, closes)
+            self.assertEqual(d, old[:-1] + days)
+            self.assertAlmostEqual(c[len(old) - 1], 50.0)
+            self.assertAlmostEqual(c[0], 50.0 * math.exp(-29 * round(math.log(1.01) * 1e4) / 1e4), places=6)   # whole basis points
+            r = np.diff(np.log(c))
+            self.assertTrue(np.allclose(r[:29], np.log(1.01), atol=1e-4))
+            self.assertEqual(M.stitch(tmp, 'ABC', days[1:], closes[1:]), (days[1:], closes[1:]))   # no shared day: as is
+            self.assertEqual(M.stitch(tmp, 'XYZ', days, closes), (days, closes))
+
+    def test_realized_volatility(self):
+        rng = np.random.default_rng(9)
+        r = rng.normal(0, 0.01, 100)
+        v = M.realized(r, 21)
+        self.assertTrue(np.isnan(v[:21]).all())
+        self.assertAlmostEqual(v[50], np.std(r[29:50], ddof=1) * math.sqrt(252))
+
+    def test_a_volatility_index_judged_by_the_sp500(self):
+        days = weekdays('2020-01-01', 400)
+        rng = np.random.default_rng(4)
+        vix = np.concatenate([[0.0], rng.normal(0, 0.05, 399)])
+        spx = np.concatenate([[0.0], rng.normal(0.0004, 0.01, 399)])
+        s = M.level_summary(days, vix[1:], 20.0, (days, np.cumsum(spx)))
+        self.assertEqual(s['level'], 20.0)
+        self.assertAlmostEqual(s['lpct'], M.pct_ranks(np.cumsum(vix))[-1])
+        n, med, up = s['out21']
+        self.assertGreater(n, 0)
+        self.assertTrue(0 <= up <= 1)
+
+    def test_volatility_indices_and_the_term_structure_in_the_build(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'pth'
+            days = weekdays('2022-01-03', 400)
+            rng = np.random.default_rng(12)
+            for t, lvl in (('SPY', 400.0), ('IDX-VIX', 20.0), ('IDX-VIX3M', 22.0)):
+                closes = list(lvl * np.exp(np.cumsum(rng.normal(0, 0.03 if 'VIX' in t else 0.01, len(days)))))
+                P.save(root, t, {'ticker': t, 'source': 'yahoo', 'fetched_at': '2026-01-01T00:00:00+00:00', **bars(days, closes)})
+            M.build(root, None)
+            out = root / 'public' / 'moves'
+            ix = json.loads((out / 'index.json').read_text())
+            got = {r[0]: dict(zip(ix['fields'], r)) for r in ix['rows']}
+            self.assertEqual(got['IDX-VIX']['kind'], 'volatility')
+            self.assertIsNotNone(got['IDX-VIX']['lpct'])
+            self.assertIsNotNone(got['IDX-VIX']['out21'])
+            self.assertIn('VIX-TERM', got)
+            self.assertIsNotNone(got['SPY']['rv21'])
+            doc = json.loads((out / 'a' / 'IDX-VIX.json').read_text())
+            self.assertEqual(doc['links'], {'outcome': 'SPY'})
+            self.assertEqual(doc['names']['SPY'], 'S&P 500 (SPY)')
+
+    def test_the_backfill_fetches_once(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            days = weekdays('2016-10-17', 30)
+            P.save(tmp, 'OLD', {'ticker': 'OLD', 'source': 'yahoo', 'fetched_at': '2026-01-01T00:00:00+00:00', **bars(days, [10.0 + i for i in range(30)])})
+            P.save(tmp, 'NEW', {'ticker': 'NEW', 'source': 'yahoo', 'fetched_at': '2026-01-01T00:00:00+00:00', **bars(days, [10.0 + i for i in range(30)])})
+            asked = []
+
+            class Client:
+                def json(self, url):
+                    asked.append(url)
+                    if '/NEW?' in url:                             # listed on the first day on file: nothing older
+                        ds = days[:1]
+                    else:
+                        ds = weekdays('2010-01-04', 1850)
+                        ds = [d for d in ds if d <= days[5]]
+                    ts = [int(dt.datetime.fromisoformat(d + 'T14:30:00+00:00').timestamp()) for d in ds]
+                    cl = [5.0 + 0.001 * i for i in range(len(ds))]
+                    q = {'open': cl, 'high': cl, 'low': cl, 'close': cl, 'volume': [1] * len(ds)}
+                    return {'chart': {'result': [{'timestamp': ts, 'meta': {'gmtoffset': 0}, 'indicators': {'quote': [q], 'adjclose': [{'adjclose': cl}]}}]}}
+            done = P.backfill(Client(), tmp, ['OLD', 'NEW', 'MISSING'])
+            self.assertEqual((done['fetched'], done['nothing_older'], done['waiting'], done['left']), (1, 1, 1, 1))   # MISSING: not collected yet
+            self.assertIn('period1=' + str(int(dt.datetime(1927, 12, 30, tzinfo=dt.timezone.utc).timestamp())), asked[0])
+            doc = P.read_long(tmp, 'OLD')
+            self.assertEqual(doc['end'], days[0])
+            d, r = P.decode_returns(doc)
+            self.assertEqual(d[-1], days[0])
+            self.assertEqual(d[0], '2010-01-04')
+            n = len(asked)
+            P.backfill(Client(), tmp, ['OLD', 'NEW'])
+            self.assertEqual(len(asked), n)                    # never fetched again
+
+    def test_an_index_from_a_later_date_and_bars_fetched_anew(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            asked = []
+
+            class Client:                                      # Yahoo: the weekdays from 1960 within period1 … period2
+                def json(self, url):
+                    asked.append(url)
+                    p2 = int(url.split('period2=')[1].split('&')[0])
+                    ds = [d for d in weekdays('1960-01-04', 4200) if dt.datetime.fromisoformat(d + 'T14:30:00+00:00').timestamp() <= p2]
+                    ts = [int(dt.datetime.fromisoformat(d + 'T14:30:00+00:00').timestamp()) for d in ds]
+                    cl = [50.0 * math.exp(0.0002 * i) for i in range(len(ds))]
+                    q = {'open': cl, 'high': cl, 'low': cl, 'close': cl, 'volume': [0] * len(ds)}
+                    return {'chart': {'result': [{'timestamp': ts, 'meta': {'gmtoffset': 0}, 'indicators': {'quote': [q], 'adjclose': [{'adjclose': cl}]}}]}}
+
+            def on_file(start):                                # the collector's bars and its state.json
+                days = weekdays(start, 30)
+                P.save(tmp, 'IDX-GSPC', {'ticker': 'IDX-GSPC', 'source': 'yahoo', 'fetched_at': '2026-01-01T00:00:00+00:00', **bars(days, [90.0 + i for i in range(30)])})
+                P.write_json(Path(tmp) / 'state.json', {'format': P.FORMAT, 'tickers': {'IDX-GSPC': {'fetched_at': '2026-01-01T00:00:00+00:00', 'first': days[0]}}})
+                return days
+            days = on_file('1970-01-02')                       # collected from 1970 before the S&P 500 went back to 1928
+            self.assertEqual(P.backfill(Client(), tmp, ['IDX-GSPC'])['fetched'], 1)
+            self.assertIn('/chart/%5EGSPC?', asked[-1])
+            doc = P.read_long(tmp, 'IDX-GSPC')
+            self.assertEqual((doc['d0'], doc['end']), ('1960-01-04', '1970-01-02'))
+            d, _ = M.stitch(tmp, 'IDX-GSPC', days, [90.0 + i for i in range(30)])
+            self.assertEqual((d[0], d[-1], len(d)), ('1960-01-04', days[-1], len(P.decode_returns(doc)[0]) + 29))
+            n = len(asked)
+            self.assertEqual(P.backfill(Client(), tmp, ['IDX-GSPC'])['left'], 0)
+            self.assertEqual(len(asked), n)                    # done
+            days = on_file('1975-01-02')                       # fetched anew from another first day: joined there again
+            self.assertEqual(P.backfill(Client(), tmp, ['IDX-GSPC'])['fetched'], 1)
+            self.assertEqual(P.read_long(tmp, 'IDX-GSPC')['end'], '1975-01-02')
+            self.assertEqual(M.stitch(tmp, 'IDX-GSPC', days, [90.0 + i for i in range(30)])[0][0], '1960-01-04')
+
+    def test_volatility_index_symbols(self):
+        seen = []
+
+        class Client:
+            def json(self, url):
+                seen.append(url)
+                ds = weekdays('2026-01-05', 30)
+                ts = [int(dt.datetime.fromisoformat(d + 'T14:30:00+00:00').timestamp()) for d in ds]
+                q = {'open': [1.0] * 30, 'high': [1.0] * 30, 'low': [1.0] * 30, 'close': [20.0 + i for i in range(30)], 'volume': [0] * 30}
+                return {'chart': {'result': [{'timestamp': ts, 'meta': {'gmtoffset': 0}, 'indicators': {'quote': [q]}}]}}
+        P.fetch(Client(), 'IDX-VIX')
+        self.assertIn('/chart/%5EVIX?', seen[-1])
+        self.assertIn('period1=' + str(int(dt.datetime(1990, 1, 2, tzinfo=dt.timezone.utc).timestamp())) + '&', seen[-1])
+        P.fetch(Client(), 'IDX-GSPC')
+        self.assertIn('period1=-', seen[-1])                   # the S&P 500 since 1927
+
+
 class Composite(unittest.TestCase):
     def test_equal_weighted_with_enough_members(self):
         days = weekdays('2026-01-05', 4)
@@ -215,7 +354,7 @@ class LongHistory(unittest.TestCase):
                 return {'chart': {'result': [{'timestamp': ts, 'meta': {'gmtoffset': 0}, 'indicators': {'quote': [q]}}]}}
         P.fetch(Client(), 'IDX-GSPC')
         self.assertIn('%5EGSPC', seen[-1])
-        self.assertIn('period1=' + str(int(dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc).timestamp())) + '&', seen[-1])
+        self.assertIn('period1=' + str(int(dt.datetime(1927, 12, 30, tzinfo=dt.timezone.utc).timestamp())) + '&', seen[-1])
         P.fetch(Client(), 'SPY')
         self.assertIn('/chart/SPY?', seen[-1])
         p1 = int(seen[-1].split('period1=')[1].split('&')[0])
