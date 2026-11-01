@@ -9,7 +9,11 @@ disclosures/data/research/paths/, drawn by docs/paths-view.js (company page "Pri
             and the sector and style ETFs: ten years on the first fetch, then the last months merged in (a refresh restates
             every earlier adjusted close after a dividend or split, so the rows on file are rescaled to the new basis).
             cache/ohlc/<TICKER>.json.gz, state.json.
-            Also, for the move odds only: the style ETFs and the market indices' daily history since 1970 (LONG_HISTORY).
+            Also, for the move odds only: the style ETFs and more ETFs (MOVES_MORE_ETFS: countries, bonds, commodities,
+            industries), and the market, world and volatility indices' whole daily history (LONG_HISTORY: the S&P 500
+            since 1928, the Nikkei since 1965, VIX since 1990 …).
+  long      cache/long/: every other ticker's daily bars before the ones on file, fetched once (backfill()), so that
+            the move odds see each company's whole history (from 1962 for the oldest).
   moves     public/moves/ (moves.py): each asset's daily returns for the move odds, today's moves and their percentiles.
   build     public/c/<cik>.json per company, public/index.json, public/models.json (the walk-forward scorecard of every
             path model and analog method), public/rules.json (every price-action rule with its pooled, out-of-sample
@@ -47,10 +51,50 @@ YAHOO_D = ('https://query1.finance.yahoo.com/v8/finance/chart/{s}?period1={p1}&p
 STOOQ_D = 'https://stooq.com/q/d/l/?s={s}&i=d'
 ETFS = [RH.BENCH] + [t for t, _, _ in RH.SECTOR_ETFS] + ['QQQ', 'IWM', 'DIA', 'TLT', 'GLD']
 SECTOR_ETF = {k: t for t, k, _ in RH.SECTOR_ETFS}
-# collected for the move odds only (moves.py; the path models above keep ETFS): the style ETFs, and the market indices'
-# long daily history (price only), from these dates on the first fetch
+# collected for the move odds only (moves.py; the path models above keep ETFS): the style ETFs; the market indices and
+# the volatility indices (price only), each from these dates on the first fetch (Yahoo answers from its first day)
 MOVES_ETFS = [t for t, _ in RH.STYLE_ETFS if t not in ETFS]
-LONG_HISTORY = {'IDX-GSPC': '1970-01-02', 'IDX-IXIC': '1971-02-05', 'IDX-DJI': '1970-01-02', 'IDX-NDX': '1985-10-01', 'IDX-RUT': '1987-09-10'}
+VOL_INDEXES = [('IDX-VIX', '^VIX', 'CBOE Volatility Index (VIX)'), ('IDX-VXN', '^VXN', 'Nasdaq-100 Volatility Index (VXN)'),
+               ('IDX-VVIX', '^VVIX', 'Volatility of the VIX (VVIX)'), ('IDX-VIX9D', '^VIX9D', '9-day VIX (VIX9D)'),
+               ('IDX-VIX3M', '^VIX3M', '3-month VIX (VIX3M)'), ('IDX-OVX', '^OVX', 'Crude Oil Volatility Index (OVX)'),
+               ('IDX-GVZ', '^GVZ', 'Gold Volatility Index (GVZ)'), ('IDX-SKEW', '^SKEW', 'CBOE SKEW Index (tail risk)')]
+# more indices (key, Yahoo symbol, name, group: price only, in their own currency) and ETFs (ticker, name, group) for the
+# move odds; moves.py groups them on the hub's Indices & ETFs view
+MOVES_INDEXES = [
+    ('IDX-SOX', '^SOX', 'PHLX Semiconductor index', 'us'), ('IDX-NYA', '^NYA', 'NYSE Composite index', 'us'),
+    ('IDX-SP400', '^SP400', 'S&P MidCap 400 index', 'us'), ('IDX-SP600', '^SP600', 'S&P SmallCap 600 index', 'us'),
+    ('IDX-RUI', '^RUI', 'Russell 1000 index', 'us'), ('IDX-DJT', '^DJT', 'Dow Jones Transportation Average', 'us'),
+    ('IDX-DJU', '^DJU', 'Dow Jones Utility Average', 'us'),
+    ('IDX-N225', '^N225', 'Nikkei 225 (Japan)', 'world'), ('IDX-FTSE', '^FTSE', 'FTSE 100 (UK)', 'world'),
+    ('IDX-GDAXI', '^GDAXI', 'DAX (Germany)', 'world'), ('IDX-FCHI', '^FCHI', 'CAC 40 (France)', 'world'),
+    ('IDX-SX5E', '^STOXX50E', 'Euro Stoxx 50', 'world'), ('IDX-HSI', '^HSI', 'Hang Seng (Hong Kong)', 'world'),
+    ('IDX-SSEC', '000001.SS', 'Shanghai Composite (China)', 'world'), ('IDX-KS11', '^KS11', 'KOSPI (South Korea)', 'world'),
+    ('IDX-TWII', '^TWII', 'Taiwan Weighted', 'world'), ('IDX-BSESN', '^BSESN', 'BSE Sensex (India)', 'world'),
+    ('IDX-NSEI', '^NSEI', 'Nifty 50 (India)', 'world'), ('IDX-GSPTSE', '^GSPTSE', 'S&P/TSX Composite (Canada)', 'world'),
+    ('IDX-AXJO', '^AXJO', 'S&P/ASX 200 (Australia)', 'world'), ('IDX-BVSP', '^BVSP', 'Bovespa (Brazil)', 'world'),
+    ('IDX-MXX', '^MXX', 'IPC (Mexico)', 'world'), ('IDX-DXY', 'DX-Y.NYB', 'US Dollar Index', 'commodities')]
+MOVES_MORE_ETFS = [
+    ('VTI', 'US total market', 'broad'), ('ACWI', 'All-country world', 'broad'), ('VEA', 'Developed markets ex-US', 'broad'),
+    ('VWO', 'Emerging markets', 'broad'),
+    ('EWJ', 'Japan', 'country'), ('FXI', 'China large caps', 'country'), ('MCHI', 'China', 'country'), ('KWEB', 'China internet', 'country'),
+    ('EWZ', 'Brazil', 'country'), ('INDA', 'India', 'country'), ('EWG', 'Germany', 'country'), ('EWU', 'United Kingdom', 'country'),
+    ('EWC', 'Canada', 'country'), ('EWA', 'Australia', 'country'), ('EWT', 'Taiwan', 'country'), ('EWY', 'South Korea', 'country'),
+    ('EWW', 'Mexico', 'country'), ('EWH', 'Hong Kong', 'country'),
+    ('IEF', 'Treasuries 7–10 years', 'bonds'), ('SHY', 'Treasuries 1–3 years', 'bonds'), ('AGG', 'US aggregate bonds', 'bonds'),
+    ('LQD', 'Investment-grade corporate bonds', 'bonds'), ('HYG', 'High-yield corporate bonds', 'bonds'),
+    ('TIP', 'Inflation-protected Treasuries', 'bonds'), ('EMB', 'Emerging-market bonds', 'bonds'), ('MUB', 'Municipal bonds', 'bonds'),
+    ('SLV', 'Silver', 'commodities'), ('UNG', 'Natural gas', 'commodities'), ('DBC', 'Broad commodities', 'commodities'),
+    ('DBA', 'Agriculture', 'commodities'), ('GDX', 'Gold miners', 'commodities'),
+    ('VNQ', 'Real estate (REITs)', 'industry'), ('IBB', 'Biotechnology', 'industry'), ('KBE', 'Banks', 'industry'),
+    ('XHB', 'Homebuilders', 'industry'), ('XRT', 'Retail', 'industry'), ('XOP', 'Oil & gas exploration', 'industry'),
+    ('OIH', 'Oil services', 'industry'), ('XME', 'Metals & mining', 'industry'), ('ITA', 'Aerospace & defense', 'industry'),
+    ('IYT', 'Transportation', 'industry'), ('JETS', 'Airlines', 'industry'), ('TAN', 'Solar', 'industry'), ('ICLN', 'Clean energy', 'industry'),
+    ('IGV', 'Software', 'industry'), ('ARKK', 'ARK Innovation', 'industry'), ('URA', 'Uranium', 'industry')]
+YAHOO_SYMBOL = {**RH.IDX_YAHOO, **{k: y for k, y, _ in VOL_INDEXES}, **{k: y for k, y, _, _ in MOVES_INDEXES}}
+# every other ticker's daily bars before the ones on file (which start ten years back), fetched once by backfill()
+LONG_FROM = '1927-12-30'
+LONG_HISTORY = {'IDX-GSPC': '1927-12-30', 'IDX-IXIC': '1971-02-05', 'IDX-DJI': '1970-01-02', 'IDX-NDX': '1985-10-01', 'IDX-RUT': '1987-09-10',
+                **{k: '1990-01-02' for k, _, _ in VOL_INDEXES}, **{k: LONG_FROM for k, _, _, _ in MOVES_INDEXES}}
 FORMAT = 1
 HORIZON = 63                                 # trading days ahead (about 13 weeks)
 WINDOW = 756                                 # three years of daily returns behind each path model
@@ -231,12 +275,13 @@ def fetch(client, ticker, full=True, sources=('yahoo', 'stooq')):
                     p1 = int(dt.datetime.fromisoformat(long_from).replace(tzinfo=dt.timezone.utc).timestamp())
                 else:
                     p1 = p2 - (YEARS * 366 + 2) * 86400
-                ys = RH.IDX_YAHOO.get(t, t).replace('^', '%5E')
+                ys = YAHOO_SYMBOL.get(t, t).replace('^', '%5E')
                 return parse_yahoo_daily(client.json(YAHOO_D.format(s=ys, p1=p1, p2=p2))), 'yahoo'
             if src == 'stooq':
-                if t in RH.IDX_STOOQ and not RH.IDX_STOOQ[t]:
+                sq = RH.IDX_STOOQ.get(t) if t in YAHOO_SYMBOL else t.lower() + '.us'
+                if not sq:
                     raise ValueError('no Stooq symbol for this index')
-                bars = parse_stooq_daily(client.get(STOOQ_D.format(s=RH.IDX_STOOQ.get(t) or (t.lower() + '.us'))).decode('utf-8', 'replace'))
+                bars = parse_stooq_daily(client.get(STOOQ_D.format(s=sq)).decode('utf-8', 'replace'))
                 if not full:
                     bars = {k: v[-REFRESH_SPAN:] for k, v in bars.items()}
                 else:
@@ -247,6 +292,107 @@ def fetch(client, ticker, full=True, sources=('yahoo', 'stooq')):
         except Exception as exc:
             problems.append(f'{src}: {str(exc)[:160]}')
     raise RuntimeError(' | '.join(problems))
+
+
+# ------------------------------------------------------------------ the older bars (the move odds' long history)
+def encode_returns(days, closes):
+    """{'d0', 'gaps' | 'dates', 'r'}: the first trading day, the calendar days from each trading day to the next (one
+    base-36 character each; the dates themselves when a gap exceeds 35 days) and each day's log return in whole basis
+    points (r[k] is the return into day k + 1). The format of cache/long/ and of moves.py's files."""
+    r = np.rint(np.diff(np.log(np.asarray(closes, float))) * 1e4).astype(int)
+    ds = [dt.date.fromisoformat(d) for d in days]
+    gaps = [(b - a).days for a, b in zip(ds, ds[1:])]
+    doc = {'d0': days[0], 'r': r.tolist()}
+    if all(1 <= g <= 35 for g in gaps):
+        doc['gaps'] = ''.join(np.base_repr(g, 36).lower() for g in gaps)
+    else:
+        doc['dates'] = list(days)
+    return doc
+
+
+def decode_returns(doc):
+    """encode_returns()'s inverse: (trading days, daily log returns as fractions)."""
+    if doc.get('dates'):
+        days = list(doc['dates'])
+    else:
+        d = dt.date.fromisoformat(doc['d0'])
+        days = [doc['d0']]
+        for ch in doc.get('gaps') or '':
+            d += dt.timedelta(days=int(ch, 36))
+            days.append(d.isoformat())
+    return days, np.asarray(doc['r'], float) / 1e4
+
+
+def long_path(root, ticker):
+    return Path(root) / 'cache' / 'long' / (RH.symbol(ticker) + '.json.gz')
+
+
+def read_long(root, ticker):
+    return _read_gz(long_path(root, ticker))
+
+
+def backfill(client, root, tickers, minutes=15.0, batch=800):
+    """Every ticker's daily bars before the ones on file, fetched once (cache/long/<T>.json.gz): from LONG_FROM (Yahoo
+    answers from the ticker's first trading day) to a week past the first day on file, kept up to that day, as daily
+    log returns in whole basis points ending on it (moves.py joins them there). Dividends and splits restated later
+    rescale the whole past alike, so these returns stay true and are never fetched again, unless the bars on file are
+    fetched anew (another first day). The indices too: one first collected from a later date gets the years before it.
+    Tickers with nothing before the bars on file are marked done; failures back off 1, 2, 4 … 30 days.
+    cache/long/state.json; returns what was done."""
+    root = Path(root)
+    sp = root / 'cache' / 'long' / 'state.json'
+    state = read_json(sp, {})
+    on_file = (read_json(root / 'state.json', {}) or {}).get('tickers', {})          # the collector's: each first day
+    t0, today = time.monotonic(), dt.datetime.now(dt.timezone.utc)
+    done = {'fetched': 0, 'nothing_older': 0, 'failed': 0, 'skipped_time': 0, 'waiting': 0}
+
+    def pending(t):
+        s, first = state.get(t) or {}, (on_file.get(t) or {}).get('first')
+        if s.get('status') == 'ok':
+            return bool(first) and first != s.get('end')
+        if s.get('status') == 'none':
+            return bool(first) and first != s.get('first')
+        return True
+    todo = [t for t in tickers if pending(t) and (state.get(t) or {}).get('retry_after', '') <= today.isoformat()]
+    p1 = int(dt.datetime.fromisoformat(LONG_FROM).replace(tzinfo=dt.timezone.utc).timestamp())
+    for i, t in enumerate(todo[:batch]):
+        if time.monotonic() - t0 > minutes * 60:
+            done['skipped_time'] = len(todo[:batch]) - i
+            break
+        have = load(root, t)
+        if not have or len(have.get('t') or []) < 2:
+            done['waiting'] += 1                      # nothing on file yet: the collector comes first
+            continue
+        first = have['t'][0]
+        info = state.setdefault(t, {})
+        try:
+            p2 = int(dt.datetime.fromisoformat(first).replace(tzinfo=dt.timezone.utc).timestamp()) + 8 * 86400
+            try:
+                bars = parse_yahoo_daily(client.json(YAHOO_D.format(s=YAHOO_SYMBOL.get(t, t).replace('^', '%5E'), p1=p1, p2=p2)))
+            except ValueError as exc:
+                if 'no daily rows' not in str(exc):
+                    raise
+                bars = {'t': [], 'ac': []}            # listed within the week: nothing older
+            keep = [k for k, d in enumerate(bars['t']) if d <= first]
+            if len(keep) < 2 or bars['t'][keep[-1]] != first:
+                info.update(status='none', checked_at=now(), first=first, rows=len(keep))
+                done['nothing_older'] += 1
+                continue
+            days, closes = [bars['t'][k] for k in keep], [bars['ac'][k] for k in keep]
+            _write_gz(long_path(root, t), {'ticker': t, 'source': 'yahoo', 'fetched_at': now(), 'end': first, **encode_returns(days, closes)})
+            info.update(status='ok', fetched_at=now(), since=days[0], end=first, days=len(days), fails=0)
+            info.pop('error', None)
+            info.pop('retry_after', None)
+            done['fetched'] += 1
+        except Exception as exc:
+            n = int(info.get('fails') or 0) + 1
+            info.update(fails=n, error=str(exc)[:300], tried_at=now(), retry_after=(today + dt.timedelta(days=min(30, 2 ** (n - 1)))).isoformat())
+            done['failed'] += 1
+        if i % 50 == 49:
+            write_json(sp, state)
+    write_json(sp, state)
+    done['left'] = sum(1 for t in tickers if pending(t))
+    return done
 
 
 def universe(index_path):
@@ -318,7 +464,7 @@ def collect(client, root, tickers, batch=2000, refresh=2500, minutes=25.0, first
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['collect', 'build', 'moves', 'movenews'])
+    ap.add_argument('cmd', choices=['collect', 'build', 'moves', 'long', 'movenews'])
     ap.add_argument('--root', default='paths')
     ap.add_argument('--universe', default=None, help="research-valuation's public/index.json")
     ap.add_argument('--people', default=None, help="the hub's research/people folder (managers.json, m/, officials.json, o/)")
@@ -330,16 +476,19 @@ def main():
     ap.add_argument('--subs', type=int, default=300, help='movenews: filing lists asked per run')
     ap.add_argument('--reads', type=int, default=250, help='movenews: 8-Ks read per run')
     a = ap.parse_args()
-    if a.cmd == 'collect':
+    if a.cmd in ('collect', 'long'):
         import tempfile
         cfg = read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {})
         http = cfg.get('http', {})
         client = Client(tempfile.mkdtemp(prefix='paths-raw-'),
                         {**http, 'host_intervals': {**http.get('host_intervals', {}), 'query1.finance.yahoo.com': 0.6, 'stooq.com': 1.0}})
         extra = [t for t in re.split(r'[\s,;]+', a.tickers or '') if t]
-        tickers = list(dict.fromkeys([RH.symbol(t) for t in extra] + ETFS + MOVES_ETFS + list(LONG_HISTORY)
+        tickers = list(dict.fromkeys([RH.symbol(t) for t in extra] + ETFS + MOVES_ETFS + [t for t, _, _ in MOVES_MORE_ETFS] + list(LONG_HISTORY)
                                      + [c['t'] for c in universe(a.universe)]))
-        print(json.dumps(collect(client, a.root, tickers, a.batch, a.refresh, a.minutes, first=extra)))
+        if a.cmd == 'long':
+            print(json.dumps(backfill(client, a.root, [t for t in tickers if t not in extra], a.minutes)))
+        else:
+            print(json.dumps(collect(client, a.root, tickers, a.batch, a.refresh, a.minutes, first=extra)))
     elif a.cmd == 'moves':
         import moves
         print(json.dumps(moves.build(a.root, a.universe, limit=a.limit)))
