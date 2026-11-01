@@ -227,3 +227,36 @@ class LongHistory(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PastDays(unittest.TestCase):
+    def test_day_rows_use_only_the_days_up_to_each_day(self):
+        days = weekdays('2025-01-01', 400)
+        rng = np.random.default_rng(3)
+        closes = list(100 * np.exp(np.cumsum(rng.normal(0, 0.01, 400))))
+        closes[300] = closes[299] * 0.85                                # a crash on day 300
+        closes[301:] = [x * 0.85 for x in closes[301:]]
+        ds, r = M.decode(json.loads(json.dumps(M.encode(days, closes))))
+        rows = M.day_rows(ds, r, [ds[300], ds[399]])
+        mv, pct, z, m5, m21, n1, n5, n21 = rows[ds[300]]
+        self.assertAlmostEqual(mv, -0.15, places=3)
+        self.assertLess(pct, 0.5)                                       # the worst day so far
+        self.assertLess(z, -5)
+        self.assertIsNotNone(n21)                                       # what came next is known
+        self.assertIsNone(rows[ds[399]][5])                             # the last day: nothing after it yet
+        # the percentile only counts the days up to it: adding later days does not change it
+        later = M.day_rows(ds[:320], r[:319], [ds[300]])[ds[300]]
+        self.assertAlmostEqual(later[1], pct)
+
+    def test_write_days(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            snaps = {f'S{i}': {'2026-10-29': [0.01 * i, 10.0 * i, 0.5, None, None, None, None, None],
+                               '2026-10-30': [-0.01, 3.0 if i < 5 else 50.0, -1.0, None, None, None, None, None]} for i in range(12)}
+            kinds = {k: 'stock' for k in snaps}
+            self.assertEqual(M.write_days(out, snaps, kinds), 2)
+            d = json.loads((out / 'days' / '2026-10-30.json').read_text())
+            self.assertEqual(d['fields'][0], 'key')
+            self.assertEqual(len(d['rows']), 12)
+            self.assertAlmostEqual(d['breadth']['down5'], 5 / 12, places=3)
+            self.assertEqual(json.loads((out / 'days' / 'index.json').read_text())['days'], ['2026-10-29', '2026-10-30'])

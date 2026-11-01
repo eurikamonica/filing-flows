@@ -268,6 +268,64 @@ def summary(days, r, band=BAND):
     return out
 
 
+DAYS_KEPT = 252                # past days a visitor can pick in the hub (days/<date>.json), a year of trading days
+DAY_FIELDS = ['key', 'move', 'pct', 'z', 'move5', 'move21', 'next1', 'next5', 'next21']
+
+
+def day_rows(days, r, targets):
+    """{date: [move, pct, z, move5, move21, next1, next5, next21]} for each target date the asset traded: the day's move
+    and its percentile among the asset's days up to and including it (what was known then: an old day's numbers never
+    change), its size against its own recent volatility, the week's and month's moves to it, and what actually came
+    next (close to close, None until those days have passed). Moves and returns as simple returns."""
+    c = cum(r)
+    at = {d: j for j, d in enumerate(days)}
+    m1, z = moves(c, 1), vol_scaled(r, 1)
+    m5, m21 = moves(c, 5), moves(c, 21)
+    f = {h: ahead(c, h) for h in (1, 5, 21)}
+    ex = lambda v: math.expm1(float(v)) if np.isfinite(v) else None
+    out = {}
+    for d in targets:
+        j = at.get(d)
+        if j is None or not np.isfinite(m1[j]):
+            continue
+        hist = m1[1:j + 1]
+        hist = hist[np.isfinite(hist)]
+        x = m1[j]
+        lo, hi = np.count_nonzero(hist < x), np.count_nonzero(hist <= x)
+        out[d] = [ex(x), 100.0 * (lo + 0.5 * (hi - lo)) / len(hist), float(z[j]) if np.isfinite(z[j]) else None,
+                  ex(m5[j]), ex(m21[j]), ex(f[1][j]), ex(f[5][j]), ex(f[21][j])]
+    return out
+
+
+def write_days(out, snaps, kinds, keep=DAYS_KEPT):
+    """days/<date>.json for the last `keep` trading days of the market (SPY), and days/index.json listing them; a day
+    older than a month is written once (its numbers no longer change), the last month's every run."""
+    ref = sorted({d for s in snaps.values() for d in s})
+    ref = ref[-keep:]
+    dd = out / 'days'
+    dd.mkdir(parents=True, exist_ok=True)
+    recent = set(ref[-25:])
+    listed = []
+    for d in ref:
+        p = dd / f'{d}.json'
+        dec = (4, 1, 2, 4, 4, 4, 4, 4)                                  # returns to 0.01%, percentiles to 0.1, sigmas to 0.01
+        rows = [[k] + [_r(v, n) for v, n in zip(s[d], dec)] for k, s in snaps.items() if d in s]
+        if len(rows) < 10:
+            continue
+        listed.append(d)
+        if p.exists() and d not in recent:
+            continue
+        st = [x for x in rows if kinds.get(x[0]) == 'stock' and x[2] is not None]
+        breadth = {'stocks': len(st), 'down5': _r(sum(1 for x in st if x[2] <= 5) / len(st)) if st else None,
+                   'up5': _r(sum(1 for x in st if x[2] >= 95) / len(st)) if st else None}
+        _dump(p, {'format': FORMAT, 'date': d, 'fields': DAY_FIELDS, 'breadth': breadth, 'rows': rows})
+    for p in dd.glob('*.json'):
+        if p.stem != 'index' and p.stem not in listed:
+            p.unlink()
+    _dump(dd / 'index.json', {'format': FORMAT, 'days': listed})
+    return len(listed)
+
+
 # ------------------------------------------------------------------ industry composites
 def composite(members, min_members=MIN_MEMBERS, share=0.6):
     """An equal-weighted daily composite of members [(days, closes)]: each day's mean simple return of the members that
@@ -388,7 +446,9 @@ def build(root, universe_path, val_dir=None, limit=0):
             if len(code) == 4 or m['key'] not in links:
                 links[m['key']] = key
     names = {a['key']: a.get('name') for a in assets}
-    rows, written = [], set()
+    rows, written, snaps, kinds = [], set(), {}, {}
+    spy = data.get('SPY')
+    targets = (spy[0] if spy else sorted({d for v in data.values() for d in v[0]}))[-DAYS_KEPT:]
     for a in assets:
         if a['key'] not in data:
             continue
@@ -397,6 +457,8 @@ def build(root, universe_path, val_dir=None, limit=0):
             enc = encode(ds, cs)
             days, r = decode(enc)
             s = summary(days, r)
+            snaps[a['key']] = day_rows(days, r, targets)
+            kinds[a['key']] = a['kind']
         except Exception as exc:                                        # noqa: BLE001
             errors.append(f"{a['key']}: {str(exc)[:160]}")
             continue
@@ -433,7 +495,12 @@ def build(root, universe_path, val_dir=None, limit=0):
         counts[r[FIELDS.index('kind')]] = counts.get(r[FIELDS.index('kind')], 0) + 1
     _dump(out / 'index.json', {'format': FORMAT, 'generated_at': now(), 'as_of': as_of, 'band': BAND, 'horizons': list(HORIZONS),
                                'breadth': {k: _r(v) for k, v in breadth.items()}, 'fields': FIELDS, 'rows': rows})
-    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'seconds': round(time.monotonic() - t0, 1),
+    try:
+        n_days = write_days(out, snaps, kinds)
+    except Exception as exc:                                            # noqa: BLE001
+        n_days = 0
+        errors.append(f"days: {str(exc)[:160]}")
+    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'seconds': round(time.monotonic() - t0, 1),
               'errors': errors[:40]}
     write_json(out / 'status.json', status)
     return status
