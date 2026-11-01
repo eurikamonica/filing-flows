@@ -206,6 +206,10 @@ function etfOne(){
   if(h.derivatives)out+=`<p class="sub">Derivatives: ${etfPct(h.derivatives,1)} of net assets (gross, by reported value). ${h.on_loan?`Securities on loan: ${etfMoney(h.on_loan)}.`:''}</p>`;
   out+=`</div>`;
  }
+ // how the portfolio changed — a video from the fund's quarter-end N-PORT reports since 2019 (hub-video.js + the Video
+ // Studio) — and how crowded its holdings are among 13F managers (crowding.js)
+ if(d.holdings&&(d.weights||[]).length>1&&typeof HubVideo!=='undefined')out+=`<div class="panel"><h3>Holdings video: stock weights and sector areas over time</h3><p class="sub">${esc(sym)}'s own reports — every public quarter-end N-PORT report since 2019 (SEC data sets) plus the newest holdings — as a race of its biggest positions, share areas by stock or by sector, and the changes in percentage points. Play here or export an MP4.</p>${HubVideo.slot('etf:'+sym,{title:sym+' holdings',file:'etf-'+sym,styles:HubVideo.WEIGHT_STYLES,state:{k:'actual',aw:'etf',ah:sym},unit:'reports'})}</div>`;
+ if(d.holdings&&(d.weights||[]).length>1&&typeof cwPortfolio==='function')out+=cwPortfolio('etf:'+sym,sym,(d.weights||[]).map(x=>[String(x[0]||'').toUpperCase().replace(/\./g,'-'),+x[1]||0]),`Its holdings in the latest report (${h.date||'N-PORT'}).`);
  // look-through
  if(lt){
   out+=`<div class="panel"><h3>The companies inside, through the rest of the Hub</h3><p class="sub">Each figure is a weighted share of the portfolio (${etfPct(lt.covered,0)} of it is companies the Hub tracks).</p>`;

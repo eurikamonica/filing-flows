@@ -1,6 +1,7 @@
 # ETF research (Disclosures → ETFs): every US-listed ETF read from its own filings, the market and the rest of the Hub.
 # Every four hours: the ETF list (Nasdaq Trader + SEC tickers); any new SEC data set — N-CEN, N-PORT, prospectus
-# risk/return — downloaded and processed once (newest first; N-PORT holdings for the newest quarter); Yahoo market data
+# risk/return — downloaded and processed once (newest first; N-PORT holdings for the newest quarter; every ETF's
+# quarter-end portfolio from each N-PORT set, back to 2019 Q4 a few sets a run, for the holdings videos); Yahoo market data
 # for a batch of ETFs (largest first, each refreshed daily); then public/ is rebuilt and joined with the Hub's 13F
 # holders, officials' trades, short interest, N-PX filers, the consensus and debt data (app/etf.py).
 # Kept on the branch "etf-history" (one commit, force-pushed); scan.yml publishes public/ with the hub.
@@ -106,7 +107,7 @@ jobs:
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd etf
-          printf '%s\n' '# etf-history (data only)' '' 'Processed SEC data sets (cache/ncen, cache/nport, cache/rr, cache/nport_holdings.json.gz), market data (cache/market),' \
+          printf '%s\n' '# etf-history (data only)' '' 'Processed SEC data sets (cache/ncen, cache/nport, cache/rr, cache/nport_holdings.json.gz; cache/nport_weights: every ETF portfolio of every N-PORT set since 2019 Q4), market data (cache/market),' \
             'progress (state.json) and the files the site publishes (public/), kept by .github/workflows/etf.yml on main.' 'Force-pushed as a single commit on every run.' > README.md
           git add -A
           git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "etf $(date -u +%Y-%m-%dT%H:%MZ)" || true

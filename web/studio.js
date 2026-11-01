@@ -68,7 +68,7 @@
   const monthYear = (ms) => { const d = new Date(ms); return MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
   const dayLabel = (ms) => { const d = new Date(ms); return MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear(); };
   const json = (url) => (U.json ? U.json(url) : fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null));
-  const HUB = 'disclosures/data/', SITE = (root.FF_DATA || 'data/');
+  const HUB = (root.FF_HUB || 'disclosures/data/'), SITE = (root.FF_DATA || 'data/');   // the Hub's player (disclosures/hub-video.js) sets both
   const norm = (s) => String(s || '').trim().toUpperCase().replace(/\./g, '-');
   const friday = (ms) => ms + ((5 - new Date(ms).getUTCDay() + 7) % 7) * DAY;   // the Friday that ends a date's week
 

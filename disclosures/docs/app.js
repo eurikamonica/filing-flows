@@ -251,8 +251,8 @@ const qs1=(sel)=>typeof document.querySelector==='function'?document.querySelect
 function hubPick(open){const nav=qs1('nav.modules'),b=qs1('.hub-pick');if(!nav||!b)return;nav.classList.toggle('open',open);b.setAttribute('aria-expanded',String(open))}
 {const b=qs1('.hub-pick');if(b)b.onclick=()=>hubPick(!qs1('nav.modules').classList.contains('open'));addEventListener('keydown',e=>{if(e.key==='Escape')hubPick(false)});if(typeof document.addEventListener==='function')document.addEventListener('click',e=>{const n=qs1('nav.modules');if(n&&n.classList.contains('open')&&!e.target.closest('.hub-groups')&&!e.target.closest('.hub-pick'))hubPick(false)})}
 /* deep links: disclosures/#signals, #flows, #trades, #holdings … */
-/* deep links from the site's search: #holdings/<manager CIK>, #trades/<official's name>, #etf/<ticker> */
-function deepLink(h,v){if(!v)return;if(h==='holdings')state.manager=v.replace(/\D/g,'');else if(h==='trades'){state.tperson=v;state.page=0}else if(h==='etf'){state.eview='one';state.esym=v.toUpperCase()}}
+/* deep links from the site's search: #holdings/<manager CIK>, #holdings/crowding (crowding.js), #trades/<official's name>, #etf/<ticker> */
+function deepLink(h,v){if(!v)return;if(h==='holdings'){if(/^crowd/i.test(v))state.hview='crowd';else{state.hview='manager';state.manager=v.replace(/\D/g,'')}}else if(h==='trades'){state.tperson=v;state.page=0}else if(h==='etf'){state.eview='one';state.esym=v.toUpperCase()}}
 function fromHash(){const [h,...rest]=location.hash.slice(1).split('/'),arg=rest.join('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);else if(arg&&h==='rotation'){const [v,u]=decodeURIComponent(arg).split('~');if(v)state.rview=v;if(u)state.rrgu=u}   /* #rotation/rrg~chain:ai-capex */else if(arg&&typeof window[h+'DeepLink']==='function')window[h+'DeepLink'](arg);else if(arg)deepLink(h,decodeURIComponent(arg));if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();

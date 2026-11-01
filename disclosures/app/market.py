@@ -19,6 +19,7 @@ signals.json          one row per ticker joining the three: institutional crowdi
 hype-history.json     the Hype map in clock-separated views (crowd_clocks.py): quarter-aligned and public as of the 13F
                       deadline, comparable managers only, per stock and quarter
 crowd-transitions.json the descriptive quarter-to-quarter transition audit of those views (crowd_clocks.audit)
+crowding.json         holdings crowding per stock and quarter: holders, top-ten holders, value held, score (crowding.py)
 
 Dollar flows: quantity change × the median quarter-end price that all reporting managers imply for the security
 (value ÷ shares), which is robust to the occasional filer reporting in thousands. Quarter-end disclosures are not
@@ -36,6 +37,7 @@ from core import now, read_json, write_json
 import insiders as INS
 import senate as SEN
 import crossholdings as XH
+import crowding as CR
 import president as PRES
 import crowd_clocks as CC
 
@@ -969,8 +971,16 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
     opts = {}
     xcfg = (read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {}) or {}).get('crossholdings') or {}
     gather = XH.Gather(XH.listed_ciks(root), int(xcfg.get('institutions', 12)), universe.cusip_ticker)
+    crowd = CR.Gather(lambda c: universe.cusip_type.get(c) in FUND_TYPES)
+
+    def see(m):                                   # one pass over the managers feeds cross-holdings and crowding
+        for f in (gather.see, crowd.see):
+            try:
+                f(m)
+            except Exception:
+                pass
     clock = CC.clock_from_prices(root)
-    flows, every = build_flows(root, universe, opts=opts, see=gather.see, clock=clock)
+    flows, every = build_flows(root, universe, opts=opts, see=see, clock=clock)
     by_quarter, ctx = (flows.pop('_by_quarter', None), flows.pop('_ctx', None)) if flows else (None, None)
     trades, tstats = officials_trades(root, universe, live)
     latest, monitor = latest_reports(root, live, trades)
@@ -998,6 +1008,12 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                                                              'rows': detail})
         # CUSIP → ticker for the securities in 13F, so other tools (Owner tools' 13F posts) can name holdings
         _write(out_dir / 'cusip-tickers.json', {c: t for c, t in universe.cusip_ticker.items() if t})
+        try:                                      # holdings crowding, stock by stock and quarter by quarter (crowding.py)
+            cdoc = CR.build(crowd, universe.cusip_ticker, universe.name, (ctx or {}).get('coverage'), stamp)
+            if cdoc:
+                _write(out_dir / 'crowding.json', cdoc)
+        except Exception as exc:
+            errors.append(f'crowding: {exc}')
         try:
             o13 = options13f(opts, ctx['managers'], universe, ctx['coverage'], ctx['quarter'], ctx['prices'])
             if o13:
