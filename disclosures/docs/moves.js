@@ -4,9 +4,11 @@
    composite, the most extreme first), stocks today (the valued companies' most extreme moves either way, or the most
    unusual against their own volatility) and one ticker. The analysis is moves-view.js, shared with the
    company pages. Data: data/research/paths/moves/index.json and a/<KEY>.json (app/moves.py, branch research-paths).
-   Deep links: #moves, #moves/all, #moves/industries, #moves/stocks, #moves/SPY, #moves/IDX-N225, #moves/SIC-3674, #moves/NVDA. */
+   Deep links: #moves, #moves/all, #moves/industries, #moves/stocks, #moves/SPY, #moves/IDX-N225, #moves/SIC-3674, #moves/NVDA;
+   a past day: #moves/stocks/2026-10-15. A past day (the Day menu: the last year of trading days) shows every asset's move
+   that day, ranked among its own days up to then, and what actually followed. */
 const mvStore={};
-const MV_VIEWS=[['market','Market & sectors'],['all','Indices & ETFs'],['industries','Industries'],['stocks','Stocks today'],['one','One ticker']];
+const MV_VIEWS=[['market','Market & sectors'],['all','Indices & ETFs'],['industries','Industries'],['stocks','Stocks on the day'],['one','One ticker']];
 const MV_GROUPS=[['market','The market (ETFs)'],['us','US indices'],['world','World indices — own currency, price only'],['sector','Sector ETFs'],['style','Styles & factors'],
  ['industry','Industry & theme ETFs'],['country','Country ETFs'],['broad','World & total-market ETFs'],['bonds','Bond ETFs'],['commodities','Commodities & the dollar'],['volatility','Volatility indices']];
 const MV_CORE=['IDX-GSPC','SPY','QQQ','IDX-NDX','DIA','IDX-DJI','IWM','IDX-RUT','RSP','MDY','IDX-IXIC'];
@@ -19,6 +21,34 @@ function mvData(){
   .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message;if(typeof render==='function')render()});
  return m;
 }
+// a past day (data/research/paths/moves/days/<date>.json, app/moves.py write_days): every asset's move that day, its rank
+// among its own days up to then, and what actually came next; names and kinds from index.json
+function mvDays(){
+ const m=mvStore.days||(mvStore.days={});
+ if(m.data||m.err||m.loading||typeof fetch!=='function')return m;
+ m.loading=fetch('data/research/paths/moves/days/index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+  .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message});
+ return m;
+}
+function mvDayDoc(day){
+ const m=mvStore['d'+day]||(mvStore['d'+day]={});
+ if(m.data||m.err||m.loading||typeof fetch!=='function')return m;
+ m.loading=fetch('data/research/paths/moves/days/'+day+'.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+  .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message;if(typeof render==='function')render()});
+ return m;
+}
+function mvPast(rows,doc){
+ const by=Object.fromEntries(rows.map(r=>[r.key,r]));
+ const out=[];
+ for(const x of doc.rows||[]){
+  const v=Object.fromEntries(doc.fields.map((f,i)=>[f,x[i]])),b=by[v.key];
+  if(!b)continue;
+  out.push(Object.assign({},b,{as_of:doc.date,move:v.move,pct:v.pct,z:v.z,move5:v.move5,move21:v.move21,next1:v.next1,next5:v.next5,next21:v.next21,
+   every:null,sim21:null,back:null,past:true}));
+ }
+ return out;
+}
+const mvNext=r=>`next day <span class="${mvTone(r.next1)}">${mvPct(r.next1)}</span> · week <span class="${mvTone(r.next5)}">${mvPct(r.next5)}</span> · month <span class="${mvTone(r.next21)}">${mvPct(r.next21)}</span>`;
 const mvRows=d=>(d.rows||[]).map(r=>Object.fromEntries(d.fields.map((f,i)=>[f,r[i]])));
 const mvPct=(v,d=1)=>v==null||!Number.isFinite(+v)?'—':(v>0?'+':v<0?'−':'')+Math.abs(100*v).toFixed(d)+'%';
 const mvRank=p=>p==null?'—':p>=50?`top ${(100-p)<1?(100-p).toFixed(2):(100-p).toFixed(1)}%`:`bottom ${p<1?p.toFixed(2):p.toFixed(1)}%`;
@@ -45,13 +75,15 @@ function mvMeter(p,vol){
  return `<div class="mvh-meter" title="percentile ${p.toFixed(1)}"><span style="left:${lo}%;width:${Math.max(hi-lo,1)}%;background:${col}"></span><span style="left:calc(50% - 1px);width:2px;background:var(--muted,#999)"></span></div>`;
 }
 function mvCard(r,on){
+ if(r.past)return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small><b class="${mvTone(r.move)}">${mvPct(r.move)}</b>${mvMeter(r.pct)}<i>${mvRank(r.pct)} day up to then</i><i>then: ${mvNext(r)}</i></button>`;
  return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small><b class="${mvTone(r.move)}">${mvPct(r.move)}</b>${mvMeter(r.pct)}<i>${mvRank(r.pct)} day · ${esc(mvEvery(r.every))} days</i><i>after days like it, next month: <span class="${mvTone(r.sim21&&r.sim21[1])}">${r.sim21?mvPct(r.sim21[1]):'—'}</span>${r.sim21?` · ${Math.round(100*r.sim21[2])}% rose`:''}</i></button>`;
 }
 function mvVolCard(r,on){
+ if(r.past)return mvCard(r,on);                                    // a past day: that day's move and what followed
  const lv=r.level,lvl=lv==null?'—':lv<10?lv.toFixed(2):lv.toFixed(1);
  return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small><b>${lvl}</b>${mvMeter(r.lpct,true)}<i>${r.lpct==null?'':mvRank(r.lpct)+' level since '+esc(String(r.d0||'').slice(0,4))} · today ${mvPct(r.move)}</i><i>S&amp;P 500 the month after levels like this: <span class="${mvTone(r.out21&&r.out21[1])}">${r.out21?mvPct(r.out21[1]):'—'}</span>${r.out21?` · ${Math.round(100*r.out21[2])}% rose`:''}</i></button>`;
 }
-function mvAnalysis(key){return key?`<div id="mv-one" data-k="${esc(key)}" style="margin-top:10px"></div>`:''}
+function mvAnalysis(key){return key?`<div id="mv-one" data-k="${esc(key)}" data-d="${esc(state.mvd||'')}" style="margin-top:10px"></div>`:''}
 // a plain table (no pager: a group is short, and several share the view)
 const mvTable=(h,rows)=>`<div class="tablebox"><table><thead><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(c=>`<tr>${c.map((v,i)=>`<td class="${i?'num':''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 function mvAll(rows,d){
@@ -61,13 +93,18 @@ function mvAll(rows,d){
  let out=`<p class="mvh-note">Every index and ETF on file, each group from the weakest latest day to the strongest (a date after the name when its last close is not ${esc(mvDay(d.as_of))}): the move, where it ranks in the asset's own history, how often a move as large comes, its volatility over the last month, and what followed the days like it. World indices are in their own currency, price only. Pick one for the whole analysis below: the days like it, similar stretches in its history, what to expect and a simulation.</p>`;
  for(const [g,lab] of MV_GROUPS){
   const rs=list.filter(r=>r.group===g);if(!rs.length)continue;
-  if(g==='volatility'){
+  if(g==='volatility'&&!d.past){
    rs.sort((a,b)=>(b.lpct??50)-(a.lpct??50));
    out+=`<h3 class="mvh-h">${esc(lab)}</h3>`+mvTable(['Index','Level','Rank of the level','Today','S&P 500 a month after levels like this','Rose'],rs.map(r=>[k(r),
     r.level==null?'—':(r.level<10?r.level.toFixed(2):r.level.toFixed(1)),mvRank(r.lpct),`<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,r.out21?`<span class="${mvTone(r.out21[1])}">${mvPct(r.out21[1])}</span>`:'—',r.out21?Math.round(100*r.out21[2])+'%':'—']));
    continue;
   }
   rs.sort((a,b)=>(a.pct??50)-(b.pct??50));
+  if(d.past){                                                       // a past day: its rank up to then, and what followed
+   out+=`<h3 class="mvh-h">${esc(lab)}</h3>`+mvTable(['Name','Move','Rank in its history up to then','Then: next day','Next week','Next month'],rs.map(r=>[k(r),
+    `<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,mvRank(r.pct),`<span class="${mvTone(r.next1)}">${mvPct(r.next1)}</span>`,`<span class="${mvTone(r.next5)}">${mvPct(r.next5)}</span>`,`<span class="${mvTone(r.next21)}">${mvPct(r.next21)}</span>`]));
+   continue;
+  }
   out+=`<h3 class="mvh-h">${esc(lab)}</h3>`+mvTable(['Name','Move','Rank in its history','How often','Volatility, 1 month','Next month after days like it','Rose','Since'],rs.map(r=>[k(r),
    `<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,mvRank(r.pct),esc(mvEvery(r.every)),r.rv21==null?'—':`${Math.round(100*r.rv21)}% · ${mvRank(r.rvpct)}`,
    r.sim21?`<span class="${mvTone(r.sim21[1])}">${mvPct(r.sim21[1])}</span>`:'—',r.sim21?Math.round(100*r.sim21[2])+'%':'—',esc(String(r.d0||'').slice(0,4))]));
@@ -82,7 +119,7 @@ function mvMarket(rows,d){
  const sty=grp('style');
  const b=d.breadth||{};
  let out=`<h3 class="mvh-h">The market</h3><div class="mvh-grid">${mk.map(r=>mvCard(r,r.key===pick)).join('')}</div>`;
- if(b.stocks)out+=`<p class="mvh-note">${esc(mvDay(d.as_of))}: of ${fmt(b.stocks)} valued companies with a close that day, <b class="mv-down">${(100*b.down5).toFixed(0)}%</b> had a bottom-5% day of their own history and <b class="mv-up">${(100*b.up5).toFixed(0)}%</b> a top-5% day (about 5% each on an ordinary day).</p>`;
+ if(b.stocks)out+=`<p class="mvh-note">${esc(mvDay(d.as_of))}: of ${fmt(b.stocks)} valued companies with a close that day, <b class="mv-down">${(100*b.down5).toFixed(0)}%</b> had a bottom-5% day of their own history${d.past?' (up to then)':''} and <b class="mv-up">${(100*b.up5).toFixed(0)}%</b> a top-5% day (about 5% each on an ordinary day).</p>`;
  if(sec.length)out+=`<h3 class="mvh-h">Sectors — weakest to strongest</h3><div class="mvh-grid">${sec.map(r=>mvCard(r,r.key===pick)).join('')}</div>`;
  const vol=grp('volatility').sort((a,b)=>['IDX-VIX','VIX-TERM','IDX-VIX9D','IDX-VIX3M','IDX-VVIX','IDX-VXN','IDX-SKEW','IDX-OVX','IDX-GVZ'].indexOf(a.key)-['IDX-VIX','VIX-TERM','IDX-VIX9D','IDX-VIX3M','IDX-VVIX','IDX-VXN','IDX-SKEW','IDX-OVX','IDX-GVZ'].indexOf(b.key));
  if(vol.length)out+=`<h3 class="mvh-h">Volatility — what options expect</h3><div class="mvh-grid">${vol.map(r=>mvVolCard(r,r.key===pick)).join('')}</div>`;
@@ -92,9 +129,10 @@ function mvMarket(rows,d){
 function mvIndustries(rows,d){
  const ind=rows.filter(r=>r.kind==='industry').sort((a,b)=>Math.abs((b.pct??50)-50)-Math.abs((a.pct??50)-50));
  const pick=state.mvk&&ind.some(r=>r.key===state.mvk)?state.mvk:(ind[0]||{}).key;
- const t=table(['Industry','Companies','Last day','Move','Rank in its history','5-day move','After days like it: next month','Rose'],ind.map(r=>[
+ const t=table(['Industry','Companies',d.past?'Day':'Last day','Move',d.past?'Rank in its history up to then':'Rank in its history','5-day move'].concat(d.past?['Then: next week','Then: next month']:['After days like it: next month','Rose']),ind.map(r=>[
   `<button type="button" class="mvh-k" data-mvk="${esc(r.key)}">${esc(r.name)}</button>`,fmt(r.members),esc(mvDay(r.as_of)),`<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,
-  `${mvRank(r.pct)}`,`<span class="${mvTone(r.move5)}">${mvPct(r.move5)}</span>`,r.sim21?`<span class="${mvTone(r.sim21[1])}">${mvPct(r.sim21[1])}</span>`:'—',r.sim21?Math.round(100*r.sim21[2])+'%':'—']));
+  `${mvRank(r.pct)}`,`<span class="${mvTone(r.move5)}">${mvPct(r.move5)}</span>`].concat(d.past?[`<span class="${mvTone(r.next5)}">${mvPct(r.next5)}</span>`,`<span class="${mvTone(r.next21)}">${mvPct(r.next21)}</span>`]
+  :[r.sim21?`<span class="${mvTone(r.sim21[1])}">${mvPct(r.sim21[1])}</span>`:'—',r.sim21?Math.round(100*r.sim21[2])+'%':'—'])));
  return `<p class="mvh-note">Each SIC industry with five or more valued companies, equal-weighted (and each SIC major group, the first two digits), the most extreme move first. They hold today's companies only.</p>`+t+mvAnalysis(pick);
 }
 function mvStocks(rows,d){
@@ -102,17 +140,25 @@ function mvStocks(rows,d){
  const sort=MV_SORTS.some(s=>s[0]===state.mvs)?state.mvs:'falls';
  const list=sort==='sigma'?st.filter(r=>r.z!=null).sort((a,b)=>Math.abs(b.z)-Math.abs(a.z)):sort==='rises'?st.sort((a,b)=>b.pct-a.pct):st.sort((a,b)=>a.pct-b.pct);
  const backLab=sort==='rises'?'Rise given back (median)':sort==='falls'?'Climbed back (median)':'Back to the close before (median)';
- const t=table(['Company','Sector','Move','Rank in its history','Against its volatility','Volatility, 1 month','How often','After days like it: next month','Rose',backLab,'Days like it'],list.slice(0,200).map(r=>[
-  `<button type="button" class="mvh-k" data-mvk="${esc(r.key)}" data-mvone="1">${esc(r.ticker)}</button> <span class="muted">${esc(r.name)}</span>`,esc(r.sector||''),
-  `<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,mvRank(r.pct),r.z==null?'—':(r.z>0?'+':'−')+Math.abs(r.z).toFixed(1)+'σ',r.rv21==null?'—':`${Math.round(100*r.rv21)}% · ${mvRank(r.rvpct)}`,esc(mvEvery(r.every)),
+ const who=r=>`<button type="button" class="mvh-k" data-mvk="${esc(r.key)}" data-mvone="1">${esc(r.ticker)}</button> <span class="muted">${esc(r.name)}</span>`;
+ const sig=r=>r.z==null?'—':(r.z>0?'+':'−')+Math.abs(r.z).toFixed(1)+'σ';
+ const t=d.past?table(['Company','Sector','Move','Rank in its history up to then','Against its volatility','Then: next day','Next week','Next month'],list.slice(0,200).map(r=>[
+  who(r),esc(r.sector||''),`<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,mvRank(r.pct),sig(r),
+  `<span class="${mvTone(r.next1)}">${mvPct(r.next1)}</span>`,`<span class="${mvTone(r.next5)}">${mvPct(r.next5)}</span>`,`<span class="${mvTone(r.next21)}">${mvPct(r.next21)}</span>`]))
+ :table(['Company','Sector','Move','Rank in its history','Against its volatility','Volatility, 1 month','How often','After days like it: next month','Rose',backLab,'Days like it'],list.slice(0,200).map(r=>[
+  who(r),esc(r.sector||''),
+  `<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,mvRank(r.pct),sig(r),r.rv21==null?'—':`${Math.round(100*r.rv21)}% · ${mvRank(r.rvpct)}`,esc(mvEvery(r.every)),
   r.sim21?`<span class="${mvTone(r.sim21[1])}">${mvPct(r.sim21[1])}</span>`:'—',r.sim21?Math.round(100*r.sim21[2])+'%':'—',mvBack(r.back),r.sim21?fmt(r.sim21[0]):'—']));
+ if(d.past)return `<p class="mvh-note">${esc(mvDay(d.as_of))}, the ${fmt(st.length)} valued companies with a close that day. "Rank in its history up to then" compares each move with the same stock's days up to that day only (what was known then); the last three columns are what actually followed, close to close. Pick a company to see the whole analysis of that day.</p>`+t;
  return `<p class="mvh-note">${esc(mvDay(d.as_of))}, the ${fmt(st.length)} valued companies with a close that day. "Rank in its history" compares each move with every day of the same stock since about ten years ago; "against its volatility" with the three months before the move. "Volatility, 1 month": the standard deviation of the last 21 daily returns, annualized, and its rank in the stock's history. "Climbed back": the median trading days after the days like it until the close was back at the close before the move. Pick a company to see the whole analysis.</p>`+t;
 }
 function movesView(){
  mvCss();
  state.mvv=MV_VIEWS.some(v=>v[0]===state.mvv)?state.mvv:'market';
  let out=head('Move odds','How rare the latest move is in each asset\'s own history — the market, US and world indices, ETFs of every kind, sectors and industries, every valued company — and what followed moves like it over the next day, week, month and quarter; the stretches of its history most like the last months, what to expect after them, and a simulation of the months ahead.','PERCENTILES · WHAT CAME NEXT');
+ const dl=mvDays(),dlist=((dl.data||{}).days||[]).slice().reverse();
  out+=`<div class="toolbar">${field('mvv','View',MV_VIEWS,state.mvv)}`;
+ if(dlist.length)out+=field('mvd','Day',[['','Latest close'],...dlist.map(x=>[x,mvDay(x)])],state.mvd||'');
  if(state.mvv==='stocks')out+=field('mvs','Show',MV_SORTS,state.mvs||'falls',true);
  if(state.mvv==='one')out+=`<div class="field wide"><label for="mvt">Ticker</label><input id="mvt" value="${esc(state.mvt||'')}" placeholder="e.g. NVDA, SPY, XLK · Enter"></div>`;
  out+='</div>';
@@ -120,26 +166,37 @@ function movesView(){
  const g=mvData();
  if(g.err)return out+empty(`The move odds could not load (${g.err}). They are rebuilt after every US close by .github/workflows/research-paths.yml (app/moves.py).`);
  if(!g.data)return out+empty('Loading the move odds…');
- const rows=mvRows(g.data);
- if(state.mvv==='industries')return out+mvIndustries(rows,g.data);
- if(state.mvv==='all')return out+mvAll(rows,g.data);
- if(state.mvv==='stocks')return out+mvStocks(rows,g.data);
- return out+mvMarket(rows,g.data);
+ let rows=mvRows(g.data),d=g.data;
+ if(state.mvd&&state.mvd!==g.data.as_of){
+  const p=mvDayDoc(state.mvd);
+  if(p.err)return out+empty(`${mvDay(state.mvd)} could not load (${p.err}). Pick another day.`);
+  if(!p.data)return out+empty(`Loading ${mvDay(state.mvd)}…`);
+  rows=mvPast(rows,p.data);
+  d={as_of:p.data.date,breadth:p.data.breadth,past:true};
+ }
+ if(state.mvv==='industries')return out+mvIndustries(rows,d);
+ if(state.mvv==='all')return out+mvAll(rows,d);
+ if(state.mvv==='stocks')return out+mvStocks(rows,d);
+ return out+mvMarket(rows,d);
 }
 function bindMoves(){
  if(state.tab!=='moves')return;
  if($('mvv'))$('mvv').onchange=e=>{state.mvv=e.target.value;state.page=0;render()};
  if($('mvs'))$('mvs').onchange=e=>{state.mvs=e.target.value;state.page=0;render()};
+ if($('mvd'))$('mvd').onchange=e=>{state.mvd=e.target.value;state.page=0;render()};
  if($('mvt')){$('mvt').onchange=e=>{state.mvt=e.target.value;render()};$('mvt').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-mvk]').forEach(b=>b.onclick=()=>{
   if(b.dataset.mvone){state.mvv='one';state.mvt=b.dataset.mvk}else state.mvk=b.dataset.mvk;
   render();const el=$('mv-one');if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'});
  });
  const one=$('mv-one');
- if(one&&window.MovesView&&one.dataset.drawn!==one.dataset.k){one.dataset.drawn=one.dataset.k;MovesView.render(one,{key:one.dataset.k,hub:''})}
+ const id=one?one.dataset.k+'@'+(one.dataset.d||''):'';
+ if(one&&window.MovesView&&one.dataset.drawn!==id){one.dataset.drawn=id;MovesView.render(one,{key:one.dataset.k,hub:'',state:one.dataset.d?{mode:'date',date:one.dataset.d,before:true}:undefined})}
 }
 function movesDeepLink(arg){
- const v=decodeURIComponent(arg||'').trim();if(!v)return;
+ let v=decodeURIComponent(arg||'').trim();if(!v)return;
+ const dm=/(?:^|\/)(\d{4}-\d{2}-\d{2})$/.exec(v);
+ if(dm){state.mvd=dm[1];v=v.slice(0,dm.index).replace(/\/$/,'');if(!v)return}
  if(MV_VIEWS.some(x=>x[0]===v)){state.mvv=v;return}
  const k=v.toUpperCase().replace(/[./]/g,'-');
  if(/^SIC-\d+$/.test(k)){state.mvv='industries';state.mvk=k;return}
@@ -158,4 +215,4 @@ window.movesDeepLink=movesDeepLink;
 window.HUB_NOTICES=Object.assign(window.HUB_NOTICES||{},{moves:movesNotice});
 window.HUB_VIEWS=Object.assign(window.HUB_VIEWS||{},{moves:movesView});
 window.HUB_BINDS=Object.assign(window.HUB_BINDS||{},{moves:bindMoves});
-if(typeof module!=='undefined')module.exports={mvMarket,mvAll,mvIndustries,mvStocks,mvRows,mvRank,movesDeepLink};
+if(typeof module!=='undefined')module.exports={mvMarket,mvAll,mvIndustries,mvStocks,mvRows,mvRank,movesDeepLink,mvPast};

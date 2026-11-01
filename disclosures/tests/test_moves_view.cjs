@@ -223,6 +223,18 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   H.movesDeepLink('SIC-3674'); ok(state.mvv === 'industries' && state.mvk === 'SIC-3674', 'deep link to an industry');
   H.movesDeepLink('nvda'); ok(state.mvv === 'one' && state.mvt === 'NVDA', 'deep link to a company');
   H.movesDeepLink('XLK'); ok(state.mvv === 'market' && state.mvk === 'XLK', 'deep link to a sector');
+  // a past day: every asset's move that day, ranked among its days up to then, and what actually followed
+  const day = { date: '2026-10-15', fields: ['key', 'move', 'pct', 'z', 'move5', 'move21', 'next1', 'next5', 'next21'], breadth: { stocks: 2, down5: 0.5, up5: 0 },
+    rows: [['NVDA', -0.061, 1.2, -3.1, -0.08, -0.1, 0.02, 0.045, 0.12], ['SPY', -0.021, 2.0, -2.5, -0.03, -0.02, 0.01, 0.02, 0.05], ['GONE', 0.1, 99, 3, 0, 0, 0, 0, 0]] };
+  const past = H.mvPast(rows, day);
+  ok(past.length === 2 && past.every((r) => r.past && r.as_of === '2026-10-15'), 'a past day joins the day file to the names, unknown keys left out');
+  state.mvd = '2026-10-15'; state.mvs = 'falls';
+  const ps = H.mvStocks(past, { as_of: '2026-10-15', breadth: day.breadth, past: true });
+  ok(ps.includes('Oct 15, 2026') && ps.includes('Then: next day') && ps.includes('+12.0%') && ps.includes('−6.1%'), 'stocks on a past day with what followed');
+  state.mvk = 'SPY';
+  const pm = H.mvMarket(past, { as_of: '2026-10-15', breadth: day.breadth, past: true });
+  ok(pm.includes('up to then') && pm.includes('data-d="2026-10-15"'), 'market cards on a past day, the analysis opened on that day');
+  state.mvd = ''; H.movesDeepLink('stocks/2026-10-01'); ok(state.mvv === 'stocks' && state.mvd === '2026-10-01', 'deep link to a past day');
 }
 
 // 8. older days counting less: the weighted percentile, days like it, what followed and how long it took, against a
