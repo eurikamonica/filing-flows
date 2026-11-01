@@ -95,7 +95,7 @@ function cwBuildAll(style,n){
  const C=g.model,P=C.P,last=cwQ(P[P.length-1]),span=`${cwQ(P[0])} → ${last}`;
  const scored=C.rows.filter(r=>r.s.some(cwNum));
  if(style==='score')return cwRank(C,scored,(r,k)=>r.s[k],{n,fmt:v=>v.toFixed(1),metric:'Crowding score (0–100)',title:'The most crowded stocks among 13F managers',sub:span+' · score = √(share of managers holding × share with it in their top ten)'});
- if(style==='delta')return cwRank(C,scored,(r,k)=>k?cwDelta(r.s[k],r.s[k-1]):null,{n,order:'abs',from:1,fmt:v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1),metric:'Change in crowding score vs the quarter before',title:'Where 13F crowding rose and fell',sub:span+' · score points, quarter on quarter'});
+ if(style==='delta')return cwRank(C,scored,(r,k)=>k?cwDelta(r.s[k],r.s[k-1]):null,{n,order:'abs',from:1,fmt:v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1),metric:'Change in crowding score vs the quarter before',title:'Where 13F crowding rose and fell',sub:`${cwQ(P[Math.min(1,P.length-1)])} → ${last} · score points, quarter on quarter`});
  if(style==='holders')return cwRank(C,C.rows,(r,k)=>r.h[k],{n,fmt:v=>Math.round(v).toLocaleString('en-US'),metric:'Managers holding',title:'The most widely held stocks in 13F',sub:span+' · managers that filed a position'});
  const secRows=Object.values(C.sectors).filter(S=>S.key!=='other').map(S=>({key:S.key,label:CW_SHORT[S.key],name:CW_SHORT[S.key]===CW_SECTORS[S.key]?'':CW_SECTORS[S.key],sec:S.key,S}));
  if(style==='sscore')return cwRank(C,secRows,(r,k)=>r.S.score[k],{n:Math.min(11,n),fmt:v=>v.toFixed(1),metric:'Sector crowding score (value-weighted)',title:'Which sectors 13F managers crowd into',sub:span+' · each stock\'s score weighted by the value held'});
@@ -114,7 +114,7 @@ function cwBuildHoldings(label,weights,style,n){
  const held=weights.map(([t,w])=>{const r=C.by.get(t);return r?{...r,w}:null}).filter(Boolean);
  if(!held.length)throw new Error(label+': none of its holdings is in the 13F crowding data');
  if(style==='hscore')return cwRank(C,held.filter(r=>r.s.some(cwNum)),(r,k)=>r.s[k],{n,fmt:v=>v.toFixed(1),metric:'Crowding score (0–100)',title:`${label}: how crowded its holdings are`,sub:span+' · its current holdings · score = √(share of managers holding × share with it in their top ten)'});
- if(style==='hdelta')return cwRank(C,held.filter(r=>r.s.some(cwNum)),(r,k)=>k?cwDelta(r.s[k],r.s[k-1]):null,{n,order:'abs',from:1,fmt:v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1),metric:'Change in crowding score vs the quarter before',title:`${label}: crowding changes in its holdings`,sub:span+' · score points, quarter on quarter'});
+ if(style==='hdelta')return cwRank(C,held.filter(r=>r.s.some(cwNum)),(r,k)=>k?cwDelta(r.s[k],r.s[k-1]):null,{n,order:'abs',from:1,fmt:v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1),metric:'Change in crowding score vs the quarter before',title:`${label}: crowding changes in its holdings`,sub:`${cwQ(P[Math.min(1,P.length-1)])} → ${cwQ(P[P.length-1])} · score points, quarter on quarter`});
  return cwRank(C,held,(r,k)=>r.h[k],{n,fmt:v=>Math.round(v).toLocaleString('en-US'),metric:'Managers holding',title:`${label}: its holdings by 13F managers holding`,sub:span});
 }
 

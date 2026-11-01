@@ -86,7 +86,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(race.series.map((s) => s.key).sort(), ['AAPL', 'NVDA']); n++;   // the top two in some quarter, no one else
   ok(race.grid.length === 3 && race.fmt(68.66) === '68.7', 'three quarters, one decimal');
   const delta = C.cwBuildAll('delta', 3);
-  ok(delta.grid.length === 2 && delta.order === 'abs', 'changes: from the second quarter, by size');
+  ok(delta.grid.length === 2 && delta.order === 'abs' && /^Q1 2026 → Q2 2026/.test(delta.sub), 'changes: from the second quarter, by size');
   near(delta.series.find((s) => s.key === 'XOM').v[1], 30.0 - 21.2, 'XOM\'s rise', 1e-9);
   ok(delta.fmt(-4.84) === '−4.8', 'signed change');
   const areas = C.cwBuildAll('sshare', 12);
