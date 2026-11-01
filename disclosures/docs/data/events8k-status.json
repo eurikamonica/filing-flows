@@ -1,58 +1,58 @@
 {
   "status": "partial",
   "failed_queue": 3,
-  "next_retry_at": "2026-11-01T07:45:22.731934+00:00",
+  "next_retry_at": "2026-11-02T07:53:31.409158+00:00",
   "error_samples": [
     {
       "key": "0001660280-26-000046",
-      "attempts": 12,
-      "last_attempt": "2026-10-31T07:45:22+00:00",
+      "attempts": 13,
+      "last_attempt": "2026-11-01T07:53:31+00:00",
       "error": "Response exceeds configured size; not marked complete",
-      "next_retry_at": "2026-11-01T07:45:22.731934+00:00"
+      "next_retry_at": "2026-11-02T07:53:31.409158+00:00"
     },
     {
       "key": "0000818479-26-000278",
-      "attempts": 12,
-      "last_attempt": "2026-10-31T07:45:24+00:00",
-      "error": "Response exceeds configured size; not marked complete",
-      "next_retry_at": "2026-11-01T07:45:24.400522+00:00"
+      "attempts": 13,
+      "last_attempt": "2026-11-01T07:54:25+00:00",
+      "error": "IncompleteRead(40369713 bytes read)",
+      "next_retry_at": "2026-11-02T07:54:25.638961+00:00"
     },
     {
       "key": "0000730464-26-000055",
-      "attempts": 12,
-      "last_attempt": "2026-10-31T07:45:25+00:00",
+      "attempts": 13,
+      "last_attempt": "2026-11-01T07:54:28+00:00",
       "error": "Response exceeds configured size; not marked complete",
-      "next_retry_at": "2026-11-01T07:45:25.801024+00:00"
+      "next_retry_at": "2026-11-02T07:54:28.339154+00:00"
     }
   ],
-  "read": 300,
+  "read": 60,
   "waiting": 3,
-  "reparse_left": 60,
+  "reparse_left": 0,
   "guidance_history": {
     "status": "ok",
-    "companies": 781,
-    "new_from_8k": 35,
+    "companies": 792,
+    "new_from_8k": 10,
     "read": 60,
     "errors": 0,
     "backfilled": 1,
-    "waiting": 668,
+    "waiting": 678,
     "re_read": 20,
-    "re_read_done": 7,
+    "re_read_done": 8,
     "discover_read": 20,
-    "discovered": 8,
-    "written": 65,
-    "updated_at": "2026-11-01T01:25:23+00:00"
+    "discovered": 11,
+    "written": 40,
+    "updated_at": "2026-11-01T07:55:55+00:00"
   },
-  "errors": 0,
+  "errors": 3,
   "on_file": 6930,
   "index_days": 29,
   "published": {
     "rows": 2074,
     "with_ticker": 2014
   },
-  "last_attempt": "2026-11-01T01:22:43+00:00",
+  "last_attempt": "2026-11-01T07:53:14+00:00",
   "last_success": null,
-  "last_partial_success": "2026-11-01T01:25:23+00:00",
-  "updated_at": "2026-11-01T01:25:23+00:00",
+  "last_partial_success": "2026-11-01T07:55:55+00:00",
+  "updated_at": "2026-11-01T07:55:55+00:00",
   "latest_filing_date": "2026-10-30"
 }
