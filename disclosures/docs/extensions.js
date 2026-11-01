@@ -27,6 +27,10 @@ function holdings(){
  const m=moduleData(),managers=m.managers||[];
  let out=head('Institutional holdings','13F public positions at quarter-end. Filing updates are not real-time trades.','SEC / 13F')+coverageStrip('holdings');
  if(window.HUB_FAST_13F_UPDATED)out+=`<p class="sub">Latest 13F index read directly from the collector snapshot: ${esc(window.HUB_FAST_13F_UPDATED)}. Pages deployment can lag; original SEC submissions are authoritative.</p>`;
+ // the crowding of stocks and sectors across every manager (crowding.js) or one manager's holdings
+ state.hview=state.hview==='crowd'&&typeof cwView==='function'?'crowd':'manager';
+ if(typeof cwView==='function')out+=`<div class="toolbar">${field('hview','View',[['manager','One manager’s holdings'],['crowd','Crowding — every 13F manager']],state.hview)}</div>`;
+ if(state.hview==='crowd'&&state.mode!=='demo')return out+cwView();
  if(!managers.length)return out+empty('No 13F data yet. Run the holdings collector or choose demo.');
  state.manager=choose(state.manager,managers.map(x=>x.cik));const manager=managers.find(x=>x.cik===state.manager);if(!ensureShard(manager))return out+loading(manager);const snaps=manager.snapshots||[];
  out+=`<div class="toolbar">${field('manager','Manager / CIK',managers.map(x=>[x.cik,(x.label||x.name)+' · '+x.cik]),state.manager,true)}</div>`;
@@ -46,6 +50,12 @@ function holdings(){
  out+=`<div class="metrics">${kpi('Disclosed value / USD','$'+compact(current.total_usd),'Not total assets under management')}${kpi('Security positions',fmt(current.positions.length),'CUSIP + class + option flag + quantity type')}${kpi('New / no longer disclosed',usable?changes.filter(x=>x.status==='NEW').length+' / '+changes.filter(x=>x.status==='NOT DISCLOSED').length:'—','Changes in disclosure, not trade execution')}${kpi('Increased / decreased',usable?changes.filter(x=>x.status==='INCREASE').length+' / '+changes.filter(x=>x.status==='DECREASE').length:'—','Quantity comparison')}${costOn()?kpi('Est. net invested (quarter)',usable&&priced.length?(netInvested<0?'−':'')+'$'+compact(Math.abs(netInvested)):'—',`Estimate · ${priced.length} of ${changes.length} rows priced · quantity change × quarter-average close`):''}</div>`;
  if(costOn())out+=`<div class="explain">Cost estimates: quantity change × average daily close of the report quarter (${esc(data().modules.prices?.source||'no price source')}, ${esc(data().modules.prices?.coverage_note||'not collected')}). They are not disclosed figures; actual execution prices and dates are unknown. Options, non-share quantities and securities without a ticker mapping show no estimate.</div>`;
  out+=`<div class="charts"><div class="panel"><h3>Reported position weights</h3><p class="sub">All disclosed types · hover for exact value</p>${treemap(current.positions,current.total_usd)}</div><div class="panel"><h3>Largest weight changes</h3><p class="sub">Percentage points · all disclosed types</p>${signedBars(changes)}</div></div>`;
+ // the manager's holdings quarter by quarter as a video (hub-video.js + the Video Studio), and how crowded they are (crowding.js)
+ if(state.mode!=='demo'&&typeof HubVideo!=='undefined'&&snaps.filter(s=>s.complete).length)out+=`<div class="panel"><h3>Holdings video: stock weights and sector areas, quarter by quarter</h3><p class="sub">Each complete 13F report of ${esc(manager.label||manager.name)} — share of the reported value by stock or by sector (the site's sector map), the race of the biggest positions, and the changes in percentage points. Play here or export an MP4.</p>${HubVideo.slot('13f:'+manager.cik,{title:(manager.label||manager.name)+' holdings',file:'13f-'+manager.cik,styles:HubVideo.WEIGHT_STYLES,state:{k:'actual',aw:'13f',ac:String(manager.cik)},unit:'quarters'})}</div>`;
+ if(state.mode!=='demo'&&typeof cwPortfolio==='function'&&current.complete&&current.total_usd>0){
+  const book=cwBook(current);
+  if(book&&book.length)out+=cwPortfolio('13f:'+manager.cik,manager.label||manager.name,book,`Its ${current.period} report: common-stock positions with a ticker (${fmt(book.length)}).`);
+ }
  const securityMap=new Map();for(const snap of snaps)for(const position of snap.positions)if(!securityMap.has(position.id))securityMap.set(position.id,position);
  const secids=[...securityMap.keys()];state.security=choose(state.security,secids);
  const security=securityMap.get(state.security);

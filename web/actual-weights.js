@@ -52,37 +52,83 @@
     return { date, positions, date_basis: ['reported','observed'].includes(hold.date_basis) ? hold.date_basis : 'unknown', source: hold.source || (hold.acc ? 'SEC N-PORT' : 'fund holdings disclosure'),
       accession: hold.acc || null, sectors: hold.sector_map || {}, equity_weight_covered: positions.reduce((s, p) => s + p[1], 0) };
   }
+  // sector key → weight, computed by the ETF build over EVERY long equity line (quarter-end N-PORT snapshots list only the
+  // largest names); finite positive weights only
+  function sectorWeights(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const out = {};
+    Object.entries(raw).forEach(([k, v]) => { const w = Number(v), key = toSector(k); if (Number.isFinite(w) && w > 0) out[key] = (out[key] || 0) + w; });
+    return Object.keys(out).length ? out : null;
+  }
   function normalizeSnapshot(s) {
     if (!s || !isDate(s.date)) return null;
     const positions = sortedPositions(s.positions || []);
     if (positions.length < 1) return null;
-    return { date: s.date, positions, date_basis: ['reported','observed'].includes(s.date_basis) ? s.date_basis : 'unknown', source: String(s.source || 'fund holdings disclosure'),
+    const sw = sectorWeights(s.sector_weights), cov = Number(s.covered != null ? s.covered : s.partial ? s.equity_weight_covered : NaN);
+    const out = { date: s.date, positions, date_basis: ['reported','observed'].includes(s.date_basis) ? s.date_basis : 'unknown', source: String(s.source || 'fund holdings disclosure'),
       accession: s.accession || null, sectors: s.sectors || {},
-      equity_weight_covered: positions.reduce((n, p) => n + p[1], 0) };
+      equity_weight_covered: Number.isFinite(cov) && cov > 0 ? cov : positions.reduce((n, p) => n + p[1], 0) };
+    if (sw) out.sector_weights = sw;
+    if (s.partial) out.partial = true;
+    return out;
+  }
+  // the quarterly block of etf/weights/<SYM>.json (app/actual_weights.py quarterly_block): the fund's public N-PORT
+  // quarter-end reports as columns — the same largest names every quarter, weights in hundred-thousandths
+  function quarterlySnapshots(q) {
+    if (!q || !Array.isArray(q.dates) || !Array.isArray(q.names)) return [];
+    const per = Math.round(1 / (Number(q.unit) > 0 ? Number(q.unit) : 1e-5));      // 100000: weights in hundred-thousandths
+    return q.dates.map((date, i) => {
+      const w = (q.w || [])[i] || [], sw = (q.sw || [])[i] || {}, sector_weights = {};
+      (q.sectors || []).forEach((k, j) => { const v = (Number(sw[j]) || 0) / per; if (v > 0) sector_weights[k] = v; });
+      return normalizeSnapshot({ date, date_basis: 'reported', source: 'SEC N-PORT (quarter-end)', accession: (q.acc || [])[i] || null,
+        positions: q.names.map((t, j) => [t, (Number(w[j]) || 0) / per]), sector_weights, partial: true, covered: (q.eq || [])[i] });
+    }).filter(Boolean);
   }
   function snapshots(history, current, from, to) {
     const by = new Map();
-    (history && history.snapshots || []).forEach((s) => { const x = normalizeSnapshot(s); if (x) by.set(x.date, x); });
+    quarterlySnapshots(history && history.quarterly).forEach((x) => by.set(x.date, x));
+    (history && history.snapshots || []).forEach((s) => {
+      const x = normalizeSnapshot(s); if (!x) return;
+      const q = by.get(x.date);                           // a full snapshot on a quarter-end: its names, the quarter's sector weights
+      if (q && q.partial) {
+        if (q.sector_weights) x.sector_weights = q.sector_weights;
+        // the same N-PORT report (or its date): the report date is the portfolio's reported as-of date
+        if (x.date_basis === 'unknown' && (!x.accession || !q.accession || x.accession === q.accession)) x.date_basis = 'reported';
+      }
+      by.set(x.date, x);
+    });
     // Publish latest if the ETF is not among the funds whose histories are tracked.
     const latest = snapshotFromDetail(current);
     if (latest && !by.has(latest.date)) by.set(latest.date, latest);
     return [...by.values()].filter((s) => (!from || s.date >= from) && (!to || s.date <= to))
       .sort((a, b) => a.date.localeCompare(b.date));
   }
+  // the 13F records are too big for the Pages build: the Hub's data/remote.json names where they are read from instead
+  // (stage-public.py write_remote; the Hub's own shardFetch does the same); without it they sit beside the other data
+  async function shardBase(api) {
+    const cfg = await Promise.resolve(api.json(api.hub + 'remote.json')).catch(() => null);
+    return cfg && typeof cfg.base === 'string' && /^https:\/\//.test(cfg.base) && (cfg.prefixes || []).some((x) => 'shards/holdings/'.startsWith(x)) ? cfg.base : api.hub;
+  }
   async function disclosedSource(st, api) {
     if (st.aw === '13f') {
       const cik = String(st.ac || '1067983').replace(/^0+/, '');
       if (!/^\d{1,10}$/.test(cik)) throw new Error('Enter a valid manager CIK');
-      const doc = await api.json(api.hub + 'shards/holdings/' + cik + '.json');
+      const base = await shardBase(api);
+      // a report not yet enriched with tickers is named through the Hub's CUSIP map (market.py → market/cusip-tickers.json)
+      const [doc, cmap] = await Promise.all([api.json(base + 'shards/holdings/' + cik + '.json'),
+        Promise.resolve(api.json(api.hub + 'market/cusip-tickers.json')).catch(() => null)]);
       if (!doc) throw new Error('Manager holdings are not published yet');
+      const tickerOf = (r) => r.ticker || (cmap && r.cusip && cmap[r.cusip]) || '';
       const rows = (doc.snapshots || []).filter(s => s.complete === true && (!st.from || s.period >= st.from) && (!st.to || s.period <= st.to));
       const snaps = await Promise.all(rows.map(async s => {
-        const p = s.positions || await api.json(api.hub + s.positions_shard);
+        const shard = String(s.positions_shard || ''), okPath = /^[A-Za-z0-9_+./-]+\.json$/.test(shard) && !shard.includes('..') && !shard.startsWith('/');
+        const p = s.positions || (okPath ? await api.json(base + shard) : null);
         if (!Array.isArray(p) || !(s.total_usd > 0)) throw new Error('Missing positions for ' + s.period);
         // Options and unresolved identifiers stay in the denominator/residual.
-        return {date:s.period, source:'SEC 13F', positions:p.filter(r => (!r.put_call || r.put_call === 'NONE') && r.ticker)
-          .map(r => [r.ticker, r.value_usd / s.total_usd]), filed:s.filed, sources:s.sources};
+        return {date:s.period, date_basis:'reported', source:'SEC 13F', positions:p.filter(r => (!r.put_call || r.put_call === 'NONE') && tickerOf(r))
+          .map(r => [tickerOf(r), r.value_usd / s.total_usd]), filed:s.filed, sources:s.sources};
       }));
+      if (!snaps.some(x => x.positions.length)) throw new Error((doc.label || doc.name || cik) + ': none of the reported positions could be matched to a ticker');
       return {name:doc.label || doc.name || cik, id:cik, snapshots:snaps,
         basis:'Share of reported 13F value', note:'Quarter-end reported long holdings, not current positions or total AUM. Options and unmatched securities remain in Other. Weight changes include price movement, not just trading. Latest amended reports may restate history; this is not a point-in-time backtest.', evidence:rows};
     }
@@ -121,8 +167,9 @@
     const all = snapshots(history, current, external && st.aw === 'official' ? '' : st.from, external && st.aw === 'official' ? '' : st.to);
     if (external) { out.notes.add(external.note); out.evidence = external.evidence; }
     if (!all.length) throw new Error(ticker + ': no source-dated constituent weights in this date range; choose a newer date or fund');
-    const meta = await api.rankMeta().catch(() => null);
+    const [meta, extra] = await Promise.all([api.rankMeta().catch(() => null), Promise.resolve(api.json(api.hub + 'etf/sectors.json')).catch(() => null)]);
     const co = new Map(((meta && meta.cos) || []).map((r) => [symbol(r[0]), { name: r[1], sec: r[2] }]));
+    const xsec = (extra && extra.sectors) || {};          // the ETF build's sector of every company ETFs hold (app/etf.py)
     const sources = [...new Set(all.map((x) => x.source))].join('; ');
     const from = all[0].date, to = all[all.length - 1].date;
     const label = external ? external.basis : indexed ? 'Index-tracker holdings proxy' : 'Actual fund disclosures';
@@ -139,20 +186,30 @@
       else out.notes.add(ref[0] + ' index methodology: ' + ref[2] + '. Tracker positions are a disclosed proxy.');
     }
     if (all.length > 1) out.notes.add('Frames interpolate VISUALLY between actual snapshots; no holdings are asserted for interim dates.');
+    if (all.some((s) => s.partial)) out.notes.add('Quarter-end snapshots come from the fund\'s public N-PORT reports (SEC data sets since 2019): the largest names, the same in every quarter, and sector weights over every long equity line.');
+    // a reported sector first (a sponsor's file; '-' and blanks are no sector), then the site's companies, then the ETF build's map
     const secFor = (s, ticker) => {
-      const reported = (s.sectors || {})[ticker];
-      return reported ? toSector(reported) : toSector((co.get(ticker) || {}).sec);
+      const reported = toSector((s.sectors || {})[ticker]);
+      if (reported !== 'other') return reported;
+      const known = toSector((co.get(ticker) || {}).sec);
+      return known !== 'other' ? known : toSector(xsec[ticker]);
     };
     const sector = st.style === 'stack' || (st.style === 'changes' && st.ag === 'sector');
     const area = st.style === 'stack' || st.style === 'companies';
+    let over = 0;
     const tables = all.map(s => {
       const m = new Map();
-      s.positions.forEach(([k,w]) => {const key = sector ? secFor(s,k) : k; m.set(key,(m.get(key)||0)+w);});
-      const sum = [...m.values()].reduce((a,b)=>a+b,0);
-      if (area && sum > 1.000001) throw new Error('Exposures exceed 100%; use holdings bars instead of a 100% area chart');
+      if (sector && s.sector_weights) Object.entries(s.sector_weights).forEach(([k,w]) => m.set(k,(m.get(k)||0)+w));
+      else s.positions.forEach(([k,w]) => {const key = sector ? secFor(s,k) : k; m.set(key,(m.get(key)||0)+w);});
+      let sum = [...m.values()].reduce((a,b)=>a+b,0);
+      if (area && sum > 1.02) throw new Error('Exposures exceed 100%; use holdings bars instead of a 100% area chart');
+      // a report's equity lines can add up to a little over its net assets (liabilities net against the portfolio):
+      // scaled to exactly 100% for the area chart, with a note
+      if (area && sum > 1.000001) { for (const [k2, v2] of m) m.set(k2, v2 / sum); over = Math.max(over, sum); sum = 1; }
       if (area || sector) m.set('other',(m.get('other')||0)+Math.max(0,1-sum));
       return m;
     });
+    if (over) out.notes.add('Some reports\' equity lines add up to more than their net assets (up to ' + (100 * over).toFixed(2) + '%): scaled to 100% for the area chart.');
     const n = Math.max(3, Math.min(20, +st.an || 12));
     let keys = [...new Set(tables.flatMap(m=>[...m.keys()]))];
     // Fixed membership across the entire animation prevents disappearing bands.
@@ -202,6 +259,6 @@
       : from === to ? 'Single reported holdings snapshot — not a history' : 'Reported holdings dates only; transitions illustrative';
     return out;
   }
-  root.FFActual = { TRACKERS, build, snapshots, normalizeSnapshot, snapshotFromDetail, sortedPositions, toSector, disclosedSource };
+  root.FFActual = { TRACKERS, build, snapshots, normalizeSnapshot, snapshotFromDetail, sortedPositions, toSector, disclosedSource, quarterlySnapshots, sectorWeights };
   if (typeof module !== 'undefined') module.exports = root.FFActual;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

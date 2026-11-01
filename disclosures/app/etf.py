@@ -13,6 +13,8 @@
                  N-PORT (monthly portfolio reports; the last four quarters): net assets, monthly sales, reinvestments
                    and redemptions (flows), monthly returns, and the latest full portfolio of every ETF; for active
                    ETFs, the share balances of every set (cache/nport_active/), which app/smart.py scores as trades.
+                   And every ETF's quarter-end portfolio of every set back to 2019 Q4 (cache/nport_weights/, a few
+                   older sets back-filled a run) → the quarterly history of the holdings videos (etf/weights/*.json).
                  Prospectus risk/return summaries (485BPOS XBRL, last five quarters): the fee table, turnover,
                    calendar-year returns, the benchmark index, the objective, the strategy and the principal risks.
     market     Yahoo Finance: ten years of weekly closes and volume, NAV, net assets, yield, category, family.
@@ -414,6 +416,148 @@ def process_nport(zpath, keep_series, holdings=True, top=150, active=None):
     return out
 
 
+HIST_CAP = 20000        # long equity lines kept per quarterly report (the largest portfolios have about 10,000)
+HIST_FIRST = (2019, 4)  # the first N-PORT data set the SEC publishes
+
+
+def _ident(s):
+    """A usable CUSIP / ISIN, or None for the placeholders funds write ('N/A', '000000000', 'NONE')."""
+    s = (s or '').strip().upper()
+    return s if len(s) >= 6 and s.strip('0') and s not in ('N/A', 'NONE', 'UNKNOWN') and re.fullmatch(r'[0-9A-Z]+', s) else None
+
+
+def nport_weights(zpath, keep_series, cap=HIST_CAP):
+    """One quarterly N-PORT set → {'keys': [...], 'funds': {series: {report date: report}}, 'ids': {CUSIP or ISIN: ticker}}
+    for the quarterly holdings history (the videos of how each ETF's portfolio changed). A report: 'acc', 'filed', 'na'
+    (net assets), 'n' (long equity lines), 'eq' (their total weight), and every line, largest first, as two lists: 'k' (an
+    index into 'keys': the ticker the fund gives, else the CUSIP, else the ISIN; lines of one security added together) and
+    'v' (the fund's own percentage of net assets in millionths). One report per series and date: the latest filed (an
+    amendment replaces the original). 'ids': for the keys that are a bare CUSIP / ISIN, the ticker most of the funds that
+    give both write."""
+    z = zipfile.ZipFile(zpath)
+    sub = {r['ACCESSION_NUMBER']: (_d(r['REPORT_DATE']), _d(r['FILING_DATE'])) for r in tsv(z, 'SUBMISSION.tsv')}
+    info, best = {}, {}
+    for r in tsv(z, 'FUND_REPORTED_INFO.tsv'):
+        s, acc = r['SERIES_ID'], r['ACCESSION_NUMBER']
+        if s not in keep_series:
+            continue
+        rd, fd = sub.get(acc, (None, None))
+        if not rd:
+            continue
+        info[acc] = (s, rd, fd or '', _f(r.get('NET_ASSETS')))
+        k = (s, rd)
+        if k not in best or (fd or '', acc) > (info[best[k]][2], best[k]):
+            best[k] = acc
+    keep = set(best.values())
+    rows, hid = defaultdict(list), {}
+    for r in tsv(z, 'FUND_REPORTED_HOLDING.tsv'):
+        acc = r['ACCESSION_NUMBER']
+        if acc not in keep or (r.get('ASSET_CAT') or '') not in EQUITY or (r.get('PAYOFF_PROFILE') or 'Long') != 'Long':
+            continue
+        row = [_ident(r.get('ISSUER_CUSIP')), None, None, _f(r.get('PERCENTAGE')), _f(r.get('CURRENCY_VALUE'))]   # CUSIP, ISIN, ticker, %, $
+        hid[r['HOLDING_ID']] = row
+        rows[acc].append(row)
+    for r in tsv(z, 'IDENTIFIERS.tsv'):
+        row = hid.get(r['HOLDING_ID'])
+        if row:
+            if not row[1] and r.get('IDENTIFIER_ISIN'):
+                row[1] = _ident(r['IDENTIFIER_ISIN'])
+            if not row[2] and (r.get('IDENTIFIER_TICKER') or '').strip():
+                row[2] = r['IDENTIFIER_TICKER'].strip().upper()
+    hid.clear()
+    keys, index = [], {}
+    out, votes, bare = defaultdict(dict), defaultdict(lambda: defaultdict(int)), set()
+    for acc, rs in rows.items():
+        s, rd, fd, na = info[acc]
+        tot = na or sum(abs(x[4] or 0) for x in rs) or 1
+        agg = defaultdict(float)
+        for cu, isin, tk, p, v in rs:
+            key = tk or cu or isin
+            w = p / 100 if p is not None else (v or 0) / tot
+            if tk:
+                for i in (cu, isin):
+                    if i:
+                        votes[i][tk] += 1
+            elif key:
+                bare.add(key)
+            if key and w > 0:
+                agg[key] += w
+        lst = sorted(((key, round(w * 1e6)) for key, w in agg.items() if w >= 5e-7), key=lambda x: -x[1])[:cap]
+        if len(lst) < 2:
+            continue
+        for key, _ in lst:
+            if key not in index:
+                index[key] = len(keys)
+                keys.append(key)
+        out[s][rd] = {'acc': acc, 'filed': fd, 'na': na, 'n': len(agg), 'eq': round(sum(agg.values()), 6),
+                      'k': [index[key] for key, _ in lst], 'v': [v for _, v in lst]}
+    # the tickers other funds give for the CUSIPs / ISINs some funds report alone (iShares, Vanguard): most of the votes
+    ids = {}
+    for k in bare:
+        cnt = votes.get(k)
+        if cnt and k in index:
+            t, n = max(cnt.items(), key=lambda kv: kv[1])
+            if n >= 0.75 * sum(cnt.values()):
+                ids[k] = t
+    return {'keys': keys, 'funds': dict(out), 'ids': ids}
+
+
+def quarterly_history(files, classify, top=15, keys=40):
+    """The quarterly N-PORT reports (cache/nport_weights/<set>.json.gz, nport_weights) → {series: [snapshot …]} for the
+    holdings videos. Two passes over the sets, one set in memory at a time: first the names to keep — for each fund the
+    `keys` largest of the names that were among its `top` largest in any report — then each report with those names'
+    weights (exact in every quarter, so a company's band never drops to zero because it fell below a cut-off) and its
+    sector weights over every line (lines with no ticker or no known sector in 'other'). classify: key → (ticker or None,
+    the site's sector key or None)."""
+    memo = {}
+    cls = lambda k: memo[k] if k in memo else memo.setdefault(k, classify(k))
+    peak = defaultdict(dict)
+    for p in files:
+        d = load_gz(p, {}) or {}
+        K = d.get('keys') or []
+        for s, reps in (d.get('funds') or {}).items():
+            pk = peak[s]
+            for r in reps.values():
+                seen = 0
+                for i, v in zip(r.get('k') or [], r.get('v') or []):
+                    t = cls(K[i])[0]
+                    if not t:
+                        continue
+                    if v > pk.get(t, 0):
+                        pk[t] = v
+                    seen += 1
+                    if seen >= top:
+                        break
+    keep = {s: set(sorted(pk, key=lambda t: -pk[t])[:keys]) for s, pk in peak.items()}
+    del peak
+    out = defaultdict(dict)
+    for p in files:
+        d = load_gz(p, {}) or {}
+        K = d.get('keys') or []
+        for s, reps in (d.get('funds') or {}).items():
+            kept = keep.get(s) or set()
+            for rd, r in reps.items():
+                prev = out[s].get(rd)
+                if prev and prev['filed'] >= (r.get('filed') or ''):
+                    continue                     # the same report in two sets (a late amendment): the later filing
+                pos, sec = defaultdict(int), defaultdict(int)
+                listed = 0
+                for i, v in zip(r.get('k') or [], r.get('v') or []):
+                    listed += v
+                    t, sc = cls(K[i])
+                    if t in kept:
+                        pos[t] += v
+                    sec[sc or 'other'] += v
+                rest = round((r.get('eq') or 0) * 1e6) - listed
+                if rest > 0:
+                    sec['other'] += rest         # lines too small to keep (under half a millionth each)
+                out[s][rd] = {'date': rd, 'filed': r.get('filed') or '', 'accession': r.get('acc'), 'net_assets': r.get('na'),
+                              'n': r.get('n'), 'eq': r.get('eq'),
+                              'positions': [[t, v / 1e6] for t, v in sorted(pos.items(), key=lambda x: -x[1])],
+                              'sector_weights': {k: v / 1e6 for k, v in sorted(sec.items(), key=lambda x: -x[1]) if v > 0}}
+    return {s: [m[d] for d in sorted(m)] for s, m in out.items()}
+
+
 # ------------------------------------------------------------------ UIT holdings (sponsor files)
 def parse_xlsx_rows(data):
     """The first worksheet of an .xlsx as lists of cell strings (shared strings resolved). Standard library only."""
@@ -565,8 +709,57 @@ def universe(root, src=None):
     return etfs
 
 
-def collect_datasets(h, root, tmp='/tmp/etf-dl', max_new=None):
-    """Download and process the DERA sets not processed yet (newest first). N-PORT holdings for the newest set only."""
+def hist_path(root, name, ids=False):
+    """cache/nport_weights/<set>.json.gz — one N-PORT set's quarterly holdings (nport_weights) — and <set>.ids.json.gz."""
+    return Path(root) / 'cache' / 'nport_weights' / (name.replace('.zip', '') + ('.ids' if ids else '') + '.json.gz')
+
+
+def save_history(root, name, zp, ets):
+    """The quarterly holdings of one downloaded N-PORT set, kept for good (each set is read once)."""
+    t0 = time.time()
+    d = nport_weights(zp, ets)
+    save_gz(hist_path(root, name, ids=True), {'source': name, 'ids': d['ids']})
+    save_gz(hist_path(root, name), {'source': name, 'keys': d['keys'], 'funds': d['funds']})
+    return {'at': now(), 'series': len(d['funds']), 'reports': sum(len(v) for v in d['funds'].values()), 'seconds': round(time.time() - t0)}
+
+
+def collect_history(root, links, tmp, max_new=3, budget=720.0):
+    """Back-fill the quarterly holdings history (newest first): up to `max_new` N-PORT sets a run, within `budget` seconds,
+    every set back to the first one the SEC publishes (2019 Q4). A set that failed is tried again after a week."""
+    st = read_json(Path(root) / 'state.json', {}) or {}
+    hs = st.setdefault('nport_weights', {})
+    urls = [u for u in sorted(links.get('nport', []), key=qkey, reverse=True) if qkey(u) >= HIST_FIRST]
+    t0, n, ets, out = time.time(), 0, None, []
+    week = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=7)).isoformat()
+    for u in urls:
+        name = Path(u).name
+        rec = hs.get(name) or {}
+        if hist_path(root, name).exists() and hist_path(root, name, ids=True).exists() and not rec.get('error'):
+            continue
+        if rec.get('error') and (rec.get('at') or '') > week:
+            continue
+        if n >= max_new or time.time() - t0 > budget:
+            break
+        ets = ets or etf_series(root)
+        zp = Path(tmp) / name
+        try:
+            download(u, zp)
+            hs[name] = save_history(root, name, zp, ets)
+            out.append([name, hs[name]['series']])
+            print(f'history {name}: {hs[name]["series"]} funds in {time.time() - t0:.0f}s', flush=True)
+        except Exception as exc:
+            print(f'::warning::history {name}: {exc}', flush=True)
+            hs[name] = {'at': now(), 'error': str(exc)[:200]}
+        finally:
+            zp.unlink(missing_ok=True)
+        n += 1
+        write_json(Path(root) / 'state.json', st)
+    return out
+
+
+def collect_datasets(h, root, tmp='/tmp/etf-dl', max_new=None, history=3):
+    """Download and process the DERA sets not processed yet (newest first). N-PORT holdings for the newest set only; the
+    quarterly holdings history (nport_weights) of every N-PORT set downloaded, then `history` older sets back-filled."""
     root = Path(root)
     links = dataset_links(h)
     st = read_json(root / 'state.json', {}) or {}
@@ -610,6 +803,11 @@ def collect_datasets(h, root, tmp='/tmp/etf-dl', max_new=None):
                     data = process_rr(zp, ets, class_series)
                 else:
                     data = process_nport(zp, ets, holdings=need_holdings, active=act)
+                    if not hist_path(root, name).exists():
+                        try:
+                            st.setdefault('nport_weights', {})[name] = save_history(root, name, zp, ets)
+                        except Exception as exc:
+                            print(f'::warning::history {name}: {exc}', flush=True)
                     if 'active' in data:
                         save_gz(act_out, {'source': name, 'funds': data.pop('active')})
                     if need_holdings:
@@ -631,6 +829,11 @@ def collect_datasets(h, root, tmp='/tmp/etf-dl', max_new=None):
         for p in [*(root / 'cache' / kind).glob('*.json.gz'), *((root / 'cache' / 'nport_active').glob('*.json.gz') if kind == 'nport' else [])]:
             if p.name not in keep:
                 p.unlink()
+    if history:
+        write_json(root / 'state.json', st)
+        rep = collect_history(root, links, tmp, max_new=history)
+        if rep:
+            report['history'] = rep
     return report
 
 
@@ -814,6 +1017,82 @@ def nport_history(root):
                         if r is not None:
                             o['returns'].setdefault(cls, {})[f'{mm // 12}-{mm % 12 + 1:02d}'] = r
     return out
+
+
+# the Select Sector SPDRs and Vanguard's sector ETFs split the market by GICS sector: their portfolios name the sector of
+# the companies the consensus data does not classify (the site's keys; the consensus data's own sector comes first)
+SECTOR_ETFS = {'XLK': 'technology', 'VGT': 'technology', 'XLF': 'financials', 'VFH': 'financials', 'XLV': 'health', 'VHT': 'health',
+               'XLY': 'consumer-disc', 'VCR': 'consumer-disc', 'XLP': 'consumer-staples', 'VDC': 'consumer-staples', 'XLE': 'energy',
+               'VDE': 'energy', 'XLI': 'industrials', 'VIS': 'industrials', 'XLB': 'materials', 'VAW': 'materials', 'XLU': 'utilities',
+               'VPU': 'utilities', 'XLRE': 'real-estate', 'VNQ': 'real-estate', 'XLC': 'communication', 'VOX': 'communication'}
+GICS_KEY = {'information technology': 'technology', 'communication services': 'communication', 'consumer discretionary': 'consumer-disc',
+            'consumer staples': 'consumer-staples', 'health care': 'health', 'financials': 'financials', 'real estate': 'real-estate',
+            'energy': 'energy', 'materials': 'materials', 'industrials': 'industrials', 'utilities': 'utilities'}
+
+
+def history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker):
+    """({ETF symbol: [quarterly snapshot …]}, ticker → sector key) from cache/nport_weights (quarterly_history), each holding
+    named by ticker and sector: the ticker the fund gives, the CUSIP / ISIN map, or the ticker other funds give for it; the
+    sector from the consensus data, else the issuer's other share class (its CUSIP's first six characters), else the sector
+    ETFs that hold it, else the GICS sector of a sponsor's holdings file."""
+    files = sorted(p for p in (Path(root) / 'cache' / 'nport_weights').glob('*_nport.json.gz'))
+    ids = {}
+    for p in sorted((Path(root) / 'cache' / 'nport_weights').glob('*_nport.ids.json.gz')):
+        ids.update((load_gz(p, {}) or {}).get('ids') or {})
+    dash = lambda t: t.replace('.', '-') if t else t
+    cmap = dict(cusip_t)
+    for u in uit.values():                                # the sponsors' files give ticker and CUSIP (CUSIPs of Linde, Eaton …)
+        for r in u.get('rows') or []:
+            if len(r) > 2 and r[1] and r[2] and _ident(r[2]) and r[2] not in cmap and re.fullmatch(r'[A-Z][A-Z.\-]{0,5}', str(r[1])):
+                cmap[r[2]] = dash(str(r[1]).upper())
+    issuer = {}
+    for c, t in cmap.items():
+        sc = (cons_rows.get(dash(t)) or {}).get('sector')
+        if sc and sc != 'other' and len(c) == 9:
+            issuer.setdefault(c[:6], sc)
+    sym_series = {e['symbol']: e.get('series') for e in etfs if e.get('series')}
+    member = {}
+    for sym, sc in SECTOR_ETFS.items():
+        for k, w, v in ((holds.get(sym_series.get(sym)) or {}).get('weights') or []):
+            member.setdefault(k, sc)
+            t = dash(key_ticker(k))
+            if t:
+                member.setdefault(t, sc)
+    for u in uit.values():
+        for r in u.get('rows') or []:
+            sc = GICS_KEY.get(str(r[4] if len(r) > 4 else '').lower())
+            if sc and r[1]:
+                member.setdefault(dash(str(r[1]).upper()), sc)
+
+    def ticker(k):
+        t = key_ticker(k) or (cmap.get(k) if k in cmap else None)
+        if not t and len(k) == 12 and k[:2] == 'US':
+            t = cmap.get(k[2:11])
+        if not t and ids.get(k):
+            v = norm_t(ids[k])
+            t = key_ticker(v) if (dash(v) in stock_syms or dash(v) in cons_rows) else None
+        return dash(t)
+
+    def classify(k):
+        t = ticker(k)
+        sc = (cons_rows.get(t) or {}).get('sector') if t else None
+        sc = sc if sc != 'other' else None               # the consensus data's "other": try the fallbacks
+        if not sc:
+            c = k if len(k) == 9 and re.fullmatch(r'[0-9A-Z]{8}[0-9]', k) else k[2:11] if len(k) == 12 and k[:2] == 'US' else t_cusip.get(t) if t else None
+            sc = issuer.get(c[:6]) if c else None
+        sc = sc or member.get(t) or member.get(k)
+        return t, (sc if sc and sc != 'other' else None)
+
+    sector_of = lambda t: classify(t)[1]
+    hist = quarterly_history(files, classify) if files else {}
+    out = {}
+    for sym, series in sym_series.items():
+        snaps = [{'date': x['date'], 'date_basis': 'reported', 'source': 'SEC N-PORT (quarter-end)', 'accession': x['accession'],
+                  'positions': x['positions'], 'sector_weights': x['sector_weights'], 'equity_weight_covered': x['eq'],
+                  'n': x['n'], 'net_assets': x['net_assets'], 'partial': True} for x in hist.get(series) or [] if x['positions']]
+        if snaps:
+            out[sym] = snaps
+    return out, sector_of
 
 
 def build(root, hub=None, cons=None, debt=None, verbose=True):
@@ -1084,7 +1363,22 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
     actual_status = {}
     try:
         import actual_weights
-        actual_status = actual_weights.capture(root, pub, index_rows)
+        quarterly, sector_of = {}, None
+        try:                                              # every ETF's quarter-end portfolios from the N-PORT sets (videos)
+            quarterly, sector_of = history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker)
+        except Exception as exc:
+            print('quarterly holdings history skipped:', type(exc).__name__, exc, flush=True)
+        actual_status = actual_weights.capture(root, pub, index_rows, quarterly=quarterly, sector_of=sector_of)
+        if sector_of:                                     # the sector of every company ETFs hold (the videos' sector areas)
+            secs = {}
+            for t in list(by) + [p[0] for q in quarterly.values() for x in q for p in x['positions']]:
+                t = (t or '').replace('.', '-')
+                if t and t not in secs and re.fullmatch(r'[A-Z][A-Z0-9-]{0,9}', t):
+                    sc = sector_of(t)
+                    if sc:
+                        secs[t] = sc
+            wj(pub / 'sectors.json', {'generated_at': now(), 'sectors': dict(sorted(secs.items())),
+                                      'note': 'The site\'s sector of each company ETFs hold: the consensus data, else the issuer\'s other share class, else the sector ETFs (Select Sector SPDRs, Vanguard sector funds) that hold it.'})
     except Exception as exc:
         actual_status = {'error': str(exc)[:200]}
         print('actual weights skipped:', type(exc).__name__, exc, flush=True)
