@@ -111,9 +111,11 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
             k, v, g = max(fast, key=lambda x: x[2])
             if g > 10:
                 s += f" The fastest-growing cost line was {_plain(item_label(Nc, k))} ({g:+.0f}%)."
+    bore = (Nc.get("nci") or 0) < -0.001 * R                     # minority interests bore a loss (Sunrun)
     if Nc["pl"] >= 0:
         gni = _pct(Nc["ni"], Ny and Ny["ni"])
-        s += f" Net earnings were {f.money(Nc['ni'])}" + (f", {_chg_words(gni)} year over year" if gni is not None else "") + "."
+        s += f" Net earnings were {f.money(Nc['ni'])}" + (f", {_chg_words(gni)} year over year" if gni is not None else "")
+        s += (f" ({f.money(Nc['pl'])} including minority interests, which bore {f.money(-Nc['nci'])} of losses)." if bore else ".")
         if Nc["pretax"] > 0 and Nc["tax"] is not None:
             s += f" The effective tax rate was {Nc['tax'] / Nc['pretax'] * 100:.1f}%."
     else:
@@ -122,6 +124,9 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
             s += (f", {'narrower' if -Nc['pl'] < -Nq['pl'] else 'wider'} than the previous quarter's "
                   f"{f.money(-Nq['pl'])} loss" if Nq["pl"] < 0 else f", after a profit of {f.money(Nq['pl'])} the previous quarter")
         s += "."
+        if bore:
+            s += (f" Minority interests bore {f.money(-Nc['nci'])} of it: to shareholders the quarter was "
+                  f"{'a profit' if Nc['ni'] >= 0 else 'a loss'} of {f.money(abs(Nc['ni']))}.")
         if Nc["nonop"] < 0 and -Nc["nonop"] > 0.5 * -Nc["pl"]:
             worst = min(Nc.get("nonop_lines") or [(None, None, 0, None)], key=lambda x: x[2])
             if worst[2] < 0 and -worst[2] > 0.5 * -Nc["nonop"]:      # one line of them (the filing's own lines)

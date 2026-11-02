@@ -3170,3 +3170,155 @@ def test_half_year_reporter_second_half_from_the_year():
     assert c["halves"]["2026-06-30"]["q1_end"] == "2025-12-31"
     ends = B._quarter_ends("0331", 1)
     assert ends[-1] < __import__("datetime").date.today() and all(e.month in (3, 6, 9, 12) for e in ends)
+
+
+def _fx(concepts, filed="2026-02-19", form="10-K"):
+    """Company facts from {concept: [(start, end, value in $M, [form])]}."""
+    body = {}
+    for c, rows in concepts.items():
+        body[c] = {"units": {"USD": [{"start": s, "end": e, "val": v * 1e6, "filed": filed, "form": (r[3] if len(r) > 3 else form)}
+                                     for r in rows for s, e, v in [r[:3]]]}}
+    from pipeline import facts
+    return facts.index_facts({"facts": {"us-gaap": body}})
+
+
+def test_proxy_statement_facts_are_left_out():
+    """DaVita FY2025: the 10-K tags net income to shareholders ($746.8M); the proxy statement's pay-versus-performance
+    table, filed two months later, tags the consolidated $1,078.7M as NetIncomeLoss too. Filed last, it used to win."""
+    from pipeline import facts
+    y = ("2025-01-01", "2025-12-31")
+    fx = _fx({"NetIncomeLoss": [y + (746.8, "10-K"), y + (1078.7, "DEF 14A")], "ProfitLoss": [y + (1078.7,)],
+              "Revenues": [y + (13500,)]})
+    assert facts.value(fx, "ni", "2025-12-31", annual=True) == 746.8e6
+    assert facts.statement_fact({"form": "DEFA14A"}) is False and facts.statement_fact({"form": "10-Q"}) is True
+
+
+def test_quarter_context_carrying_the_years_figure():
+    """Tractor Supply's 10-K tags fourth-quarter net income with the year's $1,096.1M (a context slip): the quarter is
+    the year less the nine months instead. A fourth quarter that really equals the year (nothing before) stays."""
+    from pipeline import facts
+    fy, q4, m9 = ("2024-12-29", "2025-12-27"), ("2025-09-28", "2025-12-27"), ("2024-12-29", "2025-09-27")
+    fx = _fx({"NetIncomeLoss": [fy + (1096.087,), q4 + (1096.087,), m9 + (868.6,)], "Revenues": [fy + (15524,), m9 + (11625.7,)]})
+    assert abs(facts.value(fx, "ni", "2025-12-27") - 227.487e6) < 1e3
+    assert abs(facts.value(fx, "revenue", "2025-12-27") - (15524 - 11625.7) * 1e6) < 1
+    fx2 = _fx({"NetIncomeLoss": [fy + (50,), q4 + (50,), m9 + (0,)], "Revenues": [fy + (100,), m9 + (0,)]})
+    assert facts.value(fx2, "ni", "2025-12-27") == 50e6
+
+
+def test_fourth_quarter_checked_against_the_three_quarters():
+    """NiSource's 10-K: the year's revenue ($6,522.8M) in the fourth quarter's context, and no nine-month figure under
+    that tag; Plexus: nine months of revenue tagged as $2.975M (thousands) under one tag, the quarters right under
+    another. Either way the quarter is the year less the three quarters reported before it (raw["q4_fixed"])."""
+    from pipeline import facts
+    fy = ("2025-01-01", "2025-12-31")
+    qs = [("2025-01-01", "2025-03-31"), ("2025-04-01", "2025-06-30"), ("2025-07-01", "2025-09-30")]
+    q4 = ("2025-10-01", "2025-12-31")
+    fx = _fx({"RevenueFromContractWithCustomerExcludingAssessedTax": [fy + (6522.8,), q4 + (6522.8,)] + [q + (v,) for q, v in zip(qs, (2149.5, 1246.5, 1240.2))],
+              "NetIncomeLoss": [fy + (900,), ("2025-01-01", "2025-09-30", 600)] + [q + (200,) for q in qs]})
+    raw = facts.extract(fx, "2025-12-31")
+    assert abs(raw["revenue"] - 1886.6e6) < 1e3 and raw["q4_fixed"] == ["revenue", "rev_contract"]
+    assert raw["ni"] == 300e6                                             # the year less nine months: no check needed
+    # Plexus: nine months in thousands under the contract tag, the quarters under "Revenues"
+    m9 = ("2025-01-01", "2025-09-30")
+    fx2 = _fx({"RevenueFromContractWithCustomerExcludingAssessedTax": [fy + (4033,), m9 + (2.975,)],
+               "Revenues": [q + (v,) for q, v in zip(qs, (977, 980, 1018))],
+               "NetIncomeLoss": [fy + (173,), m9 + (121.5,)] + [q + (40,) for q in qs]})
+    raw2 = facts.extract(fx2, "2025-12-31")
+    assert raw2["revenue"] == 1058e6 and "revenue" in raw2["q4_fixed"]
+    # a year's tag that is not the quarters' (AMG's share-based compensation) does not push the quarter below zero
+    fx3 = _fx({"AllocatedShareBasedCompensationExpense": [fy + (59.2,), m9 + (34.3,)],
+               "ShareBasedCompensation": [("2025-01-01", "2025-03-31", 23.7), ("2025-01-01", "2025-06-30", 92.3), m9 + (148.6,)],
+               "Revenues": [fy + (2000,), m9 + (1500,)] + [q + (500,) for q in qs]})
+    raw3 = facts.extract(fx3, "2025-12-31")
+    assert abs(raw3["sbc"] - 24.9e6) < 1e3 and "q4_fixed" not in raw3
+
+
+def test_full_year_tag_is_the_one_its_quarters_add_up_to():
+    """Nasdaq FY2025: "depreciation, depletion and amortization" ($145M, a note's figure, tagged in the 10-K only) beside
+    the cash flow statement's "depreciation and amortization" ($632M, reported every quarter): the latter is the year's.
+    JLL: a $0.7M-a-quarter plan under one tag, the cash flow statement's $112M in the 10-K only: the larger stays."""
+    from pipeline import facts
+    fy, m3, m6, m9 = ("2025-01-01", "2025-12-31"), ("2025-01-01", "2025-03-31"), ("2025-01-01", "2025-06-30"), ("2025-01-01", "2025-09-30")
+    fx = _fx({"DepreciationDepletionAndAmortization": [fy + (145,)],
+              "DepreciationAndAmortization": [fy + (632,), m3 + (156,), m6 + (314,), m9 + (472,)]})
+    assert facts.value(fx, "da", "2025-12-31", annual=True) == 632e6
+    assert facts.consistent_year(fx["DepreciationAndAmortization"], "2025-12-31") is True
+    assert facts.consistent_year(fx["DepreciationDepletionAndAmortization"], "2025-12-31") is False
+    fx2 = _fx({"ShareBasedCompensation": [fy + (2.7,), m3 + (0.7,), m6 + (1.4,), m9 + (2.1,)],
+               "AllocatedShareBasedCompensationExpense": [fy + (112,)]})
+    assert facts.value(fx2, "sbc", "2025-12-31", annual=True) == 112e6
+    # Ventas: acquisitions of real estate tagged in the 10-K only ($2.93B) beside development spending reported all year
+    fx3 = _fx({"PaymentsToAcquireProductiveAssets": [fy + (2928,)],
+               "PaymentsToDevelopRealEstateAssets": [fy + (281,), m3 + (58,), m6 + (125,), m9 + (185,)]})
+    assert facts.value(fx3, "capex", "2025-12-31", annual=True) == 281e6
+
+
+def test_da_tag_holding_depreciation_alone():
+    """Jazz: DepreciationDepletionAndAmortization equals Depreciation ($41.6M) while amortization of intangibles is
+    tagged apart ($654.7M): D&A is the two together."""
+    from pipeline import facts
+    fy = ("2025-01-01", "2025-12-31")
+    fx = _fx({"DepreciationDepletionAndAmortization": [fy + (41.636,)], "Depreciation": [fy + (41.636,)],
+              "AmortizationOfIntangibleAssets": [fy + (654.661,)]})
+    assert abs(facts.value(fx, "da", "2025-12-31", annual=True) - 696.297e6) < 1e3
+
+
+def test_missed_10q_behind_a_preliminary_quarter_is_queued(tmp_path):
+    """Landstar's Q2 2026 chart still came from the earnings release in November: the 10-Q filed in August was missed
+    by the scan. A preliminary quarter older than MISSED_AFTER_DAYS gets its 10-Q/10-K looked up and queued, once."""
+    import datetime as dt
+    from pipeline import build, sec
+    old = sec.FIXTURES
+    sec.FIXTURES = str(tmp_path)
+    try:
+        def put(url, body):
+            (tmp_path / os.path.basename(sec._fixture_path(url))).write_text(body)
+        put(sec.submissions_url(853816), json.dumps({"filings": {"recent": {
+            "form": ["10-Q", "8-K", "10-Q"], "filingDate": ["2026-10-28", "2026-07-28", "2026-07-31"],
+            "reportDate": ["2026-09-26", "2026-07-28", "2026-06-27"], "items": ["", "2.02,9.01", ""],
+            "accessionNumber": ["0000853816-26-000030", "0000853816-26-000020", "0000853816-26-000024"],
+            "primaryDocument": ["q3.htm", "d8k.htm", "q2.htm"], "acceptanceDateTime": ["", "", ""]}}}))
+        store = build.Store(str(tmp_path / "store"))
+        store.put(853816, {"quarters": {"2026-06-27": {"end": "2026-06-27", "form": "8-K", "filed": "2026-07-28"},
+                                        "2026-09-26": {"end": "2026-09-26", "form": "10-Q"}}, "profile": {"name": "Landstar"}})
+        store.state["seen"]["0000853816-26-000024"] = {"t": "2026-08-01"}       # seen, but never drawn
+        build.queue_missed_filings(store, today=dt.date(2026, 11, 2))
+        p = store.state["pending"].get("0000853816-26-000024")
+        assert p and p["cik"] == 853816 and p["form"] == "10-Q" and "0000853816-26-000024" not in store.state["seen"]
+        assert store.company(853816)["missed_at"] == "2026-06-27"
+        # checked once per quarter: nothing is asked again
+        del store.state["pending"]["0000853816-26-000024"]
+        build.queue_missed_filings(store, today=dt.date(2026, 11, 2))
+        assert "0000853816-26-000024" not in store.state["pending"]
+        # a fresh preliminary quarter waits for its 10-Q
+        store.put(1, {"quarters": {"2026-09-30": {"end": "2026-09-30", "form": "8-K"}}, "profile": {}})
+        build.queue_missed_filings(store, today=dt.date(2026, 11, 2))
+        assert store.company(1).get("missed_at") is None
+    finally:
+        sec.FIXTURES = old
+
+
+def test_loss_borne_by_minority_interests():
+    """Sunrun: its tax-equity partners bear most of the consolidated result. A profitable quarter draws their share of
+    a loss as an inflow to net earnings (the shareholders' figure); a loss quarter says what came to shareholders."""
+    from pipeline import model, sankey, analysis
+    raw = {"revenue": 1000e6, "costs_total": 900e6, "oi": 100e6, "pretax": 100e6, "tax": 10e6, "pl": 90e6, "nci": -50e6,
+           "ni": 140e6, "ocf": 200e6, "da": 50e6, "sbc": 20e6, "capex": 30e6}
+    nodes, links, kind = sankey.build(model.normalize(raw), None, None)
+    by = {n["id"]: n for n in nodes}
+    assert kind == "profit" and by["net"]["v"] == 140e6 and by["nci_in"]["v"] == 50e6 and "nci" not in by
+    into = {l["s"]: l["v"] for l in links if l["t"] == "net"}
+    assert into == {"pretax": 90e6, "nci_in": 50e6}
+    assert sum(l["v"] for l in links if l["t"] == "ocf") == 200e6
+    raw2 = {"revenue": 870e6, "costs_total": 1000e6, "oi": -130e6, "pretax": -212.1e6, "tax": -4e6, "pl": -208.2e6,
+            "nci": -323.3e6, "ni": 115.2e6, "ocf": -186e6, "da": 184e6, "sbc": 28e6, "capex": 300e6}
+    N2 = model.normalize(raw2)
+    nodes2, _, kind2 = sankey.build(N2, None, None)
+    note = [l[1] for n in nodes2 if n["id"] == "netloss" for l in n["lines"] if "bore" in l[1]]
+    assert kind2 == "loss" and note and "to shareholders net earnings of $115.2M" in note[0]
+
+    class F:
+        money = staticmethod(lambda x: f"${x / 1e6:.1f}M")
+        delta = staticmethod(lambda x: f"{x / 1e6:+.1f}M")
+    text = analysis.paragraphs(F(), "Q2 2026", N2, None, None)[1]
+    assert "to shareholders the quarter was a profit of $115.2M" in text
