@@ -551,7 +551,14 @@ def build(root, universe_path, val_dir=None, limit=0):
     except Exception as exc:                                            # noqa: BLE001
         n_days = 0
         errors.append(f"days: {str(exc)[:160]}")
-    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'seconds': round(time.monotonic() - t0, 1),
-              'errors': errors[:40]}
+    rr = None
+    try:                                                                # the daily RRG research (app/rrg_research.py)
+        import rrg_research as RR
+        doc = RR.build_daily(data, assets, out / 'rrg-research-daily.json')
+        rr = {g: v['lines'] for g, v in (doc or {}).get('groups', {}).items()}
+    except Exception as exc:                                            # noqa: BLE001
+        errors.append(f"rrg research: {str(exc)[:160]}")
+    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'rrg_research': rr,
+              'seconds': round(time.monotonic() - t0, 1), 'errors': errors[:40]}
     write_json(out / 'status.json', status)
     return status
