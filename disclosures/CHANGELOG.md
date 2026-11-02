@@ -1,5 +1,27 @@
 # Changelog
 
+## Highs, lows & ranges: at the lows (all-time, 52-week, 3-month) and in a sideways range (narrow or wide)
+
+app/regimes.py (built with the move odds after every US close, beside the highs; public/moves/lows.json, ranges.json
+and each asset's file → lows, ranges) adds the other regimes a price runs in. At the lows: a day within 15% of its
+all-time, 52-week or 3-month low with a new one in the last 63 trading days (NKE, 14% above its October low, is at a
+52-week and a 3-month low) — about 520,000 company days at a 52-week low since 1962, 123,000 at an all-time low. What
+followed each: the days to the next new low (Kaplan–Meier), to a 10% and a 20% rebound from the lowest close from then
+on, the low before the 10% rebound (its days and how much further down), the rebound from that low until the next new
+low, the returns and the lowest close over 3 and 12 months. The state: the slide's age (since its last high of the same
+span), new lows in the last 63 days, the distance from the low and under the all-time high, against the 200-day
+average, 12-1 month momentum (its own and among every company that day), volatility, P/E and volume, as for the highs.
+In a range: the last 63 trading days sideways (the net move under a quarter of the range's width) with the width in the
+bottom 15% of the asset's own 63-day widths (narrow: a tight coil) or its top 30% (wide: wide swings going nowhere);
+what followed: the days to the first close outside the range, which way, the move 1 and 3 months after it, how often it
+fell back into the other half within a month (a false breakout), the returns and the largest rise and fall over 3
+months. Tables by each state variable for companies, ETFs and indices; for every asset in a regime now, the 250 most
+similar days of the same kind of asset (at most one per asset in 21 days, none of its own from the last year) and the
+nearest of them. Days in a regime overlap (one slide gives many low days), so episodes and assets are given beside them;
+companies are today's (survivors). The hub's Move odds view becomes "Highs, lows & ranges" with a regime selector (deep
+links #moves/lows/NKE, #moves/atl/X, #moves/narrow/X, #moves/wide/X), and the company page's tab of that name shows
+every regime the company is in. The move-odds step gets 35 minutes for the extra three minutes or so.
+
 ## Move odds: the news headlines beside the filings
 
 Each case of the Move odds (the days like the one looked at, on company pages and the hub) now shows, beside what the
