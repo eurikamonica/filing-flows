@@ -234,6 +234,26 @@ def embed_page(c, r, url):
 <script src="../../../sankey.js"></script><script src="../../../seo-quarter.js" defer></script></body></html>"""
 
 
+def peer_table(me, peers, industry):
+    """the company against its largest industry peers on one table: revenue, growth, margin, the quarter"""
+    rows = [me] + list(peers)
+    def td(x, k, f):
+        v = x.get(k)
+        return f"<td class='num'>{e(f(v)) if v is not None else '—'}</td>"
+    om = lambda v: f"{v:.1f}%"
+    body = "".join(f"<tr{' class=\'me\'' if x is me else ''}><td>{('<b>' + e(x.get('ticker') or '') + '</b> ' if x is me else f'<a href=' + chr(39) + '../' + slug_for(x) + '/' + chr(39) + '><b>' + e(x.get('ticker') or '') + '</b></a> ') if x.get('ticker') else ''}{e(display_name(x.get('name')))}</td>"
+                   f"<td>{e(x.get('label'))}</td>{td(x, 'revenue', money)}{td(x, 'yoy', pct)}{td(x, 'om', om)}</tr>" for x in rows)
+    med = lambda k: sorted(v for v in (x.get(k) for x in rows) if v is not None)
+    note = ''
+    for k, lab, f in (('yoy', 'revenue growth', pct), ('om', 'operating margin', om)):
+        m = med(k)
+        if len(m) >= 3 and me.get(k) is not None:
+            mid = m[len(m) // 2]
+            note += f" {lab.capitalize()}: {f(me[k])} against the peers' median {f(mid)}."
+    return (f"<h2 id='peers'>{e(display_name(me.get('name')))} against its {e(industry)} peers</h2><p class='muted'>The largest companies of the same SEC industry, each at its latest quarter.{e(note)}</p>"
+            "<div class='tbl-wrap'><table><thead><tr><th>Company</th><th>Quarter</th><th class='num'>Revenue</th><th class='num'>Y/Y</th><th class='num'>Op. margin</th></tr></thead><tbody>" + body + "</tbody></table></div>")
+
+
 def ties_section(ties, cik, pages):
     """customers and suppliers named in annual reports (data/gamma/<sic>.json relationships), linked to their pages"""
     sells, buys = [], []
@@ -298,6 +318,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     about = (f"<h2 id='about'>About {e(name)}</h2><blockquote>{e((intro.get('text') or '')[:900])}</blockquote>"
              f"<p class='muted'>In its own words, from its {e(intro.get('source') or 'annual report')}"
              + (f", filed {e(fdate(intro.get('filed')))}" if intro.get("filed") else "") + ".</p>") if intro.get("text") else ""
+    r_me = ix_entry
     peer_links = "".join(f"<li><a href='../{slug_for(x)}/'>{e(display_name(x.get('name')))}{' (' + e(x['ticker']) + ')' if x.get('ticker') else ''}</a> "
                          f"<span class='muted'>{e(x.get('label'))} · revenue {e(x.get('rev') or '—')}{' · ' + pct(x.get('yoy')) + ' Y/Y' if x.get('yoy') is not None else ''}</span></li>"
                          for x in peers)
@@ -341,7 +362,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
 {live}
 {ties_html}
 {about}
-{f'<h2>Other {e(p.get("industry") or sector_name)} companies</h2><ul class="seo-list">{peer_links}</ul>' if peer_links else ''}
+{peer_table(r_me, peers, p.get("industry") or sector_name) if peers else ''}
 <p class="muted">Source: <a href="{e(q.get('index_url') or q.get('doc_url') or '')}" rel="nofollow">{e(name)} {e(form)} on SEC EDGAR</a> · CIK {e(p['cik'])} · {e(p.get('industry') or '')}</p>"""
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Corporation", "name": name, "tickerSymbol": t or None, "url": url},

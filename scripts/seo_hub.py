@@ -158,6 +158,21 @@ def smart(hub, L):
     row = lambda r: [L(r.get('ticker'), lab(r)), e(nm(r.get('name') or r.get('issuer'))), money(r.get('usd_net')), f"{num(r.get('buyers'))} / {num(r.get('sellers'))}",
                      f"{num(r.get('new'))} / {num(r.get('exits'))}", e(', '.join(f"{nm(x['manager'])} {money(x['usd'])}" for x in (r.get('top_buy') or [])[:2]))]
     hd = ['Stock', 'Name', 'Net $', 'Buyers / sellers', 'New / exits', 'Largest buyers']
+    sig = read(os.path.join(hub, 'market', 'signals.json')) or {}
+    sec = {}
+    for s in sig.get('rows') or []:
+        co = L.row(s.get('ticker'))
+        f13 = s.get('f13') or {}
+        if co and f13.get('usd_net') is not None:
+            k = co.get('sector') or 'other'
+            sec[k] = sec.get(k, 0) + f13['usd_net']
+    if len(sec) >= 4:
+        names = {'technology': 'Technology', 'communication': 'Communication', 'consumer-disc': 'Consumer discretionary', 'consumer-staples': 'Consumer staples', 'health': 'Health care',
+                 'financials': 'Financials', 'real-estate': 'Real estate', 'energy': 'Energy', 'materials': 'Materials', 'industrials': 'Industrials', 'utilities': 'Utilities', 'other': 'Other'}
+        items = sorted(((names.get(k, k), v) for k, v in sec.items()), key=lambda kv: -kv[1])
+        body += ("<h2>Where the funds' money moved, by sector</h2>" + SV.diverging(items, money, 'Net 13F buying (+) and selling (−) by sector, the stocks with a signal', n=12,
+                 note=f"Summed over the {num(len(sig.get('rows') or []))} stocks on the signals board; a rotation between sectors shows as green on one side and red on the other."))
+        lead += f" By sector, the funds' money moved into {items[0][0].lower()} ({money(items[0][1])}) and out of {items[-1][0].lower()} ({money(items[-1][1])})."
     body += '<h2>Most net buying</h2>' + table(hd, [row(r) for r in nb[:25]])
     body += '<h2>Most net selling</h2>' + table(hd, [row(r) for r in ns[:25]])
     body += '<h2>Most new positions</h2>' + table(hd, [row(r) for r in newp[:15]])
@@ -463,6 +478,23 @@ def event_slug(r, L):
     return f"{who}-{what}-{r.get('filed', '')}-{str(r.get('accession', ''))[-6:]}"
 
 
+_AMT = re.compile(r'\$\s?(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(billion|million|thousand|bn|mm|m\b|b\b|k\b)?', re.I)
+_MULT = {'billion': 1e9, 'bn': 1e9, 'b': 1e9, 'million': 1e6, 'mm': 1e6, 'm': 1e6, 'thousand': 1e3, 'k': 1e3}
+
+
+def amounts(text):
+    """dollar amounts named in a filing's text, largest first (a 'per share' figure is left out)"""
+    out = []
+    for m in _AMT.finditer(text or ''):
+        tail = (text[m.end():m.end() + 12] or '').lower()
+        if 'per share' in tail or 'per unit' in tail:
+            continue
+        v = float(m.group(1).replace(',', '')) * _MULT.get((m.group(2) or '').lower(), 1)
+        if v >= 1e6:
+            out.append(v)
+    return sorted(out, reverse=True)
+
+
 def archive(site, store):
     rows = (read(os.path.join(site, 'disclosures', 'data', 'market', 'events8k.json')) or {}).get('rows') or []
     path = os.path.join(store, 'seo-events.json') if store else None
@@ -503,6 +535,11 @@ def event_pages(site, base, L, evs):
                 body += f"<p class='seo-hl'><span>{e(topic)}</span>{e(r['headline'])}</p>"
             if r.get('quote'):
                 body += f"<h2>What the filing says</h2><blockquote class='seo-quote'>{e(r['quote'][:1600])}</blockquote>"
+            amt = amounts((r.get('headline') or '') + ' ' + (r.get('quote') or ''))
+            if amt and row and (row.get('revenue') or 0) > 0:
+                yr, a = row['revenue'] * 4, amt[0]
+                body += (f"<p class='seo-hl'><span>Scale</span>The filing names <b>{money(a)}</b>: about <b>{100 * a / yr:.0f}%</b> of {e(name)}'s annual revenue "
+                         f"({money(yr)}, four times the latest quarter)" + (f", or {a / row['revenue']:.1f} quarters of sales" if a >= yr else '') + ".</p>")
             body += f"<p><a class='seo-cta' href='{e(r.get('url'))}' rel='nofollow'>Read the filing on SEC EDGAR →</a></p>"
             why = [f"<p><b>Item {e(i)} — {e(ITEMS.get(i, ''))}.</b> {e(WHY[i])}</p>" for i in its if i in WHY]
             if why:

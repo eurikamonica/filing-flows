@@ -10,7 +10,7 @@ green profit, red loss).
 """
 import html
 
-GREY, GREEN, RED, BLUE, INK, MUTED, LINE = '#8a8f98', '#2e8b57', '#c0563d', '#5d7fa3', '#2b2b2b', '#6b6b6b', '#d8d4cc'
+GREY, GREEN, RED, BLUE, INK, MUTED, LINE, ORANGE = '#8a8f98', '#2e8b57', '#c0563d', '#5d7fa3', '#2b2b2b', '#6b6b6b', '#d8d4cc', '#c08a3e'
 FONT = "font-family='IBM Plex Sans,system-ui,sans-serif'"
 
 
@@ -214,3 +214,155 @@ def scatter(points, xlab, ylab, title, me=None, note=None, xfmt=lambda v: f'{v:+
         out.append(f"<circle cx='{X(mine[1]):.0f}' cy='{Y(mine[2]):.0f}' r='{max(r, 6):.1f}' fill='{BLUE}' stroke='#fff' stroke-width='2'/>"
                    f"<text x='{tx:.0f}' y='{Y(mine[2]) + 4:.0f}' font-size='12' font-weight='600' fill='{INK}' text-anchor='{'end' if right else 'start'}'>{_e(me)} ({_e(xfmt(mine[1]))}, {_e(yfmt(mine[2]))})</text>")
     return _fig(''.join(out), title, note, W, H)
+
+
+PALETTE = ('#5d7fa3', '#2e8b57', '#c0563d', '#8a8f98', '#7b6aa8', '#c08a3e', '#6fae8a', '#b0a68f', '#a05a8c', '#4f9fb8')
+
+
+def stacked(periods, series, fmt, title, note=None, colors=None, legend=True):
+    """Stacked bars, one per period: periods [label …] oldest first; series [(name, [v per period])]. Positive values
+    stack up from the baseline, negative down (a cash-flow statement: sources above, uses below)."""
+    series = [(n, v) for n, v in series if any(x for x in v if x)]
+    if len(periods) < 2 or not series:
+        return ''
+    W, H, top, bot, left = 640, 260, 46, 34, 6
+    up = [sum(max(0, (v[i] or 0)) for _, v in series) for i in range(len(periods))]
+    dn = [sum(min(0, (v[i] or 0)) for _, v in series) for i in range(len(periods))]
+    hi, lo = max(up + [0]), min(dn + [0])
+    span = (hi - lo) or 1
+    ph = H - top - bot
+    y0 = top + ph * hi / span
+    step = (W - left) / len(periods)
+    bw = min(48, step * 0.66)
+    cols = colors or PALETTE
+    out = [f"<line x1='0' x2='{W}' y1='{y0:.0f}' y2='{y0:.0f}' stroke='{LINE}'/>"]
+    if legend:
+        x = 0
+        for k, (n, _) in enumerate(series[:8]):
+            out.append(f"<rect x='{x}' y='24' width='10' height='10' fill='{cols[k % len(cols)]}'/><text x='{x + 13}' y='33' font-size='10.5' fill='{INK}'>{_e(_clip(n, 22))}</text>")
+            x += 20 + 6.2 * min(len(n), 22)
+    for i, lab in enumerate(periods):
+        x = left + i * step + (step - bw) / 2
+        yu, yd = y0, y0
+        for k, (n, v) in enumerate(series):
+            val = v[i] or 0
+            if not val:
+                continue
+            hgt = abs(val) / span * ph
+            if val > 0:
+                yu -= hgt
+                y = yu
+            else:
+                y = yd
+                yd += hgt
+            out.append(f"<rect x='{x:.0f}' y='{y:.0f}' width='{bw:.0f}' height='{max(hgt, 0.5):.1f}' fill='{cols[k % len(cols)]}'><title>{_e(lab)}: {_e(n)} {_e(fmt(val))}</title></rect>")
+        if len(periods) <= 10 and up[i]:
+            out.append(f"<text x='{x + bw / 2:.0f}' y='{yu - 4:.0f}' font-size='10' text-anchor='middle' fill='{INK}'>{_e(fmt(up[i]))}</text>")
+        out.append(f"<text x='{x + bw / 2:.0f}' y='{H - 12}' font-size='11' text-anchor='middle' fill='{MUTED}'>{_e(_clip(lab, 10))}</text>")
+    return _fig(''.join(out), title, note, W, H)
+
+
+def river(periods, series, fmt, title, note=None, colors=None):
+    """A stacked area ("river"): periods oldest first; series [(name, [v per period])] — a company's revenue lines
+    over time, each band's share visible at every period."""
+    series = [(n, [max(0, x or 0) for x in v]) for n, v in series if any(x for x in v if x)]
+    if len(periods) < 3 or not series:
+        return ''
+    W, H, top, bot, left, right = 640, 260, 46, 30, 6, 6
+    tot = [sum(v[i] for _, v in series) for i in range(len(periods))]
+    mx = max(tot) or 1
+    ph = H - top - bot
+    X = lambda i: left + (W - left - right) * i / (len(periods) - 1)
+    Y = lambda v: top + ph * (1 - v / mx)
+    cols = colors or PALETTE
+    base = [0.0] * len(periods)
+    out, x = [], 0
+    for k, (n, v) in enumerate(series[:9]):
+        out.append(f"<rect x='{x}' y='24' width='10' height='10' fill='{cols[k % len(cols)]}'/><text x='{x + 13}' y='33' font-size='10.5' fill='{INK}'>{_e(_clip(n, 22))}</text>")
+        x += 20 + 6.2 * min(len(n), 22)
+    for k, (n, v) in enumerate(series):
+        topl = [base[i] + v[i] for i in range(len(periods))]
+        path = 'M' + ' L'.join(f"{X(i):.1f},{Y(topl[i]):.1f}" for i in range(len(periods))) + ' L' + ' L'.join(f"{X(i):.1f},{Y(base[i]):.1f}" for i in reversed(range(len(periods)))) + ' Z'
+        out.append(f"<path d='{path}' fill='{cols[k % len(cols)]}' opacity='.85'><title>{_e(n)}: {_e(fmt(v[-1]))} latest</title></path>")
+        last = len(periods) - 1
+        if v[last] / mx > 0.07:
+            out.append(f"<text x='{X(last) - 4:.0f}' y='{(Y(topl[last]) + Y(base[last])) / 2 + 4:.0f}' font-size='10' text-anchor='end' fill='#fff' font-weight='600'>{_e(fmt(v[last]))}</text>")
+        base = topl
+    for i, lab in enumerate(periods):
+        if len(periods) <= 10 or i % max(1, len(periods) // 8) == 0 or i == len(periods) - 1:
+            out.append(f"<text x='{X(i):.0f}' y='{H - 10}' font-size='10.5' text-anchor='{'start' if i == 0 else 'end' if i == len(periods) - 1 else 'middle'}' fill='{MUTED}'>{_e(_clip(lab, 10))}</text>")
+    return _fig(''.join(out), title, note, W, H)
+
+
+def line_marks(days, values, marks, fmt, title, note=None, color=INK):
+    """A line over time with marks on it: days [ISO …], values [v …] (the price), marks [(day, kind, label)] with kind
+    one of buy, sell, earnings, event. The legend names the kinds present."""
+    pts = [(d, v) for d, v in zip(days, values) if v is not None]
+    if len(pts) < 10:
+        return ''
+    W, H, top, bot, left, right = 640, 280, 46, 30, 44, 10
+    t0, t1 = pts[0][0], pts[-1][0]
+    import datetime as _dt
+    ord_ = lambda d: _dt.date.fromisoformat(d[:10]).toordinal()
+    o0, o1 = ord_(t0), ord_(t1)
+    lo, hi = min(v for _, v in pts), max(v for _, v in pts)
+    pad = (hi - lo) * 0.08 or 1
+    lo, hi = lo - pad, hi + pad
+    X = lambda d: left + (W - left - right) * (ord_(d) - o0) / ((o1 - o0) or 1)
+    Y = lambda v: top + (H - top - bot) * (hi - v) / (hi - lo)
+    out = []
+    for k in range(4):
+        v = lo + (hi - lo) * (k + 1) / 4
+        out.append(f"<line x1='{left}' x2='{W - right}' y1='{Y(v):.0f}' y2='{Y(v):.0f}' stroke='{LINE}'/><text x='{left - 4}' y='{Y(v) + 4:.0f}' font-size='10' text-anchor='end' fill='{MUTED}'>{_e(fmt(v))}</text>")
+    step = max(1, len(pts) // 300)
+    path = 'M' + ' L'.join(f"{X(d):.1f},{Y(v):.1f}" for d, v in pts[::step])
+    out.append(f"<path d='{path}' fill='none' stroke='{color}' stroke-width='1.6'/>")
+    KIND = {'buy': (GREEN, 'Insider buy', '▲'), 'sell': (RED, 'Insider sale', '▼'), 'earnings': (BLUE, 'Earnings report', '●'), 'event': (ORANGE, '8-K event', '◆'), 'plan': (GREY, 'Planned sale (Form 144)', '▽')}
+    by = dict(zip(days, values))
+    seen = []
+    for d, kind, lab in marks:
+        if kind not in KIND or d < t0 or d > t1:
+            continue
+        v = by.get(d) or next((vv for dd, vv in pts if dd >= d), None)
+        if v is None:
+            continue
+        c, _, g = KIND[kind]
+        yoff = -12 if kind in ('buy', 'earnings') else 14
+        out.append(f"<text x='{X(d):.1f}' y='{Y(v) + yoff + (4 if yoff > 0 else 0):.1f}' font-size='11' text-anchor='middle' fill='{c}'>{g}<title>{_e(d)} · {_e(lab)}</title></text>")
+        if kind not in seen:
+            seen.append(kind)
+    x = 0
+    for kind in seen:
+        c, name, g = KIND[kind]
+        out.append(f"<text x='{x}' y='33' font-size='11' fill='{c}'>{g}</text><text x='{x + 13}' y='33' font-size='10.5' fill='{INK}'>{_e(name)}</text>")
+        x += 24 + 6.2 * len(name)
+    for d in (t0, t1):
+        out.append(f"<text x='{X(d):.0f}' y='{H - 10}' font-size='10.5' text-anchor='{'start' if d == t0 else 'end'}' fill='{MUTED}'>{_e(d[:10])}</text>")
+    return _fig(''.join(out), title, note, W, H)
+
+
+def calendar(start, days, title, note=None, fmt=None, label='companies'):
+    """A month-style grid from `start` (ISO, a Monday) over the weeks covering `days` {ISO: (count, weight)}: each
+    weekday cell shaded by its weight (the market value or count reporting), with the count printed."""
+    import datetime as _dt
+    d0 = _dt.date.fromisoformat(start)
+    d0 -= _dt.timedelta(days=d0.weekday())
+    last = max((_dt.date.fromisoformat(d) for d in days), default=d0)
+    weeks = max(1, (last - d0).days // 7 + 1)
+    W, top, cell, gap = 640, 40, 58, 6
+    cw = (W - 6 * gap) / 5
+    H = top + weeks * (cell + gap) + 6
+    mx = max((w for _, w in days.values()), default=1) or 1
+    out = [f"<text x='{gap + i * (cw + gap) + cw / 2:.0f}' y='34' font-size='11' text-anchor='middle' fill='{MUTED}'>{n}</text>" for i, n in enumerate(('Mon', 'Tue', 'Wed', 'Thu', 'Fri'))]
+    for w in range(weeks):
+        for i in range(5):
+            d = d0 + _dt.timedelta(days=7 * w + i)
+            k = d.isoformat()
+            x, y = gap + i * (cw + gap), top + w * (cell + gap)
+            n, wt = days.get(k, (0, 0))
+            a = 0.08 + 0.85 * ((wt / mx) ** 0.5 if wt else 0)
+            out.append(f"<rect x='{x:.0f}' y='{y}' width='{cw:.0f}' height='{cell}' rx='6' fill='{BLUE}' opacity='{a:.2f}'/>"
+                       f"<text x='{x + 7:.0f}' y='{y + 15}' font-size='10.5' fill='{INK if a < 0.5 else '#fff'}'>{d.day}{' ' + d.strftime('%b') if d.day <= 7 or (w == 0 and i == 0) else ''}</text>"
+                       + (f"<text x='{x + cw - 7:.0f}' y='{y + cell - 9}' font-size='15' font-weight='600' text-anchor='end' fill='{INK if a < 0.5 else '#fff'}'>{n}</text>"
+                          + (f"<text x='{x + 7:.0f}' y='{y + cell - 9}' font-size='9.5' fill='{INK if a < 0.5 else '#fff'}'>{_e(fmt(wt))}</text>" if fmt and wt else '') if n else ''))
+    return _fig(''.join(out), title, note, W, int(H))
