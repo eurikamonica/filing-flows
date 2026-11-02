@@ -1982,6 +1982,11 @@ def run(args):
     render(store, args.out, set(stars))
     company_list(args.out)
     price_list(args.out)
+    try:                                                         # figures that disagree with each other (audit.py)
+        from . import audit
+        audit.run(args.out)
+    except Exception as e:
+        print(f"::warning::audit not run: {e}")
 
 
 def undrawable(store, asked, known=None):

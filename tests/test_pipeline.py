@@ -3348,3 +3348,35 @@ def test_sliver_revenue_lines_and_total_members():
     assert dims.best_partition(members, 1914e6) is None
     good = {"m:A": ("Commissions", 1000e6), "m:B": ("Net interest", 900e6), "m:C": ("Other", 14e6)}
     assert [l["id"] for l in dims.best_partition(good, 1914e6)["leaves"]] == ["m:A", "m:B", "m:C"]
+
+
+def test_audit_finds_figures_that_disagree(tmp_path):
+    """pipeline/audit.py over rendered company files: a fourth quarter equal to the year, a year far from its quarters,
+    a revenue jump its lines do not share, a stale preliminary quarter."""
+    import datetime as dt
+    from pipeline import audit
+
+    def q(label, end, form, rev, lines=(), **more):
+        nodes = [{"id": "revenue", "v": rev, "q": more.get("q"), "y": more.get("y")}]
+        nodes += [{"id": f"L:{i}", "color": "rev", "v": v, "q": qv, "y": yv} for i, (v, qv, yv) in enumerate(lines)]
+        nodes += [{"id": k, "v": v} for k, v in more.get("nodes", {}).items()]
+        return {"label": label, "end": end, "form": form, "nodes": nodes}
+    d = {"profile": {"name": "Test Co"},
+         "quarters": [q("Q4 2025", "2025-12-31", "10-K", 6522.8e6, nodes={"net": 300e6}, q=1240.2e6),
+                      q("Q3 2025", "2025-09-30", "10-Q", 1240.2e6, lines=[(1200e6, 1180e6, 1100e6)], q=1246.5e6, nodes={"net": 200e6}),
+                      q("Q2 2025", "2025-06-30", "10-Q", 1246.5e6, nodes={"net": 200e6}, q=2149.5e6),
+                      q("Q1 2025", "2025-03-31", "10-Q", 2149.5e6, nodes={"net": 200e6}),
+                      q("Q4 2024", "2024-12-31", "8-K", 2000e6)],
+         "years": [{"label": "FY2025", "end": "2025-12-31", "nodes": [{"id": "revenue", "v": 6522.8e6}, {"id": "net", "v": 1500e6}]}]}
+    found = {(c, lab) for c, lab, _ in audit.check_company(d, today=dt.date(2026, 11, 2))}
+    assert ("fourth", "Q4 2025") in found and ("year", "FY2025") in found and ("preliminary", "Q4 2024") in found
+    # a jump the lines do not share, on a chart whose previous-quarter figure disagrees with that chart
+    d2 = {"profile": {"name": "Jump Co"}, "quarters": [
+        q("Q3 2026", "2026-09-30", "10-Q", 806.5e6, lines=[(806e6, 753e6, 728e6)], q=137e6, y=150e6),
+        q("Q2 2026", "2026-06-30", "10-Q", 753e6, lines=[(753e6, 748e6, 702e6)])]}
+    found2 = {(c, lab) for c, lab, _ in audit.check_company(d2, today=dt.date(2026, 11, 2))}
+    assert ("jump", "Q3 2026") in found2 and ("comparison", "Q3 2026") in found2
+    os.makedirs(tmp_path / "c")
+    json.dump(d, open(tmp_path / "c" / "1.json", "w"))
+    s = audit.run(str(tmp_path), today=dt.date(2026, 11, 2))
+    assert s["companies"] == 1 and s["counts"]["fourth"] == 1 and os.path.exists(tmp_path / "audit.json")
