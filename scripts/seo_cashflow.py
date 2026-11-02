@@ -114,7 +114,7 @@ def page_for(c, row, slug, base):
             f"<h1>{e(name)} cash flow, quarter by quarter</h1><p class='muted'>Latest: {e(last['label'])} · from the cash-flow statements filed with the SEC</p>"
             f"<p class='seo-hl {'up' if (f or 0) >= 0 else 'down'}'><span>Free cash flow</span><b>{money(f)}</b> in {e(last['label'])}"
             + (f" · <b>{money(ttf)}</b> over twelve months" if ttf is not None else '') + '</p>'
-            "<nav class='seo-toc'><a href='#analysis'>Analysis</a><a href='#fcf'>Free cash flow</a><a href='#where'>Where it went</a><a href='#bridge'>Profit to cash</a>"
+            "<nav class='seo-toc'><a href='#analysis'>Analysis</a><a href='#fcf'>Free cash flow</a><a href='#allocation'>By year</a><a href='#where'>Where it went</a><a href='#bridge'>Profit to cash</a>"
             "<a href='#table'>Every quarter</a><a href='#sankey'>Sankey</a></nav>")
     body += "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in [
         ('Operating cash flow', money(last['items'].get('ocf'))), ('Capital spending', money(last['items'].get('capex'))),
@@ -127,6 +127,21 @@ def page_for(c, row, slug, base):
     body += SV.duo([(x['label'], x['items'].get('ocf'), -(x['items'].get('capex') or 0)) for x in qs], ('Operating cash flow', 'Capital spending'), money,
                    f"{name}: operating cash flow against capital spending")
     body += '</div>'
+    fys = [x for x in cap.get('fy') or [] if x.get('items') and x['items'].get('ocf') is not None][-10:]
+    if len(fys) >= 3:
+        keys = [('ocf', 'Operating cash flow'), ('borrow', 'Net borrowing'), ('stock', 'Shares issued'), ('sales', 'Asset sales'), ('capex', 'Capital spending'),
+                ('acq', 'Acquisitions'), ('buyback', 'Buybacks'), ('div', 'Dividends')]
+        ser = [(lab, [(x['items'].get(k) or 0) for x in fys]) for k, lab in keys]
+        tot_in = sum(v for x in fys for k in ('ocf',) for v in [x['items'].get(k) or 0])
+        uses = {lab: -sum(min(0, v) for v in vals) for lab, vals in ser}
+        top = sorted(((k, v) for k, v in uses.items() if v > 0), key=lambda kv: -kv[1])[:2]
+        body += ("<h2 id='allocation'>Capital allocation, year by year</h2>"
+                 + SV.stacked([x['label'] for x in fys], ser, money, f"{name}: where the cash came from (up) and went (down), by fiscal year",
+                              note=f"Over these {len(fys)} years operating cash flow totalled {money(tot_in)}"
+                              + ('; the largest uses were ' + ' and '.join(f"{k.lower()} ({money(v)})" for k, v in top) if top else '') + '. Cash-flow statements as filed.',
+                              colors=(SV.GREEN, SV.BLUE, '#7b6aa8', '#6fae8a', SV.RED, '#c08a3e', '#a05a8c', '#8a8f98')))
+        lines.append(f"Over the last {len(fys)} fiscal years {name} generated {money(tot_in)} from operations"
+                     + ('; the largest uses were ' + ' and '.join(f"{k.lower()} ({money(v)})" for k, v in top) if top else '') + '.')
     body += "<h2 id='where'>Where the cash came from and went</h2><div class='seo-grid'>"
     for per in (last, ttm):
         if per and per.get('items'):

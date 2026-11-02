@@ -18,6 +18,7 @@ Runs after the Disclosure Hub is staged (scan.yml); a page is written only when 
 """
 import argparse
 import datetime as dt
+import html
 import json
 import os
 import re
@@ -298,6 +299,30 @@ def _from(links, node, target):
     return v
 
 
+def segment_river(name, qs, n=12):
+    """the lines that make up revenue, quarter by quarter (a stacked area): how the mix shifted"""
+    rows = []
+    for q in qs[:n]:
+        nodes = {x.get('id'): x for x in q.get('nodes') or []}
+        d = {}
+        for ln in q.get('links') or []:
+            s = nodes.get(ln.get('s'))
+            if ln.get('t') == 'revenue' and s and s.get('name') and ln.get('v'):
+                d[html.unescape(s['name'])] = d.get(html.unescape(s['name']), 0) + ln['v']
+        if len(d) >= 2:
+            rows.append((q.get('label'), d))
+    rows.reverse()
+    if len(rows) < 3:
+        return ''
+    names = sorted({k for _, d in rows for k in d}, key=lambda k: -sum(d.get(k, 0) for _, d in rows))[:8]
+    first, last = rows[0][1], rows[-1][1]
+    tf, tl = sum(first.values()) or 1, sum(last.values()) or 1
+    shift = sorted(((k, last.get(k, 0) / tl - first.get(k, 0) / tf) for k in names), key=lambda kv: -abs(kv[1]))[0]
+    note = (f"{shift[0]} went from {100 * first.get(shift[0], 0) / tf:.0f}% of revenue in {rows[0][0]} to {100 * last.get(shift[0], 0) / tl:.0f}% in {rows[-1][0]}, the largest shift in the mix."
+            if abs(shift[1]) >= 0.02 else f"The mix barely moved between {rows[0][0]} and {rows[-1][0]}.")
+    return SV.river([l for l, _ in rows], [(k, [d.get(k) for _, d in rows]) for k in names], money, f"{name}: revenue by line, {rows[0][0]} to {rows[-1][0]}", note=note)
+
+
 def revenue(co, c):
     qs = (c or {}).get('quarters') or []
     if not qs or not qs[0].get('links'):
@@ -356,6 +381,7 @@ def revenue(co, c):
                    + (f"; the operating margin was {100 * oi / tot:.1f}%." if oi is not None else '.')))
     body = (f"<p class='lead'>{e(lead)}</p>" + sankey_figure(co.get('cik') or 0, q.get('label'), f"{name} {q.get('label')} revenue to profit and cash Sankey")
             + (SV.hbars([(n_, v[0]) for n_, v, _ in segs], money, f"{name} revenue by segment, {q.get('label')}") if len(segs) > 1 else '')
+            + segment_river(name, qs)
             + SV.bars([(x.get('label'), (x.get('headline') or {}).get('revenue')) for x in reversed(qs[:8])], money, f"{name} revenue by quarter")
             + SV.hbars([(k, x) for k, x in ladder[1:] if x is not None and x > 0], lambda v, tt=tot: f"{100 * v / tt:.0f}¢", f"{name}: where each dollar of revenue goes", n=9)
             + (f"<h2>Revenue by segment, {e(q.get('label'))}</h2><div class='tbl-wrap'><table><thead><tr><th>Segment</th><th class='num'>Revenue</th><th class='num'>Share</th>"
