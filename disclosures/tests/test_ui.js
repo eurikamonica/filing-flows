@@ -227,6 +227,54 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   vm.runInContext(`state.rrgp='';state.rrgh='';delete globalThis.__o`,context);
   console.log('RRG quadrant odds checks passed.');
  }
+ // 4.6c the RRG lab (rrg-lab.js): daily lines from the move-odds files, the close at every point, the next period's
+ // crossing prices, the forecast path with its dates and prices, the research panel, ETF groups on the weekly chart from
+ // the daily files, and the Rotation research view from the server's file
+ {
+  const days=[];for(let t=Date.UTC(2020,0,2);days.length<1500;t+=864e5){const w=new Date(t).getUTCDay();if(w&&w<6)days.push(new Date(t).toISOString().slice(0,10))}
+  const gaps=days.slice(1).map((d,i)=>((Date.parse(d)-Date.parse(days[i]))/864e5).toString(36)).join('');
+  const mv=(key,kind,group,last,f)=>({key,ticker:key,name:key+' fund',kind,group,last,d0:days[0],gaps,r:days.slice(1).map((_,i)=>Math.round(1e4*f(i)))});
+  const docs={SPY:mv('SPY','market','market',500,i=>.0004+.01*Math.sin(i/7)),XLK:mv('XLK','sector','sector',180,i=>.0006+.015*Math.sin(i/9+1)),
+   XLE:mv('XLE','sector','sector',70,i=>.0002+.02*Math.cos(i/11)),EWJ:mv('EWJ','etf','country',70,i=>.0003+.012*Math.sin(i/13)),EWZ:mv('EWZ','etf','country',30,i=>.0001+.02*Math.sin(i/6))};
+  const W=Math.floor(1500/5),wd=Array.from({length:W},(_,i)=>new Date(Date.UTC(2020,0,3)+i*6048e5).toISOString().slice(0,10));
+  const D={start:wd[0],weeks:wd[W-1],benchmark:'SPY',bench:{start:wd[0],c:wd.map((_,i)=>400*Math.exp(.002*i))},
+   series:[{id:'XLK',name:'Technology',group:'sector-etf',start:wd[0],c:wd.map((_,i)=>100*Math.exp(.003*i+.05*Math.sin(i/6)))},{id:'XLE',name:'Energy',group:'sector-etf',start:wd[0],c:wd.map((_,i)=>60*Math.exp(.001*i+.06*Math.cos(i/8)))}],tickers:{}};
+  vm.runInContext(`marketStore['history/rrg']={data:${JSON.stringify(D)}};RRG.cache.clear();for(const [k,d] of Object.entries(${JSON.stringify(docs)}))RRGL.moves[k]={data:RRGLab.decodeMoves(d)};`,context);
+  const run=c=>vm.runInContext(c,context);
+  run(`state.tab='rotation';state.rview='rrg';state.rrgu='sectors';state.rrgf='d';state.rrgm='2d';state.rrgfp='XLK';state.rf=undefined;state.rfk='';state.rrglopen=true`);
+  let html=run(`rrgView()`);
+  for(const want of ['Daily (every trading day)','21-trading day window','rrgl-path','+21d ','XLK $','Crossing odds, resistance and rebounds','Next trading day: RS-Ratio · RS-Momentum at 100','Forecast path, +21 trading days','These 2 lines','Lagging: does it rebound?'])
+   assert.ok(html.includes(want),`the daily RRG lacks “${want}”`);
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'the daily RRG shows NaN/undefined');
+  assert.equal(run(`state.rrgn`),'21');                                          // the daily window by default
+  // the table and its CSV: the close, the crossing prices, the path's date and price 21 trading days on
+  const ex=JSON.parse(run(`JSON.stringify(exported)`));
+  assert.ok(ex.length===2&&ex.every(r=>r.close>0&&r.next_close_rs_ratio_100>0&&r.path_close_median_21>0&&/^\d{4}-\d{2}-\d{2}$/.test(r.path_date_21)),'the RRG table\'s CSV lacks prices or the path');
+  assert.equal(ex.find(r=>r.line==='XLK').close.toFixed(2),'180.00');            // the close on the last day: the raw last close
+  // the past: a frame 40 days back draws the path and what happened
+  run(`state.rf=${days.length-41};state.rfk='rrg|d|${days.length}'`);html=run(`rrgView()`);
+  assert.ok(html.includes('rrgl-actual'),'a past frame does not draw what happened');
+  // a lab universe on the weekly chart: the daily files as weekly closes, against SPY's
+  run(`state.rrgf='w';state.rrgu='countries';state.rrgfp='all';RRGL_UNI.countries[1]=['EWJ','EWZ']`);
+  html=run(`rrgView()`);
+  assert.ok(html.includes('EWJ $')&&html.includes('14-week window')&&html.includes('rrgl-path'),'the countries on the weekly chart');
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'the weekly countries show NaN/undefined');
+  run(`state.rrgf='d';state.rrgu='site'`);
+  assert.ok(run(`rrgView()`).includes('weekly only'),'site sectors on the daily chart: explained');
+  // the Rotation research view from a server file (the browser's own research has the server's shape)
+  const doc=run(`(()=>{const ls=['XLK','XLE'].map(k=>{const c=rrgCalc(marketStore['history/rrg'].data,rrglEnt(marketStore['history/rrg'].data,k,'d'),'d',21);return {x:c.x,y:c.y,c:c.c,b:c.b}});
+   return JSON.stringify({schema:'rrg_research.v1',freq:'d',rrg:{sh:5,n:21,long:252,min_norm:126},note:'test',groups:{sectors:{label:'Sector ETFs against the S&P 500',...RRGLab.research(ls,RRGL.grid.days,[1,5,21,63],'trading days')}}})})()`);
+  run(`RRGL.srv.d={data:${doc}};state.rview='research';state.rrsf='d'`);
+  html=run(`rotationView()`);
+  for(const want of ['Rotation research — every group, daily','Compare the groups','Lagging: does it rebound?','rrgl-bars','Crossing the 100 lines','Lagging lines by depth and momentum','Where lines stood 5 trading days later'])
+   assert.ok(html.includes(want),`the research view lacks “${want}”`);
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'the research view shows NaN/undefined');
+  assert.ok(run(`exported.length===1&&exported[0].group==='sectors'`),'the research CSV');
+  run(`state.rrsf='w'`);assert.ok(run(`rotationView()`).includes('Loading the rotation research')||run(`rotationView()`).includes('not published yet'));
+  run(`state.rview='rrg';state.rrgu='sectors';state.rrgf='w';state.rrgfp='';state.rrglopen=false;RRGL_UNI.countries[1]=['EWJ','FXI','MCHI','KWEB','EWZ','INDA','EWG','EWU','EWC','EWA','EWT','EWY','EWW','EWH']`);
+  checks+=20;
+  console.log('RRG lab checks passed.');
+ }
  // the price paths an option chain implies (options.js optFan / optPathsPanel): exact at every expiry, no NaN
  {
   const probs=[.025,.05,.1,.25,.5,.75,.9,.95,.975],ln=(t,iv,p)=>100*Math.exp(-0.5*iv*iv*t+iv*Math.sqrt(t)*vm.runInContext(`optInvN(${p})`,context));

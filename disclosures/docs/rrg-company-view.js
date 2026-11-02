@@ -211,6 +211,13 @@
   }
 
   /* ---------- drawing ---------- */
+  // the date h weeks after a week's Friday, as "Jan 29"
+  function dayOf(day, h) {
+    const t = Date.parse(String(day || '') + 'T00:00:00Z');
+    if (!Number.isFinite(t)) return '+' + h + ' wk';
+    const d = new Date(t + h * 6048e5);
+    return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()] + ' ' + d.getUTCDate();
+  }
   function chart(A, o) {
     const W = o.W || 760, Hh = Math.max(300, Math.round(W * 0.66)), Lm = W < 500 ? 40 : 50, R = 10, T = 14, Bm = 40, S = A.S, k = A.k, tail = o.tail;
     const pts = [];
@@ -247,11 +254,15 @@
     if (P.length) {
       const med = [p0]; for (let j = 0; j < 13; j++) med.push([sx(qtl(P.map((p) => p.x[j]), 0.5)), sy(qtl(P.map((p) => p.y[j]), 0.5))]);
       s += `<path d="M${med.map((q) => f(q[0]) + ',' + f(q[1])).join('L')}" style="fill:none;stroke:${o.col};stroke-width:2;stroke-dasharray:6 4;opacity:.85"/>`;
+      // the median path's weeks 1, 4 and 13: the date and the replayed close there (the benchmark flat, as the price chart)
+      const F = o.fmt || usd, px = (h) => (fin(A.close) ? A.close * Math.exp(qtl(P.map((p) => p.cum[h - 1]), 0.5)) : NaN);
+      [1, 4, 13].forEach((h) => { const q = med[h]; s += `<circle cx="${f(q[0])}" cy="${f(q[1])}" r="3.4" style="fill:${o.col};stroke:var(--surface,#fff);stroke-width:1.2"><title>${esc(h + ' wk → ' + dayOf(A.day, h) + ': ' + F(px(h)) + ' (median of the replays)')}</title></circle>`; });
       [4, 13].forEach((h) => {
         const xs1 = P.map((p) => p.x[h - 1]), ys1 = P.map((p) => p.y[h - 1]), a = [sx(qtl(xs1, 0.1)), sy(qtl(ys1, 0.9))], b = [sx(qtl(xs1, 0.9)), sy(qtl(ys1, 0.1))];
         // 4 weeks: top right of its box; 13 weeks: bottom left, away from today's dot and its name
         const lx = h === 4 ? Math.min(b[0] - 4, W - R - 6) : Math.max(a[0] + 4, Lm + 4), ly = h === 4 ? Math.max(a[1] + 14, T + 30) : Math.min(b[1] - 6, Hh - Bm - 26);
-        s += `<rect x="${f(a[0])}" y="${f(a[1])}" width="${f(b[0] - a[0])}" height="${f(b[1] - a[1])}" rx="6" style="fill:none;stroke:${o.col};stroke-width:1.2;stroke-dasharray:3 3;opacity:.8"/><text class="rc-l" x="${f(lx)}" y="${f(ly)}" text-anchor="${h === 4 ? 'end' : 'start'}">${h} wk · 80%</text>`;
+        const lab = `${h} wk · ${dayOf(A.day, h)}${fin(px(h)) ? ' · ' + F(px(h)) : ''} · 80% box`;
+        s += `<rect x="${f(a[0])}" y="${f(a[1])}" width="${f(b[0] - a[0])}" height="${f(b[1] - a[1])}" rx="6" style="fill:none;stroke:${o.col};stroke-width:1.2;stroke-dasharray:3 3;opacity:.8"/><text class="rc-l" x="${f(lx)}" y="${f(ly)}" text-anchor="${h === 4 ? 'end' : 'start'}">${esc(lab)}</text>`;
       });
     }
     const MP = o.mpath && o.mpath.filter(Boolean);
@@ -264,7 +275,7 @@
     if (ctx.length > 1) s += `<path d="M${ctx.map((q) => f(sx(q[0])) + ',' + f(sy(q[1]))).join('L')}" style="fill:none;stroke:var(--muted,#888);stroke-width:1.5;opacity:.7"/><circle cx="${f(sx(ctx[ctx.length - 1][0]))}" cy="${f(sy(ctx[ctx.length - 1][1]))}" r="4" style="fill:var(--muted,#888)"/><text class="rc-l" x="${f(sx(ctx[ctx.length - 1][0]) + 7)}" y="${f(sy(ctx[ctx.length - 1][1]) + 4)}">${esc(o.ctxName)}</text>`;
     if (pts.length > 1) s += `<path d="M${pts.map((q) => f(sx(q[0])) + ',' + f(sy(q[1]))).join('L')}" style="fill:none;stroke:${o.col};stroke-width:2.2"/>`;
     pts.forEach((q, i) => { s += `<circle cx="${f(sx(q[0]))}" cy="${f(sy(q[1]))}" r="${i === pts.length - 1 ? 6 : 2.2}" style="fill:${o.col};opacity:${i === pts.length - 1 ? 1 : (0.3 + 0.6 * i / pts.length).toFixed(2)}"><title>${esc(A.day && i === pts.length - 1 ? 'Week of ' + A.day : '')}</title></circle>`; });
-    s += `<text class="rc-l" x="${f(p0[0] + 9)}" y="${f(p0[1] - 8)}">${esc(o.name)}</text></g>`;
+    s += `<text class="rc-l" x="${f(p0[0] + 9)}" y="${f(p0[1] - 8)}">${esc(o.name + (fin(A.close) ? ' ' + (o.fmt || usd)(A.close) : ''))}</text></g>`;
     return s + '</svg>';
   }
   /* the same two paths on the price: the last 26 weekly closes, then 13 weeks on — the replays' 10–90% band and median

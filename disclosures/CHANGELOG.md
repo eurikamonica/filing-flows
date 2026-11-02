@@ -1,5 +1,30 @@
 # Changelog
 
+## RRG lab: daily RRG, prices, forecast paths with dates and prices, quadrant-crossing research
+
+The hub's RRG (Rotation → RRG) gets a daily frequency beside weekly and monthly: every trading day, from the move-odds
+files (each asset's adjusted daily closes against SPY's, on SPY's trading days; 5-day smoothing, a 21-day window by
+default, scaled by the last 252 days). The same files add new lines to every frequency: the index ETFs against the S&P
+500, world regions, countries, bonds, commodities and two sets of industry ETFs. Every point shows its close; each line's
+label carries the latest close; the table adds the close, the two closes next period that would put RS-Ratio and
+RS-Momentum at 100 (exact from the formula, the benchmark held flat) and the forecast path's date, median price and 80%
+range. The forecast path (new "Forecast path" control, on by default for every line): every run of the line's own and
+the benchmark's moves in its last three years, replayed through the formula from the date shown — the median position
+each period, dots at +1 / +4 / +13 weeks (+1 / +5 / +21 trading days) with the date and the median replayed close,
+the 80% boxes for one line, the share of replays in each quadrant on hover, and at a past date what actually happened.
+A new panel under the chart, "Crossing odds, resistance and rebounds": for each line now, the quadrant line it is
+heading for, how often lines in a similar spot crossed it within the horizon (counted over the chart's lines with the
+outcome known by the date shown, and over the whole group from the server), and for Lagging lines how often they reached
+Improving and Leading; with these lines' own history (the tables below). A new view, Rotation → Rotation research
+(app/rrg_research.py, weekly with the rotation history and daily with the move odds; docs/rrg-lab.js computes the same
+numbers in the browser): for the sector ETFs, index ETFs, styles, the site's sectors, countries, bonds and commodities,
+industry ETFs, industries and companies — how often a line within one unit of a quadrant line and moving toward it
+crossed within 1–26 weeks / 1–63 days or turned back first (by approach speed), how long it took, whether Lagging lines
+rebounded (to Improving, to Leading, back to Weakening) and what they returned against the benchmark and on their own,
+by depth and momentum, the returns after each quadrant, how long lines stay, which way they turn and how long a loop
+takes. The company page's and industry list's RRG mark weeks 1, 4 and 13 of the median replayed path with the date and
+the replayed close. History, not a forecast.
+
 ## Move odds: how rare today's move is, and what followed moves like it
 
 app/moves.py (paths.py moves, run after the daily bars in research-paths.yml) turns the daily bars into one compact file
