@@ -3333,3 +3333,18 @@ def test_loss_borne_by_minority_interests():
         delta = staticmethod(lambda x: f"{x / 1e6:+.1f}M")
     text = analysis.paragraphs(F(), "Q2 2026", N2, None, None)[1]
     assert "to shareholders the quarter was a profit of $115.2M" in text
+
+
+def test_sliver_revenue_lines_and_total_members():
+    """Healthcare Realty: $8M of fee lines (contracts with customers) beside $287M of revenue, the rest rents: the lines
+    are left off. Interactive Brokers: "Basic" and "Diluted" rows and a "Revenues" member are not revenue lines."""
+    from pipeline import build, dims
+    q = {"lines_struct": {"leaves": [{"id": "a", "label": "Management fee income"}, {"id": "b", "label": "Parking income"}],
+                          "groups": [], "recon": dict(dims.RECON)}, "lines": {"a": 5.7e6, "b": 2.2e6}}
+    assert build.sliver_lines(q, 286.6e6) is True
+    assert build.sliver_lines(dict(q, lines={"a": 150e6, "b": 60e6}), 286.6e6) is False
+    assert build.sliver_lines(dict(q, lines_struct=dict(q["lines_struct"], recon=None)), 286.6e6) is False
+    members = {"m:Revenues": ("Revenues", 1914e6), "m:Basic": ("Basic", 0.7e6), "m:Diluted": ("Diluted", 0.7e6)}
+    assert dims.best_partition(members, 1914e6) is None
+    good = {"m:A": ("Commissions", 1000e6), "m:B": ("Net interest", 900e6), "m:C": ("Other", 14e6)}
+    assert [l["id"] for l in dims.best_partition(good, 1914e6)["leaves"]] == ["m:A", "m:B", "m:C"]

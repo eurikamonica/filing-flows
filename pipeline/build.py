@@ -2225,6 +2225,19 @@ def calculated_revenue(q):
     return q
 
 
+LINES_SLIVER = 0.2          # revenue lines adding up to less than this share of revenue are left off the chart
+
+
+def sliver_lines(q, R):
+    """True when the stored revenue lines are a sliver of revenue: an insurer's or a REIT's fees from contracts with
+    customers beside premiums or rents that are not (Healthcare Realty: $8M of lines against $287M of revenue, the rest
+    "other revenues"). Such lines say nothing; revenue is drawn whole."""
+    ls, vals = q.get("lines_struct"), q.get("lines") or {}
+    if not ls or not ls.get("recon") or not R or not all(l["id"] in vals for l in ls["leaves"]):
+        return False
+    return sum(vals[l["id"]] for l in ls["leaves"]) < LINES_SLIVER * R
+
+
 def _quarter_payload(c, q, prev_q, draw_company=True):
     if not draw_company and _has_recon(q):
         q = calculated_revenue(q)
@@ -2234,7 +2247,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     if q["raw"].get("rev_reported") is not None:
         Nc["rev_calc"] = q["raw"]["rev_reported"]
     apply_reported(q, Nc, Ny, draw=draw_company)
-    ls = q.get("lines_struct")
+    ls = None if sliver_lines(q, Nc["R"]) else q.get("lines_struct")
     lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)
     if lines_q1 and ls and not all(l["id"] in lines_q1 for l in ls["leaves"]):
         lines_q1 = None
@@ -2307,7 +2320,7 @@ def year_payload(c, y):
     Nc, Ny = normalize(y["raw"]), normalize(y.get("raw_py"))
     if not Nc:
         return None
-    ls = None if _unmatched(y) else y.get("lines_struct")
+    ls = None if _unmatched(y) or sliver_lines(y, Nc["R"]) else y.get("lines_struct")
     try:
         nodes, links, kind = build_spec(Nc, None, Ny, ls, (y.get("lines"), None, y.get("lines_py")))
     except Exception as e:

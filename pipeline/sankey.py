@@ -448,9 +448,10 @@ def _bridge(S, Nc, nc, net_id, net_key, has_nci, f):
         pl = Nc.get("pl") if has_nci else None
         base = pl if pl and pl > 0 else nib
         conv = round(Nc["ocf"] / base * 100) if base else None
+        words = f"net {'income incl. minority interests' if base is pl else 'earnings'}"
         S.node("ocf", oc, "ocf", "profit", "Operating cash flow", "right", "revenue", "revenue", style="ocf",
-               extra=[f"{conv}% of net {'income incl. minority interests' if base is pl else 'earnings'}"] if conv is not None else [],
-               notekeys=NOTE_KEYS["ocf"])
+               extra=([f"{Nc['ocf'] / base:.0f}× {words} of {f.money(base)}"] if conv > 1000 else [f"{conv}% of {words}"])
+               if conv is not None else [], notekeys=NOTE_KEYS["ocf"])
         S.Qc["_net_to_ocf"] = nib + min(rx, 0) - removed
         if S.Qq.get(net_key) is not None and S.Qq.get(rkey) is not None:
             S.Qq["_net_to_ocf"] = S.Qq[net_key] + min(S.Qq[rkey], 0) - removed_in(S.Qq)
