@@ -424,9 +424,12 @@ def _bridge(S, Nc, nc, net_id, net_key, has_nci, f):
         for k, label, _, xnote in removes:
             S.node("BL:" + k, oc, "bl:" + k, "noncash", label, "right", "net", "net earnings", sign=-1,
                    extra=[xnote or "non-cash, removed"], notekeys=[label.lower()])
-        conv = round(Nc["ocf"] / nib * 100) if nib else None
+        # against the net income the cash flow statement starts from: with minority interests, the consolidated one
+        pl = Nc.get("pl") if has_nci else None
+        base = pl if pl and pl > 0 else nib
+        conv = round(Nc["ocf"] / base * 100) if base else None
         S.node("ocf", oc, "ocf", "profit", "Operating cash flow", "right", "revenue", "revenue", style="ocf",
-               extra=[f"{conv}% of net earnings"] if conv is not None else [],
+               extra=[f"{conv}% of net {'income incl. minority interests' if base is pl else 'earnings'}"] if conv is not None else [],
                notekeys=NOTE_KEYS["ocf"])
         S.Qc["_net_to_ocf"] = nib + min(rx, 0) - removed
         if S.Qq.get(net_key) is not None and S.Qq.get(rkey) is not None:

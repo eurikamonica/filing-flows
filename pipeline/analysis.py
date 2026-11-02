@@ -2,6 +2,15 @@
 from .model import item_label
 
 
+
+def _pl_words(N):
+    """The words for the consolidated net income the cash flow starts from: "net earnings", or with minority interests
+    that differ from it, "net income including minority interests" (Blue Owl: $80.2M against $20.0M to shareholders)."""
+    ni, pl = N.get("ni"), N.get("pl")
+    if ni is not None and pl is not None and abs(pl - ni) > 0.02 * max(abs(pl), 1):
+        return "net income including minority interests"
+    return "net earnings"
+
 def _pct(a, b):
     if a is None or b is None or b == 0 or a <= 0 or b <= 0:
         return None
@@ -133,7 +142,7 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
         if g is not None:
             s += f" ({_chg_words(g)} year over year)"
         if Nc["pl"] > 0 and Nc["ocf"] > 0:
-            s += f", {Nc['ocf'] / Nc['pl'] * 100:.0f}% of net earnings"
+            s += f", {Nc['ocf'] / Nc['pl'] * 100:.0f}% of {_pl_words(Nc)}"
         s += "."
         da_words = (Nc.get("da_label") or "depreciation and amortization").replace("&amp;", "and").lower()
         adds = [(n, v) for n, v in ((da_words, Nc["da"]), ("share-based compensation", Nc["sbc"])) if v]
@@ -223,5 +232,5 @@ def compare_bullets(f, q1_label, Nc, Nq, lines_struct=None, lines=(None, None, N
     if Nc["ocf"] is not None and Nq["ocf"] is not None:
         d_ocf, d_pl = Nc["ocf"] - Nq["ocf"], Nc["pl"] - Nq["pl"]
         out.append(f"Operating cash flow {'rose' if d_ocf >= 0 else 'fell'} {f.money(abs(d_ocf))} to {f.money(Nc['ocf'])}, "
-                   f"while net earnings {'rose' if d_pl >= 0 else 'fell'} {f.money(abs(d_pl))} to {f.money(Nc['pl'])}.")
+                   f"while {_pl_words(Nc)} {'rose' if d_pl >= 0 else 'fell'} {f.money(abs(d_pl))} to {f.money(Nc['pl'])}.")
     return out

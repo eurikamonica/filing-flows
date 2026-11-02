@@ -40,7 +40,7 @@ def versions(fx, key, start, end):
             by.setdefault(f.get("accn"), {})[c] = f
     out = []
     for accn, cs in by.items():
-        if key in F.TOTAL_FIRST and F.TOTAL_FIRST[key] in cs:
+        if key in F.TOTAL_FIRST and F.TOTAL_FIRST[key] in cs and F.total_ok(cs[F.TOTAL_FIRST[key]]["val"], max(x["val"] for x in cs.values())):
             c = F.TOTAL_FIRST[key]
         elif key in F.MAX_KEYS:
             c = max(cs, key=lambda x: cs[x]["val"])

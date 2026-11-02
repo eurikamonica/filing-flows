@@ -1813,6 +1813,43 @@ def test_free_cash_flow_definition_is_the_readers_choice(tmp_path):
     assert notify.chart_key(ea, noted) == "320193:" + apple["end"] + "~noted" and notify.chart_key(ea, apple) == "320193:" + apple["end"]
 
 
+def test_revenues_far_below_contract_revenue_blue_owl():
+    """Blue Owl Q2 2026: its us-gaap:Revenues ($137M) is a narrower line, far below its total revenues, net ($753M, tagged
+    as revenue from contracts with customers): revenue − total expenses ($637M) + total other loss (−$46M) = pre-tax
+    ($71M) closes only with the $753M, so that is the revenue (not a −$616M of "other revenues"). Vistra's Revenues,
+    a little below its contract revenue by its hedging losses, stay the total (test below)."""
+    from pipeline import facts, ixbrl
+    F = lambda s, e, v: {"start": s, "end": e, "val": v * 1e6, "filed": "2026-07-31"}
+    q = ("2026-04-01", "2026-06-30")
+    fx = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [F(*q, 137.041)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [F(*q, 753.1)]}},
+        "CostsAndExpenses": {"units": {"USD": [F(*q, 636.6)]}},
+        "NonoperatingIncomeExpense": {"units": {"USD": [F(*q, -45.5)]}},
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {"units": {"USD": [F(*q, 71.0)]}},
+    }}})
+    assert facts.value(fx, "revenue", "2026-06-30") == 753.1e6
+    assert facts.source(fx, "revenue", "2026-06-30") == "RevenueFromContractWithCustomerExcludingAssessedTax"
+    # without the costs to check it against, "Revenues" stays the total
+    fx2 = facts.index_facts({"facts": {"us-gaap": {k: v for k, v in [
+        ("Revenues", {"units": {"USD": [F(*q, 137.041)]}}),
+        ("RevenueFromContractWithCustomerExcludingAssessedTax", {"units": {"USD": [F(*q, 753.1)]}})]}}})
+    assert facts.value(fx2, "revenue", "2026-06-30") == 137.041e6
+    # a hedging loss that closes the statement keeps "Revenues": 3,000 − 2,700 = 300 of operating income
+    fx3 = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [F(*q, 3000)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [F(*q, 4400)]}},
+        "CostsAndExpenses": {"units": {"USD": [F(*q, 2700)]}},
+        "OperatingIncomeLoss": {"units": {"USD": [F(*q, 300)]}},
+    }}})
+    assert facts.value(fx3, "revenue", "2026-06-30") == 3000e6
+    # the latest filing read directly (inline XBRL) the same way
+    vals = {("Revenues",) + q: 137.041e6, ("RevenueFromContractWithCustomerExcludingAssessedTax",) + q: 753.1e6,
+            ("CostsAndExpenses",) + q: 636.6e6, ("NonoperatingIncomeExpense",) + q: -45.5e6,
+            ("IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",) + q: 71.0e6}
+    assert ixbrl._pick(vals, "revenue", *q) == ("RevenueFromContractWithCustomerExcludingAssessedTax", 753.1e6)
+
+
 def test_total_revenue_and_cash_flow_da_vistra():
     """Vistra Q2 2026: total revenues (us-gaap:Revenues, $4,017M) are less than revenue from contracts with customers
     ($4,401M, what the revenue lines add up to) because other revenues (hedging) were −$384M; the cash-flow statement

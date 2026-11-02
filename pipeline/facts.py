@@ -175,7 +175,7 @@ def _pick(facts, key, get):
     if key in TOTAL_FIRST:
         hit = next((x for x in c if x[1] == TOTAL_FIRST[key]), None)
         if hit:
-            return hit
+            return _total_or_larger(facts, get, c, hit)
     if key in MAX_KEYS:
         return max(c, key=lambda x: x[0])
     if key in CASH_FLOW_KEYS and len(c) > 1:
@@ -183,6 +183,45 @@ def _pick(facts, key, get):
         if cf:
             return cf[0]
     return c[0]
+
+
+# "Revenues" far below another revenue tag is checked against the income statement: the total revenue is the one that
+# closes it (revenue − costs and expenses = operating income, or + other income = pre-tax). Vistra's "Revenues" sit
+# below its contract revenue by its hedging losses and close the statement; Blue Owl's "Revenues" ($0.14B, a narrower
+# line) against its $0.75B of total revenues, net (= contract revenue) do not.
+TOTAL_NEAR = 0.75
+
+
+def total_ok(total, top):
+    """True when a "Revenues" figure is close enough to the largest revenue tag to be taken without a check."""
+    return total is not None and top is not None and (top <= 0 or total >= TOTAL_NEAR * top)
+
+
+def _total_or_larger(facts, get, c, hit):
+    top = max(c, key=lambda x: x[0])
+    if top is hit or total_ok(hit[0], top[0]):
+        return hit
+    nper = facts.get("NonoperatingIncomeExpense")
+    if closes_better(top[0], hit[0], _pick(facts, "costs_total", get)[0], _pick(facts, "oi", get)[0], _pick(facts, "pretax", get)[0],
+                     get(nper) if nper else None):
+        return top
+    return hit
+
+
+def closes_better(top, total, costs, oi=None, pre=None, non=None):
+    """True when the larger revenue figure closes the income statement (revenue − costs and expenses = operating income,
+    or with other income = pre-tax earnings) much better than the "Revenues" figure does."""
+    if costs is None:
+        return False
+
+    def gap(r):
+        if oi is not None:
+            return abs(r - costs - oi)
+        if pre is not None:
+            return abs(r - costs + (non or 0) - pre)
+        return None
+    g_hit, g_top = gap(total), gap(top)
+    return g_hit is not None and g_top is not None and g_top < 0.5 * g_hit
 
 
 def _first(facts, key, get):

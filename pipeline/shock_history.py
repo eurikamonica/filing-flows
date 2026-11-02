@@ -51,6 +51,8 @@ def compute(companyfacts, now=None):
                     candidates.append((tag, value, used, how))
             if candidates:
                 preferred = next((x for x in candidates if x[0] == F.TOTAL_FIRST.get(key)), None)
+                if preferred is not None and not F.total_ok(preferred[1], max(x[1] for x in candidates)):
+                    preferred = None                     # a "Revenues" far below the other revenue tags: the largest
                 if preferred is None and key in F.CASH_FLOW_KEYS:
                     preferred = next((x for x in candidates if F.cash_flow_only(fx[x[0]])), None)
                 tag, value, used, how = preferred or (max(candidates, key=lambda x:x[1]) if key in F.MAX_KEYS else candidates[0])
