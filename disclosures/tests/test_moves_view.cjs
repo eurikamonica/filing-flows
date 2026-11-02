@@ -153,7 +153,22 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   ok(c5.every((x, i) => i === 0 || x.j - c5[i - 1].j >= 1) && c5.length <= R5.h[5].sim.n, 'a five-day move: overlapping days count once');
   // the filings that could move a day: after the close, the next trading day
   const ix = V.newsIndex({ events: [[A.days[100], '16:05', '8-K', '2.02'], [A.days[100], '09:00', '8-K', '8.01'], [A.days[100], '', '10-Q', '']] }, A.days);
-  ok(ix.get(101).length === 1 && ix.get(100).length === 2, 'a release after the close moves the next day');
+  ok(ix.get(101).f.length === 1 && ix.get(100).f.length === 2, 'a release after the close moves the next day');
+  // the headlines the same way, beside the filings; the days searched
+  const hx = V.newsIndex({ events: [], checked: [A.days[100]], headlines: [[A.days[101], A.days[100], '20:15', 'Reuters', 'Acme beats estimates', 'https://news.google.com/rss/articles/x'],
+    [A.days[100], A.days[100], '10:02', 'CNBC', 'Acme falls as <b>chip</b> demand slows', 'https://news.google.com/rss/articles/y'], ['1999-01-01', '1999-01-01', '', 'X', 'off the history', 'u']] }, A.days);
+  ok(hx.get(101).h.length === 1 && hx.get(100).h[0][2] === 'CNBC' && hx.checked.has(A.days[100]), 'headlines under the move day they were found for');
+  // the cases table: filings, then headlines (escaped, linked, with their source); the searched days that had none say so
+  const Rc = V.analyze(A, { w: 1, measure: 'raw', mode: 'latest', band: 50 });
+  const jc = V.cases(Rc, { w: 1, band: 50 }, 'sim')[0].j, dc = A.days[jc];
+  const news = { events: [[dc, '09:00', '8-K', '2.02', 'Acme reports', '', [], '0000-1']], checked: [dc, A.days[120]],
+    headlines: [[dc, dc, '10:02', 'CNBC', 'Acme falls as <b>chip</b> demand slows', 'https://news.google.com/rss/articles/y'], [dc, dc, '', 'WSJ', 'Acme dated only', 'u2']] };
+  const html = V.casesSection(Rc, { w: 1, band: 50, set: 'sim', mode: 'latest' }, { kind: 'stock', cik: 1 }, news);
+  ok(html.includes('and the headlines') && html.includes('mv-chip news">CNBC') && html.includes('Acme falls as &lt;b&gt;chip&lt;/b&gt;') && !html.includes('<b>chip</b>'), 'headlines in the cases table, escaped');
+  ok(html.includes('Acme dated only') && !/Acme dated only<\/a> <span class="mv-sub" style="display:inline">[^<]* ET/.test(html), 'a headline dated only: no time');
+  ok(html.includes('no filing that day (headlines not searched yet)') || html.includes('no filing or headline that day'), 'the empty cells say what was searched');
+  const mk = V.casesSection(Rc, { w: 1, band: 50, set: 'sim', mode: 'latest' }, { kind: 'market', key: 'SPY' }, { headlines: news.headlines, checked: news.checked });
+  ok(mk.includes('The headlines (that day') && mk.includes("the market's headlines"), 'the market: its headlines only');
   ok(V.fb(2.5) === '2.5' && V.fb(0.25) === '0.25' && V.fb('1.30') === '1.3' && V.fb(5) === '5', 'band labels');
 }
 

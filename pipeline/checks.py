@@ -49,6 +49,16 @@ def _quarter_days(c, end):
     return _days(end, q.get("q1_end")) if q and q.get("q1_end") else None
 
 
+Q4_WORDS = {"revenue": "revenue", "cor": "cost of revenue", "gp": "gross profit", "rd": "R&D", "sm": "sales & marketing",
+            "ga": "general & administrative", "sga": "SG&A", "costs_total": "total costs", "opex_total": "operating expenses",
+            "oi": "operating profit", "pretax": "pre-tax earnings", "tax": "income tax", "ni": "net earnings",
+            "pl": "net income incl. minority interests", "nci": "minority interests", "ocf": "operating cash flow",
+            "da": "depreciation & amortization", "dep": "depreciation", "amort": "amortization",
+            "sbc": "share-based compensation", "rev_contract": "contract revenue", "capex": "capital expenditures",
+            "nii": "net interest income", "int_inc": "interest income", "int_exp": "interest expense",
+            "nonii": "noninterest income", "prov": "provision for credit losses", "nonint_exp": "noninterest expense"}
+
+
 def checks(q, c, Nc, Nq=None, Ny=None, annual=False):
     """q: the stored quarter (or fiscal year, annual=True); c: the company; N*: normalized figures (model.normalize)."""
     out = []
@@ -125,6 +135,13 @@ def checks(q, c, Nc, Nq=None, Ny=None, annual=False):
     if "pretax_fixed" in Nc.get("flags", []):
         add("note", "pretax_fixed", "Pre-tax earnings minus tax did not equal net earnings in the filing (often discontinued "
                                     "operations or equity-method income); pre-tax is shown as net earnings plus tax.")
+    fixed = [Q4_WORDS.get(k, k.replace("_", " ")) for k in (q.get("raw") or {}).get("q4_fixed") or []] if not annual else []
+    if fixed:
+        names = fixed[0] if len(fixed) == 1 else ", ".join(fixed[:-1]) + " and " + fixed[-1]
+        add("note", "q4_check", f"Fourth quarter: {names} {'is' if len(fixed) == 1 else 'are'} the fiscal year's figure"
+                                f"{'' if len(fixed) == 1 else 's'} less the three quarters reported before it. The 10-K's "
+                                "own fourth-quarter or year-to-date figure did not add up to the year (a tagging slip in "
+                                "the filing), so it was not used.")
     if "bank" in Nc.get("flags", []):
         add("note", "bank", "A bank: revenue is net interest income + noninterest income (how banks report total "
                             "revenue), and the costs are the provision for credit losses and noninterest expense; "

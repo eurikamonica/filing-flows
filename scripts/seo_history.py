@@ -333,6 +333,7 @@ def write(site, base, period_pages=PERIOD_PAGES):
         if r['cik'] not in latest or (r.get('filed') or '') > (latest[r['cik']].get('filed') or ''):
             latest[r['cik']] = r
     maps = {'quarters': [], 'periods': [], 'metrics': []}
+    images, pics = seo.og_images(base), {}                # the company's Sankey picture (pipeline/ogimg.py): on its latest quarter's page
     counts = {'quarters': 0, 'qoq': 0, 'yoy': 0, 'metrics': 0, 'guidance': 0}
 
     def put(path, url, mod, doc, kind):
@@ -356,6 +357,16 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 continue
             has_period = i < period_pages
             out = quarter_page(r, c, i, base, slug, who, name, has_period)
+            pic = images.get(f'c-{cik}') if i == 0 else None
+            if out and pic:
+                cap = f"{name} {lab} earnings: revenue breakdown"
+                alt = f"{who} {lab} earnings Sankey: revenue, costs, profit and cash flow"
+                fig = seo.share_figure(pic, alt, cap, out[0], 3, False)
+                ldi = json.dumps(seo.image_ld(base, pic, alt, cap), ensure_ascii=False)
+                doc = out[2].replace("seo-quarter.js' defer></script>", "seo-quarter.js' defer></script>" + fig, 1).replace('</head>', f'<script type="application/ld+json">{{"@context":"https://schema.org",{ldi[1:]}</script></head>', 1)
+                doc = doc.replace(f'content="{base}/og.png"', f'content="{seo.e(pic)}"')        # its link card shows the chart too
+                out = (out[0], out[1], doc)
+                pics[out[0]] = pic
             if out:
                 put(os.path.join(d, qslug(lab)), *out, 'quarters')
                 counts['quarters'] += 1
@@ -405,8 +416,8 @@ def write(site, base, period_pages=PERIOD_PAGES):
     robots = os.path.join(site, 'robots.txt')
     txt = open(robots).read() if os.path.exists(robots) else f'User-agent: *\nAllow: /\nSitemap: {base}/sitemap.xml\n'
     for kind, urls in maps.items():
-        sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-        sm += [f'<url><loc>{xesc(u)}</loc>' + (f'<lastmod>{m}</lastmod>' if m else '') + '</url>' for u, m in urls[:50000]]
+        sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
+        sm += [f'<url><loc>{xesc(u)}</loc>' + (f'<lastmod>{m}</lastmod>' if m else '') + (f'<image:image><image:loc>{xesc(pics[u])}</image:loc></image:image>' if u in pics else '') + '</url>' for u, m in urls[:50000]]
         sm.append('</urlset>')
         open(os.path.join(site, f'sitemap-{kind}.xml'), 'w', encoding='utf-8').write('\n'.join(sm))
         if f'sitemap-{kind}.xml' not in txt:

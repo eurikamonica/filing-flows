@@ -1661,6 +1661,12 @@ def build(public, backtest_dir=None, verbose=True, rrg_backtest=False):
                                            'chain': v['chain']['labels']} for g, v in tm['groups'].items()}
     except Exception as exc:
         print('RRG transition model skipped:', type(exc).__name__, exc, flush=True)
+    try:                                               # quadrant crossings, the 100 lines' resistance, lagging rebounds (rrg_research)
+        import rrg_research as RR
+        rr = RR.build_weekly(public, verbose=verbose)
+        out['rrg_research'] = {g: v['lines'] for g, v in rr['groups'].items()}
+    except Exception as exc:
+        print('RRG research skipped:', type(exc).__name__, exc, flush=True)
     try:                                               # the four index ETFs around their own centre (index_rrg)
         import index_rrg as IR
         ix = IR.build(public, verbose=verbose)
