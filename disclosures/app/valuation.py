@@ -1490,6 +1490,11 @@ def analyse(F, ctx):
         VX.extra(VMx, sys.modules[__name__], F, W, out, ctx, base if 'dcf' in out else None)
     except Exception as e:                                  # noqa: BLE001 — a lens never stops the page
         out['notes'].append(f'More lenses: {str(e)[:120]}')
+    # ---- each method's value against the price, split into today's earnings and the present value of growth
+    try:
+        growth_split(out, base, price, sh)
+    except Exception as e:                                  # noqa: BLE001 — a split never stops the page
+        out['notes'].append(f'Growth split: {str(e)[:120]}')
     # ---- the appendix: inputs and sources, assumptions, the WACC and every method's algebra (app/valuation_methods.py)
     VMx.appendix(sys.modules[__name__], out, F, W, ctx.get('rates') or {})
     # ---- headline numbers for the index
@@ -1497,6 +1502,47 @@ def analyse(F, ctx):
     highs = [b['high'] for b in out['football'] if fin(b.get('high')) and b['method'] != '52-week trading range' and not b.get('lens')]
     out['range'] = [min(lows), max(highs)] if lows and highs else None
     return out
+
+
+SPLIT_SKIP = ('52-week trading range',)
+
+
+def growth_split(out, base, price, sh):
+    """For every football row with a central value: the gap to today's price, the present value of growth in it (the
+    value less the no-growth value: today's earnings capitalized as if they never grew, out['pvgo']) and the constant
+    revenue growth for five years at which the base DCF gives that value (the reverse DCF solved for the method's value
+    instead of the price). out['growth_split'] carries the same for today's price."""
+    pv = out.get('pvgo') or {}
+    ng = pv.get('per_share') if fin(pv.get('per_share')) else None
+    g_of = {}
+
+    def implied(v):
+        if base is None or not fin(v) or v <= 0:
+            return None
+        k = round(v, 4)
+        if k not in g_of:
+            r = solve({**base, 'growth': 0.0}, 'growth', v, -0.30, 0.60, steps=36, tol=1e-5)
+            g_of[k] = r.get('value') if r.get('status') == 'ok' else None
+        return g_of[k]
+    for b in out.get('football') or []:
+        v = b.get('point')
+        if b['method'] in SPLIT_SKIP or not fin(v):
+            continue
+        if fin(price) and price > 0:
+            b['vs_price'] = v / price - 1
+        if ng is not None:
+            b['pv_growth'] = v - ng
+            b['pv_growth_share'] = (v - ng) / v if v > 0 else None
+        g = implied(v)
+        if g is not None:
+            b['implied_growth'] = g
+    sp = {'no_growth': ng, 'basis': pv.get('basis'), 'rate': pv.get('rate'), 'earnings': pv.get('earnings'), 'price': price,
+          'history_growth': (out.get('reverse') or {}).get('history_growth'), 'dcf': base is not None}
+    if fin(price) and price > 0:
+        if ng is not None:
+            sp.update({'price_pv_growth': price - ng, 'price_growth_share': (price - ng) / price})
+        sp['price_growth'] = (out.get('reverse') or {}).get('implied_growth') if (out.get('reverse') or {}).get('status') == 'ok' else implied(price)
+    out['growth_split'] = sp
 
 
 def group_label(g):

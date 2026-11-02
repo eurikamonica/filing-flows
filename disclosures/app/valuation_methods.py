@@ -643,7 +643,8 @@ def appendix(M, out, F, W, rates):
         c = b.pop('calc', None) or _derived(b, out, F, W, M)
         seen.add(b['method'])
         methods.append({'method': b['method'], 'low': b.get('low'), 'point': b.get('point'), 'high': b.get('high'), 'weight': wts.get(b['method']), **c,
-                        'fit': fit_reason(b['method'], F, out)})
+                        'fit': fit_reason(b['method'], F, out),
+                        **{k: b[k] for k in ('vs_price', 'pv_growth', 'pv_growth_share', 'implied_growth') if fin(b.get(k))}})
     kind = F.get('kind') if F.get('kind') in CANDIDATES else 'industrial'
     import valuation_extra as VX
     import valuation_sim as VS
