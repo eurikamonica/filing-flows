@@ -57,12 +57,40 @@ class Programs(unittest.TestCase):
         self.assertEqual(len(s['programs']), 4)
         self.assertEqual(s['program_fields'][0], 'drug')
 
-    def test_same_company(self):
-        self.assertTrue(VS.same_company('IDEAYA Biosciences', 'IDEAYA Biosciences, Inc.'))
-        self.assertTrue(VS.same_company('Novo Nordisk A/S', 'NOVO NORDISK A S'))
-        self.assertFalse(VS.same_company('Sunshine Lake Pharma Co., Ltd.', 'Sunshine Biopharma Inc.'))
-        self.assertFalse(VS.same_company('', 'Acme'))
+    def test_other_names_join_a_program(self):
+        a = study(1, ['XEN1101', 'Placebo'], 'PHASE3', conditions=['Focal Epilepsy'])
+        a['other_names'] = [['azetukalner', 'XEN-1101'], []]
+        b = study(2, ['Azetukalner'], 'PHASE3', conditions=['Major Depressive Disorder'])
+        P = O.trial_programs([a, b], TODAY)
+        self.assertEqual(len(P), 1, P)
+        self.assertEqual(P[0][3], 2)
+        calls = []
 
+        def fetch(url, params):                                         # the API refuses the field once: collect without it
+            calls.append(params['fields'])
+            if O.CT_OTHER_NAMES in params['fields']:
+                raise RuntimeError('HTTP 400')
+            return {'studies': []}
+        O._ct_other[0] = True
+        try:
+            O._trials_query({'key': 'acme', 'core': 'acme', 'ticker': 'ACME'}, 'acme', set(), fetch)
+            self.assertEqual(len(calls), 2)
+            self.assertFalse(O._ct_other[0])
+        finally:
+            O._ct_other[0] = True
+
+    def test_sponsor_is_the_company(self):
+        co = lambda name, ticker='X': {'name': name, 'key': O.norm(name), 'core': O.core(name), 'ticker': ticker}   # noqa: E731
+        self.assertFalse(O.is_company('Sunshine Lake Pharma Co., Ltd.', co('Sunshine Biopharma Inc.')))
+        self.assertFalse(O.is_company('China Medical University Hospital', co('CHINA PHARMA HOLDINGS, INC.')))
+        self.assertFalse(O.is_company('Tarsus University', co('Tarsus Pharmaceuticals, Inc.')))
+        self.assertTrue(O.is_company('IDEAYA Biosciences', co('IDEAYA Biosciences, Inc.')))
+        self.assertTrue(O.is_company('Novo Nordisk A/S', co('NOVO NORDISK A S')))
+        self.assertTrue(O.is_company('Neurocrine UK Limited', co('NEUROCRINE BIOSCIENCES INC')))
+        self.assertTrue(O.is_company('GE Healthcare Finland Oy', co('GE HealthCare Technologies Inc.')))
+        self.assertTrue(O.is_company('Merck Sharp & Dohme LLC', co('MERCK & CO., INC.', 'MRK')))
+        self.assertTrue(O.is_company('Kite, A Gilead Company', co('GILEAD SCIENCES, INC.', 'GILD')))
+        self.assertTrue(O.is_company('Eli Lilly and Company', co('ELI LILLY & Co')))
 
 def drug_case(**kw):
     F = {'cik': 1, 'ticker': 'ACME', 'name': 'Acme Therapeutics, Inc.', 'sic': '2836', 'kind': 'industrial', 'revenue': 2e6, 'oi': -150e6,
@@ -114,7 +142,6 @@ class Pipeline(unittest.TestCase):
         F, W, out, trials, mature = drug_case()
         self.assertEqual(VS.rnpv({**F, 'sic': '7372'}, W, out, trials, mature, TODAY, VMx), (None, None))
         self.assertIn('profitable', VS.rnpv({**F, 'oi': 5e6}, W, out, trials, mature, TODAY, VMx)[1])
-        self.assertIn('not exactly this company', VS.rnpv(F, W, out, {**trials, 'sponsor': 'Acme Lake Pharma'}, mature, TODAY, VMx)[1])
         many = {**trials, 'programs': [[f'd{i}', 'PHASE1', True, 1, '', None, False, []] for i in range(40)]}
         self.assertIn('more than one company', VS.rnpv(F, W, out, many, mature, TODAY, VMx)[1])
         self.assertIn('next Beyond the filings build', VS.rnpv(F, W, out, {'sponsor': 'Acme Therapeutics'}, mature, TODAY, VMx)[1])
@@ -153,10 +180,54 @@ class SchwartzMoon(unittest.TestCase):
         self.assertLess(self.run_sm(tm=0.05)[1]['mean'], self.run_sm(tm=0.25)[1]['mean'])
         self.assertGreaterEqual(poor['dilution']['median_new_shares'], rich['dilution']['median_new_shares'])
 
+    def test_credit_line_and_maturities(self):
+        F, W, out, prior = burner(cash=120e6, debt=400e6)
+        sm = lambda drec: VS.schwartz_moon(F, W, out, prior, {'treasury_1y': 4.2}, None, '2026-11-02', 0.15, n=800, drec=drec)[0][1]   # noqa: E731
+        base = sm(None)
+        line = sm({'analysis': {'revolver_available': 300e6}})
+        wall = sm({'snapshot': {'maturities': {'as_of': '2026-06-30', 'next12m': 0, 'y2': 250e6, 'y3': 0}}})
+        self.assertLess(line['p_fail5'], base['p_fail5'])                  # a credit line buys time
+        self.assertEqual(wall['p_fail5'], base['p_fail5'])                  # maturing debt is rolled over in the simulation...
+        self.assertGreater(wall['p_fail5_norefi'], base['p_fail5'])         # ...and must be repaid in the stress beside it
+        self.assertIsNone(base['p_fail5_norefi'])
+        self.assertEqual(line['inputs']['credit_line'], 300e6)
+        self.assertEqual(wall['inputs']['due'], [0, 250e6, 0, 0, 0])
+        self.assertIsNone(base['inputs']['due'])
+        self.assertEqual(base['mean'] >= 0, True)
+
+    def test_loss_makers_margin_from_one_regression(self):
+        F, W, out, prior = burner()
+        run = lambda a: VS.schwartz_moon(F, W, out, {**prior, 'loss_a': a, 'loss_kappa': 0.2}, {}, None, None, 0.15, n=800)[0][1]   # noqa: E731
+        lo, hi = run(-0.03), run(0.03)
+        self.assertLess(lo['profit_by'][4], hi['profit_by'][4])            # the regression's intercept sets where losses settle
+        self.assertEqual(lo['inputs']['a_loss'], -0.03)
+        F['years'] = [(0.3, -0.2), (0.25, -0.2), (0.2, -0.2), (0.22, -0.2)]
+        sg, how = VS.growth_spread(F, 0.2)
+        self.assertTrue(0.03 <= sg < 0.2 and 'shrunk' in how)
+
+    def test_stock_pay_is_not_cash(self):
+        plain, paid = self.run_sm(cash=150e6)[1], self.run_sm(cash=150e6, sbc=60e6)[1]
+        self.assertLess(paid['p_fail5'], plain['p_fail5'])                  # stock-based pay does not drain the cash
+        self.assertEqual(paid['mean'] >= plain['mean'], True)
+        self.assertAlmostEqual(paid['inputs']['sbc'], 0.15)
+
+    def test_liquidity(self):
+        room, due, asof = VS.liquidity({'debt': 300e6}, {'analysis': {'revolver_available': None}, 'snapshot': {
+            'revolver_available': 50e6, 'maturities': {'as_of': '2025-12-31', 'rest_of_year': 20e6, 'y2': 400e6, 'y4': 10e6}}})
+        self.assertEqual(room, 50e6)
+        self.assertEqual(due, [20e6, 280e6, 0.0, 0.0, 0.0])                # never more due than the debt on the balance sheet
+        self.assertEqual(asof, '2025-12-31')
+        self.assertEqual(VS.liquidity({'debt': 1.0}, None), (0.0, None, None))
+
     def test_who_gets_it(self):
         F, W, out, prior = burner(oi=50e6)
         out = {'stage': {'metrics': {'fcf': 40e6}}}
         self.assertEqual(VS.schwartz_moon(F, W, out, prior, {}, None, None, 0.15), (None, None))      # profitable and cash-generating
+        F, W, out, prior = burner(oi=80e6)                                   # 20% margin, investing more than it earns: a utility
+        out = {'stage': {'metrics': {'fcf': -40e6}}}
+        self.assertEqual(VS.schwartz_moon(F, W, out, prior, {}, None, None, 0.15), (None, None))
+        F, W, out, prior = burner(oi=8e6)                                    # 2% margin and burning cash: in
+        self.assertIsNotNone(VS.schwartz_moon(F, W, out, prior, {}, None, None, 0.15, n=200)[0])
         F, W, out, prior = burner(revenue=10e6)
         self.assertIn('$25M', VS.schwartz_moon(F, W, out, prior, {}, None, None, 0.15)[1])
 

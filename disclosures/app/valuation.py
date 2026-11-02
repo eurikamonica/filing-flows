@@ -17,6 +17,7 @@ capital, valuation bands, sector models for banks / insurers / REITs, and a blen
                              forecasts (forecast ledger), the hierarchical revenue model, Polymarket's implied prices
               markov.json    the regime model's panel prior by size bucket: the hidden Markov model's regimes and transition
                              matrix, regime growth and margin drift, growth persistence (for the Schwartz–Moon simulation)
+              backtest.json  the simulations' walk-forward backtest since 2013 (app/sim_backtest.py; also in models.json)
               status.json
 
 Inputs the build reads (each optional; a company is valued with what exists):
@@ -96,6 +97,7 @@ import valuation_methods as VMx  # noqa: E402
 import valuation_extra as VX  # noqa: E402  (more lenses and the implied return, app/valuation_extra.py)
 import markov  # noqa: E402  (regime-switching Monte Carlo, app/markov.py)
 import valuation_sim as VS  # noqa: E402  (pipeline rNPV and the Schwartz–Moon simulation, app/valuation_sim.py)
+import sim_backtest as SB  # noqa: E402  (walk-forward backtest of the simulations, app/sim_backtest.py)
 
 ERP = 0.045                 # equity risk premium: a fixed, stated assumption (not estimated here)
 TERM_G = 0.025              # terminal growth of the base DCF
@@ -919,10 +921,23 @@ def settle_shares(cands, price=None, revenue=None, implied=None):
     Waters' as 98.2 billion) is read in shares; one implausible either way (Planet Fitness's 100 Class B shares, Erie's
     2,542) is passed over. Net income ÷ diluted EPS only helps decide a unit: as a share count it is unreliable (frames
     keep each quarter's EPS as first filed, before a split, and net income includes minority interests). None when no
-    source is plausible: no per-share value beats a wrong one."""
+    source is plausible: no per-share value beats a wrong one. A count that looks possible but is a thousand or a million
+    times net income ÷ diluted EPS (Cytokinetics' 132,086 — thousands — against 123 million) is read in that unit too: no
+    split or share issue moves a count that far."""
     vals = [(n, v) for n, v in cands if fin(v) and v > 0]
     ref_ok = fin(implied) and implied > 0 and plausible_shares(implied, price, revenue)
-    plain = [(v, n, None) for n, v in vals if plausible_shares(v, price, revenue)]
+    plain = []
+    for n, v in vals:
+        if not plausible_shares(v, price, revenue):
+            continue
+        if ref_ok and not (0.01 <= v / implied <= 100):
+            for k, unit in ((1e3, 'thousands'), (1e6, 'millions'), (1e-3, 'thousandths'), (1e-6, 'millionths')):
+                w = v * k
+                if 0.8 <= w / implied <= 1.25 and plausible_shares(w, price, revenue):
+                    plain.append((w, n, f'Shares: {n} files {v:,.6g}, a count in {unit} (net income ÷ diluted EPS gives {implied:,.0f}); read as {w:,.0f}.'))
+                    break
+            continue
+        plain.append((v, n, None))
     refs = ([implied] if ref_ok else []) + [v for v, _, _ in plain]
     scaled = []
     for n, v in vals:
@@ -1091,8 +1106,9 @@ def analyse(F, ctx):
                           'rows': [[x['t'], x['rev'], x['ebit'], x['fcff'], x['pv']] for x in r['rows']],
                           'assumptions': {k: base[k] for k in ('growth', 'margin', 'tax', 'da', 'capex', 'wc', 'wacc', 'g', 'roic')}}
             mk = markov.run(F, base, W, F.get('years'), (ctx.get('markov_prior') or {}).get(markov.bucket_of(F.get('mcap'))),
-                            price, ctx.get('cons'), ctx.get('price_date'))
+                            price, ctx.get('cons'), ctx.get('price_date'), sd_scale=(ctx.get('backtest') or {}).get('regime_sd_scale') or 1.0)
             if mk:
+                mk['backtest'] = SB.for_page(ctx.get('backtest'), 'regime')
                 out['markov'] = mk
                 out['football'].append({'method': 'Regime-switching Monte Carlo 10th–90th', 'low': mk['p10'], 'high': mk['p90'],
                                         'point': mk['p50'], 'note': f"median {mk['p50']:.2f}; {mk['n']:,} paths, 10 years, Markov growth regimes"})
@@ -1483,6 +1499,15 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
         last_q = max((i for i, v in enumerate(q_rev) if fin(v)), default=None)
         F['years'] = markov.merge_years(markov.annual_years(annual.get(cik)), F.get('years'), int(periods[last_q][2:6]) if last_q is not None else None)
 
+    # the simulations' walk-forward backtest: every filer's annual frames since CY2010 (recomputed monthly)
+    bt_year = SB.complete_year(annual, today.year) if annual else None
+    sim_bt = SB.reuse(read_json(pub / 'backtest.json', {}) or {}, bt_year, today) if bt_year else None
+    if bt_year and not sim_bt:
+        bal = SB.balances(lambda c, p: frame(root, c, p), range(BR.ANNUAL_FROM, bt_year + 1))
+        sim_bt = SB.run(annual, bt_year, bal, log=(lambda *a: print(*a, flush=True)) if verbose else (lambda *a: None))
+        write_json(pub / 'backtest.json', clean(sim_bt))
+    sm_panel = SB.panel_now(annual, bt_year) if bt_year else None
+
     def cons_of(cik):
         snaps = (Fs[cik].get('_cons') or {}).get('snapshots') or []
         return [(d, v[5]) for d, v in snaps if isinstance(v, list) and len(v) > 5 and fin(v[5])]
@@ -1546,7 +1571,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
                'vol': annual_vol(px), 'segments': segments_of(slim), 'range52': [min(last_year), max(last_year)] if last_year else None,
                'bands': bd, 'price_date': px[-1][0], 'br': br_ctx, 'panel': P.get(cik) or {}, 'crow': crow,
                'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None, 'markov_prior': mk_prior,
-               'trials': (_load_dir(outside, f'c/{cik}.json') or {}).get('trials')}
+               'trials': (_load_dir(outside, f'c/{cik}.json') or {}).get('trials'), 'backtest': (sim_bt or {}).get('summary'), 'sm_panel': sm_panel}
         A = analyse(F, ctx)
         write_json(pub / 'c' / f'{cik}.json', clean(A))
         n_dcf += 'dcf' in A
@@ -1604,6 +1629,8 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
                                                'history': hist_info, 'metrics': BR.METRIC_LABEL, 'groups': BR.published_groups(D, names),
                                                'note': BR.__doc__.split('\n\n')[1]}))
     models = BR.models_doc(comb, led, rot, read_json(root / 'site' / 'model.json', {}) or {}, _load_dir(consensus, 'calibration.json', {}) or {})
+    if sim_bt:
+        models['simulations'] = {k: v for k, v in sim_bt.items() if k != 'summary'}
     write_json(pub / 'models.json', clean(models))
     st = {'built_at': now(), 'companies': len(index), 'with_dcf': n_dcf, 'banks_fit': (regs.get('bank') or {}).get('n'),
           'rule40_fit': (regs.get('rule40') or {}).get('n'),
@@ -1612,7 +1639,9 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
           'with_stage': sum(1 for r in index if r.get('stage')), 'with_outside_mc': sum(1 for r in index if fin(r.get('ov_mean'))),
           'with_markov': sum(1 for r in index if fin(r.get('mk_p50'))),
           'markov_panel': {b: {'firms': v['firms'], 'transitions': v['transitions'], 'method': v['method']} for b, v in mk_prior.items()},
-          'with_schwartz_moon': sum(1 for r in index if fin(r.get('sm_mean'))), 'with_pipeline_rnpv': sum(1 for r in index if fin(r.get('pipe_req_peak')))}
+          'with_schwartz_moon': sum(1 for r in index if fin(r.get('sm_mean'))), 'with_pipeline_rnpv': sum(1 for r in index if fin(r.get('pipe_req_peak'))),
+          'sim_backtest': {'last_year': (sim_bt or {}).get('last_year'), 'origins': [o['year'] for o in (sim_bt or {}).get('origins') or []],
+                           'cash_out_rows': (sim_bt or {}).get('cash_out_n'), 'generated_at': (sim_bt or {}).get('generated_at')}}
     write_json(pub / 'status.json', st)
     if verbose:
         print('valuation build: ' + json.dumps(st), flush=True)
@@ -1706,6 +1735,9 @@ def collect_frames(root, http, quarters=QUARTERS, refresh_days=3, deadline=None,
     for tax, concept, unit, kind in CONCEPTS:                                      # last: the long history (final, fetched once)
         if kind == 'q' and (concept in REVENUE or concept in BR.HISTORY_CONCEPTS):
             jobs += [(tax, concept, unit, y, True) for y in history]
+    queued = {(c, p) for _, c, _, p, _ in jobs}
+    for concept in (SB.CASH_CONCEPT, SB.DEBT_CONCEPT):                             # year-end cash and debt since 2010 (the backtest)
+        jobs += [('us-gaap', concept, 'USD', f'{y}Q4I', True) for y in history + years[:-1] if (concept, f'{y}Q4I') not in queued]
     for tax, concept, unit, period, _ in jobs:
         if deadline and time.monotonic() > deadline:
             break

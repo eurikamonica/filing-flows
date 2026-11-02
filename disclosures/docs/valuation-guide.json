@@ -943,6 +943,26 @@
    "term": "Schwartz–Moon",
    "full": "The Schwartz–Moon model",
    "plain": "A simulation of a young company in which growth and costs wander and the company goes bankrupt if its cash runs out, published by Eduardo Schwartz and Mark Moon in 2000 to value internet companies."
+  },
+  {
+   "term": "Backtest",
+   "full": "Walk-forward backtest",
+   "plain": "Running a model as of a date in the past, with only the data known then, and comparing its forecast with what actually happened next — repeated over several dates."
+  },
+  {
+   "term": "Coverage",
+   "full": "Coverage of a range",
+   "plain": "The share of actual outcomes that fell inside a forecast range. An honest 80% range holds about 80% of them; less means the range was too narrow."
+  },
+  {
+   "term": "Brier skill",
+   "full": "Brier skill score",
+   "plain": "How much better a probability forecast did than simply giving everyone the average rate: above 0 is better, 0 is no better, below 0 is worse."
+  },
+  {
+   "term": "Credit line",
+   "full": "Revolving credit facility (revolver)",
+   "plain": "A loan a company has arranged with banks but not yet drawn, which it can borrow from when it needs cash."
   }
  ],
  "methods": {
@@ -955,10 +975,10 @@
   },
   "Regime-switching Monte Carlo 10th–90th": {
    "family": "Probability",
-   "what": "A ten-year Monte Carlo in which revenue growth switches between three regimes following a Markov chain: a table of the chances of moving from one regime to another each year. The regimes themselves are learned from the yearly growth of every covered company since 2010 by a hidden Markov model (HMM), which finds the typical growth of each regime, how much it varies and how often companies switch, without a threshold set by hand. On today's data the three regimes differ as much in how steady they are as in how fast they grow — fast growth, uneven growth and steady growth — and each is named for what it turned out to be (a regime is called a decline only if its average growth is negative). The model also gives the probability that this company is in each regime today. The switching table blends this company's own history with the whole panel's. Margins drift with the regime, and each path's cash flows are discounted as in a DCF. Stock-based compensation is already a cost inside operating income, so it is counted once.",
+   "what": "A ten-year Monte Carlo in which revenue growth switches between three regimes following a Markov chain: a table of the chances of moving from one regime to another each year. The regimes themselves are learned from the yearly growth of every covered company since 2010 by a hidden Markov model (HMM), which finds the typical growth of each regime, how much it varies and how often companies switch, without a threshold set by hand. On today's data the three regimes differ as much in how steady they are as in how fast they grow — fast growth, uneven growth and steady growth — and each is named for what it turned out to be (a regime is called a decline only if its average growth is negative). The model also gives the probability that this company is in each regime today. The switching table blends this company's own history with the whole panel's. Margins drift with the regime, and each path's cash flows are discounted as in a DCF. Stock-based compensation is already a cost inside operating income, so it is counted once. How well it works is checked by a walk-forward backtest: the model is re-run as of 2013, 2015, 2017 and 2019 on every SEC filer's data as of then, and its range for revenue one, three and five years out is compared with what was later filed. As the HMM estimates them, the regime spreads made the 80% range too narrow — it held about two-thirds of outcomes — so every regime's spread is widened by the one factor the backtest finds brings the three-year range to about 80%; the page shows the result.",
    "why": "Companies do not grow at one smooth rate; they have good runs and bad spells. Letting each path switch regimes gives a more honest spread of outcomes than one straight-line forecast.",
    "fits": "Companies with a DCF and enough revenue history to estimate the switching.",
-   "watch": "The regimes and the switching table come from the past; a company that changes its business can behave unlike its history. With little history the company's own transitions barely move the panel's table. Read the range, not just the median."
+   "watch": "The regimes and the switching table come from the past; a company that changes its business can behave unlike its history. With little history the company's own transitions barely move the panel's table. Read the range, not just the median. The backtest cannot check the analysts' consensus used for years 1–2 (there is no history of it here)."
   },
   "Outside view — base-rate Monte Carlo": {
    "family": "Probability",
@@ -1227,10 +1247,10 @@
   "Schwartz–Moon simulation (cash can run out)": {
    "family": "Probability",
    "startup": true,
-   "what": "A simulation of a loss-making company as a race between its cash and its path to profit, after Eduardo Schwartz and Mark Moon, who valued Amazon this way in 1999. Each year revenue growth and the operating margin take a random step: growth fades from today's rate toward the economy's at the pace companies have actually shown, the margin is pulled toward what peers earn, and both are shaken by surprises of the size this company and its peers have had. The company earns interest on its cash, pays interest on its debt, pays tax only once its past losses are used up, and adds each year's free cash flow to its cash. If the cash falls below zero before profits arrive, the company is bankrupt and its shares are worth nothing on that path. On the paths that survive, the cash flows are discounted as in a DCF. The value is the average over thousands of paths.",
+   "what": "A simulation of a loss-making company as a race between its cash and its path to profit, after Eduardo Schwartz and Mark Moon, who valued Amazon this way in 1999. Each year revenue growth and the operating margin take a random step: growth fades from today's rate toward what its peers have grown, at the pace companies have actually shown; while the company loses money its margin moves the way loss-makers' margins have actually moved at that depth of loss, and once profitable it is pulled toward what peers earn; both are shaken by surprises of the size this company and its peers have had. The company earns interest on its cash, pays interest on its debt, rolls over its maturing debt, can draw on its undrawn credit line when cash runs short, pays tax only once its past losses are used up, and adds each year's free cash flow to its cash — before stock-based pay, which is a cost in the value but is paid in shares, not cash. If the cash falls below zero before profits arrive, the company is bankrupt and its shares are worth nothing on that path. On the paths that survive, the cash flows are discounted as in a DCF. The value is the average over thousands of paths. A walk-forward backtest (re-run as of 2013–2019 on every filer's data as of then) sets two choices and reports how well it does: each company's own growth spread is shrunk toward the panel's (alone it made the revenue range too narrow), and loss-makers' margins follow the panel's own regression rather than being pulled to the peer margin (which overstated how many turned profitable).",
    "why": "For a company that is still losing money, the usual DCF quietly assumes it will survive long enough to become profitable. This method makes survival part of the answer: a business with a short cash runway and a slow path to profit is worth much less than its success case, and a well-funded one hardly less. The average of all outcomes, including the zeros, is what a share that can go to zero is worth.",
-   "fits": "Companies with an operating loss or negative free cash flow and at least $25 million of revenue. Shown as a lens, beside the stage-weighted value, until the ledger has scored it.",
-   "watch": "Real companies usually raise new money before the cash runs out, so the rule that an empty bank account means zero is harsh; the page shows the other convention — every shortfall raised in new shares at today's price — beside it. Losses carried forward from before are not in the filings data and start at zero, which overstates taxes a little. The spreads come from history; a company in a new kind of business can wander further."
+   "fits": "Companies with at least $25 million of revenue and an operating loss, or negative free cash flow at an operating margin under 5% — not profitable companies such as utilities that spend more than they earn on investment and borrow for it. Shown as a lens, beside the stage-weighted value, until the ledger has scored it.",
+   "watch": "Real companies usually raise new money before the cash runs out, so the rule that an empty bank account means zero is harsh; the page shows the other convention — every shortfall raised in new shares at today's price — beside it. Losses carried forward from before are not in the filings data and start at zero, which overstates taxes a little. The spreads come from history; a company in a new kind of business can wander further. Maturing debt is assumed rolled over; beside the result, a stress test shows the chance the cash runs out if the debt the filings say falls due in the next five years had to be repaid instead. A credit line can be cut when covenants are broken, which the model does not know. In the backtest, the chance of reaching a profit within five years is still somewhat too high."
   },
   "Pipeline rNPV (solved from the price)": {
    "family": "Probability",

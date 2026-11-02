@@ -77,11 +77,12 @@
     const b = d.schwartz_moon, price = d.price, I = b.inputs || {}, T = b.years || 10;
     const it = (d.football || []).find((x) => x.method && x.method.startsWith('Schwartz–Moon')) || {};
     const tone = fin(price) ? (b.mean > price * 1.15 ? 'fv-good' : b.mean < price * 0.85 ? 'fv-bad' : '') : '';
-    let h = `<h3>Schwartz–Moon simulation: does the cash last?</h3><p class="fv-sub">A company that loses money is a race between its cash and its path to profit. Here revenue growth and the operating margin wander from today's figures — growth fading toward the economy's pace, the margin pulled toward what peers earn — and the company carries its cash balance year by year. On a path where the cash runs out before profits arrive, the shares are worth nothing (Schwartz and Moon's rule); on the others, the cash flows are discounted as in a DCF. ${num(b.n)} paths over ${T} years. Every input is from the filings or estimated across the covered companies; the appendix has the algebra. Shown as a lens: not in the stage-weighted value until the ledger has scored it.</p>`;
+    let h = `<h3>Schwartz–Moon simulation: does the cash last?</h3><p class="fv-sub">A company that loses money is a race between its cash and its path to profit. Here revenue growth and the operating margin wander from today's figures — growth fading toward what its peers have grown, the margin moving as loss-makers' margins actually have and, once profitable, pulled toward what peers earn — and the company carries its cash balance year by year. On a path where the cash runs out before profits arrive, the shares are worth nothing (Schwartz and Moon's rule); on the others, the cash flows are discounted as in a DCF. ${num(b.n)} paths over ${T} years. Every input is from the filings or estimated across every SEC filer (not only today's survivors); the appendix has the algebra, and a backtest below says how well it has done. Shown as a lens: not in the stage-weighted value until the ledger has scored it.</p>`;
     h += `<div class="fv-cards">${card('Mean value', usd(b.mean), tone, fin(price) ? spct(b.mean / price - 1) + ' vs the price' : '')}
       ${card('Middle 80% of paths', `${usd(b.p10)} – ${usd(b.p90)}`, '', `median ${usd(b.p50)}`)}
-      ${card('Cash runs out by year 5', pct(b.p_fail5), b.p_fail5 > 0.3 ? 'fv-bad' : b.p_fail5 > 0.1 ? 'fv-warn' : 'fv-good', `by year ${T}: ${pct(b.p_fail10)}${fin(b.runway_years) ? ` · runway today ${num(b.runway_years, 1)} years` : ''}`)}
+      ${card('Cash runs out by year 5', pct(b.p_fail5), b.p_fail5 > 0.3 ? 'fv-bad' : b.p_fail5 > 0.1 ? 'fv-warn' : 'fv-good', `by year ${T}: ${pct(b.p_fail10)}${fin(b.runway_years) ? ` · cash + credit line last ${num(b.runway_years, 1)} years at today's burn` : ''}`)}
       ${card('Operating profit by year 5', pct((b.profit_by || [])[4]), '', `by year ${T}: ${pct((b.profit_by || [])[T - 1])}`)}
+      ${fin(b.p_fail5_norefi) ? card('…if maturing debt cannot be refinanced', pct(b.p_fail5_norefi), b.p_fail5_norefi > 0.3 ? 'fv-bad' : b.p_fail5_norefi > 0.1 ? 'fv-warn' : 'fv-good', 'cash runs out by year 5 when the debt due must be repaid') : ''}
       ${card('If shortfalls are raised in shares', usd((b.dilution || {}).mean_value), '', `median dilution ${pct((b.dilution || {}).median_new_shares)} at today's price`)}</div>`;
     h += `<div class="fv-wrap">${shareLines([{ name: 'Still has cash', values: b.survival || [], colour: C.ink, start: 1 }, { name: 'Has reached operating profit', values: b.profit_by || [], colour: C.good, start: fin(I.m0) && I.m0 > 0 ? 1 : 0, dash: true }], T, 'Share of paths that still have cash, and that have reached operating profit, by year')}</div>
       <div class="fv-legend"><span style="--k:${C.ink}">still has cash</span><span style="--k:${C.good}">has reached operating profit, dashed (and not failed first)</span><span>x-axis: years from today</span></div>`;
@@ -91,18 +92,23 @@
     h += `<h4 style="margin:12px 0 2px;font-size:14px">Value per share across the paths</h4><p class="fv-sub">${pct(b.p_zero)} of paths end at zero (the cash ran out, or nothing is left after debt). The mean, not the median, is the value of a share that can go to zero: it is the average of all the outcomes.</p><div class="fv-wrap">${histogram(b, price)}</div>`;
     h += tbl(['Input', 'Value', 'Where it comes from'], [
       ['Starting growth', spct(I.g0, 1), I.consensus ? "analysts' consensus, next fiscal year" : 'last four quarters vs the four before'],
-      ['Growth persistence φ', num(I.phi, 2), 'how much of this year\'s growth carries into next year, across the covered companies (pooled regression)'],
+      ['Growth persistence φ', num(I.phi, 2), 'how much of this year\'s growth carries into next year (pooled regression across ' + (I.panel || 'the covered companies') + ')'],
       ['Growth it fades toward', pct(I.g_bar, 1), 'what companies of its industry and size have grown over five years (the outside view)'],
-      ['Growth spread σ', pct(I.sg, 1), 'its own variability of growth, else the panel\'s'],
-      ['Operating margin: today → peers\' median', `${pct(I.m0, 1)} → ${pct(I.target_margin, 1)}`, 'the filings; the peer median of its industry and size'],
-      ['Margin pace while losing money', `κ ${num(I.kappa_loss, 2)} a year; surprise ${pct((I.sd_loss || [])[0], 1)} + ${num((I.sd_loss || [])[1], 2)} × the loss`, 'how fast loss-making companies\' margins have actually closed the gap since 2010, and how much they jumped around'],
+      ['Growth spread σ', pct(I.sg, 1), I.sg_how || 'its own variability of growth, shrunk toward the panel\'s'],
+      ['Operating margin today', pct(I.m0, 1), 'the filings'],
+      ['Margin change while losing money', fin(I.a_loss) ? `${spct(I.a_loss, 1).replace('%', ' points')} − ${num(I.kappa_loss, 2)} × the margin a year; surprise ${pct((I.sd_loss || [])[0], 1)} + ${num((I.sd_loss || [])[1], 2)} × the loss` : `κ ${num(I.kappa_loss, 2)} a year; surprise ${pct((I.sd_loss || [])[0], 1)} + ${num((I.sd_loss || [])[1], 2)} × the loss`, 'how loss-making companies\' margins have actually moved a year at each depth of loss since 2010, and how much they jumped around (one regression)'],
+      ['Margin once profitable: pulled toward', pct(I.target_margin, 1), 'the peer median of its industry and size'],
       ['Margin pace once profitable', `κ ${num(I.kappa, 2)} a year; surprise ${pct(I.sd_profit, 1)}`, 'profitable companies across the panel'],
       ['D&A, capex', `${pct(I.da, 1)}, ${pct(I.capex, 1)} of revenue`, 'the filings; capex above D&A moves halfway to it by year 5, as in the base DCF'],
-      ['Growth–margin shock correlation ρ', num(I.rho, 2), 'across the covered companies'],
+      ['Growth–margin shock correlation ρ', num(I.rho, 2), 'across ' + (I.panel || 'the covered companies')],
+      ['Stock-based pay', pct(I.sbc || 0, 1) + ' of revenue', I.sbc > 0 ? 'a cost in the value, but paid in shares — so added back when counting the cash' : 'none on file'],
       ['Cash, debt', `${big(I.cash)}, ${big(I.debt)}`, 'latest balance sheet'],
+      ['Undrawn credit line', big(I.credit_line || 0), I.credit_line > 0 ? 'remaining borrowing capacity in the filings; drawn when the cash runs short' : 'none on file'],
+      ['Debt due, years 1–5', Array.isArray(I.due) ? I.due.map(big).join(' / ') : 'no schedule on file', Array.isArray(I.due) ? `the filed maturity schedule${I.due_as_of ? ' (as of ' + I.due_as_of + ')' : ''}: rolled over in the simulation, repaid from cash in the stress test` : 'only interest is paid'],
       ['Interest earned on cash / paid on debt', `${pct(I.r_cash, 2)} / ${pct(I.kd, 2)}`, '1-year Treasury / its cost of debt'],
       ['Discount rate (WACC)', pct(I.wacc, 2), 'the cost-of-capital build-up above']].map((r) => [esc(r[0]), esc(r[1]), esc(r[2])]));
     if (it.note) h += `<p class="fv-sub">On the football field: ${esc(it.note)}.</p>`;
+    if (b.backtest && b.backtest.text) h += `<p class="fv-sub"><b>How well it has done.</b> ${esc(b.backtest.text)}</p>`;
     return h;
   }
   function rnpvHtml(d) {

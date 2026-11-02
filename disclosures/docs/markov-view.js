@@ -203,7 +203,7 @@
       <div class="fv-cards">${card('Median value', usd(mk.p50), '', fin(price) ? (mk.p50 >= price ? '+' : '−') + pct(Math.abs(mk.p50 / price - 1), 0) + ' vs price' : '')}
       ${card('Middle 80%', `${usd(mk.p10)} – ${usd(mk.p90)}`)}
       ${card('Paths worth more than the price', pct(mk.p_above, 0), tone)}
-      ${card('Long-run regime mix', ss.length ? `${pct(ss[0], 0)} / ${pct(ss[1], 0)} / ${pct(ss[2], 0)}` : '—', '', 'high / steady / decline, year ' + p.years)}</div>
+      ${card('Long-run regime mix', ss.length ? `${pct(ss[0], 0)} / ${pct(ss[1], 0)} / ${pct(ss[2], 0)}` : '—', '', LABELS.map((n) => n.toLowerCase()).join(' / ') + ', year ' + p.years)}</div>
       <div class="fv-wrap">${histogram(mk, price)}</div>
       <div class="fv-two"><div><h4 style="margin:10px 0 4px;font-size:14px">Transition probabilities (row: this year → column: next year)</h4><div class="fv-wrap"><table class="fv-tbl"><thead><tr><th></th>${LABELS.map((n) => `<th class="n">${esc(n)}</th>`).join('')}<th class="n">Own years</th></tr></thead><tbody>
       ${LABELS.map((n, i) => `<tr><td>${i === p.start ? '<b>' + n + '</b> (now' + (sp ? ', ' + pct(sp[i], 0) : '') + ')' : n}</td>${[0, 1, 2].map((j) => cell(i, j)).join('')}<td class="n">${num(own[i].reduce((a, b) => a + b, 0), hmm ? 1 : 0)}</td></tr>`).join('')}</tbody></table></div>
@@ -219,6 +219,7 @@
       <tr><td>Stock-based compensation</td><td class="n">in operating income</td><td>${esc(S.sbc || '')}</td></tr>
       <tr><td>Discount rate</td><td class="n">${pct(p.wacc, 2)}</td><td>${esc(S.wacc || '')}</td></tr>
       <tr><td>Terminal value</td><td class="n">${pct(p.g_term)}</td><td>${esc(S.terminal || '')}</td></tr></tbody></table></div>
+      ${mk.backtest && mk.backtest.text ? `<p class="fv-sub"><b>How well it has done.</b> ${esc(mk.backtest.text)}</p>` : ''}
       <p><button type="button" class="fv-tog" data-mk-open>Show 3D sensitivity</button><span class="fv-sub" data-mk-status style="margin-left:6px">Re-runs the same model in your browser and loads a 3.5 MB chart library.</span></p>
       <div data-mk-3d hidden>
         <h4 style="margin:12px 0 2px;font-size:14px">Value surface: growth × cost of capital</h4><p class="fv-sub">Every regime's growth shifted together (x) against the WACC (y); height is the median value. The flat sheet is today's price: where the surface is above it, the price is covered. The dot is the model as published.</p>

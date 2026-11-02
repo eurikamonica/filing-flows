@@ -280,6 +280,23 @@ def _winsor_mean_sd(xs):
     return m, math.sqrt(sum((x - m) ** 2 for x in xs) / (len(xs) - 1))
 
 
+SD_SHRINK_K = 4.0       # pseudo-years of the panel's growth surprise in a company's own growth spread (app/sim_backtest.py)
+
+
+def shrunk_sd(gs, panel_sd, k=SD_SHRINK_K):
+    """(σ, how): a company's spread of yearly growth over its last five years, shrunk toward the panel's growth surprise
+    (the AR(1) residual) with k pseudo-years: √((n σ_own² + k σ_panel²) ÷ (n + k)), n = the own years less one. Own
+    spreads from a few years understate what can happen: alone they put 61% of actual three-year revenues inside the 80%
+    range in the backtest; shrunk at k = 4, 81%."""
+    own = _winsor_mean_sd(gs[-5:])[1] if len(gs) >= 3 else None
+    if not _fin(panel_sd):
+        return own, 'own'
+    if not _fin(own):
+        return panel_sd, 'panel'
+    n = min(len(gs), 5) - 1
+    return math.sqrt((n * own * own + k * panel_sd * panel_sd) / (n + k)), 'shrunk'
+
+
 # ------------------------------------------------------------------ the hidden Markov model (three Gaussian regimes)
 def _npdf(x, mu, sd):
     z = (x - mu) / sd
@@ -562,8 +579,8 @@ def _loss_margins(loss, prof, up):
     robust spread of Δm. Too few observations: the whole panel's, else a stated fallback."""
     if len(loss) < 300 or len(prof) < 300:
         if up:
-            return {k: up[k] for k in ('loss_kappa', 'loss_sd0', 'loss_sd1', 'prof_sd', 'loss_n')} | {'_thin': True}
-        return {'loss_kappa': 0.2, 'loss_sd0': 0.05, 'loss_sd1': 0.4, 'prof_sd': 0.035, 'loss_n': len(loss), '_thin': True}
+            return {k: up[k] for k in ('loss_kappa', 'loss_a', 'loss_sd0', 'loss_sd1', 'prof_sd', 'loss_n')} | {'_thin': True}
+        return {'loss_kappa': 0.2, 'loss_a': -0.01, 'loss_sd0': 0.05, 'loss_sd1': 0.4, 'prof_sd': 0.035, 'loss_n': len(loss), '_thin': True}
     X, Y = [m for m, _ in loss], [d for _, d in loss]
     mx, my = sum(X) / len(X), sum(Y) / len(Y)
     b = sum((x - mx) * (y - my) for x, y in zip(X, Y)) / (sum((x - mx) ** 2 for x in X) or 1.0)
@@ -576,7 +593,8 @@ def _loss_margins(loss, prof, up):
     s1 = sum((x - px) * (y - py) for x, y in pts) / (sum((x - px) ** 2 for x, _ in pts) or 1.0)
     s1 = _clamp(s1, 0.0, 0.8)
     s0 = _clamp(py - s1 * px, 0.01, 0.10)
-    return {'loss_kappa': kap, 'loss_sd0': s0, 'loss_sd1': s1, 'prof_sd': _clamp(_mad_sd(prof), 0.01, 0.10), 'loss_n': len(loss)}
+    return {'loss_kappa': kap, 'loss_a': _clamp(a, -0.10, 0.10), 'loss_sd0': s0, 'loss_sd1': s1, 'prof_sd': _clamp(_mad_sd(prof), 0.01, 0.10),
+            'loss_n': len(loss)}
 
 
 def panel_prior(companies):
@@ -626,8 +644,10 @@ def consensus_growth(cons_c, price_date=None, rev0=None):
     return gs, (sum(sds) / len(sds) if sds else 0.02), '; '.join(how)
 
 
-def params(F, base, W, years_hist, prior_b, cons_c=None, price_date=None):
-    """The model for one company, every number with its source. base: the site's base DCF inputs (valuation.analyse)."""
+def params(F, base, W, years_hist, prior_b, cons_c=None, price_date=None, sd_scale=1.0):
+    """The model for one company, every number with its source. base: the site's base DCF inputs (valuation.analyse).
+    sd_scale: every regime's growth spread × this — the factor the walk-forward backtest fits so that the 80% range of
+    revenue three years out holds 80% of what happened (app/sim_backtest.py; 1 without a backtest)."""
     if not (prior_b and years_hist and base and W):
         return None
     gs = [g for g, _ in years_hist]
@@ -650,7 +670,8 @@ def params(F, base, W, years_hist, prior_b, cons_c=None, price_date=None):
     sm = F.get('sm')
     m_sd = _clamp(sm, 0.005, 0.08) if _fin(sm) else prior_b['m_sd']
     start = max(range(3), key=lambda j: start_p[j]) if start_p else st[-1]
-    model = {'years': YEARS, 'start': start, 'P': P, 'g': prior_b['g'], 'g_sd': prior_b['g_sd'], 'cons': cons, 'cons_sd': csd or 0.0,
+    sd_scale = sd_scale if _fin(sd_scale) and 0.5 <= sd_scale <= 3 else 1.0
+    model = {'years': YEARS, 'start': start, 'P': P, 'g': prior_b['g'], 'g_sd': [v * sd_scale for v in prior_b['g_sd']], 'cons': cons, 'cons_sd': csd or 0.0,
              'dm': prior_b['dm'], 'kappa': prior_b['kappa'], 'm_sd': m_sd, 'm0': base['margin'] if not isinstance(base['margin'], list) else base['margin'][0],
              'rev0': base['rev0'], 'tax': base['tax'], 'da': base['da'], 'capex': base['capex'], 'wc': base['wc'],
              'wacc': W['wacc'], 'g_term': base['g'], 'roic': base['roic'], 'debt': base['debt'], 'cash': base['cash'],
@@ -667,7 +688,9 @@ def params(F, base, W, years_hist, prior_b, cons_c=None, price_date=None):
            'now': ('the HMM\'s probability of each regime in the latest year: ' + ' / '.join(f'{v * 100:.0f}%' for v in start_p)) if start_p else
                   f'the latest year\'s growth ({gs[-1] * 100:+.1f}%) sets the regime',
            'growth': (f"the HMM's regime means and spreads ({'/'.join(f'{v:.0f}' for v in prior_b['g_n'])} company-years per regime)" if hmm else
-                      f"panel means by regime ({'/'.join(f'{v:.0f}' for v in prior_b['g_n'])} company-years)"),
+                      f"panel means by regime ({'/'.join(f'{v:.0f}' for v in prior_b['g_n'])} company-years)")
+                     + (f"; spreads × {sd_scale:g}, fitted in the walk-forward backtest so that the 80% range of revenue three years out holds about "
+                        "80% of what happened (as estimated, the spreads made it too narrow)" if sd_scale != 1.0 else ''),
            'years_1_2': cons_how or 'no consensus with ≥ 3 analysts: the regime model from year 1',
            'margin': f"trailing EBIT margin {model['m0'] * 100:.1f}%; regime drift = panel median; κ = {prior_b['kappa']:.2f} (pooled regression, {prior_b['kappa_n']} pairs)",
            'margin_sd': 'company quarterly EBIT-margin σ' if _fin(sm) else 'panel residual σ',
@@ -685,9 +708,9 @@ def params(F, base, W, years_hist, prior_b, cons_c=None, price_date=None):
             'k': K_PRIOR, 'sources': src}
 
 
-def run(F, base, W, years_hist, prior_b, price, cons_c=None, price_date=None):
+def run(F, base, W, years_hist, prior_b, price, cons_c=None, price_date=None, sd_scale=1.0):
     """The 'markov' block of a company's Fair value document, or None."""
-    pr = params(F, base, W, years_hist, prior_b, cons_c, price_date)
+    pr = params(F, base, W, years_hist, prior_b, cons_c, price_date, sd_scale)
     if not pr:
         return None
     vals = simulate(pr['model'])
