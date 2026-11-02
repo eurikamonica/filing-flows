@@ -1813,6 +1813,62 @@ def test_free_cash_flow_definition_is_the_readers_choice(tmp_path):
     assert notify.chart_key(ea, noted) == "320193:" + apple["end"] + "~noted" and notify.chart_key(ea, apple) == "320193:" + apple["end"]
 
 
+def test_revenues_far_below_contract_revenue_blue_owl():
+    """Blue Owl Q2 2026: its us-gaap:Revenues ($137M) is a narrower line, far below its total revenues, net ($753M, tagged
+    as revenue from contracts with customers): revenue − total expenses ($637M) + total other loss (−$46M) = pre-tax
+    ($71M) closes only with the $753M, so that is the revenue (not a −$616M of "other revenues"). Vistra's Revenues,
+    a little below its contract revenue by its hedging losses, stay the total (test below)."""
+    from pipeline import facts, ixbrl
+    F = lambda s, e, v: {"start": s, "end": e, "val": v * 1e6, "filed": "2026-07-31"}
+    q = ("2026-04-01", "2026-06-30")
+    fx = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [F(*q, 137.041)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [F(*q, 753.1)]}},
+        "CostsAndExpenses": {"units": {"USD": [F(*q, 636.6)]}},
+        "NonoperatingIncomeExpense": {"units": {"USD": [F(*q, -45.5)]}},
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {"units": {"USD": [F(*q, 71.0)]}},
+    }}})
+    assert facts.value(fx, "revenue", "2026-06-30") == 753.1e6
+    assert facts.source(fx, "revenue", "2026-06-30") == "RevenueFromContractWithCustomerExcludingAssessedTax"
+    # without the costs to check it against, "Revenues" stays the total when the company reported it before
+    q0 = ("2026-01-01", "2026-03-31")
+    F0 = lambda s, e, v: {"start": s, "end": e, "val": v * 1e6, "filed": "2026-05-01", "accn": "0001-26-01"}
+    fx2 = facts.index_facts({"facts": {"us-gaap": {k: v for k, v in [
+        ("Revenues", {"units": {"USD": [F(*q, 137.041), F0(*q0, 130.0)]}}),
+        ("RevenueFromContractWithCustomerExcludingAssessedTax", {"units": {"USD": [F(*q, 753.1), F0(*q0, 740.0)]}})]}}})
+    assert facts.value(fx2, "revenue", "2026-06-30") == 137.041e6
+    # ... but a tiny "Revenues" the company never tagged in another filing is a newly tagged line, not the total
+    # (Cumberland: $0.17M of other revenue beside $8.8M of net revenues; the same filing's year-ago column does not count)
+    Fa = lambda s, e, v: {"start": s, "end": e, "val": v * 1e6, "filed": "2026-08-07", "accn": "0001-26-02"}
+    fx5 = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [Fa(*q, 0.166), Fa("2025-04-01", "2025-06-30", 0.2)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [Fa(*q, 8.8), F0(*q0, 9.1)]}},
+        "CostsAndExpenses": {"units": {"USD": [Fa(*q, 3.327)]}}, "OperatingIncomeLoss": {"units": {"USD": [Fa(*q, -3.16)]}},
+    }}})
+    assert facts.value(fx5, "revenue", "2026-06-30") == 8.8e6
+    # a hedging loss that closes the statement keeps "Revenues": 3,000 − 2,700 = 300 of operating income
+    fx3 = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [F(*q, 3000)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [F(*q, 4400)]}},
+        "CostsAndExpenses": {"units": {"USD": [F(*q, 2700)]}},
+        "OperatingIncomeLoss": {"units": {"USD": [F(*q, 300)]}},
+    }}})
+    assert facts.value(fx3, "revenue", "2026-06-30") == 3000e6
+    # a company without a total of costs: revenue − cost of revenue = gross profit closes with the larger tag
+    fx4 = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [F(*q, 1.3)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [F(*q, 12.8)]}},
+        "CostOfRevenue": {"units": {"USD": [F(*q, 9.6)]}},
+        "GrossProfit": {"units": {"USD": [F(*q, 3.2)]}},
+    }}})
+    assert facts.value(fx4, "revenue", "2026-06-30") == 12.8e6
+    # the latest filing read directly (inline XBRL) the same way
+    vals = {("Revenues",) + q: 137.041e6, ("RevenueFromContractWithCustomerExcludingAssessedTax",) + q: 753.1e6,
+            ("CostsAndExpenses",) + q: 636.6e6, ("NonoperatingIncomeExpense",) + q: -45.5e6,
+            ("IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",) + q: 71.0e6}
+    assert ixbrl._pick(vals, "revenue", *q) == ("RevenueFromContractWithCustomerExcludingAssessedTax", 753.1e6)
+
+
 def test_total_revenue_and_cash_flow_da_vistra():
     """Vistra Q2 2026: total revenues (us-gaap:Revenues, $4,017M) are less than revenue from contracts with customers
     ($4,401M, what the revenue lines add up to) because other revenues (hedging) were −$384M; the cash-flow statement
@@ -3125,3 +3181,202 @@ def test_half_year_reporter_second_half_from_the_year():
     assert c["halves"]["2026-06-30"]["q1_end"] == "2025-12-31"
     ends = B._quarter_ends("0331", 1)
     assert ends[-1] < __import__("datetime").date.today() and all(e.month in (3, 6, 9, 12) for e in ends)
+
+
+def _fx(concepts, filed="2026-02-19", form="10-K"):
+    """Company facts from {concept: [(start, end, value in $M, [form])]}."""
+    body = {}
+    for c, rows in concepts.items():
+        body[c] = {"units": {"USD": [{"start": s, "end": e, "val": v * 1e6, "filed": filed, "form": (r[3] if len(r) > 3 else form)}
+                                     for r in rows for s, e, v in [r[:3]]]}}
+    from pipeline import facts
+    return facts.index_facts({"facts": {"us-gaap": body}})
+
+
+def test_proxy_statement_facts_are_left_out():
+    """DaVita FY2025: the 10-K tags net income to shareholders ($746.8M); the proxy statement's pay-versus-performance
+    table, filed two months later, tags the consolidated $1,078.7M as NetIncomeLoss too. Filed last, it used to win."""
+    from pipeline import facts
+    y = ("2025-01-01", "2025-12-31")
+    fx = _fx({"NetIncomeLoss": [y + (746.8, "10-K"), y + (1078.7, "DEF 14A")], "ProfitLoss": [y + (1078.7,)],
+              "Revenues": [y + (13500,)]})
+    assert facts.value(fx, "ni", "2025-12-31", annual=True) == 746.8e6
+    assert facts.statement_fact({"form": "DEFA14A"}) is False and facts.statement_fact({"form": "10-Q"}) is True
+
+
+def test_quarter_context_carrying_the_years_figure():
+    """Tractor Supply's 10-K tags fourth-quarter net income with the year's $1,096.1M (a context slip): the quarter is
+    the year less the nine months instead. A fourth quarter that really equals the year (nothing before) stays."""
+    from pipeline import facts
+    fy, q4, m9 = ("2024-12-29", "2025-12-27"), ("2025-09-28", "2025-12-27"), ("2024-12-29", "2025-09-27")
+    fx = _fx({"NetIncomeLoss": [fy + (1096.087,), q4 + (1096.087,), m9 + (868.6,)], "Revenues": [fy + (15524,), m9 + (11625.7,)]})
+    assert abs(facts.value(fx, "ni", "2025-12-27") - 227.487e6) < 1e3
+    assert abs(facts.value(fx, "revenue", "2025-12-27") - (15524 - 11625.7) * 1e6) < 1
+    fx2 = _fx({"NetIncomeLoss": [fy + (50,), q4 + (50,), m9 + (0,)], "Revenues": [fy + (100,), m9 + (0,)]})
+    assert facts.value(fx2, "ni", "2025-12-27") == 50e6
+
+
+def test_fourth_quarter_checked_against_the_three_quarters():
+    """NiSource's 10-K: the year's revenue ($6,522.8M) in the fourth quarter's context, and no nine-month figure under
+    that tag; Plexus: nine months of revenue tagged as $2.975M (thousands) under one tag, the quarters right under
+    another. Either way the quarter is the year less the three quarters reported before it (raw["q4_fixed"])."""
+    from pipeline import facts
+    fy = ("2025-01-01", "2025-12-31")
+    qs = [("2025-01-01", "2025-03-31"), ("2025-04-01", "2025-06-30"), ("2025-07-01", "2025-09-30")]
+    q4 = ("2025-10-01", "2025-12-31")
+    fx = _fx({"RevenueFromContractWithCustomerExcludingAssessedTax": [fy + (6522.8,), q4 + (6522.8,)] + [q + (v,) for q, v in zip(qs, (2149.5, 1246.5, 1240.2))],
+              "NetIncomeLoss": [fy + (900,), ("2025-01-01", "2025-09-30", 600)] + [q + (200,) for q in qs]})
+    raw = facts.extract(fx, "2025-12-31")
+    assert abs(raw["revenue"] - 1886.6e6) < 1e3 and raw["q4_fixed"] == ["revenue", "rev_contract"]
+    assert raw["ni"] == 300e6                                             # the year less nine months: no check needed
+    # Plexus: nine months in thousands under the contract tag, the quarters under "Revenues"
+    m9 = ("2025-01-01", "2025-09-30")
+    fx2 = _fx({"RevenueFromContractWithCustomerExcludingAssessedTax": [fy + (4033,), m9 + (2.975,)],
+               "Revenues": [q + (v,) for q, v in zip(qs, (977, 980, 1018))],
+               "NetIncomeLoss": [fy + (173,), m9 + (121.5,)] + [q + (40,) for q in qs]})
+    raw2 = facts.extract(fx2, "2025-12-31")
+    assert raw2["revenue"] == 1058e6 and "revenue" in raw2["q4_fixed"]
+    # a year's tag that is not the quarters' (AMG's share-based compensation) does not push the quarter below zero
+    fx3 = _fx({"AllocatedShareBasedCompensationExpense": [fy + (59.2,), m9 + (34.3,)],
+               "ShareBasedCompensation": [("2025-01-01", "2025-03-31", 23.7), ("2025-01-01", "2025-06-30", 92.3), m9 + (148.6,)],
+               "Revenues": [fy + (2000,), m9 + (1500,)] + [q + (500,) for q in qs]})
+    raw3 = facts.extract(fx3, "2025-12-31")
+    assert abs(raw3["sbc"] - 24.9e6) < 1e3 and "q4_fixed" not in raw3
+
+
+def test_full_year_tag_is_the_one_its_quarters_add_up_to():
+    """Nasdaq FY2025: "depreciation, depletion and amortization" ($145M, a note's figure, tagged in the 10-K only) beside
+    the cash flow statement's "depreciation and amortization" ($632M, reported every quarter): the latter is the year's.
+    JLL: a $0.7M-a-quarter plan under one tag, the cash flow statement's $112M in the 10-K only: the larger stays."""
+    from pipeline import facts
+    fy, m3, m6, m9 = ("2025-01-01", "2025-12-31"), ("2025-01-01", "2025-03-31"), ("2025-01-01", "2025-06-30"), ("2025-01-01", "2025-09-30")
+    fx = _fx({"DepreciationDepletionAndAmortization": [fy + (145,)],
+              "DepreciationAndAmortization": [fy + (632,), m3 + (156,), m6 + (314,), m9 + (472,)]})
+    assert facts.value(fx, "da", "2025-12-31", annual=True) == 632e6
+    assert facts.consistent_year(fx["DepreciationAndAmortization"], "2025-12-31") is True
+    assert facts.consistent_year(fx["DepreciationDepletionAndAmortization"], "2025-12-31") is False
+    fx2 = _fx({"ShareBasedCompensation": [fy + (2.7,), m3 + (0.7,), m6 + (1.4,), m9 + (2.1,)],
+               "AllocatedShareBasedCompensationExpense": [fy + (112,)]})
+    assert facts.value(fx2, "sbc", "2025-12-31", annual=True) == 112e6
+    # Ventas: acquisitions of real estate tagged in the 10-K only ($2.93B) beside development spending reported all year
+    fx3 = _fx({"PaymentsToAcquireProductiveAssets": [fy + (2928,)],
+               "PaymentsToDevelopRealEstateAssets": [fy + (281,), m3 + (58,), m6 + (125,), m9 + (185,)]})
+    assert facts.value(fx3, "capex", "2025-12-31", annual=True) == 281e6
+
+
+def test_da_tag_holding_depreciation_alone():
+    """Jazz: DepreciationDepletionAndAmortization equals Depreciation ($41.6M) while amortization of intangibles is
+    tagged apart ($654.7M): D&A is the two together."""
+    from pipeline import facts
+    fy = ("2025-01-01", "2025-12-31")
+    fx = _fx({"DepreciationDepletionAndAmortization": [fy + (41.636,)], "Depreciation": [fy + (41.636,)],
+              "AmortizationOfIntangibleAssets": [fy + (654.661,)]})
+    assert abs(facts.value(fx, "da", "2025-12-31", annual=True) - 696.297e6) < 1e3
+
+
+def test_missed_10q_behind_a_preliminary_quarter_is_queued(tmp_path):
+    """Landstar's Q2 2026 chart still came from the earnings release in November: the 10-Q filed in August was missed
+    by the scan. A preliminary quarter older than MISSED_AFTER_DAYS gets its 10-Q/10-K looked up and queued, once."""
+    import datetime as dt
+    from pipeline import build, sec
+    old = sec.FIXTURES
+    sec.FIXTURES = str(tmp_path)
+    try:
+        def put(url, body):
+            (tmp_path / os.path.basename(sec._fixture_path(url))).write_text(body)
+        put(sec.submissions_url(853816), json.dumps({"filings": {"recent": {
+            "form": ["10-Q", "8-K", "10-Q"], "filingDate": ["2026-10-28", "2026-07-28", "2026-07-31"],
+            "reportDate": ["2026-09-26", "2026-07-28", "2026-06-27"], "items": ["", "2.02,9.01", ""],
+            "accessionNumber": ["0000853816-26-000030", "0000853816-26-000020", "0000853816-26-000024"],
+            "primaryDocument": ["q3.htm", "d8k.htm", "q2.htm"], "acceptanceDateTime": ["", "", ""]}}}))
+        store = build.Store(str(tmp_path / "store"))
+        store.put(853816, {"quarters": {"2026-06-27": {"end": "2026-06-27", "form": "8-K", "filed": "2026-07-28"},
+                                        "2026-09-26": {"end": "2026-09-26", "form": "10-Q"}}, "profile": {"name": "Landstar"}})
+        store.state["seen"]["0000853816-26-000024"] = {"t": "2026-08-01"}       # seen, but never drawn
+        build.queue_missed_filings(store, today=dt.date(2026, 11, 2))
+        p = store.state["pending"].get("0000853816-26-000024")
+        assert p and p["cik"] == 853816 and p["form"] == "10-Q" and "0000853816-26-000024" not in store.state["seen"]
+        assert store.company(853816)["missed_at"] == "2026-06-27"
+        # checked once per quarter: nothing is asked again
+        del store.state["pending"]["0000853816-26-000024"]
+        build.queue_missed_filings(store, today=dt.date(2026, 11, 2))
+        assert "0000853816-26-000024" not in store.state["pending"]
+        # a fresh preliminary quarter waits for its 10-Q
+        store.put(1, {"quarters": {"2026-09-30": {"end": "2026-09-30", "form": "8-K"}}, "profile": {}})
+        build.queue_missed_filings(store, today=dt.date(2026, 11, 2))
+        assert store.company(1).get("missed_at") is None
+    finally:
+        sec.FIXTURES = old
+
+
+def test_loss_borne_by_minority_interests():
+    """Sunrun: its tax-equity partners bear most of the consolidated result. A profitable quarter draws their share of
+    a loss as an inflow to net earnings (the shareholders' figure); a loss quarter says what came to shareholders."""
+    from pipeline import model, sankey, analysis
+    raw = {"revenue": 1000e6, "costs_total": 900e6, "oi": 100e6, "pretax": 100e6, "tax": 10e6, "pl": 90e6, "nci": -50e6,
+           "ni": 140e6, "ocf": 200e6, "da": 50e6, "sbc": 20e6, "capex": 30e6}
+    nodes, links, kind = sankey.build(model.normalize(raw), None, None)
+    by = {n["id"]: n for n in nodes}
+    assert kind == "profit" and by["net"]["v"] == 140e6 and by["nci_in"]["v"] == 50e6 and "nci" not in by
+    into = {l["s"]: l["v"] for l in links if l["t"] == "net"}
+    assert into == {"pretax": 90e6, "nci_in": 50e6}
+    assert sum(l["v"] for l in links if l["t"] == "ocf") == 200e6
+    raw2 = {"revenue": 870e6, "costs_total": 1000e6, "oi": -130e6, "pretax": -212.1e6, "tax": -4e6, "pl": -208.2e6,
+            "nci": -323.3e6, "ni": 115.2e6, "ocf": -186e6, "da": 184e6, "sbc": 28e6, "capex": 300e6}
+    N2 = model.normalize(raw2)
+    nodes2, _, kind2 = sankey.build(N2, None, None)
+    note = [l[1] for n in nodes2 if n["id"] == "netloss" for l in n["lines"] if "bore" in l[1]]
+    assert kind2 == "loss" and note and "to shareholders net earnings of $115.2M" in note[0]
+
+    class F:
+        money = staticmethod(lambda x: f"${x / 1e6:.1f}M")
+        delta = staticmethod(lambda x: f"{x / 1e6:+.1f}M")
+    text = analysis.paragraphs(F(), "Q2 2026", N2, None, None)[1]
+    assert "to shareholders the quarter was a profit of $115.2M" in text
+
+
+def test_sliver_revenue_lines_and_total_members():
+    """Healthcare Realty: $8M of fee lines (contracts with customers) beside $287M of revenue, the rest rents: the lines
+    are left off. Interactive Brokers: "Basic" and "Diluted" rows and a "Revenues" member are not revenue lines."""
+    from pipeline import build, dims
+    q = {"lines_struct": {"leaves": [{"id": "a", "label": "Management fee income"}, {"id": "b", "label": "Parking income"}],
+                          "groups": [], "recon": dict(dims.RECON)}, "lines": {"a": 5.7e6, "b": 2.2e6}}
+    assert build.sliver_lines(q, 286.6e6) is True
+    assert build.sliver_lines(dict(q, lines={"a": 150e6, "b": 60e6}), 286.6e6) is False
+    assert build.sliver_lines(dict(q, lines_struct=dict(q["lines_struct"], recon=None)), 286.6e6) is False
+    members = {"m:Revenues": ("Revenues", 1914e6), "m:Basic": ("Basic", 0.7e6), "m:Diluted": ("Diluted", 0.7e6)}
+    assert dims.best_partition(members, 1914e6) is None
+    good = {"m:A": ("Commissions", 1000e6), "m:B": ("Net interest", 900e6), "m:C": ("Other", 14e6)}
+    assert [l["id"] for l in dims.best_partition(good, 1914e6)["leaves"]] == ["m:A", "m:B", "m:C"]
+
+
+def test_audit_finds_figures_that_disagree(tmp_path):
+    """pipeline/audit.py over rendered company files: a fourth quarter equal to the year, a year far from its quarters,
+    a revenue jump its lines do not share, a stale preliminary quarter."""
+    import datetime as dt
+    from pipeline import audit
+
+    def q(label, end, form, rev, lines=(), **more):
+        nodes = [{"id": "revenue", "v": rev, "q": more.get("q"), "y": more.get("y")}]
+        nodes += [{"id": f"L:{i}", "color": "rev", "v": v, "q": qv, "y": yv} for i, (v, qv, yv) in enumerate(lines)]
+        nodes += [{"id": k, "v": v} for k, v in more.get("nodes", {}).items()]
+        return {"label": label, "end": end, "form": form, "nodes": nodes}
+    d = {"profile": {"name": "Test Co"},
+         "quarters": [q("Q4 2025", "2025-12-31", "10-K", 6522.8e6, nodes={"net": 300e6}, q=1240.2e6),
+                      q("Q3 2025", "2025-09-30", "10-Q", 1240.2e6, lines=[(1200e6, 1180e6, 1100e6)], q=1246.5e6, nodes={"net": 200e6}),
+                      q("Q2 2025", "2025-06-30", "10-Q", 1246.5e6, nodes={"net": 200e6}, q=2149.5e6),
+                      q("Q1 2025", "2025-03-31", "10-Q", 2149.5e6, nodes={"net": 200e6}),
+                      q("Q4 2024", "2024-12-31", "8-K", 2000e6)],
+         "years": [{"label": "FY2025", "end": "2025-12-31", "nodes": [{"id": "revenue", "v": 6522.8e6}, {"id": "net", "v": 1500e6}]}]}
+    found = {(c, lab) for c, lab, _ in audit.check_company(d, today=dt.date(2026, 11, 2))}
+    assert ("fourth", "Q4 2025") in found and ("year", "FY2025") in found and ("preliminary", "Q4 2024") in found
+    # a jump the lines do not share, on a chart whose previous-quarter figure disagrees with that chart
+    d2 = {"profile": {"name": "Jump Co"}, "quarters": [
+        q("Q3 2026", "2026-09-30", "10-Q", 806.5e6, lines=[(806e6, 753e6, 728e6)], q=137e6, y=150e6),
+        q("Q2 2026", "2026-06-30", "10-Q", 753e6, lines=[(753e6, 748e6, 702e6)])]}
+    found2 = {(c, lab) for c, lab, _ in audit.check_company(d2, today=dt.date(2026, 11, 2))}
+    assert ("jump", "Q3 2026") in found2 and ("comparison", "Q3 2026") in found2
+    os.makedirs(tmp_path / "c")
+    json.dump(d, open(tmp_path / "c" / "1.json", "w"))
+    s = audit.run(str(tmp_path), today=dt.date(2026, 11, 2))
+    assert s["companies"] == 1 and s["counts"]["fourth"] == 1 and os.path.exists(tmp_path / "audit.json")

@@ -137,3 +137,42 @@ def test_inline_xbrl_ifrs_bank_total_income():
         tag("TradingIncomeExpense", "1,000") + tag("OtherOperatingIncomeExpense", "668") + tag("ProfitLoss", "3,304")
     r = ixbrl.release(doc, dt.date(2026, 7, 30))
     assert r["is"]["revenue"] == 11668e6 and not r["is_quarter"] and r["span"] == 180
+
+
+def test_net_income_to_shareholders_not_the_minority_nor_per_share():
+    """Kinder Morgan: "Net income attributable to NCI" is the minority's line; Albany: "... to the noncontrolling
+    interest"; Pentair: "Basic earnings per ordinary share" is a per-share row, not net income."""
+    rows = IS + [("Net income attributable to NCI", "(26)", "(20)"), ("Net income attributable to Kinder Morgan, Inc.", "9,886", "2,204"),
+                 ("Basic earnings per ordinary share", "0.91", "0.20")]
+    r = release.parse(_doc("<p>(In millions)</p>", _table(rows, "CONSOLIDATED STATEMENTS OF INCOME")), dt.date(2026, 10, 21))
+    assert r["is"]["pl"] == 9860e6 and r["is"]["ni"] == 9886e6 and r["is"]["nci"] == -26e6
+    rows2 = IS + [("Net income attributable to the noncontrolling interest", "0.19", "0.1"),
+                  ("Net income (loss) attributable to the Company", "9,859.81", "2,183.9")]
+    r2 = release.parse(_doc("<p>(In millions)</p>", _table(rows2, "CONSOLIDATED STATEMENTS OF INCOME")), dt.date(2026, 10, 21))
+    assert abs(r2["is"]["ni"] - 9859.81e6) < 1e3 and abs(r2["is"]["nci"] - 0.19e6) < 1e3
+    rows3 = IS + [("Basic earnings per ordinary share", "0.91", "0.20"), ("Diluted earnings per ordinary share", "0.90", "0.20")]
+    r3 = release.parse(_doc("<p>(In millions)</p>", _table(rows3, "CONSOLIDATED STATEMENTS OF INCOME")), dt.date(2026, 10, 21))
+    assert r3["is"]["pl"] == 9860e6 and "ni" not in r3["is"]          # no minority line: net income is the shareholders'
+
+
+def test_cash_flow_table_in_millions_beside_a_statement_in_thousands():
+    """CTS: the income statement is in thousands; the free-cash-flow table, with no units of its own, prints
+    "$ 43.5" (millions). Operating cash flow is $43.5M, not $43,500."""
+    cf = ('<table><tr><td></td><td colspan="4">Three Months Ended September 30,</td></tr><tr><td></td><td>2026</td><td>2025</td></tr>'
+          + ROW.format("Net cash provided by operating activities", "43.5", "29.0", "")
+          + ROW.format("Capital expenditures", "(2.4)", "(4.8)", "") + ROW.format("Free cash flow", "41.1", "24.2", "") + '</table>')
+    html = _doc("<p>(In thousands)</p>", _table([(l, a.replace(",", "") + "0", b.replace(",", "") + "0") for l, a, b in IS],
+                                                "CONSOLIDATED STATEMENTS OF EARNINGS"), "<p>Free Cash Flow</p>", cf)
+    r = release.parse(html, dt.date(2026, 10, 21))
+    assert r["scale"] == 1e3 and r["cf"]["ocf"] == 43.5e6 and r["cf"]["capex"] == -2.4e6
+
+
+def test_net_income_to_shareholders_from_the_summary_table():
+    """Ryan Specialty: the income statement stops at net income ($88.0M); the release's summary table has "Net income
+    attributable to Ryan Specialty Holdings, Inc." ($36.7M). The shareholders' figure comes from there."""
+    summary = _table([("Total revenue", "64,601", "51,242"), ("Net income", "9,860", "2,184"),
+                      ("Net income attributable to Ryan Specialty Holdings, Inc.", "4,100", "1,900")], "GAAP financial measures")
+    html = _doc("<p>(In thousands)</p>", summary, _table(IS, "CONSOLIDATED STATEMENTS OF INCOME"))
+    r = release.parse(html, dt.date(2026, 10, 21))
+    assert r["is"]["pl"] == 9860e3 and r["is"]["ni"] == 4100e3
+    assert r["labels"]["ni"].startswith("net income attributable to ryan")

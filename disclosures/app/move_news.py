@@ -234,28 +234,33 @@ def refresh(client, root, comps, bars_of, subs=300, reads=250, minutes=25.0, tod
     return done
 
 
-def publish(root, comps, bars_of):
-    """public/moves/n/<TICKER>.json for every company with its filing list on file."""
+def publish(root, comps, bars_of, market=('SPY',)):
+    """public/moves/n/<TICKER>.json for every company with its filing list or headlines on file (and the market's
+    headlines): the filings and the news headlines (app/move_headlines.py) within its price history."""
+    import move_headlines as MH
     out = Path(root) / 'public' / 'moves' / 'n'
     out.mkdir(parents=True, exist_ok=True)
     written = set()
-    for c in comps:
-        if not c.get('cik'):
-            continue
-        doc = read_json(path(root, c['cik']), None)
+    for c in [{'t': m} for m in market] + list(comps):
         b = bars_of(c['t'])
-        if not doc or not doc.get('filings') or not b:
+        if not b or not b[0]:
             continue
         d0 = b[0][0]
+        doc = read_json(path(root, c['cik']), None) if c.get('cik') else None
         ev = []
-        for acc, form, date, hm, items in doc['filings']:
+        for acc, form, date, hm, items in (doc or {}).get('filings') or []:
             if date < d0:
                 continue
             r = (doc.get('read') or {}).get(acc) or {}
             ev.append([date, hm, form, items, r.get('h') or '', r.get('q') or '', r.get('t') or [], acc] + ([r['g']] if r.get('g') else []))
+        heads, checked = MH.published(root, c['t'], b[0])
+        if not ev and not checked:
+            continue
         name = f"{c['t']}.json"
-        (out / name).write_text(json.dumps({'format': FORMAT, 'key': c['t'], 'cik': int(c['cik']), 'generated_at': now(), 'events': ev},
-                                           separators=(',', ':')))
+        body = {'format': FORMAT, 'key': c['t'], 'generated_at': now(), 'events': ev, 'headlines': heads, 'checked': checked}
+        if c.get('cik'):
+            body['cik'] = int(c['cik'])
+        (out / name).write_text(json.dumps(body, separators=(',', ':')))
         written.add(name)
     for p in out.glob('*.json'):
         if p.name not in written:

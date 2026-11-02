@@ -1,5 +1,85 @@
 # Changelog
 
+## Highs, lows & ranges: at the lows (all-time, 52-week, 3-month) and in a sideways range (narrow or wide)
+
+app/regimes.py (built with the move odds after every US close, beside the highs; public/moves/lows.json, ranges.json
+and each asset's file → lows, ranges) adds the other regimes a price runs in. At the lows: a day within 15% of its
+all-time, 52-week or 3-month low with a new one in the last 63 trading days (NKE, 14% above its October low, is at a
+52-week and a 3-month low) — about 520,000 company days at a 52-week low since 1962, 123,000 at an all-time low. What
+followed each: the days to the next new low (Kaplan–Meier), to a 10% and a 20% rebound from the lowest close from then
+on, the low before the 10% rebound (its days and how much further down), the rebound from that low until the next new
+low, the returns and the lowest close over 3 and 12 months. The state: the slide's age (since its last high of the same
+span), new lows in the last 63 days, the distance from the low and under the all-time high, against the 200-day
+average, 12-1 month momentum (its own and among every company that day), volatility, P/E and volume, as for the highs.
+In a range: the last 63 trading days sideways (the net move under a quarter of the range's width) with the width in the
+bottom 15% of the asset's own 63-day widths (narrow: a tight coil) or its top 30% (wide: wide swings going nowhere);
+what followed: the days to the first close outside the range, which way, the move 1 and 3 months after it, how often it
+fell back into the other half within a month (a false breakout), the returns and the largest rise and fall over 3
+months. Tables by each state variable for companies, ETFs and indices; for every asset in a regime now, the 250 most
+similar days of the same kind of asset (at most one per asset in 21 days, none of its own from the last year) and the
+nearest of them. Days in a regime overlap (one slide gives many low days), so episodes and assets are given beside them;
+companies are today's (survivors). The hub's Move odds view becomes "Highs, lows & ranges" with a regime selector (deep
+links #moves/lows/NKE, #moves/atl/X, #moves/narrow/X, #moves/wide/X), and the company page's tab of that name shows
+every regime the company is in. The move-odds step gets 35 minutes for the extra three minutes or so.
+
+## Move odds: the news headlines beside the filings
+
+Each case of the Move odds (the days like the one looked at, on company pages and the hub) now shows, beside what the
+company filed with the SEC, the news headlines about it from the close before to that day's close: app/move_headlines.py
+asks Google News's search feed for the headlines naming each company over a window — the last week (every day, for the
+market and the 300 largest companies), a month at a time over the last three years (newest first), and the two days
+around each of its biggest moves since 2008 — and splits a window the feed returns full (100) in two, down to two days.
+Each headline goes on the trading day it could move (before the 16:00 New York close: that day; after: the next; one the
+feed dates only shows on that day and the next). Kept: headlines about the company (its ticker or the distinctive words
+of its name), not the automatic "fund X bought shares" notes or junk sources, reputable sources and headlines about a
+move first, eight a day — only the headline, its source, time and link. 550 searches a run, the market's and the
+largest companies' first; move_news.publish puts them with the filings in public/moves/n/<TICKER>.json (SPY's for the
+market's own days), with the days searched so the table can say "no headline that day".
+
+## At the highs: how long runs of all-time highs last, how deep the pullback that ends them
+
+app/highs.py (built with the move odds after every US close; public/moves/highs.json and each asset's file → highs)
+counts every day an asset ran at its highs (within 5% of its all-time high with a new high in the last 21 trading days)
+since its data begins — about 1.04 million company days, 84,000 ETF days and 54,000 index days (the S&P 500 index since
+1928) — with the state it was in and what followed. The state: the run's age (since its first ATH after a 10%
+drawdown), new highs in the last 63 days, the distance from the high, how far above its 200-day average, 12-1 month
+momentum (against its own history and against every company that day), 21-day volatility, the trailing P/E (price ÷
+the last four first-filed quarterly diluted EPS from the main site's SEC store, restated across splits the store missed;
+raw closes for the price where the bars have them) and volume (3 months vs 12); each but the counts as a percentile of
+the asset's own history up to that day. What followed: the trading days to the first 5%, 10% and 20% pullback from the
+high (Kaplan–Meier, so still-waiting days count), the rest of the run (to its last high before a 10% pullback), the new
+highs and gain still to come, the depth of the pullback that ended the run and the days back to the peak, the
+drawdowns and returns over 3 and 12 months. Tables by every state variable for companies, ETFs and indices; for every
+asset at its highs now, the 250 most similar high days of its kind (at most one per asset and 21 days, none of its own
+from the last year) and its own past runs. The hub's Move odds tab gets "At the highs" (the list, sortable, with a CSV,
+one asset in detail with survival curves, and the research tables; #moves/highs/AAPL) and company pages a tab "At the
+highs" (views.json → highs-view.js). The research-paths workflow reads the EPS store (branch data, eps-gaap/) for it.
+
+## RRG lab: daily RRG, prices, forecast paths with dates and prices, quadrant-crossing research
+
+The hub's RRG (Rotation → RRG) gets a daily frequency beside weekly and monthly: every trading day, from the move-odds
+files (each asset's adjusted daily closes against SPY's, on SPY's trading days; 5-day smoothing, a 21-day window by
+default, scaled by the last 252 days). The same files add new lines to every frequency: the index ETFs against the S&P
+500, world regions, countries, bonds, commodities and two sets of industry ETFs. Every point shows its close; each line's
+label carries the latest close; the table adds the close, the two closes next period that would put RS-Ratio and
+RS-Momentum at 100 (exact from the formula, the benchmark held flat) and the forecast path's date, median price and 80%
+range. The forecast path (new "Forecast path" control, on by default for every line): every run of the line's own and
+the benchmark's moves in its last three years, replayed through the formula from the date shown — the median position
+each period, dots at +1 / +4 / +13 weeks (+1 / +5 / +21 trading days) with the date and the median replayed close,
+the 80% boxes for one line, the share of replays in each quadrant on hover, and at a past date what actually happened.
+A new panel under the chart, "Crossing odds, resistance and rebounds": for each line now, the quadrant line it is
+heading for, how often lines in a similar spot crossed it within the horizon (counted over the chart's lines with the
+outcome known by the date shown, and over the whole group from the server), and for Lagging lines how often they reached
+Improving and Leading; with these lines' own history (the tables below). A new view, Rotation → Rotation research
+(app/rrg_research.py, weekly with the rotation history and daily with the move odds; docs/rrg-lab.js computes the same
+numbers in the browser): for the sector ETFs, index ETFs, styles, the site's sectors, countries, bonds and commodities,
+industry ETFs, industries and companies — how often a line within one unit of a quadrant line and moving toward it
+crossed within 1–26 weeks / 1–63 days or turned back first (by approach speed), how long it took, whether Lagging lines
+rebounded (to Improving, to Leading, back to Weakening) and what they returned against the benchmark and on their own,
+by depth and momentum, the returns after each quadrant, how long lines stay, which way they turn and how long a loop
+takes. The company page's and industry list's RRG mark weeks 1, 4 and 13 of the median replayed path with the date and
+the replayed close. History, not a forecast.
+
 ## Move odds: how rare today's move is, and what followed moves like it
 
 app/moves.py (paths.py moves, run after the daily bars in research-paths.yml) turns the daily bars into one compact file

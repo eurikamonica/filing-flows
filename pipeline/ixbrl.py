@@ -84,7 +84,17 @@ def _pick(vals, key, start, end):
         return None, None
     if key == "revenue":
         tot = [g for g in got if g[0] in ("Revenues", "Revenue")]
-        return max(tot or got, key=lambda g: g[1])
+        top = max(got, key=lambda g: g[1])
+        if not tot:
+            return top
+        t = max(tot, key=lambda g: g[1])
+        if facts.total_ok(t[1], top[1]):
+            return t
+        # "Revenues" far below another revenue tag: the one that closes the income statement (facts.closes_better)
+        first = lambda k: next((vals[(n, start, end)] for n in facts.CONCEPTS.get(k, []) if (n, start, end) in vals), None)
+        return top if facts.closes_better(top[1], t[1], first("costs_total"), first("oi"), first("pretax"),
+                                          vals.get(("NonoperatingIncomeExpense", start, end)),
+                                          gp=first("gp"), cor=first("cor"), opex=first("opex_total")) else t
     return got[0]
 
 

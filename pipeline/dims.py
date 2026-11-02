@@ -262,9 +262,15 @@ def ytd_values(facts, end):
     return out
 
 
+# members that are no revenue line: the total itself, or per-share rows that slip onto the axis (Interactive Brokers:
+# "Basic" and "Diluted" beside "Revenues"); a member below the tolerance cannot be told from rounding either
+NOT_LINES = {"basic", "diluted", "revenues", "revenue", "total revenues", "total revenue", "total", "net revenues"}
+
+
 def best_partition(members, total):
     """Largest set of members adding up to total, plus groups = other members equal to a subset of it."""
-    items = [(m, lab, v) for m, (lab, v) in members.items() if v > 0]
+    items = [(m, lab, v) for m, (lab, v) in members.items()
+             if v > TOL * abs(total) and str(lab or "").strip().lower() not in NOT_LINES]
     items.sort(key=lambda x: -x[2])
     items = items[:14]
     best = None

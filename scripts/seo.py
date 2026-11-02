@@ -170,6 +170,45 @@ def segments(q):
     return sorted(out, key=lambda x: -x[1])
 
 
+LICENSE = "/license/"
+
+
+def image_ld(base, image, alt, caption=None):
+    """ImageObject for Google Images: the credit, the creator and the terms (a licence page and where to get it), so
+    the picture can carry the "Licensable" badge and the credit line in image results"""
+    return {"@type": "ImageObject", "contentUrl": image, "url": image, "name": alt, **({"caption": caption} if caption else {}), "width": 1200, "height": 630,
+            "creditText": "Filing Flows (filing-flows.com)", "creator": {"@type": "Organization", "name": "Filing Flows", "url": base + "/"},
+            "copyrightNotice": "© Filing Flows — free to use with credit and a link", "license": base + LICENSE, "acquireLicensePage": base + LICENSE}
+
+
+def share_figure(image, alt, caption, url, depth=2, embed=True, tweet=None):
+    """the company's Sankey as a picture with its caption: what image search reads (alt, caption, the text around it)"""
+    if not image:
+        return ""
+    up = "../" * depth
+    return (f"<figure class='seo-share'><a href='{e(image)}'><img src='{e(image)}' alt='{e(alt)}' width='1200' height='630' loading='lazy'></a>"
+            f"<figcaption>{e(caption)} — free to use with credit and a link (<a href='{up}license/'>terms</a>)."
+            + (f" <a href='https://x.com/intent/tweet?text={quote(tweet)}&amp;url={quote(url)}' rel='noopener'>Share on X</a>" if tweet else "") + "</figcaption>"
+            + (embed_box(url, image, alt, caption) if embed else "") + "</figure>")
+
+
+def license_page(out_dir, base):
+    body = ("<p class='crumbs'><a href='../'>Filing Flows</a> › Using the charts</p><h1>Using Filing Flows charts</h1>"
+            "<p class='lead'>Every chart on Filing Flows — the earnings Sankeys, the cash-flow and 13F charts — is free to use in articles, posts, newsletters, "
+            "videos, classes and research, with two conditions.</p><div class='seo-note'>"
+            "<p><b>1. Credit:</b> “Source: Filing Flows (filing-flows.com)”, and online a link to the chart's page (the embed code under each chart does both).</p>"
+            "<p><b>2. As drawn:</b> keep the figures and the Filing Flows mark; do not sell the pictures themselves or present them as your own.</p>"
+            "<p>The figures are read automatically from companies' SEC filings (XBRL and earnings releases) and can contain errors; check the filing before relying "
+            "on a number. Nothing here is investment advice.</p>"
+            f"<p>For other uses — print, a larger size, or many charts at once — write to <a href='{X_URL}' rel='me noopener'>@{X_HANDLE} on X</a>.</p></div>")
+    os.makedirs(os.path.join(out_dir, "license"), exist_ok=True)
+    open(os.path.join(out_dir, "license", "index.html"), "w", encoding="utf-8").write(page(
+        "Using Filing Flows charts: free with credit and a link | Filing Flows",
+        "The earnings Sankeys and other Filing Flows charts are free to use in articles, posts and research with credit and a link to filing-flows.com.",
+        base + LICENSE, body, 1, base + "/og.png"))
+    return [(base + LICENSE, None)]
+
+
 def embed_box(url, image, alt, caption):
     """'Embed this chart': the picture linked to its page (a link back to the site wherever it is posted), or the
     interactive chart in a frame with the same credit line under it"""
@@ -280,10 +319,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     qs_ = SH.qslug(q.get('label') or '')
     qlink = f" · <a href='{qs_}/'>{e(who)} {e(q.get('label', ''))} earnings results →</a>" if qs_ and form != '8-K' else ''
     alt = f"{name} {q.get('label', '')} revenue breakdown: Sankey diagram of revenue" + (f" ({', '.join(n for n, _ in segs[:4])})" if segs else "") + ", costs, profit and cash flow"
-    share = (f"<figure class='seo-share'><a href='{e(image)}'><img src='{e(image)}' alt='{e(alt)}' width='1200' height='630' loading='lazy'></a>"
-             f"<figcaption>{e(name)} {e(q.get('label', ''))} revenue breakdown — free to share with a link to this page. "
-             f"<a href='https://x.com/intent/tweet?text={quote(tweet)}&amp;url={quote(url)}' rel='noopener'>Share on X</a></figcaption>"
-             + embed_box(url, image, alt, f"{name} {q.get('label', '')} revenue breakdown") + "</figure>") if image else ""
+    share = share_figure(image, alt, f"{name} {q.get('label', '')} revenue breakdown", url, depth, True, tweet)
     ties_html = ties_section(ties or [], p['cik'], pages or {})
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../../sector/{e(p.get('sector') or 'other')}/">{e(sector_name)}</a> › {e(who)}</p>
 <h1>{e(who)} earnings and revenue breakdown</h1>
@@ -311,8 +347,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
         {"@type": "Corporation", "name": name, "tickerSymbol": t or None, "url": url},
         {"@type": "WebPage", "name": title, "url": url, "datePublished": q.get("filed"), "dateModified": q.get("filed"),
          **({"primaryImageOfPage": {"@type": "ImageObject", "contentUrl": image}} if image else {})},
-        *([{"@type": "ImageObject", "contentUrl": image, "name": alt, "width": 1200, "height": 630, "creditText": "Filing Flows",
-            "creator": {"@type": "Organization", "name": "Filing Flows"}, "copyrightNotice": "Filing Flows — free to share with a link"}] if image else []),
+        *([image_ld(base, image, alt, f"{name} {q.get('label', '')} revenue breakdown")] if image else []),
         {"@type": "BreadcrumbList", "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Filing Flows", "item": base + "/"},
             {"@type": "ListItem", "position": 2, "name": sector_name, "item": f"{base}/sector/{p.get('sector') or 'other'}/"},
@@ -682,6 +717,7 @@ def write_pages(data_dir, out_dir, base):
     urls += gamma_pages(data_dir, out_dir, base, {slug_for(r) for r in latest.values()}, images)
     urls += model_page(data_dir, out_dir, base)
     urls += about_page(out_dir, base, len(latest))
+    urls += license_page(out_dir, base)
     sm = ['<?xml version="1.0" encoding="UTF-8"?>',
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
     for u, mod in urls:                              # each company's Sankey picture, for image search

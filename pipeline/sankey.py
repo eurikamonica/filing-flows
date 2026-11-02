@@ -282,29 +282,37 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
             S.link("oi", "pretax", "pretax" if Nc["nonop"] < 0 else "oi", "profit")
         cost_items(oc + 1, cost_parent, cost_plabel)
 
-        # pre-tax -> tax / minority / net
+        # pre-tax -> tax / minority / net. Minority interests take their share of the earnings (a node out of pre-tax)
+        # or, when they bore a loss, add to what comes to shareholders (a node into net earnings: Sunrun's tax-equity
+        # partners); either way net earnings are the shareholders' figure
         nc = oc + 2
-        has_nci = Nc["nci"] > 0.001 * R
+        nci_pos, nci_neg = Nc["nci"] > 0.001 * R, Nc["nci"] < -0.001 * R
+        has_nci = nci_pos or nci_neg
         net_key = "ni" if has_nci else "pl"
         bridge = Nc["ocf"] is not None
         if Nc["tax"] < 0:
             S.node("taxben", oc + 1, "taxben", "profit", "Income tax benefit", "left", "net", "net earnings",
                    notekeys=NOTE_KEYS["tax"])
+        if nci_neg:
+            S.node("nci_in", oc + 1, "nci", "profit", "Loss borne by minority interests", "left", "net", "net earnings",
+                   sign=-1, extra=[f"their share of a loss: net income incl. minority interests {f.money(Nc['pl'])}"])
         S.node("net", nc, net_key, "profit", "Net earnings", "above_left" if bridge else "right", "pretax", "pre-tax",
                extra=["attributable to shareholders"] if has_nci else [], notekeys=NOTE_KEYS["net"])
-        if has_nci:
+        if nci_pos:
             S.node("nci", nc, "nci", "profit", "Minority interests", "below_right" if bridge else "right", "pretax", "pre-tax")
         if Nc["tax"] > 0:
             S.node("tax", nc, "tax", "cost", "Income tax", "below_right" if bridge else "right", "pretax", "pre-tax",
                    notekeys=NOTE_KEYS["tax"])
         if Nc["tax"] > 0:
-            S.link("pretax", "net", net_key, "profit")
+            S.link("pretax", "net", "ni" if nci_pos else "pl", "profit")
         else:
-            S.link("pretax", "net", "pretax_less_nci" if has_nci else "pretax", "profit")
+            S.link("pretax", "net", "pretax_less_nci" if nci_pos else "pretax", "profit")
         if Nc["tax"] < 0:
             S.link("taxben", "net", "taxben", "profit")
-        if has_nci:
+        if nci_pos:
             S.link("pretax", "nci", "nci", "profit")
+        if nci_neg:
+            S.link("nci_in", "net", "nci", "profit", sign=-1)
         if Nc["tax"] > 0:
             S.link("pretax", "tax", "tax", "cost")
         if bridge:
@@ -321,7 +329,7 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
             S.node("taxben", rc, "taxben", "profit", "Income tax benefit", "left", "total", "costs", notekeys=NOTE_KEYS["tax"])
         if Nc["pl"] < 0:
             S.node("netloss", rc, "netloss", "cost", "Net loss", "left", "total", "costs",
-                   extra=["Y/Y, Q/Q compare the size of the loss"], notekeys=NOTE_KEYS["net"])
+                   extra=["Y/Y, Q/Q compare the size of the loss"] + nci_bore_loss(Nc, f), notekeys=NOTE_KEYS["net"])
         S.node("total", rc + 1, "funding_nl" if nl else "funding", "cost", "Costs &amp; expenses", "above", "revenue",
                "revenue")
         S.link("revenue", "total", "revenue", "rev")
@@ -353,7 +361,8 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
             S.node("tax", rc + 2, "tax", "cost", "Income tax", "right", "total", "costs", notekeys=NOTE_KEYS["tax"])
             S.link("total", "tax", "tax", "cost")
         if Nc["pl"] > 0:
-            S.node("netinc", rc + 2, "pl", "profit", "Net earnings", "right", "total", "costs", notekeys=NOTE_KEYS["net"])
+            S.node("netinc", rc + 2, "pl", "profit", "Net earnings", "right", "total", "costs", notekeys=NOTE_KEYS["net"],
+                   extra=nci_bore_loss(Nc, f))
             S.link("total", "netinc", "pl", "profit")
         parts = []
         if Nc["gp_path"]:
@@ -380,6 +389,17 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
 def loss_case(Nc):
     """The loss layout: revenue and the loss together fund the costs."""
     return Nc["oi"] < 0 or Nc["pretax"] < 0 or Nc["pl"] < 0
+
+
+def nci_bore_loss(Nc, f):
+    """A line for the net figure when minority interests bore a loss (Sunrun: its tax-equity partners absorb most of
+    the consolidated loss, so the $208M net loss drawn is a $115M profit to shareholders). Empty otherwise: a positive
+    minority share is drawn as its own node."""
+    nci, ni, R = Nc.get("nci") or 0, Nc.get("ni"), Nc["R"]
+    if ni is None or nci >= -0.001 * R:
+        return []
+    return [f"minority interests bore {f.money(-nci)} of the loss: to shareholders "
+            f"{'net earnings' if ni >= 0 else 'a net loss'} of {f.money(abs(ni))}"]
 
 
 def _nonop_lines(Nc, R):
@@ -424,10 +444,14 @@ def _bridge(S, Nc, nc, net_id, net_key, has_nci, f):
         for k, label, _, xnote in removes:
             S.node("BL:" + k, oc, "bl:" + k, "noncash", label, "right", "net", "net earnings", sign=-1,
                    extra=[xnote or "non-cash, removed"], notekeys=[label.lower()])
-        conv = round(Nc["ocf"] / nib * 100) if nib else None
+        # against the net income the cash flow statement starts from: with minority interests, the consolidated one
+        pl = Nc.get("pl") if has_nci else None
+        base = pl if pl and pl > 0 else nib
+        conv = round(Nc["ocf"] / base * 100) if base else None
+        words = f"net {'income incl. minority interests' if base is pl else 'earnings'}"
         S.node("ocf", oc, "ocf", "profit", "Operating cash flow", "right", "revenue", "revenue", style="ocf",
-               extra=[f"{conv}% of net earnings"] if conv is not None else [],
-               notekeys=NOTE_KEYS["ocf"])
+               extra=([f"{Nc['ocf'] / base:.0f}× {words} of {f.money(base)}"] if conv > 1000 else [f"{conv}% of {words}"])
+               if conv is not None else [], notekeys=NOTE_KEYS["ocf"])
         S.Qc["_net_to_ocf"] = nib + min(rx, 0) - removed
         if S.Qq.get(net_key) is not None and S.Qq.get(rkey) is not None:
             S.Qq["_net_to_ocf"] = S.Qq[net_key] + min(S.Qq[rkey], 0) - removed_in(S.Qq)

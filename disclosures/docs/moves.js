@@ -8,7 +8,7 @@
    a past day: #moves/stocks/2026-10-15. A past day (the Day menu: the last year of trading days) shows every asset's move
    that day, ranked among its own days up to then, and what actually followed. */
 const mvStore={};
-const MV_VIEWS=[['market','Market & sectors'],['all','Indices & ETFs'],['industries','Industries'],['stocks','Stocks on the day'],['one','One ticker']];
+const MV_VIEWS=[['market','Market & sectors'],['all','Indices & ETFs'],['industries','Industries'],['stocks','Stocks on the day'],['highs','Highs, lows & ranges — how long they last, what follows'],['one','One ticker']];
 const MV_GROUPS=[['market','The market (ETFs)'],['us','US indices'],['world','World indices — own currency, price only'],['sector','Sector ETFs'],['style','Styles & factors'],
  ['industry','Industry & theme ETFs'],['country','Country ETFs'],['broad','World & total-market ETFs'],['bonds','Bond ETFs'],['commodities','Commodities & the dollar'],['volatility','Volatility indices']];
 const MV_CORE=['IDX-GSPC','SPY','QQQ','IDX-NDX','DIA','IDX-DJI','IWM','IDX-RUT','RSP','MDY','IDX-IXIC'];
@@ -20,6 +20,32 @@ function mvData(){
  m.loading=fetch('data/research/paths/moves/index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message;if(typeof render==='function')render()});
  return m;
+}
+// highs, lows & ranges (app/highs.py, app/regimes.py): every asset in the regime now, the research by state, the analogues
+const MV_REGIMES=[['highs','At the highs (all-time)'],['atl','At an all-time low'],['52w','At a 52-week low'],['3m','At a 3-month low'],['narrow','In a narrow range'],['wide','In a wide range']];
+const mvRegFile=r=>['atl','52w','3m'].includes(r)?'lows':['narrow','wide'].includes(r)?'ranges':'highs';
+function mvHighsData(file='highs'){
+ const m=mvStore[file]||(mvStore[file]={});
+ if(m.data||m.err||m.loading||typeof fetch!=='function')return m;
+ m.loading=fetch(`data/research/paths/moves/${file}.json`,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+  .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message;if(typeof render==='function')render()});
+ return m;
+}
+function mvHighs(){
+ if(!window.HighsView)return empty('The highs view did not load.');
+ const reg=MV_REGIMES.some(x=>x[0]===state.mvhr)?state.mvhr:'highs',file=mvRegFile(reg),m=mvHighsData(file);
+ if(m.err)return empty(`This research is not published yet (${m.err}). It is built with the move odds after every US close (app/${file==='highs'?'highs':'regimes'}.py).`);
+ if(!m.data)return empty('Loading the research…');
+ const groups=file==='highs'?m.data.groups||{}:((m.data.regimes||{})[reg]||{}).groups||{};
+ const now=file==='highs'?m.data.now||[]:(m.data.now||{})[reg]||[],grp=state.mvhg&&groups[state.mvhg]?state.mvhg:Object.keys(groups)[0];
+ const mine=now.filter(r=>r.group===grp);
+ const pref=file==='highs'?['AAPL','SPY']:file==='lows'?['NKE','INTC']:['SPY'];
+ const pick=state.mvk&&mine.some(r=>r.key===state.mvk)?state.mvk:(pref.map(k=>mine.find(r=>r.key===k)).find(Boolean)||mine[0]||{}).key||'';
+ const o={state:Object.assign({},state,{mvhg:grp}),pick,field:(id,lab,items,v)=>field(id,lab,items,v)};
+ window.HighsView.css();
+ const h=file==='highs'?window.HighsView.hub(m.data,o):file==='lows'?window.HighsView.lowsHub(m.data,reg,o):window.HighsView.rangesHub(m.data,reg,o);
+ exported=o.exported||[];
+ return h;
 }
 // a past day (data/research/paths/moves/days/<date>.json, app/moves.py write_days): every asset's move that day, its rank
 // among its own days up to then, and what actually came next; names and kinds from index.json
@@ -158,10 +184,12 @@ function movesView(){
  let out=head('Move odds','How rare the latest move is in each asset\'s own history — the market, US and world indices, ETFs of every kind, sectors and industries, every valued company — and what followed moves like it over the next day, week, month and quarter; the stretches of its history most like the last months, what to expect after them, and a simulation of the months ahead.','PERCENTILES · WHAT CAME NEXT');
  const dl=mvDays(),dlist=((dl.data||{}).days||[]).slice().reverse();
  out+=`<div class="toolbar">${field('mvv','View',MV_VIEWS,state.mvv)}`;
- if(dlist.length)out+=field('mvd','Day',[['','Latest close'],...dlist.map(x=>[x,mvDay(x)])],state.mvd||'');
+ if(dlist.length&&state.mvv!=='highs')out+=field('mvd','Day',[['','Latest close'],...dlist.map(x=>[x,mvDay(x)])],state.mvd||'');
  if(state.mvv==='stocks')out+=field('mvs','Show',MV_SORTS,state.mvs||'falls',true);
+ if(state.mvv==='highs')out+=field('mvhr','Regime',MV_REGIMES,MV_REGIMES.some(x=>x[0]===state.mvhr)?state.mvhr:'highs');
  if(state.mvv==='one')out+=`<div class="field wide"><label for="mvt">Ticker</label><input id="mvt" value="${esc(state.mvt||'')}" placeholder="e.g. NVDA, SPY, XLK · Enter"></div>`;
  out+='</div>';
+ if(state.mvv==='highs')return out+mvHighs();
  if(state.mvv==='one'){const t=String(state.mvt||'').trim().toUpperCase().replace(/[./]/g,'-');return out+(t?mvAnalysis(t):empty('Type a ticker: a valued company, an ETF (SPY, XLK, EWJ, TLT …) or an index (IDX-GSPC, IDX-N225 …).'))}
  const g=mvData();
  if(g.err)return out+empty(`The move odds could not load (${g.err}). They are rebuilt after every US close by .github/workflows/research-paths.yml (app/moves.py).`);
@@ -184,6 +212,11 @@ function bindMoves(){
  if($('mvv'))$('mvv').onchange=e=>{state.mvv=e.target.value;state.page=0;render()};
  if($('mvs'))$('mvs').onchange=e=>{state.mvs=e.target.value;state.page=0;render()};
  if($('mvd'))$('mvd').onchange=e=>{state.mvd=e.target.value;state.page=0;render()};
+ for(const k of ['mvhg','mvhs','mvhr'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;if(k!=='mvhs')state.mvk='';render()};
+ document.querySelectorAll('#workspace [data-hvk]').forEach(b=>b.onclick=()=>{state.mvk=b.dataset.hvk;render();const el=$('hv-one');if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'})});
+ const hv=$('hv-one');
+ const hid=hv?hv.dataset.k+'@'+(hv.dataset.r||'highs'):'';
+ if(hv&&window.HighsView&&hv.dataset.k&&hv.dataset.drawn!==hid){hv.dataset.drawn=hid;window.HighsView.render(hv,{key:hv.dataset.k,hub:'',title:false,regime:hv.dataset.r||'highs'})}
  if($('mvt')){$('mvt').onchange=e=>{state.mvt=e.target.value;render()};$('mvt').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-mvk]').forEach(b=>b.onclick=()=>{
   if(b.dataset.mvone){state.mvv='one';state.mvt=b.dataset.mvk}else state.mvk=b.dataset.mvk;
@@ -197,6 +230,9 @@ function movesDeepLink(arg){
  let v=decodeURIComponent(arg||'').trim();if(!v)return;
  const dm=/(?:^|\/)(\d{4}-\d{2}-\d{2})$/.exec(v);
  if(dm){state.mvd=dm[1];v=v.slice(0,dm.index).replace(/\/$/,'');if(!v)return}
+ const rm=/^(highs|lows|ranges|atl|52w|3m|narrow|wide)\/(.+)$/i.exec(v);
+ if(rm){const r=rm[1].toLowerCase();state.mvv='highs';state.mvhr=r==='lows'?'52w':r==='ranges'?'narrow':r;state.mvk=rm[2].toUpperCase().replace(/[./]/g,'-');return}
+ if(/^(lows|ranges)$/i.test(v)){state.mvv='highs';state.mvhr=v.toLowerCase()==='lows'?'52w':'narrow';return}
  if(MV_VIEWS.some(x=>x[0]===v)){state.mvv=v;return}
  const k=v.toUpperCase().replace(/[./]/g,'-');
  if(/^SIC-\d+$/.test(k)){state.mvv='industries';state.mvk=k;return}
@@ -215,4 +251,4 @@ window.movesDeepLink=movesDeepLink;
 window.HUB_NOTICES=Object.assign(window.HUB_NOTICES||{},{moves:movesNotice});
 window.HUB_VIEWS=Object.assign(window.HUB_VIEWS||{},{moves:movesView});
 window.HUB_BINDS=Object.assign(window.HUB_BINDS||{},{moves:bindMoves});
-if(typeof module!=='undefined')module.exports={mvMarket,mvAll,mvIndustries,mvStocks,mvRows,mvRank,movesDeepLink,mvPast};
+if(typeof module!=='undefined')module.exports={mvMarket,mvAll,mvIndustries,mvStocks,mvRows,mvRank,movesDeepLink,mvPast,mvHighs};
