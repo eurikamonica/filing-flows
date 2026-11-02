@@ -275,6 +275,23 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   checks+=20;
   console.log('RRG lab checks passed.');
  }
+ // Move odds → At the highs (highs-view.js inside the hub tab): the deep link, the list, the CSV rows
+ {
+  const run=c=>vm.runInContext(c,context);
+  run(`movesDeepLink('highs/aapl')`);
+  assert.equal(run(`state.mvv+'|'+state.mvk`),'highs|AAPL');
+  const st={date:'2026-10-30',close:344.63,ath_date:'2026-10-29',ath:348.9,dd:-0.0122,high:true,age:25,highs63:7,ext200:0.16,ext_pct:66,mom:0.23,mom_pct:50,vol:0.14,vol_pct:3,pe:39.6,pe_pct:98.7,volu:0.86,run_start:'2026-09-25',run_gain:0.01,run_highs:7};
+  const D={groups:{companies:{label:'Companies',from:'1962-01-02',base:{days:10,runs:2,assets:2,t5:{median:15,p:{63:0.8}},t10:{median:54,p:{63:0.55,252:0.93}},run_left:{median:33},pullback:{p50:-0.17,p25:-0.29}},buckets:{}}},
+   now:[{key:'AAPL',name:'Apple Inc.',kind:'stock',group:'companies',state:st,analogues:{t10:{median:86,p:{63:0.4,252:0.92}},run_left:{median:57},pullback:{p50:-0.168}}}],note:'n'};
+  run(`mvStore.highs={data:${JSON.stringify(D)}};state.tab='moves';state.mvd=''`);
+  const html=run(`movesView()`);
+  assert.ok(html.includes('At their highs now')&&html.includes('data-hvk="AAPL"')&&html.includes('id="hv-one" data-k="AAPL"'),'the highs view in the Move odds tab');
+  assert.ok(!/NaN|undefined/.test(html),'the highs view shows NaN/undefined');
+  assert.equal(run(`exported.length`),1);
+  run(`state.mvv='market';state.mvk='';delete mvStore.highs`);
+  checks+=4;
+  console.log('Highs view in the hub checks passed.');
+ }
  // the price paths an option chain implies (options.js optFan / optPathsPanel): exact at every expiry, no NaN
  {
   const probs=[.025,.05,.1,.25,.5,.75,.9,.95,.975],ln=(t,iv,p)=>100*Math.exp(-0.5*iv*iv*t+iv*Math.sqrt(t)*vm.runInContext(`optInvN(${p})`,context));

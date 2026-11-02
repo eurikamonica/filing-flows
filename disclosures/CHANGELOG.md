@@ -1,5 +1,24 @@
 # Changelog
 
+## At the highs: how long runs of all-time highs last, how deep the pullback that ends them
+
+app/highs.py (built with the move odds after every US close; public/moves/highs.json and each asset's file → highs)
+counts every day an asset ran at its highs (within 5% of its all-time high with a new high in the last 21 trading days)
+since its data begins — about 1.04 million company days, 84,000 ETF days and 54,000 index days (the S&P 500 index since
+1928) — with the state it was in and what followed. The state: the run's age (since its first ATH after a 10%
+drawdown), new highs in the last 63 days, the distance from the high, how far above its 200-day average, 12-1 month
+momentum (against its own history and against every company that day), 21-day volatility, the trailing P/E (price ÷
+the last four first-filed quarterly diluted EPS from the main site's SEC store, restated across splits the store missed;
+raw closes for the price where the bars have them) and volume (3 months vs 12); each but the counts as a percentile of
+the asset's own history up to that day. What followed: the trading days to the first 5%, 10% and 20% pullback from the
+high (Kaplan–Meier, so still-waiting days count), the rest of the run (to its last high before a 10% pullback), the new
+highs and gain still to come, the depth of the pullback that ended the run and the days back to the peak, the
+drawdowns and returns over 3 and 12 months. Tables by every state variable for companies, ETFs and indices; for every
+asset at its highs now, the 250 most similar high days of its kind (at most one per asset and 21 days, none of its own
+from the last year) and its own past runs. The hub's Move odds tab gets "At the highs" (the list, sortable, with a CSV,
+one asset in detail with survival curves, and the research tables; #moves/highs/AAPL) and company pages a tab "At the
+highs" (views.json → highs-view.js). The research-paths workflow reads the EPS store (branch data, eps-gaap/) for it.
+
 ## RRG lab: daily RRG, prices, forecast paths with dates and prices, quadrant-crossing research
 
 The hub's RRG (Rotation → RRG) gets a daily frequency beside weekly and monthly: every trading day, from the move-odds
