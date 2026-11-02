@@ -12,6 +12,10 @@
      earnings    the latest quarter from the filings (data/c/<cik>.json): revenue, operating and net income, year on year
      credit      the distress blend, Altman Z, distance to default, the bond-calibrated spread
      analysts    the analysts' targets and the Polymarket implied price
+   More (web/flo-insights.js): how it makes money, free cash flow, who owns it (13F), insider and Congress trades, its
+   8-Ks, the next earnings, customers and suppliers, short interest, how rare the latest move is, the guidance record,
+   investment gains; market questions ("Who reports this week?", "Biggest insider buying"); "what about AMD?" follow-ups,
+   misspelt names, and next questions under every answer.
    With the owner's local model connected (local-model.js), "Explain with the local model" sends the question and these
    facts — and only these — to it. Every answer links to the page it came from. Not investment advice.
    window.FFMascot: open(), ask(question) → Promise<answer>; exported for tests: classify, findCompany, lang. */
@@ -31,6 +35,7 @@
   const academy = () => root.FFFloAcademy || (typeof module !== 'undefined' ? require('./flo-academy.js') : null);
   const workbooks = () => root.FFFloWorkbook || (typeof module !== 'undefined' ? require('./flo-workbook.js') : null);
   const realWorkbooks = () => root.FFFloRealWorkbook || (typeof module !== 'undefined' ? require('./flo-real-workbook.js') : null);
+  const insights = () => root.FFFloInsights || (typeof module !== 'undefined' && typeof require === 'function' ? require('./flo-insights.js') : null);
   const features = () => root.FFFloFeatures || (typeof module !== 'undefined' && typeof require === 'function' ? require('./flo-features.js') : null);
   const memo = new Map();
   const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
@@ -46,7 +51,7 @@
     // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
     ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\d+% range|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
-    ['opportunity', /\bopportunit|\bup or down\b|\bhigher or lower\b|\brise or fall\b|\bodds\b|\bshort(ing)?\b(?![- ](interest|squeeze|term|sellers?|ratio))|win rate|chances? (of |that )?(a |the )?([a-z$.-]+ )?(rises?|go(es)? up|falls?|go(es)? down|(is|be|ends?) (higher|lower|up|down)|profits?|makes? money)|(probability|chance) of (a )?(profit|gain|rise|fall)|机遇|机会|胜率|做空|涨还是跌|会涨吗|会跌吗|涨的概率|跌的概率|上涨概率|下跌概率|盈利概率|赚钱的概率|买还是卖/i],
+    ['opportunity', /\bwill\b.{1,25}\b(go up|go down|rise|fall|drop|climb|gain|be higher|be lower)\b|\bopportunit|\bup or down\b|\bhigher or lower\b|\brise or fall\b|\bodds\b|\bshort(ing)?\b(?![- ](interest|squeeze|term|sellers?|ratio))|win rate|chances? (of |that )?(a |the )?([a-z$.-]+ )?(rises?|go(es)? up|falls?|go(es)? down|(is|be|ends?) (higher|lower|up|down)|profits?|makes? money)|(probability|chance) of (a )?(profit|gain|rise|fall)|机遇|机会|胜率|做空|涨还是跌|会涨吗|会跌吗|涨的概率|跌的概率|上涨概率|下跌概率|盈利概率|赚钱的概率|买还是卖/i],
     ['rotation', /\brrg\b|rotation|rotating|momentum|quadrant|leading|lagging|weakening|improving|relative strength|rs-?ratio|outperform|underperform|beating the market|markov|next week|轮动|象限|动量|领先|落后|转弱|改善|相对强弱|跑赢|跑输|强于大盘|弱于大盘|马尔科夫|轮出|轮入|下周/i],
     ['credit', /\bdebt\b|credit|default|bankrupt|distress|altman|solven|leverage|balance sheet|债务|违约|信用|破产|偿债|杠杆|利差|还得起债|财务困境|负债/i],
     ['analysts', /analyst|price target|target price|consensus|polymarket|kalshi|wall street|prediction markets?|\btargets?\b|\bstreet\b|\brating\b|分析师|目标价|一致预期|预测市场|华尔街|评级/i],
@@ -59,7 +64,8 @@
     for (const [k, rx] of INTENTS) if (rx.test(String(q || ''))) out.push(k);
     if (out.includes('industry') && out.includes('rotation')) out.splice(out.indexOf('rotation'), 1);   // "how is its industry rotating"
     if (out.includes('rotation') && !out.includes('opportunity') && /next week|下周|下星期/i.test(String(q || ''))) out.push('opportunity');   // "next week?": the odds too
-    return out;
+    const IN = insights();                                               // owners, insiders, segments, next earnings … (flo-insights.js)
+    return IN ? IN.merge(out, IN.classify(q)) : out;
   }
   const ZH_NAMES = { '苹果': 'AAPL', '英伟达': 'NVDA', '微软': 'MSFT', '谷歌': 'GOOGL', '亚马逊': 'AMZN', '特斯拉': 'TSLA', '脸书': 'META', '伯克希尔': 'BRK-B',
     '台积电': 'TSM', '奈飞': 'NFLX', '网飞': 'NFLX', '英特尔': 'INTC', '超威': 'AMD', '博通': 'AVGO', '甲骨文': 'ORCL', '摩根大通': 'JPM', '高盛': 'GS', '沃尔玛': 'WMT',
@@ -69,11 +75,21 @@
   const STOP = new Set(['I', 'A', 'AN', 'THE', 'IS', 'IT', 'ON', 'OR', 'AND', 'TO', 'IN', 'OF', 'FOR', 'BE', 'DO', 'ME', 'MY', 'SO', 'UP', 'US', 'AT', 'BY', 'AS', 'IF',
     'NO', 'GO', 'ALL', 'ARE', 'CAN', 'HOW', 'WHAT', 'WHY', 'NOW', 'NEW', 'ONE', 'OUT', 'ANY', 'RRG', 'EPS', 'DCF', 'IV', 'PE', 'EV', 'CEO', 'CFO', 'ETF', 'Q', 'YOY',
     'SPY', 'VS', 'OK', 'WILL', 'NEXT', 'WEEK', 'MAX', 'PAIN', 'BUY', 'SELL', 'HI', 'HEY', 'GET', 'HAS', 'HAD', 'ITS', 'WAS']);
+  // everyday words that are also a company's first word or a ticker ("today" → USA Today, "free" → Free Flow, "most", "deals")
+  const WORDS = new Set(('who what when where which why how does did will would could should about after again lately latest recent today tonight week weeks month year '
+    + 'most more much many some any every biggest largest top best worst high low new news deal deals stake stakes move moves movers unusual rare report reports reporting earnings '
+    + 'guidance raise raised lower lowered insider insiders fund funds buy buys bought sell sells sold trade trades trading short shorts shorted squeeze free flow cash money '
+    + 'make makes made price prices stock stocks share shares market markets sector sectors industry value worth cheap rate rates debt credit option options call calls '
+    + 'filing filings material materials event events congress senate official officials activist stake holders holder owner owners own owns customer customers supplier suppliers '
+    + 'segment segments revenue sales profit margin growth record track meet meets beat beats miss next last first this that these those their there here with from into over '
+    + 'under same also just only still very really good great bad big small open close closed live real true data compare versus life care health energy power gold silver '
+    + 'water bank banks home land city star sun sky blue green red black white best leading lagging improving weakening reading since sectors companies '
+    + 'company stocks largest smallest anything everything something someone buying selling').split(' '));
   function findCompany(q, ix) {
     const list = (ix && ix.companies) || [];
     if (!list.length) return null;
     const byT = new Map(list.map((c) => [String(c.ticker || '').toUpperCase(), c]));
-    const s = String(q || '');
+    const s = String(q || '').replace(/\b(?:P\/[EBS]|EV\/(?:EBITDA|S(?:ales)?)|S&P(?: 500)?|Q&A)\b/gi, ' ');   // "P/E" is not the ticker P
     const cash = s.match(/\$([A-Za-z][A-Za-z.\-]{0,6})/);
     if (cash && byT.has(cash[1].toUpperCase())) return byT.get(cash[1].toUpperCase());
     for (const [zh, t] of Object.entries(ZH_NAMES)) if (s.includes(zh) && byT.has(t)) return byT.get(t);
@@ -81,19 +97,21 @@
     // a company's name: its first word (four letters or more) in the question, largest revenue first
     const lw = new Set(s.toLowerCase().match(/[a-z]{4,}/g) || []);
     const generic = ['corp', 'group', 'holdings', 'company', 'global', 'international', 'american', 'first', 'united', 'general', 'national'];
-    const hits = list.filter((c) => { const f = String(c.name || '').toLowerCase().match(/[a-z]{4,}/); return f && lw.has(f[0]) && !generic.includes(f[0]); });
+    const hits = list.filter((c) => { const f = String(c.name || '').toLowerCase().match(/[a-z]{4,}/); return f && lw.has(f[0]) && !generic.includes(f[0]) && !WORDS.has(f[0]); });
     hits.sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
     if (hits[0]) return hits[0];
-    for (const w of s.match(/\b[a-z][a-z.\-]{1,5}\b/g) || []) { const u = w.toUpperCase(); if (!STOP.has(u) && byT.has(u)) return byT.get(u); }   // "nvda"
+    for (const w of s.match(/\b[a-z][a-z.\-]{1,5}\b/g) || []) { const u = w.toUpperCase(); if (!STOP.has(u) && !WORDS.has(w) && byT.has(u)) return byT.get(u); }   // "nvda"
     return null;
   }
   const pageCik = () => { const m = /^#c-(\d+)/.exec((root.location && root.location.hash) || ''); return m ? +m[1] : null; };
 
   /* ---------- the page it is on: default questions and the greeting follow it ---------- */
   // company page tab → the topic it is about (#c-<cik>-x-options, #c-<cik>-debt …); the plain company page is its earnings
-  const TAB_TOPIC = { 'x-fairvalue': 'valuation', value: 'valuation', 'x-rotation': 'rotation', 'x-options': 'options', debt: 'credit', consensus: 'analysts', revisions: 'analysts', 'x-opportunity': 'opportunity' };
+  const TAB_TOPIC = { 'x-fairvalue': 'valuation', value: 'valuation', 'x-rotation': 'rotation', 'x-options': 'options', debt: 'credit', consensus: 'analysts', revisions: 'analysts', 'x-opportunity': 'opportunity',
+    eps: 'nextEarnings', holders: 'owners', 'x-insiders': 'insiders', 'x-events': 'events', cash: 'cashflow', capital: 'cashflow', dollar: 'cashflow', links: 'ties', 'x-moves': 'moves', 'x-investments': 'investments', 'x-filings': 'filings' };
   // disclosures-hub tab → topic
-  const HUB_TOPIC = { filings: 'filings', valuation: 'valuation', rotation: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'earnings', quality: 'earnings', filings: 'earnings', opportunity: 'opportunity' };
+  const HUB_TOPIC = { valuation: 'valuation', rotation: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'nextEarnings', quality: 'earnings', filings: 'earnings', opportunity: 'opportunity',
+    insiders: 'insiders', trades: 'congress', congress: 'congress', holders: 'owners', smart: 'owners', events: 'events', shorts: 'shorts', moves: 'moves', guidance: 'guidanceRecord', investors: 'investments', notes: 'ties' };
   const TOPICS = ['filings', 'valuation', 'rotation', 'options', 'earnings', 'industry', 'credit', 'analysts', 'opportunity'];
   const byRevenue = (list, f) => list.filter(f).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 3);
   // → {kind: company|industry|group|hub|home, co?, cos?, topic?, label?, ind?, key}; `loc` is window.location (or a stand-in in tests)
@@ -135,6 +153,21 @@
     credit: [(t) => `${t} debt and default risk`, (t) => `${t} 的债务和违约风险`, (t) => `${t} Altman Z and credit spread`, (t) => `${t} 的信用利差和 Altman Z`],
     analysts: [(t) => `${t} analyst price target`, (t) => `${t} 分析师目标价`, (t) => `${t} Polymarket implied price`, (t) => `${t} 预测市场隐含价格`],
     opportunity: [(t) => `Will ${t} go up or down next month?`, (t) => `${t} 下个月会涨吗？`, (t) => `Odds a buy of ${t} makes money`, (t) => `${t} 买入盈利概率`],
+    brief: [(t) => `Brief me on ${t}`, (t) => `${t} 速览`, (t) => `${t} key numbers`, (t) => `${t} 要点`],
+    trend: [(t) => `${t} revenue trend`, (t) => `${t} 营收趋势`, (t) => `${t} net income history`, (t) => `${t} 净利润历史`],
+    why: [(t) => `Why did ${t}'s revenue change?`, (t) => `${t} 营收为什么变化？`, (t) => `What drove ${t}'s margin?`, (t) => `为什么 ${t} 利润率变化？`],
+    segments: [(t) => `How does ${t} make money?`, (t) => `${t} 怎么赚钱？`, (t) => `${t} revenue by segment`, (t) => `${t} 收入构成`],
+    nextEarnings: [(t) => `When does ${t} report next?`, (t) => `${t} 下次财报什么时候？`, (t) => `Will ${t} beat the EPS estimate?`, (t) => `${t} 这次会超预期吗？`],
+    owners: [(t) => `Who owns ${t}?`, (t) => `谁持有 ${t}？`, (t) => `Are funds buying ${t}? (13F)`, (t) => `机构在增持 ${t} 吗？`],
+    insiders: [(t) => `Are ${t} insiders buying?`, (t) => `${t} 内部人在买还是卖？`, (t) => `${t} CEO and CFO trades`, (t) => `${t} 高管增持减持`],
+    congress: [(t) => `Congress trades in ${t}`, (t) => `国会议员交易 ${t}`, (t) => `Which politicians bought ${t}?`, (t) => `哪些议员买了 ${t}？`],
+    events: [(t) => `${t} latest 8-K`, (t) => `${t} 最新 8-K 公告`, (t) => `${t} recent deals and announcements`, (t) => `${t} 最近的重大事件`],
+    cashflow: [(t) => `${t} free cash flow`, (t) => `${t} 自由现金流`, (t) => `Where does ${t}'s cash go?`, (t) => `${t} 的现金花在哪里？`],
+    ties: [(t) => `${t} customers and suppliers`, (t) => `${t} 的客户和供应商`, (t) => `Who are ${t}'s biggest customers?`, (t) => `${t} 最大的客户是谁？`],
+    shorts: [(t) => `${t} short interest`, (t) => `${t} 空头仓位`, (t) => `${t} days to cover`, (t) => `${t} 空头回补天数`],
+    moves: [(t) => `How rare is ${t}'s latest move?`, (t) => `${t} 最近的涨跌有多罕见？`, (t) => `${t} today's move odds`, (t) => `${t} 今天的异动`],
+    guidanceRecord: [(t) => `Does ${t} meet its guidance?`, (t) => `${t} 指引兑现率`, (t) => `${t} guidance track record`, (t) => `${t} 业绩指引可信吗？`],
+    investments: [(t) => `${t} investment gains`, (t) => `${t} 投资收益`, (t) => `What did ${t} invest in?`, (t) => `${t} 投资了哪些公司？`],
   };
   // the bank (web/flo-questions.js) when it is loaded; the two built-in questions per topic otherwise
   function pool(topic, zh) {
@@ -153,7 +186,8 @@
     const T = (i) => (cos[i] && cos[i].ticker) || t0;
     if (ctx.kind === 'company') {
       const first = ctx.topic || 'earnings';
-      return [q1(first, t0, zh), q1(first, t0, zh, true), ...TOPICS.filter((k) => k !== first && k !== 'credit' && k !== 'analysts').map((k) => q1(k, t0, zh))].slice(0, 6);
+      const mix = ['brief', 'nextEarnings', 'segments', 'valuation', 'owners', 'why', 'trend', 'rotation', 'cashflow', 'options', 'insiders'].filter((k) => k !== first);
+      return [q1(first, t0, zh), q1(first, t0, zh, true), ...mix.map((k, i) => q1(mix[(i + s) % mix.length], t0, zh))].slice(0, 6);
     }
     if (ctx.kind === 'industry') return [q1('industry', T(0), zh), q1('industry', T(0), zh, true), q1('rotation', T(0), zh), q1('rotation', T(1), zh), q1('valuation', T(0), zh), q1('earnings', T(2), zh)];
     if (ctx.kind === 'group') return [q1('valuation', T(0), zh), q1('earnings', T(1), zh), q1('rotation', T(2), zh), q1('industry', T(0), zh), q1('options', T(0), zh)];
@@ -163,8 +197,12 @@
     }
     return [q1('valuation', T(0), zh), q1('rotation', T(1), zh), q1('options', T(2), zh), q1('earnings', T(0), zh), q1('industry', T(1), zh)];
   }
-  const TOPIC_NAME = { en: { filings: 'SEC filings', valuation: 'fair value', rotation: 'rotation (RRG)', options: 'options', earnings: 'earnings', credit: 'debt and credit', analysts: 'analysts', opportunity: 'opportunity (the odds)' },
-    zh: { filings: 'SEC 申报', valuation: '估值', rotation: 'RRG 轮动', options: '期权', earnings: '财报', credit: '债务与信用', analysts: '分析师', opportunity: '机遇（概率）' } };
+  const TOPIC_NAME = { en: { filings: 'SEC filings', valuation: 'fair value', rotation: 'rotation (RRG)', options: 'options', earnings: 'earnings', credit: 'debt and credit', analysts: 'analysts', opportunity: 'opportunity (the odds)',
+      segments: 'revenue', nextEarnings: 'next earnings', owners: '13F holders', insiders: 'insider trades', congress: 'officials\' trades', events: '8-K events', cashflow: 'cash flow', ties: 'customers and suppliers',
+      shorts: 'short interest', moves: 'move odds', guidanceRecord: 'guidance record', investments: 'investments' },
+    zh: { filings: 'SEC 申报', valuation: '估值', rotation: 'RRG 轮动', options: '期权', earnings: '财报', credit: '债务与信用', analysts: '分析师', opportunity: '机遇（概率）',
+      segments: '收入构成', nextEarnings: '下次财报', owners: '13F 持仓', insiders: '内部人交易', congress: '官员交易', events: '8-K 事件', cashflow: '现金流', ties: '客户与供应商',
+      shorts: '空头仓位', moves: '涨跌罕见度', guidanceRecord: '指引兑现', investments: '对外投资' } };
   // one line that says Flo knows where you are; null on the home page (the full help is shown there)
   function greetFor(ctx, zh) {
     const lg = zh ? 'zh' : 'en', N = TOPIC_NAME[lg];
@@ -393,8 +431,8 @@
 
   function helpAnswer(lg, company) {
     const t = company ? company.ticker : 'NVDA';
-    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me for a step-by-step DCF tutorial, cookie jar investigation, a number explanation, or SEC case studies. I also answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
-      `你好，我是 <b>Flo</b>。我还能逐步教 DCF、调查 Cookie Jar 准备金、解释图表中的数字并讲解 SEC 真实案例。网站模型包括：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
+    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me for a step-by-step DCF tutorial, cookie jar investigation, a number explanation, or SEC case studies. I also answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Now also: <b>how it makes money</b>, <b>free cash flow</b>, <b>who owns it</b> (13F), <b>insider</b> and <b>Congress</b> trades, its latest <b>8-Ks</b>, the <b>next earnings</b> (estimates, beat rate), <b>customers and suppliers</b>, <b>short interest</b>, <b>how rare today's move</b> is, its <b>guidance record</b> — and market questions like “Who reports this week?” or “Biggest insider buying”. Ask for a <b>briefing</b> (“Brief me on NVDA”), <b>why</b> results changed, a <b>trend</b> (“NVDA revenue trend”, “AAPL Q1 FY26”), what a term means (“What is a 13F?”), or compare any of these (“NVDA vs AMD free cash flow”). Follow up with “what about AMD?”. Try “What is ${t} worth?”`,
+      `你好，我是 <b>Flo</b>。我还能逐步教 DCF、调查 Cookie Jar 准备金、解释图表中的数字并讲解 SEC 真实案例。网站模型包括：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。现在还能回答：<b>怎么赚钱</b>（收入构成）、<b>自由现金流</b>、<b>谁持有</b>（13F）、<b>内部人</b>和<b>国会议员</b>交易、最新 <b>8-K</b>、<b>下次财报</b>（预期、超预期率）、<b>客户与供应商</b>、<b>空头仓位</b>、<b>今天的涨跌有多罕见</b>、<b>指引兑现率</b>，以及「本周谁发财报」「内部人买入最多」这类全市场问题。还能做<b>速览</b>（「英伟达速览」）、解释<b>业绩为什么变化</b>、看<b>趋势</b>（「NVDA 营收趋势」「AAPL Q1 FY26」）、解释名词（「什么是 13F」），以及任意比较（「NVDA 和 AMD 自由现金流对比」）。追问「那 AMD 呢？」也可以。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
   }
   let IX = null;
   const index = () => IX || (IX = json(DATA + 'index.json'));
@@ -429,8 +467,21 @@
       }
       const named = findCompany(q, ix);
       if (FX.isCompare(q)) {
-        const cos = FX.findCompanies(q, ix, findCompany, ZH_NAMES);       // two companies named: "AMD vs NVDA", "苹果和微软对比"
+        const IN1 = insights(), finder = (s, x) => findCompany(s, x) || (IN1 ? IN1.fuzzyCompany(s, x, WORDS) : null);   // "Google vs Microsoft"
+        const cos = FX.findCompanies(q, ix, finder, ZH_NAMES);           // two companies named: "AMD vs NVDA", "苹果和微软对比"
         if (cos.length === 2) {
+          // "NVDA vs AMD free cash flow", "苹果和微软谁持有更多": the same answer for each, one under the other
+          const H0 = Object.assign({}, HANDLERS, insights() ? insightHandlers() : {});
+          const topics = cls.filter((k) => !['help', 'earnings', 'industry', 'brief', 'filings', 'calls'].includes(k) && typeof H0[k] === 'function').slice(0, 2);
+          if (topics.length) {
+            const both = await Promise.all(cos.map((c) => Promise.all(topics.map((k) => H0[k](c, lg, q).catch(() => null)))));
+            if (both.some((x) => x.some(Boolean))) {
+              const html = cos.map((c, i) => `<p><b>${esc(c.ticker)}</b></p>` + (both[i].filter(Boolean).map((x) => `<p>${x.html}</p>`).join('') || `<p>${L(lg, 'Not on file.', '暂无数据。')}</p>`)).join('<hr style="border:0;border-top:1px solid var(--line,#ddd);margin:8px 0">');
+              const parts = both.flat().filter(Boolean);
+              LAST.intents = topics;
+              return { html, facts: parts.flatMap((x) => x.facts), mood: 'talk', links: parts.flatMap((x) => x.links).slice(0, 4), company: cos[0], intents: ['compare', ...topics] };
+            }
+          }
           const r = await FX.compare(cos, lg, (c) => json(DATA + 'c/' + c.cik + '.json'));
           if (r) return { ...r, company: cos[0], intents: ['compare'] };
         }
@@ -446,17 +497,48 @@
       const a = await A.handle(q, co, lg, c => json(DATA + 'c/' + c.cik + '.json'));
       if (a) return { ...a, company: co || null };
     }
+    // web/flo-insights.js: research answers beyond the models, market questions, follow-ups and misspelt names
+    const IN = insights(), mine = IN ? IN.classify(q) : [];
+    if (IN && !findCompany(q, ix)) { const g = IN.glossary(q, lg); if (g) return g; }   // "What is free cash flow?" — a definition, not a company
+    let named = findCompany(q, ix) || null;                          // a misspelt name is looked for only once the market questions are ruled out
+    if (IN) {
+      const R = insightHandlers();
+      const onPage = !!pageCik();                                   // the company of the page, not the last one talked about
+      const mkt = mine.filter((k) => R.MK[k]);
+      const fz = named ? null : IN.fuzzyCompany(q, ix, WORDS);       // "appel short interest" is about Apple; "most shorted stocks" is not
+      if ((mkt.length || R.STAKES.test(q)) && IN.isMarket(q, named || (IN.marketWords(q) ? null : fz), onPage)) {
+        const keys = mkt.length ? mkt.slice(0, 2) : ['stakes'];
+        const parts = (await Promise.all(keys.map((k) => (k === 'stakes' ? R.MK.stakes : R.MK[k])(lg, ix, q).catch(() => null)))).filter(Boolean);
+        if (parts.length) {
+          const asked = new Set(keys);
+          const actions = IN.MARKET_ASK.filter(([k]) => !asked.has(k)).slice(0, 3).map(([, en, zh]) => ({ label: lg === 'zh' ? zh : en, question: lg === 'zh' ? zh : en }));
+          LAST.intents = keys;
+          return { html: parts.map((p) => `<p>${p.html}</p>`).join(''), facts: parts.flatMap((p) => p.facts), mood: parts[0].mood, links: parts.flatMap((p) => p.links), actions, intents: keys };
+        }
+      }
+      named = named || fz || null;
+      if (named) co = named;
+    }
     if (!co && pageCik() && ix) co = (ix.companies || []).find((c) => +c.cik === pageCik()) || null;
     if (!co) return cls.includes('help') || !q.trim() ? helpAnswer(lg, null)
       : { html: L(lg, 'Which company? Give me a ticker or a name — for example “NVDA valuation” or “Is Apple Leading next week?”', '哪家公司？请给我代码或名称，比如「NVDA 估值」或「苹果下周会进入领先吗？」'), facts: [], mood: 'think', links: [] };
-    let intents = cls.filter((k) => k !== 'help');
+    let intents = (IN ? IN.merge(cls, mine) : cls).filter((k) => k !== 'help');
+    if (!intents.length && named && IN && IN.isFollow(q) && LAST.intents.length) intents = LAST.intents.slice();   // "what about AMD?"
     if (!intents.length && cls.includes('help')) return helpAnswer(lg, co);
-    if (!intents.length) intents = ['valuation', 'rotation', 'earnings'];             // just a company: the overview
-    const parts = (await Promise.all(intents.slice(0, 3).map((k) => HANDLERS[k](co, lg).catch(() => null)))).filter(Boolean);
-    if (!parts.length) return { html: L(lg, `I don't have that for ${esc(co.ticker)} yet: its data is not published.`, `暂时没有 ${esc(co.ticker)} 的这项数据：尚未发布。`), facts: [], mood: 'worried', links: [[`${BASE}#c-${co.cik}`, co.ticker]], company: co };
+    if (!intents.length) intents = ['earnings', 'segments', 'valuation'];             // just a company: the overview
+    const H = Object.assign({}, HANDLERS, IN ? insightHandlers() : {});
+    intents = intents.filter((k) => typeof H[k] === 'function');
+    const parts = (await Promise.all(intents.slice(0, 3).map((k) => H[k](co, lg, q).catch(() => null)))).filter(Boolean);
+    LAST.intents = intents.slice(0, 3);
+    if (!parts.length) return { html: L(lg, `I don't have that for ${esc(co.ticker)} yet: its data is not published.`, `暂时没有 ${esc(co.ticker)} 的这项数据：尚未发布。`), facts: [], mood: 'worried', links: [[`${BASE}#c-${co.cik}`, co.ticker]], company: co, intents,
+      actions: IN ? IN.followUps(intents.slice(0, 3), co, lg) : [] };
     const order = ['worried', 'happy', 'talk'], mood = parts.map((p) => p.mood).sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
-    return { html: parts.map((p) => `<p>${p.html}</p>`).join(''), facts: parts.flatMap((p) => p.facts), mood, links: parts.flatMap((p) => p.links), company: co, intents };
+    const actions = IN ? IN.followUps(intents.slice(0, 3), co, lg) : [];
+    return { html: parts.map((p) => `<p>${p.html}</p>`).join(''), facts: parts.flatMap((p) => p.facts), mood, links: parts.flatMap((p) => p.links), company: co, intents, actions };
   }
+  const LAST = { intents: [] };                                     // the last question's topics, for "what about AMD?"
+  let IH = null;
+  const insightHandlers = () => IH || (IH = insights().make({ json, BASE, HUB, DATA }));
 
   /* ---------- the mascot: Spin Sankey Flo ---------- */
   // Two Fs, one upright and one turned 180°, locked together: Filing (grey stem) and Flows (mint stem), each with a
@@ -734,7 +816,13 @@
       [zh ? '财务造假案例训练' : 'Forensic Case Lab', 'WorldCom SEC case spreadsheet'],
       [zh ? 'HealthSouth 案例' : 'HealthSouth Case', 'HealthSouth SEC spreadsheet'],
       [zh ? 'Channel Stuffing' : 'Revenue Case', 'Bristol SEC case spreadsheet'],
-      [zh ? '返利练习' : 'Rebate lab', 'supplier rebate exercise']
+      [zh ? '返利练习' : 'Rebate lab', 'supplier rebate exercise'],
+      [zh ? '本周财报' : 'Earnings this week', zh ? '本周哪些公司发财报？' : 'Who reports earnings this week?'],
+      [zh ? '内部人买入' : 'Insider buying', zh ? '最近内部人买入最多的股票' : 'Biggest insider buying lately'],
+      [zh ? '国会交易' : 'Congress trades', zh ? '国会议员最近在交易什么？' : 'What is Congress trading?'],
+      [zh ? '机构买入' : 'Funds buying', zh ? '上季度机构买得最多的股票' : 'What did funds buy most last quarter?'],
+      [zh ? '今日异动' : 'Unusual moves', zh ? '今天最罕见的涨跌' : 'Most unusual moves today'],
+      [zh ? '最新并购' : 'Latest deals', zh ? '最新的并购和重大 8-K' : 'Latest deals and material 8-Ks']
     ];
     // Keep the lesson readable by default: four primary actions in one
     // horizontally scrollable row, secondary tools only on explicit expansion.

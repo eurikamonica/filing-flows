@@ -464,7 +464,7 @@ def collect(client, root, tickers, batch=2000, refresh=2500, minutes=25.0, first
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['collect', 'build', 'moves', 'long', 'movenews'])
+    ap.add_argument('cmd', choices=['collect', 'build', 'moves', 'long', 'movenews', 'moveheadlines'])
     ap.add_argument('--root', default='paths')
     ap.add_argument('--universe', default=None, help="research-valuation's public/index.json")
     ap.add_argument('--people', default=None, help="the hub's research/people folder (managers.json, m/, officials.json, o/)")
@@ -475,6 +475,8 @@ def main():
     ap.add_argument('--limit', type=int, default=0, help='build: only the first N companies (tests)')
     ap.add_argument('--subs', type=int, default=300, help='movenews: filing lists asked per run')
     ap.add_argument('--reads', type=int, default=250, help='movenews: 8-Ks read per run')
+    ap.add_argument('--queries', type=int, default=400, help='moveheadlines: days searched per run')
+    ap.add_argument('--eps', default=None, help="moves: the first-filed quarterly EPS store (data branch eps-gaap/) for the P/E at the highs")
     a = ap.parse_args()
     if a.cmd in ('collect', 'long'):
         import tempfile
@@ -491,7 +493,7 @@ def main():
             print(json.dumps(collect(client, a.root, tickers, a.batch, a.refresh, a.minutes, first=extra)))
     elif a.cmd == 'moves':
         import moves
-        print(json.dumps(moves.build(a.root, a.universe, limit=a.limit)))
+        print(json.dumps(moves.build(a.root, a.universe, limit=a.limit, eps_dir=a.eps)))
     elif a.cmd == 'movenews':
         # the company filings around each day of the move odds (app/move_news.py): EDGAR, with SEC_USER_AGENT
         import tempfile
@@ -510,6 +512,24 @@ def main():
         st = move_news.refresh(client, a.root, comps, bars_of, a.subs, a.reads, a.minutes)
         st['published'] = move_news.publish(a.root, comps, bars_of)
         print(json.dumps(st))
+    elif a.cmd == 'moveheadlines':
+        # the news headlines around each big move (app/move_headlines.py): Google News's search feed, a budget per run
+        import tempfile
+        import move_headlines
+        import moves
+        cfg = read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {})
+        http = cfg.get('http', {})
+        client = Client(tempfile.mkdtemp(prefix='paths-heads-'), {**http, 'extra_hosts': list(http.get('extra_hosts', [])) + [move_headlines.HOST],
+                                                                 'host_intervals': {**http.get('host_intervals', {}), move_headlines.HOST: 1.5}, 'retries': 2})
+        comps = [{'t': c['t'], 'name': c.get('name')} for c in universe(a.universe)[: a.limit or None]]
+        memo = {}
+
+        def bars_of(t):
+            if t not in memo:
+                b = load(a.root, t)
+                memo[t] = moves.series(b) if b else None
+            return memo[t]
+        print(json.dumps(move_headlines.refresh(client, a.root, comps, bars_of, a.queries, a.minutes)))
     else:
         import paths_build
         print(json.dumps(paths_build.build(a.root, a.universe, a.people, limit=a.limit)))

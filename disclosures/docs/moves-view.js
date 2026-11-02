@@ -363,7 +363,7 @@
 .mv-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted,#777);margin:4px 0 8px}.mv-legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 .mv-g{stroke:var(--line,#e3e3e3);stroke-width:1}.mv-t{fill:var(--muted,#777);font-size:12px}.mv-l{fill:var(--ink,#222);font-size:12.5px;paint-order:stroke;stroke:var(--surface,#fff);stroke-width:3px}
 .mv-note{font-size:12px;color:var(--muted,#777);line-height:1.55;margin-top:10px;max-width:92ch}.mv-apx{border:1px solid var(--line,#ddd);border-radius:10px;padding:6px 12px;margin:10px 0;max-width:980px}
-.mv-apx summary{cursor:pointer;font-size:13.5px}.mv-apx p{font-size:13px;line-height:1.55;margin:6px 0;max-width:92ch}.mv-err{color:var(--mk-cost,#c0392b);font-size:13px}.mv-range{width:200px;accent-color:var(--ink,#222);vertical-align:middle}.mv-cases{max-height:620px;overflow:auto;border:1px solid var(--line,#e5e5e5);border-radius:10px}.mv-cases .mv-tbl{margin:0}.mv-cases th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}.mv-cases td.news{white-space:normal;min-width:260px;max-width:520px;font-size:12.5px;line-height:1.45}.mv-news{margin:0 0 6px}.mv-news:last-child{margin:0}.mv-chip{display:inline-block;font-size:11px;border:1px solid var(--line,#ddd);border-radius:999px;padding:0 7px;margin:0 4px 2px 0;color:var(--muted,#666)}.mv-chip.hot{border-color:var(--q-warm,#d9822b);color:var(--q-warm,#b5651d)}.mv-news a{color:inherit}.mv-news .q{color:var(--muted,#777);display:block}.mv-cases tr.now td{background:color-mix(in srgb,var(--q-warm,#d9822b) 10%,transparent)}
+.mv-apx summary{cursor:pointer;font-size:13.5px}.mv-apx p{font-size:13px;line-height:1.55;margin:6px 0;max-width:92ch}.mv-err{color:var(--mk-cost,#c0392b);font-size:13px}.mv-range{width:200px;accent-color:var(--ink,#222);vertical-align:middle}.mv-cases{max-height:620px;overflow:auto;border:1px solid var(--line,#e5e5e5);border-radius:10px}.mv-cases .mv-tbl{margin:0}.mv-cases th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}.mv-cases td.news{white-space:normal;min-width:260px;max-width:520px;font-size:12.5px;line-height:1.45}.mv-news{margin:0 0 6px}.mv-news:last-child{margin:0}.mv-chip{display:inline-block;font-size:11px;border:1px solid var(--line,#ddd);border-radius:999px;padding:0 7px;margin:0 4px 2px 0;color:var(--muted,#666)}.mv-chip.hot{border-color:var(--q-warm,#d9822b);color:var(--q-warm,#b5651d)}.mv-chip.news{border-color:var(--rot-1,#2a78d6);color:var(--rot-1,#2a78d6)}.mv-news a{color:inherit}.mv-news .q{color:var(--muted,#777);display:block}.mv-cases tr.now td{background:color-mix(in srgb,var(--q-warm,#d9822b) 10%,transparent)}
 .mv-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}@media (max-width:860px){.mv-two{grid-template-columns:minmax(0,1fr)}}
 .mv-png{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:4px 0 12px;padding:8px 10px;border:1px dashed var(--line,#ccc);border-radius:10px;font-size:13px}
 .mv-png-l{font-weight:600}.mv-png label{display:inline-flex;gap:4px;align-items:center;cursor:pointer}.mv-png-out img{display:block;max-width:min(100%,900px);height:auto;border:1px solid var(--line,#ddd);border-radius:10px;margin:6px 0}
@@ -699,20 +699,37 @@
     : /^424B|^S-|^F-[134]/.test(f) ? 'offering prospectus (' + f + ')' : /13D/.test(f) ? 'a 5%+ stake (Schedule 13D)' : /^SC TO/.test(f) ? 'tender offer'
       : /14D9/.test(f) ? 'response to a tender offer' : /M14A/.test(f) ? 'merger proxy' : /^25-NSE/.test(f) ? 'a listed security removed (Form 25)' : /^15-12B/.test(f) ? 'registration ended (Form 15)' : /^NT 10/.test(f) ? 'late filing notice' : /^6-K/.test(f) ? 'foreign issuer report (6-K)' : f);
   const HOT = new Set(['2.02', '1.05', '2.05', '2.06', '4.02', '3.01', '1.03', '5.01']);
+  // the filings and the headlines (app/move_headlines.py: [trading day, date, 'HH:MM' ET or '', source, title, link]) by
+  // the trading day they could move: their own day before the close, else the next trading day
   function newsIndex(news, days) {
     const by = new Map();
-    if (!news || !news.events) return by;
-    for (const e of news.events) {
+    if (!news) return by;
+    const put = (e, head) => {
       const [d, hm] = e;
       let k = lower(days, d);
       if (k < days.length && days[k] === d && hm && hm >= '16:00') k++;
-      if (k >= days.length) continue;
-      if (!by.has(k)) by.set(k, []);
-      by.get(k).push(e);
+      if (k >= days.length) return;
+      if (!by.has(k)) by.set(k, { f: [], h: [] });
+      by.get(k)[head ? 'h' : 'f'].push(e);
+    };
+    for (const e of news.events || []) put(e, false);
+    const head = (k, e) => { if (k >= days.length) return; if (!by.has(k)) by.set(k, { f: [], h: [] }); by.get(k).h.push(e); };
+    for (const e of news.headlines || []) {
+      const k = lower(days, e[0]);
+      if (k >= days.length || days[k] !== e[0]) continue;
+      head(k, e.slice(1));
+      if (!e[2]) head(k + 1, e.slice(1));          // dated only by the feed: it may have come after that close, so the next day too
     }
+    by.checked = new Set(news.checked || []);
     return by;
   }
+  function headCell(list) {
+    if (!list || !list.length) return '';
+    return list.slice(0, 5).map(([d, hm, src, title, url]) => `<p class="mv-news"><span class="mv-chip news">${esc(src || 'news')}</span><a href="${esc(url)}" target="_blank" rel="noopener nofollow">${esc(title)}</a>`
+      + ` <span class="mv-sub" style="display:inline">${esc(mdy(d) + (hm ? ' ' + hm + ' ET' : ''))}</span></p>`).join('') + (list.length > 5 ? `<span class="mv-sub">+${list.length - 5} more headlines</span>` : '');
+  }
   function newsCell(list, cik) {
+    if (list && !Array.isArray(list)) return newsCell(list.f, cik) + headCell(list.h);
     if (!list || !list.length) return '';
     return list.slice(0, 4).map(([d, hm, form, items, head, q, topics, acc, g]) => {
       const its = String(items || '').split(',').filter((x) => x && x !== '9.01');
@@ -728,14 +745,16 @@
   function casesTable(R, o, cs, news, doc) {
     const by = newsIndex(news, R.A.days), cols = PATH_MARKS;
     const rows = cs.slice().sort((a, b) => b.j - a.j);
-    const hasNews = doc.kind === 'stock';
-    let h = `<div class="mv-cases"><table class="mv-tbl"><thead><tr><th>Day</th><th class="n">Move</th><th class="n">Pct</th>${cols.map(([, l]) => `<th class="n">${esc(l)}</th>`).join('')}${hasNews ? '<th>What the company filed (that day, or after the close before it)</th>' : ''}</tr></thead><tbody>`;
+    const hasNews = doc.kind === 'stock' || !!(news && news.headlines);
+    const what = doc.kind === 'stock' ? 'What the company filed, and the headlines (that day, or after the close before it)' : 'The headlines (that day, or after the close before it)';
+    const none = (j) => { const d = R.A.days[j], seen = by.checked && by.checked.has(d); return !news ? '…' : doc.kind === 'stock' ? (seen ? 'no filing or headline that day' : 'no filing that day (headlines not searched yet)') : seen ? 'no headline found' : 'headlines not searched yet'; };
+    let h = `<div class="mv-cases"><table class="mv-tbl"><thead><tr><th>Day</th><th class="n">Move</th><th class="n">Pct</th>${cols.map(([, l]) => `<th class="n">${esc(l)}</th>`).join('')}${hasNews ? `<th>${esc(what)}</th>` : ''}</tr></thead><tbody>`;
     const nowRow = R.t >= 0 && o.mode !== 'whatif' ? { j: R.t, path: nowPath(R) || [0] } : null;
     for (const x of (nowRow ? [nowRow] : []).concat(rows)) {
       const isNow = nowRow && x === nowRow;
       h += `<tr${isNow ? ' class="now"' : ''}><td>${esc(mdy(R.A.days[x.j]))}${isNow ? ' <span class="mv-chip hot">this day</span>' : ''}</td><td class="n ${tone(R.x[x.j])}">${esc(fmtX(o, R.x[x.j]))}</td><td class="n">${num(R.p && Number.isFinite(R.p[x.j]) ? R.p[x.j] : pctOf(R.s, R.x[x.j]), 1)}</td>`
         + cols.map(([hz]) => { const v = x.path[hz]; return `<td class="n ${tone(v)}">${fin(v) ? sp(v) : '—'}</td>`; }).join('')
-        + (hasNews ? `<td class="news">${newsCell(by.get(x.j), doc.cik) || `<span class="mv-sub">${news ? 'no filing that day' : '…'}</span>`}</td>` : '') + '</tr>';
+        + (hasNews ? `<td class="news">${newsCell(by.get(x.j), doc.cik) || `<span class="mv-sub">${esc(none(x.j))}</span>`}</td>` : '') + '</tr>';
     }
     return h + '</tbody></table></div>';
   }
@@ -752,7 +771,7 @@
     }
     h += pathsSvg(R, o, cs, E);
     h += `<div class="mv-legend"><span><b style="background:none;border-top:2px dashed ${COL.up};height:0;width:14px;border-radius:0"></b><b style="background:none;border-top:2px dashed ${COL.down};height:0;width:14px;border-radius:0"></b>each case</span><span><b style="background:${COL.band}"></b>expected (average)</span><span><b style="background:none;border-top:2px dotted ${COL.ink};height:0;width:14px;border-radius:0"></b>median</span><span><b style="background:${COL.band};opacity:.25"></b>middle half</span>${R.t >= 0 && o.mode !== 'whatif' ? `<span><b style="background:${COL.warn}"></b>this day</span>` : ''}</div>`;
-    h += `<p class="mv-sub">${doc.kind === 'stock' ? 'Each case with what the company filed with the SEC that could have moved it: 8-K items (the press release\'s headline and key sentences, read for the days of its biggest moves), quarterly and annual reports, offerings and stakes. Filings are read a batch at a time, the largest companies and most extreme days first; a day may show its filing before its headline.' : 'Company filings are shown for a company: switch to “this company” above.'}</p>`;
+    h += `<p class="mv-sub">${doc.kind === 'stock' ? 'Each case with what the company filed with the SEC that could have moved it — 8-K items (the press release\'s headline and key sentences, read for the days of its biggest moves), quarterly and annual reports, offerings and stakes — and the news headlines that named it that day or the day before (Google News\'s search: the headline, its source and time, a link to read it; the automatic “fund X bought shares” notes left out). Filings and headlines are gathered a batch at a time, the largest companies and most extreme days first; a day may show its filing before its headlines.' : news && news.headlines ? 'Each case with the market\'s headlines that day or the day before (Google News\'s search: the headline, its source and time, a link), the most extreme days first.' : 'Company filings and headlines are shown for a company: switch to “this company” above.'}</p>`;
     return h + casesTable(R, o, cs, news, doc);
   }
 
@@ -1495,7 +1514,7 @@
       if (names.length > 1) h += `<div class="mv-assets" role="group" aria-label="What to look at">${names.map(([k, l, role]) => `<button type="button" class="mv-asset${k === st.key ? ' on' : ''}" data-mva="${esc(k)}"><small>${esc(role)}</small>${esc(l)}</button>`).join('')}</div>`;
       h += `<p class="mv-sub">${esc(doc.name || doc.key)} · daily closes ${esc(mdy(doc.d0))} – ${esc(mdy(doc.as_of))}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''}${doc.kind === 'index' ? (doc.group === 'world' ? ' · price only, in its own currency' : ' · price only') : ''}</p>`;
       let news = null;
-      if (doc.kind === 'stock') { try { news = await get(`${hub}data/research/paths/moves/n/${encodeURIComponent(st.key)}.json`); } catch (e) { news = null; } }
+      if (doc.kind === 'stock' || doc.key === 'SPY') { try { news = await get(`${hub}data/research/paths/moves/n/${encodeURIComponent(st.key)}.json`); } catch (e) { news = null; } }
       if (!here()) return;
       h += controls(st, doc) + body(R, st, doc, news) + '</div>';
       el.innerHTML = h;

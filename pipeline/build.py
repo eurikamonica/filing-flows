@@ -272,18 +272,38 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 2           # bump when the way D&A is read changes: stored figures are read again (refresh_da)
+DA_VERSION = 4           # bump when the way figures are read changes: stored figures are read again (refresh_da)
 # 2: D&A and share-based compensation from the cash-flow statement's tag (facts.CASH_FLOW_KEYS); total revenues
 #    (us-gaap:Revenues) before larger sub-totals, with revenue lines that add up to contract revenue marked "recon"
-REFRESH_KEYS = ("da", "dep", "amort", "sbc", "revenue", "rev_contract")
-DA_PER_RUN = 40
+# 3: a "Revenues" far below the other revenue tags is the total only when it closes the income statement
+#    (facts.closes_better: Blue Owl's narrower $0.14B line against its $0.75B of total revenues)
+# 4: every figure read again: proxy statements' facts left out (facts.statement_fact), a fourth quarter checked
+#    against the year less the three quarters before it (facts.fourth_quarter_check), a quarter context carrying
+#    the year's figure passed over, a full year's tag the one its quarters add up to (facts.consistent_year), D&A
+#    as depreciation + amortization when the combined tag holds depreciation alone
+REFRESH_FLAGS = ("rev_bank", "rev_tagged", "q4_fixed")    # what facts.extract adds beside the figures
+DA_PER_RUN = 120            # one SEC request each and a fraction of a second's reading: the budget (time_up) is the limit
 
 
-def _da_parts(fx, end, annual=False):
-    out = {k: facts.value(fx, k, end, annual) for k in REFRESH_KEYS}
-    if out["revenue"] is None:
-        out.pop("revenue")                            # never drop a stored revenue figure
+def _xbrl_parts(fx, end, annual=False, keep_capex=False):
+    """Every figure facts.extract reads for the period, to update a stored row in place: a stored revenue is never
+    dropped, and capital expenditures found in the filing's own XBRL (capex_src "instance") stay (keep_capex). The
+    flags extract adds (REFRESH_FLAGS) come along; the caller drops stale ones."""
+    new = facts.extract(fx, end, annual) or {}
+    out = {k: v for k, v in new.items() if k in facts.CONCEPTS or k in REFRESH_FLAGS}
+    if out.get("revenue") is None:
+        out.pop("revenue", None)                      # never drop a stored revenue figure
+    if keep_capex:
+        out.pop("capex", None)
     return out
+
+
+def _update_row(r, parts):
+    """Stored figures updated with _xbrl_parts: new values in, flags no longer set out."""
+    for k in REFRESH_FLAGS:
+        if k not in parts:
+            r.pop(k, None)
+    r.update(parts)
 
 
 def mark_recon(q):
@@ -302,19 +322,30 @@ def mark_recon(q):
         ls["recon"] = dict(dims.UNMATCHED)                # kept: readers choose whether to see them (Alerts)
 
 
+def reread_first(path="config/reread-first.txt"):
+    """CIKs the owner wants read again ahead of the rest (one per line; # comments): the queue of scans cancels a
+    dispatched run whenever a scheduled one lines up behind it, so a list in the repository is the sure way."""
+    try:
+        return {int(t.split("#")[0].strip()) for t in open(path) if t.split("#")[0].strip()}
+    except (FileNotFoundError, ValueError):
+        return set()
+
+
 def refresh_da(store, limit=DA_PER_RUN, only=None):
     """Figures stored before D&A was read as depreciation + amortization of intangible assets (a filing that tags the
     two apart used to give depreciation alone, labelled D&A) are read again from SEC's company facts, largest
-    companies first, a few per run. Earnings-release quarters keep their own figures; only the row's kind is noted.
-    only: these CIKs now, whatever they were read with (the owner's re-read request)."""
+    companies first (the owner's list, config/reread-first.txt, before them), a few per run. Earnings-release
+    quarters keep their own figures; only the row's kind is noted. only: these CIKs now, whatever they were read
+    with (the owner's re-read request)."""
     todo = []
+    first = reread_first() if only is None else set()
     for cik in (only if only is not None else store.ciks()):
         c = store.company(cik)
         if c.get("quarters") and c.get("profile") and (only is not None or c.get("da_v", 0) < DA_VERSION):
             last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
-            todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
+            todo.append((int(cik) not in first, -((last.get("raw") or {}).get("revenue") or 0), cik))
     n = 0
-    for _, cik in sorted(todo)[:limit]:
+    for *_, cik in sorted(todo)[:limit]:
         if only is None and time_up(CATCH_UP_SHARE, "re-reading stored figures"):
             break
         try:
@@ -323,6 +354,7 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
             for annual, items in ((False, c.get("quarters") or {}), (True, c.get("years") or {})):
                 for q in items.values():
                     release_row = q.get("form") == "8-K"
+                    own_capex = (q.get("capex_src") or {}).get("how") == "instance"
                     for rk, ek in (("raw", "end"), ("raw_q1", "q1_end"), ("raw_py", "py_end")):
                         r, end = q.get(rk), q.get(ek)
                         if not isinstance(r, dict) or not end or (annual and rk == "raw_q1"):
@@ -332,12 +364,14 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
                             if r.get("da") is not None and lab and "amortization" not in lab.lower():
                                 r["dep"] = r["da"]
                             continue
-                        r.update(_da_parts(fx, end, annual))
+                        _update_row(r, _xbrl_parts(fx, end, annual, keep_capex=own_capex))
                     if not release_row:
                         mark_recon(q)
                     if not release_row and isinstance(q.get("src"), dict):
-                        new = sources.from_xbrl(fx, q["end"], annual=annual)
-                        for k in REFRESH_KEYS:
+                        new = sources.from_xbrl(fx, q["end"], annual=annual, raw=q.get("raw"))
+                        for k in facts.CONCEPTS:
+                            if k == "capex" and own_capex:          # the filing's own line: its source stays
+                                continue
                             if k in new:
                                 q["src"][k] = new[k]
                             else:
@@ -574,7 +608,7 @@ def process_filing(store, cik, accn, form, starred=False):
     except Exception as e:
         print(f"  capex source skipped for {cik} {accn}: {e}", file=sys.stderr)
     try:                                                  # which line and tag every figure was read from
-        src = sources.from_xbrl(fx, end, dims.label_roles(lab_text) if lab_text else None)
+        src = sources.from_xbrl(fx, end, dims.label_roles(lab_text) if lab_text else None, raw=raw)
     except Exception as e:
         print(f"  sources skipped for {cik} {accn}: {e}", file=sys.stderr)
 
@@ -948,6 +982,51 @@ def queue_history(store, cik, force=False):
         return True
     except sec.NotFound:
         return False
+
+
+MISSED_AFTER_DAYS = 50       # a preliminary (8-K) quarter this old should have its 10-Q or 10-K by now (due in 40-45 days)
+MISSED_PER_RUN = 60
+
+
+def queue_missed_filings(store, limit=MISSED_PER_RUN, today=None):
+    """A quarter still drawn from its earnings release (8-K) long after the 10-Q or 10-K was due: the filing was missed
+    (a scan that did not run that day), so it is looked up in the company's filing list and queued. Each company is
+    checked once per such quarter (c["missed_at"]), a few dozen companies per run."""
+    today = today or dt.date.today()
+    st, n = store.state, 0
+    for cik in sorted(store.ciks()):
+        if n >= limit or time_up(CATCH_UP_SHARE, "missed filings"):
+            break
+        c = store.company(cik)
+        old = [q for q in (c.get("quarters") or {}).values() if q.get("form") == "8-K" and q.get("end")
+               and (today - dt.date.fromisoformat(q["end"])).days >= MISSED_AFTER_DAYS]
+        if not old:
+            continue
+        key = max(q["end"] for q in old)
+        if c.get("missed_at") == key:
+            continue
+        try:
+            rows = recent_rows(submissions(cik))
+        except Exception as e:
+            print(f"  {cik}: filing list not read: {e}", file=sys.stderr)
+            continue
+        queued = []
+        for q in old:
+            e = dt.date.fromisoformat(q["end"])
+            r = next((r for r in rows if r["form"] in ("10-Q", "10-K") and r.get("reportDate")
+                      and abs((dt.date.fromisoformat(r["reportDate"]) - e).days) <= 7), None)
+            if r and r["accessionNumber"] not in st["pending"]:
+                a = r["accessionNumber"]
+                st["seen"].pop(a, None)
+                st["pending"][a] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0, "items": None}
+                queued.append(f"{r['form']} for {q['end']}")
+        c["missed_at"] = key
+        store.put(cik, c)
+        n += 1
+        if queued:
+            print(f"  {cik}: queued {', '.join(queued)} (the chart still shows the earnings release)")
+    if n:
+        print(f"missed filings: {n} companies checked")
 
 
 def backfill_history(store, limit=BACKFILL_PER_RUN):
@@ -1847,6 +1926,7 @@ def run(args):
         with open(args.unbuildable_out, "w") as fh:
             json.dump({str(k): v for k, v in unbuildable.items()}, fh)
     backfill_history(store)
+    queue_missed_filings(store)
     refresh_periods(store)
     reread(store, getattr(args, "reread_ciks", None) or [])
     refresh_da(store)
@@ -1913,6 +1993,11 @@ def run(args):
     render(store, args.out, set(stars))
     company_list(args.out)
     price_list(args.out)
+    try:                                                         # figures that disagree with each other (audit.py)
+        from . import audit
+        audit.run(args.out)
+    except Exception as e:
+        print(f"::warning::audit not run: {e}")
 
 
 def undrawable(store, asked, known=None):
@@ -2156,6 +2241,19 @@ def calculated_revenue(q):
     return q
 
 
+LINES_SLIVER = 0.2          # revenue lines adding up to less than this share of revenue are left off the chart
+
+
+def sliver_lines(q, R):
+    """True when the stored revenue lines are a sliver of revenue: an insurer's or a REIT's fees from contracts with
+    customers beside premiums or rents that are not (Healthcare Realty: $8M of lines against $287M of revenue, the rest
+    "other revenues"). Such lines say nothing; revenue is drawn whole."""
+    ls, vals = q.get("lines_struct"), q.get("lines") or {}
+    if not ls or not ls.get("recon") or not R or not all(l["id"] in vals for l in ls["leaves"]):
+        return False
+    return sum(vals[l["id"]] for l in ls["leaves"]) < LINES_SLIVER * R
+
+
 def _quarter_payload(c, q, prev_q, draw_company=True):
     if not draw_company and _has_recon(q):
         q = calculated_revenue(q)
@@ -2165,7 +2263,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     if q["raw"].get("rev_reported") is not None:
         Nc["rev_calc"] = q["raw"]["rev_reported"]
     apply_reported(q, Nc, Ny, draw=draw_company)
-    ls = q.get("lines_struct")
+    ls = None if sliver_lines(q, Nc["R"]) else q.get("lines_struct")
     lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)
     if lines_q1 and ls and not all(l["id"] in lines_q1 for l in ls["leaves"]):
         lines_q1 = None
@@ -2238,7 +2336,7 @@ def year_payload(c, y):
     Nc, Ny = normalize(y["raw"]), normalize(y.get("raw_py"))
     if not Nc:
         return None
-    ls = None if _unmatched(y) else y.get("lines_struct")
+    ls = None if _unmatched(y) or sliver_lines(y, Nc["R"]) else y.get("lines_struct")
     try:
         nodes, links, kind = build_spec(Nc, None, Ny, ls, (y.get("lines"), None, y.get("lines_py")))
     except Exception as e:

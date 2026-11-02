@@ -76,10 +76,18 @@ def d(s):
     return dt.date.fromisoformat(s)
 
 
+def statement_fact(f):
+    """False for a fact from a proxy statement (DEF 14A and the like): its pay-versus-performance table tags the
+    year's net income too, often the consolidated figure (DaVita: $1,078.7M against the 10-K's $746.8M to
+    shareholders), and being filed after the 10-K it would replace the financial statements' figure."""
+    return "14A" not in (f.get("form") or "")
+
+
 def index_facts(companyfacts, currency="USD"):
     """concept -> {(start, end): fact} keeping the most recently filed fact per period, in the company's reporting
     currency (US dollars for nearly all; a foreign filer's own, fx.py). us-gaap and ifrs-full concepts. Balances are
-    point-in-time facts (no start): those quality.INSTANTS needs go to "__instants__" as concept -> {day: fact}."""
+    point-in-time facts (no start): those quality.INSTANTS needs go to "__instants__" as concept -> {day: fact}.
+    Facts from proxy statements are left out (statement_fact)."""
     from .history import CONCEPTS as KEEP_ALL
     from .quality import INSTANTS, SHARES
     out, names, inst, shares, vers = {}, {}, {}, {}, {}
@@ -92,6 +100,8 @@ def index_facts(companyfacts, currency="USD"):
             if concept in SHARES:
                 names.setdefault(concept, body.get("label"))
                 for f in body.get("units", {}).get("shares", []):
+                    if not statement_fact(f):
+                        continue
                     k = (f["start"], f["end"]) if "start" in f else f["end"]
                     per = shares.setdefault(concept, {})
                     if k not in per or f.get("filed", "") >= per[k].get("filed", ""):
@@ -100,6 +110,7 @@ def index_facts(companyfacts, currency="USD"):
         for concept, body in companyfacts.get("facts", {}).get(taxonomy, {}).items():
             names.setdefault(concept, body.get("label"))
             for unit, facts in body.get("units", {}).items():
+                facts = [f for f in facts if statement_fact(f)]
                 if unit == "shares" and concept in SHARES and taxonomy == "us-gaap":
                     per = shares.setdefault(concept, {})
                     for f in facts:
@@ -124,19 +135,32 @@ def index_facts(companyfacts, currency="USD"):
     return out
 
 
+def _same(a, b):
+    return abs(a - b) <= 0.001 * max(abs(a), abs(b), 1)
+
+
 def _quarter_from(per, end):
-    """Quarter value ending at `end`, directly or as YTD - prior YTD."""
+    """Quarter value ending at `end`, directly or as YTD - prior YTD. A quarter-long context that carries the figure of
+    a longer period ending the same day is a tagging slip (Tractor Supply's 10-K: fourth-quarter net income tagged
+    with the year's $1.10B; NiSource's: the year's revenue in the fourth quarter's context) and is passed over for
+    the year-to-date derivation when there is one."""
     at_end = [(s, f) for (s, e), f in per.items() if e == end]
     if not at_end:
         return None
+    s0, f0 = min(at_end, key=lambda x: x[0])           # longest year-to-date span
+    longer = (d(end) - d(s0)).days >= 170
+    derived = None
+    if longer:
+        for (s, e), f in per.items():
+            if s == s0 and e != end and 75 <= (d(end) - d(e)).days <= 105:
+                derived = f0["val"] - f["val"]
+                break
     for s, f in at_end:
         if 75 <= (d(end) - d(s)).days <= 100:
+            if longer and f is not f0 and _same(f["val"], f0["val"]) and derived is not None and not _same(derived, f["val"]):
+                continue
             return f["val"]
-    s0, f0 = min(at_end, key=lambda x: x[0])           # longest year-to-date span
-    for (s, e), f in per.items():
-        if s == s0 and e != end and 75 <= (d(end) - d(e)).days <= 105:
-            return f0["val"] - f["val"]
-    return None
+    return derived
 
 
 def _year_from(per, end):
@@ -167,56 +191,164 @@ def _candidates(facts, key, get):
     return out
 
 
-def _pick(facts, key, get):
-    """(value, concept) for a key (see MAX_KEYS, TOTAL_FIRST, CASH_FLOW_KEYS), else (None, None)."""
+def _quarter_ends_of(per, end):
+    """The three quarter ends before `end` with a figure under this tag (nearest to 91, 182 and 273 days before, within
+    three weeks), or None when one is missing."""
+    ends = {e for (s, e) in per if 60 < (d(end) - d(e)).days < 300}
+    out = []
+    for target in (91, 182, 273):
+        near = [e for e in ends if abs((d(end) - d(e)).days - target) <= 21]
+        if not near:
+            return None
+        out.append(min(near, key=lambda e: abs((d(end) - d(e)).days - target)))
+    return out
+
+
+def consistent_year(per, end):
+    """True when a tag's four quarters of the year ending at `end` add up to its full-year figure (within 3%): the
+    tag the company reports with all year. A tag that appears only in the 10-K (Nasdaq's "depreciation, depletion and
+    amortization" of $145M, a note's figure, beside the cash flow statement's $632M of depreciation and amortization,
+    reported every quarter) does not pass. None when the tag has no full-year figure."""
+    total = _year_from(per, end)
+    if total is None:
+        return None
+    ends = _quarter_ends_of(per, end)
+    if not ends:
+        return False
+    vals = [_quarter_from(per, e) for e in ends + [end]]
+    if any(v is None for v in vals):
+        return False
+    return abs(sum(vals) - total) <= 0.03 * max(abs(total), 1)
+
+
+def _pick(facts, key, get, end=None, annual=False):
+    """(value, concept) for a key (see MAX_KEYS, TOTAL_FIRST, CASH_FLOW_KEYS), else (None, None). For a full year,
+    a tag whose quarters add up to its year (consistent_year) is preferred to one that does not."""
     c = _candidates(facts, key, get)
     if not c:
         return None, None
+    if annual and end and len(c) > 1:
+        good = [x for x in c if consistent_year(facts[x[1]], end)]
+        # ... unless, for a cash-flow item, the year's own tag is many times the one reported quarterly (JLL: $112M of
+        # share-based compensation in the 10-K's cash flow statement; the quarters tag a $0.7M plan apart)
+        if good and len(good) < len(c) and not (key in CASH_FLOW_KEYS and
+                                                 max(x[0] for x in c) >= 2 * max(x[0] for x in good)):
+            c = good
     if key in TOTAL_FIRST:
         hit = next((x for x in c if x[1] == TOTAL_FIRST[key]), None)
         if hit:
-            return hit
+            return _total_or_larger(facts, get, c, hit, end, annual)
     if key in MAX_KEYS:
         return max(c, key=lambda x: x[0])
     if key in CASH_FLOW_KEYS and len(c) > 1:
         cf = [x for x in c if cash_flow_only(facts[x[1]])]
         if cf:
-            return cf[0]
+            top = max(cf, key=lambda x: x[0])
+            return top if annual and top[0] >= 2 * cf[0][0] > 0 else cf[0]   # a year's tag many times the first: the whole
     return c[0]
 
 
-def _first(facts, key, get):
+# "Revenues" far below another revenue tag is checked against the income statement: the total revenue is the one that
+# closes it (revenue − costs and expenses = operating income, or + other income = pre-tax). Vistra's "Revenues" sit
+# below its contract revenue by its hedging losses and close the statement; Blue Owl's "Revenues" ($0.14B, a narrower
+# line) against its $0.75B of total revenues, net (= contract revenue) do not.
+TOTAL_NEAR = 0.75
+
+
+def total_ok(total, top):
+    """True when a "Revenues" figure is close enough to the largest revenue tag to be taken without a check."""
+    return total is not None and top is not None and (top <= 0 or total >= TOTAL_NEAR * top)
+
+
+# a "Revenues" below this share of the largest revenue tag that the company did not report in the quarter before nor a
+# year earlier is a line newly tagged that way, not the total (Cumberland: $0.17M of other revenue beside $8.8M of net
+# revenues, with a costs sub-total that happens to close on it)
+NEW_LINE = 0.25
+
+
+def _total_or_larger(facts, get, c, hit, end=None, annual=False):
+    top = max(c, key=lambda x: x[0])
+    if top is hit or total_ok(hit[0], top[0]):
+        return hit
+    nper = facts.get("NonoperatingIncomeExpense")
+    v = lambda k: _pick(facts, k, get)[0]                                                    # noqa: E731
+    if closes_better(top[0], hit[0], v("costs_total"), v("oi"), v("pretax"), get(nper) if nper else None,
+                     gp=v("gp"), cor=v("cor"), opex=v("opex_total")):
+        return top
+    if end and hit[0] < NEW_LINE * top[0] and not _reported_before(facts.get(hit[1]) or {}, end, annual):
+        return top
+    return hit
+
+
+def _reported_before(per, end, annual=False):
+    """True when the tag has a figure for the period a quarter before or a year before `end` from another filing
+    (the comparative column of the filing that tags the line this way is no evidence of it)."""
+    if not per:
+        return False
+    own = {f.get("accn") for (s, e), f in per.items() if e == end}
+    if annual:
+        e = prior_year_end({"Revenues": per, "__labels__": {}}, end)
+        ends = [e] if e else []
+    else:
+        ends = [e for e in comparison_ends({"Revenues": per, "__labels__": {}}, end) if e]
+    return any(f.get("accn") not in own for (s, e), f in per.items() if e in ends)
+
+
+def closes_better(top, total, costs, oi=None, pre=None, non=None, gp=None, cor=None, opex=None):
+    """True when the larger revenue figure closes the income statement — revenue − costs and expenses = operating income
+    (or with other income = pre-tax earnings), revenue − cost of revenue = gross profit, revenue − operating expenses
+    (and cost of revenue) = operating income — within 2%, and much better than the "Revenues" figure does."""
+    def gap(r):
+        g = []
+        if costs is not None and oi is not None:
+            g.append(abs(r - costs - oi))
+        if costs is not None and pre is not None:
+            g.append(abs(r - costs + (non or 0) - pre))
+        if gp is not None and cor is not None:
+            g.append(abs(r - cor - gp))
+        if opex is not None and oi is not None:
+            g.append(min(abs(r - opex - oi), abs(r - (cor or 0) - opex - oi)))
+        return min(g) if g else None
+    g_hit, g_top = gap(total), gap(top)
+    return g_hit is not None and g_top is not None and g_top <= 0.02 * abs(top) and g_top < 0.5 * g_hit
+
+
+def _first(facts, key, get, end=None, annual=False):
     """(value, concept) for the key's figure: see _pick."""
-    return _pick(facts, key, get)
+    return _pick(facts, key, get, end, annual)
 
 
-def _da(facts, get):
+def _da(facts, get, end=None, annual=False):
     """Depreciation & amortization: the combined tag, else depreciation + amortization of intangible assets, else
-    depreciation alone. `get` reads one tag's figure for the period."""
-    v, _ = _first(facts, "da", get)
+    depreciation alone. A combined tag that equals the depreciation tag while amortization is tagged apart holds
+    depreciation only (Jazz: $41.6M under both, $654.7M of amortization beside): the two are added. `get` reads one
+    tag's figure for the period."""
+    v, _ = _first(facts, "da", get, end, annual)
+    dep, _ = _first(facts, "dep", get, end, annual)
+    amort, _ = _first(facts, "amort", get, end, annual)
     if v is not None:
+        if dep is not None and amort and amort > 0 and _same(v, dep):
+            return dep + amort
         return v
-    dep, _ = _first(facts, "dep", get)
     if dep is None:
         return None
-    amort, _ = _first(facts, "amort", get)
     return dep + (amort or 0)
 
 
 def value(facts, key, end, annual=False):
     get = lambda per: _year_from(per, end) if annual else _quarter_from(per, end)
     if key == "da":
-        return _da(facts, get)
-    return _pick(facts, key, get)[0]
+        return _da(facts, get, end, annual)
+    return _pick(facts, key, get, end, annual)[0]
 
 
 def source(facts, key, end, annual=False):
     """The concept value() takes its figure from (see _pick), or None."""
     get = lambda per: _year_from(per, end) if annual else _quarter_from(per, end)
     if key == "da":
-        v, concept = _pick(facts, "da", get)
-        return concept if v is not None else _pick(facts, "dep", get)[1]
-    return _pick(facts, key, get)[1]
+        v, concept = _pick(facts, "da", get, end, annual)
+        return concept if v is not None else _pick(facts, "dep", get, end, annual)[1]
+    return _pick(facts, key, get, end, annual)[1]
 
 
 def _quarter_how(per, end):
@@ -292,7 +424,49 @@ def extract(facts, end, annual=False):
     if not end:
         return None
     raw = {k: value(facts, k, end, annual) for k in CONCEPTS}
+    if not annual:
+        fourth_quarter_check(facts, end, raw)
     return bank_revenue(raw, source(facts, "revenue", end, annual))
+
+
+# a fourth quarter is checked against the year less the three quarters before it: off by more than this share of the
+# larger of the figures, it is replaced by that difference
+Q4_TOLERANCE = 0.25
+
+
+def fourth_quarter_check(facts, end, raw):
+    """A quarter at a fiscal year end is read from the 10-K as the year less nine months (or a fourth-quarter fact).
+    Either can be a tagging slip (NiSource's fourth-quarter revenue tagged as the year's $6.52B; Plexus' nine months
+    tagged as $2.975M instead of $2,975M, leaving the whole year as the quarter). So each figure is checked against
+    the year less the three quarters reported before: when they disagree by more than Q4_TOLERANCE of the larger,
+    the difference is taken, and raw["q4_fixed"] lists the keys. A figure the 10-K lacks a quarter for is filled the
+    same way."""
+    ends = _quarter_ends_of({(s, e): None for c in (CONCEPTS["revenue"] + CONCEPTS["ni"] + CONCEPTS["nii"])
+                             for (s, e) in facts.get(c, {})}, end)
+    if not ends:
+        return
+    fixed = []
+    for k in CONCEPTS:
+        total = value(facts, k, end, annual=True)
+        if total is None:
+            continue
+        before = [value(facts, k, e) for e in ends]
+        if any(v is None for v in before):
+            continue
+        alt = total - sum(before)
+        q = raw.get(k)
+        # quarters read from a tag that is not the year's (AMG: share-based compensation from the cash flow statement in
+        # the 10-Qs, the expense allocated in the 10-K) can put the difference the wrong side of zero: left alone then
+        if total and (alt > 0) != (total > 0) and (q is None or (q > 0) == (total > 0)):
+            continue
+        if q is None:
+            raw[k] = alt
+            fixed.append(k)
+        elif abs(q - alt) > Q4_TOLERANCE * max(abs(total), abs(q), abs(alt), 1):
+            raw[k] = alt
+            fixed.append(k)
+    if fixed:
+        raw["q4_fixed"] = fixed
 
 
 # a bank's own total: these tags are the whole income statement's revenue, so a bank that uses them keeps them

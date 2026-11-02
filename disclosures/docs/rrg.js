@@ -17,6 +17,9 @@ const RRG_ZINFO={r52:{label:'12-month return vs SPY',unit:'%'},hi52:{label:'Belo
  time:{label:'Time',unit:''}};
 const RRG_Q=[['lead','Leading','RS-Ratio and RS-Momentum above 100: outperforming, and gaining'],['weak','Weakening','still above its trend, but losing speed'],
  ['lag','Lagging','under its trend and losing'],['imp','Improving','under its trend, but gaining speed']];
+const RRG_FQ={w:{word:'weekly',wins:[['10','10 weeks (fast)'],['14','14 weeks'],['26','26 weeks'],['52','52 weeks (slow)']],n:'14',tails:[['4','4 weeks'],['8','8 weeks'],['13','13 weeks'],['26','26 weeks'],['52','52 weeks']],t:'8',span:260,ms:110},
+ m:{word:'monthly',wins:[['6','6 months'],['10','10 months'],['12','12 months'],['24','24 months']],n:'10',tails:[['3','3 months'],['6','6 months'],['12','12 months'],['24','24 months']],t:'6',span:120,ms:300},
+ d:{word:'daily',wins:[['10','10 days (fast)'],['14','14 days'],['21','21 days (a month)'],['42','42 days'],['63','63 days (a quarter, slow)']],n:'21',tails:[['5','5 days'],['10','10 days'],['21','21 days'],['42','42 days'],['63','63 days']],t:'10',span:252,ms:70}};
 const rrgQuad=(x,y)=>x>=100?(y>=100?0:1):(y<100?2:3);
 const rrgDay=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||''));return m?`${MONTH_NAMES[+m[2]-1]} ${+m[3]}, ${m[1]}`:qlabel(s)};
 
@@ -34,29 +37,26 @@ function rrgFull(G,ent,key){                            // one series on the who
 }
 function rrgCalc(D,ent,freq,n){
  const key=`${ent.id}|${freq}|${n}`;if(RRG.cache.has(key))return RRG.cache.get(key);
- const G=rrgGrid(D),S=G[freq],C=rrgFull(G,ent,'c'),B=ent.benchC?rrgFull(G,{start:ent.start,c:ent.benchC},'c'):rrgFull(G,D.bench,'c'),V=ent.v?rrgFull(G,ent,'v'):null;
+ // weekly and monthly on the weekly grid; daily on SPY's trading days (rrg-lab.js: the move-odds files)
+ const dly=freq==='d',GD=dly?RRGL.grid:null,G=dly?null:rrgGrid(D),S=dly?{idx:GD.idx,labels:GD.days}:G[freq];
+ const C=dly?ent.dc:rrgFull(G,ent,'c'),B=dly?GD.spy:ent.benchC?rrgFull(G,{start:ent.start,c:ent.benchC},'c'):rrgFull(G,D.bench,'c'),V=!dly&&ent.v?rrgFull(G,ent,'v'):null;
  const rs=S.idx.map(i=>C[i]!=null&&B[i]!=null&&B[i]>0?100*C[i]/B[i]:null);
  // RS smoothed (a short EMA), against its own n-period EMA trend → the relative trend; its one-period change, smoothed
  // the same way → the momentum; both in standard deviations of their own last year or so, so lines are comparable
- const L=rs.length,sh=freq==='w'?4:2,long=freq==='w'?Math.max(52,3*n):Math.max(24,3*n);
- const ema=(a,span)=>{const al=2/(span+1),o=new Array(a.length).fill(null);let m=null,c=0;for(let k=0;k<a.length;k++){if(a[k]==null){m=null;c=0;continue}m=m==null?a[k]:m+al*(a[k]-m);c++;o[k]=c>=Math.min(span,6)?m:null}return o};
- const s_=ema(rs,sh),t_=ema(s_,n),dev=s_.map((v,k)=>v!=null&&t_[k]?100*(v/t_[k]-1):null);
- const roc=ema(dev.map((v,k)=>k&&v!=null&&dev[k-1]!=null?v-dev[k-1]:null),sh);
- const norm=a=>a.map((v,k)=>{if(v==null)return null;let s2=0,m=0;for(let i=Math.max(0,k-long+1);i<=k;i++)if(a[i]!=null){s2+=a[i]*a[i];m++}
-  return m>=Math.min(long,26)&&s2>0?100+v/Math.sqrt(s2/m):null});
- const x=norm(dev),y0=norm(roc),y=y0.map((v,k)=>x[k]==null?null:v);
- const lag=freq==='w'?52:12,wk=i=>i,lr=(A,i)=>A[i]!=null&&A[i-1]!=null&&A[i]>0&&A[i-1]>0?Math.log(A[i]/A[i-1]):null;
- const sd13=(A,i)=>{const r=[];for(let j=i-12;j<=i;j++){if(j<1)continue;const v=lr(A,j);if(v!=null)r.push(v)}if(r.length<10)return null;const mu=r.reduce((a,b)=>a+b,0)/r.length;return Math.sqrt(r.reduce((a,b)=>a+(b-mu)**2,0)/(r.length-1))};
+ const PR=RRGLab.PAR[freq],St=RRGLab.states(rs,PR.sh,n,PR.long(n),PR.minNorm),x=St.x,y=St.y;
+ const lag=PR.lag,lr=(A,i)=>A[i]!=null&&A[i-1]!=null&&A[i]>0&&A[i-1]>0?Math.log(A[i]/A[i-1]):null;
+ const sdN=(A,i)=>{const r=[];for(let j=i-PR.vN+1;j<=i;j++){if(j<1)continue;const v=lr(A,j);if(v!=null)r.push(v)}if(r.length<PR.vMin)return null;const mu=r.reduce((a,b)=>a+b,0)/r.length;return Math.sqrt(r.reduce((a,b)=>a+(b-mu)**2,0)/(r.length-1))};
  const z={r52:[],hi52:[],vrel:[],volz:[]};
  S.idx.forEach((gi,k)=>{
   z.r52.push(k>=lag&&rs[k]!=null&&rs[k-lag]!=null?100*(rs[k]/rs[k-lag]-1):null);
-  let hi=null,cnt=0;for(let j=Math.max(0,gi-51);j<=gi;j++)if(C[j]!=null){cnt++;hi=hi==null?C[j]:Math.max(hi,C[j])}
-  z.hi52.push(cnt>=45&&C[gi]!=null?100*(C[gi]/hi-1):null);
-  const a=sd13(C,wk(gi)),b=sd13(B,wk(gi));z.vrel.push(a!=null&&b?100*(a/b-1):null);
+  let hi=null,cnt=0;for(let j=Math.max(0,gi-PR.hiN+1);j<=gi;j++)if(C[j]!=null){cnt++;hi=hi==null?C[j]:Math.max(hi,C[j])}
+  z.hi52.push(cnt>=PR.hiMin&&C[gi]!=null?100*(C[gi]/hi-1):null);
+  const a=sdN(C,gi),b=sdN(B,gi);z.vrel.push(a!=null&&b?100*(a/b-1):null);
   if(V){let s13=0,n13=0,s52=0,n52=0;for(let j=Math.max(0,gi-51);j<=gi;j++){if(V[j]==null)continue;s52+=V[j];n52++;if(j>gi-13){s13+=V[j];n13++}}
    z.volz.push(n13>=10&&n52>=40&&s52>0?100*((s13/n13)/(s52/n52)-1):null)}else z.volz.push(null);
  });
- const out={x,y,z,labels:S.labels};RRG.cache.set(key,out);return out;
+ const out={x,y,z,labels:S.labels,rs,c:S.idx.map(i=>C[i]),b:S.idx.map(i=>B[i]),s:St.s,t:St.t,dev:St.dev,roc:St.roc,sh:St.sh,n,long:St.long,minNorm:St.minNorm,freq};
+ RRG.cache.set(key,out);return out;
 }
 
 /* ---------- which lines: the universe ---------- */
@@ -93,14 +93,19 @@ function rrgUniverses0(D){
  const secs={},tk=D.tickers||{};for(const [t,m] of Object.entries(tk))if(m&&m.s)(secs[m.s]=secs[m.s]||[]).push(t);
  const names=Object.fromEntries((D.series||[]).filter(s=>s.group==='site-sector').map(s=>[s.sector,s.name.replace(/ · site companies$/,'')]));
  const nice=s=>names[s]||String(s).replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
- return [['sectors','Sector ETFs (SPDR)'],['styles','Style, size and asset ETFs'],['indices','The four indices around their centre (QQQ · SPY · IWM · DIA)'],['site','Site sectors (Sankey companies)'],
+ return [['sectors','Sector ETFs (SPDR)'],['styles','Style, size and asset ETFs'],['indices','The four indices around their centre (QQQ · SPY · IWM · DIA)'],...Object.entries(typeof RRGL_UNI==='object'?RRGL_UNI:{}).map(([k,v])=>[k,v[0]]),['site','Site sectors (Sankey companies)'],
   ...Object.keys(secs).sort((a,b)=>nice(a).localeCompare(nice(b))).map(s=>['top:'+s,'Largest companies · '+nice(s)]),['tickers','Tickers you type']];
 }
 function rrgTicker(t){                                 // one company's weekly file, loaded when asked for
  const m=marketData('history/t/'+t);
  return m.data?{id:t,name:t,full:m.data.n||'',start:m.data.start,c:m.data.c,v:m.data.v,bx:m.data.bx,bi:m.data.bi,bl:m.data.bl,bn:m.data.bn,blevel:m.data.blevel,bcode:m.data.bcode}:m.err?{id:t,missing:true}:{id:t,loading:true};
 }
+function rrgIds(D,uni,typed){                        // the companies of a "largest" universe, or the tickers typed
+ return uni.startsWith('top:')?Object.entries(D.tickers||{}).filter(([,m])=>m&&m.s===uni.slice(4)).sort((a,b)=>(b[1].rev||0)-(a[1].rev||0)).slice(0,10).map(([t])=>t)
+  :String(typed||'').toUpperCase().split(/[\s,;]+/).filter(Boolean).map(t=>t.replace('.','-')).slice(0,12);
+}
 function rrgEntities(D,uni,typed){
+ if(typeof rrglUniverse==='function'){const lab=rrglUniverse(D,uni,'w');if(lab)return lab}
  const S=D.series||[],grp=g=>S.filter(s=>s.group===g).map(s=>({...s,full:s.name,name:s.id.startsWith('s:')?s.name.replace(/ · site companies$/,''):s.id}));
  if(uni==='themes'||uni.startsWith('chain:')){
   const cl=((rrgChains().data||{}).chains)||[];
@@ -112,9 +117,16 @@ function rrgEntities(D,uni,typed){
  if(uni==='sectors')return grp('sector-etf');
  if(uni==='styles')return grp('style-etf');
  if(uni==='site')return grp('site-sector');
- const ids=uni.startsWith('top:')?Object.entries(D.tickers||{}).filter(([,m])=>m&&m.s===uni.slice(4)).sort((a,b)=>(b[1].rev||0)-(a[1].rev||0)).slice(0,10).map(([t])=>t)
-  :String(typed||'').toUpperCase().split(/[\s,;]+/).filter(Boolean).map(t=>t.replace('.','-')).slice(0,12);
- return ids.map(t=>{const s=S.find(x=>x.id===t);return s?{...s,name:s.id,full:s.name}:rrgTicker(t)});
+ // a ticker with no weekly file (an ETF, a country, a bond fund): its daily file, as weekly closes
+ return rrgIds(D,uni,typed).map(t=>{const s=S.find(x=>x.id===t);if(s)return {...s,name:s.id,full:s.name};const e=rrgTicker(t);return e.missing&&typeof rrglEnt==='function'?rrglEnt(D,t,'w'):e});
+}
+
+function rrgDailyEntities(D,uni,typed){              // the daily chart: each line's daily file against SPY's
+ const S=D.series||[];
+ if(uni==='indices')uni='idxetf';
+ const lab=rrglUniverse(D,uni,'d');if(lab)return lab;
+ if(uni==='sectors'||uni==='styles')return S.filter(s=>s.group===(uni==='sectors'?'sector-etf':'style-etf')).map(s=>rrglEnt(D,s.id,'d',{name:s.id,full:s.name}));
+ return rrgIds(D,uni,typed).map(t=>rrglEnt(D,t,'d'));
 }
 
 /* the dual RRG (research spec v5 §4, §15.4): each company against its industry without itself (SIC4, else SIC3 / SIC2 /
@@ -138,22 +150,25 @@ function rrgView(){
  const unis=rrgUniverses(D);
  const chLoading=/^(themes|chain:)/.test(state.rrgu||'')&&!(RRG_CH.m&&(RRG_CH.m.data||RRG_CH.m.err));   // a deep link while the chains load
  state.rrgu=unis.some(u=>u[0]===state.rrgu)||chLoading?state.rrgu:'sectors';
- state.rrgf=state.rrgf==='m'?'m':'w';
- const W=state.rrgf==='w',wins=W?[['10','10 weeks (fast)'],['14','14 weeks'],['26','26 weeks'],['52','52 weeks (slow)']]:[['6','6 months'],['10','10 months'],['12','12 months'],['24','24 months']];
- state.rrgn=wins.some(x=>x[0]===state.rrgn)?state.rrgn:W?'14':'10';
- const tails=W?[['4','4 weeks'],['8','8 weeks'],['13','13 weeks'],['26','26 weeks'],['52','52 weeks']]:[['3','3 months'],['6','6 months'],['12','12 months'],['24','24 months']];
- state.rrgt=tails.some(x=>x[0]===state.rrgt)?state.rrgt:W?'8':'6';
+ state.rrgf=['w','m','d'].includes(state.rrgf)?state.rrgf:'w';
+ const W=state.rrgf==='w',Dy=state.rrgf==='d',FQ=RRG_FQ[state.rrgf],wins=FQ.wins,tails=FQ.tails,PR=RRGLab.PAR[state.rrgf];
+ if(RRG.fq!==state.rrgf){if(RRG.fq)state.rrgn=state.rrgt=null;RRG.fq=state.rrgf}   // a new frequency: its own window and tail
+ state.rrgn=wins.some(x=>x[0]===state.rrgn)?state.rrgn:FQ.n;
+ state.rrgt=tails.some(x=>x[0]===state.rrgt)?state.rrgt:FQ.t;
  state.rrgm=RRG_MODES.some(m=>m[0]===state.rrgm)?state.rrgm:'2d';
  state.rrgz=RRG_Z.some(z=>z[0]===state.rrgz)?state.rrgz:'r52';
  const rrgCos=state.rrgu==='tickers'||String(state.rrgu).startsWith('top:');
- state.rrgb=state.rrgb==='industry'?'industry':'spy';
- let out=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rrgu','Lines',unis,state.rrgu)}${field('rrgf','Frequency',[['w','Weekly (the standard)'],['m','Monthly (long cycles)']],state.rrgf)}${field('rrgm','Chart type',RRG_MODES,state.rrgm)}${state.rrgm==='4d'?field('rrgz','↗ Depth (third measure)',RRG_Z,state.rrgz):''}${state.rrgm==='2d'?field('rfc','Next step',FC_MODES,(state.rfc=fcDefault())):''}</div>`;
- out+=`<div class="toolbar rot-display">${field('rrgn','RS window',wins,state.rrgn)}${field('rrgt','Tail',tails,state.rrgt)}${state.rrgu==='tickers'?`<div class="field wide"><label for="rrgtk">Tickers (up to 12, any company or ETF on file)</label><input id="rrgtk" value="${esc(state.rrgtk||'')}" placeholder="e.g. NVDA, AMD, SMH · Enter"></div>`:''}${rrgCos?field('rrgb','Companies against',[['spy','The S&P 500 (SPY)'],['industry','Their industry without themselves (dual RRG)']],state.rrgb):''}</div>`;
- const ents0=rrgEntities(D,state.rrgu,state.rrgtk),dual=rrgCos&&state.rrgb==='industry';
+ state.rrgb=state.rrgb==='industry'&&!Dy?'industry':'spy';
+ let out=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rrgu','Lines',unis,state.rrgu)}${field('rrgf','Frequency',[['w','Weekly (the standard)'],['d','Daily (every trading day)'],['m','Monthly (long cycles)']],state.rrgf)}${field('rrgm','Chart type',RRG_MODES,state.rrgm)}${state.rrgm==='4d'?field('rrgz','↗ Depth (third measure)',RRG_Z,state.rrgz):''}${state.rrgm==='2d'&&W?field('rfc','Next step',FC_MODES,(state.rfc=fcDefault())):''}</div>`;
+ out+=`<div class="toolbar rot-display">${field('rrgn','RS window',wins,state.rrgn)}${field('rrgt','Tail',tails,state.rrgt)}${state.rrgu==='tickers'?`<div class="field wide"><label for="rrgtk">Tickers (up to 12, any company or ETF on file)</label><input id="rrgtk" value="${esc(state.rrgtk||'')}" placeholder="e.g. NVDA, AMD, SMH · Enter"></div>`:''}${rrgCos&&!Dy?field('rrgb','Companies against',[['spy','The S&P 500 (SPY)'],['industry','Their industry without themselves (dual RRG)']],state.rrgb):''}__FP__</div>`;
+ if(Dy&&!RRGL_DAILY_OK(state.rrgu))return out.replace('__FP__','')+`<div class="explain">Daily lines come from the move-odds files (each asset's adjusted daily closes): the sector and style ETFs, the index ETFs, the countries, bonds, commodities and industry ETFs, the largest companies of a sector and tickers you type. Site sectors, themes and chain baskets are weekly only — pick other lines or the weekly chart.</div>`;
+ const GD=Dy?rrglGrid():null;
+ if(Dy&&!GD.grid)return out.replace('__FP__','')+(GD.err?empty('The daily history could not load ('+GD.err+'). It is published with the move odds every trading day; refresh to retry.'):empty('Loading the daily history…'));
+ const ents0=Dy?rrgDailyEntities(D,state.rrgu,state.rrgtk):rrgEntities(D,state.rrgu,state.rrgtk),dual=rrgCos&&state.rrgb==='industry'&&!Dy;
  const ents=dual?rrgDual(ents0):ents0,ok=ents.filter(e=>e.c),waiting=ents.filter(e=>e.loading),missing=ents.filter(e=>e.missing);
- if(state.rrgu==='tickers'&&!ents.length)return out+empty('Type tickers to compare, e.g. NVDA, AMD, SMH.');
- if(!ok.length)return out+(waiting.length?empty('Loading the weekly history…'):empty('Nothing on file for these yet. The collector takes the site’s companies largest first, a batch every few hours.'));
- const freq=state.rrgf,n=+state.rrgn,G=rrgGrid(D),S=G[freq],Q=S.labels;
+ if(state.rrgu==='tickers'&&!ents.length)return out.replace('__FP__','')+empty('Type tickers to compare, e.g. NVDA, AMD, SMH.');
+ if(!ok.length)return out.replace('__FP__','')+(waiting.length?empty(Dy?'Loading the daily history…':'Loading the weekly history…'):empty('Nothing on file for these yet. The collector takes the site’s companies largest first, a batch every few hours.'));
+ const freq=state.rrgf,n=+state.rrgn,Q=Dy?GD.grid.days:rrgGrid(D)[freq].labels;
  const lines=ok.map((e,i)=>({e,col:RRG_COL[i%RRG_COL.length],calc:rrgCalc(D,e,freq,n)}));
  const firstK=Math.min(...lines.map(l=>l.calc.y.findIndex(v=>v!=null)).filter(k=>k>=0));
  // the last week any line has a close: the grid runs to this week's Friday, which has no close until it ends, and the
@@ -164,24 +179,25 @@ function rrgView(){
  if(lastK>=0&&state.rf>lastK)state.rf=lastK;
  if(state.rf<firstK)state.rf=firstK;
  state.rfn=null;                                       // the other charts reset their frame when they come back
- const o={D,lines,Q,freq,n,dual,ix:state.rrgu==='indices',tail:+state.rrgt,mode:state.rrgm,zk:state.rrgm==='3d'?'time':state.rrgm==='4d'?state.rrgz:null,firstK,lastK,
-  P:{partial:new Set(),span:Math.min(Q.length-firstK,W?260:120),unit:W?'weeks':'months',ms:W?110:300,label:rrgDay}};
+ const o={D,lines,Q,freq,n,dual,ix:state.rrgu==='indices'&&!Dy,tail:+state.rrgt,mode:state.rrgm,zk:state.rrgm==='3d'?'time':state.rrgm==='4d'?state.rrgz:null,firstK,lastK,
+  P:{partial:new Set(),span:Math.min(Q.length-firstK,FQ.span),unit:PR.many,ms:FQ.ms,label:rrgDay}};
  o.dom=rrgDomain(o);
+ out=out.replace('__FP__',state.rrgm==='2d'?field('rrgfp','Forecast path (dates, prices)',RRGL_FP(o),rrglFpState(o)):'');
  const head=state.rrgm==='2d'?'Relative Rotation Graph':state.rrgm==='3d'?'RRG in 3-D — time as depth':'RRG in 4-D — depth: '+RRG_ZINFO[o.zk].label+'; time played';
- out+=`<div class="panel"><h3>${esc(head)}</h3><p class="sub">→ JdK RS-Ratio (relative trend) · ↑ JdK RS-Momentum (its speed)${o.zk?' · ↗ '+esc(RRG_ZINFO[o.zk].label):''} · against ${state.rrgu==='indices'?'the centre of the four (the centre against cash)':dual?'their industry without themselves (companies) · the industries against '+esc(D.benchmark||'SPY'):esc(D.benchmark||'SPY')} · ${W?'weekly':'monthly'}, ${esc(n)}-${W?'week':'month'} window · tails ${esc(state.rrgt)} ${W?'weeks':'months'}. History since ${esc(rrgDay(D.start))}; drag the slider anywhere and press play.</p>`;
+ out+=`<div class="panel"><h3>${esc(head)}</h3><p class="sub">→ JdK RS-Ratio (relative trend) · ↑ JdK RS-Momentum (its speed)${o.zk?' · ↗ '+esc(RRG_ZINFO[o.zk].label):''} · against ${o.ix?'the centre of the four (the centre against cash)':dual?'their industry without themselves (companies) · the industries against '+esc(D.benchmark||'SPY'):esc(D.benchmark||'SPY')} · ${esc(FQ.word)}, ${esc(n)}-${esc(PR.one)} window · tails ${esc(state.rrgt)} ${esc(PR.many)}. History since ${esc(rrgDay(Q[Math.max(0,firstK)]))}${Dy&&state.rrgu==='indices'?' · daily: the index ETFs against SPY (the centre model is weekly)':''}; drag the slider anywhere and press play.${state.rrgm==='2d'&&state.rrgfp?' Dashed: the forecast path — the median position each '+esc(PR.one)+' of every run of the line’s own and the benchmark’s moves in its last '+esc(fmt(PR.window))+' '+esc(PR.many)+', replayed through the formula; dots at +'+PR.marks.join(' / +')+' '+esc(PR.many)+' with the date and the median replayed close (hover for the ranges and the quadrant shares).':''}</p>`;
  const Qp=lastK>=0?Q.slice(0,lastK+1):Q;               // slider and play stop at the last close
  out+=rotPlayer(Qp,o.P);
- if(window.FFShare)out+=window.FFShare.bar({key:'hub-rrg-'+state.rrgm,title:head+' — '+rrgDay(Qp[Math.min(state.rf,Qp.length-1)]),subtitle:`→ RS-Ratio · ↑ RS-Momentum · against ${dual?'their industry (companies) / '+(D.benchmark||'SPY'):(D.benchmark||'SPY')} · ${W?'weekly':'monthly'}, ${n}-${W?'week':'month'} window · ${lines.map(l=>l.e.name).slice(0,10).join(', ')}${lines.length>10?' …':''}`,
-  source:'Weekly closes (Yahoo Finance / Stooq), adjusted; RRG computed in the browser (Filing Flows).',post:()=>rrgHubPost(o,Math.min(state.rf,Qp.length-1),head)});
+ if(window.FFShare)out+=window.FFShare.bar({key:'hub-rrg-'+state.rrgm,title:head+' — '+rrgDay(Qp[Math.min(state.rf,Qp.length-1)]),subtitle:`→ RS-Ratio · ↑ RS-Momentum · against ${dual?'their industry (companies) / '+(D.benchmark||'SPY'):(D.benchmark||'SPY')} · ${FQ.word}, ${n}-${PR.one} window · ${lines.map(l=>l.e.name).slice(0,10).join(', ')}${lines.length>10?' …':''}`,
+  source:(Dy?'Daily':'Weekly')+' closes (Yahoo Finance / Stooq), adjusted; RRG computed in the browser (Filing Flows).',post:()=>rrgHubPost(o,Math.min(state.rf,Qp.length-1),head)});
  if(state.rrgm==='2d'){ROT.ctx={Q:Qp,P:o.P,draw:f=>rrgFrame(o,f)};out+=`<div id="rot-plot" data-ffs-chart="hub-rrg-2d">${rrgFrame(o,state.rf)}</div>`}
  else{ROT.ctx={Q:Qp,P:o.P,paint:f=>rrgPaint3d(o,f)};
   out+=`<div class="rot-3d-wrap"><canvas id="rot-3d" data-ffs-chart="hub-rrg-${state.rrgm}" class="rot-3d" role="img" aria-label="${esc(head)}; the table below lists every value"></canvas><div class="rot-3d-tools"><button class="action" id="rspin" type="button">${ROT.spin?'Stop turning':'Turn slowly'}</button><button class="action" id="rreset" type="button">Front view</button></div></div>`}
  out+=`<div class="mk-legend rrg-legend">${lines.map(l=>{const k0=l.calc.y.findIndex(v=>v!=null),late=k0<0||k0>state.rf;
   return `<span${late?' class="muted"':''}><i class="mk-key" style="background:${l.col}"></i>${esc(l.e.name)} <span class="muted">${esc(rrgFull_(l.e))}${late&&k0>=0?' · from '+esc(rrgDay(Q[k0])):''}</span></span>`}).join('')}${RRG_Q.map(([k,name])=>`<span><i class="mk-key rrg-k-${k}"></i>${name}</span>`).join('')}</div>`;
  if(waiting.length||missing.length)out+=`<p class="sub">${waiting.length?'Loading '+esc(waiting.map(e=>e.id).join(', '))+'… ':''}${missing.length?'Not on file yet: '+esc(missing.map(e=>e.id).join(', '))+' (the collector fetches the site’s companies largest first; the workflow’s “tickers” input fetches any ticker now).':''}</p>`;
- const ix=state.rrgu==='indices';                     // the indices around their centre: their own model, not the SPY one
- out+='</div>'+(ix?(typeof rrgIndexPanel==='function'?rrgIndexPanel(o):''):(state.rrgm==='2d'?rrgFcNote(o):'')+(state.rrgm==='2d'&&typeof rrgOdds==='function'?rrgOdds(o):''))+rrgTable(o)+(!ix&&state.rrgm==='2d'&&typeof rrgTransitions==='function'?rrgTransitions(o):'');
- out+=`<details><summary>How the RRG is computed</summary><p>RS = 100 × weekly close ÷ ${esc(D.benchmark||'SPY')} (both adjusted for splits and dividends), smoothed over ${W?'4 weeks':'2 months'}. RS-Ratio: how far RS stands above or below its own ${esc(n)}-${W?'week':'month'} trend (an exponential average); above 100 the line is outperforming its trend. RS-Momentum: how much that gap changed since the ${W?'week':'month'} before, smoothed the same way; above 100 the relative trend is gaining speed. Both are expressed in standard deviations of their own last ${W?'year or more':'two years or more'} around 100, so a quiet ETF and a volatile stock read on the same scale. This is an open approximation of the JdK RS-Ratio and RS-Momentum used by StockCharts (their formula is not published), so levels differ from theirs while the quadrants and the clockwise rotation read the same. Monthly lines sample the last weekly close of each month. 3-D puts time in depth, so each line becomes a spiral and the front slice is the standard chart for the date shown; 4-D puts a third measure in depth and plays time.</p><p class="sub">${esc(D.note||'')}</p></details>`;
+ const ix=o.ix;                                       // the indices around their centre: their own model, not the SPY one
+ out+='</div>'+(ix?(typeof rrgIndexPanel==='function'?rrgIndexPanel(o):''):(state.rrgm==='2d'&&W?rrgFcNote(o):'')+(state.rrgm==='2d'&&W&&typeof rrgOdds==='function'?rrgOdds(o):''))+rrgTable(o)+(state.rrgm==='2d'&&typeof rrglPanel==='function'?rrglPanel(o):'')+(!ix&&state.rrgm==='2d'&&W&&typeof rrgTransitions==='function'?rrgTransitions(o):'');
+ out+=`<details><summary>How the RRG is computed</summary><p>RS = 100 × ${Dy?'daily':'weekly'} close ÷ ${esc(D.benchmark||'SPY')} (both adjusted for splits and dividends), smoothed over ${W?'4 weeks':Dy?'5 trading days':'2 months'}. RS-Ratio: how far RS stands above or below its own ${esc(n)}-${esc(PR.one)} trend (an exponential average); above 100 the line is outperforming its trend. RS-Momentum: how much that gap changed since the ${esc(PR.one)} before, smoothed the same way; above 100 the relative trend is gaining speed. Both are expressed in standard deviations of their own last ${W?'year or more':Dy?'252 trading days (126 at least)':'two years or more'} around 100, so a quiet ETF and a volatile stock read on the same scale. This is an open approximation of the JdK RS-Ratio and RS-Momentum used by StockCharts (their formula is not published), so levels differ from theirs while the quadrants and the clockwise rotation read the same. Monthly lines sample the last weekly close of each month; daily lines are the move-odds files (each asset's adjusted daily closes) on SPY's trading days, and the ETF groups the weekly history does not carry (countries, regions, bonds, commodities, industry ETFs) take the last daily close of each week on the weekly chart. Prices are adjusted closes (dividends reinvested), so older ones sit below what was quoted then. 3-D puts time in depth, so each line becomes a spiral and the front slice is the standard chart for the date shown; 4-D puts a third measure in depth and plays time.</p><p class="sub">${esc(D.note||'')}</p></details>`;
  if(window.FFPosts&&ok.length){const tk=ok.filter(e=>/^[A-Z][A-Z0-9-]{0,6}$/.test(String(e.id))&&!(D.series||[]).some(x=>x.id===e.id&&x.group!=='ticker')).slice(0,3);
   if(tk.length)out+=`<h3>Posts for X</h3>`+tk.map(e=>`<div class="hub-post" data-post-t="${esc(e.id)}" data-post-k="rotation"></div>`).join('');}
  return out;
@@ -192,9 +208,10 @@ function rrgHubPost(o,f,head){                        // every line's quadrant a
  const by=[0,1,2,3].map(q=>at.filter(a=>a.q===q).sort((a,b)=>Math.hypot(b.x-100,b.y-100)-Math.hypot(a.x-100,a.y-100)));
  const moved=at.filter(a=>a.dx!=null).map(a=>{const q0=rrgQuad(a.x-a.dx,a.y-a.dy);return q0!==a.q?`${a.n} ${RRG_Q[q0][1]} → ${RRG_Q[a.q][1]}`:null}).filter(Boolean);
  const day=rrgDay(o.Q[f]),bench=o.D.benchmark||'SPY';
- const paras=[`Relative Rotation Graph for the ${o.freq==='w'?'week':'month'} of ${day}, against ${bench}: ${at.length} lines.`,
+ const one=o.freq==='w'?'week':o.freq==='d'?'trading day':'month';
+ const paras=[`Relative Rotation Graph for the ${one} of ${day}, against ${bench}: ${at.length} lines.`,
   ...by.map((L,q)=>L.length?`${RRG_Q[q][1]} (${RRG_Q[q][2]}): ${L.map(a=>`${a.n} (${rrgF(a.x,1)} / ${rrgF(a.y,1)})`).join(', ')}.`:''),
-  moved.length?`Changed quadrant since the ${o.freq==='w'?'week':'month'} before: ${moved.join('; ')}.`:''];
+  moved.length?`Changed quadrant since the ${one} before: ${moved.join('; ')}.`:''];
  const lines=[`RRG vs ${bench}, ${day}:`,...by.map((L,q)=>L.length?`${RRG_Q[q][1]}: ${L.slice(0,6).map(a=>a.n).join(', ')}${L.length>6?' +'+(L.length-6):''}.`:''),moved.length?`Rotated: ${moved.slice(0,3).join('; ')}.`:''];
  return {title:head+' — '+day,paras,lines}}
 function rrgDomain(o){                                 // symmetric around 100, fixed for the whole history so play does not rescale
@@ -210,7 +227,8 @@ const rrgF=(v,d=2)=>v==null?'—':fmt(v,d);
 const rrgFull_=e=>{const f=String(e.full||'').replace(/\s*\([A-Z.\-]+\)$/,'');return f===e.name?'':f};
 function rrgTipRows(o,l,k){
  const c=l.calc,x=c.x[k],y=c.y[k],qd=RRG_Q[rrgQuad(x,y)];
- return [[l.e.name+' · '+rrgDay(o.Q[k]),rrgFull_(l.e)],[qd[1],qd[2]],[rrgF(x),'RS-Ratio'],[rrgF(y),'RS-Momentum'],
+ const px=c.c&&c.c[k]!=null?[[rrglMoney(l.e,c.c[k]),rrglIsPrice(l.e)?'close (adjusted)':'index level']]:[];
+ return [[l.e.name+' · '+rrgDay(o.Q[k]),rrgFull_(l.e)],[qd[1],qd[2]],...px,[rrgF(x),'RS-Ratio'],[rrgF(y),'RS-Momentum'],
   ...Object.keys(RRG_ZINFO).filter(z=>z!=='time'&&c.z[z][k]!=null).map(z=>[vfmt({unit:'%',centred:true},c.z[z][k]),RRG_ZINFO[z].label])];
 }
 function rrgFrame(o,f){
@@ -238,29 +256,36 @@ function rrgFrame(o,f){
   ks.forEach((k,i)=>{const hd=i===ks.length-1&&k===f,p=pts[i];
    marks+=`<g data-tip="${tip(rrgTipRows(o,l,k))}" tabindex="${hd?0:-1}" class="mk-hit"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${hd?10:6}" fill="transparent"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${hd?6:2.4}" class="rot-dot" style="fill:${l.col};opacity:${hd?1:(.3+.6*i/Math.max(1,ks.length-1)).toFixed(2)}"/></g>`});
   const h=pts[pts.length-1],pv=pts.length>1?pts[pts.length-2]:null;
-  if(pv&&ks[ks.length-1]===f&&!fcOn()){const a=Math.atan2(h[1]-pv[1],h[0]-pv[0]),tx=h[0]+Math.cos(a)*11,ty=h[1]+Math.sin(a)*11;
+  if(pv&&ks[ks.length-1]===f&&!(fcOn()&&o.freq==='w'&&o.n===14)){const a=Math.atan2(h[1]-pv[1],h[0]-pv[0]),tx=h[0]+Math.cos(a)*11,ty=h[1]+Math.sin(a)*11;
    marks+=`<path class="rrg-arrow" style="fill:${l.col}" d="M${tx.toFixed(1)},${ty.toFixed(1)} L${(tx-8*Math.cos(a-.45)).toFixed(1)},${(ty-8*Math.sin(a-.45)).toFixed(1)} L${(tx-8*Math.cos(a+.45)).toFixed(1)},${(ty-8*Math.sin(a+.45)).toFixed(1)} Z"/>`}
-  const text=l.e.name+(ks[ks.length-1]===f?'':' '+rrgDay(o.Q[ks[ks.length-1]])),w=text.length*6.8,right=h[0]+12+w<W-R,low=h[1]-22<T,ly=low?h[1]+18:h[1]-9;
+  const kl=ks[ks.length-1],text=l.e.name+(c.c&&c.c[kl]!=null?' '+rrglMoney(l.e,c.c[kl]):'')+(kl===f?'':' '+rrgDay(o.Q[kl])),w=text.length*6.8,right=h[0]+12+w<W-R,low=h[1]-22<T,ly=low?h[1]+18:h[1]-9;
   const b=[right?h[0]+9:h[0]-9-w,ly-11,right?h[0]+9+w:h[0]-9,ly+3];
   if(!boxes.some(q=>b[0]<q[2]&&b[2]>q[0]&&b[1]<q[3]&&b[3]>q[1])){boxes.push(b);labels+=`<text class="mk-label mk-halo" x="${right?h[0]+9:h[0]-9}" y="${ly}" text-anchor="${right?'start':'end'}">${esc(text)}</text>`}
  }
- marks+=rrgFcLayer(o,f,sx,sy)+(typeof rrgOddsLayer==='function'?rrgOddsLayer(o,f,sx,sy):'');
+ marks+=rrgFcLayer(o,f,sx,sy)+(typeof rrgOddsLayer==='function'?rrgOddsLayer(o,f,sx,sy):'')+(typeof rrglLayer==='function'&&!(typeof ROT!=='undefined'&&ROT.timer)?rrglLayer(o,f,sx,sy):'');
  return s+marks+labels+'</svg>';
 }
 function rrgTable(o){
  const f=state.rf,dir=a=>['→','↗','↑','↖','←','↙','↓','↘'][((Math.round(a/(Math.PI/4))%8)+8)%8];
+ const lab=typeof RRGLab==='object',PR=lab?RRGLab.PAR[o.freq]:null,mk=PR?PR.marks[PR.marks.length-1]:0;
  const rows=o.lines.map(l=>{const c=l.calc,x=c.x[f],y=c.y[f];if(x==null||y==null)return null;
   const qd=rrgQuad(x,y);let since=0;for(let k=f;k>=0&&c.x[k]!=null&&c.y[k]!=null&&rrgQuad(c.x[k],c.y[k])===qd;k--)since++;
   const k0=f-1,a=c.x[k0]!=null?Math.atan2(y-c.y[k0],x-c.x[k0]):null;
-  return {l,x,y,qd,since,a,r52:c.z.r52[f],volz:c.z.volz[f]}}).filter(Boolean).sort((p,q)=>q.x-p.x);
- exported=rows.map(r=>({date:o.Q[f],line:r.l.e.name,name:r.l.e.full||'',quadrant:RRG_Q[r.qd][1],rs_ratio:+r.x.toFixed(3),rs_momentum:+r.y.toFixed(3),
-  periods_in_quadrant:r.since,heading_deg:r.a==null?null:Math.round(r.a*180/Math.PI),return_12m_vs_benchmark_pct:r.r52==null?null:+r.r52.toFixed(2)}));
- const unit=o.freq==='w'?'weeks':'months';
+  const close=c.c?c.c[f]:null,L=lab&&close!=null&&c.rs?RRGLab.ladder(close,RRGLab.thresholds(c,c.rs,f)):null,F=lab&&c.c&&c.b?rrglFc(o,l,f):null,st=F&&F.steps[mk-1];
+  return {l,x,y,qd,since,a,r52:c.z.r52[f],volz:c.z.volz[f],close,L,st}}).filter(Boolean).sort((p,q)=>q.x-p.x);
+ exported=rows.map(r=>({date:o.Q[f],line:r.l.e.name,name:r.l.e.full||'',close:r.close==null?null:+r.close.toFixed(4),quadrant:RRG_Q[r.qd][1],rs_ratio:+r.x.toFixed(3),rs_momentum:+r.y.toFixed(3),
+  periods_in_quadrant:r.since,heading_deg:r.a==null?null:Math.round(r.a*180/Math.PI),return_12m_vs_benchmark_pct:r.r52==null?null:+r.r52.toFixed(2),
+  next_close_rs_ratio_100:r.L?+r.L.ratio.toFixed(4):null,next_close_rs_momentum_100:r.L?+r.L.momentum.toFixed(4):null,
+  ...(r.st?{['path_date_'+mk]:r.st.date,['path_close_median_'+mk]:+r.st.p50.toFixed(4),['path_close_p10_'+mk]:+r.st.p10.toFixed(4),['path_close_p90_'+mk]:+r.st.p90.toFixed(4),
+   ['path_rs_ratio_'+mk]:+r.st.x50.toFixed(3),['path_rs_momentum_'+mk]:+r.st.y50.toFixed(3)}:{})}));
+ const unit=PR?PR.many:o.freq==='w'?'weeks':'months',one=PR?PR.one:'period';
  let out=`<div class="section-head"><h3>${fmt(rows.length)} lines · ${esc(rrgDay(o.Q[f]))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- return out+table(['Line','Quadrant','RS-Ratio','RS-Momentum','Heading','In this quadrant','12 months vs '+(o.ix?'its benchmark':o.D.benchmark||'SPY')],rows.map(r=>[
-  `<i class="mk-key" style="background:${r.l.col}"></i> <b>${esc(r.l.e.name)}</b> <span class="muted">${esc(rrgFull_(r.l.e))}</span>`,
-  `<span class="badge rrg-b-${RRG_Q[r.qd][0]}">${RRG_Q[r.qd][1]}</span>`,fmt(r.x,2),fmt(r.y,2),r.a==null?'—':dir(r.a),`${r.since} ${unit}`,
-  r.r52==null?'—':`<span class="${r.r52>=0?'positive':'negative'}">${vfmt({unit:'%',centred:true},r.r52)}</span>`]));
+ return out+table(['Line','Close','Quadrant','RS-Ratio · RS-Momentum','12 months vs '+(o.ix?'its benchmark':o.D.benchmark||'SPY'),`Next ${one}: closes for RS-Ratio · RS-Momentum 100`,`Forecast path, +${mk} ${unit}`],rows.map(r=>[
+  `<i class="mk-key" style="background:${r.l.col}"></i> <b>${esc(r.l.e.name)}</b> <span class="muted">${esc(rrgFull_(r.l.e))}</span>`,r.close==null?'—':rrglMoney(r.l.e,r.close),
+  `<span class="badge rrg-b-${RRG_Q[r.qd][0]}">${RRG_Q[r.qd][1]}</span><br><span class="muted">${r.since} ${unit}</span>`,`${fmt(r.x,2)} · ${fmt(r.y,2)} ${r.a==null?'':dir(r.a)}`,
+  r.r52==null?'—':`<span class="${r.r52>=0?'positive':'negative'}">${vfmt({unit:'%',centred:true},r.r52)}</span>`,
+  r.L?`${rrglMoney(r.l.e,r.L.ratio)} · ${rrglMoney(r.l.e,r.L.momentum)}`:'—',
+  r.st?`${esc(rrgDay(r.st.date))}: ${rrglMoney(r.l.e,r.st.p50)}<br><span class="muted">80%: ${rrglMoney(r.l.e,r.st.p10)}–${rrglMoney(r.l.e,r.st.p90)} · ${r.st.q.map((v,i)=>RRG_Q[i][1][0]+' '+rrglSh(v)).join(' ')}</span>`:'—']));
 }
 
 /* ---------- 3-D and 4-D (canvas; turned with the 3-D view's handlers in rotation.js) ---------- */

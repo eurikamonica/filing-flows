@@ -485,7 +485,7 @@ def write(site, base, limit=None):
     d0 = dt.date.today()
     week = (d0 - dt.timedelta(days=d0.weekday())).isoformat()      # most topics change daily in small ways: dated by the week
     urls, counts = [], {t: 0 for t, _, _ in TOPICS}
-    images = seo.og_images(base)
+    images, pics = seo.og_images(base), {}
     order = sorted(latest.values(), key=lambda r: -(r.get('revenue') or 0))[:limit]
     for r in order:
         try:
@@ -515,15 +515,24 @@ def write(site, base, limit=None):
                     continue
                 url = f'{base}/c/{slug}/{topic}/'
                 app = next(a for k, _, a in TOPICS if k == topic)
+                # "How Target makes money" is what image search matches the Sankey to: the picture, its alt and caption here too
+                pic = images.get(f"c-{cik}") if topic == 'revenue' else None
+                cap = f"How {co['who_name']} makes money: {latest_q} revenue breakdown" if pic else None
+                alt = f"{co['who_name']} ({t}) {latest_q} revenue breakdown Sankey: revenue by segment, costs, profit and cash flow" if pic else None
                 crumbs = [('Filing Flows', base + '/'), (f"{co['who_name']} ({t})", f'{base}/c/{slug}/'), (p['h1'], url)]
                 body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(co['who_name'])} ({e(t)})</a> › {e(next(l for k, l, _ in TOPICS if k == topic))}</p>"
                         f"<h1>{e(p['h1'])}</h1>{nav(slug, topic, have, cik)}{p['body']}"
+                        + (seo.share_figure(pic, alt, cap, url, 3, False) if pic else '')
                         + (f"<h2>{e(co['who_name'])}'s latest quarter</h2>" + sankey_figure(cik, latest_q, f"{co['who_name']} {latest_q} income statement Sankey") if latest_q and topic != 'revenue' else '')
                         + f"{faq_html(p['qa'])}"
                         f"<p><a class='seo-cta' href='../../../#c-{cik}{('-' + app) if app else ''}'>Open the interactive view →</a></p>"
                         f"<p class='muted'>Updated {e(fdate(today))}. Read automatically from SEC filings and public data; errors are possible. Not investment advice.</p>")
                 mod = p.get('modified') or week
-                doc = seo.page(seo.fit(p['title']), p['desc'], url, body, 3, images.get(f"c-{cik}") or base + '/og.png', ld_for(co['who_name'], t, url, crumbs, p['qa'], mod))
+                ld = ld_for(co['who_name'], t, url, crumbs, p['qa'], mod)
+                if pic:
+                    ld['@graph'].append(seo.image_ld(base, pic, alt, cap))
+                    pics[url] = pic
+                doc = seo.page(seo.fit(p['title']), p['desc'], url, body, 3, images.get(f"c-{cik}") or base + '/og.png', ld)
                 d = os.path.join(site, 'c', slug, topic)
                 os.makedirs(d, exist_ok=True)
                 with open(os.path.join(d, 'index.html'), 'w', encoding='utf-8') as f:
@@ -561,8 +570,8 @@ def write(site, base, limit=None):
                 print(f"  {t} company-page block: skipped ({type(err).__name__}: {err})")
         except Exception as err:  # noqa: BLE001              # one company never stops the rest (and the sitemap)
             print(f"  {r.get('ticker') or r.get('cik')}: topic pages skipped ({type(err).__name__}: {err})")
-    sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    sm += [f'<url><loc>{xesc(u)}</loc><lastmod>{m}</lastmod></url>' for u, m in urls]
+    sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
+    sm += [f'<url><loc>{xesc(u)}</loc><lastmod>{m}</lastmod>' + (f'<image:image><image:loc>{xesc(pics[u])}</image:loc></image:image>' if u in pics else '') + '</url>' for u, m in urls]
     sm.append('</urlset>')
     open(os.path.join(site, 'sitemap-topics.xml'), 'w', encoding='utf-8').write('\n'.join(sm))
     robots = os.path.join(site, 'robots.txt')
