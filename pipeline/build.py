@@ -272,9 +272,11 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 2           # bump when the way D&A is read changes: stored figures are read again (refresh_da)
+DA_VERSION = 3           # bump when the way D&A is read changes: stored figures are read again (refresh_da)
 # 2: D&A and share-based compensation from the cash-flow statement's tag (facts.CASH_FLOW_KEYS); total revenues
 #    (us-gaap:Revenues) before larger sub-totals, with revenue lines that add up to contract revenue marked "recon"
+# 3: a "Revenues" far below the other revenue tags is the total only when it closes the income statement
+#    (facts.closes_better: Blue Owl's narrower $0.14B line against its $0.75B of total revenues)
 REFRESH_KEYS = ("da", "dep", "amort", "sbc", "revenue", "rev_contract")
 DA_PER_RUN = 40
 
