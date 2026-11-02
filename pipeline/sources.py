@@ -13,11 +13,18 @@ def label_for(concept, fx, roles):
     return lab if lab and " " in lab else dims.humanize(lab or concept)
 
 
-def from_xbrl(fx, end, roles=None, annual=False):
-    """{key: {"c", "l", "ytd", "how"}} for every figure read from SEC's XBRL company facts."""
+def from_xbrl(fx, end, roles=None, annual=False, raw=None):
+    """{key: {"c", "l", "ytd", "how"}} for every figure read from SEC's XBRL company facts. raw: the figures as
+    extracted; a fourth quarter taken as the year less the three quarters before it (facts.fourth_quarter_check,
+    raw["q4_fixed"]) says so ("how": "q4_check", with the year's tag)."""
     from . import facts
-    return {k: {"c": "us-gaap:" + v["c"], "l": label_for(v["c"], fx, roles), "ytd": v["ytd"], "how": "xbrl"}
-            for k, v in facts.provenance(fx, end, annual).items()}
+    out = {k: {"c": "us-gaap:" + v["c"], "l": label_for(v["c"], fx, roles), "ytd": v["ytd"], "how": "xbrl"}
+           for k, v in facts.provenance(fx, end, annual).items()}
+    for k in (raw or {}).get("q4_fixed") or []:
+        c = facts.source(fx, k, end, annual=True)
+        if c:
+            out[k] = {"c": "us-gaap:" + c, "l": label_for(c, fx, roles), "ytd": False, "how": "q4_check"}
+    return out
 
 
 def from_release(rel, raw):
@@ -68,6 +75,10 @@ def reported(s, period="q"):
         return f"Reported line: {_quote(s)} in the earnings release’s tables (8-K, Exhibit 99.1)."
     tag = s.get("c") or ""
     own = ", the company’s own tag" if tag and not tag.startswith("us-gaap:") else ""
+    if s.get("how") == "q4_check":
+        return (f"Calculated: the fiscal year’s {_quote(s)} ({tag}{own}) less the three quarters reported before it. "
+                "The 10-K’s own fourth-quarter or year-to-date figure for this line did not add up to the year "
+                "(a tagging slip in the filing), so it was not used.")
     where = "SEC’s XBRL company facts" if s.get("how") == "xbrl" else "the filing’s own XBRL data"
     out = f"Reported line: {_quote(s)} ({tag}{own}), from {where}."
     if period == "q" and s.get("ytd"):
@@ -174,7 +185,7 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
             out = get(key)
             if out:
                 n["_tagkey"] = key
-        elif nid == "nci":
+        elif nid in ("nci", "nci_in"):
             out = get("nci") or CALC["nci"]
         elif nid in ("ocf", "burn"):
             out = get("ocf")
@@ -223,4 +234,4 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
 
 TAG_KEY = {"revenue": "revenue", "gp": "gp", "I:cor": "cor", "I:rd": "rd", "I:sm": "sm", "I:ga": "ga", "I:sga": "sga",
            "oi": "oi", "pretax": "pretax", "tax": "tax", "taxben": "tax", "net": "ni", "netinc": "pl", "netloss": "pl",
-           "nci": "nci", "ocf": "ocf", "burn": "ocf", "da": "da", "sbc": "sbc", "capex": "capex"}
+           "nci": "nci", "nci_in": "nci", "ocf": "ocf", "burn": "ocf", "da": "da", "sbc": "sbc", "capex": "capex"}

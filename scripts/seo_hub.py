@@ -169,7 +169,8 @@ def smart(hub, L):
 
 def insiders(hub, L):
     d = read(os.path.join(hub, 'market', 'insiders.json')) or {}
-    sm = d.get('summary') or []
+    # a billion-dollar 'purchase' or a ticker of NONE is a misread filing, not news (as seo_daily.py)
+    sm = [r for r in d.get('summary') or [] if (r.get('buy_value') or 0) < 1.5e9 and (r.get('ticker') or '').upper() not in ('NONE', 'N/A', '')]
     if len(sm) < 5:
         return None
     buys = sorted([r for r in sm if r.get('buy_value')], key=lambda r: -r['buy_value'])

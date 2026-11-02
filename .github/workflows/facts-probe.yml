@@ -1,0 +1,74 @@
+# Owner's debugging aid: download companies' SEC companyfacts (the XBRL facts every chart is read from) as a run
+# artifact, so a wrong figure can be traced to the tag and context it came from without a local SEC_USER_AGENT.
+#   gh api -X POST repos/<owner>/<repo>/actions/workflows/facts-probe.yml/dispatches -f ref=main -f 'inputs[ciks]=916365,1111711'
+#   gh run download <run id> -n facts
+name: Facts probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      ciks:
+        description: "CIKs, comma-separated (at most 40)"
+        required: false
+        default: ""
+      urls:
+        description: "SEC URLs to download as they are (a filing index, an exhibit), comma-separated (at most 20)"
+        required: false
+        default: ""
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            sec.py
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install requests
+
+      - name: Download companyfacts and documents
+        env:
+          CIKS: ${{ github.event.inputs.ciks }}
+          URLS: ${{ github.event.inputs.urls }}
+        run: |
+          mkdir -p facts
+          python - <<'EOF'
+          import gzip, json, os, re, sys
+          import sec
+          ciks = [c for c in os.environ["CIKS"].replace(" ", "").split(",") if c][:40]
+          for cik in ciks:
+              try:
+                  fx = sec.get_json(sec.companyfacts_url(cik))
+              except Exception as e:
+                  print(f"{cik}: {e}", file=sys.stderr)
+                  continue
+              with gzip.open(f"facts/{int(cik)}.json.gz", "wt") as f:
+                  json.dump(fx, f)
+              print(cik, len(fx.get("facts", {}).get("us-gaap", {})), "us-gaap concepts")
+          urls = [u for u in os.environ["URLS"].replace(" ", "").split(",") if u.startswith("https://www.sec.gov/")][:20]
+          for u in urls:
+              try:
+                  data = sec.get(u, binary=True)
+              except Exception as e:
+                  print(f"{u}: {e}", file=sys.stderr)
+                  continue
+              name = re.sub(r"[^A-Za-z0-9._-]+", "_", u.split("sec.gov/", 1)[1])[-150:]
+              with open(f"facts/{name}", "wb") as f:
+                  f.write(data)
+              print(u, len(data), "bytes")
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: facts
+          path: facts/
+          retention-days: 3
