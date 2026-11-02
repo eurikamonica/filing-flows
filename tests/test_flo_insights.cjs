@@ -154,7 +154,7 @@ const text = (a) => a.html.replace(/<[^>]+>/g, '');
   a = await M.ask('largest companies by revenue', ix);
   ok(!a.company && /AAPL \$90\.0B/.test(text(a)) && text(a).indexOf('AAPL') < text(a).indexOf('MSFT'), 'the largest companies');
   a = await M.ask('Did Pelosi buy anything?', ix);
-  ok(/Nancy Pelosi's latest disclosed trades/.test(text(a)) && /NVDA bought \$1\.0M–\$5\.0M/.test(text(a)), "one official's trades by name");
+  ok(/Nancy Pelosi's latest disclosed trades/.test(text(a)) && /NVDA bought \$1M–\$5M/.test(text(a)), "one official's trades by name");
   a = await M.ask('What is EBITDA?', ix);
   ok(/Earnings before interest/.test(text(a)), 'EBITDA defined');
   console.log(`${n} Flo insight checks passed`);
