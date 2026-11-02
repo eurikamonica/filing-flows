@@ -207,7 +207,7 @@ def _scale_slips(per, every):
             agree = sum(1 for g in versions if g.get("val") and abs(g["val"] - f["val"]) <= 0.01 * abs(f["val"]))
             return (agree, -abs(math.log10(abs(f["val"])) - typical))
         best = max((f for f in versions if f.get("val")), key=score)
-        if score(best) > score(per[key]):
+        if not per[key].get("val") or score(best) > score(per[key]):
             per[key] = best
 
 
