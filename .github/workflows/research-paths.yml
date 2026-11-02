@@ -89,10 +89,11 @@ jobs:
           ls _eps_data/eps-gaap | wc -l
       - name: Move odds (public/moves/)
         # each asset's daily returns for the move odds (company pages and the hub's Move odds tab): runs even when the
-        # path models' build above was skipped or failed, as it needs only the daily bars
+        # path models' build above was skipped or failed, as it needs only the daily bars; with it the highs, the lows
+        # and the ranges (app/highs.py, app/regimes.py), a few minutes more
         if: ${{ !cancelled() }}
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 35
         run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json --eps _eps_data/eps-gaap
       - name: Move odds headlines (cache/headlines/)
         # the news headlines that name each company (app/move_headlines.py: Google News's search feed, headline, source,

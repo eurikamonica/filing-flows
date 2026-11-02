@@ -288,9 +288,24 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   assert.ok(html.includes('At their highs now')&&html.includes('data-hvk="AAPL"')&&html.includes('id="hv-one" data-k="AAPL"'),'the highs view in the Move odds tab');
   assert.ok(!/NaN|undefined/.test(html),'the highs view shows NaN/undefined');
   assert.equal(run(`exported.length`),1);
-  run(`state.mvv='market';state.mvk='';delete mvStore.highs`);
-  checks+=4;
-  console.log('Highs view in the hub checks passed.');
+  // the lows and the ranges: the regime selector, the deep links, the list
+  run(`movesDeepLink('lows/nke')`);
+  assert.equal(run(`state.mvv+'|'+state.mvhr+'|'+state.mvk`),'highs|52w|NKE');
+  run(`movesDeepLink('narrow/ko')`);
+  assert.equal(run(`state.mvhr+'|'+state.mvk`),'narrow|KO');
+  const ls={dd_ath:-0.76,dist:0.14,lows63:12,age:1250,low:33.87,low_date:'2026-10-02',since:'2021-11-05',date:'2026-10-30',close:38.67,mom:-0.44,mom_pct:1.9,mom_xs:6,pe:18.6,pe_pct:16};
+  const LD={regimes:{'52w':{label:'At a 52-week low',groups:{companies:{label:'Companies',base:{days:10,runs:2,assets:2,next_low:{median:19,p:{63:0.66}},r10:{median:18},r20:{median:47},bounce:{p50:0.29},fwd252:{p50:0.12,up:0.63},fall252:{p50:-0.18}},buckets:{}}}}},
+   now:{'52w':[{key:'NKE',name:'NIKE, Inc.',kind:'stock',group:'companies',state:ls,analogues:{next_low:{median:71,p:{63:0.46}},r20:{median:40},bounce:{p50:0.34},fwd252:{p50:0.007,up:0.51}}}]},note:'n'};
+  run(`mvStore.lows={data:${JSON.stringify(LD)}};state.mvhr='52w';state.mvk='';state.mvhg=''`);
+  const lh=run(`movesView()`);
+  assert.ok(lh.includes('id="mvhr"')&&lh.includes('At a 52-week low now')&&lh.includes('id="hv-one" data-k="NKE" data-r="52w"'),'the lows view in the Move odds tab');
+  assert.ok(!/NaN|undefined/.test(lh),'the lows view shows NaN/undefined');
+  assert.equal(run(`exported.length+'|'+exported[0].analog_days_to_new_low`),'1|71');
+  run(`state.mvhr='wide'`);
+  assert.ok(run(`movesView()`).includes('Loading the research')||run(`movesView()`).includes('not published yet'),'the ranges load on demand');
+  run(`state.mvv='market';state.mvk='';state.mvhr='';delete mvStore.highs;delete mvStore.lows;delete mvStore.ranges`);
+  checks+=10;
+  console.log('Highs, lows & ranges in the hub checks passed.');
  }
  // the price paths an option chain implies (options.js optFan / optPathsPanel): exact at every expiry, no NaN
  {

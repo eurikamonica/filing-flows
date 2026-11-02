@@ -489,12 +489,12 @@ def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
             if len(code) == 4 or m['key'] not in links:
                 links[m['key']] = key
     names = {a['key']: a.get('name') for a in assets}
-    hblocks, hstat = {}, None
+    hblocks, hstat, eps = {}, None, {}
+    vols = {k: (v[0], v[1]) for k, v in extra.items()}                 # volume and raw closes (for P/E)
+    raws = {k: (v[0], v[2]) for k, v in extra.items()}
     try:                                                                # at the highs (app/highs.py): runs and pullbacks
         import highs as HI
         eps = HI.load_eps(eps_dir) if eps_dir and Path(eps_dir).is_dir() else {}
-        vols = {k: (v[0], v[1]) for k, v in extra.items()}
-        raws = {k: (v[0], v[2]) for k, v in extra.items()}
         hdoc, hblocks = HI.build(data, assets, eps=eps, volumes=vols, raw=raws, out_path=None)
         if hdoc:
             out.mkdir(parents=True, exist_ok=True)
@@ -502,7 +502,18 @@ def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
             hstat = {'at_highs': len(hdoc['now']), 'eps_companies': len(eps), **{g: v['base']['days'] for g, v in hdoc['groups'].items()}}
     except Exception as exc:                                            # noqa: BLE001
         errors.append(f"highs: {str(exc)[:160]}")
-    extra = None
+    rblocks, rstat = {}, None
+    try:                                                                # at the lows and in a range (app/regimes.py)
+        import regimes as RG
+        ldoc, rdoc, rblocks = RG.build(data, assets, eps=eps, volumes=vols, raw=raws, out_dir=None)
+        if ldoc:
+            out.mkdir(parents=True, exist_ok=True)
+            _dump(out / 'lows.json', ldoc)
+            _dump(out / 'ranges.json', rdoc)
+            rstat = {**{f'lows_{k}': len(v) for k, v in ldoc['now'].items()}, **{f'range_{k}': len(v) for k, v in rdoc['now'].items()}}
+    except Exception as exc:                                            # noqa: BLE001
+        errors.append(f"regimes: {str(exc)[:160]}")
+    extra = vols = raws = eps = None
     rows, written, out_cum, snaps, kinds = [], set(), {}, {}, {}
     spy = data.get('SPY')
     targets = (spy[0] if spy else sorted({d for v in data.values() for d in v[0]}))[-DAYS_KEPT:]
@@ -546,6 +557,9 @@ def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
                 doc[k] = a[k]
         if hblocks.get(a['key']):
             doc['highs'] = hblocks[a['key']]
+        for f in ('lows', 'ranges'):
+            if (rblocks.get(a['key']) or {}).get(f):
+                doc[f] = rblocks[a['key']][f]
         _dump(out / 'a' / f"{a['key']}.json", doc)
         written.add(f"{a['key']}.json")
         s.update(key=a['key'], ticker=a.get('ticker'), name=a.get('name'), kind=a['kind'], sector=a.get('sector'), industry=ln.get('industry'),
@@ -577,7 +591,7 @@ def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
         rr = {g: v['lines'] for g, v in (doc or {}).get('groups', {}).items()}
     except Exception as exc:                                            # noqa: BLE001
         errors.append(f"rrg research: {str(exc)[:160]}")
-    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'rrg_research': rr, 'highs': hstat,
+    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'rrg_research': rr, 'highs': hstat, 'regimes': rstat,
               'seconds': round(time.monotonic() - t0, 1), 'errors': errors[:40]}
     write_json(out / 'status.json', status)
     return status
