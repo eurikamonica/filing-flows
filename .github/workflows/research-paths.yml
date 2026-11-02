@@ -77,13 +77,23 @@ jobs:
           ppl=""
           [ -d _research-people/public ] && ppl="--people _research-people/public"
           python disclosures/app/paths.py build --root pth --universe _research-valuation/public/index.json $ppl
+      - name: First-filed quarterly EPS (the P/E at the highs)
+        # the SEC GAAP EPS store the main site keeps (branch data, eps-gaap/<cik>.json; pipeline/eps_gaap.py): read only
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git clone --quiet --depth 1 --filter=blob:none --sparse --branch data "$url" _eps_data
+          git -C _eps_data sparse-checkout set --no-cone /eps-gaap/
+          ls _eps_data/eps-gaap | wc -l
       - name: Move odds (public/moves/)
         # each asset's daily returns for the move odds (company pages and the hub's Move odds tab): runs even when the
         # path models' build above was skipped or failed, as it needs only the daily bars
         if: ${{ !cancelled() }}
         continue-on-error: true
         timeout-minutes: 20
-        run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json
+        run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json --eps _eps_data/eps-gaap
       - name: Move odds news (public/moves/n/)
         # the company filings around each day of the move odds (app/move_news.py): EDGAR filing lists (a week old at most)
         # and the 8-Ks filed around the biggest moves (press release headline and key sentences), a budget per run

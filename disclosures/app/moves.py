@@ -416,7 +416,7 @@ FIELDS = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members
           'rv21', 'rvpct', 'level', 'lpct', 'out5', 'out21', 'group']
 
 
-def build(root, universe_path, val_dir=None, limit=0):
+def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
     """Write public/moves/ from the bars on file; returns the status."""
     t0 = time.monotonic()
     root = Path(root)
@@ -446,11 +446,14 @@ def build(root, universe_path, val_dir=None, limit=0):
         sics[c['t']] = (code, ind)
         assets.append({'key': c['t'], 'ticker': c['t'], 'name': c.get('name'), 'kind': 'stock', 'sector': c.get('sector'), 'cik': c.get('cik'),
                        'sic': code, 'mcap': c.get('mcap')})
-    data = {}
+    data, extra = {}, {}
     for a in assets:
         bars = P.load(root, a['key'])
         if not bars:
             continue
+        if bars.get('v') and a['kind'] not in ('volatility', 'index'):          # volume and raw closes (the highs: volume, P/E)
+            fl = lambda xs: np.array([np.nan if x is None else x for x in xs], float)
+            extra[a['key']] = (np.array(bars['t'], dtype='datetime64[D]'), fl(bars['v']), fl(bars['c']))
         ds, cs = series(bars)
         ds, cs = stitch(root, a['key'], ds, cs)                          # its whole history (paths.py long)
         if len(ds) > MIN_DAYS:
@@ -486,6 +489,20 @@ def build(root, universe_path, val_dir=None, limit=0):
             if len(code) == 4 or m['key'] not in links:
                 links[m['key']] = key
     names = {a['key']: a.get('name') for a in assets}
+    hblocks, hstat = {}, None
+    try:                                                                # at the highs (app/highs.py): runs and pullbacks
+        import highs as HI
+        eps = HI.load_eps(eps_dir) if eps_dir and Path(eps_dir).is_dir() else {}
+        vols = {k: (v[0], v[1]) for k, v in extra.items()}
+        raws = {k: (v[0], v[2]) for k, v in extra.items()}
+        hdoc, hblocks = HI.build(data, assets, eps=eps, volumes=vols, raw=raws, out_path=None)
+        if hdoc:
+            out.mkdir(parents=True, exist_ok=True)
+            _dump(out / 'highs.json', hdoc)
+            hstat = {'at_highs': len(hdoc['now']), 'eps_companies': len(eps), **{g: v['base']['days'] for g, v in hdoc['groups'].items()}}
+    except Exception as exc:                                            # noqa: BLE001
+        errors.append(f"highs: {str(exc)[:160]}")
+    extra = None
     rows, written, out_cum, snaps, kinds = [], set(), {}, {}, {}
     spy = data.get('SPY')
     targets = (spy[0] if spy else sorted({d for v in data.values() for d in v[0]}))[-DAYS_KEPT:]
@@ -527,6 +544,8 @@ def build(root, universe_path, val_dir=None, limit=0):
         for k in ('members', 'top', 'sic_level', 'sic'):
             if a.get(k) is not None:
                 doc[k] = a[k]
+        if hblocks.get(a['key']):
+            doc['highs'] = hblocks[a['key']]
         _dump(out / 'a' / f"{a['key']}.json", doc)
         written.add(f"{a['key']}.json")
         s.update(key=a['key'], ticker=a.get('ticker'), name=a.get('name'), kind=a['kind'], sector=a.get('sector'), industry=ln.get('industry'),
@@ -558,7 +577,7 @@ def build(root, universe_path, val_dir=None, limit=0):
         rr = {g: v['lines'] for g, v in (doc or {}).get('groups', {}).items()}
     except Exception as exc:                                            # noqa: BLE001
         errors.append(f"rrg research: {str(exc)[:160]}")
-    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'rrg_research': rr,
+    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'rrg_research': rr, 'highs': hstat,
               'seconds': round(time.monotonic() - t0, 1), 'errors': errors[:40]}
     write_json(out / 'status.json', status)
     return status

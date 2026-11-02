@@ -583,7 +583,10 @@ def load_moves(moves_dir, kinds=None):
         if kinds and d.get('kind') not in kinds:
             continue
         days, r = PT.decode_returns(d)
-        lv = np.exp(np.concatenate([[0.0], np.cumsum(r)]))
+        cum = np.concatenate([[0.0], np.cumsum(r)])
+        last = d.get('last') if isinstance(d.get('last'), (int, float)) and d.get('last') > 0 else None
+        lv = (last or 1.0) * np.exp(cum - cum[-1])                  # adjusted closes ending at the last close
         data[d['key']] = (days, lv.tolist(), d.get('last'))
-        assets.append({'key': d['key'], 'kind': d.get('kind'), 'group': d.get('group')})
+        assets.append({'key': d['key'], 'kind': d.get('kind'), 'group': d.get('group'), 'name': d.get('name'), 'cik': d.get('cik'),
+                       'sector': d.get('sector'), 'ticker': d.get('ticker')})
     return data, assets

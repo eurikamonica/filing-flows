@@ -475,6 +475,7 @@ def main():
     ap.add_argument('--limit', type=int, default=0, help='build: only the first N companies (tests)')
     ap.add_argument('--subs', type=int, default=300, help='movenews: filing lists asked per run')
     ap.add_argument('--reads', type=int, default=250, help='movenews: 8-Ks read per run')
+    ap.add_argument('--eps', default=None, help="moves: the first-filed quarterly EPS store (data branch eps-gaap/) for the P/E at the highs")
     a = ap.parse_args()
     if a.cmd in ('collect', 'long'):
         import tempfile
@@ -491,7 +492,7 @@ def main():
             print(json.dumps(collect(client, a.root, tickers, a.batch, a.refresh, a.minutes, first=extra)))
     elif a.cmd == 'moves':
         import moves
-        print(json.dumps(moves.build(a.root, a.universe, limit=a.limit)))
+        print(json.dumps(moves.build(a.root, a.universe, limit=a.limit, eps_dir=a.eps)))
     elif a.cmd == 'movenews':
         # the company filings around each day of the move odds (app/move_news.py): EDGAR, with SEC_USER_AGENT
         import tempfile
