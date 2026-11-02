@@ -59,7 +59,7 @@ def jobs(site):
         ix = get_json(site + "data/chains/index.json")
         for ch in ix.get("chains") or []:
             out.append((f"chain-{ch['id']}", ver((ix.get("generated") or "")[:10], ch.get("asof")), "chain", ch["id"],
-                        f"{ch['id']}-money-flow-sankey"))
+                        f"{ch['id']}-money-flow-sankey", f"{ch.get('name') or ch['id']}: money flow Sankey"))
     except Exception as e:
         print(f"::warning::chains not listed for pictures: {e}")
     ix = get_json(site + "data/index.json")
@@ -70,7 +70,8 @@ def jobs(site):
             latest[r["cik"]] = r
     usd = [r for r in latest.values() if (r.get("currency") or "USD") == "USD"]
     for r in sorted(usd, key=lambda r: -(r.get("revenue") or 0))[:TOP_COMPANIES]:
-        out.append((f"c-{r['cik']}", ver(r.get("label"), r.get("filed"), r.get("form")), "company", r["cik"], fname(r)))
+        out.append((f"c-{r['cik']}", ver(r.get("label"), r.get("filed"), r.get("form")), "company", r["cik"], fname(r),
+                    f"{r.get('name')} ({r.get('ticker')}) {r.get('label')} revenue breakdown: earnings and cash flow Sankey"))
     return out
 
 
@@ -79,6 +80,49 @@ def fname(r):
     s = (r.get("ticker") or "").lower().replace(".", "-")
     s = s if re.fullmatch(r"[a-z0-9-]{1,12}", s) else f"cik-{r['cik']}"
     return f"{s}-revenue-breakdown-sankey"
+
+
+XMP_TAG = b"http://ns.adobe.com/xap/1.0/\x00"
+
+
+def with_xmp(jpg, title, site):
+    """The picture's own credit and terms (IPTC photo metadata as XMP), read by Google Images for the credit line and
+    the "Licensable" badge: creator, credit, copyright notice, web statement of rights and the licensor's page.
+    An earlier XMP segment is replaced; anything that is not a JPEG comes back unchanged."""
+    if not jpg.startswith(b"\xff\xd8"):
+        return jpg
+    from xml.sax.saxutils import escape
+    lic = site.rstrip("/") + "/license/"
+    t = escape(title or "Filing Flows chart")
+    xmp = ('<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+           '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/" '
+           'xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" xmlns:plus="http://ns.useplus.org/ldf/xmp/1.0/">'
+           f'<dc:title><rdf:Alt><rdf:li xml:lang="x-default">{t}</rdf:li></rdf:Alt></dc:title>'
+           f'<dc:description><rdf:Alt><rdf:li xml:lang="x-default">{t}. Figures read from SEC filings by Filing Flows.</rdf:li></rdf:Alt></dc:description>'
+           '<dc:creator><rdf:Seq><rdf:li>Filing Flows</rdf:li></rdf:Seq></dc:creator>'
+           '<dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Filing Flows (filing-flows.com). Free to use with credit and a link.</rdf:li></rdf:Alt></dc:rights>'
+           '<photoshop:Credit>Filing Flows (filing-flows.com)</photoshop:Credit>'
+           f'<xmpRights:WebStatement>{lic}</xmpRights:WebStatement><xmpRights:Marked>True</xmpRights:Marked>'
+           f'<plus:Licensor><rdf:Seq><rdf:li rdf:parseType="Resource"><plus:LicensorName>Filing Flows</plus:LicensorName><plus:LicensorURL>{lic}</plus:LicensorURL></rdf:li></rdf:Seq></plus:Licensor>'
+           '</rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end="w"?>').encode("utf-8")
+    seg = b"\xff\xe1" + (len(XMP_TAG) + len(xmp) + 2).to_bytes(2, "big") + XMP_TAG + xmp
+    # walk the segments after SOI: drop an old XMP, put ours after the APP0/APP1 headers
+    i, out, placed = 2, [jpg[:2]], False
+    while i + 4 <= len(jpg) and jpg[i] == 0xFF and jpg[i + 1] not in (0xDA, 0xD9):
+        mk, ln = jpg[i + 1], int.from_bytes(jpg[i + 2:i + 4], "big")
+        part = jpg[i:i + 2 + ln]
+        if mk == 0xE1 and part[4:4 + len(XMP_TAG)] == XMP_TAG:
+            i += 2 + ln
+            continue
+        if not placed and mk not in (0xE0, 0xE1):
+            out.append(seg)
+            placed = True
+        out.append(part)
+        i += 2 + ln
+    if not placed:
+        out.append(seg)
+    out.append(jpg[i:])
+    return b"".join(out)
 
 
 def draw(page, site, kind, ident):
@@ -109,12 +153,21 @@ def run(site, out, base, limit=PER_RUN, budget_s=900):
         manifest = {}
     images = manifest.get("images") or {}
     all_jobs = jobs(site)
-    for key, v, kind, ident, name in all_jobs:              # a picture drawn under an older name: renamed, not redrawn
+    for key, v, kind, ident, name, title in all_jobs:       # a picture drawn under an older name: renamed, not redrawn
         old = images.get(key) or {}
         want = f"{name}.jpg"
         if old.get("file") and old["file"] != want and os.path.exists(os.path.join(out, old["file"])):
             os.replace(os.path.join(out, old["file"]), os.path.join(out, want))
             images[key] = dict(old, file=want)
+    for key, v, kind, ident, name, title in all_jobs:       # pictures drawn before they carried their credit and terms
+        img = images.get(key) or {}
+        f = os.path.join(out, img.get("file") or "")
+        if img.get("file") and not img.get("xmp") and os.path.exists(f):
+            with open(f, "rb") as fh:
+                b = fh.read()
+            with open(f, "wb") as fh:
+                fh.write(with_xmp(b, title, site))
+            images[key] = dict(img, xmp=1)
     todo = [j for j in all_jobs if (images.get(j[0]) or {}).get("v") != j[1]]
     print(f"{len(todo)} pictures to draw")
     t0, done, failed = time.time(), 0, 0
@@ -126,7 +179,7 @@ def run(site, out, base, limit=PER_RUN, budget_s=900):
         page = browser.new_page()
         page.goto(site + "index.html#method")
         page.wait_for_function("window.Sankey && window.FFChains && document.fonts")
-        for key, v, kind, ident, name in todo[:limit]:
+        for key, v, kind, ident, name, title in todo[:limit]:
             if time.time() - t0 > budget_s:
                 break
             try:
@@ -138,11 +191,11 @@ def run(site, out, base, limit=PER_RUN, budget_s=900):
             if not jpg:
                 continue
             with open(os.path.join(out, f"{name}.jpg"), "wb") as f:
-                f.write(jpg)
+                f.write(with_xmp(jpg, title, site))
             old = (images.get(key) or {}).get("file")
             if old and old != f"{name}.jpg" and os.path.exists(os.path.join(out, old)):
                 os.remove(os.path.join(out, old))
-            images[key] = {"file": f"{name}.jpg", "v": v}
+            images[key] = {"file": f"{name}.jpg", "v": v, "xmp": 1}
             done += 1
         browser.close()
     manifest = {"base": base.rstrip("/"), "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "images": images}
