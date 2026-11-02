@@ -322,19 +322,30 @@ def mark_recon(q):
         ls["recon"] = dict(dims.UNMATCHED)                # kept: readers choose whether to see them (Alerts)
 
 
+def reread_first(path="config/reread-first.txt"):
+    """CIKs the owner wants read again ahead of the rest (one per line; # comments): the queue of scans cancels a
+    dispatched run whenever a scheduled one lines up behind it, so a list in the repository is the sure way."""
+    try:
+        return {int(t.split("#")[0].strip()) for t in open(path) if t.split("#")[0].strip()}
+    except (FileNotFoundError, ValueError):
+        return set()
+
+
 def refresh_da(store, limit=DA_PER_RUN, only=None):
     """Figures stored before D&A was read as depreciation + amortization of intangible assets (a filing that tags the
     two apart used to give depreciation alone, labelled D&A) are read again from SEC's company facts, largest
-    companies first, a few per run. Earnings-release quarters keep their own figures; only the row's kind is noted.
-    only: these CIKs now, whatever they were read with (the owner's re-read request)."""
+    companies first (the owner's list, config/reread-first.txt, before them), a few per run. Earnings-release
+    quarters keep their own figures; only the row's kind is noted. only: these CIKs now, whatever they were read
+    with (the owner's re-read request)."""
     todo = []
+    first = reread_first() if only is None else set()
     for cik in (only if only is not None else store.ciks()):
         c = store.company(cik)
         if c.get("quarters") and c.get("profile") and (only is not None or c.get("da_v", 0) < DA_VERSION):
             last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
-            todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
+            todo.append((int(cik) not in first, -((last.get("raw") or {}).get("revenue") or 0), cik))
     n = 0
-    for _, cik in sorted(todo)[:limit]:
+    for *_, cik in sorted(todo)[:limit]:
         if only is None and time_up(CATCH_UP_SHARE, "re-reading stored figures"):
             break
         try:
