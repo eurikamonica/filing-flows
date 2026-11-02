@@ -287,6 +287,11 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
         # partners); either way net earnings are the shareholders' figure
         nc = oc + 2
         nci_pos, nci_neg = Nc["nci"] > 0.001 * R, Nc["nci"] < -0.001 * R
+        if not (nci_pos or nci_neg) and Nc["nci"] and any(N and abs(N["nci"]) > 0.001 * N["R"] for N in (Nq, Ny)):
+            # a sliver this quarter after a real share in a compared quarter (Sempra's Q1 2025: $2M after $313M):
+            # drawn all the same, so net earnings stay the shareholders' figure, compared like with like and
+            # agreeing with the compared quarter's own chart
+            nci_pos, nci_neg = Nc["nci"] > 0, Nc["nci"] < 0
         has_nci = nci_pos or nci_neg
         net_key = "ni" if has_nci else "pl"
         bridge = Nc["ocf"] is not None

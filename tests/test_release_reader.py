@@ -176,3 +176,21 @@ def test_net_income_to_shareholders_from_the_summary_table():
     r = release.parse(html, dt.date(2026, 10, 21))
     assert r["is"]["pl"] == 9860e3 and r["is"]["ni"] == 4100e3
     assert r["labels"]["ni"].startswith("net income attributable to ryan")
+
+
+def test_net_income_available_for_common_stockholders_and_the_minority_row_alone():
+    """Interactive Brokers: "Net income" $1,348M is mostly the minority's ($1,034M "attributable to noncontrolling
+    interests"); the shareholders' line says "available for common stockholders" ($314M). Without that line, the
+    minority's row still comes off net income."""
+    rows = IS + [("Net income attributable to noncontrolling interests", "1,034", "923"),
+                 ("Net income available for common stockholders", "314", "263")]
+    rows = [(l, a, b) if l != "Net income" else ("Net income", "1,348", "1,186") for l, a, b in rows]
+    rows = [(l, "1,496", "1,312") if l.startswith("Income before") else (l, "148", "126") if l.startswith("Provision") else (l, a, b)
+            for l, a, b in rows]
+    r = release.parse(_doc("<p>(In millions)</p>", _table(rows, "CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME")), dt.date(2026, 10, 15))
+    assert r["is"]["pl"] == 1348e6 and r["is"]["ni"] == 314e6 and r["is"]["nci"] == 1034e6
+    rec = release.reconcile(r["is"], r["labels"])
+    assert rec["ni"] == 314e6 and rec["pl"] == 1348e6 and rec["nci"] == 1034e6
+    r2 = release.parse(_doc("<p>(In millions)</p>", _table(rows[:-1], "CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME")), dt.date(2026, 10, 15))
+    rec2 = release.reconcile(r2["is"], r2["labels"])
+    assert rec2["ni"] == 314e6 and rec2["pl"] == 1348e6

@@ -83,18 +83,49 @@ def statement_fact(f):
     return "14A" not in (f.get("form") or "")
 
 
-def index_facts(companyfacts, currency="USD"):
-    """concept -> {(start, end): fact} keeping the most recently filed fact per period, in the company's reporting
-    currency (US dollars for nearly all; a foreign filer's own, fx.py). us-gaap and ifrs-full concepts. Balances are
-    point-in-time facts (no start): those quality.INSTANTS needs go to "__instants__" as concept -> {day: fact}.
-    Facts from proxy statements are left out (statement_fact)."""
+def version(f, accn=None, before=None):
+    """Which of a period's figures (one per filing that tagged the period) a chart takes, highest first: an amended
+    filing's (a 10-K/A restating it), then the chart's own filing's (accn), then the latest filed on or before the
+    chart's filing (before: that filing's date), then the earliest filed after it. A later filing's comparative can be
+    on another basis: Pixelworks' Q2 2025 revenue is $8.3M in its own 10-Q and $0.2M a year later, the Shanghai
+    business sold and moved to discontinued operations; TDS's Q2 2025 is $1.24B, then $298M without the wireless
+    business. A chart cites its filing and keeps to what was reported by then: its own figures, its comparatives
+    (the year-ago quarter on the same basis), the quarter before as that quarter's own filing had it."""
+    amended, filed = (f.get("form") or "").endswith("/A"), f.get("filed") or ""
+    if before and filed > before:
+        return (amended, False, False, tuple(-ord(ch) for ch in filed))
+    return (amended, accn is not None and f.get("accn") == accn, True, tuple(ord(ch) for ch in filed))
+
+
+def _filed_on(companyfacts, accn):
+    """When the filing accn was made, from any of its facts (None: no fact of that filing in companyfacts)."""
+    if not accn:
+        return None
+    for tax in ("us-gaap", "ifrs-full", "dei"):
+        for body in (companyfacts.get("facts", {}).get(tax) or {}).values():
+            for fs in (body.get("units") or {}).values():
+                for f in fs:
+                    if f.get("accn") == accn:
+                        return f.get("filed")
+    return None
+
+
+def index_facts(companyfacts, currency="USD", accn=None):
+    """concept -> {(start, end): fact} keeping one fact per period (version: the chart's own filing's when accn is
+    given, then the latest by that filing's date; else the most recently filed), in the company's reporting currency (US dollars for nearly all; a foreign
+    filer's own, fx.py). us-gaap and ifrs-full concepts. Balances are point-in-time facts (no start): those
+    quality.INSTANTS needs go to "__instants__" as concept -> {day: fact}. Facts from proxy statements are left out
+    (statement_fact)."""
     from .history import CONCEPTS as KEEP_ALL
     from .quality import INSTANTS, SHARES
-    out, names, inst, shares, vers = {}, {}, {}, {}, {}
+    out, names, inst, shares, vers, every = {}, {}, {}, {}, {}, {}
     out["__labels__"] = names                            # concept -> SEC's standard label, to say where a figure came from
     out["__instants__"] = inst                           # balances pipeline/quality.py reads (assets, reserves, debt, ...)
     out["__shares__"] = shares                           # share counts: concept -> {(start, end) or end: fact}
     out["__versions__"] = vers                           # every filing's version of the headline figures (history.py)
+    out["__accn__"] = accn                               # the filing whose figures are preferred (None: the latest)
+    before = _filed_on(companyfacts, accn)
+    newer = lambda f, old: version(f, accn, before) >= version(old, accn, before)
     for taxonomy in ("dei",):
         for concept, body in companyfacts.get("facts", {}).get(taxonomy, {}).items():
             if concept in SHARES:
@@ -104,7 +135,7 @@ def index_facts(companyfacts, currency="USD"):
                         continue
                     k = (f["start"], f["end"]) if "start" in f else f["end"]
                     per = shares.setdefault(concept, {})
-                    if k not in per or f.get("filed", "") >= per[k].get("filed", ""):
+                    if k not in per or newer(f, per[k]):
                         per[k] = f
     for taxonomy in ("us-gaap", "ifrs-full"):
         for concept, body in companyfacts.get("facts", {}).get(taxonomy, {}).items():
@@ -115,7 +146,7 @@ def index_facts(companyfacts, currency="USD"):
                     per = shares.setdefault(concept, {})
                     for f in facts:
                         k = (f["start"], f["end"]) if "start" in f else f["end"]
-                        if k not in per or f.get("filed", "") >= per[k].get("filed", ""):
+                        if k not in per or newer(f, per[k]):
                             per[k] = f
                 if unit != currency:
                     continue
@@ -124,15 +155,60 @@ def index_facts(companyfacts, currency="USD"):
                     if "start" not in f:
                         if concept in INSTANTS and taxonomy == "us-gaap":
                             day = inst.setdefault(concept, {})
-                            if f["end"] not in day or f.get("filed", "") >= day[f["end"]].get("filed", ""):
+                            if f["end"] not in day or newer(f, day[f["end"]]):
                                 day[f["end"]] = f
                         continue
                     key = (f["start"], f["end"])
-                    if key not in per or f.get("filed", "") >= per[key].get("filed", ""):
+                    if key in per:
+                        every.setdefault(concept, {}).setdefault(key, [per[key]]).append(f)
+                    if key not in per or newer(f, per[key]):
                         per[key] = f
                     if concept in KEEP_ALL and taxonomy == "us-gaap":
                         vers.setdefault(concept, {}).setdefault(key, []).append(f)
+    for concept, keys in every.items():
+        _scale_slips(out[concept], keys)
+        _corrections(out[concept], keys)
     return out
+
+
+SLIP = 100                     # versions of one figure this far apart are not a restatement but a slip of the scale
+CORRECTION = 0.05              # ... and this close are a correction, not a restatement: the latest filing's wins
+
+
+def _corrections(per, every):
+    """A later filing's version of a figure within CORRECTION of the chart's own filing's is a correction (Plexus'
+    FY2024 10-K tags revenue of $4,078M, the segment total before eliminations; the next 10-K's comparative has the
+    income statement's $3,961M) or a minor reclassification: the latest filed wins. Far apart, the versions are on
+    different bases (a business moved to discontinued operations) and the chart keeps its own filing's."""
+    for key, versions in every.items():
+        latest = max(versions, key=lambda f: f.get("filed") or "")
+        chosen = per[key]
+        if latest is chosen or not latest.get("val") or not chosen.get("val"):
+            continue
+        if abs(latest["val"] - chosen["val"]) <= CORRECTION * max(abs(latest["val"]), abs(chosen["val"])):
+            per[key] = latest
+
+
+def _scale_slips(per, every):
+    """A filing that tags a figure at the wrong scale (Smith Midland's Q2 2025 10-Q: net income $4,171, meaning
+    $4,171 thousand, beside revenue of $26.2M; its later filings say $4.171M) is told from the other versions of the
+    period's figure: when versions are SLIP times apart, the one more filings agree with wins, then the one in
+    scale with the concept's other periods."""
+    import math
+    mags = None
+    for key, versions in every.items():
+        vals = [f["val"] for f in versions if f.get("val")]
+        if len(vals) < 2 or max(abs(v) for v in vals) < SLIP * min(abs(v) for v in vals):
+            continue
+        if mags is None:
+            mags = sorted(math.log10(abs(f["val"])) for k, f in per.items() if f.get("val") and k not in every) or [0]
+        typical = mags[len(mags) // 2]
+        def score(f):
+            agree = sum(1 for g in versions if g.get("val") and abs(g["val"] - f["val"]) <= 0.01 * abs(f["val"]))
+            return (agree, -abs(math.log10(abs(f["val"])) - typical))
+        best = max((f for f in versions if f.get("val")), key=score)
+        if score(best) > score(per[key]):
+            per[key] = best
 
 
 def _same(a, b):
@@ -218,7 +294,9 @@ def consistent_year(per, end):
     vals = [_quarter_from(per, e) for e in ends + [end]]
     if any(v is None for v in vals):
         return False
-    return abs(sum(vals) - total) <= 0.03 * max(abs(total), 1)
+    # within 3% of the year, or of the quarters' size when the year nets to little (TDS's 2025: quarters of +7, +12,
+    # -82 and +56 against a year of -6: a $0.5M slip in a restated quarter is no reason to prefer another tag)
+    return abs(sum(vals) - total) <= 0.03 * max(abs(total), sum(abs(v) for v in vals) / 2, 1)
 
 
 def _pick(facts, key, get, end=None, annual=False):
@@ -426,7 +504,22 @@ def extract(facts, end, annual=False):
     raw = {k: value(facts, k, end, annual) for k in CONCEPTS}
     if not annual:
         fourth_quarter_check(facts, end, raw)
+    odd_one_out(raw)
     return bank_revenue(raw, source(facts, "revenue", end, annual))
+
+
+def odd_one_out(raw):
+    """Net income to shareholders and the consolidated figure (ProfitLoss) should differ by the minority interests'
+    share, and pre-tax earnings less tax is the consolidated figure. When the shareholders' figure fits pre-tax less
+    tax and ProfitLoss does not (Smith Midland's 2024 10-Qs tag ProfitLoss with the sign flipped), the ProfitLoss tag
+    is the slip: without it the chart would show a minority interest that does not exist."""
+    pretax, tax, ni, pl = (raw.get(k) for k in ("pretax", "tax", "ni", "pl"))
+    if None in (pretax, tax, ni, pl) or raw.get("nci") is not None:
+        return
+    after_tax = pretax - tax
+    tol = 0.005 * max(abs(after_tax), abs(ni), abs(pl), 1)
+    if abs(after_tax - ni) <= tol < abs(after_tax - pl):
+        raw["pl"] = ni
 
 
 # a fourth quarter is checked against the year less the three quarters before it: off by more than this share of the
@@ -453,6 +546,10 @@ def fourth_quarter_check(facts, end, raw):
         before = [value(facts, k, e) for e in ends]
         if any(v is None for v in before):
             continue
+        ytd = _nine_months(facts, k, max(ends))
+        if ytd and total and abs(ytd) * SLIP > abs(total) > abs(ytd) / SLIP \
+                and abs(sum(before) - ytd) > Q4_TOLERANCE * max(abs(ytd), abs(sum(before)), 1):
+            continue                                      # the three quarters do not add up to the nine months either
         alt = total - sum(before)
         q = raw.get(k)
         # quarters read from a tag that is not the year's (AMG: share-based compensation from the cash flow statement in
@@ -467,6 +564,18 @@ def fourth_quarter_check(facts, end, raw):
             fixed.append(k)
     if fixed:
         raw["q4_fixed"] = fixed
+
+
+def _nine_months(facts, key, end):
+    """The year-to-date figure of the three quarters before a fourth (a fact of 255-290 days ending at end), from
+    the first of the key's tags that has one. The quarters' sum is checked against it (when it is in scale with the
+    year: Plexus' nine months are the slip) before it replaces a fourth quarter: a quarter derived through a slipped
+    tag (Smith Midland's Q2 2025 capex tagged $5 thousand) would otherwise hand the fourth quarter its error."""
+    for c in CONCEPTS[key]:
+        for (s, e), f in facts.get(c, {}).items():
+            if e == end and 255 <= (d(e) - d(s)).days <= 290:
+                return f["val"]
+    return None
 
 
 # a bank's own total: these tags are the whole income statement's revenue, so a bank that uses them keeps them

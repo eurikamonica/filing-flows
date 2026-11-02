@@ -56,7 +56,7 @@ P = {
                r"|^(net )?(profit|profit \(loss\)|\(loss\) profit)( after (income )?tax(ation)?)? from continuing operations$",
     # "attributable to" the company's owners, never to the minority ("nci", "the noncontrolling interest": Kinder Morgan,
     # Albany), nor a per-share row ("basic earnings per ordinary share": Pentair, nVent)
-    "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)) (attributable|applicable|available) to "
+    "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)) (attributable|applicable|available) (to|for) "
           r"(?!(the |a |its )?(non-?controlling|minority|redeemable|nci\b))|^(net )?profit attributable to (the )?(owners|equity holders|shareholders)"
           r"|^attributable to (the )?(owners|equity holders|shareholders|stockholders)"
           r"|^attributable to (?!(the |a )?(non-?controlling|minority|nci\b))[a-z0-9 .&'’-]{0,40}(owners|shareholders|equity holders|stockholders)"
@@ -614,7 +614,9 @@ def reconcile(raw, labels=None, tax_checked=False):
     if pl is None and ni is None and cont is not None:
         pl = cont
     if pl is not None and ni is None:
-        ni = pl                                               # no minority interests line
+        # no shareholders' line matched: the minority's share printed as a row (Interactive Brokers: "net income
+        # attributable to noncontrolling interests" $1,034M of $1,348M) comes off net income; else no minority interests
+        ni = pl - abs(nci) if nci and abs(nci) < abs(pl) else pl
     if ni is None:
         raise ValueError("no net income line")
     if r.get("pretax") is not None and r.get("tax") is not None:

@@ -123,7 +123,9 @@ def submissions(cik):
 EPS_ROOT = [None]          # the data store: every companyfacts download also refreshes the EPS series (eps_gaap.py)
 
 
-def companyfacts(cik):
+def companyfacts(cik, accn=None):
+    """The company's XBRL facts indexed for a chart: with accn, the chart's own filing's figures are preferred over
+    a later filing's comparatives (facts.version). One download per company and run; one index per filing read."""
     if cik not in _cf:
         raw = sec.get_json(sec.companyfacts_url(cik))
         if EPS_ROOT[0]:
@@ -133,9 +135,14 @@ def companyfacts(cik):
             except Exception as e:
                 print(f"  EPS series not kept for {cik}: {e}", file=sys.stderr)
         cur = primary_currency(raw) or "USD"            # a foreign filer's figures in the currency it reports in
-        _cf[cik] = facts.index_facts(raw, cur)
+        _cf[cik] = {"raw": raw, "cur": cur, "index": {}}
         _cur.setdefault(cik, cur)
-    return _cf[cik]
+    c = _cf[cik]
+    if accn not in c["index"]:
+        if len(c["index"]) >= 8:                          # the indexes share the facts; a few per company is enough
+            c["index"].pop(next(iter(c["index"])))
+        c["index"][accn] = facts.index_facts(c["raw"], c["cur"], accn)
+    return c["index"][accn]
 
 
 INTRO_RANK = {"10-K": 3, "8-K": 2, "6-K": 2, "10-Q": 1}    # where the company description comes from, best first
@@ -272,7 +279,7 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 4           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+DA_VERSION = 5           # bump when the way figures are read changes: stored figures are read again (refresh_da)
 # 2: D&A and share-based compensation from the cash-flow statement's tag (facts.CASH_FLOW_KEYS); total revenues
 #    (us-gaap:Revenues) before larger sub-totals, with revenue lines that add up to contract revenue marked "recon"
 # 3: a "Revenues" far below the other revenue tags is the total only when it closes the income statement
@@ -281,6 +288,8 @@ DA_VERSION = 4           # bump when the way figures are read changes: stored fi
 #    against the year less the three quarters before it (facts.fourth_quarter_check), a quarter context carrying
 #    the year's figure passed over, a full year's tag the one its quarters add up to (facts.consistent_year), D&A
 #    as depreciation + amortization when the combined tag holds depreciation alone
+# 5: a chart's figures and comparatives from its own filing before a later filing's restated comparatives
+#    (facts.version: Pixelworks' Q2 2025 revenue $8.3M, not the $0.2M a year later without the Shanghai business)
 REFRESH_FLAGS = ("rev_bank", "rev_tagged", "q4_fixed")    # what facts.extract adds beside the figures
 DA_PER_RUN = 120            # one SEC request each and a fraction of a second's reading: the budget (time_up) is the limit
 
@@ -355,6 +364,8 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
                 for q in items.values():
                     release_row = q.get("form") == "8-K"
                     own_capex = (q.get("capex_src") or {}).get("how") == "instance"
+                    if not release_row:                      # the row's own filing's figures (facts.version)
+                        fx = companyfacts(cik, q.get("accn"))
                     for rk, ek in (("raw", "end"), ("raw_q1", "q1_end"), ("raw_py", "py_end")):
                         r, end = q.get(rk), q.get(ek)
                         if not isinstance(r, dict) or not end or (annual and rk == "raw_q1"):
@@ -377,7 +388,7 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
                             else:
                                 q["src"].pop(k, None)
             c["da_v"] = DA_VERSION
-            set_quality(c, fx)
+            set_quality(c, companyfacts(cik))
             store.put(cik, c)
             n += 1
         except Exception as e:
@@ -559,7 +570,7 @@ def process_filing(store, cik, accn, form, starred=False):
     if not row or not row.get("reportDate"):
         raise Pending("filing not yet in submissions")
     end = row["reportDate"]
-    fx = companyfacts(cik)
+    fx = companyfacts(cik, accn)                          # this filing's figures and comparatives (facts.version)
     raw = facts.extract(fx, end)
     if not raw.get("revenue") or (raw.get("ni") is None and raw.get("pl") is None):
         if any(v is not None for v in raw.values()):
@@ -1586,7 +1597,7 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
     cur = primary_currency(fx_raw)
     c = _fpi_profile(store.company(cik), sub)
     c["currency"] = cur
-    fx = companyfacts(cik)
+    fx = companyfacts(cik, accn)
     doc_url = sec.doc_url(cik, accn, row["primaryDocument"]) if row.get("primaryDocument") else None
     year = annual_entry(c, fx, None, cik, accn, form, row, end, doc_url, {})
     if not year and doc_url and not facts.extract(fx, end, annual=True).get("revenue"):
@@ -1825,7 +1836,7 @@ def company_ciks(tokens):
     return sorted(set(out))
 
 
-RELEASE_READER = 4              # bump when the 8-K reader changes: stored 8-K quarters are read again once
+RELEASE_READER = 5              # bump when the 8-K reader changes: stored 8-K quarters are read again once
 
 
 def _superseded(accn, filed):

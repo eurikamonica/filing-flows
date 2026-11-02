@@ -3380,3 +3380,90 @@ def test_audit_finds_figures_that_disagree(tmp_path):
     json.dump(d, open(tmp_path / "c" / "1.json", "w"))
     s = audit.run(str(tmp_path), today=dt.date(2026, 11, 2))
     assert s["companies"] == 1 and s["counts"]["fourth"] == 1 and os.path.exists(tmp_path / "audit.json")
+
+
+def test_a_charts_figures_come_from_its_own_filing_before_restated_comparatives():
+    """Pixelworks: its Q2 2025 10-Q tags revenue of $8.25M (and $8.54M for Q2 2024); a year later, the Shanghai business
+    sold and moved to discontinued operations, the Q2 2026 10-Q tags $0.159M as the Q2 2025 comparative. The Q2 2025
+    chart cites its own 10-Q: that filing's figures, and its comparatives on the same basis (facts.version). An
+    amended filing's figure beats the original's; without a filing to prefer, the latest filed wins as before."""
+    from pipeline import facts
+    own, later, amended = "0001040161-25-000043", "0001040161-26-000043", "0001040161-25-000099"
+    rows = [{"start": "2025-04-01", "end": "2025-06-30", "val": 8.25e6, "filed": "2025-08-13", "form": "10-Q", "accn": own},
+            {"start": "2024-04-01", "end": "2024-06-30", "val": 8.535e6, "filed": "2025-08-13", "form": "10-Q", "accn": own},
+            {"start": "2025-04-01", "end": "2025-06-30", "val": 0.159e6, "filed": "2026-08-11", "form": "10-Q", "accn": later},
+            {"start": "2026-04-01", "end": "2026-06-30", "val": 0.2e6, "filed": "2026-08-11", "form": "10-Q", "accn": later}]
+    raw = {"facts": {"us-gaap": {"Revenues": {"units": {"USD": rows}}}}}
+    latest = facts.index_facts(raw)
+    assert latest["Revenues"][("2025-04-01", "2025-06-30")]["val"] == 0.159e6
+    fx = facts.index_facts(raw, accn=own)
+    assert fx["Revenues"][("2025-04-01", "2025-06-30")]["val"] == 8.25e6 and fx["__accn__"] == own
+    assert facts.extract(fx, "2025-06-30")["revenue"] == 8.25e6 and facts.extract(fx, "2024-06-30")["revenue"] == 8.535e6
+    assert facts.extract(latest, "2025-06-30")["revenue"] == 0.159e6
+    # the quarter before, for Q/Q: as its own 10-Q had it (filed before the chart's), not the restated comparative
+    rows += [{"start": "2025-01-01", "end": "2025-03-31", "val": 7.094e6, "filed": "2025-05-14", "form": "10-Q", "accn": "0001040161-25-000027"},
+             {"start": "2025-01-01", "end": "2025-03-31", "val": 0.0, "filed": "2026-05-14", "form": "10-Q", "accn": "0001040161-26-000032"}]
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-03-31")["revenue"] == 7.094e6
+    assert facts.extract(facts.index_facts(raw), "2025-03-31")["revenue"] == 0.0             # the latest: nil
+    rows.append({"start": "2025-04-01", "end": "2025-06-30", "val": 8.0e6, "filed": "2025-10-01", "form": "10-Q/A", "accn": amended})
+    assert facts.index_facts(raw, accn=own)["Revenues"][("2025-04-01", "2025-06-30")]["val"] == 8.0e6
+
+
+def test_sliver_minority_share_after_a_real_one_is_drawn():
+    """Sempra's Q1 2025: minority interests took $2M of $919M, a sliver, after $313M of the quarter before. Net earnings
+    stay the shareholders' figure ($917M, as on every other chart), with the sliver drawn, so the chart agrees with
+    the quarter before's own and compares like with like; a company with no minority interests at all is unchanged."""
+    from pipeline import model, sankey
+    q1 = {"revenue": 3802e6, "costs_total": 3010e6, "oi": 792e6, "pretax": 792e6, "tax": 57e6, "pl": 919e6, "ni": 917e6,
+          "nci": 2e6, "ocf": 900e6, "da": 500e6, "sbc": 10e6, "capex": 1500e6}
+    q4 = {"revenue": 3758e6, "costs_total": 2684e6, "oi": 1074e6, "pretax": 1074e6, "tax": 282e6, "pl": 989e6, "ni": 676e6,
+          "nci": 313e6, "ocf": 800e6, "da": 480e6, "sbc": 10e6, "capex": 1400e6}
+    nodes, links, kind = sankey.build(model.normalize(q1), model.normalize(q4), None)
+    by = {n["id"]: n for n in nodes}
+    assert kind == "profit" and by["net"]["v"] == 917e6 and by["net"]["q"] == 676e6 and by["nci"]["v"] == 2e6
+    alone, _, _ = sankey.build(model.normalize(q1), None, None)
+    by2 = {n["id"]: n for n in alone}
+    assert by2["net"]["v"] == 919e6 and "nci" not in by2
+
+
+def test_a_slipped_scale_loses_to_the_other_versions_of_the_figure():
+    """Smith Midland's Q2 2025 10-Q tags net income as $4,171 (it is $4,171 thousand, beside $26.2M of revenue); its
+    Q3 2025 and Q2 2026 10-Qs tag the quarter's $4.171M. The chart from that 10-Q prefers its own filing's figures,
+    but a version SLIP times apart from the others is a slip: the figure more filings agree with, then the one in
+    scale with the concept's other periods, wins. ProfitLoss tagged with the sign flipped, pre-tax less tax fitting
+    net income to shareholders, is dropped too (facts.odd_one_out), or the chart shows a minority interest."""
+    from pipeline import facts
+    own, q3, q2n = "0001654954-25-009560", "0001654954-25-013097", "0001654954-26-007660"
+    mk = lambda s, e, v, filed, accn, form="10-Q": {"start": s, "end": e, "val": v, "filed": filed, "form": form, "accn": accn}
+    ni = [mk("2025-04-01", "2025-06-30", 4171, "2025-08-14", own), mk("2025-01-01", "2025-06-30", 7498, "2025-08-14", own),
+          mk("2025-01-01", "2025-03-31", 3.327e6, "2025-07-10", "0001654954-25-007941"),
+          mk("2025-04-01", "2025-06-30", 4.171e6, "2025-11-14", q3), mk("2025-04-01", "2025-06-30", 4.171e6, "2026-08-14", q2n),
+          mk("2024-04-01", "2024-06-30", 1.981e6, "2024-08-14", "0001654954-24-010647")]
+    rev = [mk("2025-04-01", "2025-06-30", 26.186e6, "2025-08-14", own), mk("2025-01-01", "2025-06-30", 48.884e6, "2025-08-14", own)]
+    pretax = [mk("2025-04-01", "2025-06-30", 5.482e6, "2025-08-14", own)]
+    tax = [mk("2025-04-01", "2025-06-30", 1.311e6, "2025-08-14", own)]
+    pl = [mk("2025-04-01", "2025-06-30", -4.171e6, "2025-08-14", own)]
+    raw = {"facts": {"us-gaap": {"NetIncomeLoss": {"units": {"USD": ni}}, "Revenues": {"units": {"USD": rev}},
+                                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {"units": {"USD": pretax}},
+                                 "IncomeTaxExpenseBenefit": {"units": {"USD": tax}}, "ProfitLoss": {"units": {"USD": pl}}}}}
+    fx = facts.index_facts(raw, accn=own)
+    r = facts.extract(fx, "2025-06-30")
+    assert r["ni"] == 4.171e6 and r["pl"] == 4.171e6 and r["nci"] is None and r["revenue"] == 26.186e6
+    # one later version only, still a thousand times apart: the one in scale with the other periods
+    raw["facts"]["us-gaap"]["NetIncomeLoss"]["units"]["USD"] = ni[:4]
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")["ni"] == 4.171e6
+
+
+def test_fourth_quarter_kept_when_the_quarters_do_not_add_up_to_nine_months():
+    """Smith Midland's FY2025 capex: $9.338M for the year, $5.382M for nine months, so $3.956M in the fourth quarter.
+    The three quarters derived through the Q2 10-Q's slipped six-month figure ($5 thousand) add up to $7.9M: not
+    the nine months either, so they do not replace the fourth quarter."""
+    from pipeline import facts
+    fx = _fx({"PaymentsToAcquirePropertyPlantAndEquipment": [("2025-01-01", "2025-03-31", 2.4), ("2025-01-01", "2025-06-30", 0.005),
+                                                            ("2025-01-01", "2025-09-30", 5.382), ("2025-01-01", "2025-12-31", 9.338)],
+              "Revenues": [("2025-01-01", "2025-03-31", 22.7), ("2025-04-01", "2025-06-30", 26.2), ("2025-07-01", "2025-09-30", 21.5),
+                           ("2025-01-01", "2025-12-31", 93.4)],
+              "NetIncomeLoss": [("2025-01-01", "2025-03-31", 3.3), ("2025-04-01", "2025-06-30", 4.2), ("2025-07-01", "2025-09-30", 2.9),
+                                ("2025-01-01", "2025-12-31", 12.5)]})
+    raw = facts.extract(fx, "2025-12-31")
+    assert abs(raw["capex"] - 3.956e6) < 1e3 and "capex" not in (raw.get("q4_fixed") or [])
