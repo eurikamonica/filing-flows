@@ -21,7 +21,59 @@ from urllib.parse import quote
 from xml.sax.saxutils import escape as xesc
 
 e = lambda s: html.escape(str(s if s is not None else ""), quote=True)
-KEEP_UPPER = {"AI", "AMD", "AT&T", "BP", "CVS", "HP", "IBM", "II", "III", "IV", "LLC", "LP", "NV", "PLC", "SA", "UPS", "USA", "US", "NVIDIA", "REIT"}
+
+# The site's own X account: the footer link, the twitter:site tag and the Organization's sameAs on every page.
+# Change it here (and in web/index.html) if the account is renamed again.
+SITE_NAME = "Filing Flows"
+X_HANDLE = "FilingFlows"
+X_URL = f"https://x.com/{X_HANDLE}"
+_PAGE_TYPES = {"WebPage", "AboutPage", "CollectionPage", "FAQPage", "ItemPage", "NewsArticle", "Article", "Dataset"}
+
+
+def _origin(url):
+    m = re.match(r"https?://[^/]+", url or "")
+    return m.group(0) if m else ""
+
+
+def organization(base):
+    """Filing Flows itself: one node with a fixed @id, so every page's publisher points at the same site and X account
+    (search engines and AI answers tie filing-flows.com and @FilingFlows together from it)."""
+    return {"@type": "Organization", "@id": f"{base}/#org", "name": SITE_NAME, "alternateName": [X_HANDLE, "filing-flows.com"],
+            "url": f"{base}/", "logo": f"{base}/apple-touch-icon.png", "sameAs": [X_URL]}
+
+
+def with_publisher(jsonld, canonical, title):
+    """The page's structured data plus the Filing Flows Organization, named as publisher of the page. A
+    {"@type": "Organization", "name": "Filing Flows"} written anywhere inside becomes a reference to that one node; a page
+    with no page-type node gets a plain WebPage. Pages without an absolute canonical URL are left as they were."""
+    base = _origin(canonical)
+    if not base:
+        return jsonld
+    ref = {"@id": f"{base}/#org"}
+    is_us = lambda x: isinstance(x, dict) and x.get("@type") == "Organization" and x.get("name") == SITE_NAME
+
+    def walk(x):
+        if is_us(x):
+            return dict(ref)
+        if isinstance(x, dict):
+            return {k: walk(v) for k, v in x.items()}
+        if isinstance(x, list):
+            return [walk(v) for v in x]
+        return x
+    nodes = (jsonld or {}).get("@graph") if isinstance(jsonld, dict) and "@graph" in jsonld else \
+        ([{k: v for k, v in jsonld.items() if k != "@context"}] if jsonld else [])
+    graph = [walk(n) for n in nodes if not is_us(n)]
+    pages = [n for n in graph if isinstance(n, dict) and n.get("@type") in _PAGE_TYPES]
+    if not pages:
+        graph.append({"@type": "WebPage", "name": title, "url": canonical})
+        pages = graph[-1:]
+    for n in pages:
+        n.setdefault("publisher", dict(ref))
+    graph.append(organization(base))
+    return {"@context": "https://schema.org", "@graph": graph}
+
+
+KEEP_UPPER ={"AI", "AMD", "AT&T", "BP", "CVS", "HP", "IBM", "II", "III", "IV", "LLC", "LP", "NV", "PLC", "SA", "UPS", "USA", "US", "NVIDIA", "REIT"}
 
 
 def display_name(name):
@@ -82,20 +134,21 @@ def _signs(body):
 def page(title, desc, canonical, body, depth, image, jsonld=None):
     body = _signs(body)
     up = "../" * depth
+    jsonld = with_publisher(jsonld, canonical, title)
     ld = f'<script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False)}</script>' if jsonld else ""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(title)}</title><meta name="description" content="{e(desc)}"><meta name="robots" content="max-image-preview:large, max-snippet:-1, max-video-preview:-1"><link rel="canonical" href="{e(canonical)}">
 <meta property="og:type" content="article"><meta property="og:site_name" content="Filing Flows"><meta property="og:title" content="{e(title)}">
 <meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{e(canonical)}"><meta property="og:image" content="{e(image)}">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@FilingFlow"><meta name="twitter:title" content="{e(title)}"><meta name="twitter:description" content="{e(desc)}"><meta name="twitter:image" content="{e(image)}">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@{X_HANDLE}"><meta name="twitter:title" content="{e(title)}"><meta name="twitter:description" content="{e(desc)}"><meta name="twitter:image" content="{e(image)}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="icon" href="{up}favicon.svg" type="image/svg+xml"><link rel="icon" href="{up}favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="{up}apple-touch-icon.png">
 <link rel="stylesheet" href="{up}styles.css"><link rel="stylesheet" href="{up}seo.css">{ld}
 </head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}gamma/">Industries</a><a href="{up}chains/">Themes</a><a href="{up}model/">Model</a><a href="{up}daily/">Today</a><a href="{up}disclosures/">Signals</a><a href="{up}events/">8-K events</a><a href="{up}#method">Method</a></nav></header>
 <main class="seo">{body}</main>
-<footer class="seo-foot">Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice. <a href="{up}">filing-flows.com</a> · <a href="https://x.com/FilingFlow" rel="me noopener">Charts posted daily on X: @FilingFlow</a></footer>
+<footer class="seo-foot">Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice. <a href="{up}">filing-flows.com</a> · <a href="{up}about/">About</a> · <a href="{X_URL}" rel="me noopener">Charts posted daily on X: @{X_HANDLE}</a></footer>
 </body></html>"""
 
 
@@ -147,7 +200,7 @@ def license_page(out_dir, base):
             "<p><b>2. As drawn:</b> keep the figures and the Filing Flows mark; do not sell the pictures themselves or present them as your own.</p>"
             "<p>The figures are read automatically from companies' SEC filings (XBRL and earnings releases) and can contain errors; check the filing before relying "
             "on a number. Nothing here is investment advice.</p>"
-            "<p>For other uses — print, a larger size, or many charts at once — write to <a href='https://x.com/FilingFlow' rel='me noopener'>@FilingFlow on X</a>.</p></div>")
+            f"<p>For other uses — print, a larger size, or many charts at once — write to <a href='{X_URL}' rel='me noopener'>@{X_HANDLE} on X</a>.</p></div>")
     os.makedirs(os.path.join(out_dir, "license"), exist_ok=True)
     open(os.path.join(out_dir, "license", "index.html"), "w", encoding="utf-8").write(page(
         "Using Filing Flows charts: free with credit and a link | Filing Flows",
@@ -496,6 +549,44 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
     return urls
 
 
+def about_page(out_dir, base, n_companies):
+    """about/index.html: what the site is, where the numbers come from, how the charts and text are made, the X account
+    and how to reach the owner — the page search engines and AI answers read to describe the site."""
+    url = f"{base}/about/"
+    mail = os.environ.get("CONTACT_EMAIL", "").strip()
+    repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    if re.fullmatch(r"[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,}", mail):
+        contact = f"e-mail <a href='mailto:{e(mail)}'>{e(mail)}</a>"
+    elif re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
+        contact = f"open an issue at <a href='https://github.com/{e(repo)}/issues'>github.com/{e(repo)}</a>"
+    else:
+        contact = f"send a message to <a href='{X_URL}' rel='me noopener'>@{X_HANDLE}</a> on X"
+    count = f"{n_companies:,} US-listed companies" if n_companies else "thousands of US-listed companies"
+    title = "About Filing Flows: SEC filings drawn as Sankey charts"
+    desc = (f"Filing Flows reads every 10-Q, 10-K and earnings release on SEC EDGAR and draws each one as a Sankey chart, "
+            f"from revenue to costs, profit and cash. Where the numbers come from, how the charts are made, and @{X_HANDLE} on X.")
+    body = f"""<p class='crumbs'><a href='../'>Filing Flows</a> › About</p>
+<h1>About Filing Flows</h1>
+<p class='lead'>Filing Flows draws every earnings filing on SEC EDGAR as a Sankey chart: where a company's revenue comes from, what it costs, what is left as profit and how much of it turns into cash.</p>
+<h2>What it is</h2>
+<p>Filing Flows (<a href='../'>filing-flows.com</a>) is an independent website run by an individual developer. It reads US companies' 10-Q and 10-K reports and earnings releases and gives each company a page with its latest quarter drawn as a Sankey, the change from a year and a quarter earlier, and its quarterly history. It covers {count}. Alongside the earnings charts it follows <a href='../m/'>13F fund holdings</a>, <a href='../o/'>officials' stock trades</a> and <a href='../events/'>8-K events</a>.</p>
+<h2>Where the numbers come from</h2>
+<p>Every figure comes from <a href='https://www.sec.gov/edgar/search/' rel='noopener'>SEC EDGAR</a>: the XBRL financial data companies file with the SEC and the filing documents themselves. The site checks EDGAR every 15 minutes and redraws a company's page when it files. Each company page links to the filing it was read from. Company descriptions and the notes on chart lines are quoted from the filings.</p>
+<h2>How the charts and text are made</h2>
+<p>The charts are drawn from the reported numbers. The analysis paragraphs are produced by fixed rules from those numbers; no language model is involved. Figures are read automatically, so errors are possible: when a number looks wrong, the filing linked on the page is the authority. The <a href='../#method'>Method</a> page explains how each line of a chart is built.</p>
+<h2>Follow and share</h2>
+<p>New charts are posted every day on X: <a href='{X_URL}' rel='me noopener'>@{X_HANDLE}</a>. Every chart is free to share with a link to its page, and each company page has an embed code for blogs and newsletters.</p>
+<h2>Not investment advice</h2>
+<p>Filing Flows is not affiliated with the SEC or with any company it covers. Nothing on the site is investment advice.</p>
+<h2>Contact</h2>
+<p>For corrections or questions, {contact}. See also the <a href='../privacy.html'>privacy policy</a> and <a href='../terms.html'>terms</a>.</p>"""
+    ld = {"@context": "https://schema.org", "@type": "AboutPage", "name": title, "url": url, "description": desc,
+          "about": {"@id": f"{base}/#org"}}
+    os.makedirs(os.path.join(out_dir, "about"), exist_ok=True)
+    open(os.path.join(out_dir, "about", "index.html"), "w", encoding="utf-8").write(page(title, desc, url, body, 1, base + "/og.png", ld))
+    return [(url, None)]
+
+
 def model_page(data_dir, out_dir, base):
     """model/: the growth model at four levels - what it is, how it scored out of sample, and its sector and theme forecasts."""
     ix = _load(os.path.join(data_dir, "model", "index.json"))
@@ -625,6 +716,7 @@ def write_pages(data_dir, out_dir, base):
     urls += chain_pages(data_dir, out_dir, base, images)
     urls += gamma_pages(data_dir, out_dir, base, {slug_for(r) for r in latest.values()}, images)
     urls += model_page(data_dir, out_dir, base)
+    urls += about_page(out_dir, base, len(latest))
     urls += license_page(out_dir, base)
     sm = ['<?xml version="1.0" encoding="UTF-8"?>',
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
