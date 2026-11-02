@@ -51,7 +51,7 @@
     // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
     ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\d+% range|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
-    ['opportunity', /\bopportunit|\bup or down\b|\bhigher or lower\b|\brise or fall\b|\bodds\b|\bshort(ing)?\b(?![- ](interest|squeeze|term|sellers?|ratio))|win rate|chances? (of |that )?(a |the )?([a-z$.-]+ )?(rises?|go(es)? up|falls?|go(es)? down|(is|be|ends?) (higher|lower|up|down)|profits?|makes? money)|(probability|chance) of (a )?(profit|gain|rise|fall)|机遇|机会|胜率|做空|涨还是跌|会涨吗|会跌吗|涨的概率|跌的概率|上涨概率|下跌概率|盈利概率|赚钱的概率|买还是卖/i],
+    ['opportunity', /\bwill\b.{1,25}\b(go up|go down|rise|fall|drop|climb|gain|be higher|be lower)\b|\bopportunit|\bup or down\b|\bhigher or lower\b|\brise or fall\b|\bodds\b|\bshort(ing)?\b(?![- ](interest|squeeze|term|sellers?|ratio))|win rate|chances? (of |that )?(a |the )?([a-z$.-]+ )?(rises?|go(es)? up|falls?|go(es)? down|(is|be|ends?) (higher|lower|up|down)|profits?|makes? money)|(probability|chance) of (a )?(profit|gain|rise|fall)|机遇|机会|胜率|做空|涨还是跌|会涨吗|会跌吗|涨的概率|跌的概率|上涨概率|下跌概率|盈利概率|赚钱的概率|买还是卖/i],
     ['rotation', /\brrg\b|rotation|rotating|momentum|quadrant|leading|lagging|weakening|improving|relative strength|rs-?ratio|outperform|underperform|beating the market|markov|next week|轮动|象限|动量|领先|落后|转弱|改善|相对强弱|跑赢|跑输|强于大盘|弱于大盘|马尔科夫|轮出|轮入|下周/i],
     ['credit', /\bdebt\b|credit|default|bankrupt|distress|altman|solven|leverage|balance sheet|债务|违约|信用|破产|偿债|杠杆|利差|还得起债|财务困境|负债/i],
     ['analysts', /analyst|price target|target price|consensus|polymarket|kalshi|wall street|prediction markets?|\btargets?\b|\bstreet\b|\brating\b|分析师|目标价|一致预期|预测市场|华尔街|评级/i],
@@ -83,12 +83,13 @@
     + 'filing filings material materials event events congress senate official officials activist stake holders holder owner owners own owns customer customers supplier suppliers '
     + 'segment segments revenue sales profit margin growth record track meet meets beat beats miss next last first this that these those their there here with from into over '
     + 'under same also just only still very really good great bad big small open close closed live real true data compare versus life care health energy power gold silver '
-    + 'water bank banks home land city star sun sky blue green red black white best').split(' '));
+    + 'water bank banks home land city star sun sky blue green red black white best leading lagging improving weakening reading since sectors companies '
+    + 'company stocks largest smallest anything everything something someone buying selling').split(' '));
   function findCompany(q, ix) {
     const list = (ix && ix.companies) || [];
     if (!list.length) return null;
     const byT = new Map(list.map((c) => [String(c.ticker || '').toUpperCase(), c]));
-    const s = String(q || '');
+    const s = String(q || '').replace(/\b(?:P\/[EBS]|EV\/(?:EBITDA|S(?:ales)?)|S&P(?: 500)?|Q&A)\b/gi, ' ');   // "P/E" is not the ticker P
     const cash = s.match(/\$([A-Za-z][A-Za-z.\-]{0,6})/);
     if (cash && byT.has(cash[1].toUpperCase())) return byT.get(cash[1].toUpperCase());
     for (const [zh, t] of Object.entries(ZH_NAMES)) if (s.includes(zh) && byT.has(t)) return byT.get(t);
@@ -466,7 +467,8 @@
       }
       const named = findCompany(q, ix);
       if (FX.isCompare(q)) {
-        const cos = FX.findCompanies(q, ix, findCompany, ZH_NAMES);       // two companies named: "AMD vs NVDA", "苹果和微软对比"
+        const IN1 = insights(), finder = (s, x) => findCompany(s, x) || (IN1 ? IN1.fuzzyCompany(s, x, WORDS) : null);   // "Google vs Microsoft"
+        const cos = FX.findCompanies(q, ix, finder, ZH_NAMES);           // two companies named: "AMD vs NVDA", "苹果和微软对比"
         if (cos.length === 2) {
           // "NVDA vs AMD free cash flow", "苹果和微软谁持有更多": the same answer for each, one under the other
           const H0 = Object.assign({}, HANDLERS, insights() ? insightHandlers() : {});
@@ -506,7 +508,7 @@
       const fz = named ? null : IN.fuzzyCompany(q, ix, WORDS);       // "appel short interest" is about Apple; "most shorted stocks" is not
       if ((mkt.length || R.STAKES.test(q)) && IN.isMarket(q, named || (IN.marketWords(q) ? null : fz), onPage)) {
         const keys = mkt.length ? mkt.slice(0, 2) : ['stakes'];
-        const parts = (await Promise.all(keys.map((k) => (k === 'stakes' ? R.MK.stakes : R.MK[k])(lg, ix).catch(() => null)))).filter(Boolean);
+        const parts = (await Promise.all(keys.map((k) => (k === 'stakes' ? R.MK.stakes : R.MK[k])(lg, ix, q).catch(() => null)))).filter(Boolean);
         if (parts.length) {
           const asked = new Set(keys);
           const actions = IN.MARKET_ASK.filter(([k]) => !asked.has(k)).slice(0, 3).map(([, en, zh]) => ({ label: lg === 'zh' ? zh : en, question: lg === 'zh' ? zh : en }));
