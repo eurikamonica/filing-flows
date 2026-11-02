@@ -1,0 +1,104 @@
+{
+ "_about": "Business-model tags for the Fair value page's peer comparisons (app/peer_tiers.py). A revenue segment is priced by the peers of its tag: 'overrides' first (a company's own segment names, matched case-insensitively), then each tag's 'patterns' in the order of 'order'; a generic name (Services, Products, Other …) is priced like the company itself. 'groups' are the SIC prefixes of a tag's broad peer pool (empty: its comps are the pool); 'comps' are the selected comparable companies, each with the reason it was chosen (tier 3). 'companies' gives a company's own selected comps for its whole-company multiples. Edit freely: every list is shown on the page with its reasons, and the ledger scores the selected tier against the broad and matched ones.",
+ "order": ["cloud_infra", "advertising", "marketplace", "payments", "subscription_media", "gaming", "software", "semis", "devices", "automotive", "pharma", "medtech", "insurance", "retail", "energy", "aerospace", "utility"],
+ "tags": {
+  "platform_services": {
+   "label": "Digital platform services (app store, subscriptions, licensing, payments)", "short": "Digital platforms",
+   "patterns": [],
+   "groups": ["7370", "7372", "7389", "7841"],
+   "comps": [["GOOGL", "app store, search licensing and advertising: the closest mix of platform revenue"], ["META", "advertising-funded platform at high margins"],
+             ["MSFT", "subscriptions and cloud services sold to a large installed base"], ["NFLX", "consumer video subscriptions"],
+             ["V", "a toll on payments across a network, like the platform's commission"], ["MA", "a toll on payments across a network"],
+             ["ADBE", "consumer and creative software subscriptions"]]
+  },
+  "cloud_infra": {
+   "label": "Cloud infrastructure", "short": "Cloud infrastructure",
+   "patterns": ["\\baws\\b", "azure", "google cloud", "intelligent cloud", "cloud infrastructure", "infrastructure as a service"],
+   "groups": ["7372", "7374", "7370"],
+   "comps": [["MSFT", "Azure"], ["ORCL", "Oracle Cloud Infrastructure"], ["GOOGL", "Google Cloud"], ["AMZN", "AWS"],
+             ["IBM", "hybrid cloud and infrastructure services"]]
+  },
+  "advertising": {
+   "label": "Digital advertising", "short": "Digital advertising",
+   "patterns": ["advertis", "\\bsearch\\b", "family of apps", "youtube"],
+   "groups": ["7370"],
+   "comps": [["GOOGL", "search and video advertising"], ["META", "social advertising"], ["TTD", "programmatic advertising"], ["APP", "mobile app advertising"],
+             ["PINS", "social advertising"], ["SNAP", "social advertising"], ["RDDT", "community advertising"]]
+  },
+  "marketplace": {
+   "label": "Online marketplaces (commissions on third-party sales)", "short": "Online marketplaces",
+   "patterns": ["third-party seller", "marketplace", "commission"],
+   "groups": ["7389", "7370", "4700"],
+   "comps": [["EBAY", "marketplace commissions"], ["ETSY", "marketplace commissions"], ["MELI", "marketplace and seller services"], ["SHOP", "merchant services for sellers"],
+             ["ABNB", "booking commissions"], ["BKNG", "booking commissions"], ["UBER", "commissions on rides and deliveries"], ["DASH", "commissions on deliveries"]]
+  },
+  "payments": {
+   "label": "Payments", "short": "Payments",
+   "patterns": ["payment", "transaction revenue", "processing"],
+   "groups": ["7389"],
+   "comps": [["V", "payment network"], ["MA", "payment network"], ["PYPL", "digital wallets and processing"], ["FIS", "payment processing"], ["GPN", "merchant acquiring"],
+             ["XYZ", "merchant and consumer payments"]]
+  },
+  "subscription_media": {
+   "label": "Media and entertainment subscriptions", "short": "Media subscriptions",
+   "patterns": ["streaming", "\\bmusic\\b", "\\bvideo\\b", "subscription and affiliate"],
+   "groups": ["7841", "4841", "7812"],
+   "comps": [["NFLX", "video subscriptions"], ["DIS", "video subscriptions and affiliate fees"], ["WBD", "video subscriptions and networks"], ["ROKU", "streaming platform"]]
+  },
+  "gaming": {
+   "label": "Video games", "short": "Video games",
+   "patterns": ["\\bxbox\\b", "gaming", "video game"],
+   "groups": ["7372"],
+   "comps": [["TTWO", "video games"], ["RBLX", "game platform"]]
+  },
+  "software": {
+   "label": "Software and software subscriptions", "short": "Software",
+   "patterns": ["software", "saas", "licens", "productivity", "365", "subscription", "cloud services", "digital services", "agentforce", "data 360"],
+   "groups": ["7372"],
+   "comps": []
+  },
+  "semis": {
+   "label": "Semiconductors", "short": "Semiconductors",
+   "patterns": ["semiconductor", "\\bchips?\\b", "data center", "\\bgpu", "compute", "graphics", "hyperscale", "edge computing", "ai clouds"],
+   "groups": ["3674"],
+   "comps": []
+  },
+  "devices": {
+   "label": "Devices and computer hardware", "short": "Devices & hardware",
+   "patterns": ["iphone", "ipad", "\\bmac\\b", "\\bdevices?\\b", "hardware", "wearable", "\\bpcs?\\b", "storage", "networking", "servers?\\b"],
+   "groups": ["357", "3663", "3651"],
+   "comps": []
+  },
+  "automotive": {"label": "Automotive", "short": "Automotive", "patterns": ["automotive", "vehicle", "\\bcars?\\b", "\\btrucks?\\b"], "groups": ["371"], "comps": []},
+  "pharma": {"label": "Pharmaceuticals", "short": "Pharmaceuticals", "patterns": ["pharma", "\\bdrugs?\\b", "therapeut", "oncology", "vaccine", "biolog", "immunology", "cardiometabolic"], "groups": ["283"], "comps": []},
+  "medtech": {"label": "Medical devices", "short": "Medical devices", "patterns": ["medical", "surgical", "diagnostic", "health care equipment"], "groups": ["384"], "comps": []},
+  "insurance": {"label": "Insurance", "short": "Insurance", "patterns": ["insurance", "premium", "underwriting", "reinsurance"], "groups": ["633", "631"], "comps": []},
+  "retail": {"label": "Retail", "short": "Retail", "patterns": ["retail", "online stores", "physical stores", "\\bstores\\b", "grocery", "merchandise"], "groups": ["53", "59"], "comps": []},
+  "energy": {"label": "Oil, gas and refining", "short": "Oil & gas", "patterns": ["\\boil\\b", "\\bgas\\b", "upstream", "downstream", "refining", "midstream", "\\blng\\b"], "groups": ["29", "13"], "comps": []},
+  "aerospace": {"label": "Aerospace and defense", "short": "Aerospace & defense", "patterns": ["aerospace", "defen[cs]e", "aircraft"], "groups": ["372"], "comps": []},
+  "utility": {"label": "Electric and gas utilities", "short": "Utilities", "patterns": ["\\belectric\\b", "utility", "power generation"], "groups": ["491", "492", "493"], "comps": []}
+ },
+ "overrides": {
+  "AAPL": {"Services": "platform_services", "iPhone": "devices", "Mac": "devices", "iPad": "devices", "Wearables, Home and Accessories": "devices"},
+  "AMZN": {"AWS": "cloud_infra", "Third-party seller services": "marketplace", "Advertising services": "advertising", "Subscription services": "subscription_media",
+           "Online stores": "retail", "Physical stores": "retail"},
+  "MSFT": {"Azure": "cloud_infra", "Microsoft Three Six Five Cloud": "software", "Productivity And Server Licensing": "software", "Search And Advertising": "advertising",
+           "XBOX": "gaming", "Industry Solutions": "software", "Windows OEM And Devices": "software", "Frontier And Support Services": "software"},
+  "GOOGL": {"Google Services": "advertising", "Google Cloud": "cloud_infra"},
+  "NVDA": {"Edge Computing": "semis", "Hyperscale": "semis", "AI Clouds, Industrial, & Enterprise": "semis"},
+  "MA": {"Payment network": "payments", "Value-added services and solutions": "payments"},
+  "PYPL": {"Transaction revenues": "payments", "Revenues from other value added services": "payments"},
+  "TSLA": {"Energy generation and storage sales": "utility", "Energy generation and storage leasing": "utility"}
+ },
+ "companies": {
+  "AAPL": {"comps": [["MSFT", "a large installed base sold software and services"], ["GOOGL", "platform economics: app store, licensing, advertising"],
+                     ["META", "consumer platform at high margins"], ["SONY", "consumer electronics and content"], ["DELL", "devices"], ["HPQ", "devices"],
+                     ["LOGI", "accessories"], ["GRMN", "wearables"]]},
+  "MSFT": {"comps": [["ORCL", "enterprise software and cloud infrastructure"], ["GOOGL", "cloud and search advertising"], ["AMZN", "cloud infrastructure"],
+                     ["CRM", "enterprise software subscriptions"], ["ADBE", "software subscriptions"], ["NOW", "enterprise software subscriptions"], ["SAP", "enterprise software"]]},
+  "GOOGL": {"comps": [["META", "advertising"], ["MSFT", "cloud and search"], ["AMZN", "cloud and advertising"], ["TTD", "advertising"], ["PINS", "advertising"], ["SNAP", "advertising"]]},
+  "META": {"comps": [["GOOGL", "advertising"], ["PINS", "social advertising"], ["SNAP", "social advertising"], ["RDDT", "community advertising"], ["TTD", "advertising"], ["APP", "advertising"]]},
+  "AMZN": {"comps": [["WMT", "retail"], ["COST", "retail"], ["MELI", "marketplace and payments"], ["SHOP", "commerce software"], ["MSFT", "cloud"], ["GOOGL", "cloud and advertising"], ["EBAY", "marketplace"]]},
+  "NVDA": {"comps": [["AVGO", "data-center chips"], ["AMD", "GPUs and CPUs"], ["TSM", "leading-edge chips"], ["MRVL", "data-center chips"], ["QCOM", "chips"], ["INTC", "CPUs"], ["MU", "memory for AI servers"]]}
+ }
+}

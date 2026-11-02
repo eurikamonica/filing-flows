@@ -1,5 +1,30 @@
 # Changelog
 
+## Fair value: peers in tiers (broad, matched, selected, fitted), segments by business model, every peer listed and re-filterable
+
+A plain peer median has known blind spots: industry codes group companies by what they make, not how they earn (SIC 7389
+holds Visa, eBay, Uber and Accenture); it treats the company as an average peer, though faster-growing, higher-margin
+businesses earn higher multiples; it mixes stages (pre-profit with mature); and the list behind it was not published.
+app/peer_tiers.py adds, beside the broad median and its weighted version:
+- matched peers (tier 2): a window ladder on industry, stage, size, revenue growth and operating margin — tight (3-digit
+  SIC, the same stage, revenue ¼–4×, growth and margin within 10 points), medium (within 15, 1/10–10×), wide (2-digit
+  SIC, within 25, 1/30–30×) — the first with six peers; the page says which, and why a mega cap finds none;
+- selected comparable companies (tier 3) by business model, each with its reason, in config/peer-map.json (editable);
+- a fitted multiple: ln(multiple) on revenue growth (and, for EV/Sales, operating margin) across the broad peers,
+  ridge-shrunk, read at the company's own figures held inside the group's range (shown only when the fit explains a
+  tenth of the spread or more);
+- revenue segments mapped by business model (the company's override, then rules; a generic name such as "Services" is
+  priced like the company itself instead of as software): Apple's Services by digital-platform peers, Amazon's AWS by
+  cloud providers and its third-party seller services by marketplaces, Microsoft's server licensing no longer as hardware;
+  a sum of the parts at each business model's selected companies;
+- public/peers-list.json: every company's figures the comparisons use (SIC, stage, market value, EV, revenue, growth,
+  margin, trading value, the multiples, quarterly P/E and EV/Sales since 2022), and on each Fair value page an explorer
+  that re-filters them — industry level, stage, size, growth and margin windows, history window, weights, outlier trim —
+  recomputing the median and the value per share, with every peer left out listed with its reason;
+- the monthly ledger now freezes every tier's value and scores it at 3, 6 and 12 months (rank correlation of the
+  value-to-price gap with the return, and the direction hit rate); the page shows the track record. Every new tier is a
+  lens until it has been scored. The valuation guide explains each tier and the blind spots of peer methods.
+
 ## Fair value: weighted peer multiples (size, trading and recency) beside the plain medians
 
 The peer methods (P/E, EV/EBITDA and EV/Sales vs peers, P/FFO vs REIT peers, and the sum of the parts) took the plain
