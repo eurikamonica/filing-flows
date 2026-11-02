@@ -94,6 +94,14 @@ jobs:
         continue-on-error: true
         timeout-minutes: 20
         run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json --eps _eps_data/eps-gaap
+      - name: Move odds headlines (cache/headlines/)
+        # the news headlines that name each company (app/move_headlines.py: Google News's search feed, headline, source,
+        # time and link only): the last week, the last three years a month at a time, the days of its biggest moves; a
+        # budget per run, the market's and the largest companies' first; the next step publishes them with the filings
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 20
+        run: python disclosures/app/paths.py moveheadlines --root pth --universe _research-valuation/public/index.json --queries 550 --minutes 15
       - name: Move odds news (public/moves/n/)
         # the company filings around each day of the move odds (app/move_news.py): EDGAR filing lists (a week old at most)
         # and the 8-Ks filed around the biggest moves (press release headline and key sentences), a budget per run
