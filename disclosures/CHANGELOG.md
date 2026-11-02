@@ -1,5 +1,19 @@
 # Changelog
 
+## Move odds: the news headlines beside the filings
+
+Each case of the Move odds (the days like the one looked at, on company pages and the hub) now shows, beside what the
+company filed with the SEC, the news headlines about it from the close before to that day's close: app/move_headlines.py
+asks Google News's search feed for the headlines naming each company over a window — the last week (every day, for the
+market and the 300 largest companies), a month at a time over the last three years (newest first), and the two days
+around each of its biggest moves since 2008 — and splits a window the feed returns full (100) in two, down to two days.
+Each headline goes on the trading day it could move (before the 16:00 New York close: that day; after: the next; one the
+feed dates only shows on that day and the next). Kept: headlines about the company (its ticker or the distinctive words
+of its name), not the automatic "fund X bought shares" notes or junk sources, reputable sources and headlines about a
+move first, eight a day — only the headline, its source, time and link. 550 searches a run, the market's and the
+largest companies' first; move_news.publish puts them with the filings in public/moves/n/<TICKER>.json (SPY's for the
+market's own days), with the days searched so the table can say "no headline that day".
+
 ## At the highs: how long runs of all-time highs last, how deep the pullback that ends them
 
 app/highs.py (built with the move odds after every US close; public/moves/highs.json and each asset's file → highs)
