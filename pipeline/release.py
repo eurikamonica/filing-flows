@@ -493,6 +493,7 @@ def parse(html, filed, last_end=None, prior_revenue=None):
     if not end:
         raise ValueError("cannot find the quarter end date in the release")
     full = _map_rows(t_is, IS_KEYS, full=True)
+    _ni_from_elsewhere(tables, t_is, m_is, full)
     span = None                                            # an inline-XBRL 6-K's own period length, when it says
     for m in re.finditer(r"\b(20\d\d-\d\d-\d\d) (" + end.isoformat() + r")\b", text[:20000]):
         try:
@@ -527,6 +528,26 @@ def parse(html, filed, last_end=None, prior_revenue=None):
     if rate:
         out["fx_official"] = {"usd": rate, "text": "the release's own US$ column beside its figures (revenue)"}
     return out
+
+
+def _ni_from_elsewhere(tables, t_is, m_is, full):
+    """Net income to shareholders from another table of the release when the income statement stops at net income
+    (Ryan Specialty: "Net income attributable to Ryan Specialty Holdings, Inc." in its summary table only, $36.7M
+    beside $88.0M of net income). The other table must show the same net income in the same columns."""
+    if "ni" in m_is or m_is.get("pl") is None:
+        return
+    for t in tables:
+        if t is t_is:
+            continue
+        m = _map_rows(t, ("pl", "ni", "nci"), full=True)
+        if "ni" in m and "pl" in m and m["pl"][0] == m_is["pl"] and m["ni"][0] != m["pl"][0] \
+                and len(m["ni"][2]) == len(m["pl"][2]) and abs(m["ni"][0]) <= abs(m["pl"][0]) * 1.5:
+            m_is["ni"] = m["ni"][0]
+            full["ni"] = m["ni"]
+            if "nci" in m and "nci" not in m_is:
+                m_is["nci"] = m["nci"][0]
+                full["nci"] = m["nci"]
+            return
 
 
 def depreciation_only(rel):

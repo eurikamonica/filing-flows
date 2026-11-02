@@ -165,3 +165,14 @@ def test_cash_flow_table_in_millions_beside_a_statement_in_thousands():
                                                 "CONSOLIDATED STATEMENTS OF EARNINGS"), "<p>Free Cash Flow</p>", cf)
     r = release.parse(html, dt.date(2026, 10, 21))
     assert r["scale"] == 1e3 and r["cf"]["ocf"] == 43.5e6 and r["cf"]["capex"] == -2.4e6
+
+
+def test_net_income_to_shareholders_from_the_summary_table():
+    """Ryan Specialty: the income statement stops at net income ($88.0M); the release's summary table has "Net income
+    attributable to Ryan Specialty Holdings, Inc." ($36.7M). The shareholders' figure comes from there."""
+    summary = _table([("Total revenue", "64,601", "51,242"), ("Net income", "9,860", "2,184"),
+                      ("Net income attributable to Ryan Specialty Holdings, Inc.", "4,100", "1,900")], "GAAP financial measures")
+    html = _doc("<p>(In thousands)</p>", summary, _table(IS, "CONSOLIDATED STATEMENTS OF INCOME"))
+    r = release.parse(html, dt.date(2026, 10, 21))
+    assert r["is"]["pl"] == 9860e3 and r["is"]["ni"] == 4100e3
+    assert r["labels"]["ni"].startswith("net income attributable to ryan")
