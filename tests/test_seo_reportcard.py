@@ -38,7 +38,7 @@ def test_pages(tmp_path):
       'history': [{'quarter': q, 'reported': r, 'est': 1, 'act': a, 'surprise': a - 1, 'beat': int(a > 1), 'move': m, 'excess': m / 2} for q, r, a, m in
                   [('2025-09-30', '2025-10-20', 1.1, .04), ('2025-12-31', '2026-01-25', .9, -.06), ('2026-03-31', '2026-04-24', 1.2, .02), ('2026-06-30', '2026-07-24', 1.05, .01)]]})
     w(s / 'data' / 'guidance-record' / '1.json', {'metrics': [{'name': 'Revenue', 'metric': 'revenue', 'hits': {'better': 'higher'}, 'rows': [
-        {'label': l, 'actual': a, 'vsMid': 5, 'guides': [{'lo': 90e6, 'hi': 100e6}]} for l, a in [('Q2 2026', 105e6), ('Q1 2026', 99e6), ('Q4 2025', 97e6), ('Q3 2025', 101e6)]]}]})
+        {'label': l, 'actual': a, 'outcome': 'above' if a > 100e6 else 'within', 'vsMid': 5, 'guides': [{'lo': 90e6, 'hi': 100e6}]} for l, a in [('Q2 2026', 105e6), ('Q1 2026', 99e6), ('Q4 2025', 97e6), ('Q3 2025', 101e6)]]}]})
     assert R.write(str(s), 'https://example.com') == 1
     p = (s / 'c' / 'aaa' / 'report-card' / 'index.html').read_text()
     assert 'beat the analysts&#x27; EPS estimate in 3 of its last 4 reports (75%)' in p and '<td>Q2 2026</td>' in p and '$90M–$100M' in p and '(above)' in p
