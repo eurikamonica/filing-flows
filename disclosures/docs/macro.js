@@ -101,3 +101,67 @@ function macSeries(o){
   return s+'</svg></div>'}).join('');
  return `<div class="rot-multiples mac-grid">${panels}</div>`;
 }
+
+/* ---------- Macro release calendar (Rotation → "Macro release calendar"). Data: data/market/history/macro-calendar.json
+   (app/macro_calendar.py on the rotation-history branch): every US data release since 1995 with its clock time (ET), what
+   it printed that day (before any revision), the day's change in the 2-year and 10-year Treasury yields and SPY's return;
+   the FOMC's statements; the release days ahead; and how much each release's days move SPY against quiet days. ---------- */
+const MCAL_SPAN=[['1','Last 12 months'],['3','Last 3 years'],['10','Last 10 years'],['all','Since 1995']];
+const MCAL_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function mcalDay(d){const t=new Date(d+'T12:00:00Z');return `${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][t.getUTCDay()]} ${MCAL_MON[t.getUTCMonth()]} ${t.getUTCDate()}, ${t.getUTCFullYear()}`}
+function mcalPeriod(D,e){
+ if(!e.period)return '';
+ const s=(D.releases[e.release]||{}).series||[],freq=((D.series||{})[s[0]]||{}).freq,[y,m,d]=e.period.split('-').map(Number);
+ return freq==='q'?`Q${Math.floor((m-1)/3)+1} ${y}`:freq==='w'?`week to ${MCAL_MON[m-1]} ${d}`:`${MCAL_MON[m-1]} ${y}`;
+}
+const mcalSign=(v,d)=>(v>0?'+':v<0?'−':'')+fmt(Math.abs(v),d);
+function mcalHead(D,e){
+ const v=e.values||{};
+ if(e.release==='fomc')return [v.kind&&v.kind!=='meeting'?v.kind:'statement',v.sep?'projections':'',v.presser?'press conference':'',v.minutes?'minutes out '+v.minutes:''].filter(Boolean).map(esc).join(' · ');
+ const parts=Object.keys(v).map(sid=>{const S=(D.series||{})[sid]||{},h=v[sid][1],yoy=v[sid][4];if(h==null)return '';
+  const name=esc(S.short||sid);
+  if(S.headline==='pct')return `${name} ${mcalSign(h,1)}%${yoy!=null&&/CPI|PCE/.test(S.short||'')?` <span class="muted">(${fmt(yoy,1)}% y/y)</span>`:''}`;
+  if(S.headline==='ann')return `${name} ${mcalSign(h,1)}% <span class="muted">annualized</span>`;
+  if(S.headline==='chg')return `${name} ${mcalSign(h,0)}k`;
+  return `${name} ${fmt(h,S.decimals||0)}${S.unit==='%'?'%':S.unit==='k'?'k':''}`}).filter(Boolean);
+ return (e.kind==='revision'?'<span class="muted">revised:</span> ':'')+parts.join(' · ');
+}
+function mcalRevised(D,e){                             // the reported change as printed → the same change on today's data
+ if(e.release==='fomc'||e.kind!=='first')return '';
+ return Object.keys(e.values||{}).map(sid=>{const S=(D.series||{})[sid]||{},h=e.values[sid][1],n=e.values[sid][5];if(h==null||n==null)return '';
+  const d=S.headline==='chg'?0:S.headline==='lvl'?(S.decimals||0):1,unit=S.headline==='chg'||S.unit==='k'?'k':S.headline==='lvl'?(S.unit==='%'?'%':''):'%';
+  const f=v=>(S.headline==='lvl'?fmt(v,d):mcalSign(v,d))+unit;
+  return Math.abs(n-h)<(S.headline==='chg'?0.5:S.headline==='lvl'?Math.pow(10,-d)/2:0.05)?'':`${esc(S.short||sid)} ${f(h)} → <b>${f(n)}</b>`}).filter(Boolean).join(' · ')||'<span class="muted">unchanged</span>';
+}
+const mcalBp=v=>v==null?'<span class="muted">—</span>':`<span class="${v>0?'positive':v<0?'negative':''}">${mcalSign(v,1)}</span>`;
+const mcalSpy=v=>v==null?'<span class="muted">—</span>':`<span class="${v>0?'positive':v<0?'negative':''}">${mcalSign(100*Math.expm1(v/1e4),2)}%</span>`;
+function macroCalendarView(){
+ const bar=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}`;
+ const g=marketGate('history/macro-calendar','The macro release calendar');
+ if(!g.data)return bar+`</div><div class="explain">The calendar is built by the “Rotation history” workflow: first prints from ALFRED (it needs the repository secret FRED_API_KEY) and the FOMC’s statements from federalreserve.gov.</div>`+g.html;
+ const D=g.data,F=D.fields||[];
+ if(!D._ev)D._ev=(D.events||[]).map(r=>Object.fromEntries(F.map((f,i)=>[f,r[i]])));
+ const rels=Object.keys(D.releases||{});
+ state.mcrel=rels.includes(state.mcrel)?state.mcrel:'';
+ state.mcspan=MCAL_SPAN.some(x=>x[0]===state.mcspan)?state.mcspan:'1';
+ const name=k=>(D.releases[k]||{}).name||k;
+ let out=bar+field('mcrel','Release',[['','Every release'],...rels.map(k=>[k,name(k)])],state.mcrel)+field('mcspan','Period',MCAL_SPAN,state.mcspan)+'</div>';
+ const onFile=Object.values(D.series||{}).filter(s=>s.on_file).length;
+ out+=`<div class="explain">When each US data release came out (Eastern time), what it <b>printed that day</b> — before the revisions that came later — and how the 2-year and 10-year Treasury yields and SPY moved that day; the FOMC’s statements too. The day’s moves are close to close: an 8:30 a.m. release comes before the open, so the day is its first full reaction. Release days are the days ALFRED first held each value, checked against the agencies’ release calendars.${onFile?'':' <b>First prints are not on file yet</b>: they come from the FRED API (repository secret FRED_API_KEY); the FOMC statements below do not need it.'}</div>`;
+ const up=(D.upcoming||[]).filter(u=>!state.mcrel||u[2]===state.mcrel).slice(0,24);
+ if(up.length)out+=`<div class="panel"><h3>Ahead</h3><p class="sub">Scheduled release days (FRED’s release calendar) and FOMC statements, the next ${up.length}.</p><div class="tablebox"><table><thead><tr><th>Day</th><th>Time (ET)</th><th>Release</th><th></th></tr></thead><tbody>${up.map(u=>`<tr><td>${esc(mcalDay(u[0]))}</td><td class="num">${esc(u[1]||'—')}</td><td>${esc(name(u[2]))}</td><td class="muted">${u[2]==='fomc'&&u[3]?esc([u[3].kind!=='meeting'?u[3].kind:'',u[3].sep?'with projections':''].filter(Boolean).join(' · ')):''}</td></tr>`).join('')}</tbody></table></div></div>`;
+ const last=D._ev.length?D._ev[D._ev.length-1].date:'';
+ const cut=state.mcspan==='all'||!last?'':(Number(last.slice(0,4))-Number(state.mcspan))+last.slice(4);
+ const ev=D._ev.filter(e=>(!state.mcrel||e.release===state.mcrel)&&e.date>cut).slice().reverse();
+ const shown=ev.slice(0,400);
+ out+=`<div class="panel"><h3>Release days</h3><p class="sub">${fmt(ev.length)} release day${ev.length===1?'':'s'}${ev.length>shown.length?`, the latest ${shown.length} shown`:''}. Yields in basis points; SPY’s return that day.${D.markets&&D.markets.spy?'':' SPY is joined once the hub’s daily returns are published.'} Faded rows are not on the agency’s calendar (an archive date, not a release): leave them out of event studies.</p>`
+  +`<div class="tablebox"><table><thead><tr><th>Day</th><th>Time (ET)</th><th>Release</th><th>Period</th><th>Printed that day</th><th>Same figure today</th><th>2-yr</th><th>10-yr</th><th>SPY</th></tr></thead><tbody>`
+  +shown.map(e=>`<tr${e.cal===0?' style="opacity:.55"':''}><td>${esc(mcalDay(e.date))}</td><td class="num">${esc(e.time||'—')}</td><td>${esc(name(e.release))}</td><td>${esc(mcalPeriod(D,e))}</td><td>${mcalHead(D,e)}</td><td>${mcalRevised(D,e)}</td><td class="num">${mcalBp(e.y2)}</td><td class="num">${mcalBp(e.y10)}</td><td class="num">${mcalSpy(e.spy)}</td></tr>`).join('')
+  +`</tbody></table></div></div>`;
+ const st=D.stats||{},sk=Object.keys(st).filter(k=>!state.mcrel||k===state.mcrel);
+ if(sk.length)out+=`<div class="panel"><h3>Do release days move the market?</h3><p class="sub">SPY’s and the 2-year yield’s average absolute move on each release’s days against the <b>quiet days</b> — trading days with no release and no FOMC statement — over the same years. A ratio above 1 means the release moves the market more than an ordinary day.</p><div class="tablebox"><table><thead><tr><th>Release</th><th>Days</th><th>Since</th><th>SPY |move|, its days</th><th>quiet days</th><th>Ratio</th><th>SPY average, its days</th><th>2-yr |move| (bp), its days</th><th>quiet days</th></tr></thead><tbody>`
+  +sk.sort((a,b)=>(st[b].ratio||0)-(st[a].ratio||0)).map(k=>{const s=st[k],pc=v=>v==null?'—':fmt(v/100,2)+'%';return `<tr><td>${esc(name(k))}</td><td class="num">${fmt(s.days)}</td><td class="num">${esc((s.from||'').slice(0,4))}</td><td class="num">${pc(s.spy_abs)}</td><td class="num">${pc(s.spy_abs_quiet)}</td><td class="num"><b>${s.ratio==null?'—':fmt(s.ratio,2)+'×'}</b></td><td class="num">${s.spy_mean==null?'—':mcalSign(s.spy_mean/100,3)+'%'}</td><td class="num">${s.y2_abs==null?'—':fmt(s.y2_abs,1)}</td><td class="num">${s.y2_abs_quiet==null?'—':fmt(s.y2_abs_quiet,1)}</td></tr>`}).join('')
+  +`</tbody></table></div></div>`;
+ out+=`<p class="muted" style="font-size:12px">${esc(D.note||'')} ${esc((D.markets||{}).note||'')} Sources: ${esc(D.source||'')}. Built ${esc((D.generated_at||'').slice(0,16).replace('T',' '))} UTC. Download: <a href="data/market/history/macro-calendar.json">macro-calendar.json</a> · <a href="data/market/history/macro-firsts.json">macro-firsts.json</a> (every period’s first print, the day it was printed and today’s value).</p>`;
+ return out;
+}

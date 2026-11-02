@@ -14,7 +14,7 @@ const ROT_SERIES=['var(--rot-1)','var(--rot-2)','var(--rot-3)'];
 const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['12','12 quarters'],['16','16 quarters'],['24','24 quarters'],['40','40 quarters']];
 const ROT_TRAIL_M=[['6','6 months'],['12','12 months'],['24','24 months'],['48','48 months'],['60','60 months'],['120','120 months']];
 const ROT_HIST=[['recent','Recent: 16 quarters · 48 months'],['long','Long: since 2010 · months since 2008']];
-const ROT_VIEWS=[['clock','Momentum clock'],['rrg','RRG — relative rotation (2-D, 3-D, 4-D)'],['ind','Industry RRG — every industry: Markov odds, replayed paths, the move into each quadrant'],['research','Rotation research — quadrant crossings, resistance, lagging rebounds (sectors, indices, stocks; weekly and daily)'],['3d','3-D / 4-D momentum clock (drag to turn, play for time)'],['solar','Solar system'],['solar3d','Solar system 3-D / 4-D (drag to turn)'],['galaxy','Galaxy — sectors as galaxies, companies as stars (weekly)'],['track','Forecast track record — every published forecast vs what happened'],['macro','Macro clock — growth × inflation (economic data since 2010)'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
+const ROT_VIEWS=[['clock','Momentum clock'],['rrg','RRG — relative rotation (2-D, 3-D, 4-D)'],['ind','Industry RRG — every industry: Markov odds, replayed paths, the move into each quadrant'],['research','Rotation research — quadrant crossings, resistance, lagging rebounds (sectors, indices, stocks; weekly and daily)'],['3d','3-D / 4-D momentum clock (drag to turn, play for time)'],['solar','Solar system'],['solar3d','Solar system 3-D / 4-D (drag to turn)'],['galaxy','Galaxy — sectors as galaxies, companies as stars (weekly)'],['track','Forecast track record — every published forecast vs what happened'],['macro','Macro clock — growth × inflation (economic data since 2010)'],['mcal','Macro release calendar — release days, first prints, market moves'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
 const ROT_SIMPLE=new Set(['rs','scan','map','heat','breadth','corr']);     // views without the x / y / z, scale and smoothing controls
 const ROT_SCALES=[['raw','As reported'],['log','Signed log (tames outliers)'],['rank','Rank within the period (0–100)'],['z','Standard score within the period']];
 const ROT_SMOOTH=[['none','None'],['ewma','Exponential (recent weighs more)'],['ma','Moving average'],['holt','Holt (level + trend)'],['kalman','Kalman (noise-filtered level)'],['median','Rolling median (ignores spikes)']];
@@ -232,6 +232,7 @@ function rotationView(){
  if(state.rview==='galaxy')return out+galaxyView();
  if(state.rview==='track')return out+ledgerView();
  if(state.rview==='macro')return out+macroView();
+ if(state.rview==='mcal')return out+macroCalendarView();
  state.rhist=state.rhist==='long'&&state.rview!=='scan'?'long':'recent';
  const long=state.rhist==='long';
  let g=marketGate('rotation','Rotation charts');if(!g.data)return out+`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}</div>`+g.html;
@@ -906,7 +907,7 @@ function rotToggle(){
 }
 function bindRotSuns(){document.querySelectorAll('#workspace [data-rsec]').forEach(b=>b.onclick=()=>{rotStop();state.rsec=b.dataset.rsec;state.rview=state.rview==='scan'?'solar':state.rview;render()})}
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
  {const dd=document.getElementById('rrgl-hist');if(dd)dd.ontoggle=()=>{if(state.rrglopen!==dd.open){state.rrglopen=dd.open;if(dd.open)render()}}}
  if($('rrglcsv'))$('rrglcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.csv)||[];downloadCSV();exported=keep};
  document.querySelectorAll('#workspace a[data-rview]').forEach(a=>a.onclick=e=>{e.preventDefault();rotStop();state.rview=a.dataset.rview;render();scrollTo({top:0,behavior:'smooth'})});

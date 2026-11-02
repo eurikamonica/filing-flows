@@ -88,14 +88,25 @@ jobs:
       - name: Build public/ (RRG lines, ticker files, the long momentum clock)
         timeout-minutes: 12
         run: python disclosures/app/rotation_history.py build --root hist --site-data site --data disclosures/docs/data
-      - name: Macro data (FRED, as published; public/macro.json)
+      - name: Macro data (FRED, as published; public/macro.json) and the release calendar (public/macro-calendar.json)
         # Rates, curve, credit spread, VIX, dollar, oil, financial conditions, claims, payrolls, production, retail,
         # housing, sentiment, CPI / core / PCE, M2 — each placed at its publication date (app/macro_history.py).
-        timeout-minutes: 6
+        # The release calendar (app/macro_calendar.py): ALFRED first prints and release days (FRED API, FRED_API_KEY;
+        # cache/macro-rt, refreshed every 6 hours) and the FOMC's statements (federalreserve.gov; cache/fomc), joined with
+        # the day's 2-year / 10-year yield change and SPY's return (the hub's daily returns, research-paths). The macro
+        # clock then reads payrolls, unemployment, claims, production, retail, housing and prices as first printed.
+        timeout-minutes: 12
         continue-on-error: true
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: |
           python -m pip install --quiet numpy
           python disclosures/app/macro_history.py fetch --root hist
+          python disclosures/app/macro_calendar.py fetch --root hist || echo "::warning::macro calendar: fetch failed (the calendar keeps what is on file)"
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          curl -fsSL --retry 3 --retry-delay 5 "${site%/}/disclosures/data/research/paths/moves/a/SPY.json" -o site/SPY.json \
+            || echo "SPY daily returns not published yet: the calendar is built without SPY"
+          python disclosures/app/macro_calendar.py build --root hist --spy site/SPY.json || echo "::warning::macro calendar: build failed"
           python disclosures/app/macro_history.py build --root hist
       - name: Next-step forecasts and the galaxy (public/chaos-forecast*.json, chaos-rrg.json, galaxy.json)
         # Rotation → "Next step": arrows, cones and the price read from them. The weekly RRG walk-forward that scores the
