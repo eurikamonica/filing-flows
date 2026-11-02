@@ -13,9 +13,11 @@
                      series, each standardised with data up to that month only), their 6-month momentum and the phase;
                      a walk-forward forecast of next month's point with an 80% range and the error of every past one
 
-  Caveat: FRED serves today's vintage, so revised series (payrolls, industrial production, retail sales, PCE) carry
-  later revisions; the publication lag is respected, the revision is not. Market series (yields, spreads, VIX,
-  the dollar, oil) are never revised.
+  Revisions: where app/macro_calendar.py has fetched a series' ALFRED real-time history (cache/macro-rt/, FRED_API_KEY),
+  each day reads the value as printed by then, from the series' first vintage on. Otherwise FRED serves today's
+  vintage, so revised series (payrolls, industrial production, retail sales, PCE) carry later revisions; the
+  publication lag is respected, the revision is not. Market series (yields, spreads, VIX, the dollar, oil) are never
+  revised.
 
     python app/macro_history.py fetch --root hist
     python app/macro_history.py build --root hist
@@ -222,34 +224,56 @@ def load_cache(root):
     return out
 
 
-def features(raw, days):
-    """{key: array over days} for FEATURES, each on the as-known basis."""
+def features(raw, days, rt=None):
+    """{key: array over days} for FEATURES, each on the as-known basis. rt: {series id: its real-time history}
+    (macro_calendar.load_known): from the series' first ALFRED vintage on, a day reads the value printed by then —
+    revisions published later are not used; before it (and for series without one) the latest vintage, placed at
+    period end + lag, as before."""
     F = {}
     for key, _, _, how in FEATURES:
         kind, sid = how[0], how[1]
-        if sid not in raw:
+        real = (rt or {}).get(sid)
+        if sid not in raw and real is None:
             continue
         _, _, freq, lag, _ = SERIES[sid]
-        obs = raw[sid]
-        now = as_of(obs, freq, lag, days)
+        obs = raw.get(sid, [])
+
+        def at(back, obs=obs, freq=freq, lag=lag, real=real):
+            ds = days if not back else [d - dt.timedelta(days=back) for d in days]
+            v = as_of(obs, freq, lag, ds)
+            if real is not None:
+                k = real.known(ds)
+                v = np.where(np.isfinite(k), k, v)
+            return v
+        now = at(0)
         if kind == 'lvl':
             F[key] = now
         elif kind == 'chg':
-            F[key] = now - as_of_lagged(obs, freq, lag, days, 7 * how[2])
+            F[key] = now - at(7 * how[2])
         elif kind == 'pct':
-            then = as_of_lagged(obs, freq, lag, days, 7 * how[2] if how[2] != 52 else 365)
+            then = at(7 * how[2] if how[2] != 52 else 365)
             with np.errstate(all='ignore'):
                 F[key] = 100 * (now / then - 1)
         elif kind == 'pct4':                      # 4-week average of a weekly series, year on year
-            def avg4(shift):
-                return np.nanmean(np.stack([as_of_lagged(obs, freq, lag, days, shift + 7 * k) for k in range(4)]), 0)
+            def avg4(shift, at=at):
+                with np.errstate(all='ignore'):
+                    return np.nanmean(np.stack([at(shift + 7 * k) for k in range(4)]), 0)
             with np.errstate(all='ignore'):
                 F[key] = 100 * (avg4(0) / avg4(365) - 1)
         elif kind == 'sahm':                      # unemployment minus its low over the past 12 months (as known)
-            past = np.stack([as_of_lagged(obs, freq, lag, days, 30 * k) for k in range(13)])
+            past = np.stack([at(30 * k) for k in range(13)])
             with np.errstate(all='ignore'):
                 F[key] = now - np.nanmin(past, 0)
     return F
+
+
+def real_time(root):
+    """{series id: real-time history} for the series app/macro_calendar.py has fetched from ALFRED ({} without them)."""
+    try:
+        import macro_calendar as MC
+    except ImportError:
+        return {}
+    return MC.load_known(root, {sid: s[2] for sid, s in SERIES.items() if s[2] in ('w', 'm', 'q')})
 
 
 def weekly_grid(until):
@@ -401,23 +425,31 @@ def build(root, today=None, verbose=True):
             print('macro build: no cached series; skipped', flush=True)
         return None
     today = today or dt.date.today()
+    rt = real_time(root)                          # first prints (ALFRED) where app/macro_calendar.py has them
     weeks = weekly_grid(today - dt.timedelta(days=(today.weekday() - 4) % 7))
-    Fw = features(raw, weeks)
+    Fw = features(raw, weeks, rt)
     months = month_ends(dt.date(1995, 1, 1), today)
-    Fm = features(raw, months)
+    Fm = features(raw, months, rt)
     w0 = next(i for i, d in enumerate(weeks) if d >= dt.date(2009, 1, 1))
     doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'source': 'FRED, Federal Reserve Bank of St. Louis',
            'series': {sid: {'label': s[0], 'unit': s[1], 'freq': s[2], 'lag_days': s[3], 'group': s[4],
                             'first': str(raw[sid][0][0]) if sid in raw and raw[sid] else None,
-                            'last': str(raw[sid][-1][0]) if sid in raw and raw[sid] else None} for sid, s in SERIES.items()},
+                            'last': str(raw[sid][-1][0]) if sid in raw and raw[sid] else None,
+                            'basis': ('as first printed (ALFRED) from ' + rt[sid].first_vintage) if sid in rt else
+                                     ('latest vintage' if s[2] in ('w', 'm', 'q') else 'market data (not revised)')}
+                      for sid, s in SERIES.items()},
            'features': [{'key': k, 'label': l, 'unit': u, 'series': h[1], 'group': SERIES[h[1]][4]} for k, l, u, h in FEATURES if k in Fw],
            'weekly': {'start': str(weeks[w0]), 'grid_index0': w0, 'data': {k: _r(v[w0:]) for k, v in Fw.items()}},
            'monthly': {'months': [d.strftime('%Y-%m') for d in months], 'data': {k: _r(v) for k, v in Fm.items()}},
            'clock': clock(Fm, months),
            'levels': levels(raw, until=today),
-           'note': ('Every value is placed at the day it was published (period end plus the usual release lag), so a chart '
-                    'or a model reading a week sees only what was public that week. FRED serves the latest vintage: '
-                    'revised series (payrolls, industrial production, retail sales, PCE) include later revisions.')}
+           'note': ('Every value is placed at the day it was published, so a chart or a model reading a week sees only what '
+                    'was public that week. ' + (
+                        'Series with ALFRED real-time data (' + ', '.join(sorted(rt)) + ') read the value as printed by '
+                        'then — later revisions are not used — from their first vintage on; before it, and for the other '
+                        'series, FRED\'s latest vintage placed at period end plus the usual release lag.' if rt else
+                        'FRED serves the latest vintage (period end plus the usual release lag): revised series (payrolls, '
+                        'industrial production, retail sales, PCE) include later revisions.'))}
     out = root / 'public' / 'macro.json'
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, separators=(',', ':'), allow_nan=False), encoding='utf-8')
