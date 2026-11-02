@@ -6,7 +6,9 @@
               lows, quality, more charts). Each is drawn off-screen with the context a page gives it.
    2 Charts   every chart they drew (an <svg> or a <canvas> of a useful size, titled by the heading above it) as a
               thumbnail: tick the ones to use — the order you tick them is their order in the picture; titles editable.
-   3 Picture  columns, size (natural, X 16:9, square, 4:5), title and subtitle → PNG, JPG or a copied image.
+   3 Picture  template (cards, as the Move odds picture; or plain), explanations (short, full or none — the page's own
+              words under each chart's heading, editable), columns, size (natural, X 16:9, square, 4:5), title and
+              subtitle → PNG, JPG or a copied image.
    A chart is drawn the way chart-share.js draws one (every computed style written into the SVG), a Sankey by its own
    exporter (window.Sankey). Everything happens in the browser; nothing is uploaded.
    window.ComposerView.render(el, { ticker, cik?, company?, hub, site?, here? }) */
@@ -48,6 +50,7 @@
 .cmp-card.on{border-color:var(--ink,#1d1d1b);box-shadow:0 0 0 1px var(--ink,#1d1d1b) inset}.cmp-card img{width:100%;height:120px;object-fit:contain;background:var(--bg,#fff);border-radius:6px;display:block}
 .cmp-card .cmp-n{position:absolute;top:6px;right:6px;min-width:22px;height:22px;border-radius:11px;background:var(--ink,#1d1d1b);color:var(--bg,#fff);font-size:12px;font-weight:600;display:none;align-items:center;justify-content:center}
 .cmp-card.on .cmp-n{display:flex}.cmp-card .cmp-t{font-size:12.5px;font-weight:600;margin:6px 0 0;line-height:1.35}.cmp-card .cmp-v{font-size:11.5px;color:var(--muted,#6b6a66)}
+.cmp-card textarea{width:100%;box-sizing:border-box;font:inherit;font-size:12px;line-height:1.4;margin-top:4px;padding:3px 6px;border:1px solid var(--line,#ccc);border-radius:6px;background:var(--bg,#fff);color:inherit;resize:vertical}
 .cmp-card input[type=text]{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;margin-top:6px;padding:3px 6px;border:1px solid var(--line,#ccc);border-radius:6px;background:var(--bg,#fff);color:inherit}
 .cmp-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 14px;margin:6px 0}.cmp-form label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--muted,#6b6a66)}
 .cmp-form input,.cmp-form select{font:inherit;font-size:13.5px;padding:5px 8px;border:1px solid var(--line,#ccc);border-radius:8px;background:var(--bg,#fff);color:var(--ink,inherit)}
@@ -102,10 +105,17 @@
     }
   }
   const HEAD = 'h1,h2,h3,h4,h5,h6';
-  function titleOf(chart, root) {
-    let t = '';
-    root.querySelectorAll(HEAD).forEach((h) => { if (h.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING) t = h.textContent; });
-    return t.replace(/\s+/g, ' ').trim().slice(0, 110);
+  const clean = (t) => String(t || '').replace(/\s+/g, ' ').trim();
+  function headingOf(chart, root) {
+    let h0 = null;
+    root.querySelectorAll(HEAD).forEach((h) => { if (h.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING) h0 = h; });
+    return h0;
+  }
+  // the explanation the page gives a chart: the paragraphs between its heading and the chart (the view's own words)
+  function captionOf(chart, root, h) {
+    const after = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return [...root.querySelectorAll('p')].filter((p) => (!h || after(h, p)) && after(p, chart) && !p.contains(chart) && !p.closest('label,button,details'))
+      .slice(h ? 0 : -1).map((p) => clean(p.textContent)).filter((t) => t.length > 12 && !/^(Loading|Reading)/.test(t)).join(' ').slice(0, 900);
   }
   // the charts a view drew: <svg> / <canvas> at least 260 × 110 on the page, not inside another one
   function chartsIn(root, src) {
@@ -115,11 +125,12 @@
       const r = e.getBoundingClientRect();
       if (r.width < 260 || r.height < 110) return;
       if (e.tagName.toLowerCase() === 'canvas' && blank(e)) return;
-      let title = '', sub = e.getAttribute('aria-label') || '', source = '';
+      const h = headingOf(e, root);
+      let title = '', sub = captionOf(e, root, h) || clean(e.getAttribute('aria-label')), source = '';
       const box = e.closest('[data-ffs-chart]'), spec = box && window.FFShare && window.FFShare.specs && window.FFShare.specs.get(box.getAttribute('data-ffs-chart'));
-      if (spec) { title = spec.title || ''; sub = spec.subtitle || sub; source = spec.source || ''; }
-      title = title || titleOf(e, root) || src[1];
-      out.push({ kind: 'el', el: e, view: src[1], title, sub: sub.slice(0, 160), source });
+      if (spec) { title = spec.title || ''; sub = clean(spec.subtitle) || sub; source = spec.source || ''; }
+      title = (title || clean(h && h.textContent) || src[1]).slice(0, 110);
+      out.push({ kind: 'el', el: e, view: src[1], title, sub, source });
     });
     const seen = {};                                    // a title the view repeats (one chart per comparison): numbered
     out.forEach((c) => { seen[c.title] = (seen[c.title] || 0) + 1; if (seen[c.title] > 1) c.title += ` (${seen[c.title]})`; });
@@ -185,58 +196,106 @@
     if (maxLines && out.length > maxLines) { out.length = maxLines; out[maxLines - 1] = out[maxLines - 1].replace(/\s*\S*$/, '') + ' …'; }
     return out;
   }
-  // the picture: a title block, the charts in a grid (each with its title), the sources and the site's name
-  function compose(items, o) {
-    const C = colors(), S = 2, pad = 36, gap = 28, n = items.length;
-    const cols = o.cols === 'auto' ? (n <= 1 ? 1 : n <= 4 ? 2 : 3) : Math.max(1, Math.min(4, +o.cols || 1));
-    const tileW = n === 1 && cols === 1 ? Math.max(720, Math.min(1400, Math.round(items[0].w))) : 760;
+  // the explanation at the length asked for: 'short' its first sentences (about 170 characters), 'full' all of it
+  function textOf(t, mode) {
+    t = clean(t);
+    if (!t || mode === 'none') return '';
+    if (mode === 'full') return t;
+    const ss = t.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [t];
+    let out = '';
+    for (const x of ss) { if (out && (out + x).length > 170) break; out += x; }
+    return clean(out.length > 220 ? out.slice(0, 200).replace(/\s+\S*$/, '') + ' …' : out);
+  }
+  /* The templates. "cards" — the Move odds picture: each chart on a rounded card with its title and explanation, a
+     light (or, on a dark page, dark) palette, the logo in the footer. "plain" — the page's own colours, no cards. */
+  const FONT = '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+  const PAL = { light: { bg: '#fcfcfb', card: '#ffffff', ink: '#1d1d1b', muted: '#6b6a66', line: '#e3e1dc' },
+    dark: { bg: '#141413', card: '#1e1d1b', ink: '#f1f0eb', muted: '#a9a7a0', line: '#3a3935' } };
+  function darkPage() {
+    const x = document.createElement('canvas').getContext('2d'); x.fillStyle = '#ffffff'; x.fillStyle = colors().bg;   // any CSS colour → #rrggbb or rgba()
+    const c = String(x.fillStyle), hx = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})/i.exec(c);
+    const m = hx ? [0, ...hx.slice(1).map((v) => parseInt(v, 16))] : /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/.exec(c);
+    return !!m && (0.2126 * m[1] + 0.7152 * m[2] + 0.0722 * m[3]) / 255 < 0.4;
+  }
+  function rrect(g, X, Y, w, h, r) { g.beginPath(); g.moveTo(X + r, Y); g.arcTo(X + w, Y, X + w, Y + h, r); g.arcTo(X + w, Y + h, X, Y + h, r); g.arcTo(X, Y + h, X, Y, r); g.arcTo(X, Y, X + w, Y, r); g.closePath(); }
+  // rows: with "auto" columns a wide chart (twice as wide as tall, or more) takes a row, the others go two by two
+  function rowsOf(items, cols) {
+    const rows = [];
+    if (cols !== 'auto') { const n = Math.max(1, Math.min(4, +cols || 1)); for (let i = 0; i < items.length; i += n) rows.push(items.slice(i, i + n)); return rows; }
+    let open = null;
+    items.forEach((it) => {
+      if (items.length === 1 || it.w / it.h >= 2) { open = null; rows.push([it]); return; }
+      if (open && open.length < 2) { open.push(it); open = null; return; }
+      open = [it]; rows.push(open);
+    });
+    return rows;
+  }
+  async function compose(items, o) {
+    const cards = o.tpl !== 'plain', P = cards ? PAL[darkPage() ? 'dark' : 'light'] : Object.assign({}, colors(), { card: null });
+    const F = cards ? FONT : colors().font, f = (px, wt) => `${wt || 400} ${px}px ${F}`;
+    const S = 2, M = 32, G = 22, IN = cards ? 16 : 0;
+    const maxCols = Math.max(...rowsOf(items, o.cols).map((r) => r.length));
+    const Wd = o.cols === 'auto' ? 1200 : [0, 1000, 1200, 1500, 1800][maxCols] || 1200, full = Wd - 2 * M;
     const m = document.createElement('canvas').getContext('2d');
-    const W = pad * 2 + cols * tileW + (cols - 1) * gap;
-    m.font = `600 30px ${C.font}`; const tl = wrap(m, o.title, W - 2 * pad, 2);
-    m.font = `15px ${C.font}`; const sl = o.subtitle ? wrap(m, o.subtitle, W - 2 * pad, 3) : [];
-    const tiles = items.map((it) => {
-      m.font = `600 17px ${C.font}`; const t = it.title ? wrap(m, it.title, tileW, 2) : [];
-      m.font = `12.5px ${C.font}`; const s = it.sub && o.subs ? wrap(m, it.sub, tileW, 2) : [];
-      const ch = Math.round(it.h * tileW / it.w);
-      const top = (t.length ? 16 + 22 * (t.length - 1) : 0) + 16 * s.length + (t.length || s.length ? 10 : 0);   // text above the chart
-      return { it, t, s, ch, top, h: top + ch };
-    });
-    const rows = []; for (let i = 0; i < tiles.length; i += cols) rows.push(tiles.slice(i, i + cols));
-    const rowH = rows.map((r) => Math.max(...r.map((t) => t.h)));
-    const day = new Date().toISOString().slice(0, 10), host = /^https?:/.test(location.protocol) ? location.host : 'filing-flows.com';
-    const sources = [...new Set(items.map((it) => it.source).filter(Boolean))];
-    m.font = `12px ${C.font}`;
-    const foot = wrap(m, [sources.length ? 'Sources: ' + sources.join(' · ') : 'Data: SEC EDGAR filings and market prices; models and charts by Filing Flows.', `${host} · ${day} · History and models, not investment advice.`].join(' '), W - 2 * pad - 180, 4);
-    const headH = tl.length * 38 + (sl.length ? 6 + sl.length * 21 : 0);
-    const H = pad + headH + 22 + rowH.reduce((a, b) => a + b, 0) + gap * (rows.length - 1) + 24 + foot.length * 17 + pad;
-    const c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
-    const g = c.getContext('2d'); g.scale(S, S);
-    g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
-    let y = pad + 28;
-    g.fillStyle = C.ink; g.font = `600 30px ${C.font}`; tl.forEach((l) => { g.fillText(l, pad, y); y += 38; }); y -= 38;
-    g.fillStyle = C.muted; g.font = `15px ${C.font}`; sl.forEach((l) => { y += 21; g.fillText(l, pad, y); });
-    y += 22;
-    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(pad, y - 8); g.lineTo(W - pad, y - 8); g.stroke();
-    rows.forEach((r, ri) => {
-      r.forEach((t, ci) => {
-        const x0 = pad + ci * (tileW + gap);
-        let yy = y + 16;
-        g.fillStyle = C.ink; g.font = `600 17px ${C.font}`; t.t.forEach((l, k) => { g.fillText(l, x0, yy + 22 * k); });
-        yy = y + (t.t.length ? 16 + 22 * (t.t.length - 1) : 0);
-        g.fillStyle = C.muted; g.font = `12.5px ${C.font}`; t.s.forEach((l) => { yy += 16; g.fillText(l, x0, yy); });
-        g.drawImage(t.it.img, x0, y + t.top, tileW, t.ch);
+    m.font = f(27, 650); const tl = wrap(m, o.title, full, 2);
+    m.font = f(14.5); const sl = o.subtitle ? wrap(m, o.subtitle, full, 3) : [];
+    const lines = o.text === 'full' ? 7 : 2;
+    const rows = rowsOf(items, o.cols).map((row) => {
+      const tw = (full - G * (row.length - 1)) / row.length, inner = tw - 2 * IN;
+      const tiles = row.map((it) => {
+        m.font = f(17, 600); const t = it.title ? wrap(m, it.title, inner, 2) : [];
+        m.font = f(12.5); const c = textOf(it.sub, o.text) ? wrap(m, textOf(it.sub, o.text), inner, lines) : [];
+        // at most 1.3 × its own size (a small chart blown up has outsized lettering) and 760 px tall; narrower ones are centred
+        let cw = Math.min(inner, Math.round(it.w * 1.3)), ch = Math.round(it.h * cw / it.w);
+        if (ch > 760) { cw = Math.round(cw * 760 / ch); ch = 760; }
+        const head = (t.length ? 28 + 22 * (t.length - 1) : 0) + (c.length ? (t.length ? 6 : 16) + 17 * c.length : 0);
+        return { it, t, c, cw, ch, head, h: head + (head ? 12 : IN) + ch + IN };
       });
-      y += rowH[ri] + gap;
+      return { tw, tiles, h: Math.max(...tiles.map((x) => x.h)) };
     });
-    y += 24 - gap;
-    g.fillStyle = C.muted; g.font = `12px ${C.font}`; foot.forEach((l) => { y += 13; g.fillText(l, pad, y); y += 4; });
-    g.fillStyle = C.ink; g.font = `600 17px ${C.font}`; g.textAlign = 'right'; g.fillText('Filing Flows', W - pad, H - pad + 4); g.textAlign = 'left';
-    if (o.size === 'natural' || !DIMS[o.size]) return c;
+    const sources = [...new Set(items.map((it) => it.source).filter(Boolean))];
+    const day = new Date().toISOString().slice(0, 10), host = /^https?:/.test(location.protocol) ? location.host : 'filing-flows.com';
+    m.font = f(12.5);
+    const foot = wrap(m, (sources.length ? sources.join(' · ') : 'SEC EDGAR filings and market prices; models and charts by Filing Flows.') + ` · ${day}`, full - 230, 3);
+    foot.push('History and models, not forecasts. Not investment advice.');
+    const headH = 46 + 34 * (tl.length - 1) + (sl.length ? 8 + 20 * sl.length : 0) + 26;
+    const footH = 22 + foot.length * 17 + 18;
+    const Hh = headH + rows.reduce((a, r) => a + r.h + G, 0) - G + 18 + footH;
+    const cv = document.createElement('canvas'); cv.width = Wd * S; cv.height = Math.round(Hh * S);
+    const g = cv.getContext('2d'); g.scale(S, S); g.textBaseline = 'alphabetic';
+    g.fillStyle = P.bg; g.fillRect(0, 0, Wd, Hh);
+    g.fillStyle = P.ink; g.font = f(27, 650); tl.forEach((l, i) => g.fillText(l, M, 46 + 34 * i));
+    g.fillStyle = P.muted; g.font = f(14.5); sl.forEach((l, i) => g.fillText(l, M, 46 + 34 * (tl.length - 1) + 28 + 20 * i));
+    let y = headH;
+    rows.forEach((r) => {
+      r.tiles.forEach((t, i) => {
+        const X = M + i * (r.tw + G);
+        if (cards) { g.fillStyle = P.card; rrect(g, X, y, r.tw, r.h, 12); g.fill(); g.strokeStyle = P.line; g.lineWidth = 1; g.stroke(); }
+        let ty = y;
+        g.fillStyle = P.ink; g.font = f(17, 600); t.t.forEach((l, k) => g.fillText(l, X + IN, y + 28 + 22 * k));
+        if (t.t.length) ty = y + 28 + 22 * (t.t.length - 1);
+        g.fillStyle = P.muted; g.font = f(12.5); t.c.forEach((l, k) => g.fillText(l, X + IN, ty + (t.t.length ? 6 : 16) + 17 * (k + 1) - 4));
+        const cy = y + (t.head ? t.head + 12 : IN);
+        g.drawImage(t.it.img, X + IN + (r.tw - 2 * IN - t.cw) / 2, cy, t.cw, t.ch);
+      });
+      y += r.h + G;
+    });
+    y += 18 - G;
+    g.strokeStyle = P.line; g.lineWidth = 1; g.beginPath(); g.moveTo(M, y + 8); g.lineTo(Wd - M, y + 8); g.stroke();
+    g.fillStyle = P.muted; g.font = f(12.5); foot.forEach((l, i) => g.fillText(l, M, y + 30 + 17 * i));
+    g.textAlign = 'right'; g.fillStyle = P.ink; g.font = f(19, 700); g.fillText('Filing Flows', Wd - M, y + 36);
+    const ww = g.measureText('Filing Flows').width;
+    g.fillStyle = P.muted; g.font = f(12.5); g.fillText(host.replace(/^www\./, ''), Wd - M, y + 53); g.textAlign = 'left';
+    try {                                                    // the logo, when the site's icon loads
+      const img = await new Promise((ok, bad) => { const im = new Image(); im.onload = () => ok(im); im.onerror = bad; im.src = (o.site || '') + 'favicon.svg'; setTimeout(bad, 2500); });
+      g.drawImage(img, Wd - M - ww - 34, y + 16, 26, 26);
+    } catch (e) { /* the wordmark alone */ }
+    if (o.size === 'natural' || !DIMS[o.size]) return cv;
     const [tw, th] = DIMS[o.size], out = document.createElement('canvas'); out.width = tw; out.height = th;
-    const k = Math.min(tw / W, th / H), og = out.getContext('2d');
-    og.fillStyle = C.bg; og.fillRect(0, 0, tw, th);
+    const k = Math.min(tw / Wd, th / Hh), og = out.getContext('2d');
+    og.fillStyle = P.bg; og.fillRect(0, 0, tw, th);
     og.imageSmoothingQuality = 'high';
-    og.drawImage(c, (tw - W * k) / 2, (th - H * k) / 2, W * k, H * k);
+    og.drawImage(cv, (tw - Wd * k) / 2, (th - Hh * k) / 2, Wd * k, Hh * k);
     return out;
   }
 
@@ -256,7 +315,7 @@
     if (company && !window.Sankey) { try { await script(site + 'sankey.js'); } catch (e) { /* no Sankey here: the other charts still work */ } }
     const name = (company && company.profile && company.profile.name) || T;
     const has = (s) => s[4] !== 'company' || (s[0].startsWith('sankey') ? company && window.Sankey && (s[0] === 'sankey-fy' ? (company.years || []).some((y) => (y.nodes || []).length) : (company.quarters || []).some((q) => (q.nodes || []).length)) : !!(ctx.cik || company));
-    const st = { src: new Set(DEFAULT.filter((id) => SOURCES.some((s) => s[0] === id && has(s)))), found: [], pick: [], cols: 'auto', size: 'x', subs: false,
+    const st = { src: new Set(DEFAULT.filter((id) => SOURCES.some((s) => s[0] === id && has(s)))), found: [], pick: [], cols: 'auto', size: 'natural', tpl: 'cards', text: 'short',
       title: `${T ? T + ' — ' : ''}${name}`, subtitle: '' };
     let stg = null;
     const watch = setInterval(() => { if (!el.isConnected) { clearInterval(watch); if (stg) stg.remove(); } }, 2000);
@@ -267,13 +326,15 @@
       h += `<div class="cmp-row"><button type="button" class="cmp-go" data-cmp="scan">Find the charts</button><span class="cmp-msg" data-cmp-msg></span></div>`;
       if (st.found.length) {
         h += `<h3>2 · Pick the charts</h3><p class="cmp-sub">${st.found.length} chart${st.found.length === 1 ? '' : 's'} found. Click to tick; the number is the place in the picture. Edit a title if you like.</p><div class="cmp-grid">`;
-        h += st.found.map((c, i) => { const k = st.pick.indexOf(i); return `<div class="cmp-card${k >= 0 ? ' on' : ''}" data-cmp-card="${i}"><span class="cmp-n">${k + 1}</span><img alt="" src="${c.thumb || ''}"><div class="cmp-t">${esc(c.title)}</div><div class="cmp-v">${esc(c.view)}</div>${k >= 0 ? `<input type="text" data-cmp-title="${i}" value="${esc(c.title)}" aria-label="Title in the picture">` : ''}</div>`; }).join('');
+        h += st.found.map((c, i) => { const k = st.pick.indexOf(i); return `<div class="cmp-card${k >= 0 ? ' on' : ''}" data-cmp-card="${i}"><span class="cmp-n">${k + 1}</span><img alt="" src="${c.thumb || ''}"><div class="cmp-t">${esc(c.title)}</div><div class="cmp-v">${esc(c.view)}</div>${k >= 0 ? `<input type="text" data-cmp-title="${i}" value="${esc(c.title)}" aria-label="Title in the picture"><textarea data-cmp-sub="${i}" rows="3" aria-label="Explanation in the picture" placeholder="No explanation on the page: write one if you like">${esc(c.sub || '')}</textarea>` : ''}</div>`; }).join('');
         h += `</div><h3>3 · The picture</h3><div class="cmp-form">
           <label>Title<input type="text" data-cmp-f="title" value="${esc(st.title)}"></label>
           <label>Subtitle (optional)<input type="text" data-cmp-f="subtitle" value="${esc(st.subtitle)}" placeholder="e.g. What the charts say this week"></label>
-          <label>Columns<select data-cmp-f="cols">${[['auto', 'Auto'], ['1', '1'], ['2', '2'], ['3', '3']].map(([v, l]) => `<option value="${v}"${st.cols === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label>Template<select data-cmp-f="tpl">${[['cards', 'Cards — like the Move odds picture'], ['plain', 'Plain — the page’s own colours']].map(([v, l]) => `<option value="${v}"${st.tpl === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+          <label>Explanations<select data-cmp-f="text">${[['short', 'Short — a line or two under each title'], ['full', 'Full — the page’s whole explanation'], ['none', 'None — titles and charts only']].map(([v, l]) => `<option value="${v}"${st.text === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+          <label>Columns<select data-cmp-f="cols">${[['auto', 'Auto (wide charts on their own row)'], ['1', '1'], ['2', '2'], ['3', '3']].map(([v, l]) => `<option value="${v}"${st.cols === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
           <label>Size<select data-cmp-f="size">${SIZES.map(([v, l]) => `<option value="${v}"${st.size === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
-          <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-cmp-f="subs"${st.subs ? ' checked' : ''}> Each chart's description under its title</label></div>
+</div>
           <div class="cmp-row"><button type="button" class="cmp-go" data-cmp="make"${st.pick.length ? '' : ' disabled'}>Make the picture (${st.pick.length})</button><button type="button" data-cmp="png" disabled>PNG</button><button type="button" data-cmp="jpg" disabled>JPG</button><button type="button" data-cmp="copy" disabled>Copy image</button><span class="cmp-msg" data-cmp-out-msg></span></div><div class="cmp-out"></div>`;
       }
       el.innerHTML = h + '</div>';
@@ -298,7 +359,7 @@
             const opts = s[0] === 'sankey-q' ? { compare: 'q' } : {};
             if (s[0] === 'sankey-q' && !(spec && spec.compare)) continue;
             const tt = String((spec.title || '').replace(/&amp;/g, '&')) + (s[0] === 'sankey-q' ? ' — vs the quarter before' : '');
-            found.push({ kind: 'sankey', spec, opts, view: 'Earnings Sankey', title: tt, own: tt, sub: (spec.subtitle || '').replace(/&amp;/g, '&'), source: 'SEC filings (XBRL)' });
+            found.push({ kind: 'sankey', spec, opts, view: 'Earnings Sankey', title: tt, own: tt, sub: '', source: 'SEC filings (XBRL)' });
             continue;
           }
           if (!window[s[3]]) await timeout(script(base + s[2]), 15000);
@@ -322,9 +383,9 @@
         if (document.fonts && document.fonts.ready) await document.fonts.ready;
         for (const i of st.pick) {                       // a Sankey's own title is in its picture: no second one above it
           const c = st.found[i], p = await picture(c);
-          items.push(Object.assign({}, p, { title: c.own && c.title === c.own ? '' : c.title, sub: c.own ? '' : c.sub, source: c.source }));
+          items.push(Object.assign({}, p, { title: c.own && c.title === c.own ? '' : c.title, sub: c.sub, source: c.source }));
         }
-        const cv = compose(items, st);
+        const cv = await compose(items, Object.assign({}, st, { site }));
         made = cv;
         const png = await new Promise((r) => cv.toBlob(r, 'image/png'));
         const out = el.querySelector('.cmp-out');
@@ -338,13 +399,14 @@
       el.querySelectorAll('[data-cmp-src]').forEach((cb) => { cb.onchange = () => { if (cb.checked) st.src.add(cb.dataset.cmpSrc); else st.src.delete(cb.dataset.cmpSrc); }; });
       el.querySelectorAll('[data-cmp-card]').forEach((card) => {
         card.onclick = (ev) => {
-          if (ev.target && ev.target.tagName === 'INPUT') return;
+          if (ev.target && /^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
           const i = +card.dataset.cmpCard, k = st.pick.indexOf(i);
           if (k >= 0) st.pick.splice(k, 1); else st.pick.push(i);
           draw();
         };
       });
       el.querySelectorAll('[data-cmp-title]').forEach((inp) => { inp.oninput = () => { st.found[+inp.dataset.cmpTitle].title = inp.value; }; });
+      el.querySelectorAll('[data-cmp-sub]').forEach((inp) => { inp.oninput = () => { st.found[+inp.dataset.cmpSub].sub = inp.value; }; });
       el.querySelectorAll('[data-cmp-f]').forEach((f) => {
         const k = f.dataset.cmpF;
         f.oninput = f.onchange = () => { st[k] = f.type === 'checkbox' ? f.checked : f.value; };
