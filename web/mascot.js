@@ -152,6 +152,9 @@
     credit: [(t) => `${t} debt and default risk`, (t) => `${t} 的债务和违约风险`, (t) => `${t} Altman Z and credit spread`, (t) => `${t} 的信用利差和 Altman Z`],
     analysts: [(t) => `${t} analyst price target`, (t) => `${t} 分析师目标价`, (t) => `${t} Polymarket implied price`, (t) => `${t} 预测市场隐含价格`],
     opportunity: [(t) => `Will ${t} go up or down next month?`, (t) => `${t} 下个月会涨吗？`, (t) => `Odds a buy of ${t} makes money`, (t) => `${t} 买入盈利概率`],
+    brief: [(t) => `Brief me on ${t}`, (t) => `${t} 速览`, (t) => `${t} key numbers`, (t) => `${t} 要点`],
+    trend: [(t) => `${t} revenue trend`, (t) => `${t} 营收趋势`, (t) => `${t} net income history`, (t) => `${t} 净利润历史`],
+    why: [(t) => `Why did ${t}'s revenue change?`, (t) => `${t} 营收为什么变化？`, (t) => `What drove ${t}'s margin?`, (t) => `为什么 ${t} 利润率变化？`],
     segments: [(t) => `How does ${t} make money?`, (t) => `${t} 怎么赚钱？`, (t) => `${t} revenue by segment`, (t) => `${t} 收入构成`],
     nextEarnings: [(t) => `When does ${t} report next?`, (t) => `${t} 下次财报什么时候？`, (t) => `Will ${t} beat the EPS estimate?`, (t) => `${t} 这次会超预期吗？`],
     owners: [(t) => `Who owns ${t}?`, (t) => `谁持有 ${t}？`, (t) => `Are funds buying ${t}? (13F)`, (t) => `机构在增持 ${t} 吗？`],
@@ -182,7 +185,7 @@
     const T = (i) => (cos[i] && cos[i].ticker) || t0;
     if (ctx.kind === 'company') {
       const first = ctx.topic || 'earnings';
-      const mix = ['nextEarnings', 'segments', 'valuation', 'owners', 'rotation', 'cashflow', 'options', 'insiders'].filter((k) => k !== first);
+      const mix = ['brief', 'nextEarnings', 'segments', 'valuation', 'owners', 'why', 'trend', 'rotation', 'cashflow', 'options', 'insiders'].filter((k) => k !== first);
       return [q1(first, t0, zh), q1(first, t0, zh, true), ...mix.map((k, i) => q1(mix[(i + s) % mix.length], t0, zh))].slice(0, 6);
     }
     if (ctx.kind === 'industry') return [q1('industry', T(0), zh), q1('industry', T(0), zh, true), q1('rotation', T(0), zh), q1('rotation', T(1), zh), q1('valuation', T(0), zh), q1('earnings', T(2), zh)];
@@ -427,8 +430,8 @@
 
   function helpAnswer(lg, company) {
     const t = company ? company.ticker : 'NVDA';
-    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me for a step-by-step DCF tutorial, cookie jar investigation, a number explanation, or SEC case studies. I also answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Now also: <b>how it makes money</b>, <b>free cash flow</b>, <b>who owns it</b> (13F), <b>insider</b> and <b>Congress</b> trades, its latest <b>8-Ks</b>, the <b>next earnings</b> (estimates, beat rate), <b>customers and suppliers</b>, <b>short interest</b>, <b>how rare today's move</b> is, its <b>guidance record</b> — and market questions like “Who reports this week?” or “Biggest insider buying”. Follow up with “what about AMD?”. Try “What is ${t} worth?”`,
-      `你好，我是 <b>Flo</b>。我还能逐步教 DCF、调查 Cookie Jar 准备金、解释图表中的数字并讲解 SEC 真实案例。网站模型包括：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。现在还能回答：<b>怎么赚钱</b>（收入构成）、<b>自由现金流</b>、<b>谁持有</b>（13F）、<b>内部人</b>和<b>国会议员</b>交易、最新 <b>8-K</b>、<b>下次财报</b>（预期、超预期率）、<b>客户与供应商</b>、<b>空头仓位</b>、<b>今天的涨跌有多罕见</b>、<b>指引兑现率</b>，以及「本周谁发财报」「内部人买入最多」这类全市场问题。追问「那 AMD 呢？」也可以。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
+    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me for a step-by-step DCF tutorial, cookie jar investigation, a number explanation, or SEC case studies. I also answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Now also: <b>how it makes money</b>, <b>free cash flow</b>, <b>who owns it</b> (13F), <b>insider</b> and <b>Congress</b> trades, its latest <b>8-Ks</b>, the <b>next earnings</b> (estimates, beat rate), <b>customers and suppliers</b>, <b>short interest</b>, <b>how rare today's move</b> is, its <b>guidance record</b> — and market questions like “Who reports this week?” or “Biggest insider buying”. Ask for a <b>briefing</b> (“Brief me on NVDA”), <b>why</b> results changed, a <b>trend</b> (“NVDA revenue trend”, “AAPL Q1 FY26”), what a term means (“What is a 13F?”), or compare any of these (“NVDA vs AMD free cash flow”). Follow up with “what about AMD?”. Try “What is ${t} worth?”`,
+      `你好，我是 <b>Flo</b>。我还能逐步教 DCF、调查 Cookie Jar 准备金、解释图表中的数字并讲解 SEC 真实案例。网站模型包括：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。现在还能回答：<b>怎么赚钱</b>（收入构成）、<b>自由现金流</b>、<b>谁持有</b>（13F）、<b>内部人</b>和<b>国会议员</b>交易、最新 <b>8-K</b>、<b>下次财报</b>（预期、超预期率）、<b>客户与供应商</b>、<b>空头仓位</b>、<b>今天的涨跌有多罕见</b>、<b>指引兑现率</b>，以及「本周谁发财报」「内部人买入最多」这类全市场问题。还能做<b>速览</b>（「英伟达速览」）、解释<b>业绩为什么变化</b>、看<b>趋势</b>（「NVDA 营收趋势」「AAPL Q1 FY26」）、解释名词（「什么是 13F」），以及任意比较（「NVDA 和 AMD 自由现金流对比」）。追问「那 AMD 呢？」也可以。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
   }
   let IX = null;
   const index = () => IX || (IX = json(DATA + 'index.json'));
@@ -465,6 +468,18 @@
       if (FX.isCompare(q)) {
         const cos = FX.findCompanies(q, ix, findCompany, ZH_NAMES);       // two companies named: "AMD vs NVDA", "苹果和微软对比"
         if (cos.length === 2) {
+          // "NVDA vs AMD free cash flow", "苹果和微软谁持有更多": the same answer for each, one under the other
+          const H0 = Object.assign({}, HANDLERS, insights() ? insightHandlers() : {});
+          const topics = cls.filter((k) => !['help', 'earnings', 'industry', 'brief', 'filings', 'calls'].includes(k) && typeof H0[k] === 'function').slice(0, 2);
+          if (topics.length) {
+            const both = await Promise.all(cos.map((c) => Promise.all(topics.map((k) => H0[k](c, lg, q).catch(() => null)))));
+            if (both.some((x) => x.some(Boolean))) {
+              const html = cos.map((c, i) => `<p><b>${esc(c.ticker)}</b></p>` + (both[i].filter(Boolean).map((x) => `<p>${x.html}</p>`).join('') || `<p>${L(lg, 'Not on file.', '暂无数据。')}</p>`)).join('<hr style="border:0;border-top:1px solid var(--line,#ddd);margin:8px 0">');
+              const parts = both.flat().filter(Boolean);
+              LAST.intents = topics;
+              return { html, facts: parts.flatMap((x) => x.facts), mood: 'talk', links: parts.flatMap((x) => x.links).slice(0, 4), company: cos[0], intents: ['compare', ...topics] };
+            }
+          }
           const r = await FX.compare(cos, lg, (c) => json(DATA + 'c/' + c.cik + '.json'));
           if (r) return { ...r, company: cos[0], intents: ['compare'] };
         }
@@ -482,6 +497,7 @@
     }
     // web/flo-insights.js: research answers beyond the models, market questions, follow-ups and misspelt names
     const IN = insights(), mine = IN ? IN.classify(q) : [];
+    if (IN && !findCompany(q, ix)) { const g = IN.glossary(q, lg); if (g) return g; }   // "What is free cash flow?" — a definition, not a company
     let named = findCompany(q, ix) || null;                          // a misspelt name is looked for only once the market questions are ruled out
     if (IN) {
       const R = insightHandlers();
@@ -510,7 +526,7 @@
     if (!intents.length) intents = ['earnings', 'segments', 'valuation'];             // just a company: the overview
     const H = Object.assign({}, HANDLERS, IN ? insightHandlers() : {});
     intents = intents.filter((k) => typeof H[k] === 'function');
-    const parts = (await Promise.all(intents.slice(0, 3).map((k) => H[k](co, lg).catch(() => null)))).filter(Boolean);
+    const parts = (await Promise.all(intents.slice(0, 3).map((k) => H[k](co, lg, q).catch(() => null)))).filter(Boolean);
     LAST.intents = intents.slice(0, 3);
     if (!parts.length) return { html: L(lg, `I don't have that for ${esc(co.ticker)} yet: its data is not published.`, `暂时没有 ${esc(co.ticker)} 的这项数据：尚未发布。`), facts: [], mood: 'worried', links: [[`${BASE}#c-${co.cik}`, co.ticker]], company: co, intents,
       actions: IN ? IN.followUps(intents.slice(0, 3), co, lg) : [] };

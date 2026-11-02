@@ -27,6 +27,7 @@
   const num = (v, d = 0) => (fin(v) ? Number(v).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d }) : '—');
   const big = (v) => { if (!fin(v)) return '—'; const a = Math.abs(v), s = v < 0 ? '−' : ''; return s + (a >= 1e12 ? '$' + num(a / 1e12, 2) + 'T' : a >= 1e9 ? '$' + num(a / 1e9, 1) + 'B' : a >= 1e6 ? '$' + num(a / 1e6, 0) + 'M' : a >= 1e3 ? '$' + num(a / 1e3, 0) + 'K' : '$' + num(a, 0)); };
   const pc = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
+  const usd = (v) => (fin(v) ? (v < 0 ? '−$' : '$') + num(Math.abs(v), Math.abs(v) >= 1000 ? 0 : 2) : '—');
   const spc = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
   const L = (lg, en, zh) => (lg === 'zh' ? zh : en);
   const fileT = (t) => String(t || '').toUpperCase().replace(/\./g, '-');
@@ -34,7 +35,11 @@
   const ago = (d, n) => { const t = Date.parse(day(d) + 'T00:00:00Z'); return Number.isFinite(t) && Date.now() - t <= n * 864e5; };
 
   /* ---------- the questions it covers ---------- */
+  const QLABEL = /\b(?:Q[1-4]\s*(?:FY\s*)?'?\d{2,4}|FY\s*'?\d{2,4})\b/i;      // "Q1 FY26", "Q3 2025", "FY2025"
   const INTENTS = [
+    ['brief', /\bbrief(ing)?\b|summar(y|ise|ize)|overview|tell me about|what'?s (going on|new) (with|at)|key (facts|points|numbers|things)|things to know|snapshot|in a nutshell|tl;?dr|总结|概况|简介|介绍一下|一句话|要点|速览|快速了解|基本情况/i],
+    ['why', /\bwhy\b.{0,40}\b(revenue|sales|profit|margins?|income|earnings|eps|cash|costs?|expenses?|grow|grew|growth|drop(ped)?|decline[sd]?|fell|rose|jump(ed)?|improve[sd]?|worse|better)\b|what (drove|caused|changed)|explain (the|its) (quarter|results)|为什么.{0,12}(营收|收入|利润|毛利|净利|现金|成本|费用|增长|下降|下滑|提高|变好|变差)|什么导致|原因是什么/i],
+    ['trend', /\btrend\b|over time|by quarter|quarter by quarter|last \d+ quarters|past \d+ quarters|\bhistory\b|historical|each quarter|every quarter|趋势|历史|过去几个季度|每个季度|逐季|近几个季度|历年/i],
     ['owners', /who owns|\bholders?\b|institution(al)?s?\b|\b13-?f\b|hedge funds?|(funds?|managers?) (own|hold|buy|bought|sell|sold|adding|cutting)|biggest (holder|owner|shareholder)|top shareholders?|谁持有|持股|机构持仓|机构|基金(经理)?(买|卖|持有|增持|减持)?|大股东|股东/i],
     ['insiders', /insiders?|form ?4\b|(ceo|cfo|executives?|directors?|management|officers?) (bought|sold|buy|sell|buying|selling)|10b5-?1|form ?144|内部人|高管(买|卖|增持|减持)|董事(买|卖)|增持|减持|管理层(买|卖)/i],
     ['congress', /congress|senators?|representatives?|politicians?|lawmakers?|pelosi|officials?'?\s*trad|国会|议员|政客|佩洛西|官员交易/i],
@@ -54,10 +59,13 @@
   function classify(q) {
     const s = String(q || ''), out = [];
     for (const [k, rx] of INTENTS) if (rx.test(s)) out.push(k);
+    if (QLABEL.test(s) && !out.includes('trend') && !out.includes('nextEarnings')) out.push('trend');
+    if (out.includes('brief') && (out.length > 1 || /income statement|statement|earnings|results|quarter|revenue|cash ?flow|balance sheet|财报|利润表|季度|营收/i.test(s)))
+      out.splice(out.indexOf('brief'), 1);                         // "income statement summary", "overview of its cash flow": that, not a briefing
     return out;
   }
   // the model intents (mascot.js) a more specific one here replaces: "earnings date" is not the last quarter's earnings
-  const REPLACES = { nextEarnings: ['earnings', 'calls'], cashflow: ['earnings'], segments: ['earnings'], guidanceRecord: ['calls'], shorts: ['opportunity'],
+  const REPLACES = { brief: ['earnings', 'valuation', 'rotation'], why: ['earnings', 'moves', 'calls'], trend: ['earnings'], nextEarnings: ['earnings', 'calls'], cashflow: ['earnings'], segments: ['earnings'], guidanceRecord: ['calls'], shorts: ['opportunity'],
     moves: ['rotation'], investments: ['valuation'], ties: ['industry'], insiders: ['earnings'] };
   function merge(base, mine) {
     const drop = new Set(mine.flatMap((k) => REPLACES[k] || []));
@@ -69,6 +77,66 @@
   // "what about AMD?", "and Apple?", "AMD 呢？", "那苹果呢" — the last question, for another company
   const FOLLOW = /^\s*(what about|how about|and( for)?|same (for|with)|now|then|也看看|那|再看看?|换成)\b|呢\s*[?？]?\s*$|^\s*[$A-Za-z.\-]{1,8}\s*[?？]\s*$/i;
   const isFollow = (q) => FOLLOW.test(String(q || '')) && String(q || '').length <= 40;
+
+  /* ---------- what a term means ("What is free cash flow?", "什么是 13F") ---------- */
+  const GLOSSARY = [
+    [/free cash flow|\bfcf\b|自由现金流/i, ['Free cash flow', 'Cash from operations minus capital spending: what the business produced that it could pay out, invest or keep. It can be negative in heavy investment years even when the company is profitable.'],
+      ['自由现金流', '经营现金流减去资本支出：企业经营产生、可以分红、回购、再投资或留存的现金。大举投资的年份即使盈利，自由现金流也可能为负。']],
+    [/operating cash flow|\bocf\b|经营现金流/i, ['Operating cash flow', 'Net income adjusted for non-cash items (depreciation, stock pay) and for money tied up in or released from working capital — the cash the business itself brought in.'],
+      ['经营现金流', '在净利润基础上加回折旧、股票薪酬等非现金项目，并扣除或加回营运资金的变化，即业务本身带来的现金。']],
+    [/operating margin|营业利润率|经营利润率/i, ['Operating margin', 'Operating income divided by revenue: how many cents of each dollar of sales are left after the costs of running the business, before interest and tax.'],
+      ['营业利润率', '营业利润除以营收：每 1 美元销售在扣除经营成本后、利息和税之前还剩多少。']],
+    [/gross margin|毛利率/i, ['Gross margin', 'Revenue minus the direct cost of what was sold, as a share of revenue.'], ['毛利率', '营收减去所售商品或服务的直接成本，再除以营收。']],
+    [/\beps\b|earnings per share|每股收益/i, ['EPS', 'Net income per share. Analysts\' estimates usually use adjusted (non-GAAP) EPS, which can differ from the GAAP figure in the filing.'],
+      ['每股收益（EPS）', '每股净利润。分析师预期通常用调整后（非 GAAP）的 EPS，可能与财报中的 GAAP 数字不同。']],
+    [/\b13-?f\b/i, ['13F', 'A quarterly SEC report of the US-listed stocks held by every investment manager with $100 million or more, filed within 45 days of the quarter\'s end. It shows long positions only.'],
+      ['13F', '管理资产超过 1 亿美元的投资机构每季度向 SEC 报告所持美股的文件，季度结束后 45 天内提交，只包含多头持仓。']],
+    [/\b13-?d\b|\b13-?g\b/i, ['Schedule 13D / 13G', 'Filed by anyone who owns more than 5% of a company\'s shares. A 13D means the holder may try to influence the company (an activist); a 13G is for passive holders.'],
+      ['13D / 13G', '持有公司 5% 以上股份时必须提交。13D 表示持有人可能寻求影响公司（激进投资者）；13G 用于被动持有人。']],
+    [/form ?4\b/i, ['Form 4', 'Filed within two business days when an officer, director or 10% owner trades the company\'s stock. Code P is an open-market purchase, S a sale.'],
+      ['Form 4', '高管、董事或 10% 股东买卖公司股票后两个工作日内提交。代码 P 是公开市场买入，S 是卖出。']],
+    [/form ?144\b/i, ['Form 144', 'A notice that an affiliate intends to sell restricted or control shares. It is an intention, not a sale; the sale itself is reported on Form 4.'],
+      ['Form 144', '关联人拟出售受限股或控制性股份的通知。只是意向，实际卖出要看 Form 4。']],
+    [/\b8-?k\b/i, ['8-K', 'A current report a company files within four business days of a material event: results, a deal, new debt, a leadership change, an impairment, a delisting notice.'],
+      ['8-K', '公司在发生重大事件后四个工作日内提交的临时报告：业绩、交易、新增债务、高管变动、减值、退市通知等。']],
+    [/\b10-?q\b|\b10-?k\b/i, ['10-Q and 10-K', 'The quarterly (10-Q) and annual (10-K) reports with the financial statements; the 10-K is audited and describes the business and its risks.'],
+      ['10-Q 与 10-K', '季度报告（10-Q）和年度报告（10-K），包含财务报表；10-K 经过审计，并介绍业务与风险。']],
+    [/short interest|空头仓位|卖空比例/i, ['Short interest', 'Shares sold short and not yet bought back, reported twice a month (FINRA). Days to cover = short interest divided by average daily volume.'],
+      ['空头仓位', '已卖空但尚未买回的股数，每月公布两次（FINRA）。回补天数 = 空头仓位 ÷ 日均成交量。']],
+    [/days to cover|回补天数/i, ['Days to cover', 'Short interest divided by average daily volume: how many days of normal trading it would take short sellers to buy back.'], ['回补天数', '空头仓位除以日均成交量：按正常成交量空头需要几天才能全部买回。']],
+    [/max(imum)? ?pain|最大痛点/i, ['Max pain', 'The expiry price at which the options outstanding would pay their holders the least. Some traders watch it; it is not a forecast.'],
+      ['最大痛点', '在该到期价格下，未平仓期权支付给持有人的总额最少。部分交易者会参考，但它不是预测。']],
+    [/implied vol(atility)?|\biv\b|隐含波动/i, ['Implied volatility', 'The size of moves priced into options, as an annual percentage. ±IV × √(days/365) gives a rough one-standard-deviation range.'],
+      ['隐含波动率', '期权价格中隐含的波动幅度（年化百分比）。±IV × √(天数/365) 约等于一个标准差的价格区间。']],
+    [/\brrg\b|relative rotation|相对轮动/i, ['RRG (relative rotation graph)', 'Plots a stock\'s strength against the market (RS-Ratio) against the momentum of that strength (RS-Momentum). Leading: strong and rising; Weakening; Lagging; Improving.'],
+      ['RRG（相对轮动图）', '横轴是相对大盘的强弱（RS-Ratio），纵轴是这种强弱的动量（RS-Momentum）。领先：强且在增强；转弱；落后；改善。']],
+    [/\bdcf\b|discounted cash flow|现金流折现/i, ['DCF', 'Discounted cash flow: the value today of the cash a business is expected to produce, each year\'s cash discounted at the cost of capital.'],
+      ['DCF（现金流折现）', '把企业未来预计产生的现金按资本成本折回今天的价值。']],
+    [/\bpvgo\b|增长机会现值/i, ['PVGO', 'Present value of growth opportunities: the part of the price above what today\'s earnings would be worth with no growth.'], ['PVGO', '增长机会现值：股价中超过“零增长时当前盈利价值”的部分。']],
+    [/altman|z-?score/i, ['Altman Z-score', 'A distress score from working capital, retained earnings, operating profit, market value and sales relative to assets and liabilities. Below about 1.8: distress zone; above about 3: safe.'],
+      ['Altman Z 值', '用营运资金、留存收益、营业利润、市值和销售额相对资产负债计算的困境评分。约低于 1.8 为困境区，高于约 3 为安全区。']],
+    [/monte carlo|蒙特卡洛/i, ['Monte Carlo', 'Thousands of scenarios with the model\'s inputs drawn at random; the share of scenarios above the price is a rough sense of the odds, not a probability forecast.'],
+      ['蒙特卡洛', '随机抽取模型输入、模拟数千种情形；价值高于股价的情形占比只是大致的倾向，不是概率预测。']],
+    [/\bxbrl\b/i, ['XBRL', 'The tagged data in SEC filings: each number in the financial statements carries a tag, which is how Filing Flows reads them.'], ['XBRL', 'SEC 申报中的结构化标签数据：财报中每个数字都带标签，Filing Flows 就是读取这些标签。']],
+    [/sankey|桑基/i, ['Sankey diagram', 'A flow chart whose band widths are proportional to amounts: here revenue splitting into costs, profit, tax and cash.'], ['桑基图', '带宽与金额成比例的流向图：这里显示营收如何流向成本、利润、税和现金。']],
+    [/10b5-?1/i, ['10b5-1 plan', 'A trading plan an insider sets up in advance; sales under it are scheduled and say less about the insider\'s current view.'], ['10b5-1 计划', '内部人预先设定的交易计划；按计划的卖出是事先安排的，较少反映内部人当下的看法。']],
+    [/guidance|业绩指引/i, ['Guidance', 'What a company says it expects for the coming quarter or year (revenue, EPS, margins), usually in its earnings release.'], ['业绩指引', '公司对下一季度或全年的预期（营收、EPS、利润率等），通常在业绩公告中给出。']],
+    [/buy ?backs?|share repurchases?|回购/i, ['Buyback', 'A company buying its own shares; fewer shares outstanding means each remaining share owns more of the earnings.'], ['回购', '公司买回自己的股票；流通股减少，每股对应的盈利更多。']],
+    [/capex|capital (spending|expenditures?)|资本支出/i, ['Capital spending (capex)', 'Cash paid for long-lived assets — buildings, equipment, data centers, software — recorded in investing cash flow.'], ['资本支出', '购买厂房、设备、数据中心、软件等长期资产所付的现金，记在投资现金流里。']],
+    [/working capital|cash conversion cycle|营运资金|现金转换周期/i, ['Working capital', 'Receivables plus inventory minus payables. The cash conversion cycle (receivable days + inventory days − payable days) is how long cash is tied up.'],
+      ['营运资金', '应收账款加存货减应付账款。现金转换周期 = 应收天数 + 存货天数 − 应付天数，表示现金被占用多久。']],
+    [/impairment|减值/i, ['Impairment', 'A write-down of an asset — often goodwill from an acquisition — to less than what was paid for it.'], ['减值', '将资产（常见为收购产生的商誉）减记到低于原支付价格的价值。']],
+    [/non-?gaap|adjusted earnings|非 ?gaap/i, ['Non-GAAP', 'Figures the company adjusts itself, usually excluding stock pay, amortization and one-offs; they are not audited like GAAP figures.'], ['非 GAAP', '公司自行调整的指标，通常剔除股票薪酬、摊销和一次性项目，不像 GAAP 数字那样经过审计。']],
+  ];
+  const DEFINE = /^\s*(what('?s| is| are| does| do)|define|definition of|meaning of|explain( what)?|what is meant by)\b|什么是|是什么意思|是什么|啥是|什么叫|意思是|解释一下/i;
+  function glossary(q, lg) {
+    const s = String(q || '');
+    if (!DEFINE.test(s)) return null;
+    const hit = GLOSSARY.filter(([rx]) => rx.test(s));
+    if (!hit.length) return null;
+    const html = hit.slice(0, 2).map(([, en, zh]) => { const [k, v] = lg === 'zh' ? zh : en; return `<b>${esc(k)}</b>: ${esc(v)}`; }).join('<br><br>');
+    return { html, facts: hit.slice(0, 2).map(([, en]) => `${en[0]}: ${en[1]}`), mood: 'talk', links: [], intents: ['glossary'] };
+  }
 
   /* ---------- a misspelt name: the closest company by its first word ---------- */
   // edit distance counting a swap of two neighbours as one edit ("appel" → "apple")
@@ -401,16 +469,91 @@
     };
     const STAKES = /activist|13-?d\b|13-?g\b|5% (stake|holder)|激进投资|举牌/i;
 
-    return { owners, insiders, congress, events, cashflow, segments, nextEarnings, ties, shorts, moves, guidanceRecord, investments, MK, STAKES };
+    // brief: six lines from six files — the business, profit and cash, value, the next report, the funds, the insiders
+    async function brief(c, lg) {
+      const T = encodeURIComponent(fileT(c.ticker));
+      const [d, v, e, h, ins] = await Promise.all([json(DATA + 'c/' + c.cik + '.json'), json(HUB + 'research/valuation/c/' + c.cik + '.json'),
+        json(HUB + 'research/earnings/c/' + T + '.json'), holders(c), json(HUB + 'market/insiders.json')]);
+      const q = ((d && d.quarters) || [])[0], hd = (q && q.headline) || {}, items = [];
+      if (q && fin(hd.revenue)) {
+        const N = new Map((q.nodes || []).map((n) => [n.id, n]));
+        const segs = (q.links || []).filter((l) => l.t === 'revenue' && N.get(l.s)).map((l) => N.get(l.s)).filter((n) => fin(n.v)).sort((a, b) => b.v - a.v);
+        items.push(L(lg, `<b>Business</b>: ${big(hd.revenue)} revenue in ${esc(q.label)}${fin(hd.yoy) ? ` (${hd.yoy >= 0 ? '+' : '−'}${num(Math.abs(hd.yoy))}% Y/Y)` : ''}${segs.length >= 2 ? `, mostly ${esc(segs[0].name)} (${pc(segs[0].v / hd.revenue)})` : ''}.`,
+          `<b>业务</b>：${esc(q.label)} 营收 ${big(hd.revenue)}${fin(hd.yoy) ? `（同比 ${hd.yoy >= 0 ? '+' : '−'}${num(Math.abs(hd.yoy))}%）` : ''}${segs.length >= 2 ? `，主要来自 ${esc(segs[0].name)}（${pc(segs[0].v / hd.revenue)}）` : ''}。`));
+      }
+      const tt = (((d && d.quality) || {}).cap || {}).ttm, ti = (tt && tt.items) || {}, fcf = fin(ti.ocf) ? ti.ocf + (ti.capex || 0) : null;
+      if (fin(hd.om) || fin(fcf)) items.push(L(lg, `<b>Profit and cash</b>: ${fin(hd.om) ? `operating margin ${num(hd.om, 1)}%` : ''}${fin(hd.om) && fin(fcf) ? '; ' : ''}${fin(fcf) ? `free cash flow ${big(fcf)} over twelve months` : ''}.`,
+        `<b>利润与现金</b>：${fin(hd.om) ? `营业利润率 ${num(hd.om, 1)}%` : ''}${fin(hd.om) && fin(fcf) ? '；' : ''}${fin(fcf) ? `过去十二个月自由现金流 ${big(fcf)}` : ''}。`));
+      const sw = ((v && v.football) || []).find((b) => /^Stage-weighted/.test(b.method));
+      if (sw && fin(v.price) && v.price > 0) { const g = sw.point / v.price - 1; items.push(L(lg, `<b>Value</b>: ${usd(v.price)} against a model value of ${usd(sw.point)} (${g >= 0 ? '+' : '−'}${pc(Math.abs(g))}).`, `<b>估值</b>：现价 ${usd(v.price)}，模型价值 ${usd(sw.point)}（${g >= 0 ? '+' : '−'}${pc(Math.abs(g))}）。`)); }
+      if (e && e.report_date) { const cs = e.consensus || {}; items.push(L(lg, `<b>Next report</b>: ${esc(e.report_date)}${fin(cs.eps) ? `, EPS expected $${num(cs.eps, 2)}` : ''}${fin(e.beat_rate) ? `; beat ${pc(e.beat_rate)} of the time` : ''}.`, `<b>下次财报</b>：${esc(e.report_date)}${fin(cs.eps) ? `，预期 EPS $${num(cs.eps, 2)}` : ''}${fin(e.beat_rate) ? `；历史超预期率 ${pc(e.beat_rate)}` : ''}。`)); }
+      const f = (h && h.flows) || {};
+      if (fin(f.usd_net)) items.push(L(lg, `<b>Funds</b>: ${num(f.buyers)} 13F managers bought, ${num(f.sellers)} sold last quarter (net ${big(f.usd_net)}).`, `<b>机构</b>：上季度 ${num(f.buyers)} 家 13F 机构买入、${num(f.sellers)} 家卖出（净额 ${big(f.usd_net)}）。`));
+      const s = ((ins && ins.summary) || []).find((x) => fileT(x.ticker) === fileT(c.ticker));
+      items.push(s ? L(lg, `<b>Insiders</b>: bought ${big(s.buy_value)}, sold ${big(s.sell_value)} since ${esc(ins.since)}.`, `<b>内部人</b>：自 ${esc(ins.since)} 起买入 ${big(s.buy_value)}，卖出 ${big(s.sell_value)}。`)
+        : ins ? L(lg, `<b>Insiders</b>: no open-market buys or sells since ${esc(ins.since)}.`, `<b>内部人</b>：自 ${esc(ins.since)} 起没有公开市场买卖。`) : '');
+      const list = items.filter(Boolean);
+      if (list.length < 2) return null;
+      return { html: L(lg, `<b>${esc(c.ticker)}</b> at a glance:`, `<b>${esc(c.ticker)}</b> 速览：`) + '<ul class="flo-list">' + list.map((x) => `<li>${x}</li>`).join('') + '</ul>',
+        facts: list.map((x) => x.replace(/<[^>]+>/g, '')), mood: 'talk', links: [lk(`${BASE}#c-${c.cik}`, L(lg, 'Company page', '公司页'))] };
+    }
+
+    // why: the quarter's own analysis (written from the figures) and the lines that moved most against a year earlier
+    async function why(c, lg, q0) {
+      const d = await json(DATA + 'c/' + c.cik + '.json');
+      const q = ((d && d.quarters) || [])[0];
+      if (!q) return null;
+      const s = String(q0 || '');
+      const topic = /margin|profit|income|earnings|eps|cost|expense|利润|毛利|净利|成本|费用/i.test(s) ? 1 : /cash|现金/i.test(s) ? 2 : /revenue|sales|grow|营收|收入|增长/i.test(s) ? 0 : -1;
+      const an = (q.analysis || []).filter(Boolean);
+      const paras = topic >= 0 && an[topic] ? [an[topic]] : an.slice(0, 2);
+      const moved = (q.nodes || []).filter((n) => fin(n.v) && fin(n.y) && n.id !== 'revenue').map((n) => [n.name, n.v - n.y]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 4);
+      if (!paras.length && !moved.length) return null;
+      const p = paras.map((x) => esc(x));
+      if (moved.length) p.push(L(lg, 'Largest changes against a year earlier: ', '与去年同期相比变化最大的项目：') + moved.map(([k, v]) => `${esc(k)} ${v >= 0 ? '+' : '−'}${big(Math.abs(v)).replace('−', '')}`).join(', ') + '.');
+      p.push(L(lg, 'These say what changed in the figures; the reasons are in the company\'s own words in the filing (click a line in the Sankey).', '以上说明数字发生了什么变化；原因请看申报中公司自己的说明（点击桑基图中的项目）。'));
+      return { html: `<b>${esc(c.ticker)} · ${esc(q.label)}</b>: ` + p.join(' '), facts: [...paras, ...moved.map(([k, v]) => `${k} changed ${big(v)} year over year`)], mood: 'talk',
+        links: [lk(`${BASE}#c-${c.cik}`, L(lg, 'The Sankey and the filing\'s notes', '桑基图与申报说明')), ...(q.doc_url ? [lk(q.doc_url, 'SEC')] : [])] };
+    }
+
+    // trend: the last quarters side by side with a small bar for each, or one quarter named in the question
+    const BARS = '▁▂▃▄▅▆▇█';
+    const spark = (vals) => { const ok = vals.filter(fin); if (!ok.length) return ''; const lo = Math.min(0, ...ok), hi = Math.max(...ok); return vals.map((v) => (fin(v) ? BARS[Math.round((v - lo) / ((hi - lo) || 1) * 7)] : ' ')).join(''); };
+    async function trend(c, lg, q0) {
+      const d = await json(DATA + 'c/' + c.cik + '.json');
+      const qs = ((d && d.quarters) || []).filter((x) => x.headline && fin(x.headline.revenue));
+      if (!qs.length) return null;
+      const s = String(q0 || ''), want = (s.match(QLABEL) || [])[0];
+      const norm = (x) => String(x || '').toUpperCase().replace(/\s+/g, '').replace(/'/g, '').replace(/FY20(\d\d)/, 'FY$1');
+      const one = want && qs.find((x) => norm(x.label) === norm(want) || norm(x.label).replace(/^(Q\d)(\d{2})$/, '$1FY$2') === norm(want));
+      if (want && one) {
+        const h = one.headline, ya = qs.find((x) => x.end && one.end && Math.abs(Date.parse(one.end) - Date.parse(x.end) - 365 * 864e5) < 45 * 864e5);
+        return { html: L(lg, `<b>${esc(c.ticker)} ${esc(one.label)}</b> (${esc(one.form)} filed ${esc(one.filed)}): revenue <b>${big(h.revenue)}</b>${fin(h.yoy) ? ` (${h.yoy >= 0 ? '+' : '−'}${num(Math.abs(h.yoy))}% Y/Y)` : ''}, operating margin ${fin(h.om) ? num(h.om, 1) + '%' : '—'}, net earnings ${big(h.ni)}, operating cash flow ${big(h.ocf)}${ya ? ` (a year earlier: revenue ${big(ya.headline.revenue)}, net ${big(ya.headline.ni)})` : ''}.`,
+          `<b>${esc(c.ticker)} ${esc(one.label)}</b>（${esc(one.form)}，${esc(one.filed)} 提交）：营收 <b>${big(h.revenue)}</b>${fin(h.yoy) ? `（同比 ${h.yoy >= 0 ? '+' : '−'}${num(Math.abs(h.yoy))}%）` : ''}，营业利润率 ${fin(h.om) ? num(h.om, 1) + '%' : '—'}，净利润 ${big(h.ni)}，经营现金流 ${big(h.ocf)}${ya ? `（去年同期营收 ${big(ya.headline.revenue)}，净利润 ${big(ya.headline.ni)}）` : ''}。`),
+          facts: [`${one.label}: revenue ${big(h.revenue)}, net ${big(h.ni)}`], mood: 'talk', links: [lk(`${BASE}#c-${c.cik}-${one.end}`, one.label)] };
+      }
+      const m = /margin|利润率/i.test(s) ? 'om' : /net (income|earnings)|profit|净利|利润/i.test(s) ? 'ni' : /cash|现金/i.test(s) ? 'ocf' : 'revenue';
+      const NAME = { revenue: ['Revenue', '营收'], ni: ['Net earnings', '净利润'], ocf: ['Operating cash flow', '经营现金流'], om: ['Operating margin', '营业利润率'] };
+      const rows = qs.slice(0, 8).reverse(), vals = rows.map((x) => x.headline[m]);
+      const f = (v) => (m === 'om' ? (fin(v) ? num(v, 1) + '%' : '—') : big(v));
+      const first = vals.find(fin), last = vals[vals.length - 1];
+      const html = L(lg, `<b>${esc(c.ticker)}</b> ${NAME[m][0].toLowerCase()}, last ${rows.length} quarters:`, `<b>${esc(c.ticker)}</b> 最近 ${rows.length} 个季度的${NAME[m][1]}：`)
+        + `<div style="font:22px/1 monospace;letter-spacing:2px;margin:6px 0;color:var(--accent,#17734a)">${spark(vals)}</div>`
+        + '<ul class="flo-list">' + rows.slice().reverse().map((x) => `<li>${esc(x.label)}: <b>${f(x.headline[m])}</b>${m === 'revenue' && fin(x.headline.yoy) ? ` · ${x.headline.yoy >= 0 ? '+' : '−'}${num(Math.abs(x.headline.yoy))}% Y/Y` : ''}</li>`).join('') + '</ul>'
+        + (fin(first) && fin(last) && m !== 'om' && first > 0 ? L(lg, `From ${f(first)} to ${f(last)} (${spc(last / first - 1, 0)}).`, `从 ${f(first)} 到 ${f(last)}（${spc(last / first - 1, 0)}）。`) : '');
+      return { html, facts: rows.map((x) => `${x.label} ${NAME[m][0]} ${f(x.headline[m])}`), mood: 'talk', links: [lk(`${BASE}#c-${c.cik}-all`, L(lg, 'Every quarter', '所有季度'))] };
+    }
+
+    return { owners, insiders, congress, events, cashflow, segments, nextEarnings, ties, shorts, moves, guidanceRecord, investments, brief, why, trend, MK, STAKES };
   }
 
   /* ---------- the next questions under an answer ---------- */
-  const REL = { valuation: ['analysts', 'nextEarnings', 'cashflow'], earnings: ['segments', 'cashflow', 'nextEarnings'], segments: ['ties', 'earnings'], cashflow: ['credit', 'valuation'],
+  const REL = { brief: ['why', 'nextEarnings', 'owners'], why: ['trend', 'segments', 'cashflow'], trend: ['why', 'segments', 'nextEarnings'], valuation: ['analysts', 'nextEarnings', 'cashflow'], earnings: ['segments', 'cashflow', 'nextEarnings'], segments: ['ties', 'earnings'], cashflow: ['credit', 'valuation'],
     owners: ['insiders', 'congress', 'shorts'], insiders: ['owners', 'events'], congress: ['owners', 'insiders'], events: ['moves', 'earnings'], nextEarnings: ['guidanceRecord', 'options', 'segments'],
     ties: ['segments', 'industry'], shorts: ['options', 'moves', 'owners'], moves: ['events', 'opportunity'], rotation: ['industry', 'moves'], options: ['moves', 'nextEarnings'],
     credit: ['cashflow', 'valuation'], analysts: ['valuation', 'nextEarnings'], opportunity: ['rotation', 'moves'], guidanceRecord: ['nextEarnings', 'calls'], investments: ['owners', 'cashflow'],
     filings: ['events', 'earnings'], industry: ['rotation', 'ties'], calls: ['guidanceRecord', 'nextEarnings'] };
-  const ASK = { segments: ['How does {t} make money?', '{t} 怎么赚钱？'], cashflow: ['{t} free cash flow', '{t} 自由现金流'], nextEarnings: ['When does {t} report next?', '{t} 下次财报什么时候？'],
+  const ASK = { brief: ['Brief me on {t}', '{t} 速览'], why: ['Why did {t}\'s results change?', '{t} 业绩为什么变化？'], trend: ['{t} revenue trend', '{t} 营收趋势'], segments: ['How does {t} make money?', '{t} 怎么赚钱？'], cashflow: ['{t} free cash flow', '{t} 自由现金流'], nextEarnings: ['When does {t} report next?', '{t} 下次财报什么时候？'],
     owners: ['Who owns {t}?', '谁持有 {t}？'], insiders: ['Are {t} insiders buying?', '{t} 内部人在买还是卖？'], congress: ['Congress trades in {t}', '国会议员交易 {t}'],
     events: ['{t} latest 8-K', '{t} 最新 8-K'], ties: ['{t} customers and suppliers', '{t} 的客户和供应商'], shorts: ['{t} short interest', '{t} 空头仓位'],
     moves: ['How rare is {t}\'s latest move?', '{t} 最近的涨跌有多罕见？'], guidanceRecord: ['Does {t} meet its guidance?', '{t} 的指引兑现率'], investments: ['{t} investment gains', '{t} 投资收益'],
@@ -430,7 +573,7 @@
     ['guidanceRecord', 'Who raised guidance lately?', '最近谁上调了指引？']];
 
   const marketWords = (q) => MARKET.test(String(q || ''));
-  const API = { classify, merge, isMarket, marketWords, isFollow, fuzzyCompany, make, followUps, MARKET_ASK, INTENTS, lev };
+  const API = { glossary, GLOSSARY, QLABEL, classify, merge, isMarket, marketWords, isFollow, fuzzyCompany, make, followUps, MARKET_ASK, INTENTS, lev };
   root.FFFloInsights = API;
   if (typeof module !== 'undefined') module.exports = API;
 })(typeof window !== 'undefined' ? window : globalThis);
