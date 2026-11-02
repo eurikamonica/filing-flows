@@ -362,4 +362,17 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   H.movesDeepLink('IDX-VIX'); ok(state.mvv === 'market', 'the VIX stays with the market');
   H.movesDeepLink('all'); ok(state.mvv === 'all', 'deep link to the view');
 }
+{ // the bar width of the histograms: a fixed step starts on a multiple of it (0 an edge); a bad one falls back to auto
+  const b = V.bars(-3.3, 4.1, 0.5, 56);
+  ok(b.fixed && b.bw === 0.5 && b.lo === -3.5 && b.hi === 4.5 && b.nb === 16, 'a 0.5% bar: edges on multiples of 0.5');
+  ok(Math.abs(b.lo / b.bw - Math.round(b.lo / b.bw)) < 1e-9, '0 is an edge');
+  const a = V.bars(-3.3, 4.1, NaN, 56);
+  ok(!a.fixed && a.nb === 56 && Math.abs(a.bw - 7.4 / 56) < 1e-12, 'auto: 56 equal bars');
+  ok(!V.bars(-3.3, 4.1, 0.001, 56).fixed, 'too many bars (over 400): auto');
+  ok(!V.bars(-3.3, 4.1, 50, 56).fixed, 'too few bars (under 4): auto');
+  const c = V.stepChoices(-10, 10);
+  ok(c.length && c.length <= 6 && c.every((s) => 20 / s >= 10 && 20 / s <= 200), 'offered widths give 10–200 bars');
+  ok(c.includes(1) && c.includes(0.5), 'round widths on a ±10% range');
+  ok(V.stepChoices(5, 5).length === 0, 'no range: nothing offered');
+}
 console.log(`moves view: ${n} checks passed`);
