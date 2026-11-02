@@ -64,7 +64,7 @@ ALIASES = {
     'mondelez': 'MDLZ', 'pepsico': 'PEP', 'frito lay': 'PEP', 'quaker oats': 'PEP', 'coca cola': 'KO', 'nestle': 'NSRGY', 'kellanova': 'K',
     'walmart': 'WMT', 'target corporation': 'TGT', 'costco': 'COST', 'home depot': 'HD', 'lowe s': 'LOW', 'amazon': 'AMZN', 'best buy': 'BBY',
     'hasbro': 'HAS', 'mattel': 'MAT', 'fisher price': 'MAT', 'newell': 'NWL', 'graco': 'NWL', 'stanley black decker': 'SWK', 'whirlpool': 'WHR',
-    'modernatx': 'MRNA', 'genentech': None, 'merck sharp dohme': 'MRK', 'bristol myers': 'BMY', 'celgene': 'BMY', 'allergan': 'ABBV', 'pharmacyclics': 'ABBV',
+    'modernatx': 'MRNA', 'kite a gilead': 'GILD', 'kite pharma': 'GILD', 'genentech': None, 'merck sharp dohme': 'MRK', 'bristol myers': 'BMY', 'celgene': 'BMY', 'allergan': 'ABBV', 'pharmacyclics': 'ABBV',
     'kite pharma': 'GILD', 'alexion': 'AZN', 'lg electronics': 'LGEAF', 'samsung': 'SSNLF', 'peloton': 'PTON', 'ikea': None,
 }
 
@@ -100,7 +100,7 @@ def get_json(url, params=None, **kw):
 
 
 # ---------------------------------------------------------------- companies and names
-GENERIC = r'\b(laboratories|labs|pharmaceuticals?|pharma|therapeutics|biosciences|bioscience|biotherapeutics|biopharma|medical|sciences|' \
+GENERIC = r'\b(laboratories|labs|pharmaceuticals?|pharma|therapeutics|biosciences|bioscience|biotherapeutics|biopharma|biopharm|medical|sciences|' \
           r'international|technologies|technology|industries|enterprises|worldwide|global|incorporated|research development)\b'
 
 
@@ -131,6 +131,33 @@ def same(a, b):
     """Two names for the same company: equal cores, or one core the other followed by more words."""
     ca, cb = core(a), core(b)
     return bool(ca and cb) and (ca == cb or ca.startswith(cb + ' ') or cb.startswith(ca + ' '))
+
+
+SUBSIDIARY_WORDS = set('''uk u s us usa america north south latin europe european emea asia pacific japan china shanghai beijing germany deutschland
+france italia italy spain espana switzerland schweiz suisse austria belgium netherlands nederland nordic denmark sweden norway finland ireland
+canada australia korea india brazil mexico israel poland hong kong singapore taiwan oy oyj ab as gmbh kg ag sa sas sarl srl r l spa p bv nv pty kk
+limited ltd llc ulc lp sl sro development research operations manufacturing'''.split())
+
+
+def is_company(name, company):
+    """Strict: the source name (a trial's lead sponsor, a recalling firm) is this company — equal distinctive cores, or
+    the company's full name or one of its listed brands and subsidiaries followed by more words ('Merck Sharp & Dohme'
+    for Merck & Co.). A short name followed by other words is not enough: 'Sunshine Lake Pharma' is not Sunshine
+    Biopharma, 'China Medical University' is not China Pharma Holdings."""
+    s = norm(name)
+    if not s:
+        return False
+    cc = company.get('core') or company['key']
+    trim = lambda x: re.sub(r'(\s[a-z])+$', '', x)          # 'novo nordisk a s' / 'novo nordisk a' (A/S)  # noqa: E731
+    if trim(core(name)) == trim(cc):
+        return True
+    for k in [company['key']] + [k for k, t in ALIASES.items() if t == company.get('ticker')]:
+        if s == k or s.startswith(k + ' '):
+            return True
+    for base in (cc, trim(cc)):                             # 'Neurocrine UK Limited', 'GE Healthcare Finland Oy', 'Orthofix s.r.l.'
+        if s.startswith(base + ' ') and all(w in SUBSIDIARY_WORDS for w in s[len(base):].split()):
+            return True
+    return False
 
 
 def display_name(name):
@@ -304,6 +331,8 @@ def attention(days, today=None):
 # ---------------------------------------------------------------- ClinicalTrials.gov
 CT_FIELDS = ('NCTId,BriefTitle,Phase,OverallStatus,PrimaryCompletionDate,StartDate,LeadSponsorName,Condition,InterventionName,'
              'EnrollmentCount,LastUpdatePostDate,StudyType')
+CT_OTHER_NAMES = 'protocolSection.armsInterventionsModule.interventions.otherNames'   # a drug's code and generic names
+_ct_other = [True]                                          # turned off for the run if the API ever refuses the field
 
 
 def own_names(company):
@@ -322,17 +351,23 @@ def trials_fetch(company, fetch=get_json):
 
 def _trials_query(company, q, seen, fetch):
     out, token = [], None
-    names = own_names(company)
     for _ in range(20):
-        params = {'query.lead': q, 'pageSize': 1000, 'fields': CT_FIELDS, 'format': 'json'}
+        params = {'query.lead': q, 'pageSize': 1000, 'fields': CT_FIELDS + (',' + CT_OTHER_NAMES if _ct_other[0] else ''), 'format': 'json'}
         if token:
             params['pageToken'] = token
-        d = fetch('https://clinicaltrials.gov/api/v2/studies', params)
+        try:
+            d = fetch('https://clinicaltrials.gov/api/v2/studies', params)
+        except RuntimeError as e:
+            if not (_ct_other[0] and '400' in str(e)):
+                raise
+            _ct_other[0] = False                                # the field is refused: collect without the other names
+            params['fields'] = CT_FIELDS
+            d = fetch('https://clinicaltrials.gov/api/v2/studies', params)
         for s in d.get('studies') or []:
             p = s.get('protocolSection') or {}
             lead = ((p.get('sponsorCollaboratorsModule') or {}).get('leadSponsor') or {}).get('name') or ''
             nct = (p.get('identificationModule') or {}).get('nctId')
-            if nct in seen or not any(same(lead, n) for n in names):
+            if nct in seen or not is_company(lead, company):
                 continue
             seen.add(nct)
             st, ds, cm = p.get('statusModule') or {}, p.get('designModule') or {}, p.get('conditionsModule') or {}
@@ -341,6 +376,7 @@ def _trials_query(company, q, seen, fetch):
                         'pcd': (st.get('primaryCompletionDateStruct') or {}).get('date'), 'start': (st.get('startDateStruct') or {}).get('date'),
                         'updated': (st.get('lastUpdatePostDateStruct') or {}).get('date'), 'n': (ds.get('enrollmentInfo') or {}).get('count'),
                         'conditions': (cm.get('conditions') or [])[:4], 'drugs': [i.get('name') for i in ((p.get('armsInterventionsModule') or {}).get('interventions') or [])][:4],
+                        'other_names': [(i.get('otherNames') or [])[:6] for i in ((p.get('armsInterventionsModule') or {}).get('interventions') or [])][:4],
                         'sponsor': lead})
         token = d.get('nextPageToken')
         if not token:
@@ -357,7 +393,142 @@ def _phase(ph):
     return best
 
 
+# ---------------------------------------------------------------- drug programs (for the pipeline rNPV, app/valuation_sim.py)
+NOT_A_DRUG = re.compile(r'placebo|saline|vehicle|sham|standard (of )?care|\bsoc\b|best supportive|usual care|no intervention|observation|'
+                        r'control\b|questionnaire|survey|blood (draw|sample)|biopsy|imaging|\bmri\b|\bpet\b|\bct\b|screening|diet\b', re.I)
+DOSE = re.compile(r'\b\d+(\.\d+)?\s*(mg|mcg|µg|ug|g|ml|mg/kg|mg/m2|iu|units?|%)\b(/\s*(day|kg|dose|week|m2))*|\bfor \d+ (weeks?|days?|months?)\b|'
+                  r'\b(dose|arm|cohort|part|level|regimen|group|schedule)\s*[a-z0-9]?\b|\bstudy (drug|medication|product)\b|\bradiopaque\b|\b(tablets?|capsules?|injection|infusion|oral|iv|sc|subcutaneous|solution|'
+                  r'phosphate|hydrochloride|hcl|sodium|potassium|matching|low|high)\b', re.I)
+ONCOLOGY = re.compile(r'cancer|tumou?r|carcinoma|lymphoma|leukemia|leukaemia|melanoma|myeloma|sarcoma|neoplasm|glioma|glioblastoma|'
+                      r'oncolog|malignan|metasta|blastoma|mesothelioma|myelodysplastic', re.I)
+
+
+ARM_SPLIT = re.compile(r'\s(?:then|followed by|and|plus|with|or|vs\.?|versus)\s|\s[-–+/]\s|[;,+]', re.I)
+ARM_WORDS = re.compile(r'^(drug|biological|genetic|device|procedure|radiation|other|dietary supplement|combination product)\s*:?\s+|'
+                       r'\[?\b14c\b\]?\s*-?|\b(radiolabell?ed|initial|maintenance|loading|open[- ]label|extension|period|part [a-z0-9]|'
+                       r'regimen|treatment|therapy|for remaining.*)$', re.I)
+
+
+def drug_name(raw):
+    """A study's intervention name reduced to the drug: the intervention type, doses, forms, arm labels and anything after
+    'then', 'and', '+', ',' removed, lower case; None for a placebo, a comparator procedure or nothing left."""
+    if not raw:
+        return None
+    x = re.sub(r'\([^)]*\)', ' ', raw)
+    x = ARM_SPLIT.split(' ' + x + ' ')[0]
+    if NOT_A_DRUG.search(x):
+        return None
+    x = DOSE.sub(' ', x)
+    for _ in range(3):
+        x = ARM_WORDS.sub(' ', x.strip())
+    x = re.sub(r'[^a-z0-9\- ]+', ' ', x.lower())
+    x = re.sub(r'\s+', ' ', x).strip(' -')
+    return x if len(x) >= 3 and not x.isdigit() else None
+
+
+def _edit1(a, b, k=2):
+    """True when a and b are within k single-character edits (a short Levenshtein with an early stop)."""
+    if abs(len(a) - len(b)) > k:
+        return False
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i] + [0] * len(b)
+        for j, cb in enumerate(b, 1):
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb))
+        if min(cur) > k:
+            return False
+        prev = cur
+    return prev[-1] <= k
+
+
+def trial_programs(studies, today=None, dormant_years=3):
+    """The drug programs behind a sponsor's interventional studies: each study counted under its first drug (sponsors
+    list their own candidate first; combination partners and comparators come after it), names merged when one study
+    names both (a code name with its generic name, 'IDE196 (darovasertib)') or when they differ by a typo (two edits).
+    A program's phase is the highest phase among its studies that are active or completed within `dormant_years`;
+    programs whose studies all stopped (terminated, withdrawn, suspended) or ended longer ago are left out; phase 4 means
+    the drug is already marketed. Rows: [name, phase, active, studies, conditions, next primary completion, oncology,
+    other names]."""
+    today = (today or dt.date.today()).isoformat()
+    cutoff = str(int(today[:4]) - dormant_years) + today[4:]
+    names, rows = {}, []                                    # a union-find over drug names
+    def find(x):
+        while names.get(x, x) != x:
+            x = names[x]
+        return x
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            names[max(ra, rb)] = min(ra, rb)
+    for s in studies or []:
+        if (s.get('type') or 'INTERVENTIONAL') != 'INTERVENTIONAL':
+            continue
+        cands = [drug_name(d) for d in s.get('drugs') or []]
+        cands = [c for c in cands if c]
+        if not cands:
+            continue
+        key = cands[0]
+        names.setdefault(key, key)
+        rows.append((key, s))
+    for key, s in rows:                                     # the registry's own other names of the lead drug: 'XEN1101' = azetukalner
+        first = next((i for i, d in enumerate(s.get('drugs') or []) if drug_name(d) == key), None)
+        for alt in ((s.get('other_names') or [])[first] if first is not None and first < len(s.get('other_names') or []) else []):
+            a = drug_name(alt)
+            if a and a != key:
+                names.setdefault(a, a)
+                union(key, a)
+    known = set(names)
+    pair = re.compile(r'([A-Za-z0-9][\w\-]{2,})\s*\(([A-Za-z0-9][\w\-]{2,})\)')
+    for _, s in rows:                                       # 'IDE196 (Darovasertib)': a code name and its generic name
+        for text in [s.get('title') or ''] + list(s.get('drugs') or []):
+            for a, b in pair.findall(text or ''):
+                a, b = drug_name(a), drug_name(b)
+                if a and b and a != b and (a in known or b in known):
+                    names.setdefault(a, a)
+                    names.setdefault(b, b)
+                    union(a, b)
+    keys = sorted(n for n in names if len(n) >= 8 and not re.search(r'\d', n))   # code names (IDE196, IDE397) are different drugs
+    for i, a in enumerate(keys):                             # typos in generic names: 'vormatrigine' / 'vormatrogine'
+        for b in keys[i + 1:]:
+            if a[:3] == b[:3] and _edit1(a, b):
+                union(a, b)
+    progs = {}
+    for key, s in rows:
+        root = find(key)
+        p = progs.setdefault(root, {'names': set(), 'studies': [], 'conditions': {}})
+        p['names'].add(key)
+        p['studies'].append(s)
+        for c in s.get('conditions') or []:
+            p['conditions'][c] = p['conditions'].get(c, 0) + 1
+    for n in names:                                         # a generic name seen only in brackets joins its program's names
+        if n not in known and find(n) in progs:
+            progs[find(n)]['names'].add(n)
+    out = []
+    for root, p in progs.items():
+        live = [s for s in p['studies'] if s.get('status') in TRIAL_ACTIVE
+                or s.get('status') == 'COMPLETED' and (s.get('pcd') or '') >= cutoff]
+        if not live:
+            continue
+        ph = None
+        for s in live:
+            x = _phase(s.get('phases'))
+            if x and (ph is None or PHASES.index(x) > PHASES.index(ph)):
+                ph = x
+        if not ph:
+            continue
+        active = [s for s in live if s.get('status') in TRIAL_ACTIVE]
+        due = sorted(s['pcd'] for s in active if s.get('pcd') and s['pcd'][:10] >= today[:7] and _phase(s.get('phases')) == ph)
+        conds = [c for c, _ in sorted(p['conditions'].items(), key=lambda kv: -kv[1])][:3]
+        onc = any(ONCOLOGY.search(c) for c in p['conditions']) or any(ONCOLOGY.search(s.get('title') or '') for s in p['studies'])
+        label = max(p['names'], key=lambda n: (sum(1 for k, _ in rows if k == n), not re.search(r'\d', n), -len(n)))
+        out.append([label, ph, bool(active), len(p['studies']), ', '.join(conds)[:100], due[0] if due else None, onc,
+                    sorted(n for n in p['names'] if n != label)[:4]])
+    out.sort(key=lambda r: (-PHASES.index(r[1]), r[5] or '9999', r[0]))
+    return out
+
+
 def trials_summary(studies, today=None):
+    today_d = today
     today = (today or dt.date.today()).isoformat()
     if not studies:
         return None
@@ -381,7 +552,9 @@ def trials_summary(studies, today=None):
     return {'studies': len(studies), 'active': len(active), 'phases': by, 'completed_2y': len(recent),
             'enrollment_active': sum(s['n'] or 0 for s in active), 'conditions': sorted(cond.items(), key=lambda x: -x[1])[:10],
             'due': [slim(s) for s in due[:25]], 'sponsor': studies[0]['sponsor'],
-            'fields': ['id', 'title', 'phase', 'status', 'primary_completion', 'enrollment', 'conditions', 'interventions']}
+            'fields': ['id', 'title', 'phase', 'status', 'primary_completion', 'enrollment', 'conditions', 'interventions'],
+            'programs': trial_programs(studies, today_d)[:60],
+            'program_fields': ['drug', 'phase', 'active', 'studies', 'conditions', 'next_primary_completion', 'oncology', 'other_names']}
 
 
 # ---------------------------------------------------------------- recalls
@@ -403,7 +576,7 @@ def fda_recalls(company, since, fetch=get_json):
             if len(got) < 100 or skip + 100 >= ((d.get('meta') or {}).get('results') or {}).get('total', 0):
                 break
         for r in rows:
-            if not any(same(r.get('recalling_firm'), n) for n in own_names(company)):
+            if not is_company(r.get('recalling_firm'), company):
                 continue
             rd = r.get('report_date') or ''
             out.append({'source': 'FDA ' + kind, 'date': f'{rd[:4]}-{rd[4:6]}-{rd[6:8]}' if len(rd) == 8 else rd, 'class': r.get('classification'),
@@ -1026,13 +1199,18 @@ def build(root, site_index, frames_root=None, today=None):
     # trials
     for p in (root / 'cache' / 'trials').glob('*.json'):
         cik = int(p.stem)
-        s = trials_summary((read_json(p, {}) or {}).get('data') or [], today)
+        if cik not in by_cik:
+            continue
+        rows = [x for x in (read_json(p, {}) or {}).get('data') or [] if not x.get('sponsor') or is_company(x['sponsor'], by_cik[cik])]   # cached before the strict rule
+        s = trials_summary(rows, today)
         if s and cik in docs:
             docs[cik]['trials'] = s
     # recalls: FDA per company, CPSC and NHTSA in bulk
     rec = {}
     for p in (root / 'cache' / 'fda').glob('*.json'):
-        rec.setdefault(int(p.stem), []).extend((read_json(p, {}) or {}).get('data') or [])
+        cik = int(p.stem)
+        if cik in by_cik:
+            rec.setdefault(cik, []).extend(x for x in (read_json(p, {}) or {}).get('data') or [] if not x.get('firm') or is_company(x['firm'], by_cik[cik]))
     for cik, lst in cpsc_match(read_json(root / 'cache' / 'cpsc.json', []) or [], find).items():
         rec.setdefault(cik, []).extend(lst)
     for cik, lst in nhtsa_match(read_json(root / 'cache' / 'nhtsa.json', []) or [], find).items():

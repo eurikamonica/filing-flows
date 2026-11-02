@@ -15,7 +15,9 @@ capital, valuation bands, sector models for banks / insurers / REITs, and a blen
               base_rates.json  the peer distributions (app/base_rates.py) by industry and size
               models.json    out-of-sample scores: the combined forecast (walk-forward), the valuation ledger, the Rotation
                              forecasts (forecast ledger), the hierarchical revenue model, Polymarket's implied prices
-              markov.json    the regime model's panel prior (transition counts, regime growth, margin drift) by size bucket
+              markov.json    the regime model's panel prior by size bucket: the hidden Markov model's regimes and transition
+                             matrix, regime growth and margin drift, growth persistence (for the Schwartz–Moon simulation)
+              backtest.json  the simulations' walk-forward backtest since 2013 (app/sim_backtest.py; also in models.json)
               status.json
 
 Inputs the build reads (each optional; a company is valued with what exists):
@@ -24,6 +26,7 @@ Inputs the build reads (each optional; a company is valued with what exists):
   --debt      public/ of the branch debt-history (app/debt.py): snapshot, Merton DD, calibrated CDS, Altman Z, cushion
   --consensus public/ of the branch consensus-history (app/consensus.py): analysts' targets, Polymarket price, our model
   --rotation  public/ of the branch rotation-history: forecast-ledger*.json (the Rotation forecasts, frozen and resolved)
+  --outside   public/ of the branch research-outside (app/outside.py): c/<cik>.json — ClinicalTrials.gov drug programs
 
 Methods (every assumption is in the output, nothing is hidden):
   WACC        cost of equity = 10-year Treasury + Blume-adjusted beta (weekly log returns vs SPY, 2 years) × ERP (4.5%,
@@ -58,6 +61,10 @@ Methods (every assumption is in the output, nothing is hidden):
               the exit-multiple / venture method, a survival-weighted value), high growth (EV/Sales against the Rule of
               40 across every company); banks, insurers and REITs (justified P/TBV and P/B by Gordon growth, a dividend
               discount model).
+  Simulations app/valuation_sim.py: drug developers without operating profit get the pipeline rNPV solved from the price
+              (the yearly peak sales per drug program that make the price fair, from ClinicalTrials.gov phases and the
+              industry's phase success rates); loss-making or cash-burning companies with revenue get the Schwartz–Moon
+              simulation (growth and margins wander, the company goes bankrupt when its cash runs out) as a lens.
   Appendix    for every company: each input with its source, each assumption with its basis, the WACC step by step,
               every method's formula with the company's numbers substituted, and the methods that do not apply and why.
   Outside     app/base_rates.py: every input read from what peers (SIC industry × size) actually did — base rates, the
@@ -89,6 +96,8 @@ import base_rates as BR
 import valuation_methods as VMx  # noqa: E402
 import valuation_extra as VX  # noqa: E402  (more lenses and the implied return, app/valuation_extra.py)
 import markov  # noqa: E402  (regime-switching Monte Carlo, app/markov.py)
+import valuation_sim as VS  # noqa: E402  (pipeline rNPV and the Schwartz–Moon simulation, app/valuation_sim.py)
+import sim_backtest as SB  # noqa: E402  (walk-forward backtest of the simulations, app/sim_backtest.py)
 
 ERP = 0.045                 # equity risk premium: a fixed, stated assumption (not estimated here)
 TERM_G = 0.025              # terminal growth of the base DCF
@@ -912,10 +921,23 @@ def settle_shares(cands, price=None, revenue=None, implied=None):
     Waters' as 98.2 billion) is read in shares; one implausible either way (Planet Fitness's 100 Class B shares, Erie's
     2,542) is passed over. Net income ÷ diluted EPS only helps decide a unit: as a share count it is unreliable (frames
     keep each quarter's EPS as first filed, before a split, and net income includes minority interests). None when no
-    source is plausible: no per-share value beats a wrong one."""
+    source is plausible: no per-share value beats a wrong one. A count that looks possible but is a thousand or a million
+    times net income ÷ diluted EPS (Cytokinetics' 132,086 — thousands — against 123 million) is read in that unit too: no
+    split or share issue moves a count that far."""
     vals = [(n, v) for n, v in cands if fin(v) and v > 0]
     ref_ok = fin(implied) and implied > 0 and plausible_shares(implied, price, revenue)
-    plain = [(v, n, None) for n, v in vals if plausible_shares(v, price, revenue)]
+    plain = []
+    for n, v in vals:
+        if not plausible_shares(v, price, revenue):
+            continue
+        if ref_ok and not (0.01 <= v / implied <= 100):
+            for k, unit in ((1e3, 'thousands'), (1e6, 'millions'), (1e-3, 'thousandths'), (1e-6, 'millionths')):
+                w = v * k
+                if 0.8 <= w / implied <= 1.25 and plausible_shares(w, price, revenue):
+                    plain.append((w, n, f'Shares: {n} files {v:,.6g}, a count in {unit} (net income ÷ diluted EPS gives {implied:,.0f}); read as {w:,.0f}.'))
+                    break
+            continue
+        plain.append((v, n, None))
     refs = ([implied] if ref_ok else []) + [v for v, _, _ in plain]
     scaled = []
     for n, v in vals:
@@ -1084,8 +1106,9 @@ def analyse(F, ctx):
                           'rows': [[x['t'], x['rev'], x['ebit'], x['fcff'], x['pv']] for x in r['rows']],
                           'assumptions': {k: base[k] for k in ('growth', 'margin', 'tax', 'da', 'capex', 'wc', 'wacc', 'g', 'roic')}}
             mk = markov.run(F, base, W, F.get('years'), (ctx.get('markov_prior') or {}).get(markov.bucket_of(F.get('mcap'))),
-                            price, ctx.get('cons'), ctx.get('price_date'))
+                            price, ctx.get('cons'), ctx.get('price_date'), sd_scale=(ctx.get('backtest') or {}).get('regime_sd_scale') or 1.0)
             if mk:
+                mk['backtest'] = SB.for_page(ctx.get('backtest'), 'regime')
                 out['markov'] = mk
                 out['football'].append({'method': 'Regime-switching Monte Carlo 10th–90th', 'low': mk['p10'], 'high': mk['p90'],
                                         'point': mk['p50'], 'note': f"median {mk['p50']:.2f}; {mk['n']:,} paths, 10 years, Markov growth regimes"})
@@ -1239,6 +1262,11 @@ def analyse(F, ctx):
     if ctx.get('br'):
         BR.enrich(sys.modules[__name__], out, F, base if 'dcf' in out else None, W, ctx)
     out.pop('_regs', None)
+    # ---- the pipeline rNPV and the Schwartz–Moon simulation (app/valuation_sim.py)
+    try:
+        VS.run(sys.modules[__name__], VMx, BR, F, W, out, ctx)
+    except Exception as e:                                  # noqa: BLE001 — a simulation never stops the page
+        out['notes'].append(f'Simulations: {str(e)[:120]}')
     # ---- more lenses and the return today's price implies (app/valuation_extra.py)
     try:
         VX.extra(VMx, sys.modules[__name__], F, W, out, ctx, base if 'dcf' in out else None)
@@ -1270,7 +1298,8 @@ def ledger_update(root, rows, prices_dir, today=None):
     p = ldir / f'{month}.json'
     if not p.exists() and rows:
         snap = {r['ticker']: [r['price'], r.get('dcf_value'), r.get('mc_p_above'), r.get('distress_pd'), r.get('target_mean'), r.get('pm_price'),
-                              r.get('ov_mean'), (r['price'] * (1 + r['comb_ret'])) if fin(r.get('comb_ret')) else None, r.get('stage_value')]
+                              r.get('ov_mean'), (r['price'] * (1 + r['comb_ret'])) if fin(r.get('comb_ret')) else None, r.get('stage_value'),
+                              r.get('mk_p50'), r.get('sm_mean')]
                 for r in rows if r.get('ticker') and fin(r.get('price'))}
         write_json(p, {'frozen_at': now(), 'month': month, 'fields': LEDGER_FIELDS, 'rows': snap})
     scores = []
@@ -1332,8 +1361,9 @@ def ledger_update(root, rows, prices_dir, today=None):
                     'share_up is the naive baseline for the direction hit rate; mae_no_change the naive baseline for the combined forecast.'}
 
 
-LEDGER_FIELDS = ['price', 'dcf_value', 'mc_p_above', 'distress_pd', 'target_mean', 'pm_price', 'outside_mean', 'combined_price', 'stage_value']
-LEDGER_SCORED = {'target_gap': 4, 'pm_gap': 5, 'outside_gap': 6, 'combined_gap': 7, 'stage_gap': 8}
+LEDGER_FIELDS = ['price', 'dcf_value', 'mc_p_above', 'distress_pd', 'target_mean', 'pm_price', 'outside_mean', 'combined_price', 'stage_value',
+                 'regime_median', 'schwartz_moon_mean']
+LEDGER_SCORED = {'target_gap': 4, 'pm_gap': 5, 'outside_gap': 6, 'combined_gap': 7, 'stage_gap': 8, 'regime_gap': 9, 'schwartz_moon_gap': 10}
 
 
 def spearman(pairs):
@@ -1367,7 +1397,9 @@ INDEX_FIELDS = ['cik', 'ticker', 'name', 'sector', 'kind', 'price', 'mcap', 'wac
                 'req_rev_g', 'target_growth', 'p_target', 'pm_eps_strike', 'pm_req_eps_g', 'p_pm_eps_base', 'pm_beat_prob', 'p_pm_price',
                 'ov_mean', 'ov_p10', 'ov_p90', 'ov_p_above', 'comb_ret', 'comb_lo', 'comb_hi', 'sens_driver', 'sens_swing', 'river_pe_pct',
                 # the regime-switching Monte Carlo (app/markov.py)
-                'mk_p50', 'mk_p_above', 'mk_state',
+                'mk_p50', 'mk_p_above', 'mk_state', 'mk_method',
+                # the Schwartz–Moon simulation and the pipeline rNPV (app/valuation_sim.py)
+                'sm_mean', 'sm_p_above', 'sm_fail5', 'pipe_req_peak', 'pipe_req_peak_lead', 'pipe_p_none', 'pipe_programs',
                 # more lenses and the implied return (app/valuation_extra.py)
                 'icc', 'icc_spread', 'epv_value', 'epv_gap', 'graham_value', 'graham_gap', 'ncav_value', 'lynch_value']
 
@@ -1395,7 +1427,7 @@ def _load_dir(d, name, default=None):
     return read_json(Path(d) / name, default) if d else default
 
 
-def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True, limit=None, rotation=None):
+def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True, limit=None, rotation=None, outside=None):
     root = Path(root)
     pub = root / 'public'
     (pub / 'c').mkdir(parents=True, exist_ok=True)
@@ -1460,6 +1492,21 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
             if 0 < evs <= 50:
                 D.add('evs_hist', evs, r['sic'], r['size'], int(r['date'][:4]), r['cik'])
     D.finish({int(r['date'][:4]) for r in o_rows}, ('cagr5',))
+    # the regime model's history: the annual frames since CY2010, then the latest trailing year from the quarterly frames
+    annual = getattr(D, 'annual', None) or {}
+    for cik, F in Fs.items():
+        q_rev = ((P.get(cik) or {}).get('q') or {}).get('rev') or []
+        last_q = max((i for i, v in enumerate(q_rev) if fin(v)), default=None)
+        F['years'] = markov.merge_years(markov.annual_years(annual.get(cik)), F.get('years'), int(periods[last_q][2:6]) if last_q is not None else None)
+
+    # the simulations' walk-forward backtest: every filer's annual frames since CY2010 (recomputed monthly)
+    bt_year = SB.complete_year(annual, today.year) if annual else None
+    sim_bt = SB.reuse(read_json(pub / 'backtest.json', {}) or {}, bt_year, today) if bt_year else None
+    if bt_year and not sim_bt:
+        bal = SB.balances(lambda c, p: frame(root, c, p), range(BR.ANNUAL_FROM, bt_year + 1))
+        sim_bt = SB.run(annual, bt_year, bal, log=(lambda *a: print(*a, flush=True)) if verbose else (lambda *a: None))
+        write_json(pub / 'backtest.json', clean(sim_bt))
+    sm_panel = SB.panel_now(annual, bt_year) if bt_year else None
 
     def cons_of(cik):
         snaps = (Fs[cik].get('_cons') or {}).get('snapshots') or []
@@ -1523,7 +1570,8 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
         ctx = {'rates': rates, 'buckets': buckets, 'regressions': regs, 'debt': drec, 'cons': cons_c, 'pm': pm, 'beta': b,
                'vol': annual_vol(px), 'segments': segments_of(slim), 'range52': [min(last_year), max(last_year)] if last_year else None,
                'bands': bd, 'price_date': px[-1][0], 'br': br_ctx, 'panel': P.get(cik) or {}, 'crow': crow,
-               'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None, 'markov_prior': mk_prior}
+               'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None, 'markov_prior': mk_prior,
+               'trials': (_load_dir(outside, f'c/{cik}.json') or {}).get('trials'), 'backtest': (sim_bt or {}).get('summary'), 'sm_panel': sm_panel}
         A = analyse(F, ctx)
         write_json(pub / 'c' / f'{cik}.json', clean(A))
         n_dcf += 'dcf' in A
@@ -1546,7 +1594,12 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
                'p_ffo': sec.get('p_ffo')}
         mk = A.get('markov') or {}
         row.update({'mk_p50': mk.get('p50'), 'mk_p_above': mk.get('p_above'),
-                    'mk_state': markov.STATES[mk['model']['start']] if mk.get('model') else None})
+                    'mk_state': (mk.get('labels') or markov.THRESHOLD_LABELS)[mk['model']['start']].lower() if mk.get('model') else None,
+                    'mk_method': mk.get('method')})
+        smb, rn = A.get('schwartz_moon') or {}, A.get('rnpv') or {}
+        row.update({'sm_mean': smb.get('mean'), 'sm_p_above': smb.get('p_above'), 'sm_fail5': smb.get('p_fail5'),
+                    'pipe_req_peak': rn.get('required_peak'), 'pipe_req_peak_lead': rn.get('required_peak_lead'), 'pipe_p_none': rn.get('p_none'),
+                    'pipe_programs': len(rn['programs']) if rn.get('programs') else None})
         row['dcf_gap'] = row['dcf_value'] / row['price'] - 1 if fin(row['dcf_value']) and fin(row['price']) and row['price'] > 0 else None
         ir, lens = A.get('implied_return') or {}, {b['method']: b.get('point') for b in A['football'] if b.get('lens')}
         gap = lambda v: v / row['price'] - 1 if fin(v) and fin(row['price']) and row['price'] > 0 else None
@@ -1576,6 +1629,8 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
                                                'history': hist_info, 'metrics': BR.METRIC_LABEL, 'groups': BR.published_groups(D, names),
                                                'note': BR.__doc__.split('\n\n')[1]}))
     models = BR.models_doc(comb, led, rot, read_json(root / 'site' / 'model.json', {}) or {}, _load_dir(consensus, 'calibration.json', {}) or {})
+    if sim_bt:
+        models['simulations'] = {k: v for k, v in sim_bt.items() if k != 'summary'}
     write_json(pub / 'models.json', clean(models))
     st = {'built_at': now(), 'companies': len(index), 'with_dcf': n_dcf, 'banks_fit': (regs.get('bank') or {}).get('n'),
           'rule40_fit': (regs.get('rule40') or {}).get('n'),
@@ -1583,7 +1638,10 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
           'base_rate_windows': hist_info.get('five_year_windows'), 'combined_rows': comb.get('rows'),
           'with_stage': sum(1 for r in index if r.get('stage')), 'with_outside_mc': sum(1 for r in index if fin(r.get('ov_mean'))),
           'with_markov': sum(1 for r in index if fin(r.get('mk_p50'))),
-          'markov_panel': {b: {'firms': v['firms'], 'transitions': v['transitions']} for b, v in mk_prior.items()}}
+          'markov_panel': {b: {'firms': v['firms'], 'transitions': v['transitions'], 'method': v['method']} for b, v in mk_prior.items()},
+          'with_schwartz_moon': sum(1 for r in index if fin(r.get('sm_mean'))), 'with_pipeline_rnpv': sum(1 for r in index if fin(r.get('pipe_req_peak'))),
+          'sim_backtest': {'last_year': (sim_bt or {}).get('last_year'), 'origins': [o['year'] for o in (sim_bt or {}).get('origins') or []],
+                           'cash_out_rows': (sim_bt or {}).get('cash_out_n'), 'generated_at': (sim_bt or {}).get('generated_at')}}
     write_json(pub / 'status.json', st)
     if verbose:
         print('valuation build: ' + json.dumps(st), flush=True)
@@ -1677,6 +1735,9 @@ def collect_frames(root, http, quarters=QUARTERS, refresh_days=3, deadline=None,
     for tax, concept, unit, kind in CONCEPTS:                                      # last: the long history (final, fetched once)
         if kind == 'q' and (concept in REVENUE or concept in BR.HISTORY_CONCEPTS):
             jobs += [(tax, concept, unit, y, True) for y in history]
+    queued = {(c, p) for _, c, _, p, _ in jobs}
+    for concept in (SB.CASH_CONCEPT, SB.DEBT_CONCEPT):                             # year-end cash and debt since 2010 (the backtest)
+        jobs += [('us-gaap', concept, 'USD', f'{y}Q4I', True) for y in history + years[:-1] if (concept, f'{y}Q4I') not in queued]
     for tax, concept, unit, period, _ in jobs:
         if deadline and time.monotonic() > deadline:
             break
@@ -1805,11 +1866,12 @@ def main():
     b.add_argument('--debt', default=None)
     b.add_argument('--consensus', default=None)
     b.add_argument('--rotation', default=None, help='public/ of rotation-history (forecast-ledger*.json)')
+    b.add_argument('--outside', default=None, help='public/ of research-outside (c/<cik>.json: ClinicalTrials.gov drug programs)')
     args = ap.parse_args()
     if args.cmd == 'collect':
         collect(args.root, args.site_url, args.minutes, args.limit)
     else:
-        build(args.root, args.prices, args.debt, args.consensus, rotation=args.rotation)
+        build(args.root, args.prices, args.debt, args.consensus, rotation=args.rotation, outside=args.outside)
     return 0
 
 

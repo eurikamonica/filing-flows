@@ -381,10 +381,13 @@ def _derived(b, out, F, W, M):
                      ['Monte Carlo spreads', 'growth σ, margin σ from its own history; WACC ±1 pt; terminal growth 1.5–3%', 'the company\'s own variability']])
     if name.startswith('Regime-switching') and out.get('markov'):
         mk = out['markov']
+        S = mk.get('sources') or {}
         return calc('10-year Monte Carlo: revenue growth switches between high / steady / decline regimes by a Markov chain; margin drifts by regime; '
-                    'value = Σ discounted FCFF − SBC + terminal, per share',
-                    [f'{num(mk.get("n"))} paths; median {ps(mk.get("p50"))}, 10th–90th {ps(mk.get("p10"))} – {ps(mk.get("p90"))}'],
-                    [], [['Transition matrix', 'its own history + the panel prior (markov.json)', 'app/markov.py']])
+                    'value = (Σ FCFF ÷ (1 + WACC)ᵗ + terminal value ÷ (1 + WACC)¹⁰ − net debt) ÷ shares',
+                    [f'regimes: {S.get("regimes") or ""}', f'today: {S.get("now") or ""}',
+                     f'{num(mk.get("n"))} paths; median {ps(mk.get("p50"))}, 10th–90th {ps(mk.get("p10"))} – {ps(mk.get("p90"))}'],
+                    [], [['Transition matrix', S.get('matrix') or 'its own history + the panel prior (markov.json)', 'app/markov.py'],
+                         ['Stock-based compensation', 'counted once', S.get('sbc') or '']])
     pe = (out.get('peers') or {})
     for key, nm, base_label, base_val in (('pe', 'P/E vs peers', 'EPS, four quarters', F.get('eps')),
                                           ('ev_ebitda', 'EV/EBITDA vs peers', 'EBITDA, four quarters', F.get('ebitda')),
@@ -492,7 +495,8 @@ def fit_reason(name, F, out):
     """Why this method applies to this company, in one or two sentences from its own figures (the appendix's
     "Why it applies here"; what each method is and why it works in general is in docs/valuation-guide.json)."""
     import valuation_extra as VX
-    lens = VX.fit_reason(name, F, out)
+    import valuation_sim as VS
+    lens = VX.fit_reason(name, F, out) or VS.fit_reason(name, F, out)
     if lens:
         return lens
     st = out.get('stage') or {}
@@ -511,7 +515,7 @@ def fit_reason(name, F, out):
         return (f'Operating income is positive ({money(oi)} over four quarters{grow}), so its margins can be projected and '
                 'its cash flows discounted.')
     if name.startswith('Regime-switching'):
-        return 'It has a DCF and enough quarters of revenue history to estimate how often its growth switches regime.'
+        return 'It has a DCF and enough years of revenue history to estimate which growth regime it is in and how often it switches.'
     if name.startswith('Outside view'):
         return ((f'Its recent revenue growth is {pc(g0, 0)}. ' if fin(g0) else '') + 'This checks its own DCF against what companies of '
                 'its industry and size actually achieved, so that optimism in its forecast is caught.')
@@ -614,8 +618,9 @@ def appendix(M, out, F, W, rates):
                         'fit': fit_reason(b['method'], F, out)})
     kind = F.get('kind') if F.get('kind') in CANDIDATES else 'industrial'
     import valuation_extra as VX
-    lens = VX.CANDIDATES if kind == 'industrial' else [m for m in VX.CANDIDATES if m in ('Graham number', 'Graham formula (revised)', 'Lynch fair P/E (PEGY)', 'H-model dividend discount')]
-    why = {**WHY_NOT, **VX.WHY_NOT, **(out.get('lens_why') or {})}
+    import valuation_sim as VS
+    lens = VX.CANDIDATES + VS.CANDIDATES if kind == 'industrial' else [m for m in VX.CANDIDATES if m in ('Graham number', 'Graham formula (revised)', 'Lynch fair P/E (PEGY)', 'H-model dividend discount')]
+    why = {**WHY_NOT, **VX.WHY_NOT, **VS.WHY_NOT, **(out.get('lens_why') or {})}
     not_used = [{'method': m, 'why': why.get(m, 'not enough data')} for m in CANDIDATES[kind] + lens if m not in seen]
     out['appendix'] = {'inputs': inputs, 'assumptions': glob, 'wacc': _wacc_steps(W), 'methods': methods, 'not_used': not_used,
                        'stage': {'key': st.get('stage'), 'label': st.get('label'), 'why': st.get('why'), 'rule': st.get('rule'),

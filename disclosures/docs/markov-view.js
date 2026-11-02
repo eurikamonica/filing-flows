@@ -10,6 +10,8 @@
   const usd = (v) => (fin(v) ? (v < 0 ? '−$' : '$') + num(Math.abs(v), Math.abs(v) >= 1000 ? 0 : 2) : '—');
   const pct = (v, d = 1) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const NAMES = ['High growth', 'Steady', 'Decline'];
+  // the regimes' names come with the model (app/markov.py regime_labels: what the HMM learned); NAMES is the threshold set
+  let LABELS = NAMES;
   // cdnjs stops at 2.35.0 in the 2.35 line (2.35.2 is a 404 there); jsDelivr's npm build is the fallback
   const PLOTLY = ['https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.0/plotly.min.js',
     'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js'];
@@ -34,14 +36,23 @@
     return (DRAWS[key] = { U, Zg, Zm });
   }
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // each path's starting regime: today's, or a stratified split by the HMM's probabilities (path i takes the regime whose
+  // cumulative probability first exceeds (i + ½) ÷ n) — app/markov.py start_states
+  function startStates(p, n) {
+    const sp = p.start_p, out = new Array(n);
+    if (!sp) return out.fill(p.start);
+    const c0 = sp[0], c1 = sp[0] + sp[1];
+    for (let i = 0; i < n; i++) { const u = (i + 0.5) / n; out[i] = u < c0 ? 0 : (u < c1 ? 1 : 2); }
+    return out;
+  }
   function simulate(p, o = {}) {
     const n = o.n || 2000, T = p.years, D = draws(n, T), dg = o.dg || 0, w = o.wacc != null ? o.wacc : p.wacc, P = o.P || p.P;
     const cum = P.map((r) => [r[0], r[0] + r[1]]), gT = p.g_term, cap = Math.max(w - gT, 0.01), reinv = 1 - gT / p.roic, tax = p.tax;
     const cons = p.cons || [], csd = p.cons_sd || 0, capex = Array.isArray(p.capex) ? p.capex : [p.capex];
     const claims = p.debt + p.claims - p.cash, out = new Float64Array(n);
-    const hv = o.track ? Array.from({ length: T }, () => new Float64Array(n)) : null;
+    const hv = o.track ? Array.from({ length: T }, () => new Float64Array(n)) : null, s0 = startStates(p, n);
     for (let i = 0; i < n; i++) {
-      let s = p.start, rev = p.rev0, m = p.m0, pv = 0, df = 1;
+      let s = s0[i], rev = p.rev0, m = p.m0, pv = 0, df = 1;
       for (let t = 0; t < T; t++) {
         const k = i * T + t, u = D.U[k], c = cum[s];
         s = u < c[0] ? 0 : (u < c[1] ? 1 : 2);
@@ -51,11 +62,11 @@
         rev = prev * (1 + gr);
         m = clamp(m + p.dm[s] + p.kappa * (p.m0 - m) + p.m_sd * D.Zm[k], -0.5, 0.7);
         const ebit = rev * m, nopat = ebit > 0 ? ebit * (1 - tax) : ebit;
-        const fcff = nopat + rev * (p.da - capex[Math.min(t, capex.length - 1)] - p.sbc) - (rev - prev) * p.wc;
+        const fcff = nopat + rev * (p.da - capex[Math.min(t, capex.length - 1)]) - (rev - prev) * p.wc;
         df /= 1 + w; pv += fcff * df;
         if (hv || t === T - 1) {
           const nxt = rev * (1 + gT), e1 = nxt * m;
-          const tv = ((e1 > 0 ? e1 * (1 - tax) : e1) * reinv - nxt * p.sbc) / cap;
+          const tv = (e1 > 0 ? e1 * (1 - tax) : e1) * reinv / cap;
           const v = (pv + tv * df - claims) / p.shares;
           if (hv) hv[t][i] = v;
           if (t === T - 1) out[i] = v;
@@ -89,7 +100,7 @@
     let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Regime probabilities by year">`;
     rows.forEach((pi, t) => {
       let y = T;
-      pi.forEach((v, j) => { const h = v * (H - T - B); s += `<rect x="${L + t * bw + 1}" y="${y}" width="${bw - 2}" height="${h}" fill="${SC[j]}" opacity="0.7"><title>Year ${t}: ${NAMES[j]} ${pct(v, 0)}</title></rect>`; y += h; });
+      pi.forEach((v, j) => { const h = v * (H - T - B); s += `<rect x="${L + t * bw + 1}" y="${y}" width="${bw - 2}" height="${h}" fill="${SC[j]}" opacity="0.7"><title>Year ${t}: ${LABELS[j]} ${pct(v, 0)}</title></rect>`; y += h; });
       s += `<text x="${L + t * bw + bw / 2}" y="${H - 6}" text-anchor="middle">${t}</text>`;
     });
     return s + `<text x="4" y="${T + 10}">100%</text><text x="4" y="${H - B}">0</text></svg>`;
@@ -129,7 +140,7 @@
     const lo = Math.max(0, q(last, 0.01)) * 0.9, hi = q(last, 0.99), B = 45, step = (hi - lo) / B || 1;
     const ys = Array.from({ length: B }, (_, i) => lo + step * (i + 0.5)), rz = ys.map(() => new Array(p.years).fill(0));
     tr.hv.forEach((arr, t) => { for (const v of arr) { const b = Math.floor((v - lo) / step); if (b >= 0 && b < B) rz[b][t] += 1 / arr.length; } });
-    return { el: { x: ex, y: ey, z: ez }, tp: { x: tx, y: ty, z: tz, rowName: NAMES[p.start] }, ridge: { x: Array.from({ length: p.years }, (_, i) => i + 1), y: ys, z: rz, p50: tr.hv.map(median) } };
+    return { el: { x: ex, y: ey, z: ez }, tp: { x: tx, y: ty, z: tz, rowName: LABELS[p.start] }, ridge: { x: Array.from({ length: p.years }, (_, i) => i + 1), y: ys, z: rz, p50: tr.hv.map(median) } };
   }
   function draw3d(box, mk, price, G, mode) {
     const P = window.Plotly, K = colors(box), p = mk.model;
@@ -157,11 +168,11 @@
     const ptTp = { x: [p.start === 0 ? row[1] : row[0]], y: [row[2]], z: [mk.p50] };
     const dot3 = (pt, label) => ({ type: 'scatter3d', mode: 'markers', ...pt, marker: { size: 5, color: K.ink }, hovertemplate: label + '<extra></extra>' });
     const dot2 = (pt, label) => ({ type: 'scatter', mode: 'markers', x: pt.x, y: pt.y, marker: { size: 10, color: K.ink, symbol: 'circle-open', line: { width: 2 } }, hovertemplate: label + '<extra></extra>' });
-    const upName = p.start === 0 ? 'P(→ steady)' : 'P(→ high growth)';
+    const upName = `P(→ ${(p.start === 0 ? LABELS[1] : LABELS[0]).toLowerCase()})`, lowName = `P(→ ${LABELS[2].toLowerCase()})`;
     if (mode.el === '3d') sf(el, 'Growth shift (pts)', 'WACC', '+d', '.1%', [dot3(ptEl, 'model as published')]);
     else hm(el, 'Growth shift (pts)', 'WACC', '+d', '.1%', [dot2(ptEl, 'model as published')]);
-    if (mode.tp === '3d') sf(tp, upName, 'P(→ decline)', '.0%', '.0%', [dot3(ptTp, 'estimated matrix')]);
-    else hm(tp, upName, 'P(→ decline)', '.0%', '.0%', [dot2(ptTp, 'estimated matrix')]);
+    if (mode.tp === '3d') sf(tp, upName, lowName, '.0%', '.0%', [dot3(ptTp, 'estimated matrix')]);
+    else hm(tp, upName, lowName, '.0%', '.0%', [dot2(ptTp, 'estimated matrix')]);
     const R = G.ridge, rbox = box.querySelector('[data-mk3="ridge"]');
     if (mode.ridge === '3d') P.react(rbox, [{ type: 'surface', x: R.x, y: R.y, z: R.z, colorscale: [[0, K.bg], [0.2, K.steady], [1, K.acc]], showscale: false,
       hovertemplate: 'Year %{x}<br>$%{y:.2f}<br>share %{z:.3f}<extra></extra>' },
@@ -177,34 +188,43 @@
   function mount(el, d) {
     const mk = d && d.markov;
     if (!mk || !mk.model) { el.innerHTML = ''; return; }
+    LABELS = (mk.labels && mk.labels.length === 3) ? mk.labels : NAMES;
     const p = mk.model, price = d.price, S = mk.sources || {}, own = mk.own_counts || [[0, 0, 0], [0, 0, 0], [0, 0, 0]], pr = (mk.prior || {}).P || [];
     const occ = mk.occupancy || [], ss = occ[occ.length - 1] || [];
     const tone = fin(mk.p_above) ? (mk.p_above >= 0.6 ? 'fv-good' : mk.p_above <= 0.4 ? 'fv-bad' : '') : '';
     const card = (label, value, cls = '', note = '') => `<div class="fv-card"><span>${esc(label)}</span><b class="${cls}">${value}</b>${note ? `<i>${note}</i>` : ''}</div>`;
-    const cell = (i, j) => `<td class="n" title="own transitions ${own[i][j]} of ${own[i].reduce((a, b) => a + b, 0)}; panel prior ${pct(pr[i] && pr[i][j], 0)}">${pct(p.P[i][j], 0)}</td>`;
-    let h = `<h3>Regime-switching Monte Carlo</h3><p class="fv-sub">Revenue growth moves between three regimes (high growth ≥ 10% a year, steady 0–10%, decline below 0) by a Markov chain: next year's regime depends only on this year's. ${num(mk.n)} paths over ${p.years} years from today's regime, <b>${esc(NAMES[p.start])}</b>. Every input below is estimated from filings, the whole covered panel, analysts' consensus or the cost-of-capital build-up; none is typed in.</p>
+    const cell = (i, j) => `<td class="n" title="own transitions ${num(own[i][j], 1)} of ${num(own[i].reduce((a, b) => a + b, 0), 1)}; panel prior ${pct(pr[i] && pr[i][j], 0)}">${pct(p.P[i][j], 0)}</td>`;
+    const hmm = mk.method === 'hmm', sp = p.start_p;
+    const gnames = LABELS.map((n, j) => `${n} (${p.g[j] >= 0 ? '+' : '−'}${num(Math.abs(100 * p.g[j]), 0)}%)`);
+    const now = sp ? LABELS.map((n, j) => `${n.toLowerCase()} ${pct(sp[j], 0)}`).join(', ') : esc(LABELS[p.start]).toLowerCase();
+    let h = `<h3>Regime-switching Monte Carlo</h3><p class="fv-sub">Revenue growth moves between three regimes by a Markov chain: next year's regime depends only on this year's. ${hmm
+      ? `The regimes are learned from yearly growth across the covered companies by a hidden Markov model (HMM) — on average ${gnames.map(esc).join(', ')} a year — rather than set by hand.`
+      : 'With too little history for the hidden Markov model, the regimes are fixed thresholds: high growth ≥ 10% a year, steady 0–10%, decline below 0.'} ${num(mk.n)} paths over ${p.years} years, starting from today's regime: <b>${now}</b>. Every input below is estimated from filings, the whole covered panel, analysts' consensus or the cost-of-capital build-up; none is typed in.</p>
       <div class="fv-cards">${card('Median value', usd(mk.p50), '', fin(price) ? (mk.p50 >= price ? '+' : '−') + pct(Math.abs(mk.p50 / price - 1), 0) + ' vs price' : '')}
       ${card('Middle 80%', `${usd(mk.p10)} – ${usd(mk.p90)}`)}
       ${card('Paths worth more than the price', pct(mk.p_above, 0), tone)}
-      ${card('Long-run regime mix', ss.length ? `${pct(ss[0], 0)} / ${pct(ss[1], 0)} / ${pct(ss[2], 0)}` : '—', '', 'high / steady / decline, year ' + p.years)}</div>
+      ${card('Long-run regime mix', ss.length ? `${pct(ss[0], 0)} / ${pct(ss[1], 0)} / ${pct(ss[2], 0)}` : '—', '', LABELS.map((n) => n.toLowerCase()).join(' / ') + ', year ' + p.years)}</div>
       <div class="fv-wrap">${histogram(mk, price)}</div>
-      <div class="fv-two"><div><h4 style="margin:10px 0 4px;font-size:14px">Transition probabilities (row: this year → column: next year)</h4><div class="fv-wrap"><table class="fv-tbl"><thead><tr><th></th>${NAMES.map((n) => `<th class="n">${n}</th>`).join('')}<th class="n">Own years</th></tr></thead><tbody>
-      ${NAMES.map((n, i) => `<tr><td>${i === p.start ? '<b>' + n + '</b> (now)' : n}</td>${[0, 1, 2].map((j) => cell(i, j)).join('')}<td class="n">${own[i].reduce((a, b) => a + b, 0)}</td></tr>`).join('')}</tbody></table></div>
-      <p class="fv-sub">${esc(S.matrix || '')}.${S.thin ? ' ' + esc(S.thin) + '.' : ''} Hover a cell for the company's own count and the panel's rate.</p></div>
+      <div class="fv-two"><div><h4 style="margin:10px 0 4px;font-size:14px">Transition probabilities (row: this year → column: next year)</h4><div class="fv-wrap"><table class="fv-tbl"><thead><tr><th></th>${LABELS.map((n) => `<th class="n">${esc(n)}</th>`).join('')}<th class="n">Own years</th></tr></thead><tbody>
+      ${LABELS.map((n, i) => `<tr><td>${i === p.start ? '<b>' + n + '</b> (now' + (sp ? ', ' + pct(sp[i], 0) : '') + ')' : n}</td>${[0, 1, 2].map((j) => cell(i, j)).join('')}<td class="n">${num(own[i].reduce((a, b) => a + b, 0), hmm ? 1 : 0)}</td></tr>`).join('')}</tbody></table></div>
+      <p class="fv-sub">${esc(S.matrix || '')}.${S.thin ? ' ' + esc(S.thin) + '.' : ''} Hover a cell for the company's own count${hmm ? ' (soft: each year split across the regimes by its probability)' : ''} and the panel's rate.</p></div>
       <div><h4 style="margin:10px 0 4px;font-size:14px">Regime probabilities, year by year</h4><div class="fv-wrap">${occupancy(occ)}</div>
-      <div class="fv-legend">${NAMES.map((n, j) => `<span style="--k:${SC[j]}">${n}</span>`).join('')}</div></div></div>
+      <div class="fv-legend">${LABELS.map((n, j) => `<span style="--k:${SC[j]}">${n}</span>`).join('')}</div></div></div>
       <div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Input</th><th class="n">Value</th><th>Source</th></tr></thead><tbody>
+      <tr><td>Regimes</td><td class="n">${hmm ? 'HMM' : 'thresholds'}</td><td>${esc(S.regimes || '')}</td></tr>
+      <tr><td>Today's regime</td><td class="n">${sp ? sp.map((v) => pct(v, 0)).join(' / ') : esc(LABELS[p.start])}</td><td>${esc(S.now || '')}</td></tr>
       <tr><td>Growth by regime (mean ± σ)</td><td class="n">${[0, 1, 2].map((s) => `${pct(p.g[s], 0)}±${pct(p.g_sd[s], 0)}`).join(' / ')}</td><td>${esc(S.growth || '')}</td></tr>
       <tr><td>Years 1–2</td><td class="n">${p.cons && p.cons.length ? p.cons.map((g) => pct(g)).join(', ') : 'regime model'}</td><td>${esc(S.years_1_2 || '')}</td></tr>
       <tr><td>EBIT margin drift by regime; pull-back κ; σ</td><td class="n">${p.dm.map((v) => (v >= 0 ? '+' : '−') + num(Math.abs(v) * 100, 1)).join(' / ')} pts; ${num(p.kappa, 2)}; ${pct(p.m_sd)}</td><td>${esc(S.margin || '')}; σ: ${esc(S.margin_sd || '')}</td></tr>
-      <tr><td>Stock-based compensation</td><td class="n">${pct(p.sbc)} of revenue</td><td>${esc(S.sbc || '')}</td></tr>
+      <tr><td>Stock-based compensation</td><td class="n">in operating income</td><td>${esc(S.sbc || '')}</td></tr>
       <tr><td>Discount rate</td><td class="n">${pct(p.wacc, 2)}</td><td>${esc(S.wacc || '')}</td></tr>
       <tr><td>Terminal value</td><td class="n">${pct(p.g_term)}</td><td>${esc(S.terminal || '')}</td></tr></tbody></table></div>
+      ${mk.backtest && mk.backtest.text ? `<p class="fv-sub"><b>How well it has done.</b> ${esc(mk.backtest.text)}</p>` : ''}
       <p><button type="button" class="fv-tog" data-mk-open>Show 3D sensitivity</button><span class="fv-sub" data-mk-status style="margin-left:6px">Re-runs the same model in your browser and loads a 3.5 MB chart library.</span></p>
       <div data-mk-3d hidden>
         <h4 style="margin:12px 0 2px;font-size:14px">Value surface: growth × cost of capital</h4><p class="fv-sub">Every regime's growth shifted together (x) against the WACC (y); height is the median value. The flat sheet is today's price: where the surface is above it, the price is covered. The dot is the model as published.</p>
         <div><button type="button" class="fv-tog on" data-mk-mode="el:3d">3D</button><button type="button" class="fv-tog" data-mk-mode="el:2d">Flat</button></div><div data-mk3="el" style="height:420px"></div>
-        <h4 style="margin:12px 0 2px;font-size:14px">Value surface: the regime switches themselves</h4><p class="fv-sub">Only today's row of the matrix changes (${esc(NAMES[p.start])}): the chance of moving up (x) and of falling into decline (y). This shows how much the value rests on the regime assumptions rather than on growth or the discount rate.</p>
+        <h4 style="margin:12px 0 2px;font-size:14px">Value surface: the regime switches themselves</h4><p class="fv-sub">Only today's row of the matrix changes (${esc(LABELS[p.start])}): the chance of moving to ${esc((p.start === 0 ? LABELS[1] : LABELS[0]).toLowerCase())} (x) and to ${esc(LABELS[2].toLowerCase())} (y). This shows how much the value rests on the regime assumptions rather than on growth or the discount rate.</p>
         <div><button type="button" class="fv-tog on" data-mk-mode="tp:3d">3D</button><button type="button" class="fv-tog" data-mk-mode="tp:2d">Flat</button></div><div data-mk3="tp" style="height:420px"></div>
         <h4 style="margin:12px 0 2px;font-size:14px">How the range opens up with the horizon</h4><p class="fv-sub">For each year t, the value if the forecast stopped there (cash flows to t plus a terminal value at t): the share of paths at each value. The red line is the price.</p>
         <div><button type="button" class="fv-tog on" data-mk-mode="ridge:3d">3D</button><button type="button" class="fv-tog" data-mk-mode="ridge:2d">Flat</button></div><div data-mk3="ridge" style="height:420px"></div>

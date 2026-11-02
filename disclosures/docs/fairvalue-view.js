@@ -22,6 +22,15 @@
     sc.onerror = () => { mvLoad = null; bad(new Error('markov-view.js did not load')); };
     document.head.appendChild(sc);
   }));
+  // sim-view.js (the pipeline rNPV and the Schwartz–Moon simulation) likewise, only for a document that has them
+  let svLoad = null;
+  const loadSim = () => svLoad || (svLoad = (typeof window !== 'undefined' && window.SimView) ? Promise.resolve(window.SimView) : new Promise((ok, bad) => {
+    const sc = document.createElement('script');
+    sc.src = HERE + 'sim-view.js';
+    sc.onload = () => ok(window.SimView);
+    sc.onerror = () => { svLoad = null; bad(new Error('sim-view.js did not load')); };
+    document.head.appendChild(sc);
+  }));
   // valuation-guide.json (next to this file): the appendix's plain-language guide — valuation from zero, start-ups, the
   // glossary, each method's what / why / fits / watch and each stage's meaning. The appendix draws without it, then again.
   let guide = null, gLoad = null;
@@ -398,6 +407,7 @@
     h += oddsHtml(d.consensus_odds) + insideOutsideHtml(d.outside_view) + stageHtml(d.stage) + sensHtml(d.sensitivity, price);
     if (mc) h += `<h3>Monte Carlo DCF</h3><p class="fv-sub">${num(mc.n)} scenarios: revenue growth ~ N(${pct(mc.assumptions.growth[0])}, ${pct(mc.assumptions.growth[1])}), EBIT margin ~ N(${pct(mc.assumptions.margin[0])}, ${pct(mc.assumptions.margin[1])}), WACC ~ N(${pct(mc.assumptions.wacc[0])}, 1 pt), terminal growth 1.5–3%. The spreads come from the company's own history. Median ${esc(usd(mc.p50))}, middle 80% ${esc(usd(mc.p10))}–${esc(usd(mc.p90))}; <b>${pct(mc.p_above, 0)}</b> of scenarios are worth more than the price.</p><div class="fv-wrap">${histogram(mc, price, dc && dc.value)}</div>`;
     if (d.markov) h += '<div data-fvmk><p class="fv-sub">Loading the regime-switching model…</p></div>';
+    if (d.rnpv || d.schwartz_moon || d.rnpv_why) h += '<div data-fvsim><p class="fv-sub">Loading the simulations…</p></div>';
     h += `<div class="fv-two"><div><h3>Cost of capital</h3><table class="fv-tbl"><tbody>
       <tr><td>10-year Treasury</td><td class="n">${pct(W.rf, 2)}</td></tr><tr><td>Beta (weekly vs SPY, ${num(W.beta_weeks)} weeks; Blume-adjusted)</td><td class="n">${num(W.beta_raw, 2)} → ${num(W.beta, 2)}</td></tr>
       <tr><td>Equity risk premium (assumption)</td><td class="n">${pct(W.erp, 1)}</td></tr><tr><td><b>Cost of equity</b></td><td class="n"><b>${pct(W.ke, 2)}</b></td></tr>
@@ -426,6 +436,8 @@
     el.innerHTML = h;
     const mkEl = el.querySelector('[data-fvmk]');
     if (mkEl) loadMarkov().then((MV) => MV.mount(mkEl, d)).catch((e) => { mkEl.innerHTML = `<p class="fv-sub">The regime-switching model could not load (${esc(e.message)}).</p>`; });
+    const svEl = el.querySelector('[data-fvsim]');
+    if (svEl) loadSim().then((SV) => SV.mount(svEl, d)).catch((e) => { svEl.innerHTML = `<p class="fv-sub">The simulations could not load (${esc(e.message)}).</p>`; });
     const bindApx = () => el.querySelectorAll('[data-fvapx]').forEach((b) => b.addEventListener('click', () => { el.querySelectorAll('details.fv-apx').forEach((x) => { x.open = b.dataset.fvapx === 'open'; }); }));
     bindApx();
     if (!guide && d.appendix && typeof window !== 'undefined') loadGuide().then(() => {      // the guide arrived after the page: redraw the appendix
