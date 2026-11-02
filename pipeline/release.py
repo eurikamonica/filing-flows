@@ -513,6 +513,11 @@ def parse(html, filed, last_end=None, prior_revenue=None):
         _, t_cf, m_cf = best_cf
         u_is, u_cf = _units(t_is), _units(t_cf)
         s_cf = u_cf if (u_cf and u_is and u_cf != u_is) else scale    # same units as the income statement unless stated
+        # a cash-flow table with no units of its own printed in millions with decimals ("$ 43.5") beside an income
+        # statement in thousands (CTS: a free-cash-flow table): its figures are a thousandth of the statement's
+        if not u_cf and scale == 1e3 and m_cf and max(abs(v) for v in m_cf.values()) < 0.01 * abs(m_is.get("revenue") or 0) \
+                and re.search(r"\d\.\d", t_cf["text"]) and (m_is.get("revenue") or 0) >= 1e4:
+            s_cf = 1e6
         out["cf"] = {k: v * s_cf for k, v in m_cf.items()}
         out["cf_quarter"] = _first_is_quarter(_header(t_cf))
         cf_rows = _map_rows(t_cf, CF_KEYS, full=True)

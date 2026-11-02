@@ -153,3 +153,15 @@ def test_net_income_to_shareholders_not_the_minority_nor_per_share():
     rows3 = IS + [("Basic earnings per ordinary share", "0.91", "0.20"), ("Diluted earnings per ordinary share", "0.90", "0.20")]
     r3 = release.parse(_doc("<p>(In millions)</p>", _table(rows3, "CONSOLIDATED STATEMENTS OF INCOME")), dt.date(2026, 10, 21))
     assert r3["is"]["pl"] == 9860e6 and "ni" not in r3["is"]          # no minority line: net income is the shareholders'
+
+
+def test_cash_flow_table_in_millions_beside_a_statement_in_thousands():
+    """CTS: the income statement is in thousands; the free-cash-flow table, with no units of its own, prints
+    "$ 43.5" (millions). Operating cash flow is $43.5M, not $43,500."""
+    cf = ('<table><tr><td></td><td colspan="4">Three Months Ended September 30,</td></tr><tr><td></td><td>2026</td><td>2025</td></tr>'
+          + ROW.format("Net cash provided by operating activities", "43.5", "29.0", "")
+          + ROW.format("Capital expenditures", "(2.4)", "(4.8)", "") + ROW.format("Free cash flow", "41.1", "24.2", "") + '</table>')
+    html = _doc("<p>(In thousands)</p>", _table([(l, a.replace(",", "") + "0", b.replace(",", "") + "0") for l, a, b in IS],
+                                                "CONSOLIDATED STATEMENTS OF EARNINGS"), "<p>Free Cash Flow</p>", cf)
+    r = release.parse(html, dt.date(2026, 10, 21))
+    assert r["scale"] == 1e3 and r["cf"]["ocf"] == 43.5e6 and r["cf"]["capex"] == -2.4e6
