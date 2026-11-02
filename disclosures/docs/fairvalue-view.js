@@ -9,7 +9,7 @@
   const usd = (v) => (fin(v) ? (v < 0 ? '−$' : '$') + num(Math.abs(v), Math.abs(v) >= 1000 ? 0 : 2) : '—');
   const big = (v) => { if (!fin(v)) return '—'; const a = Math.abs(v), s = v < 0 ? '−' : ''; return s + (a >= 1e12 ? '$' + num(a / 1e12, 2) + 'T' : a >= 1e9 ? '$' + num(a / 1e9, 1) + 'B' : a >= 1e6 ? '$' + num(a / 1e6, 0) + 'M' : '$' + num(a, 0)); };
   const pct = (v, d = 1) => (fin(v) ? num(100 * v, d) + '%' : '—');
-  const spct = (v, d = 0) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
+  const spct = (v, d = 0) => (fin(v) ? (Number(Math.abs(100 * v).toFixed(d)) === 0 ? '' : v > 0 ? '+' : '−') + num(Math.abs(100 * v), d) + '%' : '—');
   const C = { good: 'var(--mk-profit, #2e8b57)', bad: 'var(--mk-cost, #c0392b)', warn: 'var(--q-warm, #d9822b)', acc: 'var(--accent, #2a78d6)', mute: 'var(--muted, #888)', ink: 'var(--ink, #222)', line: 'var(--line, #ddd)' };
   const store = {};
   // markov-view.js (the regime-switching section) sits next to this file; it is loaded only for a document that has one
@@ -238,6 +238,8 @@
     return `<h4>Track record of the tiers (the ledger)</h4><p class="fv-sub">Rank correlation between each tier's value-to-price gap and the return over the next 3, 6 and 12 months, across every company, averaged over the monthly snapshots scored so far (higher is better; 0 = no information).</p><div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Tier</th><th class="n">3 months</th><th class="n">6 months</th><th class="n">12 months</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
   }
   function bindPx(el, d) {
+    const asx = el.querySelector('[data-fvassume]');
+    if (asx) get(BASE + 'assumptions.json').then((E) => { asx.innerHTML = assumeHtml(E, d); }).catch(() => { asx.innerHTML = ''; });
     const sc = el.querySelector('[data-fvtiersc]');
     if (sc) get(BASE + 'ledger.json').then((L) => { sc.innerHTML = scoresHtml(L); }).catch(() => { sc.innerHTML = ''; });
     const box = el.querySelector('[data-fvpx]'), det = el.querySelector('[data-fvpx-open]');
@@ -312,6 +314,33 @@
       + rows.map((r) => line(r.method, r.point, r.vs_price, r.pv_growth, r.pv_growth_share, r.implied_growth)).join('') + `</tbody></table></div>`;
     if (fin(sp.history_growth) && fin(sp.price_growth)) h += `<p class="fv-sub">Its revenue grew ${spct(sp.history_growth, 1)} over the last four quarters; today's price requires ${spct(sp.price_growth, 1)} a year for five years. A method's value above the price requires more growth than the price does, below it less. The no-growth value is the same for every method: it values the earnings the company makes today, not a forecast.</p>`;
     return h;
+  }
+
+  // ---------- fixed numbers vs the market today (app/assumption_check.py, data/research/valuation/assumptions.json) ----------
+  const KIND = { market: 'market prices', data: 'company filings', convention: 'market convention', definition: 'part of the formula' };
+  const isPct = (k) => !['graham_pe', 'sales_to_capital', 'blume', 'half_life', 'lag_days', 'graham_y0'].includes(k);
+  const aval = (e, v) => (!fin(v) ? '—' : e.key === 'half_life' ? `${num(v, 1)} years` : e.key === 'lag_days' ? `${num(v)} days` : e.key === 'graham_y0' ? `${num(v, 2)}%`
+    : ['graham_pe', 'sales_to_capital'].includes(e.key) ? `${num(v, 1)}×` : e.key === 'blume' ? num(v, 2) : pct(v, e.key === 'erp' || e.key.endsWith('_g') || e.key === 'g_cap' || e.key === 'rf_fallback' ? 2 : 1));
+  function assumeHtml(E, d) {
+    if (!E || !(E.entries || []).length) return '';
+    const econ = E.entries.filter((e) => e.kind !== 'choice'), ch = E.entries.filter((e) => e.kind === 'choice');
+    const gap = (e) => {
+      if (!fin(e.gap)) return '—';
+      if (Math.abs(e.gap) < 1e-9) return 'none';
+      const rel = fin(e.fixed) && e.fixed ? Math.abs(e.gap / e.fixed) : 0;
+      const t = isPct(e.key) ? `${e.gap > 0 ? '+' : '−'}${num(Math.abs(100 * e.gap), 2)} pts` : `${e.gap > 0 ? '+' : '−'}${num(Math.abs(e.gap), e.key === 'lag_days' ? 0 : 2)}`;
+      return `<span class="${rel > 0.25 ? 'fv-warn' : ''}">${t}</span>`;
+    };
+    let h = `<h3>Fixed numbers vs the market today</h3><p class="fv-sub">Every number the valuation fixes in advance, beside what market prices or the covered companies' own filings say it is today. Fixed numbers are set before any result is seen so that a page cannot be tuned to the answer one wants; a large gap (orange) is a reason to look, not an automatic switch. Below the table: this company's DCF with the market's numbers swapped in.</p>`;
+    h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Fixed number</th><th class="n">In the code</th><th class="n">Market / data today</th><th class="n">Range</th><th class="n">Gap</th><th>Read from</th><th>How</th><th>Feeds</th></tr></thead><tbody>${econ.map((e) => `<tr><td>${esc(e.label)}</td><td class="n">${e.fixed_text ? esc(e.fixed_text) : aval(e, e.fixed)}</td><td class="n"><b>${e.market_text ? esc(e.market_text) : aval(e, e.market)}</b>${fin(e.n) ? `<br><small>${num(e.n)} obs.</small>` : ''}</td><td class="n"><small>${fin(e.low) || fin(e.high) ? `${aval(e, e.low)} – ${aval(e, e.high)}` : ''}</small></td><td class="n">${gap(e)}</td><td><small>${esc(e.src || KIND[e.kind] || e.kind)}</small></td><td><small>${esc(e.how || '')}</small></td><td><small>${esc(e.feeds || '')}</small></td></tr>`).join('')}</tbody></table></div>`;
+    const S = d.assumption_swaps;
+    if (S && (S.rows || []).length) {
+      const lab = Object.assign(Object.fromEntries(econ.map((e) => [e.key, e.label])), { terminal_g: 'Terminal growth at the 10-year yield (the ceiling)', terminal_g_floor: 'Terminal growth at the breakeven (inflation only, the floor)' });
+      const v = (r) => (r.key === 'erp' ? `ERP ${pct(r.fixed, 2)} → ${pct(r.market, 2)} (WACC ${pct(S.wacc, 2)} → ${pct(r.used, 2)})` : r.key === 'roic_clamp' ? `ROIC used ${pct(r.fixed, 1)} → ${pct(r.used, 1)}` : `${pct(r.fixed, 2)} → ${pct(r.market, 2)}`);
+      h += `<h4>${esc(d.ticker || '')} DCF with the market's numbers</h4><p class="fv-sub">The base DCF (${esc(usd(S.value))} a share) with one fixed number at a time replaced by its market or data estimate, then all of them together. Terminal growth is kept under the WACC and the ROIC, as the model requires.</p><div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Swapped in</th><th>Fixed → market</th><th class="n">DCF value</th><th class="n">Change</th><th class="n">vs price</th></tr></thead><tbody>${S.rows.map((r) => `<tr><td>${esc(lab[r.key] || r.key)}</td><td><small>${esc(v(r))}</small></td><td class="n">${esc(usd(r.value))}</td><td class="n">${fin(r.change) ? spct(r.change) : '—'}</td><td class="n">${fin(r.value) && fin(d.price) ? spct(r.value / d.price - 1) : '—'}</td></tr>`).join('')}<tr class="fv-px-own"><td><b>All of them together</b><br><small>the central estimates; terminal growth at the 10-year yield</small></td><td></td><td class="n"><b>${esc(usd(S.all))}</b></td><td class="n"><b>${fin(S.all_change) ? spct(S.all_change) : '—'}</b></td><td class="n">${fin(S.all) && fin(d.price) ? spct(S.all / d.price - 1) : '—'}</td></tr></tbody></table></div>`;
+    }
+    if (ch.length) h += `<details class="fv-apx"><summary>Method choices with no market counterpart (${ch.length})</summary>${`<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Choice</th><th>Value</th><th>Why it is fixed</th></tr></thead><tbody>${ch.map((e) => `<tr><td>${esc(e.label)}</td><td>${esc(e.fixed_text || '')}</td><td><small>${esc(e.how || '')}</small></td></tr>`).join('')}</tbody></table></div>`}</details>`;
+    return h + (E.note ? `<p class="fv-sub">${esc(E.note)} Read ${esc(String(E.generated_at || '').slice(0, 10))}.</p>` : '');
   }
 
   // ---------- football field: one bar per method, the price as a line ----------
@@ -637,7 +666,7 @@
       ${d.implied_return ? card('Return the price implies', pct(d.implied_return.median, 1), fin(d.implied_return.spread) ? (d.implied_return.spread > 0.01 ? 'fv-good' : d.implied_return.spread < -0.01 ? 'fv-bad' : '') : '', fin(d.implied_return.ke) ? `a year, vs ${pct(d.implied_return.ke, 1)} cost of equity` : 'a year') : ''}</div>`;
     h += `<h3>Valuation football field</h3><p class="fv-sub">Each bar is one method's range, the black tick its central value, the dashed line today's price. Green: the whole range above the price; red: below.</p><div class="fv-wrap">${football(d.football || [], price)}</div>`;
     h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th class="n">vs price</th><th>How</th></tr></thead><tbody>${(d.football || []).map((r) => `<tr><td>${esc(r.method)}${r.lens ? '<span class="fv-tag" title="Shown with its algebra in the appendix; not part of the stage-weighted value or the headline range until the ledger has scored it">lens</span>' : ''}</td><td class="n">${usd(r.low)}</td><td class="n">${usd(r.point)}</td><td class="n">${usd(r.high)}</td><td class="n">${fin(r.vs_price) ? `<span class="${r.vs_price > 0.15 ? 'fv-good' : r.vs_price < -0.15 ? 'fv-bad' : ''}">${spct(r.vs_price)}</span>` : '—'}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>`;
-    h += splitHtml(d);
+    h += splitHtml(d) + '<div data-fvassume></div>';
     h += tiersHtml(d) + weightedHtml(d) + tilesHtml(d) + combinedHtml(d.combined);
     if (d.reverse && d.reverse.status === 'ok') h += `<p><b>Reverse DCF:</b> today's price needs revenue growth of <b>${pct(d.reverse.implied_growth)}</b> a year for five years (then ${pct((dc && dc.assumptions.g) || 0.025)}), with the margins and cost of capital below. The last four quarters grew ${pct(d.reverse.history_growth)} on the four before.</p>`;
     else if (d.reverse) h += `<p class="fv-sub">Reverse DCF: no single growth rate between −30% and 60% gives today's price with these assumptions.</p>`;
@@ -728,7 +757,7 @@
     draw(el, d, fits);
   }
 
-  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp, weightedHtml, tiersHtml, pxRun, pxHtml, wq, capW, scoresHtml, splitHtml, splitChart };
+  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp, weightedHtml, tiersHtml, pxRun, pxHtml, wq, capW, scoresHtml, splitHtml, splitChart, assumeHtml };
   if (typeof window !== 'undefined') window.FairValueView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

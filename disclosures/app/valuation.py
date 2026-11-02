@@ -50,6 +50,8 @@ Methods (every assumption is in the output, nothing is hidden):
   peers       value, revenue and trading value (geometric mean, none above 20%), its multiple today and at every quarter
               since 2022 with a one-year half-life; weighted quartiles. Lenses beside the plain medians (P/E, EV/EBITDA,
               EV/Sales, P/FFO and the sum of the parts).
+  Fixed vs    app/assumption_check.py: each fixed number (ERP, terminal growth, working capital, tax, ROIC band, Blume weight,
+  market      filing lag …) beside a market or data estimate today, and each DCF with the market's numbers swapped in.
   Peer tiers  app/peer_tiers.py: matched peers (a window ladder on industry, stage, size, growth and margin), selected
               comps by business model (config/peer-map.json, each with its reason), a fit of the multiple on growth (and
               margin) across the peers read at its own figures; segments mapped by business model; every company's figures
@@ -104,7 +106,8 @@ import base_rates as BR
 import valuation_methods as VMx  # noqa: E402
 import valuation_extra as VX  # noqa: E402  (more lenses and the implied return, app/valuation_extra.py)
 import peer_weights as PW  # noqa: E402  (the weighted peer multiples, app/peer_weights.py)
-import peer_tiers as PT  # noqa: E402  (matched, selected and adjusted peers, the segment map, the peer list: app/peer_tiers.py)
+import peer_tiers as PT  # noqa: E402
+import assumption_check as AC  # noqa: E402  (fixed numbers vs the market today, app/assumption_check.py)  (matched, selected and adjusted peers, the segment map, the peer list: app/peer_tiers.py)
 import markov  # noqa: E402  (regime-switching Monte Carlo, app/markov.py)
 import valuation_sim as VS  # noqa: E402  (pipeline rNPV and the Schwartz–Moon simulation, app/valuation_sim.py)
 import sim_backtest as SB  # noqa: E402  (walk-forward backtest of the simulations, app/sim_backtest.py)
@@ -375,10 +378,12 @@ def weekly(daily):
     return out
 
 
-def beta(stock, market, weeks=104):
-    """(raw beta, Blume-adjusted beta, weeks, r²) from weekly log returns over the last `weeks` weeks, or None."""
+def beta(stock, market, weeks=104, skip=0):
+    """(raw beta, Blume-adjusted beta, weeks, r²) from weekly log returns over the last `weeks` weeks (ending `skip` weeks
+    ago), or None."""
     s, m = dict(weekly(stock)), dict(weekly(market))
-    common = sorted(set(s) & set(m))[-(weeks + 1):]
+    common = sorted(set(s) & set(m))
+    common = (common[:-skip] if skip else common)[-(weeks + 1):]
     rs, rm = [], []
     for a, b in zip(common, common[1:]):
         if s[a] > 0 and s[b] > 0 and m[a] > 0 and m[b] > 0:
@@ -1141,6 +1146,7 @@ def company_inputs(cik, meta, P, slim, debt_rec, cons_c, price, periods):
     pretax = pick('pretax', ('main site (trailing)', V.get('pretax')), ('debt module', snap.get('pretax_income')), ('frames, latest year', (ann.get('pretax') or (None,))[0]))
     tax = pick('tax', ('main site (trailing)', V.get('tax')), ('frames, latest year', (ann.get('tax') or (None,))[0]))
     F['tax_rate'] = clamp(tax / pretax, 0.0, 0.35) if fin(tax) and fin(pretax) and pretax > 0 else 0.21
+    F['_tax_default'] = not (fin(tax) and fin(pretax) and pretax > 0)
     sh_q = [v for v in (q.get('sh') or []) if fin(v) and v > 0]
     implied = implied_shares(q.get('ni') or [], q.get('eps') or [])
     def fresh(day, days):                      # a count from long before the figures it is set against is stale
@@ -1258,6 +1264,8 @@ def analyse(F, ctx):
                 out['markov'] = mk
                 out['football'].append({'method': 'Regime-switching Monte Carlo 10th–90th', 'low': mk['p10'], 'high': mk['p90'],
                                         'point': mk['p50'], 'note': f"median {mk['p50']:.2f}; {mk['n']:,} paths, 10 years, Markov growth regimes"})
+            out['_swap'] = {'base': dict(base), 'roic_now': roic_now, 'tax_default': F.get('_tax_default'),
+                            'W': {k: W.get(k) for k in ('beta', 'rf', 'erp', 'w_equity', 'w_debt', 'kd_after_tax')}}
             if fin(price) and price > 0:
                 s = solve({**base, 'growth': g0}, 'growth', price, -0.30, 0.60)
                 out['reverse'] = {'status': s['status'], 'implied_growth': s.get('value'), 'history_growth': F['g0'],
@@ -1741,9 +1749,15 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
         if limit and len(Fs) >= limit:
             break
     # cost of capital for every company first (the WACC base rate needs the peers' WACCs)
+    betas, raw_wacc = [], []                               # for the market check of the fixed numbers (app/assumption_check.py)
     for F in Fs.values():
         F['_beta'] = beta(F['_px'], spy) if spy else None
         F['_W'] = wacc_of(F, rates, F['_debt'], F['_beta'])
+        prev = beta(F['_px'], spy, 104, skip=104) if spy and F['_beta'] else None
+        if prev:
+            betas.append((prev[0], F['_beta'][0]))
+        if F['_W']:
+            raw_wacc.append(F['_W'].get('raw'))
     # the outside view: peer distributions (frames since 2020 and CY2010, multiples at every quarter since mid-2022)
     sic_of = {str(c['cik']): str(c.get('sic') or '') for c in companies}
     names = BR.industry_names(companies)
@@ -1845,7 +1859,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     write_json(pub / 'markov.json', clean({'generated_at': now(), 'thresholds': {'high': markov.THRESH_HIGH, 'decline': markov.THRESH_LOW},
                                            'k': markov.K_PRIOR, 'buckets': mk_prior}))
     # pass 2: the full analysis
-    index, n_dcf = [], 0
+    index, n_dcf, swaps = [], 0, {}
     for cik, F in Fs.items():
         px, slim, drec, cons_c = F.pop('_px'), F.pop('_slim'), F.pop('_debt'), F.pop('_cons')
         b = F.pop('_beta', None)
@@ -1868,6 +1882,9 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
                'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None, 'markov_prior': mk_prior, 'pw': pw, 'pt': pt,
                'trials': (_load_dir(outside, f'c/{cik}.json') or {}).get('trials'), 'backtest': (sim_bt or {}).get('summary'), 'sm_panel': sm_panel}
         A = analyse(F, ctx)
+        sw = A.pop('_swap', None)
+        if sw:
+            swaps[cik] = sw
         write_json(pub / 'c' / f'{cik}.json', clean(A))
         n_dcf += 'dcf' in A
         W = A.get('wacc') or {}
@@ -1910,11 +1927,28 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     write_json(pub / 'index.json', clean({'generated_at': now(), 'fields': INDEX_FIELDS, 'rows': [[r.get(k) for k in INDEX_FIELDS] for r in index],
                                           'assumptions': {'erp': ERP, 'terminal_growth': TERM_G, 'years': YEARS, 'mc_scenarios': MC_N,
                                                           'treasury_10y': rates.get('treasury_10y'), 'treasury_5y': rates.get('treasury_5y')}}))
+    mkt = {}
     try:                                                    # the market as a whole (app/valuation_extra.py)
         mrows = [{'mcap': r.get('mcap'), 'icc': r.get('icc'), 'ni': (Fs.get(str(r['cik'])) or {}).get('ni')} for r in index]
-        write_json(pub / 'market.json', clean(VX.market_view(root, mrows, rates, now())))
+        mkt = VX.market_view(root, mrows, rates, now())
+        write_json(pub / 'market.json', clean(mkt))
     except Exception as e:                                  # noqa: BLE001
         print('valuation market view:', str(e)[:160], flush=True)
+    try:                                                    # fixed numbers vs the market today (app/assumption_check.py)
+        est = AC.market_estimates(M, Fs, R, index, mkt, rates, swaps, companies, pw_hist, now(), betas=betas, raw_wacc=raw_wacc)
+        write_json(pub / 'assumptions.json', clean(est))
+        for cik in Fs:                                      # each DCF with the market's numbers swapped in; the appendix's basis
+            blk = AC.dcf_swaps(M, swaps.get(cik), est)
+            p_ = pub / 'c' / f'{cik}.json'
+            A = read_json(p_, {}) or {}
+            if not A:
+                continue
+            if blk:
+                A['assumption_swaps'] = blk
+            AC.annotate(A, est)
+            write_json(p_, clean(A))
+    except Exception as e:                                  # noqa: BLE001
+        print('valuation assumption check:', str(e)[:160], flush=True)
     write_json(pub / 'peers.json', clean({'generated_at': now(), 'metrics': {m: {g: {'n': len(xs), 'p25': pctile([v for _, v in xs], .25),
                                                                                        'p50': pctile([v for _, v in xs], .5), 'p75': pctile([v for _, v in xs], .75)}
                                                                                    for g, xs in b.items()} for m, b in buckets.items()}}))
