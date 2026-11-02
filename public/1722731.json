@@ -4730,13 +4730,41 @@
             "cmp_y": "\u0394 +$2K \u00b7 scale +0.04 \u00b7 mix \u22120.03"
           },
           {
+            "id": "nci_in",
+            "col": 3,
+            "color": "profit",
+            "name": "Loss borne by minority interests",
+            "pos": "left",
+            "v": 34926.0,
+            "y": -12467.0,
+            "lines": [
+              [
+                "name",
+                "Loss borne by minority interests"
+              ],
+              [
+                "val",
+                "$35K \u00b7 0.5% of net earnings"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "their share of a loss: net income incl. minority interests $7.7M"
+              ]
+            ],
+            "cmp_y": "\u0394 +$47K \u00b7 scale/mix n/m"
+          },
+          {
             "id": "net",
             "col": 4,
             "color": "profit",
             "name": "Net earnings",
             "pos": "right",
-            "v": 7676005.0,
-            "y": -425456.0,
+            "v": 7710931.0,
+            "y": -437923.0,
             "lines": [
               [
                 "name",
@@ -4749,6 +4777,10 @@
               [
                 "mut",
                 "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "attributable to shareholders"
               ]
             ],
             "cmp_y": "\u0394 +$8.1M \u00b7 scale/mix n/m",
@@ -4825,6 +4857,13 @@
             "v": 7676005.0,
             "y": -425456.0,
             "color": "profit"
+          },
+          {
+            "s": "nci_in",
+            "t": "net",
+            "v": 34926.0,
+            "y": -12467.0,
+            "color": "profit"
           }
         ],
         "cite": {
@@ -4834,7 +4873,7 @@
         },
         "analysis": [
           "Revenue was $17.5M in Q2 2026, up 222% year over year.",
-          "Gross margin was 68.0%, up 25.4 points from Q2 2025. Operating profit was $7.4M, a 42.3% margin (up 45.3 points year over year). Operating expenses grew 82% against revenue growth of 222%. The fastest-growing cost line was General & admin (+98%). Net earnings were $7.7M. The effective tax rate was 0.0%."
+          "Gross margin was 68.0%, up 25.4 points from Q2 2025. Operating profit was $7.4M, a 42.3% margin (up 45.3 points year over year). Operating expenses grew 82% against revenue growth of 222%. The fastest-growing cost line was General & admin (+98%). Net earnings were $7.7M ($7.7M including minority interests, which bore $35K of losses). The effective tax rate was 0.0%."
         ],
         "headline": {
           "revenue": 17472536.0,
@@ -7016,7 +7055,7 @@
     "classification": "registration_unclassified"
   },
   "lifecycle": "EFFECT",
-  "generated_at": "2026-11-02T08:27:53+00:00",
+  "generated_at": "2026-11-02T18:39:27+00:00",
   "scan": {
     "state": "parsed",
     "last_attempt": "2026-10-29T23:03:49+00:00",
