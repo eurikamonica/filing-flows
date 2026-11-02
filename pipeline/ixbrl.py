@@ -93,7 +93,8 @@ def _pick(vals, key, start, end):
         # "Revenues" far below another revenue tag: the one that closes the income statement (facts.closes_better)
         first = lambda k: next((vals[(n, start, end)] for n in facts.CONCEPTS.get(k, []) if (n, start, end) in vals), None)
         return top if facts.closes_better(top[1], t[1], first("costs_total"), first("oi"), first("pretax"),
-                                          vals.get(("NonoperatingIncomeExpense", start, end))) else t
+                                          vals.get(("NonoperatingIncomeExpense", start, end)),
+                                          gp=first("gp"), cor=first("cor"), opex=first("opex_total")) else t
     return got[0]
 
 

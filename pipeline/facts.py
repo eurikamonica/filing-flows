@@ -202,26 +202,30 @@ def _total_or_larger(facts, get, c, hit):
     if top is hit or total_ok(hit[0], top[0]):
         return hit
     nper = facts.get("NonoperatingIncomeExpense")
-    if closes_better(top[0], hit[0], _pick(facts, "costs_total", get)[0], _pick(facts, "oi", get)[0], _pick(facts, "pretax", get)[0],
-                     get(nper) if nper else None):
+    v = lambda k: _pick(facts, k, get)[0]                                                    # noqa: E731
+    if closes_better(top[0], hit[0], v("costs_total"), v("oi"), v("pretax"), get(nper) if nper else None,
+                     gp=v("gp"), cor=v("cor"), opex=v("opex_total")):
         return top
     return hit
 
 
-def closes_better(top, total, costs, oi=None, pre=None, non=None):
-    """True when the larger revenue figure closes the income statement (revenue − costs and expenses = operating income,
-    or with other income = pre-tax earnings) much better than the "Revenues" figure does."""
-    if costs is None:
-        return False
-
+def closes_better(top, total, costs, oi=None, pre=None, non=None, gp=None, cor=None, opex=None):
+    """True when the larger revenue figure closes the income statement — revenue − costs and expenses = operating income
+    (or with other income = pre-tax earnings), revenue − cost of revenue = gross profit, revenue − operating expenses
+    (and cost of revenue) = operating income — within 2%, and much better than the "Revenues" figure does."""
     def gap(r):
-        if oi is not None:
-            return abs(r - costs - oi)
-        if pre is not None:
-            return abs(r - costs + (non or 0) - pre)
-        return None
+        g = []
+        if costs is not None and oi is not None:
+            g.append(abs(r - costs - oi))
+        if costs is not None and pre is not None:
+            g.append(abs(r - costs + (non or 0) - pre))
+        if gp is not None and cor is not None:
+            g.append(abs(r - cor - gp))
+        if opex is not None and oi is not None:
+            g.append(min(abs(r - opex - oi), abs(r - (cor or 0) - opex - oi)))
+        return min(g) if g else None
     g_hit, g_top = gap(total), gap(top)
-    return g_hit is not None and g_top is not None and g_top < 0.5 * g_hit
+    return g_hit is not None and g_top is not None and g_top <= 0.02 * abs(top) and g_top < 0.5 * g_hit
 
 
 def _first(facts, key, get):

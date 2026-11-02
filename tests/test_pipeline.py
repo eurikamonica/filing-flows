@@ -1843,6 +1843,14 @@ def test_revenues_far_below_contract_revenue_blue_owl():
         "OperatingIncomeLoss": {"units": {"USD": [F(*q, 300)]}},
     }}})
     assert facts.value(fx3, "revenue", "2026-06-30") == 3000e6
+    # a company without a total of costs: revenue − cost of revenue = gross profit closes with the larger tag
+    fx4 = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [F(*q, 1.3)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [F(*q, 12.8)]}},
+        "CostOfRevenue": {"units": {"USD": [F(*q, 9.6)]}},
+        "GrossProfit": {"units": {"USD": [F(*q, 3.2)]}},
+    }}})
+    assert facts.value(fx4, "revenue", "2026-06-30") == 12.8e6
     # the latest filing read directly (inline XBRL) the same way
     vals = {("Revenues",) + q: 137.041e6, ("RevenueFromContractWithCustomerExcludingAssessedTax",) + q: 753.1e6,
             ("CostsAndExpenses",) + q: 636.6e6, ("NonoperatingIncomeExpense",) + q: -45.5e6,
