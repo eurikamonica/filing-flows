@@ -125,8 +125,8 @@ ok(chips.innerHTML.includes('<div class="flo-main-scroll">'),
 ok(chips.innerHTML.includes('</div><button type="button" class="flo-tools-toggle"'),
  'More Tools button remains outside the horizontal overflow region');
 ok(chips.innerHTML.includes('id="flo-extra-tools" hidden'),'extra mode group collapsed');
-eq(chips.querySelectorAll('.flo-mode').length,11,'all 11 existing Flo tools still in DOM');
-eq((chips.innerHTML.match(/flo-mode" data-flo-q=/g)||[]).length,11,
+eq(chips.querySelectorAll('.flo-mode').length,17,'all 17 Flo tools (11 lessons and labs, 6 market questions) in the DOM');
+eq((chips.innerHTML.match(/flo-mode" data-flo-q=/g)||[]).length,17,
  'existing tool actions preserved under collapsible menu');
 const toggle=chips.querySelector('.flo-tools-toggle');toggle.click();
 ok(chips.innerHTML.includes('id="flo-extra-tools">'),'expansion reveals secondary tools');
