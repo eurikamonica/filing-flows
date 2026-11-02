@@ -282,7 +282,7 @@ DA_VERSION = 4           # bump when the way figures are read changes: stored fi
 #    the year's figure passed over, a full year's tag the one its quarters add up to (facts.consistent_year), D&A
 #    as depreciation + amortization when the combined tag holds depreciation alone
 REFRESH_FLAGS = ("rev_bank", "rev_tagged", "q4_fixed")    # what facts.extract adds beside the figures
-DA_PER_RUN = 40
+DA_PER_RUN = 120            # one SEC request each and a fraction of a second's reading: the budget (time_up) is the limit
 
 
 def _xbrl_parts(fx, end, annual=False, keep_capex=False):
