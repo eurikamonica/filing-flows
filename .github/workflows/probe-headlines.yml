@@ -1,0 +1,36 @@
+name: Probe — move headlines feed (temporary)
+on:
+  push:
+    branches: [probe/headlines]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Ask the feed for a few days
+        working-directory: disclosures/app
+        run: |
+          python - <<'PY'
+          import json, tempfile
+          from urllib.parse import quote
+          from core import Client
+          import move_headlines as H
+          c = Client(tempfile.mkdtemp(), {'extra_hosts': [H.HOST], 'host_intervals': {H.HOST: 1.5}, 'retries': 2})
+          hdr = {'User-Agent': 'Mozilla/5.0 (compatible; FilingFlows move-odds headlines; +https://github.com/eurikamonica/filing-flows)', 'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8', 'Accept-Language': 'en-US,en;q=0.9'}
+          for name, t, d in [('Apple Inc.', 'AAPL', '2026-10-30'), ('NVIDIA CORP', 'NVDA', '2025-01-27'), ('the market', 'SPY', '2020-03-16'), ('Meta Platforms, Inc.', 'META', '2022-10-27'), ('HALOZYME THERAPEUTICS, INC.', 'HALO', '2026-10-15')]:
+              try:
+                  body = c.get(H.FEED.format(q=quote(H.query(name, t, d))), headers=hdr)
+                  raw = H.parse(body)
+                  kept = H.keep(raw, name, t, d)
+                  print(t, d, 'raw', len(raw), 'kept', len(kept))
+                  for k in kept[:4]:
+                      print('   ', k[0], '|', k[1], '|', k[2][:110], '|', k[3][:60])
+              except Exception as e:
+                  print(t, d, 'ERROR', e)
+          PY
