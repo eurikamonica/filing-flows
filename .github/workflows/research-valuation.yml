@@ -6,7 +6,9 @@
 # multiples, residual income, bank / insurer / REIT models, valuation bands, distress probability (app/valuation.py), and the
 # outside view (app/base_rates.py): peer base rates from the frames since 2020 / CY2010, the probabilities of the
 # market-implied, Street and Polymarket views, stages, sensitivity, river charts and the walk-forward model scores (with
-# the Rotation forecast ledger from the branch rotation-history).
+# the Rotation forecast ledger from the branch rotation-history), the regime-switching Monte Carlo (app/markov.py) and the
+# simulations of app/valuation_sim.py: the Schwartz–Moon simulation for companies burning cash and, with the drug programs
+# from the branch research-outside (ClinicalTrials.gov), the pipeline rNPV solved from the price for drug developers.
 # Kept on the branch "research-valuation" (one commit, force-pushed); scan.yml publishes public/ at
 # disclosures/data/research/valuation/.
 name: Research — fair value & credit
@@ -49,7 +51,7 @@ jobs:
           else
             mkdir val && git -C val init --quiet -b research-valuation && git -C val remote add origin "$url"
           fi
-          for b in debt-history consensus-history; do
+          for b in debt-history consensus-history research-outside; do
             if git ls-remote --exit-code --heads "$url" "$b" >/dev/null; then
               git clone --quiet --depth 1 --filter=blob:none --sparse --branch "$b" "$url" "_$b"
               git -C "_$b" sparse-checkout set public
@@ -59,7 +61,7 @@ jobs:
             git clone --quiet --depth 1 --filter=blob:none --sparse --branch rotation-history "$url" _rotation-history
             git -C _rotation-history sparse-checkout set --no-cone /public/forecast-ledger.json /public/forecast-ledger-q.json /public/forecast-ledger-m.json
           fi
-          du -sh val _debt-history/public _consensus-history/public disclosures/docs/data/cache/prices 2>/dev/null || true
+          du -sh val _debt-history/public _consensus-history/public _research-outside/public disclosures/docs/data/cache/prices 2>/dev/null || true
       - name: Collect (SEC frames, the site's company figures)
         timeout-minutes: 30
         run: |
@@ -68,11 +70,12 @@ jobs:
       - name: Build public/
         timeout-minutes: 25
         run: |
-          debt=""; cons=""; rot=""
+          debt=""; cons=""; rot=""; outs=""
           [ -d _debt-history/public ] && debt="--debt _debt-history/public"
           [ -d _consensus-history/public ] && cons="--consensus _consensus-history/public"
           [ -f _rotation-history/public/forecast-ledger.json ] && rot="--rotation _rotation-history/public"
-          python disclosures/app/valuation.py build --root val --prices disclosures/docs/data/cache/prices $debt $cons $rot
+          [ -d _research-outside/public/c ] && outs="--outside _research-outside/public"
+          python disclosures/app/valuation.py build --root val --prices disclosures/docs/data/cache/prices $debt $cons $rot $outs
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd val

@@ -17,7 +17,7 @@
   "paras": [
    "Young companies break the usual tools. With no profit, a P/E ratio has nothing to divide by. A DCF of a loss-making business mostly restates the forecaster's hopes, because almost all of its value lies in a distant future its short history cannot vouch for. Many start-ups fail outright, and those that succeed usually raise more money first, which splits the ownership into more pieces (dilution). A start-up valuation has to handle all three: the path to profit, the chance of failure and the dilution along the way.",
    "Private investors use a handful of standard approaches. The venture capital (VC) method estimates what the company could be worth in about five years and discounts that back at a very high target return; commonly cited ranges run from about 50–70% a year at the start-up stage to 25–35% just before a public listing, because the rate also has to pay for the many investments that fail. The First Chicago method weighs a success, a middling and a failure scenario by their probabilities. The Berkus and scorecard methods, used for pre-revenue seed rounds, score the idea, the team, the prototype and the market by judgment. Option-pricing methods divide the value among share classes when the funding structure is complex.",
-   "What this site uses, and why. It works only from public filings and prices, so it uses the methods those can feed: net cash (floor) and the market-implied value of the pipeline for pre-revenue companies; the path-to-margin DCF with dilution; the exit-multiple method, which is the VC method with public-market inputs; the survival-weighted value, a two-scenario First Chicago method with the failure probability taken from distress models or the cash runway; and EV/Sales against the Rule of 40, which prices growth plus cash generation across all listed companies. Berkus and scorecard are not used: they need judgments about the team and the product that no filing contains.",
+   "What this site uses, and why. It works only from public filings and prices, so it uses the methods those can feed: net cash (floor) and the market-implied value of the pipeline for pre-revenue companies; the path-to-margin DCF with dilution; the exit-multiple method, which is the VC method with public-market inputs; the survival-weighted value, a two-scenario First Chicago method with the failure probability taken from distress models or the cash runway; EV/Sales against the Rule of 40, which prices growth plus cash generation across all listed companies; the Schwartz–Moon simulation, in which growth and margins wander and the company fails if its cash runs out first; and, for drug developers, the pipeline's risk-adjusted net present value (rNPV) run backwards from the price, which turns the market value into the peak sales each drug program must reach. Berkus and scorecard are not used: they need judgments about the team and the product that no filing contains.",
    "The numbers to watch at this stage: the burn rate (cash used per year), the cash runway (how many years the cash lasts at that rate), the dilution needed to reach break-even, the Rule of 40 score, and how much of the market value is a bet on the future rather than on the business as it is today."
   ],
   "classic": [
@@ -55,6 +55,16 @@
     "Revenue multiples",
     "Prices the company on its sales like similar companies, since there are no profits to price.",
     "Used: EV/Sales vs peers and EV/Sales vs Rule of 40."
+   ],
+   [
+    "Risk-adjusted NPV (rNPV)",
+    "Values each drug in development as its sales if approved, discounted, times the industry's chance of approval from its phase of testing.",
+    "Used for drug developers, run backwards from the price: the peak sales each program needs (Pipeline section)."
+   ],
+   [
+    "Schwartz–Moon simulation",
+    "Simulates growth and costs with a cash balance; the company fails when the cash runs out.",
+    "Used as a lens for companies losing money or burning cash."
    ]
   ]
  },
@@ -867,6 +877,72 @@
    "abbr": [
     "PP&E"
    ]
+  },
+  {
+   "term": "HMM",
+   "full": "Hidden Markov model",
+   "plain": "A model in which a company moves between regimes that cannot be seen directly, only through what they produce (here yearly growth). Fitted to many companies at once, it learns how much each regime grows, how much that varies and how often companies switch — and for one company, the probability that it is in each regime now.",
+   "abbr": [
+    "HMM"
+   ]
+  },
+  {
+   "term": "rNPV",
+   "full": "Risk-adjusted net present value",
+   "plain": "The present value of what a product would earn if it succeeds, multiplied by its chance of success. Used for drugs in development, whose chance of reaching the market is known from the industry's history.",
+   "abbr": [
+    "rNPV",
+    "NPV"
+   ]
+  },
+  {
+   "term": "LOA",
+   "full": "Likelihood of approval",
+   "plain": "The chance a drug in a given phase of testing eventually reaches the market: the product of the chances of passing each later phase and the regulator's review.",
+   "abbr": [
+    "LOA"
+   ]
+  },
+  {
+   "term": "Phase 1, 2, 3",
+   "full": "Phases of clinical trials",
+   "plain": "Phase 1 tests a new drug for safety in a few people, phase 2 for whether it works and at what dose, phase 3 in hundreds or thousands of patients against the standard treatment. Then the company files for approval (in the US, an NDA or BLA with the Food and Drug Administration, FDA)."
+  },
+  {
+   "term": "NDA, BLA",
+   "full": "New Drug Application, Biologics License Application",
+   "plain": "The filings that ask the FDA to approve a drug (NDA) or a biological product such as an antibody or a vaccine (BLA).",
+   "abbr": [
+    "NDA",
+    "BLA",
+    "FDA"
+   ]
+  },
+  {
+   "term": "Catalyst",
+   "full": "Catalyst (trial readout)",
+   "plain": "A dated event that can move the price a lot, such as the result of a clinical trial (its primary completion, when the main measurement is finished)."
+  },
+  {
+   "term": "NOL",
+   "full": "Net operating loss carried forward",
+   "plain": "Past losses a company may set against future profits, so it pays no income tax until they are used up.",
+   "abbr": [
+    "NOL"
+   ]
+  },
+  {
+   "term": "AR(1)",
+   "full": "First-order autoregression",
+   "plain": "A model in which this year's value depends on last year's plus a surprise: here, how much of a company's growth carries into the next year (the persistence φ, between 0 for none and 1 for all).",
+   "abbr": [
+    "AR"
+   ]
+  },
+  {
+   "term": "Schwartz–Moon",
+   "full": "The Schwartz–Moon model",
+   "plain": "A simulation of a young company in which growth and costs wander and the company goes bankrupt if its cash runs out, published by Eduardo Schwartz and Mark Moon in 2000 to value internet companies."
   }
  ],
  "methods": {
@@ -879,10 +955,10 @@
   },
   "Regime-switching Monte Carlo 10th–90th": {
    "family": "Probability",
-   "what": "A ten-year Monte Carlo in which revenue growth switches between regimes — high growth, steady, decline — following a Markov chain: a table of the chances of moving from one regime to another each year, estimated from this company's history and a panel of other companies. Margins drift with the regime, and each path's cash is discounted as in a DCF, net of stock-based compensation.",
+   "what": "A ten-year Monte Carlo in which revenue growth switches between three regimes following a Markov chain: a table of the chances of moving from one regime to another each year. The regimes themselves are learned from the yearly growth of every covered company since 2010 by a hidden Markov model (HMM), which finds the typical growth of each regime, how much it varies and how often companies switch, without a threshold set by hand. On today's data the three regimes differ as much in how steady they are as in how fast they grow — fast growth, uneven growth and steady growth — and each is named for what it turned out to be (a regime is called a decline only if its average growth is negative). The model also gives the probability that this company is in each regime today. The switching table blends this company's own history with the whole panel's. Margins drift with the regime, and each path's cash flows are discounted as in a DCF. Stock-based compensation is already a cost inside operating income, so it is counted once.",
    "why": "Companies do not grow at one smooth rate; they have good runs and bad spells. Letting each path switch regimes gives a more honest spread of outcomes than one straight-line forecast.",
    "fits": "Companies with a DCF and enough revenue history to estimate the switching.",
-   "watch": "The switching table comes from the past; a company that changes its business can behave unlike its history. Read the range, not just the median."
+   "watch": "The regimes and the switching table come from the past; a company that changes its business can behave unlike its history. With little history the company's own transitions barely move the panel's table. Read the range, not just the median."
   },
   "Outside view — base-rate Monte Carlo": {
    "family": "Probability",
@@ -1147,6 +1223,22 @@
    "why": "Unlike a plain peer median it adjusts for how this company differs from its peers, and unlike a DCF it uses the market's own pricing.",
    "fits": "Non-financial companies with revenue of $50 million or more.",
    "watch": "It inherits the market's mood: if every company is dear, the fit is dear too. The range (± one residual standard error) is wide — companies with the same figures trade at very different multiples."
+  },
+  "Schwartz–Moon simulation (cash can run out)": {
+   "family": "Probability",
+   "startup": true,
+   "what": "A simulation of a loss-making company as a race between its cash and its path to profit, after Eduardo Schwartz and Mark Moon, who valued Amazon this way in 1999. Each year revenue growth and the operating margin take a random step: growth fades from today's rate toward the economy's at the pace companies have actually shown, the margin is pulled toward what peers earn, and both are shaken by surprises of the size this company and its peers have had. The company earns interest on its cash, pays interest on its debt, pays tax only once its past losses are used up, and adds each year's free cash flow to its cash. If the cash falls below zero before profits arrive, the company is bankrupt and its shares are worth nothing on that path. On the paths that survive, the cash flows are discounted as in a DCF. The value is the average over thousands of paths.",
+   "why": "For a company that is still losing money, the usual DCF quietly assumes it will survive long enough to become profitable. This method makes survival part of the answer: a business with a short cash runway and a slow path to profit is worth much less than its success case, and a well-funded one hardly less. The average of all outcomes, including the zeros, is what a share that can go to zero is worth.",
+   "fits": "Companies with an operating loss or negative free cash flow and at least $25 million of revenue. Shown as a lens, beside the stage-weighted value, until the ledger has scored it.",
+   "watch": "Real companies usually raise new money before the cash runs out, so the rule that an empty bank account means zero is harsh; the page shows the other convention — every shortfall raised in new shares at today's price — beside it. Losses carried forward from before are not in the filings data and start at zero, which overstates taxes a little. The spreads come from history; a company in a new kind of business can wander further."
+  },
+  "Pipeline rNPV (solved from the price)": {
+   "family": "Probability",
+   "startup": true,
+   "what": "A drug developer is worth its cash plus a bet on its drug programs. In a risk-adjusted net present value (rNPV), each program is worth the sales it would earn if approved, discounted to today, times its chance of reaching the market from its current phase of testing — the likelihood of approval (LOA), from the industry's record for 2011–2020 (about 8% from phase 1, 15% from phase 2 and 52% from phase 3; lower for cancer drugs). Because no filing says what an approved drug would sell, the site runs the calculation backwards: it finds the yearly peak sales each program would need for today's price to be fair, after paying for the research still to come. It also shows how much each upcoming trial result should move the price either way.",
+   "why": "Drug developers have no profits to multiply and a DCF of today's losses says nothing about them; what matters is how likely each drug is to succeed and how much it could sell. Turning the price into the peak sales it requires gives a number that can be checked against what drugs for the same diseases actually sell.",
+   "fits": "Drug developers (SIC 2833–2836, or research companies under 8731) without operating profit, whose trials on ClinicalTrials.gov are sponsored under their own name.",
+   "watch": "Success rates are industry averages; a specific drug, disease or company can be far better or worse. Programs are grouped by drug name, so a drug listed under a code name and a generic name that never appear together counts twice. Partnered drugs, royalties and marketed products are not separated out."
   }
  },
  "aliases": {

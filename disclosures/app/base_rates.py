@@ -250,6 +250,7 @@ def add_history(D, root, M, P, periods, sic_of):
                 D.add('eps_yoy_q', clamp(e1 / e0 - 1, -3.0, 5.0), sic, size, y, cik)
     last_year = int(periods[-1][2:6])
     A = annual_history(root, M, last_year)
+    D.annual = A                                            # kept for the regime model's yearly histories (app/markov.py)
     n_a = 0
     for cik, a in A.items():
         sic = sic_of.get(cik)
