@@ -1830,11 +1830,22 @@ def test_revenues_far_below_contract_revenue_blue_owl():
     }}})
     assert facts.value(fx, "revenue", "2026-06-30") == 753.1e6
     assert facts.source(fx, "revenue", "2026-06-30") == "RevenueFromContractWithCustomerExcludingAssessedTax"
-    # without the costs to check it against, "Revenues" stays the total
+    # without the costs to check it against, "Revenues" stays the total when the company reported it before
+    q0 = ("2026-01-01", "2026-03-31")
+    F0 = lambda s, e, v: {"start": s, "end": e, "val": v * 1e6, "filed": "2026-05-01", "accn": "0001-26-01"}
     fx2 = facts.index_facts({"facts": {"us-gaap": {k: v for k, v in [
-        ("Revenues", {"units": {"USD": [F(*q, 137.041)]}}),
-        ("RevenueFromContractWithCustomerExcludingAssessedTax", {"units": {"USD": [F(*q, 753.1)]}})]}}})
+        ("Revenues", {"units": {"USD": [F(*q, 137.041), F0(*q0, 130.0)]}}),
+        ("RevenueFromContractWithCustomerExcludingAssessedTax", {"units": {"USD": [F(*q, 753.1), F0(*q0, 740.0)]}})]}}})
     assert facts.value(fx2, "revenue", "2026-06-30") == 137.041e6
+    # ... but a tiny "Revenues" the company never tagged in another filing is a newly tagged line, not the total
+    # (Cumberland: $0.17M of other revenue beside $8.8M of net revenues; the same filing's year-ago column does not count)
+    Fa = lambda s, e, v: {"start": s, "end": e, "val": v * 1e6, "filed": "2026-08-07", "accn": "0001-26-02"}
+    fx5 = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [Fa(*q, 0.166), Fa("2025-04-01", "2025-06-30", 0.2)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [Fa(*q, 8.8), F0(*q0, 9.1)]}},
+        "CostsAndExpenses": {"units": {"USD": [Fa(*q, 3.327)]}}, "OperatingIncomeLoss": {"units": {"USD": [Fa(*q, -3.16)]}},
+    }}})
+    assert facts.value(fx5, "revenue", "2026-06-30") == 8.8e6
     # a hedging loss that closes the statement keeps "Revenues": 3,000 − 2,700 = 300 of operating income
     fx3 = facts.index_facts({"facts": {"us-gaap": {
         "Revenues": {"units": {"USD": [F(*q, 3000)]}},

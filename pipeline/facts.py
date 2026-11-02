@@ -237,7 +237,7 @@ def _pick(facts, key, get, end=None, annual=False):
     if key in TOTAL_FIRST:
         hit = next((x for x in c if x[1] == TOTAL_FIRST[key]), None)
         if hit:
-            return _total_or_larger(facts, get, c, hit)
+            return _total_or_larger(facts, get, c, hit, end, annual)
     if key in MAX_KEYS:
         return max(c, key=lambda x: x[0])
     if key in CASH_FLOW_KEYS and len(c) > 1:
@@ -260,7 +260,13 @@ def total_ok(total, top):
     return total is not None and top is not None and (top <= 0 or total >= TOTAL_NEAR * top)
 
 
-def _total_or_larger(facts, get, c, hit):
+# a "Revenues" below this share of the largest revenue tag that the company did not report in the quarter before nor a
+# year earlier is a line newly tagged that way, not the total (Cumberland: $0.17M of other revenue beside $8.8M of net
+# revenues, with a costs sub-total that happens to close on it)
+NEW_LINE = 0.25
+
+
+def _total_or_larger(facts, get, c, hit, end=None, annual=False):
     top = max(c, key=lambda x: x[0])
     if top is hit or total_ok(hit[0], top[0]):
         return hit
@@ -269,7 +275,23 @@ def _total_or_larger(facts, get, c, hit):
     if closes_better(top[0], hit[0], v("costs_total"), v("oi"), v("pretax"), get(nper) if nper else None,
                      gp=v("gp"), cor=v("cor"), opex=v("opex_total")):
         return top
+    if end and hit[0] < NEW_LINE * top[0] and not _reported_before(facts.get(hit[1]) or {}, end, annual):
+        return top
     return hit
+
+
+def _reported_before(per, end, annual=False):
+    """True when the tag has a figure for the period a quarter before or a year before `end` from another filing
+    (the comparative column of the filing that tags the line this way is no evidence of it)."""
+    if not per:
+        return False
+    own = {f.get("accn") for (s, e), f in per.items() if e == end}
+    if annual:
+        e = prior_year_end({"Revenues": per, "__labels__": {}}, end)
+        ends = [e] if e else []
+    else:
+        ends = [e for e in comparison_ends({"Revenues": per, "__labels__": {}}, end) if e]
+    return any(f.get("accn") not in own for (s, e), f in per.items() if e in ends)
 
 
 def closes_better(top, total, costs, oi=None, pre=None, non=None, gp=None, cor=None, opex=None):
