@@ -107,12 +107,17 @@ jobs:
           esac
           echo "module=$module" >> "$GITHUB_OUTPUT"
           # light sources never read or write the 13F quarter files or the N-PX records; 13F runs never touch N-PX.
-          # N-PX, the market data (COT, FDIC, N-PX), prices and the daily all-source run keep the full checkout.
+          # N-PX, the market data (COT, FDIC, N-PX), prices and the daily all-source run keep the rest. The 13F quarter
+          # files before last year (the history the back-fill relay deepens, app/backfill13f.py: many GB, read by no
+          # run here; a refreshed manager rewrites its own) stay out of every checkout except the watched funds' (the
+          # next step adds them back: the market views' race reads every quarter of theirs).
+          old=''
+          for ((yy = 2000; yy < $(date -u +%Y) - 1; yy++)); do old="$old"$'\n'"!/disclosures/docs/data/shards/holdings/*-$yy-*.json"; done
           case "$module" in
             insiders|ownership|shorts|senate|events8k|news|reddit|options|extremes|market|congress)
               skip=$'!/disclosures/docs/data/shards/holdings/\n!/disclosures/docs/data/shards/npx/' ;;
-            holdings) skip='!/disclosures/docs/data/shards/npx/' ;;
-            *) skip='' ;;
+            holdings) skip="!/disclosures/docs/data/shards/npx/$old" ;;
+            *) skip="${old#$'\n'}" ;;
           esac
           if [ -n "$skip" ]; then
             { echo 'sparse<<EOF'; echo '/*'; printf '%b\n' "$skip"; echo 'EOF'; echo 'filter=blob:none'; } >> "$GITHUB_OUTPUT"
@@ -124,6 +129,15 @@ jobs:
           filter: ${{ steps.pick.outputs.filter }}
           sparse-checkout: ${{ steps.pick.outputs.sparse }}
           sparse-checkout-cone-mode: false
+      - name: The watched funds' quarter files
+        if: steps.pick.outputs.module == 'holdings' || steps.pick.outputs.module == 'all' || steps.pick.outputs.module == 'markets'
+        working-directory: .
+        shell: bash
+        run: |
+          pats=$(python3 -c "import json; print(' '.join('/disclosures/docs/data/shards/holdings/%d-*.json' % int(w['cik']) for w in json.load(open('disclosures/config/settings.json'))['holdings'].get('watch', []) if str(w.get('cik', '')).strip().isdigit()))")
+          set -f    # the patterns' * must reach git, not the shell
+          if [ -n "$pats" ] && [ -f .git/info/sparse-checkout ]; then git sparse-checkout add $pats; fi
+          ls disclosures/docs/data/shards/holdings 2>/dev/null | wc -l
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'

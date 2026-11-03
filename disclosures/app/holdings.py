@@ -4,6 +4,7 @@ from shards import load_manager
 from discovery import discover_sec, select_batch
 from holdings13f.build import filing_list, load_filing
 from holdings13f.core import resolve, compare
+from holdings13f.ranges import deep_ciks, size_of, target_since
 
 class SECAdapter:
     def __init__(self, client): self.client=client
@@ -30,9 +31,11 @@ def collect_holdings(client,cfg,old,revalidate=False):
                 old_managers[key]=row;managers[key]=row
                 attempts[key]={**attempts.get(key,{}),'last_attempt':row.get('last_success'),'last_success':row.get('last_success'),'error':None}
     # 4.5 the watched funds and the listed managers carry their history from `watch_since` (the 13F XML era began with
-    # 2013 Q2) rather than the universe's `since`: the quarter-by-quarter videos of Berkshire, Scion or Pershing Square
-    deep={str(int(w['cik'])) for w in cfg.get('watch',[])}|{str(int(m['cik'])) for m in cfg.get('managers',[])} if cfg.get('watch_since') else set()
-    since_of=lambda c:cfg['watch_since'] if c in deep else cfg['since']
+    # 2013 Q2) rather than the universe's `since`: the quarter-by-quarter videos of Berkshire, Scion or Pershing Square.
+    # Every other manager keeps the range of the reading on file: the back-fill relay (app/backfill13f.py) deepens it by
+    # size (holdings.tiers, holdings13f/ranges.py) and this run merges the result above; a refresh never shrinks it.
+    deep=deep_ciks(cfg)
+    since_of=lambda c:target_since(cfg,c,current=(old_managers.get(c) or {}).get('since')) if c in deep else ((old_managers.get(c) or {}).get('since') or cfg['since'])
     history={key:{**m,**attempts.get(key,{})} for key,m in old_managers.items()}
     history.update({key:value for key,value in attempts.items() if key not in history})
     for key,m in old_managers.items():                     # a manager whose range changed is read again like a new one
@@ -122,7 +125,12 @@ def collect_holdings(client,cfg,old,revalidate=False):
             errors.append({'cik':cik,'error':str(exc)})
             attempts[cik]['error']=str(exc)
             if cached:managers[cik]={**cached,'stale':True}
-    directory=[{**r,'processed':r['cik'] in managers,'last_attempt':attempts.get(r['cik'],{}).get('last_attempt'),'error':attempts.get(r['cik'],{}).get('error')} for r in items.values()]
+    def _range(cik):                                         # the reading on file, for the relay's deepening (catalogs/holdings.json)
+        m=managers.get(cik)
+        if not m:return {}
+        usd,n=size_of(m)
+        return {'since':m.get('since'),'total_usd':usd,'position_count':n}
+    directory=[{**r,'processed':r['cik'] in managers,'last_attempt':attempts.get(r['cik'],{}).get('last_attempt'),'error':attempts.get(r['cik'],{}).get('error'),**_range(r['cik'])} for r in items.values()]
     return {'managers':list(managers.values()),'directory':directory,'discovery':discovery,'attempts':attempts,
             'errors':errors,'status':'partial' if errors else 'ok',
             'counts':{'discovered_managers':len(items),'processed_managers':len(managers),'pending_managers':sum(not r['processed'] for r in directory),'attempted_this_run':len(selected)},

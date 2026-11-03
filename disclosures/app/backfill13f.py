@@ -13,6 +13,10 @@ plus holdings-backfill.json: the summary row of every manager it finished (the c
 its next run, so the catalog, the holders index and the market views pick them up) and its own attempts / back-off.
 It never writes live.json or the catalog, so it can run beside the collector without either overwriting the other.
 
+Once every manager has a first reading (config holdings.since), the relay deepens the history by size: the managers
+whose latest reported value and position count match a tier of holdings.tiers (holdings13f/ranges.py) are read again
+from that tier's date, largest first. The index giants (thousands of positions a quarter) keep the universe's range.
+
     python app/backfill13f.py --data docs/data --minutes 33
 """
 import argparse
@@ -31,6 +35,7 @@ from core import read_json, write_json, now  # noqa: E402
 from shards import compact_write, safe_path  # noqa: E402
 from holdings13f.build import filing_list, load_filing  # noqa: E402
 from holdings13f.core import resolve, compare  # noqa: E402
+from holdings13f.ranges import size_of, target_since  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = 'holdings-backfill.json'
@@ -83,27 +88,42 @@ class SecGet:
         return json.loads(self.get(url))
 
 
-def pending(catalog, state, shard=None, now_iso=None):
+def pending(catalog, state, shard=None, now_iso=None, cfg=None):
     """Managers on SEC's 13F list that no run has processed (catalog 'processed' false, not finished here), largest
-    filing history and most recent filers first; managers that failed wait out their back-off."""
-    done = set(state.get('managers', {}))
+    filing history and most recent filers first; then, with the config, the managers read so far from a later date than
+    their size calls for (holdings.tiers, holdings13f/ranges.py), largest first — each row carries 'since', the date to
+    read from. Managers that failed wait out their back-off."""
+    done = state.get('managers', {})
     att = state.get('attempts', {})
     now_iso = now_iso or now()
-    rows = []
+    fresh, deeper = [], []
     for r in catalog:
-        if r.get('kind', 'holdings') != 'holdings' or r.get('processed'):
+        if r.get('kind', 'holdings') != 'holdings':
             continue
         c = str(int(r['cik']))
-        if c in done:
-            continue
         a = att.get(c, {})
         if a.get('retry_after') and a['retry_after'] > now_iso:
             continue
         if shard and int(c) % shard[1] != shard[0]:
             continue
-        rows.append(r)
-    rows.sort(key=lambda r: (str(r.get('latest_filing') or ''), int(r.get('filing_count') or 0)), reverse=True)
-    return rows
+        if not r.get('processed') and c not in done:
+            fresh.append({**r, 'since': cfg['since'] if cfg else None})
+            continue
+        if not cfg:
+            continue
+        known = done.get(c) or r                             # the relay's own summary row, else the catalog's range fields
+        current = known.get('since') or r.get('since')
+        usd, n = size_of(known)
+        if usd is None or n is None:
+            usd, n = size_of(r)
+        if not current or usd is None or n is None:
+            continue
+        target = target_since(cfg, c, usd, n)
+        if target < current:
+            deeper.append({**r, 'since': target, 'total_usd': usd})
+    fresh.sort(key=lambda r: (str(r.get('latest_filing') or ''), int(r.get('filing_count') or 0)), reverse=True)
+    deeper.sort(key=lambda r: (float(r.get('total_usd') or 0), str(r.get('latest_filing') or '')), reverse=True)
+    return fresh + deeper
 
 
 def process(sec, cik, label, since, as_of=None):
@@ -160,7 +180,7 @@ def run(data, cfg, minutes=33.0, interval=0.15, shard=None, sec=None, limit=None
         state = {'since': since, 'as_of': as_of, 'managers': {}, 'attempts': {}, 'runs': []}
     state.setdefault('managers', {})
     state.setdefault('attempts', {})
-    todo = pending(catalog, state, shard)
+    todo = pending(catalog, state, shard, cfg=cfg)
     sec = sec or SecGet(interval)
     done = errors = 0
     blocked = None
@@ -171,7 +191,7 @@ def run(data, cfg, minutes=33.0, interval=0.15, shard=None, sec=None, limit=None
         a = state['attempts'].setdefault(cik, {})
         a['last_attempt'] = now()
         try:
-            row = process(sec, cik, r.get('name'), since, as_of)
+            row = process(sec, cik, r.get('name'), r.get('since') or since, as_of)
             state['managers'][cik] = write_manager(data, row)
             a.update(last_success=row['last_success'], error=None, fails=0, retry_after=None)
             done += 1
@@ -185,7 +205,7 @@ def run(data, cfg, minutes=33.0, interval=0.15, shard=None, sec=None, limit=None
                 break
         if (done + errors) % 25 == 0:
             write_json(data / STATE, state)
-    left = len(pending(catalog, state, shard))
+    left = len(pending(catalog, state, shard, cfg=cfg))
     stats = {'at': now(), 'minutes': round((time.time() - t0) / 60, 1), 'managers': done, 'errors': errors, 'requests': sec.calls,
              'megabytes': round(sec.bytes / 1e6, 1), 'remaining': left, 'blocked': blocked}
     state['runs'] = (state.get('runs') or [])[-49:] + [stats]

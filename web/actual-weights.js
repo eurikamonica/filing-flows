@@ -163,7 +163,7 @@
       }), basis:'Monthly disclosed transaction lower-bound share', evidence,
         note:'NOT actual holdings or net exposure. Monthly composition uses disclosed transaction amount LOWER BOUNDS, not exact dollars; buys and sells are gross, never netted. Only ticker-resolved transactions are included. Months without records are not zero activity. Disclosure can lag the trade date. '
           + (capped ? 'The published feed is capped at 4,000 recent transactions across all officials, so history and boundary months can be incomplete.'
-                    : 'Every disclosed trade of this official on file (US House reports read by machine since 2023, Senate electronic reports), from ' + (own.first || '') + ' to ' + (own.last || '') + '.')};
+                    : 'Every disclosed trade of this official on file (US House reports read by machine, Senate electronic reports), from ' + (own.first || '') + ' to ' + (own.last || '') + '.')};
     }
     return null;
   }
