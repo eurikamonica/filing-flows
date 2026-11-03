@@ -44,6 +44,13 @@ on:
     - cron: '20 21 * * 1-5'
     - cron: '11 */6 * * *'
     - cron: '41 */3 * * *'
+  # GitHub starts only some of the schedules above when it is busy (Nov 2, 2026: 20 of about 200 in a day, so the
+  # insider and 8-K tabs went 6+ hours without a run). An outside clock can start the two frequent ones on time:
+  # Supabase pg_cron with public.github_dispatch('disclosures-light') / ('disclosures-13f'), see README "Scan more often".
+  repository_dispatch:
+    types:
+      - disclosures-light          # = the '28,58' schedule: insiders, 8-K, 13D / 13G, Form 144, short interest, Senate, news
+      - disclosures-13f            # = the '7,22,37,52' schedule: the 13F managers
   push:
     branches: [main]
     paths:
@@ -60,7 +67,7 @@ concurrency:
   # light runs (insiders + 8-K + 13D / 13G / Form 144 + short interest + Senate PTRs + news, market views) queue separately so the long 13F / officials runs never cancel them.
   # The once-a-day run after the close (option chains, 52-week and all-time highs and lows) has a group of its own: in the light group a
   # pending run is replaced by the next half-hourly one, so it was cancelled most days and the highs / lows posts had nothing to read.
-  group: disclosures-${{ (github.event.schedule == '11 */6 * * *' || inputs.module == 'prices') && 'prices' || (github.event.schedule == '20 21 * * 1-5' || inputs.module == 'options' || inputs.module == 'extremes') && 'close' || ((github.event.schedule == '28,58 * * * *' || github.event.schedule == '41 */3 * * *' || inputs.module == 'insiders' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit') && 'light' || 'main') }}
+  group: disclosures-${{ (github.event.schedule == '11 */6 * * *' || inputs.module == 'prices') && 'prices' || (github.event.schedule == '20 21 * * 1-5' || inputs.module == 'options' || inputs.module == 'extremes') && 'close' || ((github.event.schedule == '28,58 * * * *' || github.event.schedule == '41 */3 * * *' || inputs.module == 'insiders' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit' || github.event.action == 'disclosures-light') && 'light' || 'main') }}
   cancel-in-progress: false
 defaults:
   run:
@@ -81,9 +88,13 @@ jobs:
           REQUESTED_MODULE: ${{ inputs.module }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
           EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
           module="${REQUESTED_MODULE:-all}"
           if [ "$EVENT_NAME" = push ]; then module=congress; fi   # code pushes: a quick officials run; schedules cover the rest
+          if [ "$EVENT_NAME" = repository_dispatch ]; then         # the outside clock: the same runs as the two frequent schedules
+            case "$EVENT_ACTION" in disclosures-light) module=insiders ;; disclosures-13f) module=holdings ;; *) module=insiders ;; esac
+          fi
           case "$EVENT_SCHEDULE" in
             '7,22,37,52 * * * *') module=holdings ;;
             '17 * * * *') module=congress ;;
@@ -129,7 +140,7 @@ jobs:
       - name: Data and template checks
         # Full test suite is valuable on push/manual and the daily all-source run;
         # running it before every 15-minute disclosure poll delays freshness.
-        if: github.event_name != 'schedule' || github.event.schedule == '43 10 * * *'
+        if: (github.event_name != 'schedule' && github.event_name != 'repository_dispatch') || github.event.schedule == '43 10 * * *'
         run: |
           python -m pip install --quiet numpy    # the price-path / analog / index-RRG modules' tests (not needed to collect)
           python -m unittest discover -s tests -v

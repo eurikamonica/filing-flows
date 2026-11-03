@@ -126,6 +126,17 @@ select vault.create_secret('<user>/<repo>', 'github_repo');
 select cron.schedule('filing-flows-scan', '*/10 * * * *', $$select public.github_dispatch('scan')$$);
 ```
 
+The Disclosure Hub's frequent collections (`disclosures.yml`) can run on the same clock. GitHub skips most of their
+schedules on busy days (on Nov 2, 2026 it started about 20 of some 200, and the insider and 8-K tabs went six hours
+without a run):
+
+```sql
+select cron.schedule('filing-flows-disclosures-light', '13,43 * * * *', $$select public.github_dispatch('disclosures-light')$$);
+select cron.schedule('filing-flows-disclosures-13f', '7,37 * * * *', $$select public.github_dispatch('disclosures-13f')$$);
+```
+
+(`disclosures-light`: insiders, 8-K, 13D / 13G, Form 144, short interest, Senate, news; `disclosures-13f`: the 13F managers.)
+
 Runs started this way show as *repository_dispatch* on the Actions page. Stop with
 `select cron.unschedule('filing-flows-scan');`. A run that is still busy when the next one is due simply makes the next
 one wait. Faster scans mostly help earnings releases (8-K), which are read straight from the press release; a 10-Q/10-K
