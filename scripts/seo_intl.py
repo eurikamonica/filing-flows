@@ -26,6 +26,12 @@ from seo_history import sankey_figure  # noqa: E402
 e, display_name, slug_for = seo.e, seo.display_name, seo.slug_for
 
 
+def de(n):
+    """French elision before a vowel: "d’Apple", "d’Intel", "de Microsoft" ("Résultats de Apple" read wrong)"""
+    n = str(n or '')
+    return ('d’' if re.match(r'[AEIOUYÀÂÉÈÊËÎÏÔÛÜaeiouyàâéèêëîïôûü]', n) else 'de ') + n
+
+
 def read(path):
     try:
         with open(path, encoding='utf-8') as f:
@@ -80,7 +86,7 @@ L = {
         'bn': 'milliards de dollars', 'mn': 'millions de dollars', 'th': 'milliers de dollars', 'usd': 'dollars', 'pct': ' %',
         'thou': ' ', 'sep': ' ; ',
         'title': lambda who, per, rev, yoy: f'{who} : résultats du {per}, chiffre d’affaires de {rev}' + (f', {yoy} sur un an' if yoy else ''),
-        'h1': lambda who, per: f'Résultats de {who} au {per}',
+        'h1': lambda who, per: f'Résultats {de(who)} au {per}',
         'lead': lambda who, per, rev, up, g, om, ni, form, date: (f'{who} a réalisé un chiffre d’affaires de {rev} au {per}'
                                                                   + ((f', {g[1:]} fois le chiffre d’affaires d’un an plus tôt' if g.startswith('×') else f', en {"hausse" if up else "baisse"} de {g} sur un an') if g else '')
                                                                   + (f', avec une marge opérationnelle de {om}' if om else '') + (f' et un bénéfice net de {ni}' if ni else '')
@@ -91,16 +97,16 @@ L = {
         'expect': lambda eps, rev, ya: f' Les analystes attendent un bénéfice par action (BPA) de {eps} dollars' + (f' et un chiffre d’affaires de {rev}' if rev else '') + (f', contre {ya} dollars un an plus tôt' if ya else '') + '.',
         'beat': lambda b: f' Le BPA a dépassé le consensus dans {b} % des trimestres connus.',
         'tiles': ['Chiffre d’affaires', 'Sur un an', 'Marge opérationnelle', 'Bénéfice net', 'Flux de trésorerie d’exploitation'],
-        'h_seg': lambda n, per: f'Chiffre d’affaires de {n} par segment ({per})', 'seg_head': ['Segment', 'Chiffre d’affaires', 'Part', 'Sur un an'],
+        'h_seg': lambda n, per: f'Chiffre d’affaires {de(n)} par segment ({per})', 'seg_head': ['Segment', 'Chiffre d’affaires', 'Part', 'Sur un an'],
         'chart_rev': 'chiffre d’affaires par trimestre', 'chart_ni': 'bénéfice net par trimestre', 'chart_sankey': 'diagramme de Sankey du chiffre d’affaires au cash',
         'h_hist': 'Résultats trimestriels récents', 'hist_head': ['Trimestre', 'Chiffre d’affaires', 'Sur un an', 'Marge opérationnelle', 'Bénéfice net'],
-        'faq': 'Questions fréquentes', 'q_last': lambda n: f'Quels sont les derniers résultats de {n} ?', 'q_how': lambda n: f'Comment {n} gagne-t-il de l’argent ?',
+        'faq': 'Questions fréquentes', 'q_last': lambda n: f'Quels sont les derniers résultats {de(n)} ?', 'q_how': lambda n: f'Comment {n} gagne-t-il de l’argent ?',
         'q_when': lambda n: f'Quand {n} publie-t-il ses résultats ?',
         'cta': 'Ouvrir le diagramme de Sankey interactif →', 'source': lambda n, f: f'Données lues automatiquement dans le {f} déposé par {n} auprès de la SEC américaine.',
         'idx_title': 'Résultats des entreprises américaines : chiffre d’affaires, marges et date des prochains résultats | Filing Flows',
         'idx_h1': lambda n: f'Résultats trimestriels de {n} entreprises cotées aux États-Unis',
         'idx_lead': 'Le dernier chiffre d’affaires, la croissance, les marges, le bénéfice net et la répartition par segment de chaque entreprise, avec la date des prochains résultats et les attentes des analystes, lus dans ses documents déposés auprès de la SEC et mis à jour chaque jour.',
-        'idx_item': lambda who: f'Résultats de {who}', 'crumb': 'Filing Flows en français', 'other': 'Autres langues',
+        'idx_item': lambda who: f'Résultats {de(who)}', 'crumb': 'Filing Flows en français', 'other': 'Autres langues',
     },
 }
 LANG_NAME = {'en': 'English', 'zh-Hans': '中文', 'es': 'Español', 'fr': 'Français'}
