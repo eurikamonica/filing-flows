@@ -4225,13 +4225,41 @@
             "cmp_y": "\u0394 +$10K \u00b7 scale +0.07 \u00b7 mix \u22120.06"
           },
           {
+            "id": "nci_in",
+            "col": 3,
+            "color": "profit",
+            "name": "Loss borne by minority interests",
+            "pos": "left",
+            "v": 28685.0,
+            "y": -33777.0,
+            "lines": [
+              [
+                "name",
+                "Loss borne by minority interests"
+              ],
+              [
+                "val",
+                "$29K \u00b7 0.2% of net earnings"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "their share of a loss: net income incl. minority interests $14.5M"
+              ]
+            ],
+            "cmp_y": "\u0394 +$62K \u00b7 scale/mix n/m"
+          },
+          {
             "id": "net",
             "col": 4,
             "color": "profit",
             "name": "Net earnings",
             "pos": "above_left",
-            "v": 14549512.0,
-            "y": -111334.0,
+            "v": 14578197.0,
+            "y": -145111.0,
             "lines": [
               [
                 "name",
@@ -4239,11 +4267,15 @@
               ],
               [
                 "val",
-                "$14.5M \u00b7 100% of pre-tax"
+                "$14.6M \u00b7 100% of pre-tax"
               ],
               [
                 "mut",
                 "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "attributable to shareholders"
               ]
             ],
             "cmp_y": "\u0394 +$14.7M \u00b7 scale/mix n/m",
@@ -4255,8 +4287,8 @@
             "color": "profit",
             "name": "Operating cash sources",
             "pos": "above",
-            "v": 35687523.0,
-            "y": 2708183.0,
+            "v": 35716208.0,
+            "y": 2674406.0,
             "lines": [
               [
                 "name",
@@ -4268,10 +4300,10 @@
               ],
               [
                 "mut",
-                "Y/Y +1218%"
+                "Y/Y +1235%"
               ]
             ],
-            "cmp_y": "\u0394 +$33.0M \u00b7 scale +5.1 \u00b7 mix +27.9"
+            "cmp_y": "\u0394 +$33.0M \u00b7 scale +5.0 \u00b7 mix +28.0"
           },
           {
             "id": "burn",
@@ -4295,7 +4327,7 @@
                 "Y/Y +650%"
               ]
             ],
-            "cmp_y": "\u0394 +$18.3M \u00b7 scale +34.3 \u00b7 mix \u221216.0",
+            "cmp_y": "\u0394 +$18.3M \u00b7 scale +34.8 \u00b7 mix \u221216.5",
             "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the S-1, six months ended Jun 30, 2026."
           },
           {
@@ -4304,8 +4336,8 @@
             "color": "noncash",
             "name": "Working capital &amp; other",
             "pos": "right",
-            "v": 35687523.0,
-            "y": 2708183.0,
+            "v": 35716208.0,
+            "y": 2674406.0,
             "lines": [
               [
                 "name",
@@ -4317,7 +4349,7 @@
               ],
               [
                 "mut",
-                "Y/Y +1218%"
+                "Y/Y +1235%"
               ],
               [
                 "mut",
@@ -4399,10 +4431,17 @@
             "color": "profit"
           },
           {
+            "s": "nci_in",
+            "t": "net",
+            "v": 28685.0,
+            "y": -33777.0,
+            "color": "profit"
+          },
+          {
             "s": "net",
             "t": "bridge",
-            "v": 14549512.0,
-            "y": -111334.0,
+            "v": 14578197.0,
+            "y": -145111.0,
             "color": "profit"
           },
           {
@@ -4415,8 +4454,8 @@
           {
             "s": "bridge",
             "t": "wc_out",
-            "v": 35687523.0,
-            "y": 2708183.0,
+            "v": 35716208.0,
+            "y": 2674406.0,
             "color": "noncash"
           }
         ],
@@ -7054,5 +7093,5 @@
     "error": null,
     "classification": "registration_unclassified"
   },
-  "generated_at": "2026-11-02T18:39:27+00:00"
+  "generated_at": "2026-11-03T01:14:51+00:00"
 }
