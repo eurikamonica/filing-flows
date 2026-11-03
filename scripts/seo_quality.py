@@ -69,8 +69,9 @@ def components(r, ranks, i):
     a = r.get('accruals')
     if a is not None and i in ranks['accruals']:
         s = ranks['accruals'][i]
-        out['accruals'] = (s, f"accruals of {100 * a:+.1f}% of assets, {'better' if s >= 0.5 else 'worse'} than {100 * (s if s >= 0.5 else 1 - s):.0f}% of companies"
-                              + (' (profit well backed by cash)' if a < -0.02 else ' (profit running ahead of cash)' if a > 0.05 else ''))
+        # lower is better: "lower than 93% of companies"; a negative figure stays "backed by cash" even when most are lower
+        out['accruals'] = (s, f"accruals of {100 * a:+.1f}% of assets, {'lower' if s >= 0.5 else 'higher'} than {100 * (s if s >= 0.5 else 1 - s):.0f}% of companies"
+                              + (' (profit backed by cash)' if a < -0.02 else ' (profit running ahead of cash)' if a > 0.05 else ''))
     da = r.get('da')
     if da is not None and i in ranks['discretionary']:
         s = ranks['discretionary'][i]
