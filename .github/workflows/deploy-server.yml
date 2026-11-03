@@ -1,0 +1,140 @@
+name: Deploy to own server
+
+# Copies the site that a run just built (its "github-pages" artifact) to your own server with rsync, then makes it
+# live there in one switch (deploy/README.md). scan.yml and earnings-fast.yml call it after every build, next to
+# the GitHub Pages deploy; run it by hand to send the newest published site now.
+#
+# Needs the repository secrets DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS and DEPLOY_HOST (the server prints them:
+# sudo ff-deploy-key show); DEPLOY_USER is optional (default "deploy"). Without DEPLOY_SSH_KEY it does nothing, so
+# it is harmless before the server exists. The key can only upload into the server's staging copy and publish it
+# (ff-deploy-gate); nothing secret is ever printed.
+
+on:
+  workflow_call:
+    inputs:
+      allow_shrink:
+        type: boolean
+        default: false
+      source:
+        description: "this-run: the artifact the calling run just built"
+        type: string
+        default: this-run
+    outputs:
+      deployed:
+        description: "true when the site went live on the server"
+        value: ${{ jobs.sync.outputs.deployed }}
+  workflow_dispatch:
+    inputs:
+      allow_shrink:
+        description: "Publish even if the site has far fewer pages than the live one (only after a deliberate cut)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read          # by hand: the newest published site, an artifact of scan.yml or earnings-fast.yml
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:                       # one upload at a time, across scan.yml and earnings-fast.yml
+      group: deploy-server
+      cancel-in-progress: false
+    outputs:
+      deployed: ${{ steps.publish.outputs.deployed }}
+    steps:
+      - name: Server configured?
+        id: cfg
+        env:
+          HAS_KEY: ${{ secrets.DEPLOY_SSH_KEY != '' && secrets.DEPLOY_KNOWN_HOSTS != '' && (secrets.DEPLOY_HOST != '' || vars.DEPLOY_HOST != '') }}
+        run: |
+          if [ "$HAS_KEY" = "true" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No own server yet (secrets DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, DEPLOY_HOST): nothing to do."
+          fi
+
+      - name: The site this run built
+        if: steps.cfg.outputs.ready == 'true' && inputs.source == 'this-run'
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: dl
+
+      - name: The newest published site (run by hand)
+        if: steps.cfg.outputs.ready == 'true' && inputs.source != 'this-run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=github-pages&per_page=20" \
+                --jq '[.artifacts[] | select(.expired == false and .workflow_run.head_branch == "main")][0].workflow_run.id')
+          [ -n "$run" ] && [ "$run" != "null" ] || { echo "::error::no unexpired github-pages artifact on main"; exit 1; }
+          echo "the site of run $run"
+          gh run download "$run" -R "$GITHUB_REPOSITORY" -n github-pages -D dl
+
+      - name: Unpack and check it
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          mkdir site && tar -xf dl/artifact.tar -C site && rm -rf dl
+          pages=$(find site -name '*.html' | wc -l)
+          echo "$(find site -type f | wc -l) files, $pages pages, $(du -sm site | cut -f1) MB"
+          [ -f site/index.html ] || { echo "::error::the site has no index.html: not deployed"; exit 1; }
+          [ "$pages" -ge 1000 ] || [ "${{ inputs.allow_shrink }}" = "true" ] \
+            || { echo "::error::only $pages pages: not deployed (allow_shrink to force)"; exit 1; }
+
+      - name: The deploy key
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          umask 077
+          mkdir -p ~/.ssh
+          # pasted keys pick up Windows line ends and trailing spaces; ssh refuses those
+          printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' | sed -e 's/[[:space:]]*$//' -e '/^$/d' > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" | tr -d '\r' | sed -e 's/[[:space:]]*$//' -e '/^$/d' > ~/.ssh/deploy_known_hosts
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "::error::DEPLOY_SSH_KEY is not a valid private key"; exit 1; }
+
+      - name: Upload the changed files (rsync)
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER || 'deploy' }}
+        run: |
+          # no -t (times): unchanged files keep their date on the server, so --checksum sends only real changes and
+          # the published snapshots keep sharing them; --delete only ever touches the server's staging copy
+          ssh_cmd="ssh -i $HOME/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile=$HOME/.ssh/deploy_known_hosts -o ConnectTimeout=20 -o ServerAliveInterval=15 -o LogLevel=ERROR"
+          for i in 1 2 3; do
+            if rsync -rp --checksum --delete --chmod=D755,F644 --stats -e "$ssh_cmd" site/ "$DEPLOY_USER@$DEPLOY_HOST:" > rsync.log 2>&1; then
+              grep -E "^(Number of (files|regular files transferred|deleted files)|Total transferred file size|Total bytes sent)" rsync.log || true
+              exit 0
+            fi
+            echo "upload attempt $i failed:"; grep -v '^$' rsync.log | tail -5
+            sleep $((i * 15))
+          done
+          echo "::error::the upload to the server failed three times; the server still shows the previous site"
+          exit 1
+
+      - name: Make it live (one switch on the server)
+        id: publish
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER || 'deploy' }}
+          SHRINK: ${{ inputs.allow_shrink && ' --allow-shrink' || '' }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile=$HOME/.ssh/deploy_known_hosts -o ConnectTimeout=20 -o LogLevel=ERROR \
+            "$DEPLOY_USER@$DEPLOY_HOST" "publish$SHRINK"
+          echo "deployed=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Own server"
+            echo
+            echo "The site is live on the server ($(date -u +%H:%M) UTC)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Forget the key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key ~/.ssh/deploy_known_hosts rsync.log

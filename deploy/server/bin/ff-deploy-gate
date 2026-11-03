@@ -1,0 +1,51 @@
+#!/bin/bash
+# The one command the GitHub Actions deploy key may run on the server. Its line in the deploy user's
+# ~/.ssh/authorized_keys reads
+#     restrict,command="/usr/local/bin/ff-deploy-gate" ssh-ed25519 AAAA... github-actions-deploy
+# so whatever the client asks for arrives here in SSH_ORIGINAL_COMMAND, and only three things are let through:
+#   rsync --server …   upload into the staging copy (stage/) through rrsync: writes only, only inside stage/,
+#                      symbolic links made harmless (-munge); a finished upload leaves state/stage-ok behind
+#   publish            make stage/ the live site (ff-publish: hard-linked snapshot + symlink switch)
+#   status             a JSON line about the server (ff-status: disk, web server, last publish)
+# Uploads and publishes take one lock (state/lock), so two deploys never write at the same time.
+set -uo pipefail
+
+BASE="${FF_BASE:-/srv/filing-flows}"
+BIN="${FF_BIN:-/usr/local/bin}"
+RRSYNC="${FF_RRSYNC:-$(command -v rrsync || echo /usr/bin/rrsync)}"
+cmd="${SSH_ORIGINAL_COMMAND:-}"
+
+take_lock() {
+  exec 9>"$BASE/state/lock"
+  flock -w "${FF_LOCK_WAIT:-1200}" 9 || { echo "ff-deploy-gate: another deploy still holds the lock" >&2; exit 75; }
+}
+
+case "$cmd" in
+  "rsync --server "*)
+    case " $cmd " in *" --sender "*) echo "ff-deploy-gate: downloads are not allowed" >&2; exit 1 ;; esac
+    opts=(-wo)
+    "$RRSYNC" -h 2>&1 | grep -q -- '-munge' && opts+=(-munge)
+    "$RRSYNC" -h 2>&1 | grep -q -- '-no-lock' && opts+=(-no-lock)     # the lock below is the one that counts
+    take_lock
+    rm -f "$BASE/state/stage-ok"
+    "$RRSYNC" "${opts[@]}" "$BASE/stage"
+    rc=$?
+    if [ "$rc" -eq 0 ]; then date -u +%Y-%m-%dT%H:%M:%SZ > "$BASE/state/stage-ok"; fi
+    exit "$rc"
+    ;;
+  publish)
+    take_lock
+    exec "$BIN/ff-publish"
+    ;;
+  "publish --allow-shrink")
+    take_lock
+    exec "$BIN/ff-publish" --allow-shrink
+    ;;
+  status)
+    exec "$BIN/ff-status"
+    ;;
+  *)
+    echo "ff-deploy-gate: not allowed: ${cmd:0:60}" >&2
+    exit 1
+    ;;
+esac

@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""Make the uploaded copy of the site (stage/) the live one, all at once.
+
+Layout under FF_BASE (/srv/filing-flows):
+    stage/            what rsync uploads into (only changed files are sent)
+    releases/<time>/  published snapshots: hard links to the files of stage/ at that moment, so a snapshot costs
+                      almost no disk and rsync's next upload (new file, then rename) never changes a published file
+    current           symlink to the live snapshot; the web server's root
+    state/            lock, stage-ok (the last upload finished), last-publish.json
+
+The switch is one rename of a symlink, so a visitor gets either the old site or the new one, never half of each.
+Refuses when the last upload did not finish, when stage/ has no index.html, or when it has far fewer pages than the
+live site (a broken build would otherwise wipe the site; --allow-shrink overrides). Keeps the newest FF_KEEP
+snapshots (3) and the live one; older ones are deleted. Runs as the deploy user, needs no root.
+
+    ff-publish                  publish stage/ (what the deploy key's "publish" runs)
+    ff-publish --allow-shrink   …even when it has far fewer pages than the live site
+    sudo -u deploy ff-publish --rollback [ID]   back to the previous snapshot (or ID), e.g. after a broken build
+"""
+import json
+import os
+import shutil
+import sys
+import time
+
+BASE = os.environ.get("FF_BASE", "/srv/filing-flows")
+KEEP = max(2, int(os.environ.get("FF_KEEP", "3")))
+MIN_SHARE = float(os.environ.get("FF_MIN_SHARE", "0.7"))      # stage needs at least 70% of the live site's pages
+
+
+def fail(msg):
+    print(f"ff-publish: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def count(root):
+    """(files, html pages, bytes) under root; symlinks are not counted (they are never published)."""
+    files = html = size = 0
+    for d, dirs, names in os.walk(root):
+        for n in names:
+            p = os.path.join(d, n)
+            if os.path.islink(p) or not os.path.isfile(p):
+                continue
+            files += 1
+            size += os.path.getsize(p)
+            if n.endswith(".html"):
+                html += 1
+    return files, html, size
+
+
+def snapshot(src, dst):
+    """dst becomes a tree of hard links to src's regular files (directories are made new, symlinks left out)."""
+    os.mkdir(dst, 0o755)
+    for d, dirs, names in os.walk(src):
+        rel = os.path.relpath(d, src)
+        out = dst if rel == "." else os.path.join(dst, rel)
+        for sub in dirs:
+            p = os.path.join(d, sub)
+            if os.path.islink(p):
+                continue
+            os.mkdir(os.path.join(out, sub), 0o755)
+        dirs[:] = [s for s in dirs if not os.path.islink(os.path.join(d, s))]
+        for n in names:
+            p = os.path.join(d, n)
+            if os.path.islink(p) or not os.path.isfile(p):
+                continue
+            os.link(p, os.path.join(out, n))
+
+
+def release_id(releases):
+    rid = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    n, out = 1, rid
+    while os.path.exists(os.path.join(releases, out)):
+        n += 1
+        out = f"{rid}-{n}"
+    return out
+
+
+def prune(releases, live):
+    """Delete all but the newest KEEP snapshots (never the live one) and any half-made snapshot."""
+    names = sorted(n for n in os.listdir(releases) if not n.startswith("."))
+    for n in os.listdir(releases):
+        if n.startswith(".") and n.endswith(".partial"):
+            shutil.rmtree(os.path.join(releases, n), ignore_errors=True)
+    old = [n for n in names[:-KEEP] if n != live]
+    for n in old:
+        shutil.rmtree(os.path.join(releases, n), ignore_errors=True)
+    return old
+
+
+def switch(rid):
+    link = os.path.join(BASE, ".current.new")
+    if os.path.lexists(link):
+        os.unlink(link)
+    os.symlink(os.path.join("releases", rid), link)
+    os.replace(link, os.path.join(BASE, "current"))     # the switch: one atomic rename
+
+
+def rollback(argv):
+    """--rollback [ID]: the live site goes back to the snapshot before the live one (or to ID). The next deploy
+    publishes the newest build again, so this is for the minutes until a fix is built."""
+    releases = os.path.join(BASE, "releases")
+    names = sorted(n for n in os.listdir(releases) if not n.startswith("."))
+    current = os.path.join(BASE, "current")
+    live = os.path.basename(os.path.realpath(current)) if os.path.islink(current) else None
+    want = argv[argv.index("--rollback") + 1] if len(argv) > argv.index("--rollback") + 1 else None
+    if want is None:
+        older = [n for n in names if live is None or n < live]
+        if not older:
+            fail(f"no snapshot older than the live one ({live}); snapshots: {', '.join(names) or 'none'}")
+        want = older[-1]
+    if want not in names:
+        fail(f"no snapshot {want}; snapshots: {', '.join(names)}")
+    switch(want)
+    print(f"live site switched back from {live} to {want} (snapshots: {', '.join(names)})")
+
+
+def main(argv):
+    if "--rollback" in argv:
+        return rollback(argv)
+    allow_shrink = "--allow-shrink" in argv
+    stage = os.path.join(BASE, "stage")
+    releases = os.path.join(BASE, "releases")
+    current = os.path.join(BASE, "current")
+    state = os.path.join(BASE, "state")
+    os.makedirs(releases, exist_ok=True)
+    os.makedirs(state, exist_ok=True)
+
+    if not os.path.exists(os.path.join(state, "stage-ok")):
+        fail("the last upload did not finish (no state/stage-ok); the live site is unchanged")
+    if not os.path.isfile(os.path.join(stage, "index.html")):
+        fail("the upload has no index.html; the live site is unchanged")
+    files, html, size = count(stage)
+    live = os.path.basename(os.path.realpath(current)) if os.path.islink(current) else None
+    if live and os.path.isdir(os.path.join(releases, live)):
+        _, live_html, _ = count(os.path.join(releases, live))
+        if live_html and html < MIN_SHARE * live_html and not allow_shrink:
+            fail(f"the upload has {html:,} pages, the live site {live_html:,} (under {MIN_SHARE:.0%}): not published. "
+                 "If the site really got smaller, run the deploy again with allow_shrink")
+
+    rid = release_id(releases)
+    tmp = os.path.join(releases, f".{rid}.partial")
+    shutil.rmtree(tmp, ignore_errors=True)
+    snapshot(stage, tmp)
+    os.rename(tmp, os.path.join(releases, rid))
+
+    switch(rid)
+
+    removed = prune(releases, rid)
+    info = {"release": rid, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "files": files, "html": html,
+            "bytes": size, "previous": live, "removed": removed}
+    tmp_state = os.path.join(state, ".last-publish.json")
+    with open(tmp_state, "w") as f:
+        json.dump(info, f)
+    os.replace(tmp_state, os.path.join(state, "last-publish.json"))
+    print(f"published {rid}: {files:,} files ({html:,} pages, {size / 1e6:,.0f} MB); previous {live or 'none'}; "
+          f"{len(removed)} old snapshot(s) removed")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

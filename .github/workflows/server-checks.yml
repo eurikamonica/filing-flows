@@ -1,0 +1,141 @@
+name: Server checks (own server)
+
+# The own-server code (deploy/README.md) on a clean Ubuntu runner: the scripts' tests with a real rsync, rrsync and
+# Caddy, then the whole install (deploy/server/setup.sh) and one deploy through real SSH, as on the server.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'deploy/**'
+      - 'pipeline/server_status.py'
+      - 'scripts/compare_hosts.py'
+      - 'scripts/site_monitor.py'
+      - 'tests/test_server_*.py'
+      - 'tests/test_compare_hosts.py'
+      - 'tests/test_site_monitor.py'
+      - '.github/workflows/deploy-server.yml'
+      - '.github/workflows/server-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/**'
+      - 'pipeline/server_status.py'
+      - 'scripts/compare_hosts.py'
+      - 'scripts/site_monitor.py'
+      - '.github/workflows/server-checks.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /deploy/
+            /pipeline/server_status.py
+            /scripts/compare_hosts.py
+            /scripts/site_monitor.py
+            /config/indexnow.json
+            /tests/test_server_deploy.py
+            /tests/test_server_caddy.py
+            /tests/test_server_status.py
+            /tests/test_compare_hosts.py
+            /tests/test_site_monitor.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Tools (rsync, rrsync, Caddy, shellcheck)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rsync caddy shellcheck >/dev/null
+          pip install -q pytest
+          rsync --version | head -1; caddy version; command -v rrsync
+      - name: Shell scripts
+        run: shellcheck -S warning deploy/server/setup.sh deploy/server/bin/ff-deploy-gate deploy/server/bin/ff-site deploy/server/bin/ff-deploy-key deploy/server/bin/ff-ssh-lockdown
+      - name: Tests
+        run: python -m pytest -q tests/test_server_deploy.py tests/test_server_caddy.py tests/test_server_status.py tests/test_compare_hosts.py tests/test_site_monitor.py
+
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /deploy/
+      - name: The one-step install (as on a new server)
+        run: sudo bash deploy/server/setup.sh --no-swap --fail2ban --host 127.0.0.1
+      - name: Caddy's log (when something failed)
+        if: failure()
+        run: |
+          sudo systemctl status caddy --no-pager || true
+          sudo journalctl -u caddy -n 60 --no-pager || true
+          ls -la /var/log/caddy /etc/caddy || true
+      - name: Run it again (nothing breaks, the deploy key stays)
+        run: |
+          before=$(sudo sha256sum /home/deploy/.ssh/authorized_keys)
+          sudo bash deploy/server/setup.sh --no-swap --host 127.0.0.1 > /dev/null
+          [ "$before" = "$(sudo sha256sum /home/deploy/.ssh/authorized_keys)" ]
+      - name: What it set up
+        run: |
+          id deploy
+          if id -nG deploy | grep -qw sudo; then echo "deploy must not have sudo"; exit 1; fi
+          sudo ufw status | head -12
+          systemctl is-active caddy
+          sudo cat /home/deploy/.ssh/authorized_keys | cut -c1-60
+          grep -q '^restrict,command="/usr/local/bin/ff-deploy-gate" ssh-ed25519 ' <(sudo cat /home/deploy/.ssh/authorized_keys)
+          sudo ff-site show | head -3
+      - name: A deploy through real SSH, as GitHub Actions does it
+        run: |
+          umask 077
+          sudo ff-deploy-key show > secrets.txt
+          awk '/^=== DEPLOY_SSH_KEY ===$/{f=1;next} /^$/{if(f)exit} f' secrets.txt > key
+          awk '/^=== DEPLOY_KNOWN_HOSTS ===$/{f=1;next} /^$/{if(f)exit} f' secrets.txt > known
+          host=$(awk '/^=== DEPLOY_HOST ===$/{getline; print; exit}' secrets.txt)
+          rm secrets.txt
+          [ "$host" = "127.0.0.1" ]
+          mkdir -p site/c/amzn
+          for i in $(seq 1 1200); do echo "<p>page $i</p>" > "site/p$i.html"; done
+          echo '<!doctype html><html><title>home</title></html>' > site/index.html
+          echo amazon > site/c/amzn/index.html
+          ssh_cmd="ssh -i $PWD/key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$PWD/known -o LogLevel=ERROR"
+          rsync -rp --checksum --delete --chmod=D755,F644 --stats -e "$ssh_cmd" site/ "deploy@$host:" | grep "^Number of regular files transferred"
+          $ssh_cmd "deploy@$host" publish
+          echo "amazon, again" > site/c/amzn/index.html
+          rsync -rp --checksum --delete --chmod=D755,F644 --stats -e "$ssh_cmd" site/ "deploy@$host:" | grep "^Number of regular files transferred: 1$"
+          $ssh_cmd "deploy@$host" publish
+          $ssh_cmd "deploy@$host" status | python3 -m json.tool
+          if $ssh_cmd "deploy@$host" id; then echo "the deploy key ran a shell command"; exit 1; fi
+          if $ssh_cmd "deploy@$host" "rsync --server --sender -r . /etc"; then echo "the deploy key could download"; exit 1; fi
+          test "$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' -H 'Host: filing-flows.com' http://127.0.0.1/c/amzn)" = "301 http://127.0.0.1/c/amzn/"
+          test "$(curl -s -H 'Host: filing-flows.com' http://127.0.0.1/c/amzn/)" = "amazon, again"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: filing-flows.com' http://127.0.0.1/nothing)" = "404"
+          curl -s http://127.0.0.1/robots.txt | grep -q "Disallow: /"
+          rm -f key known
+      - name: Deploy key forgotten, SSH lockdown refuses without an admin key
+        run: |
+          sudo ff-deploy-key forget
+          if sudo ff-deploy-key show; then echo "the private key is still on the server"; exit 1; fi
+          sudo -u deploy true
+          tmp=$(mktemp -d)
+          if sudo FF_ADMIN_USER=nobody FF_SSHD_DROPIN="$tmp/x.conf" ff-ssh-lockdown; then echo "locked down without a key"; exit 1; fi
+          [ ! -e "$tmp/x.conf" ]
+      - name: The other modes are valid configurations
+        run: |
+          FF_LOG=off ff-site render live > live.caddy && caddy validate --adapter caddyfile --config live.caddy
+      - name: Caddy's log (when something failed)
+        if: failure()
+        run: |
+          sudo systemctl status caddy --no-pager || true
+          sudo journalctl -u caddy -n 60 --no-pager || true
