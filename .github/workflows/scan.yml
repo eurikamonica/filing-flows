@@ -151,7 +151,11 @@ jobs:
       - name: Scan new 10-Q / 10-K filings and build charts
         timeout-minutes: 42          # never the whole job: the data store is still saved below, so no work is lost
         env:
-          RUN_BUDGET_MINUTES: ${{ steps.claim.outputs.fast == 'true' && '9' || '32' }}   # the pipeline stops taking on new work after this (pipeline/build.py time_up); the owner's fast lane: 9
+          # the pipeline stops taking on new work after this (pipeline/build.py time_up); the owner's fast lane: 9. What
+          # follows the budget (the chains, rendering 4,000 companies, the audit) takes 10-12 minutes: at 32 a run that
+          # used its whole budget (a re-read backlog keeps the filings loop busy to the end) hit the 42 and saved no site
+          RUN_BUDGET_MINUTES: ${{ steps.claim.outputs.fast == 'true' && '9' || '27' }}
+          PYTHONUNBUFFERED: "1"                                # the log's timestamps say when each phase ran
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's X post options for the threads on company pages
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           OWNER_FAST: ${{ steps.claim.outputs.fast }}          # a fast scan never makes way; a regular one does (owner lane)
@@ -399,17 +403,27 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/seo_quality.py --site _site
+      - name: The screener's table and preset screens (disclosures/data/screener.json, disclosures/screener/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/screener.py --site _site
       - name: Stock timelines with every disclosure marked (c/<slug>/timeline/, disclosures/insider-signals/)
         continue-on-error: true
         env:
           SITE_URL: ${{ vars.SITE_URL }}
-        run: python scripts/seo_timeline.py --site _site --base "${SITE_URL:-https://filing-flows.com}"
+        run: python scripts/seo_timeline.py --site _site
       - name: The home page's plain HTML (who reported this week, who reports next, links to every page type)
         continue-on-error: true
         run: python scripts/seo_home.py --site _site
       - name: One sitemap index (sitemap-index.xml) listing every sitemap in robots.txt
         continue-on-error: true
         run: python scripts/sitemap_index.py --site _site
+      - name: Link audit (sitemaps, internal links, titles and canonicals of the static pages; warnings only)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/audit_links.py --site _site --github
 
       - name: Integrate SIC relationships, markets and audit-visible research pages
         run: |

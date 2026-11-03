@@ -1,5 +1,20 @@
 # Changelog
 
+## Fair value: weighted peer multiples (size, trading and recency) beside the plain medians
+
+The peer methods (P/E, EV/EBITDA and EV/Sales vs peers, P/FFO vs REIT peers, and the sum of the parts) took the plain
+median of the narrowest SIC group: a tiny, thinly traded company counted as much as the industry leader, and only
+today's price was used. app/peer_weights.py adds a weighted version of each, beside the plain one: a peer's weight is
+the geometric mean of its share of the group's market value, revenue and trading value (the median daily close ×
+volume over 63 sessions, from the hub's prices), capped at 20%; each peer's P/E and EV/Sales count today and at every
+quarter since 2022 with a one-year half-life (EV/EBITDA and P/FFO: today only). The weighted 25th, 50th and 75th
+percentiles price the company as the plain ones do. On the live data Apple's Services segment moves from 4.9× (the
+plain median of 144 SIC 737 companies) to 8.8× EV/Sales (GOOGL, MSFT and META at the 20% cap), its hardware from 2.4×
+to 4.6×, and the sum of the parts from $91 to $170 a share. The page adds a table: the plain median, the median by each
+weight alone, all together, the weighted middle half, the effective number of peers and the largest weights; the sum
+of the parts gets weighted columns. The weighted rows are lenses (shown with their algebra in the appendix, not part
+of the stage-weighted value until the ledger has scored them); the valuation guide explains them.
+
 ## Highs, lows & ranges: at the lows (all-time, 52-week, 3-month) and in a sideways range (narrow or wide)
 
 app/regimes.py (built with the move odds after every US close, beside the highs; public/moves/lows.json, ranges.json

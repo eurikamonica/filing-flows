@@ -49,7 +49,7 @@ def bars(points, fmt, title, note=None, color=None):
         y = y0 - hgt if v >= 0 else y0
         c = color or (RED if v < 0 else GREY if i < len(pts) - 1 else BLUE)
         out.append(f"<rect x='{x:.0f}' y='{y:.0f}' width='{bw:.0f}' height='{max(hgt, 1):.0f}' rx='2' fill='{c}'/>")
-        ty = y - 5 if v >= 0 else y + hgt + 13
+        ty = y - 5 if v >= 0 else y0 - 5                         # a negative bar's figure above the line, clear of the period labels
         out.append(f"<text x='{x + bw / 2:.0f}' y='{ty:.0f}' font-size='11' text-anchor='middle' fill='{INK}'>{_e(fmt(v))}</text>")
         out.append(f"<text x='{x + bw / 2:.0f}' y='{H - 12}' font-size='11' text-anchor='middle' fill='{MUTED}'>{_e(_clip(l, 12))}</text>")
     return _fig(''.join(out), title, note, W, H)
@@ -118,29 +118,32 @@ def pair(rows, names, title, note=None):
 
 
 def ranges(rows, fmt, title, note=None, legend=('guided range', 'reported (above / within / below)')):
-    """Guided ranges against what was reported: [(label, lo, hi, actual)] oldest first; actual may be None."""
+    """Ranges with a point against each: [(label, lo, hi, point)] (guided low–high against what was reported; a valuation
+    method's low–high against its point estimate). One row per item, the range a horizontal bar, the point a dot with
+    its figure: labels are read in full and never cross each other."""
     rs = [r for r in rows if r[1] is not None]
     if not rs or not any(r[3] is not None for r in rs):  # nothing reported to hold the ranges to: the table says it
         return ''
-    W, H, top, bot = 640, 250, 58, 34
+    rh, top, bot, W = 26, 44, 10, 640
+    H = top + rh * len(rs) + bot
+    left = 236                                              # the labels' column
     vals = [v for r in rs for v in (r[1], r[2], r[3]) if v is not None]
     lo, hi = min(vals), max(vals)
-    pad = (hi - lo) * 0.12 or abs(hi) * 0.1 or 1
+    pad = (hi - lo) * 0.08 or abs(hi) * 0.1 or 1
     lo, hi = lo - pad, hi + pad
-    ph = H - top - bot
-    Y = lambda v: top + ph * (hi - v) / (hi - lo)
-    step = W / len(rs)
+    X = lambda v: left + (W - left - 70) * (v - lo) / (hi - lo)
     out = []
     for i, (l, a, b, act) in enumerate(rs):
-        cx = i * step + step / 2
+        cy = top + i * rh + rh / 2
         b = a if b is None else b
-        out.append(f"<rect x='{cx - 14:.0f}' y='{Y(b):.0f}' width='28' height='{max(5, Y(a) - Y(b)):.0f}' rx='3' fill='{GREY}' opacity='.5'/>")
+        out.append(f"<text x='{left - 10}' y='{cy + 4:.0f}' font-size='11' text-anchor='end' fill='{INK}'>{_e(_clip(l, 36))}</text>")
+        out.append(f"<rect x='{X(a):.0f}' y='{cy - 6:.0f}' width='{max(4, X(b) - X(a)):.0f}' height='12' rx='3' fill='{GREY}' opacity='.45'/>")
         if act is not None:
             c = GREEN if act >= b else RED if act < a else BLUE
-            out.append(f"<circle cx='{cx:.0f}' cy='{Y(act):.0f}' r='6' fill='{c}'/><text x='{cx + 10:.0f}' y='{Y(act) + 4:.0f}' font-size='11' fill='{INK}'>{_e(fmt(act))}</text>")
-        out.append(f"<text x='{cx:.0f}' y='{H - 12}' font-size='11' text-anchor='middle' fill='{MUTED}'>{_e(_clip(l, 12))}</text>")
+            out.append(f"<circle cx='{X(act):.0f}' cy='{cy:.0f}' r='5' fill='{c}'/>"
+                       f"<text x='{max(X(act), X(b)) + 9:.0f}' y='{cy + 4:.0f}' font-size='11' fill='{INK}'>{_e(fmt(act))}</text>")
     legend = (f"<rect x='0' y='26' width='14' height='10' fill='{GREY}' opacity='.45'/><text x='18' y='35' font-size='11' fill='{MUTED}'>{_e(legend[0])}</text>"
-              f"<circle cx='160' cy='31' r='5' fill='{GREEN}'/><text x='169' y='35' font-size='11' fill='{MUTED}'>{_e(legend[1])}</text>")
+              f"<circle cx='160' cy='31' r='5' fill='{BLUE}'/><text x='169' y='35' font-size='11' fill='{MUTED}'>{_e(legend[1])}</text>")
     return _fig(legend + ''.join(out), title, note, W, H)
 
 
@@ -168,10 +171,15 @@ def duo(points, names, fmt, title, note=None):
             hgt = abs(v) / span * ph
             x = cx - bw - 1 if j == 0 else cx + 1
             y = y0 - hgt if v >= 0 else y0
-            out.append(f"<rect x='{x:.0f}' y='{y:.0f}' width='{bw:.0f}' height='{max(hgt, 1):.0f}' rx='2' fill='{RED if v < 0 else c}'/>")
+            # the series' colour whatever the sign (a loss is below the line already; red on both would hide which is which)
+            dim = " opacity='.6'" if v < 0 else ''        # no backslash inside the f-string: the workflows run Python 3.11
+            out.append(f"<rect x='{x:.0f}' y='{y:.0f}' width='{bw:.0f}' height='{max(hgt, 1):.0f}' rx='2' fill='{c}'{dim}/>")
             if len(pts) <= 8:
                 ty = y - 4 if v >= 0 else y + hgt + 11
-                out.append(f"<text x='{x + bw / 2:.0f}' y='{ty:.0f}' font-size='10' text-anchor='middle' fill='{INK}'>{_e(fmt(v))}</text>")
+                # the figure sits outside the pair (left series to the left, right series to the right) so it never crosses the
+                # neighbour's taller bar, and the two figures never overlap
+                anchor, tx = ("end", x + bw) if j == 0 else ("start", x)
+                out.append(f"<text x='{tx:.0f}' y='{ty:.0f}' font-size='10' text-anchor='{anchor}' fill='{INK}'>{_e(fmt(v))}</text>")
         out.append(f"<text x='{cx:.0f}' y='{H - 12}' font-size='11' text-anchor='middle' fill='{MUTED}'>{_e(_clip(l, 12))}</text>")
     last = pts[-1]
     note = note or f"Latest ({last[0]}): {names[0]} {fmt(last[1])}, {names[1]} {fmt(last[2])}."

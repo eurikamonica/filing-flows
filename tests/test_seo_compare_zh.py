@@ -82,3 +82,23 @@ def test_es_fr(tmp_path):
     assert I.money(1.2345e12, I.L["fr"]) == "1 234,5 milliards de dollars" and I.money(5.3e8, I.L["es"]) == "530 millones de dólares"
     robots = (s / "robots.txt").read_text()
     assert "sitemap-es.xml" in robots and "sitemap-fr.xml" in robots
+
+
+def test_a_sliver_of_revenue_makes_no_margin():
+    """A company with $50 of revenue against a $3M loss has no margin to compare: the table says n/m, the lead does not
+    call the other one 'more profitable, with an operating margin of −19.0% against −5817056.8%', and a line's XBRL
+    'Member' leftover is not printed."""
+    import seo
+    a = {"cik": 1, "ticker": "TTGT", "name": "TECHTARGET INC", "sic": "7370", "revenue": 1.1e8}
+    b = {"cik": 2, "ticker": "MYSE", "name": "MYSIZE INC", "sic": "7370", "revenue": 50}
+    ca = co(1, "Q2 2026", 1.1e8, -3, -19.0, -2.2e7, [("Product Revenue Member", 6e7), ("Services [Member]", 5e7)])
+    cb = co(2, "Q2 2026", 50, -53, -5817056.8, -3e6, [("Apps", 30), ("Other", 20)])
+    fa, fb = C.figures(ca), C.figures(cb)
+    assert fb["nm"] is None and fa["nm"] is not None                       # −6,000,000% of revenue is not a net margin
+    assert ("Product Revenue", 6e7) in fa["segs"] and ("Services", 5e7) in fa["segs"]
+    url, _, doc = C.page_for(a, b, fa, fb, None, None, "https://example.com")
+    assert "more profitable" not in doc and "5817056" not in doc and "n/m" in doc
+    assert seo.pct(-5817056.8, False) == "n/m" and seo.pct(-19.0, False) == "-19.0%" and seo.pct(1500) == "+1500%"
+    assert seo.ratio(-3e6, 50) is None and seo.ratio(-2.2e7, 1.1e8) == -20.0 and seo.ratio(5, 0) is None
+    assert seo.times(1) == "once" and seo.times(2) == "twice" and seo.times(3) == "3 times" and seo.times(0) == "0 times"
+    assert seo.label("Retail Revenue Member") == "Retail Revenue" and seo.label("Direct to Consumer [member]") == "Direct to Consumer"

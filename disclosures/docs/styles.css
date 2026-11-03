@@ -530,3 +530,11 @@ nav.modules { display: block; overflow: visible; margin: 14px 0 12px; padding: 0
   .hub-main { overflow-x: clip; }
 }
 #notice { font-size: 13px; }
+/* screener (screener.js): the threshold and column pickers fold away; the thresholds sit in a grid */
+details.field { flex-basis: 100%; }
+details.field summary { cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--muted); padding: 6px 0; }
+.sc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 14px; padding: 6px 0 4px; }
+.sc-th { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.sc-th input { width: 100%; box-sizing: border-box; }
+.sc-col { font-size: 12.5px; display: flex; gap: 6px; align-items: center; }
+.sc-sort { font-weight: inherit; white-space: nowrap; }

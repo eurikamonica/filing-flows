@@ -48,7 +48,7 @@ def pc(v, d=1):
 
 
 def usd2(v):
-    return '—' if v is None else f"${v:,.2f}"
+    return seo.usd2(v)
 
 
 def quarter_label(q, hist_labels):
@@ -163,7 +163,7 @@ def page_for(co, er, rec, base, slug, c=None):
         lead += (f" On report days the stock moved {100 * mm['median_abs']:.1f}% in either direction on median (largest {100 * mm['largest']:.1f}%), rising {100 * mm['up_share']:.0f}% of the time"
                  + (f"; after a beat it rose {100 * mm['up_on_beat']:.0f}% of the time" if mm['up_on_beat'] is not None and mm['n_beats'] >= 3 else '') + '.')
     if nxt and nxt >= today:
-        lead += f" Next report: {fdate(nxt)}" + (f", analysts expect EPS ${cs['eps']:.2f}" if cs.get('eps') is not None else '') + (f"; options imply a move of about ±{100 * mm['implied']:.1f}%" if mm and mm.get('implied') else '') + '.'
+        lead += f" Next report: {fdate(nxt)}" + (f", analysts expect EPS {seo.usd2(cs['eps'])}" if cs.get('eps') is not None else '') + (f"; options imply a move of about ±{100 * mm['implied']:.1f}%" if mm and mm.get('implied') else '') + '.'
     # ---- tiles
     tiles = [('Beat rate', f"{100 * beats / n:.0f}% of {n}"), ('Average surprise', pc(avg_s)),
              ('Median move on the day', f"±{100 * mm['median_abs']:.1f}%" if mm else None), ('Rose on the day', f"{100 * mm['up_share']:.0f}%" if mm else None),
@@ -186,7 +186,7 @@ def page_for(co, er, rec, base, slug, c=None):
              f"<tbody>{''.join(rows)}</tbody></table></div>")
     # ---- charts
     lab = lambda h: quarter_label(h.get('quarter'), labels)
-    charts = SV.duo([(lab(h), h['est'], h['act']) for h in hist[-8:]], ('Estimate', 'Reported'), lambda v: f"${v:.2f}", f"{name}: EPS reported against the estimate")
+    charts = SV.duo([(lab(h), h['est'], h['act']) for h in hist[-8:]], ('Estimate', 'Reported'), seo.usd2, f"{name}: EPS reported against the estimate")
     charts += SV.diverging([(lab(h), 100 * h['move']) for h in reversed(hist[-10:]) if h.get('move') is not None], lambda v: f"{v:+.1f}%",
                            f"{t}: the stock's move on each report day", n=10, note='Close to close around the report, from the daily price history.')
     pts = [(lab(h), 100 * h['surprise'], 100 * h['move'], 1) for h in hist if h.get('surprise') is not None and h.get('move') is not None]
@@ -262,12 +262,12 @@ def index_page(site, base, cards):
             + SV.hbars([(c['ticker'], 100 * c['med']) for c in movers[:15]], lambda v: f"±{v:.1f}%", 'Biggest earnings-day movers (median move on the day)', n=15, color=SV.RED)
             + ("<h2>Reporting next, with their record</h2>" + table(['Company', 'Reports', 'Beat rate', 'Median move', 'Options imply'], [
                 [L(c), str(c['n']), f"{100 * c['beats'] / c['n']:.0f}%", f"±{100 * c['med']:.1f}%" if c['med'] else '—', f"±{100 * c['implied']:.1f}%" if c['implied'] else '—'] for c in soon]) if soon else '')
-            + "<h2>Most reliable beaters</h2>" + table(['Company', 'Beat rate', 'Reports', 'Avg. surprise', 'Rose on the day'], [
+            + sect("<h2>Most reliable beaters</h2>", ['Company', 'Beat rate', 'Reports', 'Avg. surprise', 'Rose on the day'], [
                 [L(c), f"{100 * c['beats'] / c['n']:.0f}%", str(c['n']), pc(c['avg_s']), f"{100 * c['up']:.0f}%" if c['up'] is not None else '—'] for c in best])
-            + "<h2>The stock has moved more than the options priced in</h2><p class='muted'>Median realized move divided by the move the options currently imply; above 1 the straddle has tended to be cheap, below 1 generous.</p>"
-            + table(['Company', 'Median move', 'Options imply', 'Ratio', 'Implied range held'], [[L(c), f"±{100 * c['med']:.1f}%", f"±{100 * c['implied']:.1f}%", f"{c['ratio']:.1f}×", f"{100 * c['held']:.0f}%" if c['held'] is not None else '—'] for c in cheap])
-            + "<h2>The options have priced in more than the stock moved</h2>" + table(['Company', 'Median move', 'Options imply', 'Ratio', 'Implied range held'], [[L(c), f"±{100 * c['med']:.1f}%", f"±{100 * c['implied']:.1f}%", f"{c['ratio']:.1f}×", f"{100 * c['held']:.0f}%" if c['held'] is not None else '—'] for c in rich])
-            + "<h2>Calmest on report day</h2>" + table(['Company', 'Median move', 'Beat rate'], [[L(c), f"±{100 * c['med']:.1f}%", f"{100 * c['beats'] / c['n']:.0f}%"] for c in calm])
+            + sect("<h2>The stock has moved more than the options priced in</h2><p class='muted'>Median realized move divided by the move the options currently imply; above 1 the straddle has tended to be cheap, below 1 generous.</p>",
+                   ['Company', 'Median move', 'Options imply', 'Ratio', 'Implied range held'], [[L(c), f"±{100 * c['med']:.1f}%", f"±{100 * c['implied']:.1f}%", f"{c['ratio']:.1f}×", f"{100 * c['held']:.0f}%" if c['held'] is not None else '—'] for c in cheap])
+            + sect("<h2>The options have priced in more than the stock moved</h2>", ['Company', 'Median move', 'Options imply', 'Ratio', 'Implied range held'], [[L(c), f"±{100 * c['med']:.1f}%", f"±{100 * c['implied']:.1f}%", f"{c['ratio']:.1f}×", f"{100 * c['held']:.0f}%" if c['held'] is not None else '—'] for c in rich])
+            + sect("<h2>Calmest on report day</h2>", ['Company', 'Median move', 'Beat rate'], [[L(c), f"±{100 * c['med']:.1f}%", f"{100 * c['beats'] / c['n']:.0f}%"] for c in calm])
             + ("<h2>Most conservative guidance</h2><p class='muted'>Share of guided periods whose result landed above the midpoint of the range.</p>" + table(['Company', 'Metric', 'Better side of midpoint', 'Beat the range', 'Avg. vs midpoint', 'Odds next on the better side'], [
                 [L(c), e(c['cred']['name']), f"{c['cred']['above_mid']} of {c['cred']['n']}", str(c['cred']['above']), f"{c['cred']['avg_vs_mid']:+.1f}%" if c['cred']['avg_vs_mid'] is not None else '—', f"{100 * c['cred']['p_next']:.0f}%"] for c in cred]) if cred else '')
             + "<p class='muted'>From each company's reports, earnings releases and daily prices; errors are possible. Not investment advice.</p>")
@@ -276,6 +276,11 @@ def index_page(site, base, cards):
     open(os.path.join(site, 'disclosures', 'report-cards', 'index.html'), 'w', encoding='utf-8').write(seo.page(
         'Earnings report cards: who beats, how much stocks move on the day, whose guidance is conservative | Filing Flows', lead[:300], url, body, 2, base + '/og.png'))
     return url
+
+
+def sect(head_html, cols, rows):
+    """a heading and its table, or nothing when no company qualifies (an empty table under a heading reads as broken)"""
+    return head_html + table(cols, rows) if rows else ''
 
 
 def table(head, rows):

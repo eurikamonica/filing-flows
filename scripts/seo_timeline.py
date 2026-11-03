@@ -171,15 +171,20 @@ def page_for(co, base, slug, site, hub, stats, istats):
             "<nav class='seo-toc'><a href='#chart'>Chart</a><a href='#marks'>Each mark</a>" + ("<a href='#insiders'>Insiders</a>" if ins_h else '') + ("<a href='#kind'>8-K kinds</a>" if ev_h else '') + "</nav>"
             f"<p class='lead'>{e(lead)}</p><div id='chart'>{chart}</div>"
             f"<h2 id='marks'>Each mark, and what followed</h2>{table}{ins_h}{ev_h}"
-            f"<p><a class='seo-cta' href='../report-card/'>Report card: every quarter against the estimate →</a> <a href='../'>{e(name)}: every quarter →</a> "
-            f"<a href='../../../disclosures/#insiders'>Live insider trades →</a></p>{DISCLAIMER}")
+            + (f"<p><a class='seo-cta' href='../report-card/'>Report card: every quarter against the estimate →</a> <a href='../'>{e(name)}: every quarter →</a> "
+               if os.path.exists(os.path.join(site, 'c', slug, 'report-card', 'index.html')) else      # report cards: companies with four reports on file
+               f"<p><a class='seo-cta' href='../'>{e(name)}: every quarter →</a> ")
+            + f"<a href='../../../disclosures/#insiders'>Live insider trades →</a></p>{DISCLAIMER}")
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
                                                          {'@type': 'ListItem', 'position': 2, 'name': name, 'item': f"{base}/c/{slug}/"},
                                                          {'@type': 'ListItem', 'position': 3, 'name': 'Timeline', 'item': url}]},
         {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': f"Are {name} insiders buying or selling?", 'acceptedAnswer': {'@type': 'Answer', 'text': re.sub('<[^>]+>', '', ins_h)[:600] or lead}}]},
         {'@type': 'WebPage', 'name': title, 'url': url, 'dateModified': days[-1], 'description': lead[:300]}]}
-    return url, days[-1], seo.page(seo.fit(title), lead[:300], url, body, 3, base + '/og.png', ld), {
+    # the sitemap's date: the newest disclosure on the chart, not the newest close (a new price every day would have
+    # every timeline sent to IndexNow every day)
+    changed = max(m[0] for m in marks if m[0] <= days[-1]) if any(m[0] <= days[-1] for m in marks) else days[-1]
+    return url, changed, seo.page(seo.fit(title), lead[:300], url, body, 3, base + '/og.png', ld), {
         'ticker': t, 'name': name, 'slug': slug, 'buys': sum(1 for m in marks if m[1] == 'buy'), 'sells': sum(1 for m in marks if m[1] == 'sell'),
         'buy_usd': sum(m[3].get('size') or 0 for m in marks if m[1] == 'buy'), 'sell_usd': sum(m[3].get('size') or 0 for m in marks if m[1] == 'sell'), 'chg': chg}
 
@@ -197,7 +202,11 @@ def signals_page(site, base, istats, cards):
     b, s = pat['buy'], pat['sell']
     lead = (f"Insiders’ open-market trades from the last 400 days, {istats['trades']:,} of them old enough to score against the market over the following 63 sessions. "
             f"Buys were followed by the stock beating SPY {100 * b['hit']:.0f}% of the time (median excess {spct(b['median_excess'])}); sales by the stock lagging {100 * s['hit']:.0f}% of the time."
-            + (f" Size mattered most: buys of $1M or more were right {100 * pat['buy_large']['hit']:.0f}% of the time against {100 * pat['buy_small']['hit']:.0f}% for buys under $100k." if pat.get('buy_large') and pat.get('buy_small') else ''))
+            + (f" Buys of $1M or more were right {100 * pat['buy_large']['hit']:.0f}% of the time, buys under $100k {100 * pat['buy_small']['hit']:.0f}%"
+               + (" — the large ones did better" if pat['buy_large']['hit'] > pat['buy_small']['hit'] + 0.03 else
+                  " — the small ones did better" if pat['buy_small']['hit'] > pat['buy_large']['hit'] + 0.03 else " — about the same")
+               + (f"; cluster buys (three or more insiders within 30 days) {100 * pat['buy_cluster']['hit']:.0f}%" if pat.get('buy_cluster') else '') + '.'
+               if pat.get('buy_large') and pat.get('buy_small') else ''))
     heavy = sorted([c for c in cards if c['buys'] >= 2], key=lambda c: -c['buy_usd'])[:25]
     sellers = sorted([c for c in cards if c['sells'] >= 2], key=lambda c: -c['sell_usd'])[:25]
     L = lambda c: f"<a href='../../c/{c['slug']}/timeline/'><b>{e(c['ticker'])}</b></a> {e(c['name'])}"
@@ -278,6 +287,7 @@ def write(site, base):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--site', default='_site')
-    ap.add_argument('--base', default='https://filing-flows.com')
+    ap.add_argument('--site-url', default=os.environ.get('SITE_URL', '') or 'https://filing-flows.com')
     a = ap.parse_args()
-    print('timeline pages:', write(a.site, a.base))
+    m = re.search(r'https?://[^\s"]+', a.site_url or '')
+    print('timeline pages:', write(a.site, m.group(0) if m else 'https://filing-flows.com'))
