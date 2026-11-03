@@ -81,6 +81,7 @@
       const row = (ix.companies || []).find((c) => tk(c.ticker) === tk(ctx.ticker));
       if (!row) return null;
       ctx.cik = ctx.cik || row.cik;
+      ctx.name = ctx.name || row.name;                   // as the company writes it ("NVIDIA Corp"), not the SEC's capitals
       return await get(site + `data/c/${row.cik}.json`);
     } catch (e) { return null; }
   }
@@ -313,7 +314,11 @@
     const company = await companyOf(ctx, site);
     if (!here()) return;
     if (company && !window.Sankey) { try { await script(site + 'sankey.js'); } catch (e) { /* no Sankey here: the other charts still work */ } }
-    const name = (company && company.profile && company.profile.name) || T;
+    if (company && !ctx.name) {                         // a company page passes its file: the site index has the name as written
+      try { const ix = await get(site + 'data/index.json'); const row = (ix.companies || []).find((c) => String(c.cik) === String(company.profile && company.profile.cik)); if (row) ctx.name = row.name; } catch (e) { /* the file's name */ }
+      if (!here()) return;
+    }
+    const name = ctx.name || (company && company.profile && company.profile.name) || T;
     const has = (s) => s[4] !== 'company' || (s[0].startsWith('sankey') ? company && window.Sankey && (s[0] === 'sankey-fy' ? (company.years || []).some((y) => (y.nodes || []).length) : (company.quarters || []).some((q) => (q.nodes || []).length)) : !!(ctx.cik || company));
     const st = { src: new Set(DEFAULT.filter((id) => SOURCES.some((s) => s[0] === id && has(s)))), found: [], pick: [], cols: 'auto', size: 'natural', tpl: 'cards', text: 'short',
       title: `${T ? T + ' — ' : ''}${name}`, subtitle: '' };
