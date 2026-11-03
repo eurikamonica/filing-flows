@@ -7,7 +7,8 @@ name: Earnings fast lane
 # feed every 15 seconds in the busy hours (6:00-9:45 and 15:55-18:30 ET; every 45 s the rest of EDGAR's day). When an
 # index member files an Item 2.02 it claims the filing and stops; this run then reads the release with the regular
 # reader, puts the company's chart, its row in the company list and its page into the last published site, and
-# publishes it — a few minutes from acceptance (most of it the Pages upload and deploy of the ~830 MB site). The
+# publishes it — a few minutes from acceptance (most of it the Pages upload and deploy of the ~830 MB site), on
+# GitHub Pages and on your own server when there is one (deploy-server.yml, deploy/README.md). The
 # same files go to the branch "fastlane" (overlay/), which the full scan lays over its own build until it has read
 # the filing itself, so a scan that started before the release does not take the page back.
 #
@@ -176,7 +177,7 @@ jobs:
 
   deploy:
     needs: build
-    if: needs.build.outputs.published == 'true'
+    if: needs.build.outputs.published == 'true' && vars.PAGES_DEPLOY != 'off'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -184,3 +185,10 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Your own server (deploy-server.yml; nothing happens until its secrets exist). Same upload queue as scan.yml.
+  deploy-server:
+    needs: build
+    if: needs.build.outputs.published == 'true'
+    uses: ./.github/workflows/deploy-server.yml
+    secrets: inherit

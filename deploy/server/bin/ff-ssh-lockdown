@@ -1,0 +1,64 @@
+#!/bin/bash
+# Turns off SSH password login and root login, once the owner's own key works.
+#
+#   sudo ff-ssh-lockdown          only keys from now on (refuses if the admin user has no key yet)
+#   sudo ff-ssh-lockdown --undo   passwords allowed again (e.g. after losing the key, from the provider's web console)
+#
+# It writes /etc/ssh/sshd_config.d/00-filing-flows.conf: files there are read in name order and the first value of
+# a setting wins, so this one comes before the cloud image's own (50-cloud-init.conf may say PasswordAuthentication
+# yes). The configuration is tested with "sshd -t" before SSH is reloaded; the current session stays open.
+set -euo pipefail
+
+DROPIN="${FF_SSHD_DROPIN:-/etc/ssh/sshd_config.d/00-filing-flows.conf}"
+
+if [ "$(id -u)" -ne 0 ]; then echo "请在命令前加 sudo / run with sudo" >&2; exit 1; fi
+
+reload_ssh() {
+  systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || systemctl restart ssh 2>/dev/null || systemctl restart sshd
+}
+
+if [ "${1:-}" = "--undo" ]; then
+  rm -f "$DROPIN"
+  sshd -t
+  reload_ssh
+  echo "✔ 已恢复：密码登录重新允许（root 登录按系统默认）。"
+  exit 0
+fi
+
+admin="${FF_ADMIN_USER:-${SUDO_USER:-}}"
+if [ -z "$admin" ] || [ "$admin" = root ]; then
+  echo "请用你平时登录的用户（例如 ubuntu）运行：sudo ff-ssh-lockdown" >&2
+  exit 1
+fi
+home=$(getent passwd "$admin" | cut -d: -f6)
+keys="$home/.ssh/authorized_keys"
+if [ ! -s "$keys" ] || ! ssh-keygen -lf "$keys" >/dev/null 2>&1; then
+  echo "用户 $admin 还没有可用的 SSH 钥匙（$keys 是空的）。为了不把你锁在门外，这次什么都没有改。" >&2
+  exit 1
+fi
+
+echo "用户 $admin 已有这些钥匙："
+ssh-keygen -lf "$keys" | sed 's/^/  /'
+
+cat > "$DROPIN" <<'EOF'
+# Written by ff-ssh-lockdown (Filing Flows): keys only. Undo: sudo ff-ssh-lockdown --undo
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin no
+EOF
+chmod 644 "$DROPIN"
+
+if ! sshd -t 2>/tmp/ff-sshd-test.log; then
+  rm -f "$DROPIN"
+  echo "SSH 配置检查没有通过，已撤回，什么都没有改：" >&2
+  cat /tmp/ff-sshd-test.log >&2
+  exit 1
+fi
+reload_ssh
+
+eff=$(sshd -T 2>/dev/null | grep -Ei '^(passwordauthentication|permitrootlogin|kbdinteractiveauthentication) ' || true)
+echo "$eff" | sed 's/^/  /'
+echo
+echo "✔ 密码登录和 root 登录已关闭。"
+echo "  先别关这个窗口：另开一个新窗口，用 ssh $admin@<服务器地址> 登录试试。能进去，再关掉这个窗口。"
+echo "  进不去的话，在这个还开着的窗口里运行 sudo ff-ssh-lockdown --undo 撤回。"

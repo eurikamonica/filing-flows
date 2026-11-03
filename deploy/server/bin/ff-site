@@ -1,0 +1,336 @@
+#!/bin/bash
+# Writes the web server's configuration (/etc/caddy/Caddyfile) for one of three modes and reloads Caddy:
+#
+#   sudo ff-site staging            before the domain points here: the site answers on plain HTTP only (by IP address
+#                                   for a look in a browser, by Host header for scripts/compare_hosts.py), every
+#                                   answer marked noindex so nothing from the test can end up in a search engine.
+#                                   Optional HTTPS test name: sudo ff-site test-host test.example.com (needs its DNS
+#                                   record first; same noindex, and a robots.txt that disallows everything).
+#   sudo ff-site live [--wait-dns]  the domain points here directly (Cloudflare grey cloud, "DNS only"): Caddy gets
+#                                   and renews free Let's Encrypt certificates by itself. --wait-dns waits until
+#                                   public DNS (1.1.1.1 and 8.8.8.8) shows this server's address before switching,
+#                                   so it can be started just before the DNS change.
+#   sudo ff-site origin [--paste]   the domain points here through Cloudflare's proxy (orange cloud) with SSL
+#                                   "Full (strict)": Caddy uses a Cloudflare Origin Certificate (valid 15 years, no
+#                                   renewals). --paste asks for the certificate and its key and stores them.
+#   ff-site render [mode]           print the configuration without changing anything (also used by the tests)
+#   ff-site show                    the current mode and configuration
+#
+# Every mode serves the site the way GitHub Pages did, so no address changes (deploy/README.md lists the rules):
+# /dir -> 301 /dir/ (query kept), /dir/ -> dir/index.html, /page -> page.html, missing -> 404 status with /404.html
+# when the site has one (else a short built-in page), www -> 301 to the bare domain, gzip/zstd, CORS "*",
+# Cache-Control 5 min for pages and data, 10 min for other files, a year for versioned files (?v=… or a hash in the
+# name). Generic Ubuntu/Debian: nothing in it belongs to one hosting company.
+set -euo pipefail
+
+CONF="${FF_CONF:-/etc/filing-flows/site.conf}"
+CADDYFILE="${FF_CADDYFILE:-/etc/caddy/Caddyfile}"
+CERT_DIR="${FF_CERT_DIR:-/etc/caddy/certs}"
+
+conf_get() {   # conf_get KEY [default]
+  local v=""
+  [ -f "$CONF" ] && v=$(sed -n "s/^$1=//p" "$CONF" | tail -1 | sed 's/^"\(.*\)"$/\1/')
+  echo "${v:-${2:-}}"
+}
+
+conf_set() {   # conf_set KEY VALUE
+  mkdir -p "$(dirname "$CONF")"
+  touch "$CONF"
+  if grep -q "^$1=" "$CONF"; then
+    sed -i "s|^$1=.*|$1=\"$2\"|" "$CONF"
+  else
+    echo "$1=\"$2\"" >> "$CONF"
+  fi
+}
+
+DOMAIN=$(conf_get DOMAIN filing-flows.com)
+SITE_NAME=$(conf_get SITE_NAME "Filing Flows")
+ROOT="${FF_ROOT:-$(conf_get BASE /srv/filing-flows)/current}"
+LOG="${FF_LOG:-/var/log/caddy/access.log}"
+HTTP_PORT="${FF_HTTP_PORT:-80}"
+HTTPS_PORT="${FF_HTTPS_PORT:-443}"
+
+render() {
+  local mode="${1:-$(conf_get MODE staging)}"
+  local test_host
+  test_host=$(conf_get TEST_HOST)
+
+  cat <<EOF
+# Written by ff-site (mode: $mode). Do not edit by hand: change deploy/server/bin/ff-site in the repository, then run
+# "sudo ff-site $mode" again. The file before the last change is kept as $(basename "$CADDYFILE").bak.
+{
+	http_port $HTTP_PORT
+	https_port $HTTPS_PORT
+${FF_EXTRA_GLOBAL:-}
+}
+
+EOF
+
+  local log_block=""
+  if [ "$LOG" != "off" ]; then
+    log_block="	log {
+		output file $LOG {
+			roll_size 50MiB
+			roll_keep 5
+			roll_keep_for 720h
+		}
+	}"
+  fi
+
+  # The site itself, shared by every mode (a Caddyfile snippet).
+  sed -e "s|@ROOT@|$ROOT|g" -e "s|@SITE_NAME@|$SITE_NAME|g" <<'EOF'
+(ff_site) {
+	root * @ROOT@
+	encode zstd gzip
+	header Access-Control-Allow-Origin "*"
+
+	# Cache-Control: a year for versioned files (?v=… or a content hash in the name); 5 minutes for pages, data,
+	# sitemaps and robots.txt (the site changes every 15 minutes); 10 minutes for everything else (as GitHub Pages)
+	@ff_versioned query v=*
+	@ff_hashed path_regexp ff_hash \.[0-9a-f]{8,}\.(js|mjs|css|woff2?|png|jpe?g|gif|svg|webp|avif)$
+	@ff_short {
+		not query v=*
+		path_regexp ff_page (/|\.html|\.json|\.xml|\.txt|/[^./]+)$
+	}
+	@ff_other {
+		not query v=*
+		not path_regexp ff_page2 (/|\.html|\.json|\.xml|\.txt|/[^./]+)$
+		not path_regexp ff_hash2 \.[0-9a-f]{8,}\.(js|mjs|css|woff2?|png|jpe?g|gif|svg|webp|avif)$
+	}
+	header @ff_versioned Cache-Control "public, max-age=31536000, immutable"
+	header @ff_hashed Cache-Control "public, max-age=31536000, immutable"
+	header @ff_short Cache-Control "public, max-age=300"
+	header @ff_other Cache-Control "public, max-age=600"
+
+	route {
+		# a directory without its slash: 301 to the slash, query kept (GitHub Pages does the same)
+		@ff_dir_q {
+			not path */
+			file {path}/index.html
+			expression `{query} != ""`
+		}
+		redir @ff_dir_q {path}/?{query} 301
+		@ff_dir {
+			not path */
+			file {path}/index.html
+		}
+		redir @ff_dir {path}/ 301
+		# /page answers with page.html, /dir/ with dir/index.html; nothing else is guessed
+		try_files {path} {path}.html
+		file_server {
+			disable_canonical_uris
+		}
+	}
+
+	handle_errors {
+		@ff_404 expression `{err.status_code} == 404`
+		handle @ff_404 {
+			@ff_page404 file /404.html
+			handle @ff_page404 {
+				rewrite * /404.html
+				file_server {
+					status 404
+				}
+			}
+			handle {
+				header Content-Type "text/html; charset=utf-8"
+				respond `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Page not found · @SITE_NAME@</title></head>
+<body style="font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;max-width:36rem;margin:15vh auto;padding:0 16px;color:#1d1d1b">
+<h1 style="font-size:1.6rem;margin:0 0 .5rem">Page not found</h1>
+<p>There is no page at this address on @SITE_NAME@.</p>
+<p><a href="/">Go to the home page</a></p>
+</body></html>
+` 404
+			}
+		}
+		handle {
+			respond "{err.status_code} {err.status_text}"
+		}
+	}
+EOF
+  echo "$log_block"
+  echo "}"
+  echo
+
+  # For hosts that only preview the site (the server's IP address, a test name): never indexed.
+  cat <<'EOF'
+(ff_preview) {
+	header X-Robots-Tag "noindex, nofollow"
+	handle /robots.txt {
+		respond `User-agent: *
+Disallow: /
+` 200
+	}
+}
+
+EOF
+
+  case "$mode" in
+    staging)
+      cat <<EOF
+# Staging: the domain still points elsewhere. Plain HTTP only, nothing to certify yet.
+http://$DOMAIN {
+	import ff_site
+	header X-Robots-Tag "noindex, nofollow"
+}
+
+http://www.$DOMAIN {
+	redir https://$DOMAIN{uri} 301
+}
+
+# Anything else on port $HTTP_PORT, e.g. http://<server address>/ in a browser
+http:// {
+	import ff_site
+	import ff_preview
+}
+EOF
+      if [ -n "$test_host" ]; then
+        cat <<EOF
+
+# Test name over HTTPS (its own DNS record points here); not for search engines
+$test_host {
+	import ff_site
+	import ff_preview
+}
+EOF
+      fi
+      ;;
+    live|origin)
+      local tls=""
+      if [ "$mode" = origin ]; then
+        tls="	tls $CERT_DIR/origin.pem $CERT_DIR/origin.key"
+      fi
+      cat <<EOF
+$DOMAIN {
+$tls
+	import ff_site
+}
+
+www.$DOMAIN {
+$tls
+	redir https://$DOMAIN{uri} 301
+}
+EOF
+      ;;
+    *)
+      echo "ff-site: unknown mode '$mode' (staging, live or origin)" >&2
+      return 2
+      ;;
+  esac
+}
+
+need_root() {
+  if [ "$(id -u)" -ne 0 ]; then echo "请在命令前加 sudo / run with sudo" >&2; exit 1; fi
+}
+
+apply() {
+  local mode="$1"
+  need_root
+  local new="$CADDYFILE.new"
+  render "$mode" > "$new"
+  if ! caddy validate --adapter caddyfile --config "$new" > /tmp/ff-site-validate.log 2>&1; then
+    echo "新配置没有通过检查，网站保持原样 / the new configuration failed validation, nothing changed:" >&2
+    tail -20 /tmp/ff-site-validate.log >&2
+    rm -f "$new"
+    exit 1
+  fi
+  [ -f "$CADDYFILE" ] && cp "$CADDYFILE" "$CADDYFILE.bak"
+  mv "$new" "$CADDYFILE"
+  chmod 644 "$CADDYFILE"
+  conf_set MODE "$mode"
+  if systemctl is-active -q caddy; then
+    systemctl reload caddy
+  else
+    systemctl enable --now caddy
+  fi
+  echo "✔ 网站配置已切换为 $mode / web server now in mode $mode"
+}
+
+server_ipv4() {
+  conf_get IPV4 "$(ip -4 -o addr show scope global 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1)"
+}
+
+wait_dns() {
+  local want n=0 a b
+  want=$(server_ipv4)
+  echo "等待 $DOMAIN 的公共解析指向本机 $want（最多 30 分钟；现在可以去 Cloudflare 修改 DNS）…"
+  while :; do
+    a=$(dig +short A "$DOMAIN" @1.1.1.1 2>/dev/null | tail -1 || true)
+    b=$(dig +short A "$DOMAIN" @8.8.8.8 2>/dev/null | tail -1 || true)
+    if [ "$a" = "$want" ] && [ "$b" = "$want" ]; then
+      echo "✔ 1.1.1.1 和 8.8.8.8 都已指向 $want"
+      return 0
+    fi
+    n=$((n + 1))
+    if [ "$n" -ge 360 ]; then
+      echo "30 分钟内解析没有指向本机（1.1.1.1: ${a:-无}，8.8.8.8: ${b:-无}），没有切换。" >&2
+      return 1
+    fi
+    if [ $((n % 12)) -eq 1 ]; then echo "  现在：1.1.1.1 → ${a:-无}，8.8.8.8 → ${b:-无}"; fi
+    sleep 5
+  done
+}
+
+paste_origin_cert() {
+  need_root
+  local tmp
+  tmp=$(mktemp -d)
+  echo "第 1 步：粘贴 Cloudflare 给你的 Origin Certificate（从 -----BEGIN CERTIFICATE----- 到 -----END CERTIFICATE-----），"
+  echo "        粘贴完按回车，再按 Ctrl+D："
+  cat > "$tmp/cert.pem"
+  echo "第 2 步：粘贴 Private Key（从 -----BEGIN PRIVATE KEY----- 到 -----END PRIVATE KEY-----），粘贴完按回车，再按 Ctrl+D："
+  cat > "$tmp/key.pem"
+  if ! openssl x509 -in "$tmp/cert.pem" -noout 2>/dev/null; then
+    echo "证书格式不对，没有保存。请重新运行 sudo ff-site origin --paste" >&2; rm -rf "$tmp"; exit 1
+  fi
+  if ! openssl pkey -in "$tmp/key.pem" -noout 2>/dev/null; then
+    echo "私钥格式不对，没有保存。请重新运行 sudo ff-site origin --paste" >&2; rm -rf "$tmp"; exit 1
+  fi
+  if [ "$(openssl x509 -in "$tmp/cert.pem" -pubkey -noout | sha256sum)" != "$(openssl pkey -in "$tmp/key.pem" -pubout | sha256sum)" ]; then
+    echo "证书和私钥不是一对，没有保存。" >&2; rm -rf "$tmp"; exit 1
+  fi
+  install -d -m 750 -o root -g caddy "$CERT_DIR"
+  install -m 644 -o root -g caddy "$tmp/cert.pem" "$CERT_DIR/origin.pem"
+  install -m 640 -o root -g caddy "$tmp/key.pem" "$CERT_DIR/origin.key"
+  rm -rf "$tmp"
+  echo "✔ 证书已保存（有效期至 $(openssl x509 -in "$CERT_DIR/origin.pem" -noout -enddate | cut -d= -f2)）"
+}
+
+cmd="${1:-show}"
+shift || true
+case "$cmd" in
+  render)
+    render "${1:-}"
+    ;;
+  staging)
+    apply staging
+    ;;
+  live)
+    if [ "${1:-}" = "--wait-dns" ]; then wait_dns; fi
+    apply live
+    ;;
+  origin)
+    if [ "${1:-}" = "--paste" ]; then paste_origin_cert; fi
+    if [ ! -f "$CERT_DIR/origin.pem" ] || [ ! -f "$CERT_DIR/origin.key" ]; then
+      echo "还没有 Origin 证书：先运行 sudo ff-site origin --paste" >&2
+      exit 1
+    fi
+    apply origin
+    ;;
+  test-host)
+    need_root
+    host="${1:-}"
+    if [ -z "$host" ] || [ "$host" = off ]; then conf_set TEST_HOST ""; else conf_set TEST_HOST "$host"; fi
+    apply "$(conf_get MODE staging)"
+    ;;
+  show)
+    echo "mode: $(conf_get MODE staging)   domain: $DOMAIN   test host: $(conf_get TEST_HOST '-')"
+    [ -f "$CADDYFILE" ] && cat "$CADDYFILE"
+    ;;
+  *)
+    sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
+    exit 2
+    ;;
+esac

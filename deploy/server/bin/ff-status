@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""One JSON object about the server, for the monitor and the owner's daily report (nothing secret in it):
+disk and memory use, load, the web server's state, the live snapshot and when it was published, whether a reboot
+is waiting for an update, and the mode of the web server's configuration (staging / live / origin)."""
+import json
+import os
+import shutil
+import socket
+import subprocess
+import time
+
+BASE = os.environ.get("FF_BASE", "/srv/filing-flows")
+CONF = os.environ.get("FF_CONF", "/etc/filing-flows/site.conf")
+
+
+def meminfo():
+    out = {}
+    try:
+        with open("/proc/meminfo") as f:
+            for line in f:
+                k, v = line.split(":", 1)
+                out[k] = int(v.split()[0]) * 1024
+    except OSError:
+        return None
+    total, avail = out.get("MemTotal"), out.get("MemAvailable")
+    if not total or avail is None:
+        return None
+    return {"total_gb": round(total / 2**30, 1), "used_pct": round(100 * (1 - avail / total), 1),
+            "swap_gb": round(out.get("SwapTotal", 0) / 2**30, 1)}
+
+
+def service(name):
+    try:
+        r = subprocess.run(["systemctl", "is-active", name], capture_output=True, text=True, timeout=10)
+        return r.stdout.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
+def conf():
+    out = {}
+    try:
+        with open(CONF) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    out[k.strip()] = v.strip().strip('"')
+    except OSError:
+        pass
+    return out
+
+
+def main():
+    du = shutil.disk_usage(BASE if os.path.exists(BASE) else "/")
+    try:
+        with open("/proc/uptime") as f:
+            up = float(f.read().split()[0])
+    except OSError:
+        up = None
+    current = os.path.join(BASE, "current")
+    last = {}
+    try:
+        with open(os.path.join(BASE, "state", "last-publish.json")) as f:
+            last = json.load(f)
+    except (OSError, ValueError):
+        pass
+    try:
+        releases = len([n for n in os.listdir(os.path.join(BASE, "releases")) if not n.startswith(".")])
+    except OSError:
+        releases = 0
+    c = conf()
+    out = {
+        "host": socket.gethostname(),
+        "time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "disk": {"total_gb": round(du.total / 2**30, 1), "used_gb": round(du.used / 2**30, 1),
+                 "free_gb": round(du.free / 2**30, 1), "used_pct": round(100 * du.used / du.total, 1)},
+        "memory": meminfo(),
+        "load": [round(x, 2) for x in os.getloadavg()],
+        "cpus": os.cpu_count(),
+        "uptime_days": round(up / 86400, 1) if up is not None else None,
+        "web": service("caddy"),
+        "mode": c.get("MODE", "unknown"),
+        "domain": c.get("DOMAIN"),
+        "release": os.path.basename(os.path.realpath(current)) if os.path.islink(current) else None,
+        "published_at": last.get("at"),
+        "pages": last.get("html"),
+        "files": last.get("files"),
+        "site_mb": round(last["bytes"] / 1e6) if last.get("bytes") else None,
+        "snapshots": releases,
+        "reboot_required": os.path.exists("/var/run/reboot-required"),
+    }
+    print(json.dumps(out))
+
+
+if __name__ == "__main__":
+    main()

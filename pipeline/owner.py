@@ -346,6 +346,9 @@ def send_daily(site, st, cfg, s, now, slot, mailer_send, sender, to_list, site_u
     tz = s.get("tz")
     lead = (f"Your {'full ' if is_full(s) else ''}daily report for {notify.day_words(now, tz)}: {len(items)} "
             f"filing{'s' if len(items) != 1 else ''} since the last report, {scope_words(s)}, largest first.")
+    from . import server_status                  # the own server's state, when there is one (deploy/README.md)
+    note = "" if dry_run else server_status.report_line()
+    lead = f"{lead} {note}" if note else lead
     sent = 0
     for to in to_list:
         msg = report_message(items, pics, cfg, sender, to, subject_line(items, notify.day_words(now, tz, True)), lead, site_url)
