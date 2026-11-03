@@ -380,7 +380,9 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 5           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+DA_VERSION = 6           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+# v6 (Nov 2026): a bank's revenue from net interest + noninterest income when its "Revenues" tag is only the fee part
+# or one of the two is untagged (facts.bank_revenue); companies whose newest quarter is not drawn go first
 # 2: D&A and share-based compensation from the cash-flow statement's tag (facts.CASH_FLOW_KEYS); total revenues
 #    (us-gaap:Revenues) before larger sub-totals, with revenue lines that add up to contract revenue marked "recon"
 # 3: a "Revenues" far below the other revenue tags is the total only when it closes the income statement
@@ -512,11 +514,19 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
     with (the owner's re-read request)."""
     todo = []
     first = reread_first() if only is None else set()
+    # companies whose newest quarter could not be drawn in the last render (render: state "undrawn") first, oldest
+    # reading first: their stored figures are often from an old reader (a bank read before net interest income was:
+    # revenue = its fee income alone, smaller than its profit — M&T, Eastern, Glacier … 41 pages in Nov 2026 — and so
+    # last in a queue ordered by that revenue). An undrawn company already on the current reading is read once more
+    # per newest quarter, in case SEC's company facts have caught up since.
+    undrawn = {int(k): v for k, v in (store.state.get("undrawn") or {}).items()} if only is None else {}
     for cik in (only if only is not None else store.ciks()):
         c = store.company(cik)
-        if c.get("quarters") and c.get("profile") and (only is not None or c.get("da_v", 0) < DA_VERSION):
+        stuck = int(cik) in undrawn and c.get("da_undrawn") != undrawn[int(cik)]
+        if c.get("quarters") and c.get("profile") and (only is not None or c.get("da_v", 0) < DA_VERSION or stuck):
             last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
-            todo.append((int(cik) not in first, -((last.get("raw") or {}).get("revenue") or 0), cik))
+            todo.append((int(cik) not in first, int(cik) not in undrawn, c.get("da_v", 0),
+                         -((last.get("raw") or {}).get("revenue") or 0), cik))
     n = 0
     for *_, cik in sorted(todo)[:limit]:
         if only is None and time_up(CATCH_UP_SHARE, "re-reading stored figures"):
@@ -552,6 +562,8 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
                             else:
                                 q["src"].pop(k, None)
             c["da_v"] = DA_VERSION
+            if int(cik) in undrawn:
+                c["da_undrawn"] = undrawn[int(cik)]            # read again for this quarter: not again until a newer one
             set_quality(c, companyfacts(cik))
             store.put(cik, c)
             n += 1
@@ -2721,6 +2733,7 @@ def render(store, out, stars=frozenset()):
     x_cfg = social.load_cfg("config/x.json")
     index, groups, usd_recs = [], {}, {}
     fx_cache = FX.load_cache(store.root)
+    undrawn = store.state.setdefault("undrawn", {})         # cik → newest quarter end that could not be drawn
     for cik in store.ciks():
         c = store.company(cik)
         halfly = not c.get("quarters") and bool(c.get("halves"))
@@ -2731,6 +2744,11 @@ def render(store, out, stars=frozenset()):
         cur = c.get("currency") or "USD"
         FX._cur[0] = cur                                     # amounts written in the company's own currency
         payloads = _payloads(c, cik)
+        newest = max((q.get("end") or "" for q in c["quarters"].values()), default="")
+        if newest and newest not in {pl.get("end") for pl in payloads}:
+            undrawn[str(cik)] = newest                       # its stored figures are read again first (refresh_da)
+        else:
+            undrawn.pop(str(cik), None)
         if halfly:
             payloads = [_as_half(pl) for pl in payloads]
         if not payloads:
@@ -2901,7 +2919,9 @@ def render(store, out, stars=frozenset()):
         "industries": sorted(agg_index["industry"], key=lambda x: x["name"]),
         "sector_names": sectors.SECTORS, "release_audit": audit_out,
     })
-    print(f"rendered {len(index)} companies, {len(agg_index['sector'])} sectors, {len(agg_index['industry'])} industries")
+    print(f"rendered {len(index)} companies, {len(agg_index['sector'])} sectors, {len(agg_index['industry'])} industries; "
+          f"{len(undrawn)} with their newest quarter not drawn")
+    store.commit()                                           # the undrawn list, for the next run's re-reading
 
 
 def cal_label(cal):

@@ -244,9 +244,14 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
                 S.node("nonop_in", oc, "nonop", "profit", "Other income, net", "left", "pretax", "pre-tax",
                        notekeys=NOTE_KEYS["nonop"])
             S.node("oi", oc, "oi", "profit", "Operating profit", "above", "gp", "gross profit", notekeys=NOTE_KEYS["oi"])
-            S.node("opex", oc, "opex", "cost", "Operating expenses", "below", "gp", "gross profit",
-                   notekeys=NOTE_KEYS["opex"])
-            S.link("gp", "oi", "oi", "profit"); S.link("gp", "opex", "opex", "cost")
+            if not Qc.get("opgain"):
+                S.node("opex", oc, "opex", "cost", "Operating expenses", "below", "gp", "gross profit",
+                       notekeys=NOTE_KEYS["opex"])
+            S.link("gp", "oi", "oi_core", "profit")
+            if Qc.get("opgain"):
+                _opgain(S, Nc, rc + 1, f)
+            else:
+                S.link("gp", "opex", "opex", "cost")
             cost_parent, cost_plabel = "opex", "opex"
         else:
             oc = rc + 1
@@ -256,9 +261,14 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
                 S.node("nonop_in", oc, "nonop", "profit", "Other income, net", "left", "pretax", "pre-tax",
                        notekeys=NOTE_KEYS["nonop"])
             S.node("oi", oc, "oi", "profit", "Operating profit", "above", "revenue", "revenue", notekeys=NOTE_KEYS["oi"])
-            S.node("costs", oc, "costs", "cost", "Costs &amp; expenses", "below", "revenue", "revenue",
-                   notekeys=NOTE_KEYS["costs"])
-            S.link("revenue", "oi", "oi", "profit"); S.link("revenue", "costs", "costs", "cost")
+            if not Qc.get("opgain"):
+                S.node("costs", oc, "costs", "cost", "Costs &amp; expenses", "below", "revenue", "revenue",
+                       notekeys=NOTE_KEYS["costs"])
+            S.link("revenue", "oi", "oi_core", "profit")
+            if Qc.get("opgain"):
+                _opgain(S, Nc, rc, f)
+            else:
+                S.link("revenue", "costs", "costs", "cost")
             cost_parent, cost_plabel = "costs", "costs"
         S.node("pretax", oc + 1, "pretax", "profit", "Pre-tax earnings", "above", "revenue", "revenue",
                extra=[fold_note] if fold_note else [], notekeys=NOTE_KEYS["pretax"])
@@ -292,6 +302,12 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
             # drawn all the same, so net earnings stay the shareholders' figure, compared like with like and
             # agreeing with the compared quarter's own chart
             nci_pos, nci_neg = Nc["nci"] > 0, Nc["nci"] < 0
+        # minority interests that take more than pre-tax earnings leave (MGM's Q3 2026: $56M to them out of $39M, the
+        # shareholders' share a $17M loss; Surgery Partners, Dana, Hagerty): not carved out of pre-tax earnings, which
+        # cannot hold them — net earnings are drawn including them, the split written on the node
+        nci_over = nci_pos and (Nc["ni"] < 0 or Nc["pretax"] < Nc["nci"])
+        if nci_over:
+            nci_pos = False
         has_nci = nci_pos or nci_neg
         net_key = "ni" if has_nci else "pl"
         bridge = Nc["ocf"] is not None
@@ -302,7 +318,9 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=No
             S.node("nci_in", oc + 1, "nci", "profit", "Loss borne by minority interests", "left", "net", "net earnings",
                    sign=-1, extra=[f"their share of a loss: net income incl. minority interests {f.money(Nc['pl'])}"])
         S.node("net", nc, net_key, "profit", "Net earnings", "above_left" if bridge else "right", "pretax", "pre-tax",
-               extra=["attributable to shareholders"] if has_nci else [], notekeys=NOTE_KEYS["net"])
+               extra=(["attributable to shareholders"] if has_nci else
+                      [f"incl. minority interests {f.money(Nc['nci'])}; to shareholders {f.money(Nc['ni'])}"] if nci_over
+                      else []), notekeys=NOTE_KEYS["net"])
         if nci_pos:
             S.node("nci", nc, "nci", "profit", "Minority interests", "below_right" if bridge else "right", "pretax", "pre-tax")
         if Nc["tax"] > 0:
@@ -580,6 +598,17 @@ def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
         S.link("bridge", nid, key, color, sign=sign)
     if "ocf" in S.ids:
         _capex(S, Nc, c0 + 2, f)
+
+
+def _opgain(S, Nc, col, f):
+    """Gains inside operating profit beyond what revenue (or gross profit) leaves, net of the costs (model.normalize
+    "op_gain"): one inflow into operating profit; revenue (or gross profit) flows into it whole."""
+    pretax_only = "oi_missing" in Nc["flags"]
+    S.node("opgain", col, "opgain", "profit", "Other gains, net of costs" if pretax_only else "Operating gains, net of costs",
+           "below", "oi", "operating profit" if not pretax_only else "pre-tax earnings",
+           extra=["costs not shown apart: gains exceed them" + ("" if pretax_only else " (e.g. a sale of assets)")],
+           notekeys=["gain on sale", "gain on", "gains"])
+    S.link("opgain", "oi", "opgain", "profit")
 
 
 def _check(nodes, links):
