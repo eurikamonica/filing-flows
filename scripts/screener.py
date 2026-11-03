@@ -83,7 +83,7 @@ def fmt(k, v):
     if v is None:
         return '—'
     if k in PCT:
-        return f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(100 * v):.1f}%" if k in ('r3m', 'r1m', 'r1y', 'from_high', 'growth') else f"{100 * v:.1f}%"
+        return (lambda r: f"{'+' if r > 0 else '−' if r < 0 else ''}{abs(r):.1f}%")(round(100 * v, 1)) if k in ('r3m', 'r1m', 'r1y', 'from_high', 'growth') else f"{100 * v:.1f}%"
     if k in USD:
         return money(v)
     if k == 'om' or k == 'yoy' or k == 'short_chg':

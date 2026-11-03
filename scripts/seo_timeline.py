@@ -43,7 +43,10 @@ def pct(v, d=1):
 
 
 def spct(v):
-    return f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(100 * v):.1f}%" if v is not None else '—'
+    if v is None:
+        return '—'
+    r = round(100 * v, 1)                                       # the sign of what is printed: never "−0.0%"
+    return f"{'+' if r > 0 else '−' if r < 0 else ''}{abs(r):.1f}%"
 
 
 def marks_for(t, cik, hub, er, days):

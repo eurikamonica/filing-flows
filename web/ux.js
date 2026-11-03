@@ -20,7 +20,7 @@
   }
   const usd = (v, d = 2) => (fin(v) ? (v < 0 ? '−$' : '$') + num(Math.abs(v), d) : '—');
   const pct = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
-  const spct = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
+  const spct = (v, d = 1) => { if (!fin(v)) return '—'; const r = +(100 * v).toFixed(d); return (r > 0 ? '+' : r < 0 ? '−' : '') + num(Math.abs(r), d) + '%'; };   // never "−0.0%"
   const day = (s) => {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ''));
     return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : String(s || '');

@@ -533,7 +533,7 @@ def usually(items, ES, row=None):
     its = [(c, s) for c, s in its if s and s.get('h1') and s['h1'].get('n', 0) >= 30]
     if not its:
         return ''
-    sp = lambda v: f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(100 * v):.1f}%"
+    sp = lambda v: (lambda r: f"{'+' if r > 0 else '−' if r < 0 else ''}{abs(r):.1f}%")(round(100 * v, 1))
     c, s = its[0]
     h1, h21 = s['h1'], s.get('h21') or {}
     txt = (f"Across <b>{h1['n']:,}</b> 8-Ks reporting Item {e(c)} ({e(s.get('name', '').lower())}) in our universe, the stock's median move the next session was "
@@ -550,7 +550,7 @@ def impact_page(site, base, ES):
     rows = sorted([(c, s) for c, s in items.items() if s.get('h1') and s['h1']['n'] >= 30], key=lambda cs: -cs[1]['h1']['abs_median'])
     if not rows:
         return None
-    sp = lambda v: f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(100 * v):.1f}%"
+    sp = lambda v: (lambda r: f"{'+' if r > 0 else '−' if r < 0 else ''}{abs(r):.1f}%")(round(100 * v, 1))
     cls = lambda v: 'up' if v > 0 else 'down' if v < 0 else ''
     tbl = table(['Item', '8-Ks', 'Next session, median', 'Typical size', 'Up', '5 sessions', '21 sessions', '21 sessions vs SPY'], [
         [f"<b>{e(c)}</b> {e(s.get('name', ''))}", f"{s['h1']['n']:,}", f"<span class='{cls(s['h1']['median'])}'>{sp(s['h1']['median'])}</span>", f"±{100 * s['h1']['abs_median']:.1f}%",
