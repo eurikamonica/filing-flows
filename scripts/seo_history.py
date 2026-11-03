@@ -307,7 +307,7 @@ def vs_mid(v, unit):
     return '—' if v is None else f"{v:+.1f}{' pts' if unit == 'pct' else '%'}"
 
 
-def guidance_page(r, rec, base, slug, who, name):
+def guidance_page(r, rec, base, slug, who, name, has_outlook=True):
     ms = [m for m in rec.get('metrics') or [] if m.get('rows')]
     if not ms:
         return None
@@ -349,7 +349,7 @@ def guidance_page(r, rec, base, slug, who, name):
     page_body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › Guidance history</p>"
                  f"<h1>{e(who)} guidance history: what it guided and what it reported</h1><p class='lead'>{e(lead)}</p>{body}"
                  + "<h2>The latest quarter</h2>" + sankey_figure(r['cik'], '', f"{who} latest quarter Sankey") + faq(qa)
-                 + "<p><a href='../guidance/'>Latest guidance and outlook →</a></p><p class='muted'>Each guided period is held to the last guidance given before its figures were reported; a single figure counts as in line within 1% (0.25 pts for a rate). Reported figures are GAAP, from the company's filings; adjusted guidance shows its moves only.</p>")
+                 + ("<p><a href='../guidance/'>Latest guidance and outlook →</a></p>" if has_outlook else '') + "<p class='muted'>Each guided period is held to the last guidance given before its figures were reported; a single figure counts as in line within 1% (0.25 pts for a rate). Reported figures are GAAP, from the company's filings; adjusted guidance shows its moves only.</p>")
     crumbs = [('Filing Flows', base + '/'), (who, f'{base}/c/{slug}/'), ('Guidance history', url)]
     return url, (rec.get('latest') or '')[:10] or None, seo.page(title, lead[:300], url, page_body, 3, base + '/og.png', ld(base, crumbs, qa))
 
@@ -432,7 +432,7 @@ def write(site, base, period_pages=PERIOD_PAGES):
                     send_on(d, old_slug, out[0], f'{who} {label} by quarter')
         rec = read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))
         if rec:
-            out = guidance_page(r, rec, base, slug, who, name)
+            out = guidance_page(r, rec, base, slug, who, name, os.path.exists(os.path.join(d, 'guidance', 'index.html')))   # seo_topics.py ran first
             if out:
                 put(os.path.join(d, 'guidance-history'), *out, 'metrics')
                 counts['guidance'] += 1

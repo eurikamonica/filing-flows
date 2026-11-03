@@ -21,7 +21,10 @@ import sys
 from urllib.parse import quote
 from xml.sax.saxutils import escape as xesc
 
-e = lambda s: html.escape(str(s if s is not None else ""), quote=True)
+# text that arrives already encoded (an FDA recall's "PACK A &#38; B", a name's "&amp;") is decoded first, so the page shows
+# "A & B", not "A &#38; B"; only complete entities (with the semicolon): "S&P", "AT&T", "Procter&reg" stay as they are
+_ENT = re.compile(r"&(?:#[0-9]+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);")
+e = lambda s: html.escape(_ENT.sub(lambda m: html.unescape(m.group(0)), str(s if s is not None else "")), quote=True)
 
 # The site's own X account: the footer link, the twitter:site tag and the Organization's sameAs on every page.
 # Change it here (and in web/index.html) if the account is renamed again.
@@ -470,7 +473,8 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     tweet = f"{who} {q.get('label', '')} revenue breakdown"
     import seo_history as SH
     qs_ = SH.qslug(q.get('label') or '')
-    qlink = f" · <a href='{qs_}/'>{e(who)} {e(q.get('label', ''))} earnings results →</a>" if qs_ and form != '8-K' else ''
+    # seo_history.py writes quarter pages only for a company with a ticker (Public Service Co of Colorado, c/cik-81018/, has none)
+    qlink = f" · <a href='{qs_}/'>{e(who)} {e(q.get('label', ''))} earnings results →</a>" if qs_ and form != '8-K' and ix_entry.get('ticker') else ''
     alt = f"{name} {q.get('label', '')} revenue breakdown: Sankey diagram of revenue" + (f" ({', '.join(n for n, _ in segs[:4])})" if segs else "") + ", costs, profit and cash flow"
     share = share_figure(image, alt, f"{name} {q.get('label', '')} revenue breakdown", url, depth, True, tweet)
     ties_html = ties_section(ties or [], p['cik'], pages or {})
@@ -625,7 +629,11 @@ def chain_pages(data_dir, out_dir, base, images=None):
         lead = (f"{money(cov.get('spend'))} spent in the last twelve months by {', '.join(b['t'] for b in d.get('buyers') or [])}; "
                 f"{money(cov.get('traced'))} traced to {cov.get('suppliers')} listed suppliers." if d.get("kind") == "spend"
                 else f"{n_of(len(rows), 'company', 'companies')}, {money(sum(r.get('attr') or 0 for r in rows))} of revenue in the last twelve months.")
-        lis = "".join(f"<li><a href='../../c/{e(r['t'].lower())}/'>{e(r['t'])}</a> {e(r.get('name') or '')} "
+        # a supplier without a company page here (ASML, Agnico Eagle: foreign filers, read for the chain through exchange
+        # rates) is named, not linked
+        slug = lambda t: (t or '').lower().replace('.', '-')
+        has = lambda t: os.path.exists(os.path.join(out_dir, "c", slug(t), "index.html"))
+        lis = "".join(f"<li>{(chr(60) + 'a href=' + chr(39) + '../../c/' + e(slug(r['t'])) + '/' + chr(39) + '>' + e(r['t']) + '</a>') if has(r['t']) else '<b>' + e(r['t']) + '</b>'} {e(r.get('name') or '')} "
                       f"<span class='muted'>{money(r.get('attr'))} · {e(r.get('line') or '')}</span></li>" for r in rows[:60])
         body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Chains</a> › {e(d['name'])}</p>"
                 f"<h1>{e(d['name'])}</h1><p class='lead'>{e(d.get('about') or '')}</p><p>{e(lead)} Trailing twelve months to "

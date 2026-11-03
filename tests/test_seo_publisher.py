@@ -64,3 +64,9 @@ def test_no_signed_zero():
     doc = seo.page("T", "down −0.0% today", "https://x/", "<p>was −0.0% (typical ±2.1%)</p><td>-0%</td><td>-0.01%</td><td>10-0%</td><p>−0,0 %</p>", 1, "https://x/og.png")
     assert "was 0.0% (typical" in doc and "<td>0%</td>" in doc and "-0.01%" in doc and "10-0%" in doc and "<p>0,0 %</p>" in doc
     assert 'content="down 0.0% today"' in doc and "−0.0%" not in doc
+
+
+def test_text_already_encoded_is_not_encoded_twice():
+    """An FDA recall's "PACK A &#38; B" showed as "A &amp;#38; B" on c/mdln/risks/; "S&P" and "AT&T" are plain text."""
+    assert seo.e("OPEN HEART PACK A &#38; B") == "OPEN HEART PACK A &amp; B" and seo.e("Procter &amp; Gamble") == "Procter &amp; Gamble"
+    assert seo.e("S&P 500") == "S&amp;P 500" and seo.e("Procter&regulation") == "Procter&amp;regulation" and seo.e("<b>") == "&lt;b&gt;"
