@@ -252,6 +252,9 @@ def metric_page(r, c, base, slug, who, name, mslug, label, key, kind):
     return url, mod, seo.page(title, lead[:300], url, body, 3, base + '/og.png', ld(base, crumbs, qa, mod))
 
 
+WORDS = dict(zip('0123456789', ('zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine')))
+
+
 def segment_metrics(c):
     """The largest revenue lines of the latest quarter: (slug, label, node id)."""
     qs = c.get('quarters') or []
@@ -272,7 +275,9 @@ def segment_metrics(c):
             # the addresses the label's XBRL leftover gave the page before it was cleaned ("Ethanol Member" →
             # ethanol-member-revenue): the raw name's, and the name with " Member" back on it (the data is cleaned too)
             olds = []
-            for was in (slug_of(seo.html.unescape(str(raw.get(k) or ''))), slug_of(lbl + ' member')):
+            # and the digits a tag name had spelled ("Microsoft Three Six Five Cloud" → Microsoft 365 Cloud, pipeline/dims._words)
+            spelled = re.sub(r'\d{2,}|\dG\b', lambda m: ' '.join(WORDS[ch] for ch in m.group(0) if ch.isdigit()) + (' g' if m.group(0).endswith('G') else ''), lbl)
+            for was in (slug_of(seo.html.unescape(str(raw.get(k) or ''))), slug_of(lbl + ' member'), slug_of(spelled)):
                 o = (f'{was}-revenue' if 'revenue' not in was else was) if was else None
                 if o and o != page and o not in olds:
                     olds.append(o)

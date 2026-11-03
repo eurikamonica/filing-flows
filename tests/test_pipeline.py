@@ -3504,13 +3504,17 @@ def test_member_labels_cleaned_of_xbrl_leftovers():
     documentation sentence in the label's place ("This member stands for the information pertaining to …"): the chart
     writes the name without them, and a stored breakdown is cleaned when drawn (build.clean_lines)."""
     from pipeline import dims, build
-    assert dims.clean_label("Cabinetry And Millwork Member", "x_CabinetryAndMillworkMember") == "Cabinetry And Millwork"
+    assert dims.clean_label("Cabinetry And Millwork Member", "x_CabinetryAndMillworkMember") == "Cabinetry and Millwork"
+    # the digits a tag name had to spell, and the small words of a name spaced out of one (Microsoft's lines)
+    assert dims.clean_label("Microsoft Three Six Five Cloud", "msft_MicrosoftThreeSixFiveCloudMember") == "Microsoft 365 Cloud"
+    assert dims.clean_label("Productivity And Server Licensing") == "Productivity and Server Licensing" and dims.clean_label("Five G Services") == "5G Services"
+    assert dims.clean_label("Capital One") == "Capital One" and dims.clean_label("Bank Of America Merchant") == "Bank of America Merchant"
     assert dims.clean_label("Direct to Consumer [member]", "x_DirectToConsumerMember") == "Direct to Consumer"
     assert dims.clean_label("Operating lease revenues from automobile rentals [Members]", "x_A") == "Operating lease revenues from automobile rentals"
     assert dims.clean_label('This member stands for the information pertaining to "Net revenue non-core services".', "abc_NetRevenueNonCoreServicesMember") == "Net Revenue Non Core Services"
     assert dims.clean_label("iPhone [Member]", "aapl_IPhoneMember") == "iPhone" and dims.clean_label("Services", "aapl_ServiceMember") == "Services"
     ls = {"leaves": [{"id": "x:CabinetryAndMillworkMember", "label": "Cabinetry And Millwork Member"}], "groups": [], "axis": "a"}
-    assert build.clean_lines(ls)["leaves"][0]["label"] == "Cabinetry And Millwork" and ls["leaves"][0]["label"].endswith("Member")
+    assert build.clean_lines(ls)["leaves"][0]["label"] == "Cabinetry and Millwork" and ls["leaves"][0]["label"].endswith("Member")
 
 
 def test_a_year_ending_in_early_january_is_named_for_the_year_it_mostly_falls_in(tmp_path):

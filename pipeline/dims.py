@@ -87,7 +87,24 @@ def clean_label(text, elid=""):
     if elid and (DOCUMENTATION.search(t) or len(t) > 90 or (t.endswith(".") and len(t) > 40)):
         t = humanize(elid.split("_", 1)[-1]) if "_" in elid else humanize(elid)
     t = re.sub(r"(?<=[a-z]{3})\.$", "", t)              # a closing full stop ("Japan." → "Japan"), not "U.S."
-    return t.strip()
+    return _words(t.strip())
+
+
+_DIGIT = {"Zero": "0", "One": "1", "Two": "2", "Three": "3", "Four": "4", "Five": "5", "Six": "6", "Seven": "7", "Eight": "8", "Nine": "9"}
+_DW = "(?:Zero|One|Two|Three|Four|Five|Six|Seven|Eight|Nine)"
+_MINOR = {"And", "Or", "Of", "The", "For", "In", "On", "To", "With", "At", "By", "Per", "Via"}
+
+
+def _words(t):
+    """A label spelled out of a tag name, written as the company writes it: the digits a tag name had to spell
+    ("Microsoft Three Six Five Cloud" → "Microsoft 365 Cloud", "Five G" → "5G") and, in a label whose every word is
+    capitalised, the small words in lower case ("Productivity And Server Licensing" → "Productivity and Server Licensing")."""
+    t = re.sub(rf"\b{_DW}(?: {_DW})+\b", lambda m: "".join(_DIGIT[w] for w in m.group(0).split()), t)
+    t = re.sub(r"\b(Three|Four|Five|Six) ?G\b", lambda m: _DIGIT[m.group(1)] + "G", t)
+    ws = t.split(" ")
+    if len(ws) >= 3 and all(w[:1].isupper() or not w[:1].isalpha() for w in ws):
+        t = " ".join(w.lower() if i and w in _MINOR else w for i, w in enumerate(ws))
+    return t
 
 
 def label_roles(xml_text):
