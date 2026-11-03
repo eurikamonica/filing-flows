@@ -14,7 +14,6 @@
     python scripts/seo_history.py --site _site --site-url https://filing-flows.com
 """
 import argparse
-import html as H
 import json
 import os
 import re
@@ -42,7 +41,7 @@ def money(v):
 
 
 def pc(v, d=0):
-    return '—' if v is None else f'{v:+.{d}f}%'
+    return seo.pct(v) if d == 0 else '—' if v is None else f'{v:+.{d}f}%'       # a change: +10%, −0.4% (never "-0%")
 
 
 def pts(v):
@@ -63,7 +62,7 @@ def year_ago(label):
 
 def nodes(q):
     """{id: (label, this, previous quarter, year ago)} of a quarter's Sankey."""
-    return {n['id']: (H.unescape(n.get('name') or n.get('label') or n['id']), n.get('v'), n.get('q'), n.get('y')) for n in q.get('nodes') or []}
+    return {n['id']: (seo.label(n.get('name') or n.get('label') or n['id']), n.get('v'), n.get('q'), n.get('y')) for n in q.get('nodes') or []}
 
 
 def chg(a, b):
@@ -71,8 +70,9 @@ def chg(a, b):
 
 
 def margin(n, k, i):
+    """the line as a percentage of revenue; None when the revenue is a sliver next to it (seo.ratio)"""
     r, x = n.get('revenue'), n.get(k)
-    return 100 * x[i] / r[i] if r and x and r[i] and x[i] is not None else None
+    return seo.ratio(x[i], r[i]) if r and x and r[i] and x[i] is not None else None
 
 
 KEY = [('revenue', 'Revenue'), ('gp', 'Gross profit'), ('oi', 'Operating profit'), ('net', 'Net earnings'), ('ocf', 'Operating cash flow'), ('fcf', 'Free cash flow')]
@@ -115,9 +115,12 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
     yoy, qoq = chg(rev[1], rev[3]), chg(rev[1], rev[2])
     lead = f"{who} reported revenue of {money(rev[1])} for the {words} ({lab})" + (f", {pc(yoy)} from a year earlier" if yoy is not None else '') + (
         f" and {pc(qoq)} from the quarter before" if qoq is not None else '') + '.'
-    om, nm = margin(n, 'oi', 1), margin(n, 'net', 1)
+    # net earnings: the figure the chart draws (headline.ni), whichever node holds it (net, netinc, or netloss as a loss)
+    net = h.get('ni') if h.get('ni') is not None else (n['net'][1] if 'net' in n else n['netinc'][1] if 'netinc' in n else -n['netloss'][1] if 'netloss' in n and n['netloss'][1] is not None else None)
+    om = margin(n, 'oi', 1)
+    nm = seo.ratio(net, rev[1])
     if om is not None:
-        lead += f" Operating margin was {om:.1f}%" + (f", net earnings {money(n['net'][1])} ({nm:.1f}% of revenue)" if nm is not None else '') + '.'
+        lead += f" Operating margin was {om:.1f}%" + (f", net {'earnings' if net >= 0 else 'loss'} {money(abs(net))} ({abs(nm):.1f}% of revenue)" if nm is not None else '') + '.'
     rows = ''.join(f"<tr><td>{e(t)}</td><td class='num'>{e(money(n[k][1]))}</td><td class='num'>{e(pc(chg(n[k][1], n[k][2])))}</td><td class='num'>{e(pc(chg(n[k][1], n[k][3])))}</td></tr>"
                    for k, t in KEY if k in n and n[k][1] is not None)
     qs = c['quarters']
@@ -129,22 +132,22 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
         navs.append(f"<a href='../{qslug(next_q['label'])}/'>← {e(next_q['label'])}</a>")
     if prev_q:
         navs.append(f"<a href='../{qslug(prev_q['label'])}/'>{e(prev_q['label'])} →</a>")
-    if has_period:
-        if prev_q:
+    if has_period:                                   # only the comparisons period_page() writes: both revenues on file
+        if prev_q and rev[1] and rev[2]:
             navs.append(f"<a href='../{qslug(lab)}-vs-{qslug(prev_q['label'])}/'>{e(lab)} vs {e(prev_q['label'])} (Q/Q)</a>")
-        if ya:
+        if ya and rev[1] and rev[3]:
             navs.append(f"<a href='../{qslug(lab)}-vs-{qslug(ya)}/'>{e(lab)} vs {e(ya)} (Y/Y)</a>")
     analysis = ''.join(f'<p>{e(a)}</p>' for a in (q.get('analysis') or [])[:4])
-    qa = [(f"What was {name}'s revenue in the {words}?", first(lead))]
+    qa = [(f"What was {seo.poss(name)} revenue in the {words}?", first(lead))]
     if om is not None:
-        qa.append((f"Was {name} profitable in the {words}?", f"Operating profit was {money(n['oi'][1])} ({om:.1f}% of revenue)" + (f" and net earnings {money(n['net'][1])}." if 'net' in n and n['net'][1] is not None else '.')))
+        qa.append((f"Was {name} profitable in the {words}?", f"Operating profit was {money(n['oi'][1])} ({om:.1f}% of revenue)" + (f" and net {'earnings' if net >= 0 else 'loss'} {money(abs(net))}." if net is not None else '.')))
     url = f"{base}/c/{slug}/{qslug(lab)}/"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(lab)}</p>"
             f"<h1>{e(who)} {e(lab)} earnings results ({e(words)})</h1><p class='muted'>{e(q.get('form'))} filed {e(fdate(q.get('filed')))}</p>"
             f"<nav class='seo-more'>{' · '.join(navs)}</nav><p class='lead'>{e(lead)}</p>"
             + "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{k}</span><b>{e(v)}</b></div>" for k, v in (
                 ('Revenue', money(rev[1])), ('Year over year', pc(yoy)), ('Quarter over quarter', pc(qoq)),
-                ('Operating margin', f'{om:.1f}%' if om is not None else '—'), ('Net earnings', money(n['net'][1]) if 'net' in n else '—'))) + "</div>"
+                ('Operating margin', f'{om:.1f}%' if om is not None else '—'), ('Net earnings', money(net) if net is not None else '—'))) + "</div>"
             + f"{sankey_figure(r['cik'], lab, f'{who} {lab} income statement Sankey')}"
             f"<div class='tbl-wrap'><table><thead><tr><th>{e(lab)}</th><th class='num'>Amount</th><th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>"
             + (f"<h2>What changed</h2>{analysis}" if analysis else '') + faq(qa)
@@ -230,12 +233,13 @@ def metric_page(r, c, base, slug, who, name, mslug, label, key, kind):
     latest, prev = s[0], s[1]
     hi, lo = max(s, key=lambda x: x[1]), min(s, key=lambda x: x[1])
     delta = (f"{pts(latest[1] - prev[1])} from {prev[0]}" if kind == 'ratio' else f"{pc(chg(latest[1], prev[1]))} from {prev[0]}")
-    lead = (f"{name}'s {label} was {fmt(latest[1])} in {latest[0]} ({seo.period_words(latest[0])}), {delta}. "
+    were = "were" if label.lower().endswith(("expenditures", "costs", "expenses", "sales", "earnings")) else "was"
+    lead = (f"{seo.poss(name)} {label} {were} {fmt(latest[1])} in {latest[0]} ({seo.period_words(latest[0])}), {delta}. "
             f"Over the last {len(s)} quarters it ranged from {fmt(lo[1])} ({lo[0]}) to {fmt(hi[1])} ({hi[0]}).")
     ya = {x[0]: x[1] for x in s}
     rows = ''.join(f"<tr><td>{e(x[0])}</td><td class='num'>{e(fmt(x[1]))}</td><td class='num'>{e((pts(x[1] - s[i + 1][1]) if kind == 'ratio' else pc(chg(x[1], s[i + 1][1]))) if i + 1 < len(s) else '—')}</td>"
                    f"<td class='num'>{e(((pts(x[1] - ya[year_ago(x[0])]) if kind == 'ratio' else pc(chg(x[1], ya[year_ago(x[0])]))) if year_ago(x[0]) in ya else '—'))}</td></tr>" for i, x in enumerate(s))
-    qa = [(f"What is {name}'s {label}?", first(lead)), (f"How has {name}'s {label} changed?", lead[len(first(lead)):].strip() or lead)]
+    qa = [(f"What is {seo.poss(name)} {label}?", first(lead)), (f"How has {seo.poss(name)} {label} changed?", lead[len(first(lead)):].strip() or lead)]
     url = f"{base}/c/{slug}/{mslug}/"
     title = f"{who} {label} by quarter: {fmt(latest[1])} in {latest[0]} | Filing Flows"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(label[0].upper() + label[1:])}</p>"
@@ -257,20 +261,31 @@ def segment_metrics(c):
     n = nodes(q)
     tops = [ln['s'] for ln in q.get('links') or [] if ln['t'] == 'revenue' and ln['s'] in n and ln['s'] not in ('rev_more',)]
     tops = sorted(set(tops), key=lambda k: -(n[k][1] or 0))[:3] if len(set(tops)) > 1 else []
+    raw = {x['id']: x.get('name') or x.get('label') or x['id'] for x in q.get('nodes') or []}
+    slug_of = lambda lbl: re.sub(r'[^a-z0-9]+', '-', lbl.lower()).strip('-')[:40]    # noqa: E731
     out = []
     for k in tops:
         lbl = n[k][0]
-        s = re.sub(r'[^a-z0-9]+', '-', lbl.lower()).strip('-')[:40]
+        s = slug_of(lbl)
         if s and s not in ('revenue', 'other-revenues', 'other'):
-            out.append((f'{s}-revenue' if 'revenue' not in s else s, f'{lbl} revenue', k))
+            was = slug_of(seo.html.unescape(str(raw.get(k) or '')))        # the slug the label's XBRL leftover gave the page before
+            out.append((f'{s}-revenue' if 'revenue' not in s else s, f'{lbl} revenue', k,
+                        (f'{was}-revenue' if 'revenue' not in was else was) if was and was != s else None))
     return out
+
+
+def moved_page(url, name):
+    """a page whose address changed (a line's label cleaned of 'Member'): the old address sends search engines on"""
+    return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{e(name)} | Filing Flows</title>'
+            f'<meta name="robots" content="noindex, follow"><link rel="canonical" href="{e(url)}"><meta http-equiv="refresh" content="0; url={e(url)}">'
+            f'</head><body><p>This page has moved: <a href="{e(url)}">{e(name)}</a>.</p></body></html>')
 
 
 # ---------------------------------------------------------------- guided against reported
 def unit_fmt(v, unit):
     if v is None:
         return '—'
-    return money(v) if unit == 'usd' else f'${v:.2f}' if unit == 'ps' else f'{v:.1f}%'
+    return money(v) if unit == 'usd' else seo.usd2(v) if unit == 'ps' else f'{v:.1f}%'
 
 
 def vs_mid(v, unit):
@@ -285,14 +300,14 @@ def guidance_page(r, rec, base, slug, who, name):
     n = sum(m['hits']['n'] for m in judged)
     hit = sum(m['hits']['hitOrBeat'] for m in judged)
     said = rec.get('said') or {}
-    lead = f"{name} gave guidance in {rec.get('releases')} earnings releases on file since {fdate(rec.get('since'))}."
+    lead = f"{name} gave guidance in {seo.n_of(rec.get('releases') or 0, 'earnings release')} on file since {fdate(rec.get('since'))}."
     if n:
-        lead += f" Of {n} guided periods since reported, it met or beat its own guidance {hit} times ({round(100 * hit / n)}%)."
+        lead += f" Of {seo.n_of(n, 'guided period')} since reported, it met or beat its own guidance {seo.times(hit)} ({round(100 * hit / n)}%)."
         best = max(judged, key=lambda m: m['hits']['n'])
         lead += f" {best['name']}: {best['hits']['hitOrBeat']} of {best['hits']['n']}" + (
             f", on average {best['hits']['avgVsMid']:+.1f}{' pts' if best['unit'] == 'pct' else '%'} against the guided midpoint" if best['hits'].get('avgVsMid') is not None else '') + '.'
     if said.get('raised') or said.get('lowered'):
-        lead += f" Its releases raised guidance {said.get('raised', 0)} times and lowered it {said.get('lowered', 0)} times."
+        lead += f" Its releases raised guidance {seo.times(said.get('raised', 0))} and lowered it {seo.times(said.get('lowered', 0))}."
     OUT = {'above': 'above the range', 'within': 'within the range', 'below': 'below the range', 'met': 'met'}
     body = ''
     for m in ms[:6]:
@@ -313,7 +328,7 @@ def guidance_page(r, rec, base, slug, who, name):
                  + f"<div class='tbl-wrap'><table><thead><tr><th>Period</th><th>Guided (and how it moved)</th><th class='num'>Reported</th><th>Result</th><th class='num'>vs midpoint</th></tr></thead><tbody>{rows}</tbody></table></div>")
     qa = [(f"Does {name} beat its guidance?", lead.split(' Its releases')[0] if n else lead)]
     if said.get('raised') or said.get('lowered'):
-        qa.append((f"How often does {name} raise guidance?", f"Its earnings releases raised guidance {said.get('raised', 0)} times and lowered it {said.get('lowered', 0)} times since {fdate(rec.get('since'))}."))
+        qa.append((f"How often does {name} raise guidance?", f"Its earnings releases raised guidance {seo.times(said.get('raised', 0))} and lowered it {seo.times(said.get('lowered', 0))} since {fdate(rec.get('since'))}."))
     url = f"{base}/c/{slug}/guidance-history/"
     title = f"{who} guidance history: guided vs reported" + (f", met or beat {round(100 * hit / n)}% of the time" if n else '') + ' | Filing Flows'
     page_body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › Guidance history</p>"
@@ -384,12 +399,16 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 put(os.path.join(d, mslug), *out, 'metrics')
                 counts['metrics'] += 1
                 mlinks.append((f'{mslug}/', f'{name} {label} by quarter'))
-        for mslug, label, key in segment_metrics(c):
+        for mslug, label, key, old_slug in segment_metrics(c):
             out = metric_page(r, c, base, slug, who, name, mslug, label, key, 'value')
             if out:
                 put(os.path.join(d, mslug), *out, 'metrics')
                 counts['metrics'] += 1
                 mlinks.append((f'{mslug}/', f'{name} {label} by quarter'))
+                if old_slug and old_slug != mslug and not os.path.exists(os.path.join(d, old_slug, 'index.html')):
+                    os.makedirs(os.path.join(d, old_slug), exist_ok=True)                 # "ethanol-member-revenue" → ethanol-revenue
+                    with open(os.path.join(d, old_slug, 'index.html'), 'w', encoding='utf-8') as f:
+                        f.write(moved_page(out[0], f'{who} {label} by quarter'))
         rec = read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))
         if rec:
             out = guidance_page(r, rec, base, slug, who, name)

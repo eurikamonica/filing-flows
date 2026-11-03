@@ -91,6 +91,61 @@ def analysis(name, qs, ttm, qq):
     return out
 
 
+def runway(c, qs, ttm):
+    """Cash runway and the debt wall from the latest balance sheet (quality.val) and the maturity buckets (quality.cap.maturities):
+    {cash, debt, net, fcf_ttm, fcf_q, burn, months, due12, buckets, label} or None when there is no balance sheet."""
+    Q = c.get('quality') or {}
+    v = Q.get('val') or {}
+    cash = v.get('cash_all') if v.get('cash_all') is not None else ((v.get('b_cash') or 0) + (v.get('b_sti') or 0) if v.get('b_cash') is not None else None)
+    if cash is None:
+        return None
+    debt = v.get('debt') if v.get('debt') is not None else (v.get('b_ltd') or 0) + (v.get('b_stb') or 0)
+    f_ttm = fcf(ttm) if ttm else None
+    f_q = fcf(qs[-1]) if qs else None
+    rec = [fcf(x) for x in qs[-4:]]
+    burn = None
+    if f_ttm is not None and f_ttm < 0:
+        burn = -f_ttm                                                   # a year's burn at the trailing rate
+    elif f_q is not None and f_q < 0 and sum(1 for x in rec if x is not None and x < 0) >= 2:
+        burn = -4 * f_q                                                 # turned negative recently: the latest quarter annualised
+    months = 12 * cash / burn if burn else None
+    mat = (Q.get('cap') or {}).get('maturities') or {}
+    buckets = [(b[0], b[1]) for b in mat.get('buckets') or [] if len(b) >= 2 and b[1]]
+    due12 = next((a for k, a in buckets if k == 1), None)
+    if due12 is None and v.get('b_ltd_c') is not None:
+        due12 = (v.get('b_ltd_c') or 0) + (v.get('b_stb') or 0)
+    return {'cash': cash, 'debt': debt, 'net': cash - (debt or 0), 'fcf_ttm': f_ttm, 'ocf_ttm': ((ttm or {}).get('items') or {}).get('ocf'), 'fcf_q': f_q, 'burn': burn, 'months': months, 'due12': due12,
+            'buckets': buckets, 'label': mat.get('label'), 'at': v.get('end') or mat.get('at')}
+
+
+def runway_section(name, rw):
+    if not rw:
+        return '', None
+    tiles = [('Cash & investments', money(rw['cash'])), ('Debt', money(rw['debt']) if rw['debt'] else 'none'), ('Net cash' if rw['net'] >= 0 else 'Net debt', money(abs(rw['net']))),
+             ('Due within a year', money(rw['due12']) if rw['due12'] else None)]
+    if rw['months'] is not None:
+        tiles.append(('Cash runway', f"{rw['months'] / 12:.1f} years" if rw['months'] >= 24 else f"{rw['months']:.0f} months"))
+    if rw['burn']:
+        how = (f"{name} is burning cash: operations themselves consumed cash" if (rw.get('ocf_ttm') or 0) < 0 else
+               f"{name} is spending more on capital than operations bring in") + f", a free cash flow of {money(-rw['burn'])} a year at the current rate"
+        line = (how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{rw['months'] / 12:.1f} years</b>" if rw['months'] >= 24 else
+                how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{rw['months']:.0f} months</b>")
+        if rw['due12']:
+            line += f"; {money(rw['due12'])} of debt also comes due within a year, which {'the cash covers' if rw['cash'] >= rw['due12'] + rw['burn'] else 'would need refinancing or new money'}"
+        line += ' before any new financing.'
+    else:
+        line = (f"{name} funds itself: free cash flow was {money(rw['fcf_ttm'])} over the last twelve months"
+                + (f", and {money(rw['cash'])} of cash and investments stands against {money(rw['debt'])} of debt" if rw['debt'] else f", with {money(rw['cash'])} of cash and investments and no debt on the balance sheet")
+                + (f" ({money(rw['due12'])} due within a year, {rw['cash'] / rw['due12']:.1f}× covered by cash)" if rw['due12'] else '') + '.')
+    body = ("<h2 id='runway'>Cash runway and the debt wall</h2><div class='seo-tiles'>"
+            + ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in tiles if v) + f"</div><div class='seo-note'><p>{line}</p></div>")
+    if len(rw['buckets']) >= 2:
+        lab = {1: 'Year 1', 2: 'Year 2', 3: 'Year 3', 4: 'Year 4', 5: 'Year 5', 6: 'After year 5'}
+        body += SV.bars([(lab.get(k, str(k)), a) for k, a in rw['buckets']], money, f"{name}: debt maturities by year ({rw['label'] or 'latest 10-K'})",
+                        note=f"Principal due in each year as disclosed in the annual report, against {money(rw['cash'])} of cash and investments now.", color=SV.RED)
+    return body, re.sub('<[^>]+>', '', line)
+
+
 def page_for(c, row, slug, base):
     Q = c.get('quality') or {}
     cap = Q.get('cap') or {}
@@ -114,7 +169,7 @@ def page_for(c, row, slug, base):
             f"<h1>{e(name)} cash flow, quarter by quarter</h1><p class='muted'>Latest: {e(last['label'])} · from the cash-flow statements filed with the SEC</p>"
             f"<p class='seo-hl {'up' if (f or 0) >= 0 else 'down'}'><span>Free cash flow</span><b>{money(f)}</b> in {e(last['label'])}"
             + (f" · <b>{money(ttf)}</b> over twelve months" if ttf is not None else '') + '</p>'
-            "<nav class='seo-toc'><a href='#analysis'>Analysis</a><a href='#fcf'>Free cash flow</a><a href='#allocation'>By year</a><a href='#where'>Where it went</a><a href='#bridge'>Profit to cash</a>"
+            "<nav class='seo-toc'><a href='#analysis'>Analysis</a><a href='#fcf'>Free cash flow</a><a href='#allocation'>By year</a><a href='#runway'>Runway & debt</a><a href='#where'>Where it went</a><a href='#bridge'>Profit to cash</a>"
             "<a href='#table'>Every quarter</a><a href='#sankey'>Sankey</a></nav>")
     body += "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in [
         ('Operating cash flow', money(last['items'].get('ocf'))), ('Capital spending', money(last['items'].get('capex'))),
@@ -142,6 +197,11 @@ def page_for(c, row, slug, base):
                               colors=(SV.GREEN, SV.BLUE, '#7b6aa8', '#6fae8a', SV.RED, '#c08a3e', '#a05a8c', '#8a8f98')))
         lines.append(f"Over the last {len(fys)} fiscal years {name} generated {money(tot_in)} from operations"
                      + ('; the largest uses were ' + ' and '.join(f"{k.lower()} ({money(v)})" for k, v in top) if top else '') + '.')
+    rw = runway(c, qs, ttm)
+    rws, rline = runway_section(name, rw)
+    body += rws
+    if rline:
+        lines.append(rline)
     body += "<h2 id='where'>Where the cash came from and went</h2><div class='seo-grid'>"
     for per in (last, ttm):
         if per and per.get('items'):
@@ -175,7 +235,7 @@ def page_for(c, row, slug, base):
                                                          {'@type': 'ListItem', 'position': 3, 'name': 'Cash flow', 'item': url}]},
         {'@type': 'WebPage', 'name': title, 'url': url, 'dateModified': row.get('filed') or last.get('end'), 'description': desc,
          'about': {'@type': 'Corporation', 'name': name, **({'tickerSymbol': tk} if tk else {})}}]}
-    return seo.page(f"{title} | Filing Flows", desc, url, body, 3, f"{base}/og.png", ld), row.get('filed') or last.get('end')
+    return seo.page(f"{title} | Filing Flows", desc, url, body, 3, f"{base}/og.png", ld), row.get('filed') or last.get('end'), rw
 
 
 def seo_table(head, rows):
@@ -244,9 +304,9 @@ def industry_page(sic, ind, fl, g, capex, base):
     rev = fl.get('revenue')
     body_ch, lines = [], []
     top3 = sum(x[0][0] for x in cx[:3]) / tot
-    lines.append(f"{len(cx)} companies in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months, "
+    lines.append(f"{seo.n_of(len(cx), 'company', 'companies')} in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months, "
                  f"{tot / ocf * 100:.0f}% of the {money(ocf)} their operations generated" if ocf > 0 else
-                 f"{len(cx)} companies in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months")
+                 f"{seo.n_of(len(cx), 'company', 'companies')} in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months")
     lines[-1] += (f"; the three largest spenders — {', '.join(x[1].get('ticker') or display_name(x[1].get('name')) for x in cx[:3])} — account for {top3 * 100:.0f}%."
                   if len(cx) > 3 else '.')
     if rev:
@@ -294,14 +354,15 @@ def industry_page(sic, ind, fl, g, capex, base):
                                         note='The companies’ cash-flow statements, latest four quarters or fiscal year: every figure filed (grade A).'))
     rel = sorted(g.get('relationships') or [], key=lambda x: -(x.get('value_usd') or 0))
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../../'>Industries</a> › <a href='../'>{e(name)}</a> › Capital spending and supply chain</p>"
-            f"<h1>{e(name)}: capital spending and supply chain</h1><p class='muted'>SIC {e(sic)} · {len(cx)} companies with filed cash-flow statements</p>"
+            f"<h1>{e(name)}: capital spending and supply chain</h1><p class='muted'>SIC {e(sic)} · {seo.n_of(len(cx), 'company', 'companies')} with filed cash-flow statements</p>"
             "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in [
                 ('Capital spending, 12 months', money(tot)), ('Operating cash flow', money(ocf)), ('Capex / cash flow', f"{tot / ocf * 100:.0f}%" if ocf > 0 else None),
                 ('Capex / revenue', f"{tot / rev * 100:.1f}%" if rev else None), ('Top 3 share', f"{top3 * 100:.0f}%")] if v) + '</div>'
             + "<h2>Analysis</h2><div class='seo-note'>" + ''.join(f"<p>{e(s)}</p>" for s in lines) + '</div>'
             + "<h2>Charts</h2><div class='seo-grid'>" + ''.join(x for x in body_ch if x) + '</div>')
     body += "<h2>Capital spending by company</h2>" + seo_table(['Company', 'Capital spending', 'Operating cash flow', 'Capex / OCF', 'Period'], [
-        [f"<a href='../../../c/{x[0][3]}/cash-flow/'>{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}</a>", money(x[0][0]), money(x[0][1]),
+        [(f"<a href='../../../c/{x[0][3]}/cash-flow/'>{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}</a>" if x[0][3]
+          else f"{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}"), money(x[0][0]), money(x[0][1]),
          f"{x[0][0] / x[0][1] * 100:.0f}%" if x[0][1] and x[0][1] > 0 else '—', e(x[0][2] or '')] for x in cx[:60]])
     if rel:
         body += ("<h2>Customers and suppliers named in annual reports</h2>" + seo_table(['Supplier', 'Customer', 'Share of supplier revenue', 'Evidence', 'Source'], [
@@ -313,6 +374,47 @@ def industry_page(sic, ind, fl, g, capex, base):
     url = f"{base}/gamma/{sic}/supply-chain/"
     title = f"{name} capital spending and supply chain: {money(tot)} capex, who supplies the industry"
     return seo.page(f"{title} | Filing Flows", ' '.join(lines)[:300], url, body, 3, base + '/og.png')
+
+
+def runway_page(site, base, cards):
+    """disclosures/cash-runway/: who is burning cash and how long it lasts, the debt walls, the fortress balance sheets"""
+    if not cards:
+        return None
+    L = lambda c: f"<a href='../../c/{c['slug']}/cash-flow/'><b>{e(c['ticker'])}</b></a> {e(c['name'])}"
+    burners = sorted([c for c in cards if c.get('months') is not None], key=lambda c: c['months'])
+    walls = sorted([c for c in cards if c.get('due12') and c['cash'] > 0 and c['due12'] > c['cash']], key=lambda c: -c['due12'] / c['cash'])[:30]
+    forts = sorted([c for c in cards if c['net'] > 0 and (c.get('fcf_ttm') or 0) > 0], key=lambda c: -c['net'])[:30]
+    yrs = lambda m: f"{m / 12:.1f} yrs" if m >= 24 else f"{m:.0f} mo"
+    n_burn = len(burners)
+    lead = (f"Of {len(cards):,} companies with a balance sheet on file, {n_burn:,} have negative free cash flow at the current rate, "
+            f"{sum(1 for c in burners if (c.get('ocf_ttm') or 0) < 0)} of them because operations themselves consume cash"
+            + (f"; {sum(1 for c in burners if c['months'] < 12):,} have less than a year of runway without new money" if burners else '')
+            + f". {len(walls):,} have more debt due within a year than cash on hand. Figures are from the companies' own cash-flow statements and balance sheets as filed.")
+    body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Cash runway</p><h1>Cash runway: who is burning cash, and how long it lasts</h1>"
+            f"<p class='lead'>{e(lead)}</p>")
+    if burners:
+        body += "<h2 id='burning'>Shortest runway</h2>" + seo_table(['Company', 'Cash & investments', 'Free cash flow, a year', 'Operations', 'Runway', 'Due within a year'], [
+            [L(c), money(c['cash']), money(-c['burn']), 'consume cash' if (c.get('ocf_ttm') or 0) < 0 else 'positive; capex exceeds', yrs(c['months']), money(c['due12']) if c['due12'] else '—'] for c in burners[:40]])
+        body += SV.hbars([(f"{c['ticker']} {c['name'][:28]}", c['months']) for c in burners[:15]], lambda v: yrs(v), 'Shortest cash runway at the current burn', n=15, color=SV.RED)
+    if walls:
+        body += "<h2 id='walls'>Debt walls: more due within a year than cash</h2>" + seo_table(['Company', 'Due within a year', 'Cash & investments', 'Coverage', 'Free cash flow, 12 months'], [
+            [L(c), money(c['due12']), money(c['cash']), f"{c['cash'] / c['due12']:.2f}×", money(c['fcf_ttm']) if c.get('fcf_ttm') is not None else '—'] for c in walls])
+    if forts:
+        body += "<h2 id='fortress'>Fortress balance sheets: most net cash, self-funding</h2>" + seo_table(['Company', 'Net cash', 'Cash & investments', 'Debt', 'Free cash flow, 12 months'], [
+            [L(c), money(c['net']), money(c['cash']), money(c['debt']) if c['debt'] else 'none', money(c['fcf_ttm'])] for c in forts])
+    body += ("<p class='muted'>Runway is cash and investments divided by the trailing year's negative free cash flow (or the latest quarter's, annualised, when the burn is new); "
+             "it assumes no new financing and no change in the burn. Debt due within a year is the annual report's first maturity bucket or the current portion on the balance sheet. Not investment advice.</p>"
+             "<p><a class='seo-cta' href='../#quality'>Earnings quality, live →</a></p>")
+    url = f"{base}/disclosures/cash-runway/"
+    ld = {'@context': 'https://schema.org', '@graph': [
+        {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
+                                                         {'@type': 'ListItem', 'position': 2, 'name': 'Disclosures', 'item': base + '/disclosures/'},
+                                                         {'@type': 'ListItem', 'position': 3, 'name': 'Cash runway', 'item': url}]},
+        {'@type': 'Dataset', 'name': 'Cash runway and debt maturities by company', 'description': lead[:500], 'url': url, 'creator': {'@type': 'Organization', 'name': 'Filing Flows', 'url': base + '/'}, 'isAccessibleForFree': True}]}
+    os.makedirs(os.path.join(site, 'disclosures', 'cash-runway'), exist_ok=True)
+    with open(os.path.join(site, 'disclosures', 'cash-runway', 'index.html'), 'w', encoding='utf-8') as f:
+        f.write(seo.page('Cash Runway: Which Companies Are Burning Cash and How Long It Lasts | Filing Flows', lead[:300], url, body, 2, f"{base}/og.png", ld))
+    return url
 
 
 def read(path):
@@ -327,7 +429,7 @@ def write(site, base):
     base = base.rstrip('/')
     ix = json.load(open(os.path.join(site, 'data', 'index.json'), encoding='utf-8'))
     rows = ix.get('companies') if isinstance(ix, dict) else ix
-    urls, capex = [], {}
+    urls, capex, cards = [], {}, []
     for r in rows:
         slug = seo.slug_for(r)
         if not os.path.exists(os.path.join(site, 'c', slug, 'index.html')):
@@ -350,6 +452,22 @@ def write(site, base):
             f.write(out[0])
         link_from_company(site, slug)
         urls.append((f"{base}/c/{slug}/cash-flow/", out[1]))
+        if len(out) > 2 and out[2]:
+            cards.append({**out[2], 'cik': int(r['cik']), 'slug': slug, 'ticker': r.get('ticker') or '', 'name': display_name(r.get('name'))})
+    try:                                    # the screener reads the runways from here instead of every company file again
+        with open(os.path.join(site, 'data', 'runway.json'), 'w', encoding='utf-8') as f:
+            json.dump({str(x['cik']): {k: x.get(k) for k in ('cash', 'debt', 'net', 'fcf_ttm', 'burn', 'months', 'due12')} for x in cards}, f, separators=(',', ':'))
+    except OSError as err:
+        print(f"runway file not written: {err}")
+    try:
+        u = runway_page(site, base, cards)
+        if u:
+            urls.insert(0, (u, None))
+    except Exception as err:  # noqa: BLE001
+        print(f"cash runway page skipped: {err}")
+    for k, v in list(capex.items()):        # a company with fewer than four quarters of cash flow has no cash-flow page to link to
+        if not os.path.exists(os.path.join(site, 'c', v[3], 'cash-flow', 'index.html')):
+            capex[k] = v[:3] + (None,) + v[4:]
     try:
         urls += industry_pages(site, base, capex)
     except Exception as err:  # noqa: BLE001

@@ -96,6 +96,33 @@ class Officials(unittest.TestCase):
         self.assertEqual(P.match_legislator(L, 'Daniel Crenshaw', 'US House')['bioguide'], 'B1')
         self.assertIsNone(P.match_legislator(L, 'Markwayne Mullin', 'US Senate'))
 
+    def test_one_page_per_official_whatever_the_spelling(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            gov = root / 'smart' / 'public' / 'a' / 'gov'
+            gov.mkdir(parents=True)
+            tr = lambda d, t: [d, t, 1, 8000.5, None, 0.02, None, 0.01, None, d]
+            actors = {'g:SCOTT SCOTT FRANKLIN': {'name': 'Scott Scott Franklin', 'sub': 'US House', 'stats': {}, 'trades': [tr('2026-08-26', 'AAA'), tr('2026-07-01', 'BBB')]},
+                      'g:C SCOTT FRANKLIN': {'name': 'C. Scott Franklin', 'sub': 'US House', 'stats': {}, 'trades': [tr('2024-09-25', 'CCC'), tr('2026-07-01', 'BBB')]},
+                      'g:MARJORIE TAYLOR MRS GREENE': {'name': 'Marjorie Taylor Mrs Greene', 'sub': 'US House', 'stats': {}, 'trades': [tr('2026-01-02', 'AAA')]},
+                      'g:MARJORIE TAYLOR GREENE': {'name': 'Marjorie Taylor Greene', 'sub': 'US House', 'stats': {}, 'trades': [tr('2025-01-02', 'BBB')]},
+                      'g:RICK SCOTT': {'name': 'Rick Scott', 'sub': 'US Senate', 'stats': {}, 'trades': [tr('2026-01-02', 'AAA')]}}
+            (gov / 'x.json').write_text(json.dumps({'actors': actors}))
+            hub = root / 'hub'
+            (hub / 'market').mkdir(parents=True)
+            L = {'people': {'F1': {'bioguide': 'F1', 'name': 'C. Scott Franklin', 'keys': {'scott franklin'}, 'last': 'franklin', 'initials': {'c', 's'}, 'chamber': 'US House',
+                                   'party': 'Republican', 'state': 'FL'}}, 'committees': {}, 'membership': {}}
+            rows, pages = P.officials(root / 'smart', hub, P.cfg_load(), L, {})
+            slugs = sorted(r[0] for r in rows['rows'])
+            self.assertEqual(slugs, ['c-scott-franklin', 'marjorie-taylor-greene', 'rick-scott'])
+            f = pages['c-scott-franklin']
+            self.assertEqual(f['name'], 'C. Scott Franklin')
+            self.assertEqual(f['aliases'], ['scott-scott-franklin'])
+            self.assertEqual(f['performance']['n'], 3)                        # the shared BBB trade once
+            self.assertEqual(f['performance']['last'], '2026-08-26')
+            self.assertEqual(pages['marjorie-taylor-greene']['aliases'], ['marjorie-taylor-mrs-greene'])
+            self.assertEqual(pages['rick-scott']['aliases'], [])
+
 
 class Index(unittest.TestCase):
     def test_sp500_screen_and_calls(self):

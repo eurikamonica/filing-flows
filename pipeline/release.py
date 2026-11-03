@@ -648,8 +648,8 @@ def reconcile(raw, labels=None, tax_checked=False):
 
 
 GENERIC_REV = re.compile(r"^(total )?(net )?(revenues?|sales|net sales|net revenues?)$")
-NOT_A_LINE = re.compile(r"per share|margin|%|income|expense|cost|profit|loss|eps|tax|depreciation|amortization|"
-                        r"compensation|cash|assets|liabilities|equity|shares|interest|capital|total$")
+NOT_A_LINE = re.compile(r"per (\w+ )?(\w+ )?share|per unit|per ads|dividend|margin|%|income|expense|cost|profit|loss|eps|tax|depreciation|amortization|"
+                        r"compensation|cash|assets|liabilities|equity|shares|interest|capital|total$|^basic$|^diluted$|weighted")
 SEG_CTX = re.compile(r"segment|business unit|business group|by product|product line|division|reportable|by market|end market", re.I)
 GEO_CTX = re.compile(r"geograph|region|country|by location|domestic|international", re.I)
 
