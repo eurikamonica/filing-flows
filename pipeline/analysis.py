@@ -101,8 +101,9 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
     g_pool = _pct(Nc["pool"], pool_y)
     if g_pool is not None and gy is not None:
         name = "Operating expenses" if cost_key == "opex" else "Total costs"
-        s += f" {name} grew {g_pool:.0f}% against revenue growth of {gy:.0f}%." if g_pool >= 0 else \
-             f" {name} fell {abs(g_pool):.0f}% while revenue changed {gy:+.0f}%."
+        rev = (f"revenue growth of {gy:.0f}%" if gy > 0.5 else f"a revenue fall of {abs(gy):.0f}%" if gy < -0.5 else "flat revenue")
+        s += f" {name} grew {g_pool:.0f}% against {rev}." if g_pool >= 0 else \
+             f" {name} fell {abs(g_pool):.0f}% while revenue " + (f"rose {gy:.0f}%." if gy > 0.5 else f"fell {abs(gy):.0f}%." if gy < -0.5 else "was flat.")
     if Nc["items"] and Ny:
         ymap = dict(Ny["items"])
         fast = [(k, v, _pct(v, ymap.get(k))) for k, v in Nc["items"] if ymap.get(k)]

@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, chains, gamma, checks, dims, facts, fx as FX, ixbrl, quality, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, chains, gamma, checks, dims, facts, fx as FX, ixbrl, names, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -2297,7 +2297,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     labels = {e: x["label"] for e, x in c["quarters"].items()}
     py_label = labels.get(q.get("py_end")) or "a year earlier"
     p = c["profile"]
-    name = p["name"]
+    name = names.cased(p["name"])                   # "ILLINOIS TOOL WORKS INC" → Illinois Tool Works Inc
     q1_label = labels.get(q.get("q1_end")) or (facts.fiscal_label(q["q1_end"], p.get("fye") or "1231")[0]
                                                if q.get("q1_end") else None)
     compare = compare_y = None
@@ -2384,7 +2384,7 @@ def year_payload(c, y):
         l.pop("q", None)
     f = Fmt(Nc["R"])
     p = c["profile"]
-    name = p["name"]
+    name = names.cased(p["name"])                   # "ILLINOIS TOOL WORKS INC" → Illinois Tool Works Inc
     py_label = facts.fiscal_year_label(y["py_end"], p.get("fye") or "1231")[0] if y.get("py_end") else None
     compare_y = None
     if Ny and py_label:
@@ -2587,7 +2587,7 @@ def render(store, out, stars=frozenset()):
                  "rev": pl["headline"]["rev_fmt"], "revenue": pl["headline"]["revenue"], "yoy": pl["headline"]["yoy"]}
                 for pl in payloads[:-1] if (pl.get("filed") or "") >= cut]
         u_latest = next((x for x in (usd or {}).get("quarters") or [] if x["end"] == latest["end"]), None)
-        index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": p["name"], "sector": p["sector"],
+        index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": names.cased(p["name"]), "sector": p["sector"],
                       "industry": p["industry"], "sic": p["sic"], "label": latest["label"], "end": latest["end"],
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
                       "rev": latest["headline"]["rev_fmt"],

@@ -17,6 +17,7 @@ import html
 import json
 import os
 import re
+import sys
 from urllib.parse import quote
 from xml.sax.saxutils import escape as xesc
 
@@ -73,23 +74,48 @@ def with_publisher(jsonld, canonical, title):
     return {"@context": "https://schema.org", "@graph": graph}
 
 
-KEEP_UPPER ={"AI", "AMD", "AT&T", "BP", "CVS", "HP", "IBM", "II", "III", "IV", "LLC", "LP", "NV", "PLC", "SA", "UPS", "USA", "US", "NVIDIA", "REIT"}
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))    # the repository: pipeline/names.py
+from pipeline import names as _names  # noqa: E402
+
+KEEP_UPPER = _names.KEEP_UPPER
 
 
 def display_name(name):
-    name = re.sub(r"\s*[/(\\][A-Z]{2}[/)\\]?\s*$", "", (name or "").strip())
-    if name.upper() == name:
-        name = " ".join(w if (w.upper() in KEEP_UPPER or re.search(r"\d", w)) else w.capitalize() for w in name.split())
-    name = re.sub(r",?\s+(?:&\s+)?(Inc|Corp|Corporation|Co|Ltd|Plc|Holdings|Group)\.?$", "", name)
-    name = re.sub(r"\s+Com$", "", name)                          # "AMAZON COM INC" → Amazon, not "Amazon Com"
-    return re.sub(r"\bJpmorgan\b", "JPMorgan", name).rstrip(" &,")
+    """A filing's name as a page shows it (pipeline/names.py): 'W&T OFFSHORE INC' → W&T Offshore, 'AMPHENOL CORP /DE/' → Amphenol."""
+    return _names.display(name)
 
 
 def money(v):
     if v is None:
         return "—"
     a, s = abs(v), "−" if v < 0 else ""
-    return f"{s}${a / 1e9:.1f}B" if a >= 0.95e9 else f"{s}${a / 1e6:.0f}M" if a >= 0.95e6 else f"{s}${a / 1e3:.0f}K"
+    if a < 500:
+        return "$0" if a < 0.5 else f"{s}${a:,.0f}"                # "$0 in penalties", not "$0K"
+    if a >= 999.5e6:
+        return f"{s}${a / 1e9:.1f}B"                               # $1.0B, $113.2B
+    if a >= 99.95e6:
+        return f"{s}${a / 1e6:.0f}M"                               # $978M (not "$1.0B" for $977.7M)
+    if a >= 0.9995e6:
+        return f"{s}${a / 1e6:.1f}M"                               # $13.3M, as the Sankey prints it
+    return f"{s}${a / 1e3:.0f}K"
+
+
+def n_of(n, word, plural=None):
+    """A count with its noun: '1 company', '12 companies', '1,741 companies' (plural: when it is not word + s)."""
+    try:
+        k = int(round(float(n)))
+    except (TypeError, ValueError):
+        return f"{n} {plural or word + 's'}"
+    w = word if k == 1 else (plural or (word[:-1] + "ies" if word.endswith("y") and word[-2:-1] not in "aeiou" else word + "s"))
+    return f"{k:,} {w}"
+
+
+def poss(name):
+    """The possessive of a name: Illinois Tool Works' latest quarter, Macy's stores, Apple's revenue."""
+    name = str(name or "")
+    if name.endswith(("'s", "’s")):
+        return name
+    return name + ("'" if name.endswith(("s", "S")) else "'s")
 
 
 def usd2(v):
@@ -605,14 +631,15 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
         n = len(d["companies"])
         period = qname(d.get("period"))
         med = f"{100 * sm['median']:+.0f}%" if sm.get("median") is not None else None
-        lead = (f"{n} companies filing with the SEC under SIC {sic}." + (f" Median revenue growth {med} year on year in {period}"
-                f" (middle half {100 * sm['p25']:+.0f}% to {100 * sm['p75']:+.0f}%, {sm['n']} companies)." if med and sm.get("p25") is not None else "")
+        spread = sm.get("p25") is not None and (sm.get("n") or 0) >= 3           # a middle half of one company is no spread
+        lead = (f"{n_of(n, 'company')} filing with the SEC under SIC {sic}." + (f" Median revenue growth {med} year on year in {period}"
+                + (f" (middle half {100 * sm['p25']:+.0f}% to {100 * sm['p75']:+.0f}%, {n_of(sm['n'], 'company')})" if spread else f" ({n_of(sm.get('n') or n, 'company')})") + "." if med else "")
                 + (f" The growth model expects the industry's combined revenue to grow {100 * fc[1]:+.0f}% in {qname(fc[0])}." if fc else "")
                 + (f" {len(rel)} customer or supplier links named in annual reports." if rel else ""))
         title = f"{nm} (SIC {sic}): revenue growth{', ' + med + ' Y/Y' if med else ''} — {n} companies | Filing Flows"
         tiles = "".join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
             ("Companies", str(n)), ("Median growth Y/Y", med or "—"),
-            ("Middle half", f"{100 * sm['p25']:+.0f}% to {100 * sm['p75']:+.0f}%" if sm.get("p25") is not None else "—"),
+            ("Middle half", f"{100 * sm['p25']:+.0f}% to {100 * sm['p75']:+.0f}%" if spread else "—"),
             ("Industry revenue, next quarter", f"{100 * fc[1]:+.0f}% Y/Y ({qname(fc[0])}, model)" if fc else "—")))
         rows = []
         for m in sorted(d["companies"], key=lambda m: -(m.get("revenue_usd") or 0))[:60]:

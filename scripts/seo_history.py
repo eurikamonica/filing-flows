@@ -135,7 +135,7 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
         if ya and rev[1] and rev[3]:
             navs.append(f"<a href='../{qslug(lab)}-vs-{qslug(ya)}/'>{e(lab)} vs {e(ya)} (Y/Y)</a>")
     analysis = ''.join(f'<p>{e(a)}</p>' for a in (q.get('analysis') or [])[:4])
-    qa = [(f"What was {name}'s revenue in the {words}?", first(lead))]
+    qa = [(f"What was {seo.poss(name)} revenue in the {words}?", first(lead))]
     if om is not None:
         qa.append((f"Was {name} profitable in the {words}?", f"Operating profit was {money(n['oi'][1])} ({om:.1f}% of revenue)" + (f" and net earnings {money(n['net'][1])}." if 'net' in n and n['net'][1] is not None else '.')))
     url = f"{base}/c/{slug}/{qslug(lab)}/"
@@ -230,12 +230,13 @@ def metric_page(r, c, base, slug, who, name, mslug, label, key, kind):
     latest, prev = s[0], s[1]
     hi, lo = max(s, key=lambda x: x[1]), min(s, key=lambda x: x[1])
     delta = (f"{pts(latest[1] - prev[1])} from {prev[0]}" if kind == 'ratio' else f"{pc(chg(latest[1], prev[1]))} from {prev[0]}")
-    lead = (f"{name}'s {label} was {fmt(latest[1])} in {latest[0]} ({seo.period_words(latest[0])}), {delta}. "
+    were = "were" if label.lower().endswith(("expenditures", "costs", "expenses", "sales", "earnings")) else "was"
+    lead = (f"{seo.poss(name)} {label} {were} {fmt(latest[1])} in {latest[0]} ({seo.period_words(latest[0])}), {delta}. "
             f"Over the last {len(s)} quarters it ranged from {fmt(lo[1])} ({lo[0]}) to {fmt(hi[1])} ({hi[0]}).")
     ya = {x[0]: x[1] for x in s}
     rows = ''.join(f"<tr><td>{e(x[0])}</td><td class='num'>{e(fmt(x[1]))}</td><td class='num'>{e((pts(x[1] - s[i + 1][1]) if kind == 'ratio' else pc(chg(x[1], s[i + 1][1]))) if i + 1 < len(s) else '—')}</td>"
                    f"<td class='num'>{e(((pts(x[1] - ya[year_ago(x[0])]) if kind == 'ratio' else pc(chg(x[1], ya[year_ago(x[0])]))) if year_ago(x[0]) in ya else '—'))}</td></tr>" for i, x in enumerate(s))
-    qa = [(f"What is {name}'s {label}?", first(lead)), (f"How has {name}'s {label} changed?", lead[len(first(lead)):].strip() or lead)]
+    qa = [(f"What is {seo.poss(name)} {label}?", first(lead)), (f"How has {seo.poss(name)} {label} changed?", lead[len(first(lead)):].strip() or lead)]
     url = f"{base}/c/{slug}/{mslug}/"
     title = f"{who} {label} by quarter: {fmt(latest[1])} in {latest[0]} | Filing Flows"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(label[0].upper() + label[1:])}</p>"
@@ -285,7 +286,7 @@ def guidance_page(r, rec, base, slug, who, name):
     n = sum(m['hits']['n'] for m in judged)
     hit = sum(m['hits']['hitOrBeat'] for m in judged)
     said = rec.get('said') or {}
-    lead = f"{name} gave guidance in {rec.get('releases')} earnings releases on file since {fdate(rec.get('since'))}."
+    lead = f"{name} gave guidance in {seo.n_of(rec.get('releases') or 0, 'earnings release')} on file since {fdate(rec.get('since'))}."
     if n:
         lead += f" Of {n} guided periods since reported, it met or beat its own guidance {hit} times ({round(100 * hit / n)}%)."
         best = max(judged, key=lambda m: m['hits']['n'])

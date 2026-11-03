@@ -3467,3 +3467,18 @@ def test_fourth_quarter_kept_when_the_quarters_do_not_add_up_to_nine_months():
                                 ("2025-01-01", "2025-12-31", 12.5)]})
     raw = facts.extract(fx, "2025-12-31")
     assert abs(raw["capex"] - 3.956e6) < 1e3 and "capex" not in (raw.get("q4_fixed") or [])
+
+
+def test_company_names_cased_for_the_pages():
+    """SEC's conformed names are capitals: the pages, posts and chart titles write them as the companies do, initialisms
+    and all ('W&T OFFSHORE INC' → W&T Offshore, 'FREEPORT-MCMORAN INC' → Freeport-McMoRan, 'MKS INC' → MKS, 'AMPHENOL CORP
+    /DE/' → Amphenol, 'AMETEK INC/' → Ametek); a newer filer's mixed-case name is its own, kept."""
+    from pipeline import names
+    assert names.display("W&T OFFSHORE INC") == "W&T Offshore" and names.display("FREEPORT-MCMORAN INC") == "Freeport-McMoRan"
+    assert names.display("MKS INC") == "MKS" and names.display("AMPHENOL CORP /DE/") == "Amphenol" and names.display("AMETEK INC/") == "Ametek"
+    assert names.display("CNA FINANCIAL CORP") == "CNA Financial" and names.display("CONOCOPHILLIPS") == "ConocoPhillips"
+    assert names.display("AMAZON COM INC") == "Amazon.com" and names.cased("AMAZON COM INC") == "Amazon.com Inc"
+    assert names.cased("ILLINOIS TOOL WORKS INC") == "Illinois Tool Works Inc" and names.cased("Equitable Holdings, Inc.") == "Equitable Holdings, Inc."
+    assert names.display("MACY'S, INC.") == "Macy's" and names.display("O'REILLY AUTOMOTIVE INC") == "O'Reilly Automotive"
+    assert names.display("BANK OF AMERICA CORP /DE/") == "Bank of America" and names.display("LYONDELLBASELL INDUSTRIES N.V.") == "LyondellBasell Industries N.V."
+    assert names.display("E.W. SCRIPPS Co") == "E.W. Scripps" and names.display("Huntsman CORP") == "Huntsman" and names.display("3M CO") == "3M"

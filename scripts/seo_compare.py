@@ -203,8 +203,9 @@ def write(site, base, k=3):
                  + '</ul></section>')
         open(main, 'w', encoding='utf-8').write(txt.replace('</main>', block + '</main>', 1))
     if urls:
-        lis = ''.join(f"<h2>{e(ind)}</h2><ul class='seo-list'>" + ''.join(
-            f"<li><a href='{slug_for(a)}-vs-{slug_for(b)}/'>{e(display_name(a.get('name')))} vs {e(display_name(b.get('name')))}</a></li>" for a, b in L) + '</ul>'
+        # one industry at a time, folded: 6,700 links in one column made a page 200,000 pixels tall
+        lis = ''.join(f"<details class='seo-fold'><summary><b>{e(ind)}</b> <span class='muted'>{len(L):,} comparisons</span></summary><ul class='seo-list'>" + ''.join(
+            f"<li><a href='{slug_for(a)}-vs-{slug_for(b)}/'>{e(display_name(a.get('name')))} vs {e(display_name(b.get('name')))}</a></li>" for a, b in L) + '</ul></details>'
             for ind, L in sorted(by_ind.items()))
         body = (f"<p class='crumbs'><a href='../'>Filing Flows</a> › Comparisons</p><h1>Company comparisons</h1>"
                 f"<p class='lead'>{len(urls):,} side-by-side comparisons of US-listed companies and their closest peers in the same industry: revenue, growth, margins and cash flow from their latest filings.</p>{lis}")

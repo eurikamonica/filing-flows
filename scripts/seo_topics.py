@@ -253,21 +253,21 @@ def risks(co, out):
     r, cp, en, fr, tr = (out.get(k) or {} for k in ('recalls', 'complaints', 'environment', 'fedreg', 'trials'))
     parts, qa, body = [], [], ''
     if r.get('n'):
-        parts.append(f"{r.get('last_12m', 0)} recalls in the last 12 months ({r.get('n')} in five years, {r.get('class1', 0)} Class I)")
-        qa.append((f"Has {name} had any recalls?", f"{r.get('n')} recalls on file over five years from the FDA, CPSC and NHTSA; {r.get('last_12m', 0)} in the last 12 months."))
+        parts.append(f"{seo.n_of(r.get('last_12m', 0), 'recall')} in the last 12 months ({r.get('n')} in five years, {r.get('class1', 0)} Class I)")
+        qa.append((f"Has {name} had any recalls?", f"{seo.n_of(r.get('n'), 'recall')} on file over five years from the FDA, CPSC and NHTSA; {r.get('last_12m', 0)} in the last 12 months."))
         body += '<h2>Latest recalls</h2><ul class="seo-list">' + ''.join(f"<li>{e(x.get('date'))} · {e(x.get('source'))} · {e(x.get('what'))}</li>" for x in (r.get('latest') or [])[:8]) + '</ul>'
     if cp.get('last_12m'):
-        parts.append(f"{cp['last_12m']:,} consumer complaints to the CFPB in 12 months" + (f" ({cp['change'] * 100:+.0f}%)" if cp.get('change') is not None else ''))
+        parts.append(f"{seo.n_of(cp['last_12m'], 'consumer complaint')} to the CFPB in 12 months" + (f" ({cp['change'] * 100:+.0f}%)" if cp.get('change') is not None else ''))
         qa.append((f"How many complaints does {name} get?", f"{cp['last_12m']:,} complaints to the Consumer Financial Protection Bureau in the last 12 months"
                    + (f", {cp['change'] * 100:+.0f}% on the year before" if cp.get('change') is not None else '') + '.'))
     if en.get('facilities'):
-        parts.append(f"{en.get('in_violation', 0)} EPA-regulated facilities in violation, {money(en.get('penalties_5y'))} in penalties over five years")
-        qa.append((f"Has {name} been fined by the EPA?", f"Its {en['facilities']:,} EPA-regulated facilities drew {money(en.get('penalties_5y'))} in penalties over five years; "
-                   f"{en.get('in_violation', 0)} are in violation now."))
+        parts.append(f"{seo.n_of(en.get('in_violation', 0), 'EPA-regulated facility', 'EPA-regulated facilities')} in violation, {money(en.get('penalties_5y'))} in penalties over five years")
+        qa.append((f"Has {name} been fined by the EPA?", f"Its {seo.n_of(en['facilities'], 'EPA-regulated facility', 'EPA-regulated facilities')} drew {money(en.get('penalties_5y'))} in penalties over five years; "
+                   f"{en.get('in_violation', 0)} {'is' if en.get('in_violation', 0) == 1 else 'are'} in violation now."))
     if fr.get('count'):
-        parts.append(f"{fr['count']} Federal Register documents in a year")
+        parts.append(f"{seo.n_of(fr['count'], 'Federal Register document')} in a year")
     if tr.get('active'):
-        parts.append(f"{tr['active']} active clinical trials")
+        parts.append(f"{seo.n_of(tr['active'], 'active clinical trial')}")
         qa.append((f"How many clinical trials does {name} have?", f"{tr['active']} active studies on ClinicalTrials.gov, {((tr.get('phases') or {}).get('PHASE3') or {}).get('active', 0)} in phase 3."))
     if not parts:
         return None
@@ -549,7 +549,7 @@ def write(site, base, limit=None):
                 body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(co['who_name'])} ({e(t)})</a> › {e(next(l for k, l, _ in TOPICS if k == topic))}</p>"
                         f"<h1>{e(p['h1'])}</h1>{nav(slug, topic, have, cik)}{p['body']}"
                         + (seo.share_figure(pic, alt, cap, url, 3, False) if pic else '')
-                        + (f"<h2>{e(co['who_name'])}'s latest quarter</h2>" + sankey_figure(cik, latest_q, f"{co['who_name']} {latest_q} income statement Sankey") if latest_q and topic != 'revenue' else '')
+                        + (f"<h2>{e(seo.poss(co['who_name']))} latest quarter</h2>" + sankey_figure(cik, latest_q, f"{co['who_name']} {latest_q} income statement Sankey") if latest_q and topic != 'revenue' else '')
                         + f"{faq_html(p['qa'])}"
                         f"<p><a class='seo-cta' href='../../../#c-{cik}{('-' + app) if app else ''}'>Open the interactive view →</a></p>"
                         f"<p class='muted'>Updated {e(fdate(today))}. Read automatically from SEC filings and public data; errors are possible. Not investment advice.</p>")
