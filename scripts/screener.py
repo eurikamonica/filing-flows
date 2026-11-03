@@ -172,7 +172,7 @@ def build(site, today=None):
             except Exception:  # noqa: BLE001
                 pass
         hits.sort(key=lambda d: (d.get(sk) is None, (d.get(sk) or 0) * sd_ if not isinstance(d.get(sk), str) else d.get(sk)))
-        presets.append({'key': key, 'title': title, 'line': line, 'sort': sk, 'dir': sd_, 'cols': cols, 'tickers': [d['ticker'] for d in hits[:200]]})
+        presets.append({'key': key, 'title': title, 'line': line, 'sort': sk, 'dir': sd_, 'cols': cols, 'tickers': [d['ticker'] for d in hits]})      # all of them: the counts shown are the real ones
     return {'generated_at': today.isoformat(), 'fields': FIELDS, 'rows': [[d.get(k) for k in FIELDS] for d in out], 'presets': presets,
             'note': 'One row per listed company, merged from the site’s published files: the latest quarter (SEC XBRL), fundamentals and factor scores (research/quality), '
                     'the earnings quality score, the next report and beat rate, 13F flows and the price (market/signals), Form 4 insider trades, FINRA short interest, and cash, '
