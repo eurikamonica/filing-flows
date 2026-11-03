@@ -23,6 +23,13 @@ e = seo.e
 MAX_PAGES = 400             # per kind: the page count and the build stay small
 
 
+def redirect_page(url, name):
+    """a moved page: search engines follow the canonical and the refresh to the one address the person has now"""
+    return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{e(name)} | Filing Flows</title>'
+            f'<meta name="robots" content="noindex, follow"><link rel="canonical" href="{e(url)}"><meta http-equiv="refresh" content="0; url={e(url)}">'
+            f'</head><body><p>This page has moved: <a href="{e(url)}">{e(name)}</a>.</p></body></html>')
+
+
 def money(v):
     return seo.money(v) if v is not None else "—"
 
@@ -195,6 +202,7 @@ def write_pages(people_dir, out_dir, base):
     of = load("officials.json") or {}
     F = of.get("fields") or []
     items = []
+    mains = {dict(zip(F, r)).get("slug") for r in of.get("rows") or []}
     for r in (of.get("rows") or [])[:MAX_PAGES]:
         row = dict(zip(F, r))
         o = load(f"o/{row['slug']}.json")
@@ -204,6 +212,11 @@ def write_pages(people_dir, out_dir, base):
         d = os.path.join(out_dir, "o", o["slug"])
         os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
+        for a in o.get("aliases") or []:            # another spelling of the same member's name: its old address forwards here
+            if a in mains or not re.fullmatch(r"[a-z0-9-]{1,80}", a):
+                continue
+            os.makedirs(os.path.join(out_dir, "o", a), exist_ok=True)
+            open(os.path.join(out_dir, "o", a, "index.html"), "w", encoding="utf-8").write(redirect_page(url, o["name"]))
         urls.append((url, (o.get("performance") or {}).get("last")))
         items.append((o["slug"], o["name"], f"{o.get('chamber') or ''} · {(o.get('performance') or {}).get('n') or 0} trades"))
         no += 1

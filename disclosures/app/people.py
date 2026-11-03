@@ -485,7 +485,33 @@ def officials(smart_root, hub, cfg, L, sectors, today=None):
             actors.setdefault(aid, {'name': ts[0]['person'], 'sub': ts[0].get('jurisdiction') or '', 'stats': {}, 'trades': []})
             names[k] = aid
     rows, pages = [], {}
+    # one person, one page: disclosures spell a member's name several ways ("C. Scott Franklin", "Scott Scott Franklin";
+    # "Marjorie Taylor Mrs Greene"; "Thomas R. Suozzi"), each its own actor in the smart-money record. The spellings that
+    # come to the same name (person_key: no initials, titles or suffixes) in the same chamber are merged; the page takes the
+    # member's official name when the legislators list knows them, and the other spellings' addresses become aliases.
+    groups = defaultdict(list)
     for aid, x in actors.items():
+        name, chamber = x.get('name') or aid[2:], x.get('sub') or ''
+        groups[(person_key(name), chamber)].append((aid, x))
+    merged = {}
+    for (k, chamber), xs in groups.items():
+        xs.sort(key=lambda ax: -len(ax[1].get('trades') or []))
+        aid, x = xs[0]
+        if len(xs) == 1:
+            merged[aid] = (x, [])
+            continue
+        seen_t, tr = set(), []
+        for _, y in xs:
+            for t in y.get('trades') or []:
+                key = (t[0], t[1], t[2], t[3])
+                if key not in seen_t:
+                    seen_t.add(key)
+                    tr.append(t)
+        tr.sort(key=lambda t: t[0] or '', reverse=True)
+        leg = match_legislator(L, x.get('name') or aid[2:], chamber if chamber in ('US House', 'US Senate') else None)
+        name = (leg or {}).get('name') or min((y.get('name') or a[2:] for a, y in xs), key=lambda n: (len(re.findall(r'\b(Mrs?|Ms|Dr|Hon)\b\.?', n)), -len(n)))
+        merged[aid] = ({**x, 'name': name, 'trades': tr}, [slugify(y.get('name') or a[2:]) for a, y in xs])
+    for aid, (x, alias_slugs) in merged.items():
         name, chamber = x.get('name') or aid[2:], x.get('sub') or ''
         tr = x.get('trades') or []
         w = np.array([abs(t[3] or 0) or 1.0 for t in tr if t[7] is not None])
@@ -516,7 +542,8 @@ def officials(smart_root, hub, cfg, L, sectors, today=None):
                                      'amount_max': t.get('amount_max'), 'filed': t.get('filed_date'), 'owner': t.get('owner'),
                                      'committee': cname, 'committee_id': cid, 'area': j, 'source_url': t.get('source_url')})
         slug = slugify(name)
-        page = {'id': aid, 'name': name, 'slug': slug, 'chamber': chamber, 'bioguide': (leg or {}).get('bioguide'),
+        aliases = sorted({a for a in alias_slugs if a != slug})
+        page = {'id': aid, 'name': name, 'slug': slug, 'aliases': aliases, 'chamber': chamber, 'bioguide': (leg or {}).get('bioguide'),
                 'party': (leg or {}).get('party'), 'state': (leg or {}).get('state'), 'committees': coms, 'performance': perf,
                 'record': x.get('stats') or {},
                 'recent_fields': ['date', 'ticker', 'type', 'amount_min', 'amount_max', 'owner', 'filed', 'source_url'],
