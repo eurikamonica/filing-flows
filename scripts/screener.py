@@ -121,6 +121,7 @@ def build(site, today=None):
     sg = {K(r.get('ticker')): r for r in (read(os.path.join(hub, 'market', 'signals.json')) or {}).get('rows') or []}
     ins = {K(r.get('ticker')): r for r in (read(os.path.join(hub, 'market', 'insiders.json')) or {}).get('summary') or []}
     sh = {K(r.get('ticker')): r for r in (read(os.path.join(hub, 'market', 'short-interest.json')) or {}).get('rows') or []}
+    runways = read(os.path.join(site, 'data', 'runway.json'))       # seo_cashflow.py's, when it ran first (scan.yml)
     out, seen = [], set()
     for r in rows or []:
         t = K(r.get('ticker'))
@@ -131,8 +132,8 @@ def build(site, today=None):
         Q, S, E, G, I, H = q.get(t, {}), qs.get(t, {}), er.get(t, {}), sg.get(t, {}), ins.get(t, {}), sh.get(t, {})
         if not Q and not G and not E:
             continue
-        rw = None
-        c = read(os.path.join(site, 'data', 'c', f"{r['cik']}.json")) if r.get('cik') else None
+        rw = runways.get(str(r.get('cik'))) if runways is not None else None
+        c = read(os.path.join(site, 'data', 'c', f"{r['cik']}.json")) if runways is None and r.get('cik') else None
         if c:
             try:
                 cap = ((c.get('quality') or {}).get('cap') or {})
@@ -172,7 +173,7 @@ def build(site, today=None):
             except Exception:  # noqa: BLE001
                 pass
         hits.sort(key=lambda d: (d.get(sk) is None, (d.get(sk) or 0) * sd_ if not isinstance(d.get(sk), str) else d.get(sk)))
-        presets.append({'key': key, 'title': title, 'line': line, 'sort': sk, 'dir': sd_, 'cols': cols, 'tickers': [d['ticker'] for d in hits[:200]]})
+        presets.append({'key': key, 'title': title, 'line': line, 'sort': sk, 'dir': sd_, 'cols': cols, 'tickers': [d['ticker'] for d in hits]})      # all of them: the counts shown are the real ones
     return {'generated_at': today.isoformat(), 'fields': FIELDS, 'rows': [[d.get(k) for k in FIELDS] for d in out], 'presets': presets,
             'note': 'One row per listed company, merged from the site’s published files: the latest quarter (SEC XBRL), fundamentals and factor scores (research/quality), '
                     'the earnings quality score, the next report and beat rate, 13F flows and the price (market/signals), Form 4 insider trades, FINRA short interest, and cash, '

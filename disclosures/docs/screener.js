@@ -87,9 +87,9 @@ function screenerView() {
     ${field('scgrade', 'Quality grade at least', [['', 'Any'], ['A', 'A'], ['B', 'B'], ['C', 'C'], ['D', 'D']], f.grade || '')}
     ${field('sczone', 'Altman zone', [['', 'Any'], ['safe', 'Safe'], ['grey', 'Grey'], ['distress', 'Distress']], f.zone || '')}
     ${field('sctag', 'Signal tag', [['', 'Any'], ...Object.keys(D.list.reduce((a, r) => { (r.tags || []).forEach(t => a[t] = 1); return a; }, {})).sort().map(t => [t, t.replace(/_/g, ' ')])], f.tag || '')}
-    <details class="field wide"><summary>Thresholds (${SC_FILTERS.filter(x => f[x[0]] !== undefined && f[x[0]] !== '').length} set)</summary><div class="sc-grid">
+    <details class="field wide" data-scopen="th"${(state.scOpen || {}).th ? ' open' : ''}><summary>Thresholds (${SC_FILTERS.filter(x => f[x[0]] !== undefined && f[x[0]] !== '').length} set)</summary><div class="sc-grid">
     ${SC_FILTERS.map(([k, label]) => `<label class="sc-th">${esc(label)}<input type="number" step="any" data-scf="${k}" value="${esc(f[k] == null ? '' : String(f[k]))}"></label>`).join('')}</div></details>
-    <details class="field wide"><summary>Columns (${(state.scCols || SC_DEFAULT_COLS).length})</summary><div class="sc-grid">
+    <details class="field wide" data-scopen="cols"${(state.scOpen || {}).cols ? ' open' : ''}><summary>Columns (${(state.scCols || SC_DEFAULT_COLS).length})</summary><div class="sc-grid">
     ${SC_COLS.map(([k, label]) => `<label class="sc-col"><input type="checkbox" data-sccol="${k}" ${(state.scCols || SC_DEFAULT_COLS).includes(k) ? 'checked' : ''}> ${esc(label)}</label>`).join('')}</div></details></div>`;
   const cols = (state.scCols || SC_DEFAULT_COLS).map(k => SC_COLS.find(c => c[0] === k)).filter(Boolean);
   let L = D.list.filter(r => scPasses(r, f));
@@ -109,6 +109,8 @@ function screenerView() {
 }
 function bindScreener() {
   if (state.tab !== 'screener') return;
+  // the threshold and column pickers stay open across the re-render each change makes (they closed after every edit)
+  document.querySelectorAll('#workspace [data-scopen]').forEach(d => d.addEventListener('toggle', () => { state.scOpen = Object.assign(state.scOpen || {}, { [d.dataset.scopen]: d.open }); }));
   const D = (scData().data || {});
   const re = () => { state.scShow = 150; render(); };
   if ($('scpreset')) $('scpreset').onchange = e => { if (e.target.value) scApplyPreset(D, e.target.value); else { state.scPreset = ''; state.scOnly = null; } try { history.replaceState(null, '', '#screener' + (e.target.value ? '/' + e.target.value : '')) } catch (x) {} re(); };

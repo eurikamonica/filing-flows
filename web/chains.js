@@ -180,8 +180,12 @@
     // column heads, title, footer
     byCol.forEach((list, c) => {
       if (!list.length) return;
-      shapes.push({ t: 'text', x: c === 0 ? xs[c] + NW : xs[c], y: TOP - 14, text: (view.cols[c].name || '').toUpperCase(), size: 10.5, weight: 600,
-        fill: INK3, anchor: c === 0 ? 'end' : 'start', spacing: 0.8 });
+      const head = (view.cols[c].name || '').toUpperCase();
+      let hx = c === 0 ? xs[c] + NW : xs[c], anchor = c === 0 ? 'end' : 'start';
+      // the first column's head ends at its bars; when they stand near the left edge it would run off the canvas
+      // ("WHERE THE MONEY COMES FROM" on an industry's chart), so it starts at the margin instead
+      if (c === 0 && hx - textW(head, 10.5, 600) - head.length * 0.8 < 24) { hx = 24; anchor = 'start'; }
+      shapes.push({ t: 'text', x: hx, y: TOP - 14, text: head, size: 10.5, weight: 600, fill: INK3, anchor, spacing: 0.8 });
     });
     shapes.push({ t: 'text', x: 24, y: 36, text: o.title || '', size: 21, weight: 600, fill: INK, anchor: 'start' });
     if (o.subtitle) shapes.push({ t: 'text', x: 24, y: 60, text: fit(o.subtitle, 13.5, 400, W - 48), size: 13.5, weight: 400, fill: INK3, anchor: 'start' });

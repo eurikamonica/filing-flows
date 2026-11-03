@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import event_stats as ES  # noqa: E402
 import seo_timeline as T  # noqa: E402
 import seo_hub as H  # noqa: E402
+import seo  # noqa: E402
 
 
 def w(p, o):
@@ -76,7 +77,8 @@ def test_stats_and_pages(tmp_path):
     assert 0 < p['buy']['hit'] < 1 and 0 <= p['sell']['hit'] <= 1
     assert T.write(str(s), 'https://example.com') == 3
     page = (s / 'c' / 'aaa' / 'timeline' / 'index.html').read_text()
-    assert 'Alpha stock timeline' in page and 'Insider buy' in page and 'Form 144: A Director plans to sell $3M' in page and 'Officer change' in page
+    assert 'Alpha stock timeline' in page and 'Insider buy' in page and ('Form 144: A Director plans to sell ' + seo.money(3e6)) in page and 'Officer change' in page
+    assert "href='../report-card/'" not in page                       # no report card for this company: no link to one
     assert 'What this kind of 8-K usually did' in page and '<b>5.02</b>' in page and 'Insiders’ record here' in page and 'old enough to score' in page
     assert 'href="timeline/"' in (s / 'c' / 'aaa' / 'index.html').read_text()
     sig = (s / 'disclosures' / 'insider-signals' / 'index.html').read_text()

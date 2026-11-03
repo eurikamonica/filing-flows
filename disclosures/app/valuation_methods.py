@@ -454,13 +454,15 @@ def _derived(b, out, F, W, M):
 
 CANDIDATES = {   # every method the build knows, by company type: what it needs (for "not used, because …")
     'industrial': ['DCF — Monte Carlo 10th–90th percentile', 'Regime-switching Monte Carlo 10th–90th', 'Outside view — base-rate Monte Carlo',
-                   'P/E vs peers', 'EV/EBITDA vs peers', 'EV/Sales vs peers', 'Residual income', 'Owner earnings capitalized',
+                   'P/E vs peers', 'EV/EBITDA vs peers', 'EV/Sales vs peers', 'P/E vs peers, weighted', 'EV/EBITDA vs peers, weighted',
+                   'EV/Sales vs peers, weighted', 'Residual income', 'Owner earnings capitalized',
                    'Shareholder yield (dividends + buybacks)', 'Normalized (mid-cycle) P/E', 'Normalized (mid-cycle) DCF', 'Path-to-margin DCF',
                    'Path-to-margin DCF, dilution-adjusted', 'Exit-multiple (venture) method', 'Survival-weighted value',
-                   'EV/Sales vs Rule of 40 (all-company fit)', 'Tangible book (asset value)', 'Net cash (floor)', 'Sum of the parts (segments × peer EV/Sales)'],
-    'bank': ['Residual income', 'P/TBV vs ROTCE (bank peers)', 'Justified P/TBV (Gordon growth)', 'Dividend discount (Gordon)', 'P/E vs peers'],
-    'insurer': ['Residual income', 'P/B vs ROE (insurer peers)', 'Justified P/B (Gordon growth)', 'Dividend discount (Gordon)', 'P/E vs peers'],
-    'reit': ['P/FFO vs REIT peers', 'Dividend discount (Gordon)', 'Residual income', 'P/E vs peers'],
+                   'EV/Sales vs Rule of 40 (all-company fit)', 'Tangible book (asset value)', 'Net cash (floor)', 'Sum of the parts (segments × peer EV/Sales)',
+                   'Sum of the parts, weighted (segments × weighted peer EV/Sales)'],
+    'bank': ['Residual income', 'P/TBV vs ROTCE (bank peers)', 'Justified P/TBV (Gordon growth)', 'Dividend discount (Gordon)', 'P/E vs peers', 'P/E vs peers, weighted'],
+    'insurer': ['Residual income', 'P/B vs ROE (insurer peers)', 'Justified P/B (Gordon growth)', 'Dividend discount (Gordon)', 'P/E vs peers', 'P/E vs peers, weighted'],
+    'reit': ['P/FFO vs REIT peers', 'P/FFO vs REIT peers, weighted', 'Dividend discount (Gordon)', 'Residual income', 'P/E vs peers', 'P/E vs peers, weighted'],
 }
 WHY_NOT = {
     'DCF — Monte Carlo 10th–90th percentile': 'needs positive operating income (a cash-flow model on a loss only restates its assumptions); not used for banks, insurers or REITs',
@@ -482,6 +484,11 @@ WHY_NOT = {
     'Tangible book (asset value)': 'only at the decline / turnaround and pre-revenue stages',
     'Net cash (floor)': 'only for pre-revenue companies',
     'Sum of the parts (segments × peer EV/Sales)': 'needs two or more reported segments',
+    'P/E vs peers, weighted': 'needs the plain peer P/E',
+    'EV/EBITDA vs peers, weighted': 'needs the plain peer EV/EBITDA',
+    'EV/Sales vs peers, weighted': 'needs the plain peer EV/Sales',
+    'P/FFO vs REIT peers, weighted': 'needs the plain REIT P/FFO',
+    'Sum of the parts, weighted (segments × weighted peer EV/Sales)': 'needs the plain sum of the parts and two or more peers for every segment',
     'P/TBV vs ROTCE (bank peers)': 'needs positive tangible book and the bank fit',
     'P/B vs ROE (insurer peers)': 'needs positive book and the insurer fit',
     'Justified P/TBV (Gordon growth)': 'needs positive tangible book, net income and ROTCE above its growth',
@@ -499,6 +506,9 @@ def fit_reason(name, F, out):
     lens = VX.fit_reason(name, F, out) or VS.fit_reason(name, F, out)
     if lens:
         return lens
+    if ', weighted' in name:                                # the weighted peers (app/peer_weights.py): the plain method's reason, and why weight
+        return (fit_reason(name.replace(', weighted', ''), F, out) + ' Weighting the peers by market value, revenue and trading value, and '
+                'their quarters by recency, keeps small, thinly traded peers and old prices from moving the multiple as much.')
     st = out.get('stage') or {}
     m = st.get('metrics') or {}
     rev, oi, ni, eps, g0 = F.get('revenue'), F.get('oi'), F.get('ni'), F.get('eps'), F.get('g0')

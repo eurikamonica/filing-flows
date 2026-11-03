@@ -1034,7 +1034,7 @@
       + `<div><label>Alike in</label><div class="mv-pills">${pill('amatch', 'size', 'size and shape', !AN.shape)}${pill('amatch', 'shape', 'shape only', AN.shape)}</div></div></div>`;
     if (AN.error) return h + `<p class="mv-sub">${esc(AN.error)}</p>`;
     const name = esc(doc.ticker || doc.name), L = AN.L, F = AN.F, E = AN.E, nI = AN.items.length, upN = AN.items.filter((x) => x.fwd[F] > 0).length;
-    const ev = AN.every[F], cN = R.c[R.c.length - 1], last = (R.A.last || doc.last) * Math.exp(R.c[AN.t] - cN);
+    const ev = AN.every[F], cN = R.c[R.c.length - 1], last = (R.A.last || doc.last || 100) * Math.exp(R.c[AN.t] - cN);
     h += `<p class="mv-sub">The ${words(nI, 'stretch')} of ${esc(tdWords(L))} in ${name}'s history since ${esc(my(AN.from))} whose path was most like the ${esc(tdWords(L))} to ${esc(mdy(R.A.days[AN.t]))}${AN.shape ? ' in shape (each scaled to its own swings)' : ' in size and shape'}, none overlapping, each ended before that stretch began, and what followed each over the next ${esc(tdWords(F))}: green when higher at the end, red when lower; the thick blue line is the expected path (their average${R.hl ? ', older days counting less' : ''}), the dotted one the median, the blue band the middle half; grey, the range of every ${esc(tdWords(F))} in its history (5–95%).${AN.actual.length > 1 ? ` Orange: what followed ${esc(mdy(R.A.days[AN.t]))}.` : ''}</p>`;
     h += `<p class="mv-head" style="font-size:16px">${num(upN)} of ${num(nI)} were higher ${esc(tdWords(F))} later. Expected after a stretch like this: ${aMarks(F).filter(([hz]) => hz < E.mean.length).map(([hz, l]) => `${esc(l)} <b class="${tone(E.mean[hz])}">${sp(E.mean[hz])}</b>`).join(' · ')}`
       + `${ev ? ` <span class="mv-sub" style="display:inline">(every ${esc(tdWords(F))}: ${sp(ev.mean)} on average, ${share(ev.up)} higher)</span>` : ''}.</p>`;
@@ -1392,7 +1392,7 @@
     });
   }
   function drawSim(x, box, R, o, doc) {
-    const AN = R.an, S = AN.sim, F = S.F, cN = R.c[R.c.length - 1], last = (R.A.last || doc.last) * Math.exp(R.c[AN.t] - cN), dp = last >= 1000 ? 0 : last >= 100 ? 1 : 2;
+    const AN = R.an, S = AN.sim, F = S.F, cN = R.c[R.c.length - 1], last = (R.A.last || doc.last || 100) * Math.exp(R.c[AN.t] - cN), dp = last >= 1000 ? 0 : last >= 100 ? 1 : 2;
     const pv = (v) => last * (1 + v);
     const P = card(x, box.x, box.y, box.w, box.h, `A simulation: ${num(S.M)} paths over the next ${tdWords(F)}, from what followed the stretches like it`,
       `median ${num(pv(S.band.q50[F]), dp)} (${sp(S.band.q50[F])}) · 90% of paths ${num(pv(S.band.q5[F]), dp)}–${num(pv(S.band.q95[F]), dp)} · higher in ${share(S.up)} · fell 10% on the way in ${share(S.down10)}, rose 10% in ${share(S.up10)}`);

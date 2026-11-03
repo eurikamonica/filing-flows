@@ -24,7 +24,7 @@
 .ep-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin:8px 0 6px}
 .ep-card{border:1px solid var(--line,#ddd);border-radius:10px;padding:10px 12px;border-top:3px solid var(--k,var(--line,#ddd))}
 .ep-card b{display:block;font-size:20px;font-variant-numeric:tabular-nums;margin-top:2px}.ep-card span{font-size:12px;color:var(--muted,#777)}
-.ep table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}.ep th,.ep td{padding:5px 8px;border-bottom:1px solid var(--line,#e5e5e5);text-align:right}
+.ep .ep-scroll{overflow-x:auto;max-width:100%}.ep table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}.ep th,.ep td{padding:5px 8px;border-bottom:1px solid var(--line,#e5e5e5);text-align:right}
 .ep th:first-child,.ep td:first-child{text-align:left}.ep .pos{color:${C.good}}.ep .neg{color:${C.bad}}.ep .ep-tag{display:inline-block;font-size:11px;border:1px solid var(--line,#ccc);border-radius:20px;padding:1px 8px;margin-left:6px;color:var(--muted,#777)}
 .ep svg{max-width:100%;height:auto}.ep .ep-legend span{display:inline-flex;align-items:center;gap:5px;margin-right:14px;font-size:12px}.ep .ep-legend i{width:12px;height:3px;display:inline-block}`;
     document.head.appendChild(s);
@@ -75,9 +75,9 @@
         ${fin(r.pead) ? `Predicted drift over the next 60 sessions: ${sgn(r.pead)} vs SPY${r.pead_range ? ` (80% range ${spct(r.pead_range[0])} to ${spct(r.pead_range[1])})` : ''}.` : ''}</p>`;
     }
     if ((d.history || []).length) {
-      h += `<h3>Recent reports</h3><table><thead><tr><th>Quarter</th><th>Reported</th><th>Estimate</th><th>Actual</th><th>Surprise</th><th>Move (2 sessions)</th><th>vs SPY</th></tr></thead><tbody>`;
+      h += `<h3>Recent reports</h3><div class="ep-scroll"><table><thead><tr><th>Quarter</th><th>Reported</th><th>Estimate</th><th>Actual</th><th>Surprise</th><th>Move (2 sessions)</th><th>vs SPY</th></tr></thead><tbody>`;
       for (const x of d.history.slice().reverse()) h += `<tr><td>${esc(x.quarter)}</td><td>${esc(x.reported)}</td><td>${usd(x.est)}</td><td>${usd(x.act)}</td><td>${sgn(x.surprise)}</td><td>${sgn(x.move)}</td><td>${sgn(x.excess)}</td></tr>`;
-      h += `</tbody></table>`;
+      h += `</tbody></table></div>`;
     }
     if (fin(ours.eps) || fin(ours.rev)) h += `<h3>Our estimates</h3><p class="ep-sub">${esc(ours.method || '')}: EPS ${usd(ours.eps)}${fin(ours.eps_growth) ? ` (net income growth ${spct(ours.eps_growth)})` : ''}, revenue ${big(ours.rev)}${fin(ours.rev_growth) ? ` (revenue growth ${spct(ours.rev_growth)})` : ''}. Frozen beside the analysts' numbers before the report and scored after it — a simple baseline, so the Street usually wins; the scorecard says how often.</p>`;
     if (fin(rt.pred)) h += `<h3>Peer read-through</h3><p class="ep-sub">${num(rt.n_peers)} ${esc(d.sector)} companies already reported this season with an average EPS surprise of ${spct(rt.peer_mean)}; historically a company's surprise moved ${num(rt.beta, 2)}× its sector's, so the read-through points to ${sgn(rt.pred)}.</p>`;
@@ -87,11 +87,11 @@
       else h += `<h3>EPS ladder on Polymarket</h3><p class="ep-sub">${esc(x.title)}: median ${usd(x.polymarket && x.polymarket.median)}, 80% range ${usd(x.polymarket && x.polymarket.q10)}–${usd(x.polymarket && x.polymarket.q90)} against a consensus of ${usd(x.consensus)}.</p>${survivalChart(x)}`;
     }
     if (o || sq || ng) {
-      h += `<h3>Indicators</h3><table><tbody>`;
+      h += `<h3>Indicators</h3><div class="ep-scroll"><table><tbody>`;
       if (o) h += `<tr><td>Implied vs realised volatility (30 days)</td><td>${pct(o.iv30, 1)} vs ${pct(o.rv30, 1)} — VRP ${sgn(o.vrp)}</td></tr><tr><td>Skew (25-delta) · put/call (open interest · volume)</td><td>${num(o.skew25, 3)} · ${num(o.pc_oi, 2)} · ${num(o.pc_vol, 2)}</td></tr>`;
       if (sq) h += `<tr><td>Short interest · days to cover · 1-month return</td><td>${pct(sq.short_pct, 1)} of shares · ${num(sq.dtc, 1)} days · ${sgn(sq.momentum)} (squeeze score ${num(sq.score, 2)})</td></tr>`;
       if (ng) h += `<tr><td>Street EPS vs GAAP (latest quarter)</td><td>gap ${pct(ng.gap_pct)} of Street EPS (before: ${pct(ng.gap_prev_mean)})${ng.flag ? ' — widening' : ''}</td></tr>`;
-      h += `</tbody></table>`;
+      h += `</tbody></table></div>`;
     }
     h += `<p class="ep-sub">Data: app/earnings_season.py (branch research-earnings), built ${esc(String(d.generated_at || '').slice(0, 16).replace('T', ' '))} UTC.</p></div>`;
     el.innerHTML = h;

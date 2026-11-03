@@ -416,7 +416,7 @@ function rrglGrid(){                                   // SPY's trading days: th
  return m.data?{grid:RRGL.grid}:m.err?{err:m.err}:{loading:true};
 }
 const RRGL_UNI={
- idxetf:['Index ETFs against the S&P 500 (QQQ · DIA · IWM · MDY · RSP)',['QQQ','DIA','IWM','MDY','RSP']],
+ idxetf:['Index ETFs against the S&P 500 (QQQ · DIA · IWM · MDY · IJR · RSP)',['QQQ','DIA','IWM','MDY','IJR','RSP']],
  regions:['World regions (ETFs in dollars)',['VTI','ACWI','VEA','EFA','VWO','EEM']],
  countries:['Countries (ETFs in dollars)',['EWJ','FXI','MCHI','KWEB','EWZ','INDA','EWG','EWU','EWC','EWA','EWT','EWY','EWW','EWH']],
  bonds:['Bonds (Treasuries, credit, inflation-linked)',['SHY','IEF','TLT','TIP','AGG','LQD','HYG','EMB','MUB']],
@@ -498,7 +498,7 @@ function rrglServer(fq){
  m.loading=fetch('data/research/paths/moves/rrg-research-daily.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;rrglRedraw()}).catch(e=>{m.err=e.message;rrglRedraw()});
  return m;
 }
-const RRGL_IDX=new Set(['QQQ','DIA','IWM','MDY','RSP']);
+const RRGL_IDX=new Set(['QQQ','DIA','IWM','MDY','IJR','RSP']);
 function rrglGroupOf(o,e){                             // which of the server's groups a line belongs to
  const id=String(e.id);
  if(o.freq==='d'){const k=e.dkind,g=e.dgroup;

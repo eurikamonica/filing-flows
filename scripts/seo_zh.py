@@ -74,7 +74,12 @@ def yuan(v):
 
 
 def zpct(v, signed=True):
-    return '—' if v is None else (f'{"+" if v >= 0 and signed else ""}{v:.0f}%' if signed else f'{v:.1f}%')
+    """同比 +12% / 27倍（千分之一的基数）；利润率 12.3%，超出 ±1000% 为 n/m（seo.pct 的规则）"""
+    if v is None:
+        return '—'
+    if signed:
+        return f'{1 + v / 100:,.0f}倍' if v >= seo.MEANINGFUL else f'{"+" if v >= 0 else ""}{v:.0f}%'
+    return f'{v:.1f}%' if abs(v) < seo.MEANINGFUL else 'n/m'
 
 
 def period(label):
@@ -121,8 +126,9 @@ def company(r, c, er, cons, base, en_has):
         who = f"{zh}（{t}）" if zh else f"{en}（{t}）"
     per = period(q.get('label'))
     rev = h['revenue']
-    lead = f"{who}{per}营收 {yuan(rev)}" + (f"，同比{'增长' if h['yoy'] >= 0 else '下降'} {abs(h['yoy']):.0f}%" if h.get('yoy') is not None else '')
-    if h.get('om') is not None:
+    lead = f"{who}{per}营收 {yuan(rev)}" + ((f"，同比增至 {zpct(h['yoy'])}" if h['yoy'] >= seo.MEANINGFUL else
+                                             f"，同比{'增长' if h['yoy'] >= 0 else '下降'} {abs(h['yoy']):.0f}%") if h.get('yoy') is not None else '')
+    if h.get('om') is not None and abs(h['om']) < seo.MEANINGFUL:
         lead += f"，营业利润率 {h['om']:.1f}%"
     if h.get('ni') is not None:
         lead += f"，净利润 {yuan(h['ni'])}"
