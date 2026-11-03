@@ -452,7 +452,12 @@ def write(site, base):
         link_from_company(site, slug)
         urls.append((f"{base}/c/{slug}/cash-flow/", out[1]))
         if len(out) > 2 and out[2]:
-            cards.append({**out[2], 'slug': slug, 'ticker': r.get('ticker') or '', 'name': display_name(r.get('name'))})
+            cards.append({**out[2], 'cik': int(r['cik']), 'slug': slug, 'ticker': r.get('ticker') or '', 'name': display_name(r.get('name'))})
+    try:                                    # the screener reads the runways from here instead of every company file again
+        with open(os.path.join(site, 'data', 'runway.json'), 'w', encoding='utf-8') as f:
+            json.dump({str(x['cik']): {k: x.get(k) for k in ('cash', 'debt', 'net', 'fcf_ttm', 'burn', 'months', 'due12')} for x in cards}, f, separators=(',', ':'))
+    except OSError as err:
+        print(f"runway file not written: {err}")
     try:
         u = runway_page(site, base, cards)
         if u:

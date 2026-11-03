@@ -121,6 +121,7 @@ def build(site, today=None):
     sg = {K(r.get('ticker')): r for r in (read(os.path.join(hub, 'market', 'signals.json')) or {}).get('rows') or []}
     ins = {K(r.get('ticker')): r for r in (read(os.path.join(hub, 'market', 'insiders.json')) or {}).get('summary') or []}
     sh = {K(r.get('ticker')): r for r in (read(os.path.join(hub, 'market', 'short-interest.json')) or {}).get('rows') or []}
+    runways = read(os.path.join(site, 'data', 'runway.json'))       # seo_cashflow.py's, when it ran first (scan.yml)
     out, seen = [], set()
     for r in rows or []:
         t = K(r.get('ticker'))
@@ -131,8 +132,8 @@ def build(site, today=None):
         Q, S, E, G, I, H = q.get(t, {}), qs.get(t, {}), er.get(t, {}), sg.get(t, {}), ins.get(t, {}), sh.get(t, {})
         if not Q and not G and not E:
             continue
-        rw = None
-        c = read(os.path.join(site, 'data', 'c', f"{r['cik']}.json")) if r.get('cik') else None
+        rw = runways.get(str(r.get('cik'))) if runways is not None else None
+        c = read(os.path.join(site, 'data', 'c', f"{r['cik']}.json")) if runways is None and r.get('cik') else None
         if c:
             try:
                 cap = ((c.get('quality') or {}).get('cap') or {})
