@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, chains, gamma, checks, dims, facts, fx as FX, ixbrl, quality, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, chains, gamma, checks, dims, facts, fx as FX, ixbrl, names, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -177,6 +177,47 @@ def _needs_facts(c):
     """Stored before the period list or the per-figure sources existed."""
     return c.get("periods") is None or any(q.get("src") is None and q.get("form") != "8-K" for q in c["quarters"].values()) \
         or any(y.get("src") is None for y in (c.get("years") or {}).values())
+
+
+LABEL_VERSION = 2      # 2: a 52/53-week year ending in early January is the year it mostly falls in (facts.fiscal_label)
+
+
+def relabel(store):
+    """Stored quarters and years named again from their end dates once per LABEL_VERSION (Johnson & Johnson's quarter
+    ended 2026-09-27 was 'Q3 FY27'; it is Q3 2026). A renamed quarter keeps its first name in label_was, so the static
+    pages can send the old address on."""
+    if store.state.get("label_v") == LABEL_VERSION:
+        return 0
+    n = 0
+    for cik in store.ciks():
+        try:
+            c = store.company(cik)
+            fye = (c.get("profile") or {}).get("fye") or "1231"
+            changed = False
+            for q in (c.get("quarters") or {}).values():
+                if not q.get("end") or q.get("period") == "half":
+                    continue
+                label, fq, fy = facts.fiscal_label(q["end"], fye)
+                if label != q.get("label"):
+                    q.setdefault("label_was", q.get("label"))
+                    q["label"], q["fq"], q["fy"] = label, fq, fy
+                    changed = True
+            for y in (c.get("years") or {}).values():
+                if not y.get("end"):
+                    continue
+                label, fy = facts.fiscal_year_label(y["end"], fye)
+                if label != y.get("label"):
+                    y.setdefault("label_was", y.get("label"))
+                    y["label"], y["fy"] = label, fy
+                    changed = True
+            if changed:
+                store.put(cik, c)
+                n += 1
+        except Exception as e:
+            print(f"  relabel skipped for {cik}: {e}", file=sys.stderr)
+    store.state["label_v"] = LABEL_VERSION
+    print(f"  relabelled the periods of {n} companies (label version {LABEL_VERSION})")
+    return n
 
 
 def refresh_periods(store, limit=PERIODS_PER_RUN):
@@ -1938,6 +1979,7 @@ def run(args):
             json.dump({str(k): v for k, v in unbuildable.items()}, fh)
     backfill_history(store)
     queue_missed_filings(store)
+    relabel(store)
     refresh_periods(store)
     reread(store, getattr(args, "reread_ciks", None) or [])
     refresh_da(store)
@@ -2178,6 +2220,11 @@ def apply_reported(q, Nc, Ny, draw=True):
 FCF_ALT_KEYS = ("nodes", "links", "kind", "footer", "checks", "analysis", "headline", "compare", "compare_y")
 
 
+def _aggregate_line(q):
+    ls = q.get("lines_struct") or {}
+    return any(dims.AGGREGATE_ID.search(str(x.get("id") or "")) for x in (ls.get("leaves") or []) + (ls.get("groups") or []))
+
+
 def quarter_payload(c, q, prev_q):
     """A quarter's chart, analysis and checks. When the company's own free cash flow is drawn, the payload also carries
     the same quarter on operating cash flow − capex ("fcf_alt"): readers choose the definition in their alerts
@@ -2185,6 +2232,9 @@ def quarter_payload(c, q, prev_q):
     shown = q
     if _unmatched(q):                                   # lines that do not add up: hidden unless the reader asks
         q = dict(q, lines_struct=None)
+    elif _aggregate_line(q):                            # a subtotal member drawn as a line (stored before dims.AGGREGATE_ID): no lines
+        q = dict(q, lines_struct=None)
+        shown = q
     pl = _quarter_payload(c, q, prev_q)
     if not pl:
         return pl
@@ -2274,7 +2324,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     if q["raw"].get("rev_reported") is not None:
         Nc["rev_calc"] = q["raw"]["rev_reported"]
     apply_reported(q, Nc, Ny, draw=draw_company)
-    ls = None if sliver_lines(q, Nc["R"]) else q.get("lines_struct")
+    ls = None if sliver_lines(q, Nc["R"]) else clean_lines(q.get("lines_struct"))
     lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)
     if lines_q1 and ls and not all(l["id"] in lines_q1 for l in ls["leaves"]):
         lines_q1 = None
@@ -2297,7 +2347,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     labels = {e: x["label"] for e, x in c["quarters"].items()}
     py_label = labels.get(q.get("py_end")) or "a year earlier"
     p = c["profile"]
-    name = p["name"]
+    name = names.cased(p["name"])                   # "ILLINOIS TOOL WORKS INC" → Illinois Tool Works Inc
     q1_label = labels.get(q.get("q1_end")) or (facts.fiscal_label(q["q1_end"], p.get("fye") or "1231")[0]
                                                if q.get("q1_end") else None)
     compare = compare_y = None
@@ -2314,6 +2364,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
         "compare": compare, "compare_y": compare_y, "preliminary": q["form"] == "8-K",
         "release_check": q.get("from_release"),
         "end": q["end"], "label": q["label"], "cal": q["cal"], "form": q["form"], "filed": q["filed"],
+        **({"label_was": q["label_was"]} if q.get("label_was") else {}),
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,
         "title": f"{name} {q['label']} earnings &amp; cash flow",
         "subtitle": (f"Quarter ended {_date(q['end'])} · GAAP · Y/Y vs. {_short(q.get('py_end'))} "
@@ -2324,10 +2375,33 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
         "analysis": analysis.paragraphs(f, q["label"], Nc, Nq, Ny, ls, (q.get("lines"), lines_q1, q.get("lines_py")),
                                         py_label=py_label),
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
-                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100,
+                     "ni": net_drawn(nodes, Nc), "ni_fmt": f.money(net_drawn(nodes, Nc)), "om": Nc["oi"] / Nc["R"] * 100,
                      "oi": Nc["oi"], "ocf": Nc.get("ocf")},
         "_N": (Nc, Nq, Ny),
     }
+
+
+def clean_lines(ls):
+    """A stored breakdown with its labels cleaned of XBRL leftovers (dims.clean_label: "[Member]", a documentation
+    sentence in a label's place): charts stored before the labels were cleaned draw clean."""
+    if not ls:
+        return ls
+    out = dict(ls)
+    for key in ("leaves", "groups"):
+        out[key] = [dict(l, label=dims.clean_label(l.get("label") or "", l.get("id") or "")) for l in ls.get(key) or []]
+    return out
+
+
+def net_drawn(nodes, Nc):
+    """The net figure the chart's net node shows, for the page's headline, tiles and history beside it: net earnings to
+    shareholders when minority interests are drawn (Exxon's $15.4B, not the $16.0B including them), the consolidated
+    figure otherwise (a loss layout's net loss is the consolidated one, with the shareholders' figure in its note)."""
+    for n in nodes:
+        if n["id"] in ("net", "netinc"):
+            return n["v"]
+        if n["id"] == "netloss":
+            return -n["v"]
+    return Nc["pl"]
 
 
 ANNUAL_NOTE = ("Source: SEC EDGAR XBRL data ({form} filed {filed}): the full fiscal year as reported. Percentages show each "
@@ -2347,7 +2421,7 @@ def year_payload(c, y):
     Nc, Ny = normalize(y["raw"]), normalize(y.get("raw_py"))
     if not Nc:
         return None
-    ls = None if _unmatched(y) or sliver_lines(y, Nc["R"]) else y.get("lines_struct")
+    ls = None if _unmatched(y) or _aggregate_line(y) or sliver_lines(y, Nc["R"]) else clean_lines(y.get("lines_struct"))
     try:
         nodes, links, kind = build_spec(Nc, None, Ny, ls, (y.get("lines"), None, y.get("lines_py")))
     except Exception as e:
@@ -2372,7 +2446,7 @@ def year_payload(c, y):
         l.pop("q", None)
     f = Fmt(Nc["R"])
     p = c["profile"]
-    name = p["name"]
+    name = names.cased(p["name"])                   # "ILLINOIS TOOL WORKS INC" → Illinois Tool Works Inc
     py_label = facts.fiscal_year_label(y["py_end"], p.get("fye") or "1231")[0] if y.get("py_end") else None
     compare_y = None
     if Ny and py_label:
@@ -2389,6 +2463,7 @@ def year_payload(c, y):
         "cite": sources.citation(name, y, "fy"),
         "period": "fy", "key": "fy-" + y["end"], "compare": None, "compare_y": compare_y, "preliminary": False,
         "end": y["end"], "label": y["label"], "cal": f"FY{y['fy']}", "form": y["form"], "filed": y["filed"],
+        **({"label_was": y["label_was"]} if y.get("label_was") else {}),
         "doc_url": y.get("doc_url"), "index_url": y.get("index_url"), "kind": kind,
         "title": f"{name} {y['label']} earnings &amp; cash flow",
         "subtitle": f"Fiscal year ended {_date(y['end'])} · GAAP · Y/Y vs. {_short(y.get('py_end'))}",
@@ -2398,7 +2473,7 @@ def year_payload(c, y):
         "analysis": [_yearly(x) for x in analysis.paragraphs(f, y["label"], Nc, None, Ny, ls,
                                                              (y.get("lines"), None, y.get("lines_py")), py_label=py_label or "a year earlier")],
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
-                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100,
+                     "ni": net_drawn(nodes, Nc), "ni_fmt": f.money(net_drawn(nodes, Nc)), "om": Nc["oi"] / Nc["R"] * 100,
                      "oi": Nc["oi"], "ocf": Nc.get("ocf")},
     }
 
@@ -2575,7 +2650,7 @@ def render(store, out, stars=frozenset()):
                  "rev": pl["headline"]["rev_fmt"], "revenue": pl["headline"]["revenue"], "yoy": pl["headline"]["yoy"]}
                 for pl in payloads[:-1] if (pl.get("filed") or "") >= cut]
         u_latest = next((x for x in (usd or {}).get("quarters") or [] if x["end"] == latest["end"]), None)
-        index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": p["name"], "sector": p["sector"],
+        index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": names.cased(p["name"]), "sector": p["sector"],
                       "industry": p["industry"], "sic": p["sic"], "label": latest["label"], "end": latest["end"],
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
                       "rev": latest["headline"]["rev_fmt"],

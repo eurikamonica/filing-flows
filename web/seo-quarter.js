@@ -34,7 +34,17 @@
         notes.innerHTML = cmp && (cmp.bullets || []).length ? `<h3>${esc(Sankey.dec(cmp.title || 'What changed'))}</h3><ul>${cmp.bullets.slice(0, 6).map((b) => `<li>${esc(Sankey.dec(b))}</li>`).join('')}</ul>` : '';
       };
       bar.innerHTML = have.length > 1 ? have.map(([m, l]) => `<button type="button" data-m="${m}">${esc(l)}</button>`).join('') : '';
-      bar.addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (b) { mode = b.dataset.m; draw(); } });
+      // switching the comparison cross-fades: the old chart dims, the new one draws in (no motion for readers who ask for none)
+      const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      chart.style.transition = still ? '' : 'opacity .22s ease';
+      bar.addEventListener('click', (ev) => {
+        const b = ev.target.closest('button');
+        if (!b || b.dataset.m === mode) return;
+        mode = b.dataset.m;
+        if (still) { draw(); return; }
+        chart.style.opacity = '0.15';
+        setTimeout(() => { draw(); requestAnimationFrame(() => { chart.style.opacity = '1'; }); }, 200);
+      });
       f.innerHTML = '';
       f.append(bar, chart, notes);
       draw();

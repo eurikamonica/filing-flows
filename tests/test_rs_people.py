@@ -23,7 +23,7 @@ def _people(hub):
                                          "record": {"scored": 120, "decisions": 40, "hit": 0.55}, "quarters": []})
     OF = ["slug", "name", "chamber", "party", "state", "committees", "trades", "scored", "follow", "trade", "hit", "overlaps", "last", "recent"]
     W("research/people/officials.json", {"fields": OF, "rows": [["jane-roe", "Jane Roe", "US House", "Democrat", "CA", 2, 40, 31, 0.021, 0.03, 0.58, 1, "2026-10-08", 3]]})
-    W("research/people/o/jane-roe.json", {"id": "g:JANE ROE", "name": "Jane Roe", "slug": "jane-roe", "chamber": "US House", "party": "Democrat", "state": "CA",
+    W("research/people/o/jane-roe.json", {"id": "g:JANE ROE", "name": "Jane Roe", "slug": "jane-roe", "aliases": ["jane-mrs-roe", "jane-roe"], "chamber": "US House", "party": "Democrat", "state": "CA",
                                           "committees": [["HSAS", "House Committee on Armed Services", ""]], "performance": {"n": 40, "scored": 31, "follow": 0.021, "trade": 0.03, "hit": 0.58, "first": "2024-01-05", "last": "2026-10-08"},
                                           "recent": [["2026-10-08", "LMT", "purchase", 15001, 50000, "Self", "2026-10-14", "https://disclosures-clerk.house.gov/x.pdf"]],
                                           "overlaps": [{"ticker": "LMT", "date": "2026-10-08", "type": "purchase", "amount_min": 15001, "amount_max": 50000, "filed": "2026-10-14", "owner": "Self",
@@ -91,3 +91,5 @@ def test_seo_people_pages(tmp_path):
     sm = (out / "sitemap-people.xml").read_text()
     assert "https://x.test/m/berkshire-hathaway-1067983/" in sm and "https://x.test/o/" in sm
     assert "sitemap-people.xml" in (out / "robots.txt").read_text()
+    alias = (out / "o" / "jane-mrs-roe" / "index.html").read_text()        # another spelling's old address forwards, unindexed
+    assert 'url=https://x.test/o/jane-roe/' in alias and 'noindex' in alias and "jane-mrs-roe" not in sm

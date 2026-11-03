@@ -1,8 +1,8 @@
 {
   "version": 2,
   "source": "SEC EDGAR + issuer official IR",
-  "generated_at": "2026-11-02T18:43:06+00:00",
-  "last_attempt": "2026-11-02T18:43:06+00:00",
+  "generated_at": "2026-11-03T02:33:26+00:00",
+  "last_attempt": "2026-11-03T02:33:26+00:00",
   "last_success": null,
   "status": "partial",
   "errors": [
@@ -12,46 +12,59 @@
     "MSFT": {
       "sec": "ok",
       "ir": "ok",
-      "last_attempt": "2026-11-02T18:43:01+00:00"
+      "last_attempt": "2026-11-03T02:33:21+00:00"
     },
     "NVDA": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-11-02T18:43:03+00:00",
+      "last_attempt": "2026-11-03T02:33:23+00:00",
       "ir_discovery": "ok"
     },
     "AAPL": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-11-02T18:43:03+00:00",
+      "last_attempt": "2026-11-03T02:33:24+00:00",
       "ir_discovery": "ok"
     },
     "AMZN": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-11-02T18:43:04+00:00",
+      "last_attempt": "2026-11-03T02:33:24+00:00",
       "ir_discovery": "ok"
     },
     "META": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-11-02T18:43:04+00:00",
+      "last_attempt": "2026-11-03T02:33:25+00:00",
       "ir_discovery": "ok"
     },
     "GOOGL": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-11-02T18:43:05+00:00",
+      "last_attempt": "2026-11-03T02:33:25+00:00",
       "ir_discovery": "ok"
     },
     "TSLA": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-11-02T18:43:05+00:00",
+      "last_attempt": "2026-11-03T02:33:26+00:00",
       "ir_discovery": "partial"
     }
   },
   "rows": [
+    {
+      "id": "sec:0000320193-26-000024",
+      "ticker": "AAPL",
+      "kind": "sec_earnings_evidence",
+      "date": "2026-11-02",
+      "filed_date": "2026-11-02",
+      "accession": "0000320193-26-000024",
+      "form": "8-K",
+      "items": "2.02,9.01",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000024/aapl-20261102.htm",
+      "transcript_status": "not_verified",
+      "note": "8-K Item 2.02 earnings disclosure, not an earnings-call transcript."
+    },
     {
       "id": "sec:0001018724-26-000038",
       "ticker": "AMZN",
@@ -347,10 +360,10 @@
   "counts": {
     "official_transcripts": 2,
     "official_ir_candidates": 4,
-    "sec_earnings_evidence": 15,
+    "sec_earnings_evidence": 16,
     "guidance_ranges": 0,
     "quantitative_exercises": 0
   },
-  "latest_source_date": "2026-10-29",
+  "latest_source_date": "2026-11-02",
   "rights": "Public metadata and original-source links only; calculations based on unreconciled management speech."
 }

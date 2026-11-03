@@ -3348,6 +3348,12 @@ def test_sliver_revenue_lines_and_total_members():
     assert dims.best_partition(members, 1914e6) is None
     good = {"m:A": ("Commissions", 1000e6), "m:B": ("Net interest", 900e6), "m:C": ("Other", 14e6)}
     assert [l["id"] for l in dims.best_partition(good, 1914e6)["leaves"]] == ["m:A", "m:B", "m:C"]
+    # Tractor Supply's release: "Dividends declared per common share outstanding" beside "Sales" is no revenue line
+    from pipeline import release
+    tsco = {"m:S": ("Sales", 3.9e9), "m:D": ("Dividends declared per common share outstanding", 20e6)}
+    assert dims.best_partition(tsco, 3.92e9) is None
+    assert release.NOT_A_LINE.search("dividends declared per common share outstanding") and release.NOT_A_LINE.search("earnings per diluted share")
+    assert not release.NOT_A_LINE.search("net sales") and not release.NOT_A_LINE.search("aerospace products revenue")
 
 
 def test_audit_finds_figures_that_disagree(tmp_path):
@@ -3467,3 +3473,78 @@ def test_fourth_quarter_kept_when_the_quarters_do_not_add_up_to_nine_months():
                                 ("2025-01-01", "2025-12-31", 12.5)]})
     raw = facts.extract(fx, "2025-12-31")
     assert abs(raw["capex"] - 3.956e6) < 1e3 and "capex" not in (raw.get("q4_fixed") or [])
+
+
+def test_company_names_cased_for_the_pages():
+    """SEC's conformed names are capitals: the pages, posts and chart titles write them as the companies do, initialisms
+    and all ('W&T OFFSHORE INC' → W&T Offshore, 'FREEPORT-MCMORAN INC' → Freeport-McMoRan, 'MKS INC' → MKS, 'AMPHENOL CORP
+    /DE/' → Amphenol, 'AMETEK INC/' → Ametek); a newer filer's mixed-case name is its own, kept."""
+    from pipeline import names
+    assert names.display("W&T OFFSHORE INC") == "W&T Offshore" and names.display("FREEPORT-MCMORAN INC") == "Freeport-McMoRan"
+    assert names.display("MKS INC") == "MKS" and names.display("AMPHENOL CORP /DE/") == "Amphenol" and names.display("AMETEK INC/") == "Ametek"
+    assert names.display("CNA FINANCIAL CORP") == "CNA Financial" and names.display("CONOCOPHILLIPS") == "ConocoPhillips"
+    assert names.display("AMAZON COM INC") == "Amazon.com" and names.cased("AMAZON COM INC") == "Amazon.com Inc"
+    assert names.cased("ILLINOIS TOOL WORKS INC") == "Illinois Tool Works Inc" and names.cased("Equitable Holdings, Inc.") == "Equitable Holdings, Inc."
+    assert names.display("MACY'S, INC.") == "Macy's" and names.display("O'REILLY AUTOMOTIVE INC") == "O'Reilly Automotive"
+    assert names.display("BANK OF AMERICA CORP /DE/") == "Bank of America" and names.display("LYONDELLBASELL INDUSTRIES N.V.") == "LyondellBasell Industries N.V."
+    assert names.display("E.W. SCRIPPS Co") == "E.W. Scripps" and names.display("Huntsman CORP") == "Huntsman" and names.display("3M CO") == "3M"
+    # a 13F's issuer names: abbreviations, a trailing state marker, a share class; a legal form after another
+    assert names.cased("VANGUARD INDEX FDS") == "Vanguard Index Funds" and names.cased("COSTCO WHSL CORP NEW") == "Costco Wholesale Corp"
+    assert names.cased("BERKSHIRE HATHAWAY INC DEL") == "Berkshire Hathaway Inc" and names.cased("ALPHABET INC CL A") == "Alphabet Inc Class A"
+    assert names.cased("ISHARES CORE S&P TOTAL U.S.") == "iShares Core S&P Total U.S." and names.cased("SPDR GOLD TR") == "SPDR Gold Trust"
+    assert names.display("SK TELECOM CO LTD") == "SK Telecom" and names.display("ELI LILLY & CO") == "Eli Lilly" and names.display("NEW YORK TIMES CO") == "New York Times"
+    # a person's name as a Form 4 or a 13D writes it
+    assert names.person("KIRK RONALD") == "Kirk Ronald" and names.person("O'BRIEN MICHAEL J") == "O'Brien Michael J"
+    assert names.person("MCCARTHY JOHN JR") == "McCarthy John Jr." and names.person("DE LA CRUZ JOSE") == "De la Cruz Jose"
+    assert names.person("Denny Michael B.") == "Denny Michael B." and names.person("SMITH-JONES ANNA III") == "Smith-Jones Anna III"
+
+
+def test_member_labels_cleaned_of_xbrl_leftovers():
+    """A filer's label linkbase can hand a chart "Cabinetry And Millwork Member", "Direct to Consumer [member]" or a
+    documentation sentence in the label's place ("This member stands for the information pertaining to …"): the chart
+    writes the name without them, and a stored breakdown is cleaned when drawn (build.clean_lines)."""
+    from pipeline import dims, build
+    assert dims.clean_label("Cabinetry And Millwork Member", "x_CabinetryAndMillworkMember") == "Cabinetry And Millwork"
+    assert dims.clean_label("Direct to Consumer [member]", "x_DirectToConsumerMember") == "Direct to Consumer"
+    assert dims.clean_label("Operating lease revenues from automobile rentals [Members]", "x_A") == "Operating lease revenues from automobile rentals"
+    assert dims.clean_label('This member stands for the information pertaining to "Net revenue non-core services".', "abc_NetRevenueNonCoreServicesMember") == "Net Revenue Non Core Services"
+    assert dims.clean_label("iPhone [Member]", "aapl_IPhoneMember") == "iPhone" and dims.clean_label("Services", "aapl_ServiceMember") == "Services"
+    ls = {"leaves": [{"id": "x:CabinetryAndMillworkMember", "label": "Cabinetry And Millwork Member"}], "groups": [], "axis": "a"}
+    assert build.clean_lines(ls)["leaves"][0]["label"] == "Cabinetry And Millwork" and ls["leaves"][0]["label"].endswith("Member")
+
+
+def test_a_year_ending_in_early_january_is_named_for_the_year_it_mostly_falls_in(tmp_path):
+    """Johnson & Johnson's fiscal years end the Sunday nearest December 31 (its 2026 ends January 3, 2027; SEC's profile
+    says 0103): the quarter ended 2026-09-27 is Q3 2026, not 'Q3 FY27', and the year ended 2025-12-28 is FY2025. A
+    retailer's year ending January 31 keeps the site's FY naming (Walmart's quarter ended 2025-10-31: Q3 FY26). The
+    stored periods are renamed once, keeping the first name so the static pages can send the old address on."""
+    from pipeline import build, facts
+    assert facts.fiscal_label("2026-09-27", "0103") == ("Q3 2026", 3, 2026) and facts.fiscal_label("2025-12-28", "0103") == ("Q4 2025", 4, 2025)
+    assert facts.fiscal_label("2026-01-03", "0103")[0] == "Q4 2025" and facts.fiscal_year_label("2025-12-28", "0103") == ("FY2025", 2025)
+    assert facts.fiscal_label("2025-10-31", "0131")[0] == "Q3 FY26" and facts.fiscal_label("2026-09-30", "1231")[0] == "Q3 2026"
+    store = build.Store(str(tmp_path / "store"))
+    store.put(200406, {"profile": {"name": "JOHNSON & JOHNSON", "fye": "0103"},
+                       "quarters": {"2026-09-27": {"end": "2026-09-27", "label": "Q3 FY27", "fq": 3, "fy": 2027, "form": "10-Q"}},
+                       "years": {"2025-12-28": {"end": "2025-12-28", "label": "FY26", "fy": 2026, "form": "10-K"}}})
+    store.put(104169, {"profile": {"name": "WALMART INC", "fye": "0131"},
+                       "quarters": {"2025-10-31": {"end": "2025-10-31", "label": "Q3 FY26", "fq": 3, "fy": 2026, "form": "10-Q"}}})
+    assert build.relabel(store) == 1
+    q = store.company(200406)["quarters"]["2026-09-27"]
+    assert (q["label"], q["fq"], q["fy"], q["label_was"]) == ("Q3 2026", 3, 2026, "Q3 FY27")
+    y = store.company(200406)["years"]["2025-12-28"]
+    assert (y["label"], y["fy"], y["label_was"]) == ("FY2025", 2025, "FY26")
+    assert "label_was" not in store.company(104169)["quarters"]["2025-10-31"]
+    assert build.relabel(store) == 0                                     # once per label version
+
+
+def test_a_segment_aggregation_member_is_no_revenue_line():
+    """ASU 2023-07's 'all reportable segments' member (Chevron's ReportableSegmentAggregationBeforeOtherOperatingSegment
+    Member, labelled 'Segment Total') is a subtotal: a breakdown of {Segment Total, All Other} is no breakdown, and the
+    quarter shows no lines rather than that; the segments themselves are taken when they add up."""
+    agg = "us-gaap:ReportableSegmentAggregationBeforeOtherOperatingSegmentMember"
+    members = {agg: ("Segment Total", 67.174), "us-gaap:AllOtherSegmentsMember": ("All Other", 1.0),
+               "cvx:UpstreamMember": ("Upstream", 50.0), "cvx:DownstreamMember": ("Downstream", 25.0)}
+    assert dims.best_partition(members, 68.174) is None
+    members["cvx:UpstreamMember"] = ("Upstream", 40.0); members["cvx:DownstreamMember"] = ("Downstream", 27.174)
+    part = dims.best_partition(members, 68.174)
+    assert sorted(l["label"] for l in part["leaves"]) == ["All Other", "Downstream", "Upstream"]

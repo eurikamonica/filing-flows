@@ -59,9 +59,15 @@
     ['moves', /how (rare|unusual)|unusual moves?|biggest movers?|top movers?|movers|moves? today|today'?s (move|drop|fall|gain|jump)|why (is|did|was) .{0,25}(down|up|drop|fall|fell|jump|rise|rose|move|moving)|move odds|(dropped|fell|jumped|soared|plunged|crashed) (today|yesterday)|今天(为什么)?(涨|跌|大涨|大跌)|为什么(涨|跌)|跌了多少|涨了多少|异动|罕见|暴跌|暴涨/i],
     ['guidanceRecord', /guidance (track record|record|history|reliab|accura|changes?|raises?|cuts?)|(raised|lowered|raises|lowers|cut|cuts|withdrew|withdrawn|reaffirmed) (its |their )?guidance|上调(了)?指引|下调(了)?指引|指引(上调|下调|变化)|(meet|meets|met|hit|hits|beat|beats|miss|misses) (its |their )?(own )?guidance|sandbag|guidance credib|指引(兑现|可信|记录|历史|准确)|兑现率|说到做到/i],
     ['investments', /\binvestments\b(?! (bank|banking|grade|advis))|investment gains?|investment portfolio|gains? on (its )?investments?|stakes? in (other )?companies|equity investments?|venture (bets|stakes)|what (did|does) .{0,20}invest in|投资收益|投资了哪些|持有哪些公司|股权投资|投了谁/i],
+    ['quality', /earnings quality|quality (score|grade|of (its |the )?(earnings|profits?))|accruals?|beneish|dechow|piotroski|manipulat|cook(ing|ed) the books|aggressive accounting|red flags? in (its |the )?(accounting|earnings)|盈余质量|财报质量|利润质量|盈利质量|做假账|操纵利润|会计(质量|风险)|财务造假/i],
+    ['runway', /cash runway|\brunway\b|how long (can|will|does) .{0,25}(last|survive|fund)|months of cash|run(s|ning)? out of (cash|money)|going concern|现金(能|还能)?撑|还能撑|现金跑道|现金够(用|不够)|会不会(破产|没钱)|能撑多久|(快|将|要)?没(有)?(现金|钱)了?|现金(不足|告急|紧张)|缺钱/i],
+    ['screen', /\bscreen(er|s)?\b|which (stocks|companies) (have|are|with|show)|find (me )?(stocks|companies|names)|(stocks|companies) (with|that have|where|whose)|momentum stocks|short squeeze|fallen (leaders|angels)|cash machines|distress(ed)? (watch|stocks|companies)|筛选|选股|找(一些|几个|出)?(股票|公司)|哪些公司.{0,8}(有|在|是|正在)|有哪些.{0,6}(股票|公司)/i],
+    ['afterEvent', /what (usually |typically |normally )?happens? after|after (an? |the )?8-?k|8-?k (impact|reaction|effect|items?)|which 8-?k|items? \d\.\d\d|(move|reaction|react) (after|following|to) (an? )?(8-?k|filing|announcement)|公告(之)?后|8-?k ?(之后|后|影响|反应)|哪种公告|公告.{0,4}(涨|跌)/i],
+    ['insiderSignal', /insider (trades?|buys?|buying|signals?) (predict|work|track record|backtest|reliab|matter|mean)|do insiders? (know|predict|beat)|follow(ing)? (the )?insiders|insider (signal|pattern|backtest|track record)|cluster buy|内部人.{0,8}(准不准|靠谱|信号|预测|跟着|胜率|有用)|跟着内部人/i],
+    ['backtest', /if (i|you|one) (had )?(bought|invested|put)|had i (bought|invested)|what would .{0,40}(bought|invested|put in|ago).{0,40} be worth|worth (now|today) if|(bought|invested) .{0,30}\b(in|on|at) (20\d\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|\d+ years? ago.{0,30}(worth|now|today)|如果.{0,10}(买|投)(了|入)?|当初买|要是.{0,8}买了|(买了|投了).{0,12}现在值多少|回测/i],
   ];
   // words that ask about the market rather than one company ("who reports this week", "biggest insider buys")
-  const MARKET = /which sectors?|sectors? (are|is) |by revenue|largest companies|biggest companies|this week|next week|today|lately|recent(ly)?|latest|biggest|largest|most|top \d*|which (stocks|companies)|what (stocks|companies)|any (stocks|companies)|list|ranking|leaderboard|across the market|in the market|本周|这周|下周|今天|最近|最新|最大|最多|哪些|哪几|排行|榜|全市场|有哪/i;
+  const MARKET = /which sectors?|sectors? (are|is) |by revenue|largest companies|biggest companies|this week|next week|today|lately|recent(ly)?|latest|biggest|largest|most|lowest|highest|worst|best|shortest|top \d*|which (stocks|companies)|what (stocks|companies)|any (stocks|companies)|list|ranking|leaderboard|across the market|in the market|本周|这周|下周|今天|最近|最新|最大|最多|哪些|哪几|排行|榜|全市场|有哪/i;
   const PRONOUN = /\b(it|its|this (company|stock)|they|their|the company)\b|这家|它|该公司|这只/i;
   function classify(q) {
     const s = String(q || ''), out = [];
@@ -74,10 +80,13 @@
     if (out.includes('why') && /scan|扫描|lately|recently|since/i.test(s) && !/revenue|profit|margin|income|cash|营收|利润/i.test(s)) out.splice(out.indexOf('why'), 1);
     if (out.includes('brief') && (out.length > 1 || /income statement|statement|earnings|results|quarter|revenue|cash ?flow|balance sheet|财报|利润表|季度|营收/i.test(s)))
       out.splice(out.indexOf('brief'), 1);                         // "income statement summary", "overview of its cash flow": that, not a briefing
+    // the newer models answer the whole question: a screen is not the insider list, "after an 8-K" is not the latest 8-K
+    const ONLY = { screen: ['insiders', 'shorts', 'events', 'multiples', 'owners', 'nextEarnings', 'cashflow', 'quality'], afterEvent: ['events', 'multiples', 'moves'], insiderSignal: ['insiders'], backtest: ['multiples', 'trend', 'moves'], runway: ['cashflow', 'debtLoad'] };
+    for (const k of Object.keys(ONLY)) if (out.includes(k)) for (const r of ONLY[k]) if (out.includes(r)) out.splice(out.indexOf(r), 1);
     return out;
   }
   // the model intents (mascot.js) a more specific one here replaces: "earnings date" is not the last quarter's earnings
-  const REPLACES = { profile: ['segments', 'valuation', 'help'], multiples: ['analysts', 'industry'], debtLoad: ['cashflow'], brief: ['earnings', 'valuation', 'rotation'], why: ['earnings', 'moves', 'calls'], trend: ['earnings'], nextEarnings: ['earnings', 'calls'], cashflow: ['earnings'], segments: ['earnings'], guidanceRecord: ['calls'], shorts: ['opportunity'],
+  const REPLACES = { quality: ['earnings', 'credit'], runway: ['cashflow', 'debtLoad', 'credit'], screen: ['help', 'rotation', 'opportunity', 'industry'], afterEvent: ['events', 'moves'], insiderSignal: ['insiders'], backtest: ['moves', 'earnings', 'valuation'], profile: ['segments', 'valuation', 'help'], multiples: ['analysts', 'industry'], debtLoad: ['cashflow'], brief: ['earnings', 'valuation', 'rotation'], why: ['earnings', 'moves', 'calls'], trend: ['earnings'], nextEarnings: ['earnings', 'calls'], cashflow: ['earnings'], segments: ['earnings'], guidanceRecord: ['calls'], shorts: ['opportunity'],
     moves: ['rotation'], investments: ['valuation'], ties: ['industry'], insiders: ['earnings'] };
   function merge(base, mine) {
     const drop = new Set(mine.flatMap((k) => REPLACES[k] || []));
@@ -646,6 +655,159 @@
         links: [lk(`${BASE}#c-${c.cik}-debt`, L(lg, 'Debt & rates', '债务与利率'))] };
     }
 
+    /* ---------- the newer models: earnings quality, cash runway, what follows an 8-K, insider patterns, screens, a backtest ---------- */
+    const slugOf = (c) => { const t = String(c.ticker || '').toLowerCase().replace(/\./g, '-'); return /^[a-z0-9-]{1,12}$/.test(t) ? t : 'cik-' + c.cik; };
+    const qrows = async () => { const d = await json(DATA + 'quality-score.json'); if (!d || !d.fields) return null; const F = d.fields; return { n: d.n, rows: (d.rows || []).map((r) => Object.fromEntries(F.map((k, i) => [k, r[i]]))) }; };
+    const GRADE_ZH = { A: '优', B: '良', C: '中', D: '差', E: '很差' };
+    async function quality(c, lg) {
+      const d = await qrows();
+      if (!d) return null;
+      const T = fileT(c.ticker), r = d.rows.find((x) => fileT(x.ticker) === T || String(x.cik) === String(c.cik));
+      if (!r) return null;
+      const lost = (r.lost || []).slice(0, 2).map(esc).join(lg === 'zh' ? '；' : '; '), won = (r.won || []).slice(0, 2).map(esc).join(lg === 'zh' ? '；' : '; ');
+      const html = L(lg, `<b>${esc(c.ticker)}</b> scores <b>${num(r.score)} of 100</b> for earnings quality (grade ${esc(r.grade)}, rank ${num(r.rank)} of ${num(d.n)}): eight published measures of whether profit is backed by cash and free of the markers of managed earnings — accruals, discretionary accruals, Beneish M, Dechow F, Montier C, Piotroski F, the non-GAAP gap and smoothness.${lost ? ` It loses the most points on ${lost}.` : ''}${won ? ` Full marks for ${won}.` : ''} A statistical screen, not an audit${r.score < 50 ? '; fast growth lowers it by construction' : ''}.`,
+        `<b>${esc(c.ticker)}</b> 盈余质量得分 <b>${num(r.score)}/100</b>（${esc(r.grade)} 级，${num(d.n)} 家中排第 ${num(r.rank)}）：由八项公开指标组成——应计项目、可操纵应计、Beneish M、Dechow F、Montier C、Piotroski F、非 GAAP 差距和利润平滑度，衡量利润是否有现金支撑、是否带有盈余管理的特征。${lost ? `失分最多的是：${lost}。` : ''}${won ? `得满分的是：${won}。` : ''}这是统计筛查，不是审计${r.score < 50 ? '；高增长本身会拉低分数' : ''}。`);
+      return { html, facts: [`earnings quality score ${r.score}/100 grade ${r.grade} rank ${r.rank}/${d.n}`, ...(r.lost || []).map((x) => 'loses points: ' + x)], mood: r.score >= 65 ? 'happy' : r.score < 50 ? 'worried' : 'talk',
+        links: [lk(`${BASE}c/${slugOf(c)}/earnings-quality/`, L(lg, 'Earnings quality score', '盈余质量评分')), lk(`${BASE}disclosures/#quality`, L(lg, 'Quality workbench', '质量工作台'))] };
+    }
+    MK.quality = async (lg, ix, q) => {
+      const d = await qrows();
+      if (!d) return null;
+      const low = /lowest|worst|low|poor|flag|manipulat|cook|red flag|最差|最低|造假|操纵|风险/i.test(String(q || ''));
+      const big = d.rows.filter((x) => true);
+      const rows = (low ? big.slice().sort((a, b) => a.score - b.score) : big).slice(0, 8);
+      const names = Object.fromEntries(((ix && ix.companies) || []).filter((x) => x.ticker).map((x) => [fileT(x.ticker), x]));
+      return { html: L(lg, `${low ? 'Lowest' : 'Highest'} earnings quality scores (0–100, eight published measures):`, `盈余质量得分${low ? '最低' : '最高'}的公司（0–100，八项公开指标）：`)
+        + ol(rows.map((r) => `${coLink(r.ticker, (names[fileT(r.ticker)] || {}).cik || r.cik)} ${num(r.score)} (${esc(r.grade)})${(r.lost || [])[0] && low ? L(lg, ` — ${esc(r.lost[0])}`, ` — ${esc(r.lost[0])}`) : ''}`)),
+        facts: rows.map((r) => `${r.ticker} quality ${r.score} ${r.grade}`), mood: 'talk', links: [lk(`${BASE}disclosures/earnings-quality/`, L(lg, 'Every company ranked', '全部公司排名'))] };
+    };
+    const runwayOf = (c) => {
+      const v = ((c.quality || {}).val) || {};
+      const cash = fin(v.cash_all) ? v.cash_all : fin(v.b_cash) ? (v.b_cash || 0) + (v.b_sti || 0) : null;
+      if (!fin(cash)) return null;
+      const debt = fin(v.debt) ? v.debt : (v.b_ltd || 0) + (v.b_stb || 0);
+      const fcf = fin(v.ocf) ? v.ocf - (fin(v.capex) ? Math.abs(v.capex) : 0) : null;
+      // a runway only when operations themselves consume cash; capital spending above operating cash flow is a choice
+      const burn = fin(fcf) && fcf < 0 && fin(v.ocf) && v.ocf < 0 ? -fcf : null;
+      const due = fin(v.b_ltd_c) ? (v.b_ltd_c || 0) + (v.b_stb || 0) : null;
+      return { cash, debt, fcf, burn, months: burn && cash > 0 ? 12 * cash / burn : null, due, ocf: v.ocf, end: v.end };
+    };
+    async function runway(c, lg) {
+      const d = await json(DATA + 'c/' + c.cik + '.json');
+      const r = d ? runwayOf(d) : null;
+      if (!r) return null;
+      const yrs = (m) => (m >= 24 ? L(lg, `${num(m / 12, 1)} years`, `${num(m / 12, 1)} 年`) : L(lg, `${num(m)} months`, `${num(m)} 个月`));
+      const gap = !r.burn && fin(r.fcf) && r.fcf < 0 && fin(r.ocf) && r.ocf > 0;
+      const html = gap
+        ? L(lg, `<b>${esc(c.ticker)}</b>'s operations bring cash in (<b>${big(r.ocf)}</b> over twelve months) and it spends more than that on capital projects: a gap of <b>${big(-r.fcf)}</b> funded from <b>${big(r.cash)}</b> of cash and investments and from borrowing${r.debt ? ` (${big(r.debt)} of debt)` : ''}. That is a choice to invest, not a cash runway running down.`,
+          `<b>${esc(c.ticker)}</b> 的经营活动在产生现金（过去十二个月 <b>${big(r.ocf)}</b>），只是资本开支更大：缺口 <b>${big(-r.fcf)}</b> 由 <b>${big(r.cash)}</b> 现金及投资和借款填补${r.debt ? `（债务 ${big(r.debt)}）` : ''}。这是主动投资，不是现金在耗尽。`)
+        : r.burn && r.months == null
+        ? L(lg, `<b>${esc(c.ticker)}</b>'s operations consume cash (free cash flow <b>${big(r.fcf)}</b> over twelve months), and no cash balance is on file to set against it.`,
+          `<b>${esc(c.ticker)}</b> 的经营活动在消耗现金（过去十二个月自由现金流 <b>${big(r.fcf)}</b>），但没有可用的现金余额数据来计算还能撑多久。`)
+        : r.burn
+        ? L(lg, `<b>${esc(c.ticker)}</b> is burning cash: its operations consume cash, a free cash flow of <b>${big(-r.burn)}</b> over the trailing twelve months against <b>${big(r.cash)}</b> of cash and investments — a runway of about <b>${yrs(r.months)}</b> at that rate, before any new financing${fin(r.due) && r.due > 0 ? `; ${big(r.due)} of debt comes due within a year${r.cash >= r.due + r.burn ? ', which the cash covers' : ', which would need refinancing'}` : ''}.`,
+          `<b>${esc(c.ticker)}</b> 在烧钱：经营活动本身在消耗现金，过去十二个月自由现金流 <b>${big(-r.burn)}</b>，账上现金及投资 <b>${big(r.cash)}</b}——按此速度现金跑道约 <b>${yrs(r.months)}</b>（不计新融资）${fin(r.due) && r.due > 0 ? `；一年内到期债务 ${big(r.due)}${r.cash >= r.due + r.burn ? '，现金足以覆盖' : '，需要再融资'}` : ''}。`)
+        : L(lg, `<b>${esc(c.ticker)}</b> funds itself: free cash flow of <b>${big(r.fcf)}</b> over the trailing twelve months, <b>${big(r.cash)}</b> of cash and investments against ${r.debt ? `<b>${big(r.debt)}</b> of debt` : 'no debt'}${fin(r.due) && r.due > 0 ? ` (${big(r.due)} due within a year, ${num(r.cash / r.due, 1)}× covered)` : ''}. No runway question arises while it generates cash.`,
+          `<b>${esc(c.ticker)}</b> 能自我造血：过去十二个月自由现金流 <b>${big(r.fcf)}</b>，账上现金及投资 <b>${big(r.cash)}</b>，${r.debt ? `债务 <b>${big(r.debt)}</b>` : '没有债务'}${fin(r.due) && r.due > 0 ? `（一年内到期 ${big(r.due)}，现金覆盖 ${num(r.cash / r.due, 1)} 倍）` : ''}。只要持续产生现金，就不存在跑道问题。`);
+      return { html: html.replace('</b}', '</b>'), facts: [`cash ${big(r.cash)}, debt ${big(r.debt)}, FCF ttm ${big(r.fcf)}` + (r.months ? `, runway ${num(r.months)} months` : '')], mood: r.months != null && r.months < 12 ? 'worried' : 'talk',
+        links: [lk(`${BASE}c/${slugOf(c)}/cash-flow/#runway`, L(lg, 'Cash runway & debt wall', '现金跑道与债务到期')), lk(`${BASE}disclosures/cash-runway/`, L(lg, 'Who is burning cash', '谁在烧钱'))] };
+    }
+    MK.runway = async (lg, ix) => {
+      const d = await json(HUB + 'screener.json');
+      if (!d || !d.fields) return null;
+      const F = d.fields, rows = d.rows.map((r) => Object.fromEntries(F.map((k, i) => [k, r[i]]))).filter((r) => fin(r.runway_months) && (r.mcap || 0) >= 3e8).sort((a, b) => a.runway_months - b.runway_months).slice(0, 8);
+      if (!rows.length) return null;
+      return { html: L(lg, 'Shortest cash runway at the current burn (market value $300M+):', '按当前烧钱速度现金跑道最短的公司（市值 3 亿美元以上）：') + ol(rows.map((r) => `${coLink(r.ticker, r.cik)} ${r.runway_months >= 24 ? num(r.runway_months / 12, 1) + L(lg, ' yrs', ' 年') : num(r.runway_months) + L(lg, ' mo', ' 个月')} · ${L(lg, 'cash', '现金')} ${big(r.cash)}`)),
+        facts: rows.map((r) => `${r.ticker} runway ${r.runway_months} months`), mood: 'worried', links: [lk(`${BASE}disclosures/cash-runway/`, L(lg, 'Cash runway, every company', '现金跑道榜'))] };
+    };
+    const ITEM_ZH = { '1.01': '重大协议', '1.02': '协议终止', '2.01': '完成收购或处置', '2.02': '业绩公告', '2.03': '新增债务', '2.05': '退出成本', '2.06': '资产减值', '3.01': '退市通知', '3.02': '非注册股权发行', '4.01': '更换审计师', '4.02': '财务重述', '5.01': '控制权变更', '5.02': '高管董事变动', '5.03': '章程修订', '5.07': '股东投票结果', '8.01': '其他事项' };
+    const sp = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${num(Math.abs(100 * v), 1)}%`;
+    MK.afterEvent = async (lg, ix, q) => {
+      const d = await json(DATA + 'event-stats.json');
+      if (!d || !d.items) return null;
+      const m = /(\d\.\d\d)/.exec(String(q || ''));
+      const items = Object.entries(d.items).filter(([, s]) => s.h1 && s.h1.n >= 30);
+      if (m && d.items[m[1]] && d.items[m[1]].h1) {
+        const s = d.items[m[1]], k = m[1];
+        return { html: L(lg, `After an 8-K reporting Item ${esc(k)} (${esc(s.name || '')}), across <b>${num(s.h1.n)}</b> filings: the stock's median move the next session was <b>${sp(s.h1.median)}</b> (typical size ±${num(100 * s.h1.abs_median, 1)}%, up ${num(100 * s.h1.up)}% of the time)${s.h21 ? `; over 21 sessions ${sp(s.h21.median)}` : ''}. Measured from the close before the filing reached EDGAR; descriptive, not predictive.`,
+          `报告 Item ${esc(k)}（${esc(ITEM_ZH[k] || s.name || '')}）的 8-K 之后，统计 <b>${num(s.h1.n)}</b> 份：次日股价中位数变动 <b>${sp(s.h1.median)}</b>（典型幅度 ±${num(100 * s.h1.abs_median, 1)}%，上涨概率 ${num(100 * s.h1.up)}%）${s.h21 ? `；21 个交易日后 ${sp(s.h21.median)}` : ''}。从公告送达 EDGAR 前的收盘算起；描述历史，不是预测。`),
+          facts: [`item ${k}: n ${s.h1.n}, next-session median ${sp(s.h1.median)}, abs ${num(100 * s.h1.abs_median, 1)}%, up ${num(100 * s.h1.up)}%`], mood: 'talk', links: [lk(`${BASE}events/impact/`, L(lg, 'Every 8-K item scored', '各类 8-K 影响'))] };
+      }
+      const rows = items.sort((a, b) => b[1].h1.abs_median - a[1].h1.abs_median).slice(0, 7);
+      return { html: L(lg, `Which 8-K items move stocks most, by the typical next-session move across ${num(d.events)} filings:`, `哪类 8-K 最能推动股价（${num(d.events)} 份公告，次日典型幅度）：`)
+        + ol(rows.map(([k, s]) => `Item ${esc(k)} ${esc(lg === 'zh' ? ITEM_ZH[k] || s.name || '' : s.name || '')}: ±${num(100 * s.h1.abs_median, 1)}%, ${L(lg, 'median', '中位数')} ${sp(s.h1.median)}, ${L(lg, 'up', '上涨')} ${num(100 * s.h1.up)}%`)),
+        facts: rows.map(([k, s]) => `item ${k} abs ${num(100 * s.h1.abs_median, 1)}% median ${sp(s.h1.median)}`), mood: 'talk', links: [lk(`${BASE}events/impact/`, L(lg, 'Every 8-K item scored', '各类 8-K 影响'))] };
+    };
+    MK.insiderSignal = async (lg) => {
+      const d = await json(DATA + 'insider-stats.json');
+      const p = d && d.patterns;
+      if (!p || !p.buy) return null;
+      const line = (k) => (p[k] ? `${esc(p[k].label)}: ${L(lg, 'right', '正确')} ${num(100 * p[k].hit)}%, ${L(lg, 'median excess', '超额中位数')} ${sp(p[k].median_excess)} (${num(p[k].n)})` : '');
+      return { html: L(lg, `Do insider trades predict the stock? Over ${num(d.trades)} scored Form 4 trades (the stock against SPY over the next 63 sessions): buys beat the market <b>${num(100 * p.buy.hit)}%</b> of the time, sales were followed by a lagging stock <b>${num(100 * p.sell.hit)}%</b> of the time. By pattern:`,
+        `内部人交易准不准？统计 ${num(d.trades)} 笔已评分的 Form 4 交易（之后 63 个交易日相对 SPY）：买入后跑赢大盘的概率 <b>${num(100 * p.buy.hit)}%</b>，卖出后跑输的概率 <b>${num(100 * p.sell.hit)}%</b>。分模式看：`)
+        + ol(['buy_large', 'buy_mid', 'buy_small', 'buy_cluster', 'buy_repeat', 'sell_large'].map(line).filter(Boolean)),
+        facts: Object.values(p).map((x) => `${x.label}: hit ${x.hit}, median excess ${x.median_excess}, n ${x.n}`), mood: 'talk', links: [lk(`${BASE}disclosures/insider-signals/`, L(lg, 'Every insider pattern scored', '内部人信号全表'))] };
+    };
+    const PRESET_RX = [['insiders-buying', /insider/i], ['momentum', /momentum|strong|rising|动量|强势/i], ['short-squeeze', /short|squeeze|空头|轧空/i], ['distress', /distress|bankrupt|run(ning)? out|burn|困境|破产|烧钱/i],
+      ['cash-machines', /cash (machine|cow|rich)|free cash|buyback|dividend|现金牛|分红|回购/i], ['quality-growth', /quality growth|growth|growing|high.?quality|优质|成长/i], ['fallen-leaders', /fallen|beaten|down \d+|from (its |the )?high|cheap|回调|跌了|低位/i],
+      ['smart-money-inflows', /13-?f|funds?|institution|smart money|机构|聪明钱/i], ['low-quality-earnings', /low.?quality|manipulat|beneish|red flag|造假|低质量/i], ['earnings-this-week', /earnings|report|this week|财报|本周/i]];
+    MK.screen = async (lg, ix, q) => {
+      const d = await json(HUB + 'screener.json');
+      if (!d || !d.presets) return null;
+      const hit = PRESET_RX.find(([, rx]) => rx.test(String(q || '')));
+      const names = Object.fromEntries(((ix && ix.companies) || []).filter((x) => x.ticker).map((x) => [fileT(x.ticker), x]));
+      if (hit) {
+        const p = d.presets.find((x) => x.key === hit[0]);
+        if (p) {
+          const ts = p.tickers.slice(0, 10);
+          return { html: L(lg, `<b>${esc(p.title)}</b> — ${esc(p.line)} ${num(p.tickers.length)} companies pass today${ts.length ? ', the first ' + ts.length + ':' : '.'}`, `<b>${esc(p.title)}</b>——${esc(p.line)} 今天有 ${num(p.tickers.length)} 家公司通过${ts.length ? '，前 ' + ts.length + ' 家：' : '。'}`)
+            + (ts.length ? ' ' + ts.map((t) => coLink(t, (names[t] || {}).cik)).join(', ') : ''),
+            facts: [`screen ${p.key}: ${p.tickers.length} pass; ${ts.join(' ')}`], mood: 'talk', links: [lk(`${BASE}disclosures/#screener/${p.key}`, L(lg, 'Open this screen live', '打开实时筛选')), lk(`${BASE}disclosures/screener/`, L(lg, 'All preset screens', '全部预设筛选'))] };
+        }
+      }
+      return { html: L(lg, `The screener holds ${num(d.rows.length)} companies and ${num(d.fields.length - 6)} fields from the filings — growth, margins, cash flow and yields, Piotroski, Altman and Beneish, the quality score, the next report, 13F and insider flows, short interest, cash and runway. Preset screens:`, `筛选器收录 ${num(d.rows.length)} 家公司、${num(d.fields.length - 6)} 个来自财报的字段——增长、利润率、现金流与收益率、Piotroski、Altman、Beneish、质量评分、下次财报、13F 与内部人资金流、空头、现金与跑道。预设筛选：`)
+        + ol(d.presets.map((p) => `<a href="${esc(BASE)}disclosures/#screener/${esc(p.key)}">${esc(p.title)}</a> (${num(p.tickers.length)})`)),
+        facts: d.presets.map((p) => `${p.key}: ${p.tickers.length}`), mood: 'talk', links: [lk(`${BASE}disclosures/#screener`, L(lg, 'Open the screener', '打开筛选器'))] };
+    };
+    // "$10,000 in NVDA in January 2024": the daily closes decoded as the backtest page does
+    const decodeMoves = (doc) => { if (!doc || !doc.last) return null; let days; if (doc.dates) days = doc.dates.slice(); else { const d = new Date(doc.d0 + 'T00:00:00Z'); days = [doc.d0]; for (const ch of doc.gaps || '') { d.setUTCDate(d.getUTCDate() + parseInt(ch, 36)); days.push(d.toISOString().slice(0, 10)); } } const r = doc.r || [], n = Math.min(days.length, r.length + 1), px = new Array(n); let s = 0; for (let i = n - 1; i >= 0; i--) { px[i] = doc.last * Math.exp(-s); if (i > 0) s += r[i - 1] / 1e4; } return { days: days.slice(0, n), px, asOf: doc.as_of }; };
+    const MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+    function whenAsked(q) {
+      const s = String(q || '');
+      let m = /(\d{4})-(\d{2})-(\d{2})/.exec(s);
+      if (m) return m[0];
+      m = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? ?(\d{1,2})?,? ?(20\d\d)/i.exec(s);
+      if (m) return `${m[3]}-${String(MON[m[1].slice(0, 3).toLowerCase()]).padStart(2, '0')}-${String(m[2] || 1).padStart(2, '0')}`;
+      m = /(20\d\d)年(?:(\d{1,2})月)?(?:(\d{1,2})[日号])?/.exec(s);
+      if (m) return `${m[1]}-${String(m[2] || 1).padStart(2, '0')}-${String(m[3] || 1).padStart(2, '0')}`;
+      m = /\b(20[12]\d)\b/.exec(s);
+      if (m) return `${m[1]}-01-01`;
+      m = /(\d+)\s*(years?|yrs?|年)\s*(ago|前)/i.exec(s) || /(ago|前).{0,3}(\d+)\s*(years?|yrs?|年)/i.exec(s);
+      if (m) { const n = +(m[1] || m[2]); const d = new Date(); d.setUTCFullYear(d.getUTCFullYear() - n); return d.toISOString().slice(0, 10); }
+      return null;
+    }
+    const amountAsked = (q) => { const m = /\$ ?([\d,]+(?:\.\d+)?)\s*(k|m|万|千)?|([\d,]+(?:\.\d+)?)\s*(k|万|千)?\s*(美元|dollars|usd|块)/i.exec(String(q || '')); if (!m) return 10000; const v = parseFloat((m[1] || m[3] || '').replace(/,/g, '')), u = (m[2] || m[4] || '').toLowerCase(); return v * (u === 'k' || u === '千' ? 1e3 : u === 'm' ? 1e6 : u === '万' ? 1e4 : 1) || 10000; };
+    async function backtest(c, lg, q) {
+      const T = fileT(c.ticker);
+      const [a, b] = await Promise.all([json(HUB + 'research/paths/moves/a/' + encodeURIComponent(T) + '.json'), json(HUB + 'research/paths/moves/a/SPY.json')]);
+      const S = decodeMoves(a), B = decodeMoves(b);
+      if (!S) return null;
+      let from = whenAsked(q) || S.days[Math.max(0, S.days.length - 252)];
+      if (from < S.days[0]) from = S.days[0];
+      const amt = amountAsked(q);
+      const at = (X, d) => { let lo = 0, hi = X.days.length; while (lo < hi) { const m = (lo + hi) >> 1; if (X.days[m] < d) lo = m + 1; else hi = m; } return lo; };
+      const i0 = at(S, from);
+      if (i0 >= S.days.length - 1) return null;
+      const end = amt * S.px[S.px.length - 1] / S.px[i0], ret = end / amt - 1;
+      const yrs = (Date.parse(S.days[S.days.length - 1]) - Date.parse(S.days[i0])) / (365.25 * 864e5);
+      const cagr = yrs > 0.5 ? Math.pow(end / amt, 1 / yrs) - 1 : null;
+      let bench = '';
+      if (B) { const j = at(B, S.days[i0]); if (j < B.px.length - 1) { const be = amt * B.px[B.px.length - 1] / B.px[j]; bench = L(lg, ` The same money in SPY: <b>${big(be)}</b> (${sp(be / amt - 1)}), so ${esc(c.ticker)} is ${end >= be ? 'ahead' : 'behind'} by ${big(Math.abs(end - be))}.`, ` 同样的钱买 SPY：<b>${big(be)}</b>（${sp(be / amt - 1)}），${esc(c.ticker)} ${end >= be ? '领先' : '落后'} ${big(Math.abs(end - be))}。`); } }
+      const html = L(lg, `<b>${big(amt)}</b> in <b>${esc(c.ticker)}</b> on ${esc(day(S.days[i0]))} at ${'$' + num(S.px[i0], 2)} a share would be <b>${big(end)}</b> at the ${esc(day(S.days[S.days.length - 1]))} close (${sp(ret)}${cagr != null ? `, ${sp(cagr)} a year` : ''}), prices as traded, dividends not counted.${bench}`,
+        `${esc(day(S.days[i0]))} 以每股 ${'$' + num(S.px[i0], 2)} 买入 <b>${big(amt)}</b> 的 <b>${esc(c.ticker)}</b>，到 ${esc(day(S.days[S.days.length - 1]))} 收盘值 <b>${big(end)}</b>（${sp(ret)}${cagr != null ? `，年化 ${sp(cagr)}` : ''}），按交易价格计算，不含股息。${bench}`);
+      return { html, facts: [`${big(amt)} in ${c.ticker} on ${S.days[i0]} → ${big(end)} (${sp(ret)})`], mood: ret > 0 ? 'happy' : 'worried', links: [lk(`${BASE}#backtest/t=${encodeURIComponent(T)}&from=${S.days[i0]}&amt=${Math.round(amt)}`, L(lg, 'The path, with every disclosure marked', '完整路径与每次披露')), lk(`${BASE}c/${slugOf(c)}/timeline/`, L(lg, 'Timeline', '时间线'))] };
+    }
+
     MK.sectors = async (lg) => {
       const d = await json(HUB + 'market/rotation.json');
       if (!d || !d.fields || !d.sectors) return null;
@@ -658,7 +820,7 @@
         facts: rows.map((r) => `${r[1]} relative strength ${r[2][ix.rs]}`), mood: 'talk', links: [lk(`${BASE}disclosures/sector-rotation/`, L(lg, 'Sector rotation', '板块轮动'))] };
     };
 
-    return { owners, insiders, congress, events, cashflow, segments, nextEarnings, ties, shorts, moves, guidanceRecord, investments, brief, why, trend, profile, multiples, debtLoad, MK, STAKES };
+    return { owners, insiders, congress, events, cashflow, segments, nextEarnings, ties, shorts, moves, guidanceRecord, investments, brief, why, trend, profile, multiples, debtLoad, quality, runway, backtest, MK, STAKES };
   }
 
   /* ---------- the next questions under an answer ---------- */
@@ -666,14 +828,15 @@
     owners: ['insiders', 'congress', 'shorts'], insiders: ['owners', 'events'], congress: ['owners', 'insiders'], events: ['moves', 'earnings'], nextEarnings: ['guidanceRecord', 'options', 'segments'],
     ties: ['segments', 'industry'], shorts: ['options', 'moves', 'owners'], moves: ['events', 'opportunity'], rotation: ['industry', 'moves'], options: ['moves', 'nextEarnings'],
     credit: ['cashflow', 'valuation'], analysts: ['valuation', 'nextEarnings'], opportunity: ['rotation', 'moves'], guidanceRecord: ['nextEarnings', 'calls'], investments: ['owners', 'cashflow'],
-    filings: ['events', 'earnings'], industry: ['rotation', 'ties'], calls: ['guidanceRecord', 'nextEarnings'] };
+    filings: ['events', 'earnings'], industry: ['rotation', 'ties'], calls: ['guidanceRecord', 'nextEarnings'], quality: ['cashflow', 'why', 'runway'], runway: ['debtLoad', 'cashflow', 'quality'], backtest: ['moves', 'insiders', 'nextEarnings'] };
   const ASK = { profile: ['What does {t} do?', '{t} 是做什么的？'], multiples: ['{t} P/E and market cap', '{t} 市盈率和市值'], debtLoad: ['How much debt does {t} have?', '{t} 有多少负债？'], brief: ['Brief me on {t}', '{t} 速览'], why: ['Why did {t}\'s results change?', '{t} 业绩为什么变化？'], trend: ['{t} revenue trend', '{t} 营收趋势'], segments: ['How does {t} make money?', '{t} 怎么赚钱？'], cashflow: ['{t} free cash flow', '{t} 自由现金流'], nextEarnings: ['When does {t} report next?', '{t} 下次财报什么时候？'],
     owners: ['Who owns {t}?', '谁持有 {t}？'], insiders: ['Are {t} insiders buying?', '{t} 内部人在买还是卖？'], congress: ['Congress trades in {t}', '国会议员交易 {t}'],
     events: ['{t} latest 8-K', '{t} 最新 8-K'], ties: ['{t} customers and suppliers', '{t} 的客户和供应商'], shorts: ['{t} short interest', '{t} 空头仓位'],
     moves: ['How rare is {t}\'s latest move?', '{t} 最近的涨跌有多罕见？'], guidanceRecord: ['Does {t} meet its guidance?', '{t} 的指引兑现率'], investments: ['{t} investment gains', '{t} 投资收益'],
     valuation: ['What is {t} worth?', '{t} 值多少钱？'], earnings: ['{t} latest earnings', '{t} 最新财报'], credit: ['{t} debt and default risk', '{t} 的债务和违约风险'],
     analysts: ['{t} analyst price target', '{t} 分析师目标价'], options: ['{t} options: range and max pain', '{t} 期权隐含区间'], rotation: ['Will {t} be Leading next week?', '{t} 下周会进入领先吗？'],
-    industry: ['How is {t}\'s industry rotating?', '{t} 所在行业轮动'], opportunity: ['Will {t} go up or down next month?', '{t} 下个月会涨吗？'], calls: ['{t} earnings call guidance', '{t} 电话会议指引'] };
+    industry: ['How is {t}\'s industry rotating?', '{t} 所在行业轮动'], opportunity: ['Will {t} go up or down next month?', '{t} 下个月会涨吗？'], calls: ['{t} earnings call guidance', '{t} 电话会议指引'],
+    quality: ['{t} earnings quality score', '{t} 盈余质量评分'], runway: ['How long can {t}\'s cash last?', '{t} 的现金能撑多久？'], backtest: ['If I had bought {t} a year ago?', '一年前买 {t} 现在值多少？'] };
   function followUps(intents, co, lg, n = 3) {
     if (!co || !co.ticker) return [];
     const seen = new Set(intents), out = [];
@@ -684,7 +847,8 @@
   const MARKET_ASK = [['nextEarnings', 'Who reports earnings this week?', '本周哪些公司发财报？'], ['insiders', 'Biggest insider buying lately', '最近内部人买入最多的股票'],
     ['congress', 'What is Congress trading?', '国会议员最近在交易什么？'], ['owners', 'What did funds buy most last quarter?', '上季度机构买得最多的股票'],
     ['moves', 'Most unusual moves today', '今天最罕见的涨跌'], ['events', 'Latest deals and material 8-Ks', '最新的并购和重大 8-K'], ['shorts', 'Most shorted stocks', '空头最多的股票'],
-    ['guidanceRecord', 'Who raised guidance lately?', '最近谁上调了指引？'], ['sectors', 'Which sectors are leading?', '哪些板块最强？']];
+    ['guidanceRecord', 'Who raised guidance lately?', '最近谁上调了指引？'], ['sectors', 'Which sectors are leading?', '哪些板块最强？'],
+    ['quality', 'Lowest earnings quality scores', '盈余质量最差的公司'], ['screen', 'Find stocks with insiders buying', '找内部人在买的股票'], ['afterEvent', 'Which 8-K items move stocks?', '哪类公告最能推动股价？'], ['insiderSignal', 'Do insider trades predict the stock?', '跟着内部人买靠谱吗？'], ['runway', 'Who is running out of cash?', '哪些公司快没现金了？']];
 
   const marketWords = (q) => MARKET.test(String(q || ''));
   const API = { glossary, GLOSSARY, QLABEL, classify, merge, isMarket, marketWords, isFollow, fuzzyCompany, make, followUps, MARKET_ASK, INTENTS, lev };

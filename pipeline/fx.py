@@ -39,9 +39,21 @@ FRED = {"EUR": ("DEXUSEU", True), "GBP": ("DEXUSUK", True), "AUD": ("DEXUSAL", T
         "BRL": ("DEXBZUS", False), "MXN": ("DEXMXUS", False), "ZAR": ("DEXSFUS", False), "THB": ("DEXTHUS", False),
         "MYR": ("DEXMAUS", False)}
 ECB = {"ILS", "IDR", "PHP", "PLN", "TRY", "CZK", "HUF", "ISK", "RON", "BGN"}
+# every currency the ECB publishes a reference rate for (frankfurter's list): the fallback when FRED does not answer —
+# from GitHub's runners fredgraph.csv timed out on every scan of Nov 2 2026, so TSMC, ASML, Cameco and Novo Nordisk were
+# left out of the chains and no foreign filer had dollar charts (store/fx.json had stayed empty)
+ECB_ALL = ECB | {"AUD", "BRL", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD",
+                 "SEK", "SGD", "THB", "ZAR"}
+# the U.S. Treasury's quarterly reporting rates (fiscaldata.treasury.gov), last resort for what the ECB does not publish
+TREASURY = {"TWD": "Taiwan-Dollar", "CLP": "Chile-Peso", "COP": "Colombia-Peso", "ARS": "Argentina-Peso", "PEN": "Peru-Sol",
+            "VND": "Vietnam-Dong", "SAR": "Saudi Arabia-Riyal", "AED": "United Arab Emirates-Dirham", "EGP": "Egypt-Pound"}
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={start}"
 ECB_URL = "https://api.frankfurter.app/{start}..{end}?from=USD&to={cur}"
+TREASURY_URL = ("https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange"
+                "?fields=record_date,exchange_rate&filter=country_currency_desc:eq:{name},record_date:gte:{start}&page[size]=400")
 START = "2015-01-01"
+_down = set()                   # hosts that did not answer this run: not asked again (each try cost a 30-second timeout)
+_tried = {}                     # currency -> rates already fetched (or failed) this run
 
 _cur = ["USD"]
 
@@ -136,9 +148,50 @@ def _get(url):
     if sec.FIXTURES:
         return sec.get(url)
     import requests
-    r = requests.get(url, headers={"User-Agent": "FilingFlows/1.0 (exchange rates for charts)"}, timeout=30)
-    r.raise_for_status()
+    from urllib.parse import urlsplit
+    host = urlsplit(url).netloc
+    if host in _down:
+        raise RuntimeError(f"{host} did not answer earlier this run")
+    try:
+        r = requests.get(url, headers={"User-Agent": "FilingFlows/1.0 (exchange rates for charts)"}, timeout=(8, 20))
+        r.raise_for_status()
+    except requests.exceptions.RequestException:
+        _down.add(host)
+        raise
     return r.text
+
+
+def _fred(cur):
+    sid, usd_per = FRED[cur]
+    out = {}
+    for row in csv.reader(io.StringIO(_get(FRED_URL.format(sid=sid, start=START)))):
+        if len(row) >= 2 and re.fullmatch(r"\d{4}-\d\d-\d\d", row[0]):
+            try:
+                v = float(row[1])
+            except ValueError:
+                continue
+            if v > 0:
+                out[row[0]] = v if usd_per else 1 / v
+    return out
+
+
+def _ecb(cur, today):
+    d = json.loads(_get(ECB_URL.format(start=START, end=today, cur=cur)))
+    return {day: 1 / float(r[cur]) for day, r in (d.get("rates") or {}).items() if (r or {}).get(cur)}
+
+
+def _treasury(cur):
+    """quarter-end rates (units per dollar) → {day: dollars per unit}"""
+    d = json.loads(_get(TREASURY_URL.format(name=TREASURY[cur], start=START)))
+    out = {}
+    for r in d.get("data") or []:
+        try:
+            v = float(r.get("exchange_rate"))
+        except (TypeError, ValueError):
+            continue
+        if v > 0 and re.fullmatch(r"\d{4}-\d\d-\d\d", r.get("record_date") or ""):
+            out[r["record_date"]] = 1 / v
+    return out
 
 
 def daily(cur, cache):
@@ -149,29 +202,31 @@ def daily(cur, cache):
     c = cache.get(cur) or {}
     if c.get("at") == today and c.get("d"):
         return c["d"]
+    if cur in _tried:                                     # asked once this run, answered or not
+        return _tried[cur]
     out = dict(c.get("d") or {})
-    try:
-        if cur in FRED:
-            sid, usd_per = FRED[cur]
-            for row in csv.reader(io.StringIO(_get(FRED_URL.format(sid=sid, start=START)))):
-                if len(row) >= 2 and re.fullmatch(r"\d{4}-\d\d-\d\d", row[0]):
-                    try:
-                        v = float(row[1])
-                    except ValueError:
-                        continue
-                    if v > 0:
-                        out[row[0]] = v if usd_per else 1 / v
-        elif cur in ECB:
-            d = json.loads(_get(ECB_URL.format(start=START, end=today, cur=cur)))
-            for day, r in (d.get("rates") or {}).items():
-                v = (r or {}).get(cur)
-                if v:
-                    out[day] = 1 / float(v)
-    except Exception as e:
-        print(f"  exchange rates {cur}: {str(e)[:120]}")
+    src = c.get("src")
+    # the sources in order: FRED (the Fed's H.10 daily rates), the ECB's reference rates, the Treasury's quarterly ones
+    for name, ok, fetch in (("fred", cur in FRED, lambda: _fred(cur)), ("ecb", cur in ECB_ALL, lambda: _ecb(cur, today)),
+                            ("treasury", cur in TREASURY, lambda: _treasury(cur))):
+        if not ok:
+            continue
+        try:
+            got = fetch()
+        except Exception as e:
+            print(f"  exchange rates {cur} ({name}): {str(e)[:120]}")
+            continue
+        if got:
+            out.update(got)
+            src = name
+            break
+    else:
+        _tried[cur] = out
         if not out:
             return {}
-    cache[cur] = {"at": today, "d": out, "src": "fred" if cur in FRED else "ecb"}
+        return out                                         # nothing new today: what is on file serves, tried again tomorrow
+    cache[cur] = {"at": today, "d": out, "src": src}
+    _tried[cur] = out
     return out
 
 
@@ -186,8 +241,8 @@ def period_start(end, annual):
 
 
 def source_name(cur, cache):
-    return ("Federal Reserve H.10 rates, via FRED" if (cache.get(cur) or {}).get("src", "fred" if cur in FRED else "ecb") == "fred"
-            else "ECB reference rates")
+    src = (cache.get(cur) or {}).get("src", "fred" if cur in FRED else "ecb")
+    return {"fred": "Federal Reserve H.10 rates, via FRED", "treasury": "U.S. Treasury reporting rates of exchange (quarterly)"}.get(src, "ECB reference rates")
 
 
 def rates_for(c, cache):

@@ -19,7 +19,7 @@ def quarter(label, filed, rev, dc, gp, oi, net, k):
     """revenue, its two lines, gross and operating profit, net earnings; q = the quarter before, y = a year earlier (×k)"""
     def n(i, name, v):
         return {"id": i, "name": name, "v": v, "q": v / 1.1, "y": v / k}
-    nodes = [n("G:x:DataCenterMember", "Data Center", dc), n("L:x:GamingMember", "Gaming", rev - dc), n("revenue", "Revenue", rev),
+    nodes = [n("G:x:DataCenterMember", "Data Center", dc), n("L:x:GamingMember", "Gaming Member", rev - dc), n("revenue", "Revenue", rev),
              n("gp", "Gross profit", gp), n("oi", "Operating profit", oi), n("net", "Net earnings", net), n("I:rd", "Research &amp; development", rev * .1)]
     links = [{"s": "G:x:DataCenterMember", "t": "revenue", "v": dc}, {"s": "L:x:GamingMember", "t": "revenue", "v": rev - dc},
              {"s": "revenue", "t": "gp", "v": gp}, {"s": "gp", "t": "oi", "v": oi}, {"s": "oi", "t": "net", "v": net}]
@@ -29,8 +29,8 @@ def quarter(label, filed, rev, dc, gp, oi, net, k):
 
 def site(tmp):
     w(tmp / "data" / "index.json", {"companies": [{"cik": 1, "ticker": "NVDA", "name": "NVIDIA CORP", "filed": "2026-08-26"}]})
-    qs = [quarter("Q2 FY27", "2026-08-26", 9.62e10, 8.9e10, 7.2e10, 6.37e10, 5.97e10, 2.06),
-          quarter("Q1 FY27", "2026-05-27", 8.16e10, 7.5e10, 6.1e10, 5.3e10, 4.9e10, 1.9),
+    qs = [dict(quarter("Q2 FY27", "2026-08-26", 9.62e10, 8.9e10, 7.2e10, 6.37e10, 5.97e10, 2.06), label_was="Q2 FY28"),
+          dict(quarter("Q1 FY27", "2026-05-27", 8.16e10, 7.5e10, 6.1e10, 5.3e10, 4.9e10, 1.9), label_was="Q1 FY28"),
           quarter("Q4 FY26", "2026-02-25", 7.0e10, 6.2e10, 5.2e10, 4.5e10, 4.2e10, 1.8),
           quarter("Q3 FY26", "2025-11-19", 6.0e10, 5.3e10, 4.4e10, 3.8e10, 3.5e10, 1.7)]
     w(tmp / "data" / "c" / "1.json", {"quarters": qs})
@@ -56,6 +56,13 @@ def test_history(tmp_path):
     assert "reported revenue of $96.2B for the second quarter fiscal 2027 (Q2 FY27), +106% from a year earlier and +10% from the quarter before" in q
     assert '"text": "NVIDIA (NVDA) reported revenue of $96.2B' in q and "data-label='Q2 FY27'" in q and "seo-quarter.js" in q
     assert "q2-fy27-vs-q1-fy27/" in q and "q2-fy27-vs-q2-fy26/" in q and "../q1-fy27/" in q
+    # the quarters renamed by the pipeline (label_was): the old addresses send on and are not in the sitemaps
+    moved = (s / "c" / "nvda" / "q2-fy28" / "index.html").read_text()
+    assert "noindex" in moved and "/c/nvda/q2-fy27/" in moved
+    assert "/c/nvda/q2-fy27-vs-q1-fy27/" in (s / "c" / "nvda" / "q2-fy28-vs-q1-fy28" / "index.html").read_text()
+    assert "/c/nvda/q2-fy27-vs-q2-fy26/" in (s / "c" / "nvda" / "q2-fy28-vs-q2-fy27" / "index.html").read_text()
+    maps = (s / "sitemap-quarters.xml").read_text() + (s / "sitemap-periods.xml").read_text()
+    assert "fy28" not in maps
     qoq = (s / "c" / "nvda" / "q2-fy27-vs-q1-fy27" / "index.html").read_text()
     assert "NVIDIA&#x27;s revenue rose $8.7B (+10%) from $87.5B in Q1 FY27" in qoq or "NVIDIA's revenue rose" in qoq
     assert "The biggest changes: Data Center +$8.1B (+10%)" in qoq.replace("&#x27;", "'")
@@ -64,8 +71,12 @@ def test_history(tmp_path):
     gm = (s / "c" / "nvda" / "gross-margin" / "index.html").read_text()
     assert "gross margin was 74.8% in Q2 FY27" in gm.replace("&#x27;", "'") and "Over the last 4 quarters" in gm
     assert (s / "c" / "nvda" / "data-center-revenue" / "index.html").exists() and (s / "c" / "nvda" / "research-and-development" / "index.html").exists()
+    gaming = (s / "c" / "nvda" / "gaming-revenue" / "index.html").read_text()                  # "Gaming Member" → Gaming
+    assert "Gaming revenue by quarter" in gaming and "Gaming Member" not in gaming
+    moved = (s / "c" / "nvda" / "gaming-member-revenue" / "index.html").read_text()            # the old address sends on
+    assert "noindex" in moved and "/c/nvda/gaming-revenue/" in moved and "gaming-member-revenue" not in (s / "sitemap-metrics.xml").read_text()
     gh = (s / "c" / "nvda" / "guidance-history" / "index.html").read_text().replace("&#x27;", "'")
-    assert "met or beat its own guidance 2 times (100%)" in gh and "raised guidance 3 times and lowered it 1 times" in gh
+    assert "met or beat its own guidance twice (100%)" in gh and "raised guidance 3 times and lowered it once" in gh
     assert "$91.0B–$95.0B (May 27, 2026)" in gh and "above the range" in gh and "+3.4%" in gh and "to be reported" in gh
     main = (s / "c" / "nvda" / "index.html").read_text()
     assert 'class="seo-history"' in main and "q3-fy26/" in main and "guidance-history/" in main

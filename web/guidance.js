@@ -920,8 +920,9 @@
       const moves = { raised: 0, lowered: 0, reaffirmed: 0, narrowed: 0, widened: 0 };
       m.rows.forEach((sr) => sr.guides.slice(1).forEach((gd) => { moves[gd.change] = (moves[gd.change] || 0) + 1; if (gd.range) moves[gd.range] += 1; }));
       m.moves = moves;
-      m.name = `${m.basis === 'non-GAAP' ? 'Adjusted ' : m.basis === 'GAAP' && m.metric !== 'revenue' ? 'GAAP ' : ''}${(NAMES[m.metric] || m.metric).replace(/^./, (c) => (m.basis ? c.toLowerCase() : c))}`;
-      m.name = m.name.replace(/^(GAAP|Adjusted) (.)/, (x, a, b) => `${a} ${b.toLowerCase()}`).replace(/^./, (c) => c.toUpperCase());
+      // "Adjusted free cash flow", "GAAP net income" — but an initialism keeps its capitals ("Adjusted EBITDA", not "eBITDA")
+      m.name = `${m.basis === 'non-GAAP' ? 'Adjusted ' : m.basis === 'GAAP' && m.metric !== 'revenue' ? 'GAAP ' : ''}${(NAMES[m.metric] || m.metric).replace(/^.(?=[a-z])/, (c) => (m.basis ? c.toLowerCase() : c))}`;
+      m.name = m.name.replace(/^(GAAP|Adjusted) (.)(?=[a-z])/, (x, a, b) => `${a} ${b.toLowerCase()}`).replace(/^./, (c) => c.toUpperCase());
       return m;
     }).filter((m) => m.rows.length);
     const order = (m) => [RECORD_METRICS.indexOf(m.metric) < 0 ? 99 : RECORD_METRICS.indexOf(m.metric), m.basis === 'non-GAAP' ? 1 : 0, -m.hits.n];
