@@ -102,19 +102,23 @@ def runway(c, qs, ttm):
     debt = v.get('debt') if v.get('debt') is not None else (v.get('b_ltd') or 0) + (v.get('b_stb') or 0)
     f_ttm = fcf(ttm) if ttm else None
     f_q = fcf(qs[-1]) if qs else None
-    rec = [fcf(x) for x in qs[-4:]]
+    ocf_ttm = ((ttm or {}).get('items') or {}).get('ocf')
+    ocf_q = [(x.get('items') or {}).get('ocf') for x in qs[-4:]]
+    # a runway is the question only when the business itself consumes cash. A company whose operations bring cash in and
+    # whose capital spending is larger (Amazon, a utility building plant) funds the gap by choice, from cash and
+    # borrowing: "0 months of runway" for Ameren or FirstEnergy said something false.
     burn = None
-    if f_ttm is not None and f_ttm < 0:
+    if ocf_ttm is not None and ocf_ttm < 0 and f_ttm is not None and f_ttm < 0:
         burn = -f_ttm                                                   # a year's burn at the trailing rate
-    elif f_q is not None and f_q < 0 and sum(1 for x in rec if x is not None and x < 0) >= 2:
-        burn = -4 * f_q                                                 # turned negative recently: the latest quarter annualised
-    months = 12 * cash / burn if burn else None
+    elif ocf_q and ocf_q[-1] is not None and ocf_q[-1] < 0 and f_q is not None and f_q < 0 and sum(1 for x in ocf_q if x is not None and x < 0) >= 2:
+        burn = -4 * f_q                                                 # operations turned to burning cash recently: the latest quarter annualised
+    months = 12 * cash / burn if burn and cash > 0 else None           # no cash on file is a gap in the data, not zero months
     mat = (Q.get('cap') or {}).get('maturities') or {}
     buckets = [(b[0], b[1]) for b in mat.get('buckets') or [] if len(b) >= 2 and b[1]]
     due12 = next((a for k, a in buckets if k == 1), None)
     if due12 is None and v.get('b_ltd_c') is not None:
         due12 = (v.get('b_ltd_c') or 0) + (v.get('b_stb') or 0)
-    return {'cash': cash, 'debt': debt, 'net': cash - (debt or 0), 'fcf_ttm': f_ttm, 'ocf_ttm': ((ttm or {}).get('items') or {}).get('ocf'), 'fcf_q': f_q, 'burn': burn, 'months': months, 'due12': due12,
+    return {'cash': cash, 'debt': debt, 'net': cash - (debt or 0), 'fcf_ttm': f_ttm, 'ocf_ttm': ocf_ttm, 'fcf_q': f_q, 'burn': burn, 'months': months, 'due12': due12,
             'buckets': buckets, 'label': mat.get('label'), 'at': v.get('end') or mat.get('at')}
 
 
@@ -124,15 +128,21 @@ def runway_section(name, rw):
     tiles = [('Cash & investments', money(rw['cash'])), ('Debt', money(rw['debt']) if rw['debt'] else 'none'), ('Net cash' if rw['net'] >= 0 else 'Net debt', money(abs(rw['net']))),
              ('Due within a year', money(rw['due12']) if rw['due12'] else None)]
     if rw['months'] is not None:
-        tiles.append(('Cash runway', f"{rw['months'] / 12:.1f} years" if rw['months'] >= 24 else f"{rw['months']:.0f} months"))
-    if rw['burn']:
-        how = (f"{name} is burning cash: operations themselves consumed cash" if (rw.get('ocf_ttm') or 0) < 0 else
-               f"{name} is spending more on capital than operations bring in") + f", a free cash flow of {money(-rw['burn'])} a year at the current rate"
+        tiles.append(('Cash runway', f"{rw['months'] / 12:.1f} years" if rw['months'] >= 24 else seo.n_of(rw['months'], 'month')))
+    if rw['burn'] and rw['months'] is not None:
+        how = f"{name} is burning cash: its operations consume cash, a free cash flow of {money(-rw['burn'])} a year at the current rate"
         line = (how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{rw['months'] / 12:.1f} years</b>" if rw['months'] >= 24 else
-                how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{rw['months']:.0f} months</b>")
+                how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{seo.n_of(rw['months'], 'month')}</b>")
         if rw['due12']:
             line += f"; {money(rw['due12'])} of debt also comes due within a year, which {'the cash covers' if rw['cash'] >= rw['due12'] + rw['burn'] else 'would need refinancing or new money'}"
         line += ' before any new financing.'
+    elif rw['burn']:
+        line = f"{name}'s operations consume cash (free cash flow {money(-rw['burn'])} a year), and no cash balance is on file to set against it."
+    elif (rw.get('fcf_ttm') or 0) < 0 and (rw.get('ocf_ttm') or 0) > 0:
+        line = (f"{name}'s operations bring cash in ({money(rw['ocf_ttm'])} over twelve months), and it spends more than that on capital projects: a gap of "
+                f"{money(-rw['fcf_ttm'])} funded from its {money(rw['cash'])} of cash and investments and from borrowing"
+                + (f" ({money(rw['debt'])} of debt" + (f", {money(rw['due12'])} due within a year" if rw['due12'] else '') + ')' if rw['debt'] else '')
+                + ". That is a choice to invest, not a cash runway running down.")
     else:
         line = (f"{name} funds itself: free cash flow was {money(rw['fcf_ttm'])} over the last twelve months"
                 + (f", and {money(rw['cash'])} of cash and investments stands against {money(rw['debt'])} of debt" if rw['debt'] else f", with {money(rw['cash'])} of cash and investments and no debt on the balance sheet")
@@ -381,20 +391,21 @@ def runway_page(site, base, cards):
     if not cards:
         return None
     L = lambda c: f"<a href='../../c/{c['slug']}/cash-flow/'><b>{e(c['ticker'])}</b></a> {e(c['name'])}"
-    burners = sorted([c for c in cards if c.get('months') is not None], key=lambda c: c['months'])
+    burners = sorted([c for c in cards if c.get('months') is not None and (c.get('cash') or 0) > 0], key=lambda c: c['months'])
     walls = sorted([c for c in cards if c.get('due12') and c['cash'] > 0 and c['due12'] > c['cash']], key=lambda c: -c['due12'] / c['cash'])[:30]
     forts = sorted([c for c in cards if c['net'] > 0 and (c.get('fcf_ttm') or 0) > 0], key=lambda c: -c['net'])[:30]
     yrs = lambda m: f"{m / 12:.1f} yrs" if m >= 24 else f"{m:.0f} mo"
     n_burn = len(burners)
-    lead = (f"Of {len(cards):,} companies with a balance sheet on file, {n_burn:,} have negative free cash flow at the current rate, "
-            f"{sum(1 for c in burners if (c.get('ocf_ttm') or 0) < 0)} of them because operations themselves consume cash"
-            + (f"; {sum(1 for c in burners if c['months'] < 12):,} have less than a year of runway without new money" if burners else '')
+    gap = sum(1 for c in cards if (c.get('fcf_ttm') or 0) < 0 and (c.get('ocf_ttm') or 0) > 0)
+    lead = (f"Of {len(cards):,} companies with a balance sheet on file, {n_burn:,} have operations that consume cash"
+            + (f"; {sum(1 for c in burners if c['months'] < 12):,} of them have less than a year of runway without new money" if burners else '')
+            + f". Another {gap:,} bring cash in from operations but spend more on capital projects, a gap they fund by choice (not counted as burning)"
             + f". {len(walls):,} have more debt due within a year than cash on hand. Figures are from the companies' own cash-flow statements and balance sheets as filed.")
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Cash runway</p><h1>Cash runway: who is burning cash, and how long it lasts</h1>"
             f"<p class='lead'>{e(lead)}</p>")
     if burners:
-        body += "<h2 id='burning'>Shortest runway</h2>" + seo_table(['Company', 'Cash & investments', 'Free cash flow, a year', 'Operations', 'Runway', 'Due within a year'], [
-            [L(c), money(c['cash']), money(-c['burn']), 'consume cash' if (c.get('ocf_ttm') or 0) < 0 else 'positive; capex exceeds', yrs(c['months']), money(c['due12']) if c['due12'] else '—'] for c in burners[:40]])
+        body += "<h2 id='burning'>Shortest runway</h2>" + seo_table(['Company', 'Cash & investments', 'Free cash flow, a year', 'Runway', 'Due within a year'], [
+            [L(c), money(c['cash']), money(-c['burn']), yrs(c['months']), money(c['due12']) if c['due12'] else '—'] for c in burners[:40]])
         body += SV.hbars([(f"{c['ticker']} {c['name'][:28]}", c['months']) for c in burners[:15]], lambda v: yrs(v), 'Shortest cash runway at the current burn', n=15, color=SV.RED)
     if walls:
         body += "<h2 id='walls'>Debt walls: more due within a year than cash</h2>" + seo_table(['Company', 'Due within a year', 'Cash & investments', 'Coverage', 'Free cash flow, 12 months'], [

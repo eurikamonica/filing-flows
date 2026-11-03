@@ -113,8 +113,8 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
         return None
     h = q.get('headline') or {}
     yoy, qoq = chg(rev[1], rev[3]), chg(rev[1], rev[2])
-    lead = f"{who} reported revenue of {money(rev[1])} for the {words} ({lab})" + (f", {pc(yoy)} from a year earlier" if yoy is not None else '') + (
-        f" and {pc(qoq)} from the quarter before" if qoq is not None else '') + '.'
+    lead = f"{who} reported revenue of {money(rev[1])} for the {words} ({lab})" + (f", {seo.vs(yoy, 'a year earlier')}" if yoy is not None else '') + (
+        f" and {seo.vs(qoq, 'the quarter before')}" if qoq is not None else '') + '.'
     # net earnings: the figure the chart draws (headline.ni), whichever node holds it (net, netinc, or netloss as a loss)
     net = h.get('ni') if h.get('ni') is not None else (n['net'][1] if 'net' in n else n['netinc'][1] if 'netinc' in n else -n['netloss'][1] if 'netloss' in n and n['netloss'][1] is not None else None)
     om = margin(n, 'oi', 1)
@@ -232,7 +232,7 @@ def metric_page(r, c, base, slug, who, name, mslug, label, key, kind):
     fmt = (lambda v: f'{v:.1f}%') if kind == 'ratio' else money
     latest, prev = s[0], s[1]
     hi, lo = max(s, key=lambda x: x[1]), min(s, key=lambda x: x[1])
-    delta = (f"{pts(latest[1] - prev[1])} from {prev[0]}" if kind == 'ratio' else f"{pc(chg(latest[1], prev[1]))} from {prev[0]}")
+    delta = (f"{pts(latest[1] - prev[1])} from {prev[0]}" if kind == 'ratio' else seo.vs(chg(latest[1], prev[1]), prev[0]))
     were = "were" if label.lower().endswith(("expenditures", "costs", "expenses", "sales", "earnings")) else "was"
     lead = (f"{seo.poss(name)} {label} {were} {fmt(latest[1])} in {latest[0]} ({seo.period_words(latest[0])}), {delta}. "
             f"Over the last {len(s)} quarters it ranged from {fmt(lo[1])} ({lo[0]}) to {fmt(hi[1])} ({hi[0]}).")
@@ -272,6 +272,15 @@ def segment_metrics(c):
             out.append((f'{s}-revenue' if 'revenue' not in s else s, f'{lbl} revenue', k,
                         (f'{was}-revenue' if 'revenue' not in was else was) if was and was != s else None))
     return out
+
+
+def send_on(d, old_slug, url, name):
+    """the old address of a renamed page (c/<slug>/<old_slug>/) sends on to url, unless a page of its own is there"""
+    if not old_slug or os.path.exists(os.path.join(d, old_slug, 'index.html')):
+        return
+    os.makedirs(os.path.join(d, old_slug), exist_ok=True)
+    with open(os.path.join(d, old_slug, 'index.html'), 'w', encoding='utf-8') as f:
+        f.write(moved_page(url, name))
 
 
 def moved_page(url, name):
@@ -386,12 +395,20 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 put(os.path.join(d, qslug(lab)), *out, 'quarters')
                 counts['quarters'] += 1
                 links.append((f'{qslug(lab)}/', f'{lab} results'))
+                if q.get('label_was') and qslug(q['label_was']) != qslug(lab):         # "Q3 FY27" → Q3 2026 (pipeline relabel)
+                    send_on(d, qslug(q['label_was']), out[0], f'{who} {lab} results')
             if has_period:
                 for mode in ('qoq', 'yoy'):
                     out = period_page(r, c, i, base, slug, who, name, mode)
                     if out:
-                        put(os.path.join(d, out[0].rstrip('/').rsplit('/', 1)[1]), *out, 'periods')
+                        pslug = out[0].rstrip('/').rsplit('/', 1)[1]
+                        put(os.path.join(d, pslug), *out, 'periods')
                         counts[mode] += 1
+                        other = c['quarters'][i + 1] if mode == 'qoq' and i + 1 < len(c['quarters']) else None
+                        o_was = (other.get('label_was') or other.get('label')) if other else year_ago(q.get('label_was') or lab)
+                        old = f"{qslug(q.get('label_was') or lab)}-vs-{qslug(o_was)}" if o_was else None
+                        if old and old != pslug:
+                            send_on(d, old, out[0], f'{who} {lab} compared')
         mlinks = []
         for mslug, label, (key, kind) in METRICS:
             out = metric_page(r, c, base, slug, who, name, mslug, label, key, kind)
@@ -405,10 +422,8 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 put(os.path.join(d, mslug), *out, 'metrics')
                 counts['metrics'] += 1
                 mlinks.append((f'{mslug}/', f'{name} {label} by quarter'))
-                if old_slug and old_slug != mslug and not os.path.exists(os.path.join(d, old_slug, 'index.html')):
-                    os.makedirs(os.path.join(d, old_slug), exist_ok=True)                 # "ethanol-member-revenue" → ethanol-revenue
-                    with open(os.path.join(d, old_slug, 'index.html'), 'w', encoding='utf-8') as f:
-                        f.write(moved_page(out[0], f'{who} {label} by quarter'))
+                if old_slug and old_slug != mslug:                                        # "ethanol-member-revenue" → ethanol-revenue
+                    send_on(d, old_slug, out[0], f'{who} {label} by quarter')
         rec = read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))
         if rec:
             out = guidance_page(r, rec, base, slug, who, name)

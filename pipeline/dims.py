@@ -280,7 +280,10 @@ def ytd_values(facts, end):
 # members that are no revenue line: the total itself, or per-share rows that slip onto the axis (Interactive Brokers:
 # "Basic" and "Diluted" beside "Revenues"); a member below the tolerance cannot be told from rounding either
 NOT_LINES = {"basic", "diluted", "revenues", "revenue", "total revenues", "total revenue", "total", "net revenues"}
-NOT_A_LINE = re.compile(r"\bper\b.*\bshare\b|\bper unit\b|\bdividend|\bweighted\b|\beps\b")    # per-share rows (Tractor Supply's
+NOT_A_LINE = re.compile(r"\bper\b.*\bshare\b|\bper unit\b|\bdividend|\bweighted\b|\beps\b|^segment total$|^total (?:reportable )?segments$|^reportable segments total$")    # per-share rows (Tractor Supply's
+# a member that is itself a subtotal of other members (ASU 2023-07's "all reportable segments" aggregation: Chevron's
+# ReportableSegmentAggregationBeforeOtherOperatingSegmentMember, "Segment Total"): never a revenue line
+AGGREGATE_ID = re.compile(r"Aggregation|SegmentTotal|TotalSegments|TotalReportableSegment", re.I)
                                                                                                # "dividends declared per common share")
 
 
@@ -301,7 +304,7 @@ def best_partition(members, total, unit=None):
     floor = unit if unit is not None else TOL * abs(total)
     items = [(m, lab, v) for m, (lab, v) in members.items()
              if v >= floor and v > 0 and str(lab or "").strip().lower() not in NOT_LINES
-             and not NOT_A_LINE.search(str(lab or "").lower())]
+             and not NOT_A_LINE.search(str(lab or "").lower()) and not AGGREGATE_ID.search(str(m or ""))]
     items.sort(key=lambda x: -x[2])
     items = items[:14]
     best = None

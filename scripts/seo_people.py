@@ -72,7 +72,8 @@ def line_svg(rows, w=860, h=260):
     x = lambda i: 48 + i * (w - 64) / (len(pts) - 1)
     y = lambda v: 16 + (hi - v) * (h - 48) / (hi - lo)
     path = lambda k: " ".join(f"{'M' if i == 0 else 'L'}{x(i):.1f},{y(r[k]):.1f}" for i, r in enumerate(pts))
-    ticks = "".join(f"<text x='{x(i):.1f}' y='{h - 8}' font-size='11' text-anchor='middle' fill='currentColor' opacity='.65'>{e(r[0])}</text>"
+    anchor = lambda i: 'start' if i == 0 else 'end' if i == len(pts) - 1 else 'middle'       # the ends stay inside the chart
+    ticks = "".join(f"<text x='{x(i):.1f}' y='{h - 8}' font-size='11' text-anchor='{anchor(i)}' fill='currentColor' opacity='.65'>{e(r[0])}</text>"
                     for i, r in enumerate(pts) if i % max(1, len(pts) // 6) == 0 or i == len(pts) - 1)
     base = f"<line x1='48' x2='{w - 16}' y1='{y(1.0):.1f}' y2='{y(1.0):.1f}' stroke='currentColor' opacity='.25' stroke-dasharray='3 3'/>"
     return (f"<svg viewBox='0 0 {w} {h}' role='img' aria-label='Clone portfolio against SPY'>{base}"
@@ -112,8 +113,9 @@ value-weighted over the common-share positions with a price ({pct(c.get('coverag
 no costs). A 13F lists only US long positions at quarter end, reported up to 45 days later.</p>
 <h2>Largest holdings ({e(m['period'])})</h2>
 {SV.hbars([(f"{h[0]} · {seo.display_name(h[1])}", h[3]) for h in (m.get('holdings') or []) if h[0]], money, f"{name}: largest 13F holdings, {m['period']}", n=15)}
-{SV.diverging([(a[0], a[2]) for a in (m.get('adds') or []) if a[2] is not None] + [(a[0], -abs(a[2])) for a in (m.get('cuts') or []) if a[2] is not None],
-              lambda v: f"{v:+.0f}%", f"{name}: biggest adds and cuts in the quarter (change in shares)", n=14)}
+{SV.diverging([(a[0], a[2]) for a in (m.get('adds') or []) if a[2] is not None and (a[1] or '').upper() == 'INCREASE']
+              + [(a[0], -abs(a[2])) for a in (m.get('cuts') or []) if a[2] is not None and (a[1] or '').upper() == 'DECREASE'],
+              lambda v: f"{v:+.0f}%", f"{name}: positions grown and trimmed in the quarter (change in shares; new positions and exits are listed below)", n=14)}
 <div class="tbl-wrap"><table><thead><tr><th>Ticker</th><th>Company</th><th class="num">Weight</th><th class="num">Value</th><th>Change in the quarter</th></tr></thead><tbody>{rows}</tbody></table></div>
 <h2>Biggest adds</h2><ul class="seo-list">{lst(m.get('adds') or []) or '<li class="muted">None reported.</li>'}</ul>
 <h2>Biggest cuts</h2><ul class="seo-list">{lst(m.get('cuts') or []) or '<li class="muted">None reported.</li>'}</ul>
@@ -150,6 +152,8 @@ def official_page(o, base):
                   for t in (o.get("recent") or [])[:30])
     tot = {}
     for x in o.get("recent") or []:
+        if not x[1]:                                            # a trade without a ticker (a fund, a bond): not a bar
+            continue
         mid = ((x[3] or 0) + (x[4] or x[3] or 0)) / 2
         k = (x[1], 'buy' if 'purchase' in str(x[2]).lower() else 'sell')
         tot[k] = tot.get(k, 0) + mid

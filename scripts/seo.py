@@ -91,6 +91,21 @@ def person(name):
     return _names.person(name)
 
 
+ENTITY = re.compile(r"\b(?:INC|LLC|L\.L\.C|LP|L\.P|LLP|LTD|LIMITED|CORP|CORPORATION|CO|COMPANY|FUNDS?|CAPITAL|PARTNERS(?:HIP)?|MANAGEMENT|TRUSTS?|TRUSTEES?"
+                    r"|ADVISORS|ADVISERS|ADVISORY|HOLDINGS?|GROUP|GMBH|SA|S\.A|NV|N\.V|BV|B\.V|PLC|AG|SE|SARL|PTE|SPA|S\.P\.A|SICAV|SICAF|VENTURES"
+                    r"|INVESTMENTS?|INVESTORS|ASSOCIATES|ASSETS?|EQUITY|EQUITIES|FOUNDATION|BANK|BANCORP|ENTERPRISES|INDUSTRIES|TECHNOLOGIES|SYSTEMS"
+                    r"|INTERNATIONAL|GLOBAL|ACQUISITION|SPONSOR|ESTATE|UNIVERSITY|COLLEGE|PENSION|RETIREMENT|INSURANCE|SECURITIES|FINANCIAL|FINANCE"
+                    r"|RESEARCH|MASTER|OFFSHORE|STRATEGIES|STRATEGIC|OPPORTUNIT(?:Y|IES)|SUB|MERGER|FAMILY|OFFICE|KG|OY|AB|ASA|AS|SPV)\b", re.I)
+
+
+def filer(name):
+    """a Form 4 or 13D filer's name as the filing writes it, in capitals, cased: a person's word by word ('KIRK RONALD' →
+    Kirk Ronald, the filing's word order kept), an entity's as a company's ('KKR GROUP LP' → KKR Group LP)"""
+    if not name:
+        return name
+    return _names.cased(name) if ENTITY.search(name) else _names.person(name)
+
+
 def label(text):
     """A chart line's label as the pages print it: the XBRL member leftovers gone ('Retail Revenue Member' → Retail Revenue)."""
     return _dims.clean_label(html.unescape(str(text or "")))
@@ -108,6 +123,15 @@ def ratio(x, rev):
     return v if abs(v) < MEANINGFUL else None
 
 
+def vs(v, what):
+    """a change in a sentence: '+12% from a year earlier', '−0.4% from Q1 2026', 'up 15-fold from Q2 2026' (a sliver's base)"""
+    if v is None:
+        return f"— from {what}"
+    if v >= MEANINGFUL:
+        return f"up {1 + v / 100:,.0f}-fold from {what}"
+    return f"{pct(v)} from {what}"
+
+
 def times(n):
     """'once', 'twice', '3 times'."""
     try:
@@ -123,6 +147,8 @@ def money(v):
     a, s = abs(v), "−" if v < 0 else ""
     if a < 500:
         return "$0" if a < 0.5 else f"{s}${a:,.0f}"                # "$0 in penalties", not "$0K"
+    if a >= 999.95e9:
+        return f"{s}${a / 1e12:.2f}T"                              # $6.90T (a 13F filer's assets), not $6897.7B
     if a >= 999.5e6:
         return f"{s}${a / 1e9:.1f}B"                               # $1.0B, $113.2B
     if a >= 99.95e6:
@@ -160,6 +186,8 @@ def pct(v, signed=True):
     if v is None:
         return "—"
     if signed:
+        if v >= MEANINGFUL:                                     # +2627% from a sliver: 27× reads
+            return f"{1 + v / 100:,.0f}×"
         return "0%" if abs(v) < 0.05 else f"{v:+.1f}%" if abs(v) < 0.95 else f"{v:+.0f}%"    # never "-0%": −0.4%, or 0%
     return f"{v:.1f}%" if abs(v) < MEANINGFUL else "n/m"
 
@@ -222,6 +250,34 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 </body></html>"""
 
 
+CHROME = {   # the header's links and the footer of a translated page (seo_zh.py, seo_intl.py): page() writes them in English
+    "zh-Hans": {"nav": ["最新", "公司", "行业", "主题", "模型", "今日", "信号", "8-K 事件", "方法"],
+                "foot": "数据由程序自动读取自 SEC 文件（XBRL 与财报新闻稿），可能存在误差，不构成投资建议。", "about": "关于", "x": "每日图表发布在 X："},
+    "es": {"nav": ["Últimos", "Empresas", "Industrias", "Temas", "Modelo", "Hoy", "Señales", "Eventos 8-K", "Método"],
+           "foot": "Cifras leídas automáticamente de los informes presentados ante la SEC (XBRL y comunicados de resultados); puede haber errores. No es asesoramiento de inversión.",
+           "about": "Acerca de", "x": "Gráficos diarios en X:"},
+    "fr": {"nav": ["Récents", "Entreprises", "Secteurs", "Thèmes", "Modèle", "Aujourd’hui", "Signaux", "Événements 8-K", "Méthode"],
+           "foot": "Chiffres lus automatiquement dans les documents déposés auprès de la SEC (XBRL et communiqués de résultats) ; des erreurs sont possibles. Ce n’est pas un conseil en investissement.",
+           "about": "À propos", "x": "Graphiques publiés chaque jour sur X :"},
+}
+_NAV_EN = ["Latest", "Companies", "Industries", "Themes", "Model", "Today", "Signals", "8-K events", "Method"]
+
+
+def localize(doc, lang):
+    """a page() document in another language: <html lang>, the header's links and the footer"""
+    t = CHROME.get(lang)
+    if not t:
+        return doc
+    doc = doc.replace('<html lang="en">', f'<html lang="{lang}">', 1)
+    head, sep, rest = doc.partition('</header>')
+    for en, tr in zip(_NAV_EN, t["nav"]):
+        head = head.replace(f'">{en}</a>', f'">{tr}</a>', 1)
+    doc = head + sep + rest
+    doc = doc.replace("Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice.", t["foot"], 1)
+    doc = doc.replace('/">About</a>', f'/">{t["about"]}</a>', 1).replace("Charts posted daily on X: ", t["x"] + ("" if lang == "zh-Hans" else " "), 1)
+    return doc
+
+
 def fit(title, site=" | Filing Flows", width=62):
     """the site name only when the title still fits in a search result (about 60 characters); Google shows the
     site's name beside the result anyway"""
@@ -246,7 +302,7 @@ LICENSE = "/license/"
 def image_ld(base, image, alt, caption=None):
     """ImageObject for Google Images: the credit, the creator and the terms (a licence page and where to get it), so
     the picture can carry the "Licensable" badge and the credit line in image results"""
-    return {"@type": "ImageObject", "contentUrl": image, "url": image, "name": alt, **({"caption": caption} if caption else {}), "width": 1200, "height": 630,
+    return {"@type": "ImageObject", "@id": image.split("?")[0] + "#image", "contentUrl": image, "url": image, "name": alt, **({"caption": caption} if caption else {}), "width": 1200, "height": 630,
             "creditText": "Filing Flows (filing-flows.com)", "creator": {"@type": "Organization", "name": "Filing Flows", "url": base + "/"},
             "copyrightNotice": "© Filing Flows — free to use with credit and a link", "license": base + LICENSE, "acquireLicensePage": base + LICENSE}
 
@@ -438,7 +494,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Corporation", "name": name, "tickerSymbol": t or None, "url": url},
         {"@type": "WebPage", "name": title, "url": url, "datePublished": q.get("filed"), "dateModified": q.get("filed"),
-         **({"primaryImageOfPage": {"@type": "ImageObject", "contentUrl": image}} if image else {})},
+         **({"primaryImageOfPage": {"@id": image.split("?")[0] + "#image"}} if image else {})},     # the one ImageObject below, credit and licence included
         *([image_ld(base, image, alt, f"{name} {q.get('label', '')} revenue breakdown")] if image else []),
         {"@type": "BreadcrumbList", "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Filing Flows", "item": base + "/"},
@@ -883,6 +939,7 @@ def write_pages(data_dir, out_dir, base):
         f"The latest quarterly results of {len(az):,} US-listed companies, read from their 10-Q, 10-K and earnings releases: revenue, growth, operating margin, net income and cash flow, each as a Sankey chart. A–Z.",
         base + "/c/", f"{len(az)} companies with an income-statement Sankey, newest quarter first in each page.", az, 1, index_charts(latest, names)))
     urls.append((base + "/c/", None))
+    sectors_lis = []
     for sid, sname in names.items():
         items = sorted((x for x in latest.values() if x.get("sector") == sid), key=lambda x: -(x.get("revenue") or 0))
         if not items:
@@ -893,6 +950,16 @@ def write_pages(data_dir, out_dir, base):
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(list_page(
             f"{sname} earnings", f"Latest quarterly earnings of {len(items)} {sname} companies as Sankey diagrams: revenue, growth, margins.",
             url, f"{len(items)} {sname} companies by revenue, each with its latest quarter drawn from the SEC filing.", items, 2, sector_charts(items, sname)))
+        urls.append((url, None))
+        sectors_lis.append(f"<li><a href='{e(sid)}/'>{e(sname)}</a> <span class='muted'>{n_of(len(items), 'company', 'companies')} · {e(money(sum(x.get('revenue') or 0 for x in items)))} of quarterly revenue</span></li>")
+    if sectors_lis:                                              # sector/ itself: the sectors (the address a crumb or a reader may try)
+        url = f"{base}/sector/"
+        body = (f"<p class='crumbs'><a href='../'>Filing Flows</a> › Sectors</p><h1>Earnings by sector</h1>"
+                f"<p class='lead'>The latest quarterly results of US-listed companies by sector, each company's latest quarter drawn from its SEC filing.</p>"
+                f"<ul class='seo-list'>{''.join(sectors_lis)}</ul>")
+        open(os.path.join(out_dir, "sector", "index.html"), "w", encoding="utf-8").write(page(
+            "Earnings by sector | Filing Flows", f"Quarterly earnings of US-listed companies by sector: {len(sectors_lis)} sectors, each company's latest quarter as a Sankey chart.",
+            url, body, 1, base + "/og.png"))
         urls.append((url, None))
     urls += chain_pages(data_dir, out_dir, base, images)
     urls += gamma_pages(data_dir, out_dir, base, {slug_for(r) for r in latest.values()}, images)
