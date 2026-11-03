@@ -241,7 +241,8 @@ def peer_table(me, peers, industry):
         v = x.get(k)
         return f"<td class='num'>{e(f(v)) if v is not None else '—'}</td>"
     om = lambda v: f"{v:.1f}%"
-    body = "".join(f"<tr{' class=\'me\'' if x is me else ''}><td>{('<b>' + e(x.get('ticker') or '') + '</b> ' if x is me else f'<a href=' + chr(39) + '../' + slug_for(x) + '/' + chr(39) + '><b>' + e(x.get('ticker') or '') + '</b></a> ') if x.get('ticker') else ''}{e(display_name(x.get('name')))}</td>"
+    cls_me = " class='me'"
+    body = "".join(f"<tr{cls_me if x is me else ''}><td>{('<b>' + e(x.get('ticker') or '') + '</b> ' if x is me else f'<a href=' + chr(39) + '../' + slug_for(x) + '/' + chr(39) + '><b>' + e(x.get('ticker') or '') + '</b></a> ') if x.get('ticker') else ''}{e(display_name(x.get('name')))}</td>"
                    f"<td>{e(x.get('label'))}</td>{td(x, 'revenue', money)}{td(x, 'yoy', pct)}{td(x, 'om', om)}</tr>" for x in rows)
     med = lambda k: sorted(v for v in (x.get(k) for x in rows) if v is not None)
     note = ''
