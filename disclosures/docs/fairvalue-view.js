@@ -276,6 +276,44 @@
       }).join('')}</tbody></table></div>`;
   }
 
+  // ---------- each method against the price, and the present value of growth in it (valuation.growth_split) ----------
+  function splitChart(rows, sp) {
+    const ng = sp.no_growth, price = sp.price;
+    const all = [{ method: "Today's share price", point: price, price: true }].concat(rows);
+    const cap = fin(price) ? price * 4 : Math.max(...all.map((r) => r.point));
+    const hi = Math.min(cap, Math.max(...all.map((r) => r.point), fin(ng) ? ng : 0)) * 1.06, lo = Math.min(0, fin(ng) ? ng : 0, ...all.map((r) => r.point));
+    const W = 860, L = 250, R = 30, T = 16, rowH = 24, H = T + all.length * rowH + 26;
+    const X = (v) => L + (Math.min(Math.max(v, lo), hi) - lo) / ((hi - lo) || 1) * (W - L - R);
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Each method's value split into the no-growth value and the present value of growth">`;
+    for (let k = 0; k <= 5; k++) { const v = lo + (hi - lo) * k / 5; s += `<line class="fv-grid" x1="${X(v)}" x2="${X(v)}" y1="${T - 6}" y2="${H - 22}"/><text x="${X(v)}" y="${H - 6}" text-anchor="middle">${esc(usd(v))}</text>`; }
+    all.forEach((r, i) => {
+      const y = T + i * rowH, base = fin(ng) ? Math.max(0, Math.min(ng, r.point)) : 0;
+      s += `<text class="fv-lbl" x="${L - 10}" y="${y + 15}" text-anchor="end"${r.price ? ' font-weight="600"' : ''}>${esc(r.method.length > 40 ? r.method.slice(0, 39) + '…' : r.method)}</text>`;
+      if (fin(ng) && base > 0) s += `<rect x="${X(0)}" y="${y + 5}" width="${Math.max(1, X(base) - X(0))}" height="14" fill="${C.mute}" opacity="0.45"><title>no-growth value ${esc(usd(ng))}</title></rect>`;
+      if (r.point > base) s += `<rect x="${X(base)}" y="${y + 5}" width="${Math.max(1, X(r.point) - X(base))}" height="14" fill="${r.price ? C.ink : C.acc}" opacity="${r.price ? 0.55 : 0.6}"><title>${esc(r.method)}: ${esc(usd(r.point))}${fin(ng) ? `, of which growth ${esc(usd(r.point - ng))}` : ''}</title></rect>`;
+      if (r.point > hi) s += `<text x="${W - R + 4}" y="${y + 16}">→</text>`;
+    });
+    if (fin(price)) s += `<line x1="${X(price)}" x2="${X(price)}" y1="${T - 8}" y2="${H - 22}" stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+    if (fin(ng) && ng > lo) s += `<line x1="${X(ng)}" x2="${X(ng)}" y1="${T - 8}" y2="${H - 22}" stroke="${C.mute}" stroke-width="1" stroke-dasharray="2 3"/><text x="${X(ng)}" y="${T - 9}" text-anchor="middle" class="fv-lbl">no growth ${esc(usd(ng))}</text>`;
+    return s + '</svg>';
+  }
+  function splitHtml(d) {
+    const sp = d.growth_split, price = d.price;
+    if (!sp || !fin(price)) return '';
+    const rows = (d.football || []).filter((r) => fin(r.point) && fin(r.vs_price)).slice().sort((a, b) => b.point - a.point);
+    if (!rows.length) return '';
+    const ng = sp.no_growth, share = (v) => (!fin(v) ? '—' : v > 1 ? 'more than all of it' : v < 0 ? 'none (below the no-growth value)' : pct(v, 0));
+    const g = (v) => (fin(v) ? spct(v, 1) + ' a year' : '—');
+    let h = `<h3>What each method says about the share price — and how much of it is growth</h3><p class="fv-sub">For every method: the value per share it gives, how far that is from today's price, and how much of it is the <b>present value of growth</b>${fin(ng) ? ` — everything above the <b>no-growth value</b> of ${esc(usd(ng))} a share (${esc(sp.basis || '')}: ${esc(big(sp.earnings))} a year at ${pct(sp.rate, 1)}, today's earnings as if they never grew)` : ''}. The last column turns each value into the growth it requires: the constant revenue growth for five years (then the terminal rate) at which this page's DCF, with its margins and cost of capital, gives that value${sp.dcf ? '' : ' (no DCF for this company, so not shown)'}.</p>`;
+    h += `<div class="fv-wrap">${splitChart(rows.filter((r) => r.point > 0), sp)}</div><div class="fv-legend"><span style="--k:${C.mute}">no-growth value</span><span style="--k:${C.acc}">present value of growth (a method)</span><span style="--k:${C.ink}">present value of growth in today's price</span></div>`;
+    const line = (name, v, vs, pg, ps, ig, strong) => `<tr${strong ? ' class="fv-px-own"' : ''}><td>${strong ? `<b>${esc(name)}</b>` : esc(name)}</td><td class="n">${strong ? `<b>${esc(usd(v))}</b>` : esc(usd(v))}</td><td class="n">${vs == null ? '—' : `<span class="${vs > 0.15 ? 'fv-good' : vs < -0.15 ? 'fv-bad' : ''}">${spct(vs)}</span>`}</td><td class="n">${fin(ng) ? esc(usd(ng)) : '—'}</td><td class="n">${fin(pg) ? esc(usd(pg)) : '—'}</td><td class="n">${share(ps)}</td><td class="n">${g(ig)}</td></tr>`;
+    h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Value per share</th><th class="n">vs today's price</th><th class="n">No-growth value</th><th class="n">Present value of growth</th><th class="n">Growth's share of the value</th><th class="n">Revenue growth it requires (5 years)</th></tr></thead><tbody>`
+      + line("Today's share price", price, null, sp.price_pv_growth, sp.price_growth_share, sp.price_growth, true)
+      + rows.map((r) => line(r.method, r.point, r.vs_price, r.pv_growth, r.pv_growth_share, r.implied_growth)).join('') + `</tbody></table></div>`;
+    if (fin(sp.history_growth) && fin(sp.price_growth)) h += `<p class="fv-sub">Its revenue grew ${spct(sp.history_growth, 1)} over the last four quarters; today's price requires ${spct(sp.price_growth, 1)} a year for five years. A method's value above the price requires more growth than the price does, below it less. The no-growth value is the same for every method: it values the earnings the company makes today, not a forecast.</p>`;
+    return h;
+  }
+
   // ---------- football field: one bar per method, the price as a line ----------
   function football(rows, price) {
     rows = rows.filter((r) => fin(r.low) && fin(r.high));
@@ -579,6 +617,7 @@
       const x = explainer(m.method);
       return `<details class="fv-apx"><summary><b>${esc(m.method)}</b> · ${fin(m.point) ? usd(m.point) : '—'}${fin(m.low) && fin(m.high) ? ` <span class="fv-tag">${usd(m.low)} – ${usd(m.high)}</span>` : ''}${fin(m.weight) ? ` <span class="fv-tag">stage weight ${num(100 * m.weight, 0)}%</span>` : ''}${m.kind && m.kind !== 'model' ? ` <span class="fv-tag">${esc(kindTag[m.kind] || m.kind)}</span>` : x && x.family ? ` <span class="fv-tag">${esc(x.family.toLowerCase())}</span>` : ''}</summary>`
         + methodGuide(m)
+        + (fin(m.vs_price) ? `<p class="fv-sub"><b>Against the price:</b> ${spct(m.vs_price)} vs today's price${fin(m.pv_growth) ? `; present value of growth ${esc(usd(m.pv_growth))} a share (${m.pv_growth_share > 1 ? 'more than all' : m.pv_growth_share < 0 ? 'none' : pct(m.pv_growth_share, 0)} of the value; the rest is today's earnings as if they never grew)` : ''}${fin(m.implied_growth) ? `; it requires revenue growth of ${spct(m.implied_growth, 1)} a year for five years in this page's DCF` : ''}.</p>` : '')
         + (m.formula ? `<p class="fv-f">${esc(m.formula)}</p>` : '') + ((m.steps || []).filter(Boolean).length ? `<ol class="fv-steps">${m.steps.filter(Boolean).map((y) => `<li>${esc(y)}</li>`).join('')}</ol>` : '')
         + tbl(['Input', 'Value', 'Source'], m.inputs || []) + tbl(['Assumption', 'Value', 'Basis'], m.assumptions || []) + '</details>';
     }).join('');
@@ -597,7 +636,8 @@
       ${card('Distress (1 year, model blend)', dist ? pct(dist.pd, dist.pd < 0.01 ? 2 : 1) : '—', dist ? (dist.pd > 0.05 ? 'fv-bad' : dist.pd > 0.01 ? 'fv-warn' : 'fv-good') : '', cr.rating_band ? `spread-implied ${esc(cr.rating_band)}` : '')}
       ${d.implied_return ? card('Return the price implies', pct(d.implied_return.median, 1), fin(d.implied_return.spread) ? (d.implied_return.spread > 0.01 ? 'fv-good' : d.implied_return.spread < -0.01 ? 'fv-bad' : '') : '', fin(d.implied_return.ke) ? `a year, vs ${pct(d.implied_return.ke, 1)} cost of equity` : 'a year') : ''}</div>`;
     h += `<h3>Valuation football field</h3><p class="fv-sub">Each bar is one method's range, the black tick its central value, the dashed line today's price. Green: the whole range above the price; red: below.</p><div class="fv-wrap">${football(d.football || [], price)}</div>`;
-    h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th>How</th></tr></thead><tbody>${(d.football || []).map((r) => `<tr><td>${esc(r.method)}${r.lens ? '<span class="fv-tag" title="Shown with its algebra in the appendix; not part of the stage-weighted value or the headline range until the ledger has scored it">lens</span>' : ''}</td><td class="n">${usd(r.low)}</td><td class="n">${usd(r.point)}</td><td class="n">${usd(r.high)}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>`;
+    h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th class="n">vs price</th><th>How</th></tr></thead><tbody>${(d.football || []).map((r) => `<tr><td>${esc(r.method)}${r.lens ? '<span class="fv-tag" title="Shown with its algebra in the appendix; not part of the stage-weighted value or the headline range until the ledger has scored it">lens</span>' : ''}</td><td class="n">${usd(r.low)}</td><td class="n">${usd(r.point)}</td><td class="n">${usd(r.high)}</td><td class="n">${fin(r.vs_price) ? `<span class="${r.vs_price > 0.15 ? 'fv-good' : r.vs_price < -0.15 ? 'fv-bad' : ''}">${spct(r.vs_price)}</span>` : '—'}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>`;
+    h += splitHtml(d);
     h += tiersHtml(d) + weightedHtml(d) + tilesHtml(d) + combinedHtml(d.combined);
     if (d.reverse && d.reverse.status === 'ok') h += `<p><b>Reverse DCF:</b> today's price needs revenue growth of <b>${pct(d.reverse.implied_growth)}</b> a year for five years (then ${pct((dc && dc.assumptions.g) || 0.025)}), with the margins and cost of capital below. The last four quarters grew ${pct(d.reverse.history_growth)} on the four before.</p>`;
     else if (d.reverse) h += `<p class="fv-sub">Reverse DCF: no single growth rate between −30% and 60% gives today's price with these assumptions.</p>`;
@@ -688,7 +728,7 @@
     draw(el, d, fits);
   }
 
-  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp, weightedHtml, tiersHtml, pxRun, pxHtml, wq, capW, scoresHtml };
+  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp, weightedHtml, tiersHtml, pxRun, pxHtml, wq, capW, scoresHtml, splitHtml, splitChart };
   if (typeof window !== 'undefined') window.FairValueView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

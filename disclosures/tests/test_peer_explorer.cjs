@@ -53,4 +53,12 @@ ok(t.includes('four ways to pick') && t.includes('2 on file, needs 3') && t.incl
 ok(FV.scoresHtml({ snapshots: ['2026-11'], scores: [] }).includes('first scores come three months'), 'no track record yet');
 const sc = FV.scoresHtml({ scores: [{ horizon_months: 3, ic_evs_matched_gap: 0.08, n_evs_matched_gap: 900 }, { horizon_months: 3, ic_evs_matched_gap: 0.04, n_evs_matched_gap: 900 }] });
 ok(sc.includes('EV/Sales · Matched') && sc.includes('0.060'), 'the track record, averaged over months');
+// each method against the price and the present value of growth in it
+const dsp = { price: 100, growth_split: { no_growth: 40, basis: 'NOPAT ÷ WACC − net debt', rate: 0.09, earnings: 4e9, price: 100, price_pv_growth: 60, price_growth_share: 0.6, price_growth: 0.08, history_growth: 0.05, dcf: true },
+  football: [{ method: 'DCF', low: 90, high: 140, point: 120, vs_price: 0.2, pv_growth: 80, pv_growth_share: 0.667, implied_growth: 0.11 },
+    { method: 'EPV', low: 35, high: 45, point: 38, vs_price: -0.62, pv_growth: -2, pv_growth_share: -0.05, implied_growth: -0.04 }, { method: '52-week trading range', low: 80, high: 120 }] };
+const sh = FV.splitHtml(dsp);
+ok(sh.includes('how much of it is growth') && sh.includes('$40.00') && sh.includes('+11.0% a year') && sh.includes('none (below the no-growth value)') && sh.includes('+8.0% a year') && !/NaN|undefined/.test(sh), 'the price and growth table');
+ok(sh.indexOf('>DCF<') < sh.indexOf('>EPV<') && sh.includes('<svg'), 'sorted by value, with the chart');
+ok(FV.splitHtml({ price: 100, football: [] }) === '', 'nothing without the split');
 console.log(`Peer explorer: ${n} checks passed`);

@@ -1,5 +1,16 @@
 # Changelog
 
+## Fair value: every method against the share price, and the present value of growth in it
+
+Each method on the Fair value page now says what it means for the share price and for growth: its value per share
+against today's price (a new column on the football table), how much of that value is the present value of growth —
+the value less the no-growth value, today's earnings capitalized as if they never grew (NOPAT ÷ WACC − net debt; for
+banks and insurers net income ÷ the cost of equity) — and the revenue growth it requires: the constant growth for five
+years, then the terminal rate, at which the page's DCF (its margins, reinvestment and cost of capital) gives that value,
+the reverse DCF solved for the method's value instead of the price. Today's price gets the same split (the share of
+the price paid for growth, the growth it requires). A new section draws each value as the no-growth part and the growth
+part against the price, with a table; each method's appendix entry adds the same line.
+
 ## Fair value: peers in tiers (broad, matched, selected, fitted), segments by business model, every peer listed and re-filterable
 
 A plain peer median has known blind spots: industry codes group companies by what they make, not how they earn (SIC 7389
