@@ -98,7 +98,7 @@ def parse_form4(xml_bytes, accession, folder):
         if not shares:
             continue
         rows.append({'accession': accession, 'url': folder, 'issuer_cik': text_of(issuer, 'issuerCik').lstrip('0'),
-                     'issuer': text_of(issuer, 'issuerName'), 'ticker': (text_of(issuer, 'issuerTradingSymbol') or '').upper().strip(),
+                     'issuer': text_of(issuer, 'issuerName'), 'ticker': clean_ticker(text_of(issuer, 'issuerTradingSymbol')),
                      'insider': names[best] if best is not None else '', 'role': roles[best][0] if best is not None else '',
                      'title': roles[best][1] if best is not None else '', 'owners': len(owners),
                      'code': code, 'date': text_of(tx, 'transactionDate')[:10], 'security': text_of(tx, 'securityTitle'),
@@ -158,6 +158,7 @@ def collect(client, root, cfg=None):
     uniq = {}
     for t in trades:
         if t.get('date', '') >= keep:
+            t['ticker'] = clean_ticker(t.get('ticker'))       # the store too, so smart money and the people pages read clean ones
             uniq[(t['accession'], t['code'], t['date'], t['shares'], t.get('price'))] = t
     trades = sorted(uniq.values(), key=lambda t: (t['date'], t['accession']), reverse=True)
     with gzip.open(store.with_suffix('.tmp'), 'wt', encoding='utf-8') as f:
@@ -170,6 +171,20 @@ def collect(client, root, cfg=None):
     return {'status': 'partial' if errors or retry.rows or pending else 'ok', **retry.summary(),
             'latest_filing_date': max((t.get('filed', '') for t in trades), default=None), 'read': read, 'waiting': len(pending), 'errors': errors,
             'trades': len(trades), 'updated_at': now()}
+
+
+_PLACEHOLDER = {'N/A', 'NA', 'N.A.', 'NONE', 'NULL', '-', '--', 'NO TICKER', 'NOT APPLICABLE'}
+
+
+def clean_ticker(s):
+    """The issuer's trading symbol as filed, made a ticker: "N/A" / "NONE" (an unlisted fund) is none, "NYSE:FLG" is FLG,
+    "ABC, ABCW" is ABC."""
+    t = re.sub(r'\s+', ' ', str(s or '')).upper().strip()
+    t = re.sub(r'^(NYSE ?AMERICAN|NYSE ?ARCA|NYSE|NASDAQ|AMEX|OTC(?:QB|QX)?|CBOE|BATS)\s*[:\-]\s*', '', t)
+    if t in _PLACEHOLDER:
+        return ''
+    t = re.split(r'[\s,;]+', t)[0] if t else ''
+    return t if re.fullmatch(r'[A-Z0-9][A-Z0-9.\-/]{0,9}', t) and t not in _PLACEHOLDER else ''
 
 
 def summary(trades, today=None):
@@ -216,6 +231,8 @@ def publish(root, out_dir):
     if not store.exists():
         return None
     trades = json.load(gzip.open(store, 'rt', encoding='utf-8'))
+    for t in trades:                                     # trades stored before clean_ticker
+        t['ticker'] = clean_ticker(t.get('ticker'))
     summ = summary(trades)
     data = {'generated_at': now(), 'trades_on_file': len(trades),
             'since': min((t['date'] for t in trades), default=None),

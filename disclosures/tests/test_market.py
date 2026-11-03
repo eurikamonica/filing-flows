@@ -154,6 +154,15 @@ class Insiders(unittest.TestCase):
         self.assertTrue(s['cluster'])
         self.assertEqual(s['buy_value'], 180000)
 
+    def test_trading_symbol_placeholders(self):
+        # Form 4s of unlisted funds file "N/A" or "NONE" ("N/A: Hamilton Lane Advisors bought $35.0M" on daily/)
+        got = [insiders.clean_ticker(x) for x in ('N/A', 'none', 'NYSE:FLG', 'abc, abcw', 'BRK.B', ' msft ', 'NASDAQ: AAPL', None)]
+        self.assertEqual(got, ['', '', 'FLG', 'ABC', 'BRK.B', 'MSFT', 'AAPL', ''])
+        FN = FORM4.replace(b'<issuerTradingSymbol>NVDA</issuerTradingSymbol>', b'<issuerTradingSymbol>N/A</issuerTradingSymbol>')
+        if FN != FORM4:
+            rows = insiders.parse_form4(insiders.xml_from_submission(b'<XML>\n' + FN + b'\n</XML>'), '0001-26-000002', 'https://www.sec.gov/x/')
+            self.assertEqual(rows[0]['ticker'], '')
+
 
 import frames, rotation
 
