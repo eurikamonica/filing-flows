@@ -13,6 +13,10 @@ function bindComposer(){
  if(el&&window.ComposerView&&!el.dataset.on){el.dataset.on='1';window.ComposerView.render(el,{ticker:el.dataset.k,hub:'',site:'../',here:()=>state.tab==='composer'})}
 }
 function composerDeepLink(arg){state.cmt=String(decodeURIComponent(arg||'')).toUpperCase()}
+// a tool, not a source: each chart it reads keeps its own freshness line in its own tab (without this the fallback read
+// "Official composer · Status STALE · unknown")
+function composerNotice(){return {stale:false,text:'Chart composer · draws the charts of the other views in your browser; each view\'s data is as fresh as its own tab says'}}
+window.HUB_NOTICES=Object.assign(window.HUB_NOTICES||{},{composer:composerNotice});
 window.HUB_VIEWS=Object.assign(window.HUB_VIEWS||{},{composer:composerView});
 window.HUB_BINDS=Object.assign(window.HUB_BINDS||{},{composer:bindComposer});
 window.composerDeepLink=composerDeepLink;
