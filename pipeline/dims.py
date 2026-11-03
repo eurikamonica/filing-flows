@@ -26,8 +26,19 @@ def find_files(cik, accn):
     return url(inst), url(lab)
 
 
+NOT_A_NAME = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization)\b", re.I)
+DOC_LIKE = re.compile(r"^(this|the) (member|element|axis|domain)\b|\bstands for\b|\belement represents\b", re.I)
+
+
 def parse_labels(xml_text):
-    """element id (e.g. 'aapl_IPhoneMember') -> preferred label."""
+    """element id (e.g. 'aapl_IPhoneMember') -> preferred label.
+
+    Every label the company gives the element counts (one element can have several label resources, each with its
+    own arc). The terse label first, then the standard and the verbose one, then any other role — never the
+    documentation, a sentence ("This member stands for …"). A label that names a cost, an expense or a liability is
+    passed over when another one does not: companies give a revenue member the terse label of a cost table it also
+    appears in (Workday: professional services → "Costs of professional services"; Delta: passenger → "Air traffic
+    liability"; Xenia: rooms → "Rooms expenses"). When every label names one, the terse label stays, as before."""
     root = ET.fromstring(xml_text.encode() if isinstance(xml_text, str) else xml_text)
     xl = "{http://www.w3.org/1999/xlink}"
     loc, lab_by_res, arcs = {}, {}, []
@@ -40,15 +51,25 @@ def parse_labels(xml_text):
             lab_by_res.setdefault(el.get(xl + "label"), []).append((role, (el.text or "").strip()))
         elif name == "labelArc":
             arcs.append((el.get(xl + "from"), el.get(xl + "to")))
-    out = {}
+    by_el = {}
     for frm, to in arcs:
         elid = loc.get(frm)
-        labels = dict(lab_by_res.get(to, []))
-        named = [t for r, t in labels.items() if not r.endswith(("/documentation", "/definitionGuidance", "/commentaryGuidance"))]
-        text = (labels.get("http://www.xbrl.org/2003/role/terseLabel") or labels.get("http://www.xbrl.org/2003/role/label")
-                or next(iter(named), "") or next(iter(labels.values()), ""))
-        if elid and text:
-            out[elid] = clean_label(text, elid)
+        if elid:
+            by_el.setdefault(elid, []).extend(lab_by_res.get(to, []))
+    order = ("terseLabel", "label", "verboseLabel")
+    out = {}
+    for elid, labs in by_el.items():
+        roles = {}
+        for role, text in labs:
+            r = role.rsplit("/", 1)[-1]
+            t = clean_label(text)
+            if r not in ("documentation", "definitionGuidance", "commentaryGuidance") and t and not DOC_LIKE.search(t):
+                roles.setdefault(r, t)
+        cands = [roles[r] for r in order if r in roles] + [t for r, t in roles.items() if r not in order]
+        if not cands:
+            continue
+        plain = [t for t in cands if not NOT_A_NAME.search(t)]
+        out[elid] = clean_label(plain[0] if plain else cands[0], elid)
     return out
 
 
@@ -58,11 +79,14 @@ DOCUMENTATION = re.compile(r"^(this member|represents|information (pertaining|ab
 def clean_label(text, elid=""):
     """A member's label as a chart writes it: "[Member]", "[Members]" and a trailing "Member" word gone ("Cabinetry And
     Millwork Member", "Direct to Consumer [member]"); a documentation sentence put in the label's place ("This member
-    stands for the information pertaining to …") replaced by the element's own name in words."""
-    t = re.sub(r"\s*\[\s*(?:members?|domain|axis|line items?|abstract)\s*\]", "", (text or "").strip(), flags=re.I)   # "[Member] [Domain]"
-    t = re.sub(r"\s+Members?$", "", t.strip())
+    stands for the information pertaining to …") replaced by the element's own name in words; "[Domain]", "[Axis]" and
+    a closing full stop ("Japan." → "Japan") gone too."""
+    t = re.sub(r"\s*\[\s*(?:members?|domain|axis|line items?|table|abstract)\s*\]", "", (text or "").strip(), flags=re.I)   # "[Member] [Domain]"
+    t = re.sub(r"\s+", " ", t).strip()
+    t = re.sub(r"\s+Members?$", "", t)
     if elid and (DOCUMENTATION.search(t) or len(t) > 90 or (t.endswith(".") and len(t) > 40)):
         t = humanize(elid.split("_", 1)[-1]) if "_" in elid else humanize(elid)
+    t = re.sub(r"(?<=[a-z]{3})\.$", "", t)              # a closing full stop ("Japan." → "Japan"), not "U.S."
     return t.strip()
 
 
