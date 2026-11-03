@@ -113,8 +113,8 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
         return None
     h = q.get('headline') or {}
     yoy, qoq = chg(rev[1], rev[3]), chg(rev[1], rev[2])
-    lead = f"{who} reported revenue of {money(rev[1])} for the {words} ({lab})" + (f", {pc(yoy)} from a year earlier" if yoy is not None else '') + (
-        f" and {pc(qoq)} from the quarter before" if qoq is not None else '') + '.'
+    lead = f"{who} reported revenue of {money(rev[1])} for the {words} ({lab})" + (f", {seo.vs(yoy, 'a year earlier')}" if yoy is not None else '') + (
+        f" and {seo.vs(qoq, 'the quarter before')}" if qoq is not None else '') + '.'
     # net earnings: the figure the chart draws (headline.ni), whichever node holds it (net, netinc, or netloss as a loss)
     net = h.get('ni') if h.get('ni') is not None else (n['net'][1] if 'net' in n else n['netinc'][1] if 'netinc' in n else -n['netloss'][1] if 'netloss' in n and n['netloss'][1] is not None else None)
     om = margin(n, 'oi', 1)
@@ -232,7 +232,7 @@ def metric_page(r, c, base, slug, who, name, mslug, label, key, kind):
     fmt = (lambda v: f'{v:.1f}%') if kind == 'ratio' else money
     latest, prev = s[0], s[1]
     hi, lo = max(s, key=lambda x: x[1]), min(s, key=lambda x: x[1])
-    delta = (f"{pts(latest[1] - prev[1])} from {prev[0]}" if kind == 'ratio' else f"{pc(chg(latest[1], prev[1]))} from {prev[0]}")
+    delta = (f"{pts(latest[1] - prev[1])} from {prev[0]}" if kind == 'ratio' else seo.vs(chg(latest[1], prev[1]), prev[0]))
     were = "were" if label.lower().endswith(("expenditures", "costs", "expenses", "sales", "earnings")) else "was"
     lead = (f"{seo.poss(name)} {label} {were} {fmt(latest[1])} in {latest[0]} ({seo.period_words(latest[0])}), {delta}. "
             f"Over the last {len(s)} quarters it ranged from {fmt(lo[1])} ({lo[0]}) to {fmt(hi[1])} ({hi[0]}).")

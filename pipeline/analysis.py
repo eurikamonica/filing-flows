@@ -60,7 +60,10 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
         leaves = [(l["label"], cur.get(l["id"]), py.get(l["id"])) for l in lines_struct["leaves"] if l["id"] in cur]
         if leaves:
             top = max(leaves, key=lambda x: x[1])
-            s += f" {top[0]} was the largest line at {top[1] / R * 100:.0f}% of revenue."
+            if top[1] <= R:
+                s += f" {top[0]} was the largest line at {top[1] / R * 100:.0f}% of revenue."
+            else:                                                # a line above the total: other lines are negative (eliminations, hedges)
+                s += f" {top[0]} was the largest line, {f.money(top[1])} against total revenue of {f.money(R)} (other lines net negative)."
             moves = [(lab, c - p, _pct(c, p)) for lab, c, p in leaves if p]
             if moves and Ny:
                 dR = R - Ny["R"]

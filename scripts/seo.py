@@ -108,6 +108,15 @@ def ratio(x, rev):
     return v if abs(v) < MEANINGFUL else None
 
 
+def vs(v, what):
+    """a change in a sentence: '+12% from a year earlier', '−0.4% from Q1 2026', 'up 15-fold from Q2 2026' (a sliver's base)"""
+    if v is None:
+        return f"— from {what}"
+    if v >= MEANINGFUL:
+        return f"up {1 + v / 100:,.0f}-fold from {what}"
+    return f"{pct(v)} from {what}"
+
+
 def times(n):
     """'once', 'twice', '3 times'."""
     try:
