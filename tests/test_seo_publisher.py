@@ -57,3 +57,10 @@ def test_translated_pages_have_translated_chrome():
     assert "No es asesoramiento de inversión" in doc and "Figures read automatically" not in doc and ">Acerca de</a>" in doc
     zh = seo.localize(seo.page("T", "d", BASE + "/zh/c/aaa/", "<p>x</p>", 3, "i"), "zh-Hans")
     assert ">公司</a>" in zh and "每日图表发布在 X：@" in zh
+
+
+def test_no_signed_zero():
+    """f"{v:+.1f}%" of −0.04 prints "−0.0%": page() drops the sign of a change that rounds to nothing, and only that."""
+    doc = seo.page("T", "down −0.0% today", "https://x/", "<p>was −0.0% (typical ±2.1%)</p><td>-0%</td><td>-0.01%</td><td>10-0%</td><p>−0,0 %</p>", 1, "https://x/og.png")
+    assert "was 0.0% (typical" in doc and "<td>0%</td>" in doc and "-0.01%" in doc and "10-0%" in doc and "<p>0,0 %</p>" in doc
+    assert 'content="down 0.0% today"' in doc and "−0.0%" not in doc

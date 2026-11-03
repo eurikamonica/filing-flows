@@ -227,9 +227,14 @@ def _signs(body):
     return _TILE.sub(lambda m: f"<div class='seo-tile {'up' if m.group(2) == '+' else 'down'}'><span>{m.group(1)}</span><b>{m.group(2)}", body)
 
 
+# a change that rounds to nothing has no sign: "−0.0%", "-0%", "−0,0 %" → "0.0%", "0%", "0,0 %" (an f"{v:+.1f}%" of −0.04)
+_NEG0 = re.compile(r"(?<![\w.,])[-−](0(?:[.,]0+)?(?:\s|&nbsp;)?%)")
+
+
 def page(title, desc, canonical, body, depth, image, jsonld=None):
     if len(title) > 70 and title.endswith(" | Filing Flows"):      # a long title keeps its own words; search shows the site's name anyway
         title = title[:-len(" | Filing Flows")]
+    body, desc = _NEG0.sub(r"\1", body), _NEG0.sub(r"\1", desc)
     body = _signs(body)
     up = "../" * depth
     jsonld = with_publisher(jsonld, canonical, title)
