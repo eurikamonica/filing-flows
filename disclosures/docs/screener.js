@@ -39,7 +39,7 @@ function scCell(kind, v) {
   if (kind === 'pts') return `<span class="${v > 0 ? 'positive' : v < 0 ? 'negative' : ''}">${scSigned(v)}%</span>`;
   if (kind === 'flag') return v ? '✓' : '';
   if (kind === 'date') return esc(String(v));
-  if (kind === 'months') return v >= 24 ? fmt(v / 12, 1) + ' yrs' : fmt(v, 0) + ' mo';
+  if (kind === 'months') return v > 120 ? '10+ yrs' : v >= 24 ? fmt(v / 12, 1) + ' yrs' : fmt(v, 0) + ' mo';
   if (kind === 'num') return typeof v === 'number' && !Number.isInteger(v) ? fmt(v, 2) : fmt(v);
   return esc(String(v));
 }

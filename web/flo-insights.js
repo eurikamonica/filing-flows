@@ -696,7 +696,7 @@
       const d = await json(DATA + 'c/' + c.cik + '.json');
       const r = d ? runwayOf(d) : null;
       if (!r) return null;
-      const yrs = (m) => (m >= 24 ? L(lg, `${num(m / 12, 1)} years`, `${num(m / 12, 1)} 年`) : L(lg, `${num(m)} months`, `${num(m)} 个月`));
+      const yrs = (m) => (m > 120 ? L(lg, 'more than ten years', '十年以上') : m >= 24 ? L(lg, `${num(m / 12, 1)} years`, `${num(m / 12, 1)} 年`) : L(lg, `${num(m)} months`, `${num(m)} 个月`));
       const gap = !r.burn && fin(r.fcf) && r.fcf < 0 && fin(r.ocf) && r.ocf > 0;
       const html = gap
         ? L(lg, `<b>${esc(c.ticker)}</b>'s operations bring cash in (<b>${big(r.ocf)}</b> over twelve months) and it spends more than that on capital projects: a gap of <b>${big(-r.fcf)}</b> funded from <b>${big(r.cash)}</b> of cash and investments and from borrowing${r.debt ? ` (${big(r.debt)} of debt)` : ''}. That is a choice to invest, not a cash runway running down.`,
@@ -705,8 +705,8 @@
         ? L(lg, `<b>${esc(c.ticker)}</b>'s operations consume cash (free cash flow <b>${big(r.fcf)}</b> over twelve months), and no cash balance is on file to set against it.`,
           `<b>${esc(c.ticker)}</b> 的经营活动在消耗现金（过去十二个月自由现金流 <b>${big(r.fcf)}</b>），但没有可用的现金余额数据来计算还能撑多久。`)
         : r.burn
-        ? L(lg, `<b>${esc(c.ticker)}</b> is burning cash: its operations consume cash, a free cash flow of <b>${big(-r.burn)}</b> over the trailing twelve months against <b>${big(r.cash)}</b> of cash and investments — a runway of about <b>${yrs(r.months)}</b> at that rate, before any new financing${fin(r.due) && r.due > 0 ? `; ${big(r.due)} of debt comes due within a year${r.cash >= r.due + r.burn ? ', which the cash covers' : ', which would need refinancing'}` : ''}.`,
-          `<b>${esc(c.ticker)}</b> 在烧钱：经营活动本身在消耗现金，过去十二个月自由现金流 <b>${big(-r.burn)}</b>，账上现金及投资 <b>${big(r.cash)}</b}——按此速度现金跑道约 <b>${yrs(r.months)}</b>（不计新融资）${fin(r.due) && r.due > 0 ? `；一年内到期债务 ${big(r.due)}${r.cash >= r.due + r.burn ? '，现金足以覆盖' : '，需要再融资'}` : ''}。`)
+        ? L(lg, `<b>${esc(c.ticker)}</b> is burning cash: its operations consume cash, a free cash flow of <b>${big(-r.burn)}</b> over the trailing twelve months against <b>${big(r.cash)}</b> of cash and investments — a runway of ${r.months > 120 ? '' : 'about '}<b>${yrs(r.months)}</b> at that rate, before any new financing${fin(r.due) && r.due > 0 ? `; ${big(r.due)} of debt comes due within a year${r.cash >= r.due + r.burn ? ', which the cash covers' : ', which would need refinancing'}` : ''}.`,
+          `<b>${esc(c.ticker)}</b> 在烧钱：经营活动本身在消耗现金，过去十二个月自由现金流 <b>${big(-r.burn)}</b>，账上现金及投资 <b>${big(r.cash)}</b>——按此速度现金跑道${r.months > 120 ? '' : '约'} <b>${yrs(r.months)}</b>（不计新融资）${fin(r.due) && r.due > 0 ? `；一年内到期债务 ${big(r.due)}${r.cash >= r.due + r.burn ? '，现金足以覆盖' : '，需要再融资'}` : ''}。`)
         : L(lg, `<b>${esc(c.ticker)}</b> funds itself: free cash flow of <b>${big(r.fcf)}</b> over the trailing twelve months, <b>${big(r.cash)}</b> of cash and investments against ${r.debt ? `<b>${big(r.debt)}</b> of debt` : 'no debt'}${fin(r.due) && r.due > 0 ? ` (${big(r.due)} due within a year, ${num(r.cash / r.due, 1)}× covered)` : ''}. No runway question arises while it generates cash.`,
           `<b>${esc(c.ticker)}</b> 能自我造血：过去十二个月自由现金流 <b>${big(r.fcf)}</b>，账上现金及投资 <b>${big(r.cash)}</b>，${r.debt ? `债务 <b>${big(r.debt)}</b>` : '没有债务'}${fin(r.due) && r.due > 0 ? `（一年内到期 ${big(r.due)}，现金覆盖 ${num(r.cash / r.due, 1)} 倍）` : ''}。只要持续产生现金，就不存在跑道问题。`);
       return { html: html.replace('</b}', '</b>'), facts: [`cash ${big(r.cash)}, debt ${big(r.debt)}, FCF ttm ${big(r.fcf)}` + (r.months ? `, runway ${num(r.months)} months` : '')], mood: r.months != null && r.months < 12 ? 'worried' : 'talk',

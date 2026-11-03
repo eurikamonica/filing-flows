@@ -72,6 +72,11 @@ def test_runway():
     # no cash on file: no zero-month runway
     c0 = {'quality': {'val': {'cash_all': 0, 'debt': 5e6}, 'cap': {}}}
     assert C.runway(c0, q, ttm)['months'] is None
+    # a burn that is tiny against the cash (Castle Biosciences: $0.5M a year against $267M): "more than 10 years", not 545.6
+    qs = [{'label': f'Q{k}', 'items': {'ocf': -100e3, 'capex': -22e3}} for k in range(4)]
+    rws = C.runway({'quality': {'val': {'cash_all': 266.8e6, 'debt': 10e6}, 'cap': {}}}, qs, {'label': 'TTM', 'items': {'ocf': -400e3, 'capex': -89e3}})
+    body, line = C.runway_section('Castle', rws)
+    assert rws['months'] > 6000 and 'more than 10 years' in body and 'more than ten years' in line and '545' not in body + line
 
 
 def test_chain_index(tmp_path):

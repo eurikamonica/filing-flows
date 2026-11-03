@@ -128,10 +128,11 @@ def runway_section(name, rw):
     tiles = [('Cash & investments', money(rw['cash'])), ('Debt', money(rw['debt']) if rw['debt'] else 'none'), ('Net cash' if rw['net'] >= 0 else 'Net debt', money(abs(rw['net']))),
              ('Due within a year', money(rw['due12']) if rw['due12'] else None)]
     if rw['months'] is not None:
-        tiles.append(('Cash runway', f"{rw['months'] / 12:.1f} years" if rw['months'] >= 24 else seo.n_of(rw['months'], 'month')))
+        tiles.append(('Cash runway', 'more than 10 years' if rw['months'] > 120 else f"{rw['months'] / 12:.1f} years" if rw['months'] >= 24 else seo.n_of(rw['months'], 'month')))
     if rw['burn'] and rw['months'] is not None:
         how = f"{name} is burning cash: its operations consume cash, a free cash flow of {money(-rw['burn'])} a year at the current rate"
-        line = (how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{rw['months'] / 12:.1f} years</b>" if rw['months'] >= 24 else
+        line = (how + f" against {money(rw['cash'])} of cash and investments: a runway of <b>more than ten years</b> at that rate" if rw['months'] > 120 else
+                how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{rw['months'] / 12:.1f} years</b>" if rw['months'] >= 24 else
                 how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{seo.n_of(rw['months'], 'month')}</b>")
         if rw['due12']:
             line += f"; {money(rw['due12'])} of debt also comes due within a year, which {'the cash covers' if rw['cash'] >= rw['due12'] + rw['burn'] else 'would need refinancing or new money'}"
@@ -394,7 +395,7 @@ def runway_page(site, base, cards):
     burners = sorted([c for c in cards if c.get('months') is not None and (c.get('cash') or 0) > 0], key=lambda c: c['months'])
     walls = sorted([c for c in cards if c.get('due12') and c['cash'] > 0 and c['due12'] > c['cash']], key=lambda c: -c['due12'] / c['cash'])[:30]
     forts = sorted([c for c in cards if c['net'] > 0 and (c.get('fcf_ttm') or 0) > 0], key=lambda c: -c['net'])[:30]
-    yrs = lambda m: f"{m / 12:.1f} yrs" if m >= 24 else f"{m:.0f} mo"
+    yrs = lambda m: '10+ yrs' if m > 120 else f"{m / 12:.1f} yrs" if m >= 24 else f"{m:.0f} mo"
     n_burn = len(burners)
     gap = sum(1 for c in cards if (c.get('fcf_ttm') or 0) < 0 and (c.get('ocf_ttm') or 0) > 0)
     lead = (f"Of {len(cards):,} companies with a balance sheet on file, {n_burn:,} have operations that consume cash"
