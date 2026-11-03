@@ -183,6 +183,29 @@ def owners(co, h):
             'desc': lead[:300], 'body': body, 'qa': qa}
 
 
+def gval(v, unit):
+    """one guided figure: −$0.65 a share, $1.2B, 4.5%"""
+    if unit == 'ps':
+        return f"{'−' if v < 0 else ''}${abs(v):,.2f}"
+    if unit == 'usd':
+        return money(v)
+    if unit == 'growth':
+        return f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(v):g}%"
+    if unit == 'bps':
+        return f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(v):g} bps"
+    if unit == 'x':
+        return f"{v:g}×"
+    return f"{'−' if v < 0 else ''}{abs(v):g}%"
+
+
+def grange(i):
+    """a guided range, or the one figure when both ends are the same ("EPS $-0.65–-0.65" read wrong)"""
+    lo, hi, u = i.get('lo'), i.get('hi'), i.get('unit')
+    if hi is None or hi == lo:
+        return gval(lo, u)
+    return f"{gval(lo, u)} to {gval(hi, u)}" if lo < 0 or hi < 0 or u in ('growth', 'bps') else f"{gval(lo, u)}–{gval(hi, u)}"
+
+
 def guidance(co, h, ol, rec=None):
     g = (h or {}).get('guidance') or {}
     docs = (ol or {}).get('docs') or []
@@ -194,10 +217,8 @@ def guidance(co, h, ol, rec=None):
     if g.get('items'):
         word = GUIDE.get(g.get('label'), 'gave')
         its = [i for i in g['items'] if i.get('lo') is not None and not i.get('scope')][:4]
-        rng = lambda i: (f"{i['lo']:,.2f}–{i['hi']:,.2f}" if i.get('unit') == 'ps' else f"{money(i['lo'])}–{money(i['hi'])}" if i.get('unit') == 'usd'   # noqa: E731
-                         else f"{i['lo']:g}–{i['hi']:g}%")
         lead = f"{name} ({t}) {word} its guidance on {fdate(g.get('filed'))}: " + '; '.join(
-            f"{i.get('name') or i.get('metric')} {('$' if i.get('unit') == 'ps' else '')}{rng(i)} for {i.get('period')}" for i in its) + '.'
+            f"{i.get('name') or i.get('metric')} {grange(i)} for {i.get('period')}" for i in its) + '.'
         qa.append((f"Did {name} raise or lower its guidance?", lead))
     if md:
         c = md.get('counts') or {}
@@ -208,7 +229,7 @@ def guidance(co, h, ol, rec=None):
             qa.append((f"What does {name} expect?", ' '.join(s['t'] for s in new)[:600]))
     stm = ''.join(f"<li>{('<b>' + e(s.get('status')) + '</b> · ') if s.get('status') in ('new', 'updated') else ''}{e(s['t'])}</li>"
                   for s in (md or {}).get('statements', [])[:12])
-    items = ''.join(f"<tr><td>{e(i.get('name') or i.get('metric'))}</td><td>{e(i.get('period'))}</td><td class='num'>{e(i.get('lo'))}–{e(i.get('hi'))} {e(i.get('unit'))}</td>"
+    items = ''.join(f"<tr><td>{e(i.get('name') or i.get('metric'))}</td><td>{e(i.get('period'))}</td><td class='num'>{e(grange(i))}</td>"
                     f"<td>{e(i.get('change') or '')}</td></tr>" for i in (g.get('items') or [])[:12] if i.get('lo') is not None)
     body = (f"<p class='lead'>{e(lead.strip())}</p>" + SC.guidance_outlook(name, rec, ol, money)
             + (f"<h2>Latest guidance</h2><div class='tbl-wrap'><table><thead><tr><th>Metric</th><th>Period</th><th class='num'>Range</th><th>Change</th></tr></thead><tbody>{items}</tbody></table></div>"

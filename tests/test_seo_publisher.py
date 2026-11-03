@@ -78,3 +78,11 @@ def test_translated_page_placeholder_and_one_disclaimer():
     assert "正在绘制 Sankey 图…" in seo.localize(doc, "zh-Hans") and "Dibujando el diagrama de Sankey…" in seo.localize(doc, "es")
     import seo_intl as I
     assert I.L["es"]["source"]("Apple", "10-Q").endswith("ante la SEC de EE. UU.") and "conseil" not in I.L["fr"]["source"]("Apple", "10-Q")
+
+
+def test_guidance_ranges():
+    """"EPS $-0.65–-0.65" on c/wnc/guidance/: one figure when both ends agree, signs before the dollar, words for a range across zero."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    import seo_topics as T
+    assert T.grange({"lo": -0.65, "hi": -0.65, "unit": "ps"}) == "−$0.65" and T.grange({"lo": 1.2, "hi": 1.35, "unit": "ps"}) == "$1.20–$1.35"
+    assert T.grange({"lo": -2, "hi": 1, "unit": "growth"}) == "−2% to +1%" and T.grange({"lo": 30, "hi": 32, "unit": "pct"}) == "30%–32%"
