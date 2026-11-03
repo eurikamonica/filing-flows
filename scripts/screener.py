@@ -87,7 +87,10 @@ def fmt(k, v):
     if k in USD:
         return money(v)
     if k == 'om' or k == 'yoy' or k == 'short_chg':
-        return f"{v:+.1f}%" if k != 'om' else f"{v:.1f}%"
+        if v >= 1000:                                               # growth from a sliver: 2,576×, not +257,500.0%
+            return f"{1 + v / 100:,.0f}×"
+        r = round(v, 1)
+        return f"{'+' if r > 0 and k != 'om' else '−' if r < 0 else ''}{abs(r):.1f}%"
     if k == 'runway_months':
         return '10+ yrs' if v > 120 else f"{v / 12:.1f} yrs" if v >= 24 else f"{v:.0f} mo"
     if k == 'report_date':

@@ -31,12 +31,12 @@ const SC_DEFAULT_COLS = ['mcap', 'growth', 'om', 'fcf_y', 'qscore', 'report_date
 const SC_SECTORS = [['', 'Any sector'], ['technology', 'Technology'], ['communication', 'Communication'], ['consumer-disc', 'Consumer discretionary'], ['consumer-staples', 'Consumer staples'], ['health', 'Health care'],
   ['financials', 'Financials'], ['real-estate', 'Real estate'], ['energy', 'Energy'], ['materials', 'Materials'], ['industrials', 'Industrials'], ['utilities', 'Utilities']];
 const scUsd = v => v == null || !Number.isFinite(+v) ? '—' : (v < 0 ? '−' : '') + '$' + compact(Math.abs(v));
-const scSigned = (v, d = 1) => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + fmt(Math.abs(v), d);
+const scSigned = (v, d = 1) => { if (v == null) return '—'; const r = +v.toFixed(d); return (r > 0 ? '+' : r < 0 ? '−' : '') + fmt(Math.abs(r), d); };   // never "−0.0"
 function scCell(kind, v) {
   if (v == null) return '—';
   if (kind === 'usd') return scUsd(v);
   if (kind === 'pct') return `<span class="${v > 0 ? 'positive' : v < 0 ? 'negative' : ''}">${scSigned(100 * v)}%</span>`;
-  if (kind === 'pts') return `<span class="${v > 0 ? 'positive' : v < 0 ? 'negative' : ''}">${scSigned(v)}%</span>`;
+  if (kind === 'pts') return `<span class="${v > 0 ? 'positive' : v < 0 ? 'negative' : ''}">${v >= 1000 ? fmt(1 + v / 100, 0) + '×' : scSigned(v) + '%'}</span>`;   // +257,500% from a sliver: 2,576×
   if (kind === 'flag') return v ? '✓' : '';
   if (kind === 'date') return esc(String(v));
   if (kind === 'months') return v > 120 ? '10+ yrs' : v >= 24 ? fmt(v / 12, 1) + ' yrs' : fmt(v, 0) + ' mo';
