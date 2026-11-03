@@ -66,8 +66,9 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
                 dR = R - Ny["R"]
                 best = max(moves, key=lambda x: x[1] if dR >= 0 else -x[1])
                 if best[1] * dR > 0 and abs(dR) > 0:
+                    words = _chg_words(best[2])                # None when the line was nil or negative a year ago
                     s += (f" {best[0]} {'added' if best[1] > 0 else 'lost'} {f.money(abs(best[1]))} year over year"
-                          f" ({_chg_words(best[2])}), {abs(best[1]) / abs(dR) * 100:.0f}% of the total change.")
+                          + (f" ({words})" if words else "") + f", {abs(best[1]) / abs(dR) * 100:.0f}% of the total change.")
                 worst = [m for m in moves if m[2] is not None and m[2] < -0.5]
                 if worst and dR > 0:
                     w = min(worst, key=lambda x: x[2])
@@ -164,7 +165,8 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
             s += f" Working capital and other items {'added' if r > 0 else 'used'} {f.money(abs(r))}."
         use = Nc.get("co_fcf_use")
         if use:                                          # the company's own free cash flow, as the chart draws it
-            items = " and ".join(f"{p['label'][:1].lower() + p['label'][1:]} ({f.money(p['amount'])})" for p in use["parts"])
+            items = " and ".join(f"{(p.get('label') or 'other items')[:1].lower() + (p.get('label') or 'other items')[1:]} ({f.money(p['amount'])})"
+                                 for p in use["parts"])
             s += f" After {items}, {use['name'].lower()} as the company reports it was {f.money(use['fcf'])}."
         elif Nc.get("capex"):
             fcf = Nc["ocf"] - Nc["capex"]
