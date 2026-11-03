@@ -19,7 +19,7 @@ def quarter(label, filed, rev, dc, gp, oi, net, k):
     """revenue, its two lines, gross and operating profit, net earnings; q = the quarter before, y = a year earlier (×k)"""
     def n(i, name, v):
         return {"id": i, "name": name, "v": v, "q": v / 1.1, "y": v / k}
-    nodes = [n("G:x:DataCenterMember", "Data Center", dc), n("L:x:GamingMember", "Gaming", rev - dc), n("revenue", "Revenue", rev),
+    nodes = [n("G:x:DataCenterMember", "Data Center", dc), n("L:x:GamingMember", "Gaming Member", rev - dc), n("revenue", "Revenue", rev),
              n("gp", "Gross profit", gp), n("oi", "Operating profit", oi), n("net", "Net earnings", net), n("I:rd", "Research &amp; development", rev * .1)]
     links = [{"s": "G:x:DataCenterMember", "t": "revenue", "v": dc}, {"s": "L:x:GamingMember", "t": "revenue", "v": rev - dc},
              {"s": "revenue", "t": "gp", "v": gp}, {"s": "gp", "t": "oi", "v": oi}, {"s": "oi", "t": "net", "v": net}]
@@ -64,6 +64,10 @@ def test_history(tmp_path):
     gm = (s / "c" / "nvda" / "gross-margin" / "index.html").read_text()
     assert "gross margin was 74.8% in Q2 FY27" in gm.replace("&#x27;", "'") and "Over the last 4 quarters" in gm
     assert (s / "c" / "nvda" / "data-center-revenue" / "index.html").exists() and (s / "c" / "nvda" / "research-and-development" / "index.html").exists()
+    gaming = (s / "c" / "nvda" / "gaming-revenue" / "index.html").read_text()                  # "Gaming Member" → Gaming
+    assert "Gaming revenue by quarter" in gaming and "Gaming Member" not in gaming
+    moved = (s / "c" / "nvda" / "gaming-member-revenue" / "index.html").read_text()            # the old address sends on
+    assert "noindex" in moved and "/c/nvda/gaming-revenue/" in moved and "gaming-member-revenue" not in (s / "sitemap-metrics.xml").read_text()
     gh = (s / "c" / "nvda" / "guidance-history" / "index.html").read_text().replace("&#x27;", "'")
     assert "met or beat its own guidance twice (100%)" in gh and "raised guidance 3 times and lowered it once" in gh
     assert "$91.0B–$95.0B (May 27, 2026)" in gh and "above the range" in gh and "+3.4%" in gh and "to be reported" in gh

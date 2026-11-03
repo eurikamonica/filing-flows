@@ -41,7 +41,7 @@ def money(v):
 
 
 def pc(v, d=0):
-    return '—' if v is None else f'{v:+.{d}f}%'
+    return seo.pct(v) if d == 0 else '—' if v is None else f'{v:+.{d}f}%'       # a change: +10%, −0.4% (never "-0%")
 
 
 def pts(v):
@@ -261,13 +261,24 @@ def segment_metrics(c):
     n = nodes(q)
     tops = [ln['s'] for ln in q.get('links') or [] if ln['t'] == 'revenue' and ln['s'] in n and ln['s'] not in ('rev_more',)]
     tops = sorted(set(tops), key=lambda k: -(n[k][1] or 0))[:3] if len(set(tops)) > 1 else []
+    raw = {x['id']: x.get('name') or x.get('label') or x['id'] for x in q.get('nodes') or []}
+    slug_of = lambda lbl: re.sub(r'[^a-z0-9]+', '-', lbl.lower()).strip('-')[:40]    # noqa: E731
     out = []
     for k in tops:
         lbl = n[k][0]
-        s = re.sub(r'[^a-z0-9]+', '-', lbl.lower()).strip('-')[:40]
+        s = slug_of(lbl)
         if s and s not in ('revenue', 'other-revenues', 'other'):
-            out.append((f'{s}-revenue' if 'revenue' not in s else s, f'{lbl} revenue', k))
+            was = slug_of(seo.html.unescape(str(raw.get(k) or '')))        # the slug the label's XBRL leftover gave the page before
+            out.append((f'{s}-revenue' if 'revenue' not in s else s, f'{lbl} revenue', k,
+                        (f'{was}-revenue' if 'revenue' not in was else was) if was and was != s else None))
     return out
+
+
+def moved_page(url, name):
+    """a page whose address changed (a line's label cleaned of 'Member'): the old address sends search engines on"""
+    return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{e(name)} | Filing Flows</title>'
+            f'<meta name="robots" content="noindex, follow"><link rel="canonical" href="{e(url)}"><meta http-equiv="refresh" content="0; url={e(url)}">'
+            f'</head><body><p>This page has moved: <a href="{e(url)}">{e(name)}</a>.</p></body></html>')
 
 
 # ---------------------------------------------------------------- guided against reported
@@ -388,12 +399,16 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 put(os.path.join(d, mslug), *out, 'metrics')
                 counts['metrics'] += 1
                 mlinks.append((f'{mslug}/', f'{name} {label} by quarter'))
-        for mslug, label, key in segment_metrics(c):
+        for mslug, label, key, old_slug in segment_metrics(c):
             out = metric_page(r, c, base, slug, who, name, mslug, label, key, 'value')
             if out:
                 put(os.path.join(d, mslug), *out, 'metrics')
                 counts['metrics'] += 1
                 mlinks.append((f'{mslug}/', f'{name} {label} by quarter'))
+                if old_slug and old_slug != mslug and not os.path.exists(os.path.join(d, old_slug, 'index.html')):
+                    os.makedirs(os.path.join(d, old_slug), exist_ok=True)                 # "ethanol-member-revenue" → ethanol-revenue
+                    with open(os.path.join(d, old_slug, 'index.html'), 'w', encoding='utf-8') as f:
+                        f.write(moved_page(out[0], f'{who} {label} by quarter'))
         rec = read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))
         if rec:
             out = guidance_page(r, rec, base, slug, who, name)

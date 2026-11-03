@@ -120,6 +120,7 @@ def page_for(a, b, fa, fb, va, vb, base):
         rows += [('Market value', money(va.get('mcap')), money(vb.get('mcap'))),
                  ('P/E', f"{va['pe']:.1f}×" if va.get('pe') else '—', f"{vb['pe']:.1f}×" if vb.get('pe') else '—'),
                  ('Analysts’ mean target', f"${va['target_mean']:.2f}" if va.get('target_mean') else '—', f"${vb['target_mean']:.2f}" if vb.get('target_mean') else '—')]
+    rows = [r for r in rows if r[1] != '—' or r[2] != '—']                  # a row neither company has a figure for says nothing
     tbl = (f"<div class='tbl-wrap'><table><thead><tr><th></th><th class='num'>{e(na)} ({e(ta)})</th><th class='num'>{e(nb)} ({e(tb)})</th></tr></thead><tbody>"
            + ''.join(f"<tr><td>{e(k)}</td><td class='num'>{e(x)}</td><td class='num'>{e(y)}</td></tr>" for k, x, y in rows) + '</tbody></table></div>')
     seg = ''
