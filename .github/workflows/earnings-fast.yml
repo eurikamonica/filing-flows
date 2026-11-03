@@ -1,0 +1,186 @@
+name: Earnings fast lane
+
+# S&P 500 and Nasdaq-100 earnings releases on the site minutes after the SEC accepts them (pipeline/fastlane.py).
+#
+# The full scan (scan.yml) reads every new filing and rebuilds the whole site: about an hour from a release to its
+# page in earnings season (Apple, Nov 2 2026: accepted 16:30 ET, live 17:33). Here a watcher polls EDGAR's live 8-K
+# feed every 15 seconds in the busy hours (6:00-9:45 and 15:55-18:30 ET; every 45 s the rest of EDGAR's day). When an
+# index member files an Item 2.02 it claims the filing and stops; this run then reads the release with the regular
+# reader, puts the company's chart, its row in the company list and its page into the last published site, and
+# publishes it — a few minutes from acceptance (most of it the Pages upload and deploy of the ~830 MB site). The
+# same files go to the branch "fastlane" (overlay/), which the full scan lays over its own build until it has read
+# the filing itself, so a scan that started before the release does not take the page back.
+#
+# The watcher is a relay like post-to-x.yml: each run watches for up to 50 minutes and then, or right after a hit,
+# starts the next one (workflow_dispatch, chained=true), so there is always one watching while earlier runs publish.
+# The cron only restarts the relay if it breaks. The repository variable FAST_LANE=off stops it. Run it by hand with
+# an accession number to publish one release now (e.g. a company the watcher missed).
+
+on:
+  schedule:
+    - cron: "7,27,47 10-23 * * 1-5"      # UTC; the watcher keeps to EDGAR's hours (6:00-22:00 ET, weekdays) itself
+    - cron: "7,27,47 0-2 * * 2-6"
+  workflow_dispatch:
+    inputs:
+      chained:
+        description: "Started by the previous watcher (leave off when running by hand)"
+        type: boolean
+        default: false
+      accession:
+        description: "Publish this 8-K now instead of watching (accession number, e.g. 0000320193-26-000024)"
+        default: ""
+      cik:
+        description: "…and its company's CIK (e.g. 320193)"
+        default: ""
+
+permissions:
+  contents: write      # the branch "fastlane": claimed filings and the overlay
+  pages: write
+  id-token: write
+  actions: write       # starts the next watcher; reads the last published site (an artifact of scan.yml or this)
+
+env:
+  SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+  SITE_URL: ${{ vars.SITE_URL || 'https://filing-flows.com' }}
+  LANE_URL: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+jobs:
+  watch:
+    if: vars.FAST_LANE != 'off'
+    runs-on: ubuntu-latest
+    timeout-minutes: 58
+    concurrency:
+      group: earnings-fast-watch
+      cancel-in-progress: false
+    outputs:
+      hit: ${{ steps.w.outputs.hit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /pipeline/
+            /config/
+            /requirements.txt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: The branch "fastlane" (claimed filings, overlay)
+        run: |
+          if git ls-remote --exit-code --heads "$LANE_URL" fastlane >/dev/null; then
+            git clone --quiet --depth 1 --branch fastlane "$LANE_URL" lane
+          else
+            mkdir lane && git -C lane init --quiet -b fastlane && git -C lane remote add origin "$LANE_URL"
+          fi
+      - name: Watch EDGAR's live 8-K feed
+        id: w
+        env:
+          ACCESSION: ${{ github.event.inputs.accession }}
+          CIK: ${{ github.event.inputs.cik }}
+        run: |
+          if [ -n "$ACCESSION" ]; then                       # by hand: this filing, now
+            echo "[{\"cik\": ${CIK:-0}, \"accn\": \"$ACCESSION\", \"ticker\": \"CIK${CIK}\", \"items\": [\"2.02\"], \"form\": \"8-K\"}]" > hits.json
+          else
+            python -m pipeline.fastlane watch --lane lane --out hits.json --minutes 50
+          fi
+          if [ "$(jq length hits.json)" -gt 0 ]; then
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+            cd lane && git add -A
+            git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit --quiet -m "claim $(date -u +%H:%M:%S)" || true
+            for i in 1 2 3; do git push --quiet origin HEAD:fastlane && break; git pull --quiet --rebase origin fastlane || true; sleep 2; done
+          fi
+      - uses: actions/upload-artifact@v4
+        if: steps.w.outputs.hit == 'true'
+        with:
+          name: hits
+          path: hits.json
+          retention-days: 3
+      - name: The next watcher (relay)
+        if: always() && github.event.inputs.accession == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          inside=$(python -c 'from pipeline import fastlane as F; print(int(F.in_window()))')
+          if [ "$inside" != "1" ]; then echo "outside EDGAR's hours: the relay rests until the cron starts it"; exit 0; fi
+          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow earnings-fast.yml --status queued --json databaseId --jq length)
+          if [ "${n:-0}" -gt 0 ]; then echo "a watcher is already queued"; exit 0; fi
+          gh workflow run earnings-fast.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chained=true
+
+  build:
+    needs: watch
+    if: needs.watch.outputs.hit == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:                      # one publish at a time: each patches the site the one before it published
+      group: earnings-fast-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /pipeline/
+            /scripts/
+            /config/
+            /web/
+            /requirements.txt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: hits
+      - name: The companies' records (branch "data", only these companies)
+        run: |
+          git clone --quiet --depth 1 --filter=blob:none --no-checkout --branch data "$LANE_URL" store
+          paths=$(jq -r '[.[] | "/companies/\(.cik).json"] | join(" ")' hits.json)
+          git -C store sparse-checkout set --no-cone /fx.json $paths
+          git -C store checkout --quiet data
+          ls store/companies 2>/dev/null || echo "no record yet: read as a new company"
+      - name: Read the releases (the regular reader) and draw them
+        run: python -m pipeline.fastlane build --hits hits.json --store store --out fast
+      - name: The site as last published (newest github-pages artifact of scan.yml or this workflow)
+        id: site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ "$(jq length fast/done.json)" -gt 0 ] || { echo "nothing to publish"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; }
+          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=github-pages&per_page=20" \
+                --jq '[.artifacts[] | select(.expired == false and .workflow_run.head_branch == "main")][0].workflow_run.id')
+          echo "patching the site of run $run"
+          gh run download "$run" -R "$GITHUB_REPOSITORY" -n github-pages -D dl
+          mkdir _site && tar -xf dl/artifact.tar -C _site && rm -rf dl
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/og/index.json" -o _og.json || echo "{}" > _og.json
+      - name: Put them into the site and the overlay
+        if: steps.site.outputs.skip != '1'
+        env:
+          OG_MANIFEST: _og.json
+        run: |
+          git clone --quiet --depth 1 --branch fastlane "$LANE_URL" lane
+          python -m pipeline.fastlane patch --built fast --site _site --lane lane --base "$SITE_URL"
+          cd lane && git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit --quiet -m "overlay $(date -u +%H:%M:%S)" || true
+          for i in 1 2 3; do git push --quiet origin HEAD:fastlane && break; git pull --quiet --rebase origin fastlane || true; sleep 2; done
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.site.outputs.skip != '1'
+        with:
+          path: _site
+    outputs:
+      published: ${{ steps.site.outputs.skip != '1' }}
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -661,10 +661,9 @@ def og_images(base):
     return {k: f"{root}/{v['file']}" + (f"?v={v['v']}" if v.get("v") else "") for k, v in (m.get("images") or {}).items() if root and v.get("file")}
 
 
-def write_pages(data_dir, out_dir, base):
-    base = (base or "").rstrip("/")
-    if not base:
-        return 0
+def page_context(data_dir, base):
+    """What every company page needs besides its own figures: share pictures, the index rows (newest quarter per
+    company), supply chains and themes, customer and supplier ties, page slugs and industry peers."""
     images = og_images(base)
     ix = json.load(open(os.path.join(data_dir, "index.json"), encoding="utf-8"))
     rows = ix["companies"] if isinstance(ix, dict) else ix
@@ -697,24 +696,47 @@ def write_pages(data_dir, out_dir, base):
     by_industry = {}
     for r in latest.values():
         by_industry.setdefault(r.get("sic") or r.get("industry"), []).append(r)
+    return {"images": images, "names": names, "latest": latest, "chain_of": chain_of, "ties": ties, "pages": pages,
+            "by_industry": by_industry}
+
+
+def write_company(ctx, data_dir, out_dir, base, cik):
+    """One company's page (c/<slug>/) and its embed frame. Returns (url, filed, share picture or None), or None."""
+    r = ctx["latest"].get(cik)
+    if not r:
+        return None
+    try:
+        c = json.load(open(os.path.join(data_dir, "c", f"{cik}.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    images, names, by_industry = ctx["images"], ctx["names"], ctx["by_industry"]
+    peers = sorted((x for x in by_industry.get(r.get("sic") or r.get("industry"), []) if x["cik"] != cik), key=lambda x: -(x.get("revenue") or 0))[:8]
+    url, doc = company_page(c, r, peers, names.get(r.get("sector"), r.get("sector") or "Other"), base, image=images.get(f"c-{cik}"),
+                            all_rows=by_industry.get(r.get("sic") or r.get("industry"), []), chains=ctx["chain_of"].get(str(r.get("ticker") or "").upper(), []), images=images,
+                            ties=ctx["ties"].get(str(cik)), pages=ctx["pages"])
+    d = os.path.join(out_dir, "c", slug_for(r))
+    os.makedirs(d, exist_ok=True)
+    open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
+    os.makedirs(os.path.join(d, "embed"), exist_ok=True)       # the frame other sites embed (not indexed itself)
+    open(os.path.join(d, "embed", "index.html"), "w", encoding="utf-8").write(embed_page(c, r, url))
+    return url, r.get("filed"), images.get(f"c-{cik}")
+
+
+def write_pages(data_dir, out_dir, base):
+    base = (base or "").rstrip("/")
+    if not base:
+        return 0
+    ctx = page_context(data_dir, base)
+    images, names, latest = ctx["images"], ctx["names"], ctx["latest"]
     urls, n, pics = [(base + "/", None)], 0, {}
-    for cik, r in latest.items():
-        try:
-            c = json.load(open(os.path.join(data_dir, "c", f"{cik}.json"), encoding="utf-8"))
-        except (OSError, ValueError):
+    for cik in latest:
+        got = write_company(ctx, data_dir, out_dir, base, cik)
+        if not got:
             continue
-        peers = sorted((x for x in by_industry.get(r.get("sic") or r.get("industry"), []) if x["cik"] != cik), key=lambda x: -(x.get("revenue") or 0))[:8]
-        url, doc = company_page(c, r, peers, names.get(r.get("sector"), r.get("sector") or "Other"), base, image=images.get(f"c-{cik}"),
-                                all_rows=by_industry.get(r.get("sic") or r.get("industry"), []), chains=chain_of.get(str(r.get("ticker") or "").upper(), []), images=images,
-                                ties=ties.get(str(cik)), pages=pages)
-        d = os.path.join(out_dir, "c", slug_for(r))
-        os.makedirs(d, exist_ok=True)
-        open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
-        os.makedirs(os.path.join(d, "embed"), exist_ok=True)       # the frame other sites embed (not indexed itself)
-        open(os.path.join(d, "embed", "index.html"), "w", encoding="utf-8").write(embed_page(c, r, url))
-        urls.append((url, r.get("filed")))
-        if images.get(f"c-{cik}"):
-            pics[url] = images[f"c-{cik}"]
+        url, filed, pic = got
+        urls.append((url, filed))
+        if pic:
+            pics[url] = pic
         n += 1
     az = sorted(latest.values(), key=lambda x: display_name(x.get("name")).lower())
     os.makedirs(os.path.join(out_dir, "c"), exist_ok=True)
