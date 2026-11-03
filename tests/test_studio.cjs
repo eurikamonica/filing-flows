@@ -593,6 +593,64 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     const q4 = 4 * 100 + 3 + 20 - (100 + 101 + 102);
     ok(V2.grid.length === 13 && Math.abs(V2.series[0].v[0] - (100 + 101 + 102 + q4)) < 1e-9, 'fourth quarters from the year: ' + V2.grid.length + ' trailing sums');
   }
+  // money put into formula lines: each line bought like an index, or a mix split by its weights (and rebalanced)
+  {
+    const mp = (src) => S.mixParts(S.parse(src));
+    const four = mp('0.625*rebase(URTH)+0.208333*rebase(QQQ)+0.125*rebase(IBIT)+0.041667*rebase(GLD)');
+    ok(four.length === 4 && four.map((x) => x.label).join() === 'URTH,QQQ,IBIT,GLD' && Math.abs(four[0].written - 62.5) < 1e-9 && Math.abs(four[3].written - 4.1667) < 1e-3, 'a four-part mix and its weights as written');
+    ok(mp('(rebase(URTH)-0.40*rebase(QQQ))/0.60') === null && mp('rebase(QQQ/SPY)') === null && mp('QQQ') === null, 'a difference, a ratio, one ticker: not a mix');
+    const halves = mp('(rebase(AAA)+rebase(BBB))/2'), cash = mp('0.6*rebase(AAA)+40');
+    ok(halves.length === 2 && halves.every((x) => x.written === 100) && cash[1].label === 'cash' && cash[1].written === 40 && cash[0].written === 60, 'halves, and a number as cash');
+    ok(mp('AAA.price*2+BBB')[0].written === null && mp('AAA.price*2+BBB')[0].label === 'AAA.price', 'raw prices: no weights as written');
+    files['disclosures/data/etf/px/LAT.json'] = (() => { const x = px('LAT', 0.005, 0); const k = 120; return Object.assign(x, { t: x.t.slice(k), c: x.c.slice(k), a: x.a.slice(k), div: [] }); })();
+    const base = { k: 'formula', fi: '1', from: start };
+    const B = (o) => S.build(Object.assign(S.parseState(''), base, o));
+    // a lump sum in one ticker's line is the growth race of that ticker
+    const A1 = await B({ expr: 'A: AAA', amt: '10000' }), G1 = await S.build(Object.assign(S.parseState(''), { k: 'growth', t: 'AAA', from: start, amt: '10000' }));
+    const L1 = A1.grid.length - 1;
+    ok(A1.kind === 'growth' && A1.fx && Math.abs(A1.series[0].v[L1] - G1.series[0].v[G1.grid.length - 1]) < 1e-6, 'a lump in a ticker line = its growth race: ' + A1.series[0].v[L1] + ' vs ' + G1.series[0].v[G1.grid.length - 1]);
+    // a 60/40 mix, its parts starting with it: split by the weights and never rebalanced, a lump follows the line
+    const mix = 'Mix: 0.6*rebase(AAA)+0.4*rebase(BBB)';
+    const lineM = await B({ expr: mix, amt: '10000' }), wM = await B({ expr: mix, amt: '10000', fsplit: 'w' }), yM = await B({ expr: mix, amt: '10000', fsplit: 'w', frb: 'y' });
+    const Lm = lineM.grid.length - 1, end = (V) => V.series[0].v[V.grid.length - 1];
+    ok(Math.abs(end(lineM) - end(wM)) < 1e-6 && Math.abs(end(wM) - end(yM)) > 1, 'never rebalanced = the line; rebalanced yearly differs: ' + [end(lineM), end(wM), end(yM)].map(Math.round));
+    ok([...wM.notes].some((x) => /60\.0% AAA · 40\.0% BBB \(the weights as written\), never rebalanced/.test(x)) && /split by the mix’s weights, never rebalanced/.test(wM.sub), 'the weights are spelled out: ' + wM.sub);
+    // by hand: 60/40 put back every year — the value per unit (the plan's index) compounds the mix's yearly returns
+    {
+      const aa = wM.series[0], V = yM, L = V.grid.length - 1;
+      ok(Math.abs(V.series[0].idx[0] - 100) < 1e-9 && V.series[0].idx.every((x) => x > 0), 'the plan has a value per unit');
+      ok(Math.abs(V.series[0].v[L] / 10000 - V.series[0].idx[L] / 100) < 1e-6, 'a lump grows as the value per unit: ' + V.series[0].v[L] + ' / ' + V.series[0].idx[L]);
+      ok(aa.v[0] === 10000, 'the lump on the first week');
+    }
+    // the same amount every month, rebalanced at each buy; the money put in, the yearly return, the end card
+    const D = await B({ expr: mix + '\nA: AAA', amt: '0', rec: '500', ri: '1', ru: 'm', fsplit: 'w', frb: 'b' });
+    const Ld = D.grid.length - 1;
+    ok(D.dca && D.contrib[Ld] === D.dca.put && D.dca.put > 20000 && D.series.length === 2 && D.series.every((x) => x.v[Ld] > 0), 'monthly buys into the lines: ' + D.dca.put);
+    D.endCard = true; D.style = 'line'; S.finish(D, Object.assign(S.parseState(''), base));
+    ok(/put in/.test(D.endTitle) && /rebalanced at each buy/.test(D.endSub) && /%\/yr/.test(D.final[0].label) && /\$500 every month/.test(D.caption), 'DCA end card: ' + D.endTitle + ' | ' + D.endSub);
+    for (const style of ['line', 'area', 'tiles', 'bars']) { D.style = style; for (const t of [0, 4, 11.9]) S.draw(ctx, 1920, 1080, D, { theme: 'clean', dur: 12 }, t); n++; }
+    const R = S.report(D);
+    ok(R.kind === 'growth' && R.rows.length === 2 && R.cols.some((c) => c[0] === 'yr') && R.rows.every((r) => r.cells.put[2] === D.dca.put), 'the report: money put in and a yearly return per line');
+    // an end value to reach: the monthly amount worked back for each line
+    const Gl = await B({ expr: mix + '\nA: AAA', amt: '0', goal: '100000', solve: 'rec', fsplit: 'w', frb: 'q' });
+    ok(Gl.goal && Gl.series.every((x) => Math.abs(x.v[Gl.grid.length - 1] - 100000) < 1e-6 && x.each > 0), 'each line ends at the goal: ' + Gl.series.map((x) => Math.round(x.each)));
+    // a spread below zero gets no money; every line below zero: nothing to build; a later line starts the money later
+    const Sp = await B({ expr: mix + '\nSpread: AAA - BBB*3' });
+    ok(Sp.series.length === 1 && [...Sp.notes].some((x) => /Spread is below zero/.test(x)), 'a line below zero gets no money');
+    await assert.rejects(B({ expr: 'Spread: AAA - BBB*3' }), /No line to put money in/); n++;
+    const La = await B({ expr: mix + '\nLate: 0.5*rebase(LAT)+0.5*rebase(AAA)', fsplit: 'w' });
+    ok(Math.abs(La.grid[0] - Date.UTC(2020, 0, 3) - 120 * W) < 8 * 864e5 && [...La.notes].some((x) => /The money goes in from/.test(x)), 'the money starts when every line has a value: ' + new Date(La.grid[0]).toISOString().slice(0, 10));
+    // cash and inflation lines, after inflation: as for tickers
+    const Ci = await B({ expr: mix, amt: '10000', cashl: '1', cashr: '4', infl: 'line', inflr: '3' });
+    ok(Ci.series.some((x) => x.bench === 'cash') && Ci.series.some((x) => x.bench === 'infl'), 'cash and inflation beside the lines');
+    // the address keeps the settings; a template for it; lines drawn as they are without the money
+    const st2 = Object.assign(S.parseState(''), base, { expr: mix, fsplit: 'w', frb: 'y', rec: '500' });
+    const back = S.parseState(S.serialize(st2).slice(7));
+    ok(back.fi === '1' && back.fsplit === 'w' && back.frb === 'y' && back.k === 'formula', 'the address keeps the money settings');
+    ok(S.TEMPLATES.some((t) => t.s.k === 'formula' && t.s.fi === '1' && t.s.fsplit === 'w'), 'a template for money in a mix');
+    const off = await B({ expr: mix, fi: '0' });
+    ok(off.kind === 'formula' && !off.fx && Math.abs(off.series[0].v[0] - 100) < 1e-9, 'without the money the lines are drawn as they are');
+  }
   // the page loads the studio, the router and the menu know it
   const idx = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8'), app = fs.readFileSync(path.join(__dirname, '..', 'web', 'app.js'), 'utf8'), nav = fs.readFileSync(path.join(__dirname, '..', 'web', 'nav.js'), 'utf8');
   ok(idx.includes('<script src="studio.js"></script>') && app.includes('window.FFStudio.render') && nav.includes("'#studio'"), 'the studio is not wired into the page');
