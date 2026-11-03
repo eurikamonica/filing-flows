@@ -41,6 +41,10 @@ ROOT = Path(__file__).resolve().parents[1]
 STATE = 'holdings-backfill.json'
 
 
+PARSE_ERRORS = ('reconciliation failed', 'Invalid security identity', 'Unknown amendment type', 'Missing summary totals',
+                'No supported XML cover', 'Multiple cover documents')
+
+
 class Blocked(RuntimeError):
     """SEC answered 403: its fair-access block. The run stops (and the relay waits) instead of going on."""
 
@@ -103,7 +107,9 @@ def pending(catalog, state, shard=None, now_iso=None, cfg=None):
         c = str(int(r['cik']))
         a = att.get(c, {})
         if a.get('retry_after') and a['retry_after'] > now_iso:
-            continue
+            # a deepening that failed on an old filing's page (strict before the gaps of `process`) is tried again at once
+            if not (cfg and (r.get('processed') or c in done) and int(a.get('fails') or 0) <= 2 and any(p in (a.get('error') or '') for p in PARSE_ERRORS)):
+                continue
         if shard and int(c) % shard[1] != shard[0]:
             continue
         if not r.get('processed') and c not in done:
@@ -129,23 +135,33 @@ def pending(catalog, state, shard=None, now_iso=None, cfg=None):
     return fresh + deeper
 
 
-def process(sec, cik, label, since, as_of=None):
-    """One manager, exactly as holdings.collect_holdings builds it."""
+def process(sec, cik, label, since, as_of=None, strict_from=None):
+    """One manager, exactly as holdings.collect_holdings builds it. strict_from (the universe's `since`): a filing from
+    before it that cannot be read — an old cover page whose totals do not match its table — is a gap in the history
+    ('unreadable'), not a failed manager; a filing from strict_from on still fails the manager, as it always has."""
     name, metas = filing_list(sec, cik, since)
-    filings, notices = [], []
+    filings, notices, unreadable = [], [], []
     for meta in metas:
         if as_of and meta['filed'] > as_of:
             continue
         if meta['form'].startswith('13F-NT'):
             notices.append(meta)
             continue
-        filings.append(load_filing(sec, meta))
+        try:
+            filings.append(load_filing(sec, meta))
+        except (ValueError, KeyError, TypeError) as exc:
+            if not strict_from or meta['filed'] >= strict_from:
+                raise
+            unreadable.append({k: meta.get(k) for k in ('accession', 'form', 'filed')} | {'error': str(exc)[:200]})
     snapshots = resolve(filings, as_of)
     for i, s in enumerate(snapshots):
         s['changes'] = compare(snapshots[i - 1], s) if i else []
         s['baseline_period'] = snapshots[i - 1]['period'] if i else None
-    return {'cik': str(int(cik)), 'name': name, 'label': label or name, 'since': since, 'as_of': as_of, 'filings': filings,
-            'snapshots': snapshots, 'notices': notices, 'last_success': now(), 'stale': False}
+    row = {'cik': str(int(cik)), 'name': name, 'label': label or name, 'since': since, 'as_of': as_of, 'filings': filings,
+           'snapshots': snapshots, 'notices': notices, 'last_success': now(), 'stale': False}
+    if unreadable:
+        row['unreadable'] = unreadable
+    return row
 
 
 def write_manager(root, row):
@@ -194,7 +210,7 @@ def run(data, cfg, minutes=33.0, interval=0.15, shard=None, sec=None, limit=None
         a = state['attempts'].setdefault(cik, {})
         a['last_attempt'] = now()
         try:
-            row = process(sec, cik, r.get('name'), r.get('since') or since, as_of)
+            row = process(sec, cik, r.get('name'), r.get('since') or since, as_of, strict_from=since)
             state['managers'][cik] = write_manager(data, row)
             a.update(last_success=row['last_success'], error=None, fails=0, retry_after=None)
             done += 1

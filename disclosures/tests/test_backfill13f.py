@@ -173,6 +173,44 @@ class WatchedHistory(unittest.TestCase):
             self.assertEqual((row['since'], row['total_usd'], row['position_count']), ('2021-01-01', 1800.0, 1))
 
 
+class Gaps(unittest.TestCase):
+    def test_an_unreadable_old_filing_is_a_gap_not_a_failed_manager(self):
+        """A 2014 cover page whose totals do not match its table (common in the first XML years) leaves that quarter
+        out and is noted under 'unreadable'; the same fault in a filing from the universe's range still fails the
+        manager (the relay's process and the collector alike)."""
+        sec = FakeSec()
+        sec.docs['https://data.sec.gov/submissions/CIK0000000042.json'] = json.dumps({'name': 'TEST MANAGER', 'filings': {'recent': {
+            'form': ['13F-HR', '13F-HR', '13F-HR'], 'accessionNumber': ['0000000042-14-000001', '0000000042-25-000001', '0000000042-25-000002'],
+            'filingDate': ['2014-02-14', '2025-05-15', '2025-08-14'], 'acceptanceDateTime': ['', '', ''],
+            'primaryDocument': ['primary_doc.xml', 'primary_doc.xml', 'primary_doc.xml']}, 'files': []}}).encode()
+        base = 'https://www.sec.gov/Archives/edgar/data/42/000000004214000001/'
+        sec.docs[base + 'index.json'] = json.dumps({'directory': {'item': [{'name': 'primary_doc.xml'}, {'name': 'infotable.xml'}]}}).encode()
+        sec.docs[base + 'primary_doc.xml'] = cover('12-31-2013', 999999)          # the cover's total: not the table's
+        sec.docs[base + 'infotable.xml'] = table(5, 500)
+        row = B.process(sec, '42', 'Test Manager', '2013-06-30', strict_from='2025-01-01')
+        self.assertEqual([x['period'] for x in row['snapshots']], ['2025-03-31', '2025-06-30'])
+        self.assertEqual([(u['accession'], u['filed']) for u in row['unreadable']], [('0000000042-14-000001', '2014-02-14')])
+        self.assertIn('reconciliation', row['unreadable'][0]['error'])
+        with self.assertRaises(ValueError):                                      # strict for the universe's range
+            B.process(sec, '42', 'Test Manager', '2013-06-30', strict_from='2013-01-01')
+        # the collector: the same gap for a watched fund read from 2013
+        sec_ = sec
+
+        class Client:
+            def get(self, url, sec=False):
+                return FakeSec.get(sec_, url)
+
+            def json(self, url, sec=False):
+                return json.loads(FakeSec.get(sec_, url))
+        with tempfile.TemporaryDirectory() as d:
+            cfg = {'since': '2025-01-01', 'watch_since': '2013-06-30', 'watch': [{'cik': '42', 'name': 'Test Manager'}], 'managers': [],
+                   'batch_size': 4, '_data_root': d, 'discover_all': False}
+            out = H.collect_holdings(Client(), cfg, {'managers': [], 'attempts': {}, 'discovery': {'directory': []}})
+            m = next(x for x in out['managers'] if x['cik'] == '42')
+            self.assertEqual(([x['period'] for x in m['snapshots']], len(m['unreadable'])), (['2025-03-31', '2025-06-30'], 1))
+            self.assertEqual(out['errors'], [])
+
+
 class Tiers(unittest.TestCase):
     def test_target_since_by_size(self):
         from holdings13f.ranges import target_since, size_of

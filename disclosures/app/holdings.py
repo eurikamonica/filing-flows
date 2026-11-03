@@ -104,13 +104,17 @@ def collect_holdings(client,cfg,old,revalidate=False):
             if cached.get('cache'):cached=load_manager(cfg['_data_root'],cached)
             name,metas=filing_list(adapter,cik,since_of(cik))
             prior={f['accession']:f for f in cached.get('filings',[])}
-            filings,notices=[],[]
+            filings,notices,unreadable=[],[],[]
             for meta in metas:
                 if cfg.get('as_of') and meta['filed']>cfg['as_of']:continue
                 if meta['form'].startswith('13F-NT'):
                     notices.append(meta);continue
                 filing=prior.get(meta['accession']) if not revalidate else None
-                if filing is None:filing=load_filing(adapter,meta)
+                if filing is None:
+                    try:filing=load_filing(adapter,meta)
+                    except (ValueError,KeyError,TypeError) as exc:   # the history before the universe's range: an unreadable old filing is a gap, not a failed manager
+                        if meta['filed']>=cfg['since']:raise
+                        unreadable.append({k:meta.get(k) for k in ('accession','form','filed')}|{'error':str(exc)[:200]});continue
                 filings.append(filing)
             snapshots=resolve(filings,cfg.get('as_of'))
             for i,s in enumerate(snapshots):
@@ -119,7 +123,7 @@ def collect_holdings(client,cfg,old,revalidate=False):
             managers[cik]={'cik':cik,'name':name,'label':item.get('name',name),'since':since_of(cik),
                              'as_of':cfg.get('as_of'),'filings':filings,'snapshots':snapshots,
                              'notices':notices,'last_success':now(),'stale':False,
-                             'discovered_filing_count':item.get('filing_count')}
+                             'discovered_filing_count':item.get('filing_count'),**({'unreadable':unreadable} if unreadable else {})}
             attempts[cik]['last_success']=now()
         except Exception as exc:
             errors.append({'cik':cik,'error':str(exc)})
