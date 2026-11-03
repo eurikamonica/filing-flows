@@ -43,7 +43,7 @@ import time
 import urllib.parse
 import urllib.request
 import zipfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -418,7 +418,7 @@ def process_nport(zpath, keep_series, holdings=True, top=150, active=None):
 
 HIST_CAP = 20000        # long equity lines kept per quarterly report (the largest portfolios have about 10,000)
 HIST_FIRST = (2019, 4)  # the first N-PORT data set the SEC publishes
-HIST_VERSION = 2        # 2: the unit investment trusts' reports (SPY, DIA, QQQ: no series id) kept under the trust's CIK
+HIST_VERSION = 3        # 3: the trusts' reports (SPY, DIA, MDY, QQQ: no series id, or one assigned later) kept under the trust's CIK
 
 
 def _ident(s):
@@ -427,14 +427,13 @@ def _ident(s):
     return s if len(s) >= 6 and s.strip('0') and s not in ('N/A', 'NONE', 'UNKNOWN') and re.fullmatch(r'[0-9A-Z]+', s) else None
 
 
-def uit_ciks(root):
-    """{registrant CIK: 'cik<CIK>'} of the ETFs that are unit investment trusts (SPY, DIA, QQQ): a trust is one fund and
-    its N-PORT reports carry no series id (or one the ETF list never saw), so the history keeps them under its CIK."""
-    out = {}
-    for e in universe(root):
-        if e.get('act') == 'uit' and str(e.get('cik') or '').isdigit():
-            out[int(e['cik'])] = f'cik{int(e["cik"])}'
-    return out
+def trust_ciks(etfs):
+    """{registrant CIK: 'cik<CIK>'} of the ETFs that are the only ETF of their registrant — the unit investment trusts
+    (SPY, DIA, MDY, QQQ) above all: a trust is one fund and its N-PORT reports carry no series id (or one the ETF list
+    never saw: QQQ's since 2026), so the history keeps them under the trust's CIK. etfs: universe(root), or the root."""
+    etfs = etfs if isinstance(etfs, list) else universe(etfs)
+    n = Counter(int(e['cik']) for e in etfs if str(e.get('cik') or '').isdigit())
+    return {c: f'cik{c}' for c, k in n.items() if k == 1}
 
 
 def nport_weights(zpath, keep_series, keep_cik=None, cap=HIST_CAP):
@@ -444,22 +443,28 @@ def nport_weights(zpath, keep_series, keep_cik=None, cap=HIST_CAP):
     index into 'keys': the ticker the fund gives, else the CUSIP, else the ISIN; lines of one security added together) and
     'v' (the fund's own percentage of net assets in millionths). One report per series and date: the latest filed (an
     amendment replaces the original). 'ids': for the keys that are a bare CUSIP / ISIN, the ticker most of the funds that
-    give both write. keep_cik (uit_ciks): a unit investment trust's reports, which name no series the ETF list knows,
-    are kept under 'cik<CIK>' of the registrant."""
+    give both write. keep_cik (trust_ciks): a trust's reports, which name no series the ETF list knows, are kept under
+    'cik<CIK>' of the registrant — only when the registrant reports a single series in the set (a trust is one fund;
+    a family's other funds, whose series the ETF list does not carry, stay out)."""
     z = zipfile.ZipFile(zpath)
     sub = {r['ACCESSION_NUMBER']: (_d(r['REPORT_DATE']), _d(r['FILING_DATE'])) for r in tsv(z, 'SUBMISSION.tsv')}
-    reg = {}
+    reg, trust = {}, set()
     if keep_cik:
         for r in tsv(z, 'REGISTRANT.tsv'):
             try:
                 reg[r['ACCESSION_NUMBER']] = int(r.get('CIK') or 0)
             except ValueError:
                 pass
+        series_of = defaultdict(set)
+        for r in tsv(z, 'FUND_REPORTED_INFO.tsv'):
+            if (r.get('SERIES_ID') or '').strip():
+                series_of[reg.get(r['ACCESSION_NUMBER'])].add(r['SERIES_ID'].strip())
+        trust = {c for c in keep_cik if len(series_of.get(c) or ()) <= 1}
     info, best = {}, {}
     for r in tsv(z, 'FUND_REPORTED_INFO.tsv'):
         s, acc = r['SERIES_ID'], r['ACCESSION_NUMBER']
         if s not in keep_series:
-            s = (keep_cik or {}).get(reg.get(acc))
+            s = keep_cik.get(reg.get(acc)) if keep_cik and reg.get(acc) in trust else None
             if not s:
                 continue
         rd, fd = sub.get(acc, (None, None))
@@ -735,10 +740,11 @@ def hist_path(root, name, ids=False):
     return Path(root) / 'cache' / 'nport_weights' / (name.replace('.zip', '') + ('.ids' if ids else '') + '.json.gz')
 
 
-def save_history(root, name, zp, ets):
-    """The quarterly holdings of one downloaded N-PORT set, kept for good (each set is read once per HIST_VERSION)."""
+def save_history(root, name, zp, ets, trusts=None):
+    """The quarterly holdings of one downloaded N-PORT set, kept for good (each set is read once per HIST_VERSION).
+    trusts: trust_ciks (worked out from the root when not given)."""
     t0 = time.time()
-    d = nport_weights(zp, ets, uit_ciks(root))
+    d = nport_weights(zp, ets, trusts if trusts is not None else trust_ciks(root))
     save_gz(hist_path(root, name, ids=True), {'source': name, 'ids': d['ids']})
     save_gz(hist_path(root, name), {'source': name, 'keys': d['keys'], 'funds': d['funds']})
     return {'at': now(), 'v': HIST_VERSION, 'series': len(d['funds']), 'reports': sum(len(v) for v in d['funds'].values()), 'seconds': round(time.time() - t0)}
@@ -750,7 +756,7 @@ def collect_history(root, links, tmp, max_new=3, budget=720.0):
     st = read_json(Path(root) / 'state.json', {}) or {}
     hs = st.setdefault('nport_weights', {})
     urls = [u for u in sorted(links.get('nport', []), key=qkey, reverse=True) if qkey(u) >= HIST_FIRST]
-    t0, n, ets, out = time.time(), 0, None, []
+    t0, n, ets, trusts, out = time.time(), 0, None, None, []
     week = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=7)).isoformat()
     for u in urls:
         name = Path(u).name
@@ -762,10 +768,11 @@ def collect_history(root, links, tmp, max_new=3, budget=720.0):
         if n >= max_new or time.time() - t0 > budget:
             break
         ets = ets or etf_series(root)
+        trusts = trusts if trusts is not None else trust_ciks(root)
         zp = Path(tmp) / name
         try:
             download(u, zp)
-            hs[name] = save_history(root, name, zp, ets)
+            hs[name] = save_history(root, name, zp, ets, trusts)
             out.append([name, hs[name]['series']])
             print(f'history {name}: {hs[name]["series"]} funds in {time.time() - t0:.0f}s', flush=True)
         except Exception as exc:
@@ -1073,9 +1080,10 @@ def history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock
             issuer.setdefault(c[:6], sc)
     sym_series = {e['symbol']: e.get('series') for e in etfs if e.get('series')}
     sym_keys = {sym: [series] for sym, series in sym_series.items()}
-    for e in etfs:                                        # a unit investment trust's reports sit under its CIK (uit_ciks):
-        if e.get('act') == 'uit' and str(e.get('cik') or '').isdigit() and e.get('symbol'):   # some quarters under a series id, some not
-            sym_keys.setdefault(e['symbol'], []).append(f'cik{int(e["cik"])}')
+    trusts = trust_ciks(etfs)
+    for e in etfs:                                        # a trust's reports sit under its CIK (trust_ciks): some quarters
+        if str(e.get('cik') or '').isdigit() and int(e['cik']) in trusts and e.get('symbol'):   # under a series id, some not
+            sym_keys.setdefault(e['symbol'], []).append(trusts[int(e['cik'])])
     member = {}
     for sym, sc in SECTOR_ETFS.items():
         for k, w, v in ((holds.get(sym_series.get(sym)) or {}).get('weights') or []):

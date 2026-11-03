@@ -76,31 +76,40 @@ class Extract(unittest.TestCase):
         self.assertEqual(out['ids'], {'037833100': 'AAPL'})               # S2 gives the ticker for S1's bare CUSIP
 
     def test_a_unit_investment_trust_is_kept_under_its_cik(self):
-        """SPY, DIA and QQQ are unit investment trusts: one fund each, and their N-PORT reports name no series the ETF
-        list knows (SERIES_ID blank, or one assigned later). Kept under the registrant's CIK (uit_ciks), merged with any
-        series-keyed quarters by history_by_symbol; another registrant's unknown series stays out."""
+        """SPY, DIA, MDY and QQQ are unit investment trusts: one fund each, and their N-PORT reports name no series the ETF
+        list knows (SERIES_ID blank, or one assigned later). Kept under the registrant's CIK (trust_ciks: the ETFs alone
+        on their registrant), merged with any series-keyed quarters by history_by_symbol. A registrant that reports other
+        series too (a family with one ETF and mutual funds) is no trust: its unknown series stay out, as does another
+        registrant's."""
         reports = [('u1', '', '2026-03-31', '2026-05-28', 5e11, [('h1', '67066G104', '', 'NVDA', 7.5, 'EC', 'Long'), ('h2', '037833100', '', 'AAPL', 7, 'EC', 'Long')]),
                    ('u2', 'S000099', '2025-12-31', '2026-02-27', 4e11, [('h3', '67066G104', '', 'NVDA', 8, 'EC', 'Long'), ('h4', '037833100', '', 'AAPL', 6, 'EC', 'Long')]),
-                   ('x1', '', '2026-03-31', '2026-05-01', 100, [('h5', '67066G104', '', 'NVDA', 50, 'EC', 'Long'), ('h6', '037833100', '', 'AAPL', 50, 'EC', 'Long')])]
+                   ('x1', '', '2026-03-31', '2026-05-01', 100, [('h5', '67066G104', '', 'NVDA', 50, 'EC', 'Long'), ('h6', '037833100', '', 'AAPL', 50, 'EC', 'Long')]),
+                   ('f1', 'S000500', '2026-03-31', '2026-05-01', 100, [('h7', '67066G104', '', 'NVDA', 50, 'EC', 'Long'), ('h8', '037833100', '', 'AAPL', 50, 'EC', 'Long')]),
+                   ('f2', 'S000501', '2026-03-31', '2026-05-01', 100, [('h9', '67066G104', '', 'NVDA', 40, 'EC', 'Long'), ('h10', '037833100', '', 'AAPL', 60, 'EC', 'Long')])]
+        regs = {'u1': 884394, 'u2': 884394, 'x1': 12345, 'f1': 777, 'f2': 777}
         with tempfile.TemporaryDirectory() as d:
-            out = E.nport_weights(nport_zip(Path(d) / 'n.zip', reports, {'u1': 884394, 'u2': 884394, 'x1': 12345}), {'S1'}, {884394: 'cik884394'})
-            self.assertEqual(sorted(out['funds']), ['cik884394'])              # u2's series is not on the ETF list either: the CIK
+            out = E.nport_weights(nport_zip(Path(d) / 'n.zip', reports, regs), {'S1'}, {884394: 'cik884394', 777: 'cik777'})
+            self.assertEqual(sorted(out['funds']), ['cik884394'])              # u2's series is not on the ETF list either: the CIK; 777 reports two series: no trust
             self.assertEqual(sorted(out['funds']['cik884394']), ['2025-12-31', '2026-03-31'])
             self.assertEqual(out['funds']['cik884394']['2026-03-31']['v'], [75000, 70000])
             # without the map (an older reading) the trust is dropped, as before
-            self.assertEqual(E.nport_weights(nport_zip(Path(d) / 'n2.zip', reports, {'u1': 884394}), {'S1'})['funds'], {})
+            self.assertEqual(E.nport_weights(nport_zip(Path(d) / 'n2.zip', reports, regs), {'S1'})['funds'], {})
             # history_by_symbol: a quarter under the series id and one under the CIK make one series for the symbol
             root = Path(d) / 'etf'
             K = ['NVDA', 'AAPL']
             set_file(root / 'cache' / 'nport_weights' / '2026q1_nport.json.gz', K, {
                 'cik884394': {'2026-03-31': {'acc': 'u1', 'filed': '2026-05-28', 'na': 5e11, 'n': 2, 'eq': 0.145, 'k': [0, 1], 'v': [75000, 70000]}},
-                'S000099': {'2025-12-31': {'acc': 'u2', 'filed': '2026-02-27', 'na': 4e11, 'n': 2, 'eq': 0.14, 'k': [0, 1], 'v': [80000, 60000]}}})
-            etfs = [{'symbol': 'SPY', 'series': 'S000099', 'act': 'uit', 'cik': 884394}]
+                'S000099': {'2025-12-31': {'acc': 'u2', 'filed': '2026-02-27', 'na': 4e11, 'n': 2, 'eq': 0.14, 'k': [0, 1], 'v': [80000, 60000]}},
+                'cik777': {'2026-03-31': {'acc': 'f1', 'filed': '2026-05-01', 'na': 100, 'n': 2, 'eq': 1, 'k': [0, 1], 'v': [500000, 500000]}}})
+            etfs = [{'symbol': 'SPY', 'series': 'S000099', 'act': '33', 'cik': 884394},        # the list's act: a trust filing 10-Ks
+                    {'symbol': 'AAA', 'series': 'S000500', 'act': '40', 'cik': 777}, {'symbol': 'BBB', 'series': 'S000501', 'act': '40', 'cik': 777}]
+            self.assertEqual(E.trust_ciks(etfs), {884394: 'cik884394'})        # AAA and BBB share a registrant: no trust
             cons = {'NVDA': {'sector': 'technology'}, 'AAPL': {'sector': 'technology'}}
             q, _ = E.history_by_symbol(root, etfs, {}, {}, {}, {}, cons, {'NVDA', 'AAPL'}, lambda k: k if k in cons else None)
             self.assertEqual([x['date'] for x in q['SPY']], ['2025-12-31', '2026-03-31'])
             self.assertEqual(dict(q['SPY'][1]['positions']), {'NVDA': 0.075, 'AAPL': 0.07})
-        self.assertEqual(E.uit_ciks.__doc__.split()[0], '{registrant')
+            self.assertNotIn('AAA', q)                                        # no series-keyed quarter and no CIK key for them
+        self.assertEqual(E.trust_ciks.__doc__.split()[0], '{registrant')
 
     def test_placeholder_cusips_fall_back_to_the_isin(self):
         with tempfile.TemporaryDirectory() as d:

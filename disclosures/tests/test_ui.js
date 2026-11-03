@@ -11,7 +11,9 @@ const live=JSON.parse(fs.readFileSync(path.join(root,'docs/data/live.json'),'utf
 // a module's checkout leaves some shards out (the officials and light runs skip shards/holdings and shards/npx);
 // rows whose shard is absent are dropped so the views render what is on disk instead of reaching for the network
 const shard=p=>{const f=path.join(root,'docs/data',p);return fs.existsSync(f)?JSON.parse(fs.readFileSync(f,'utf8')):null};
-const inline=(rows,load)=>{const out=[];for(const r of rows||[]){const v=load(r);if(v)out.push(v)}return out};
+// at most SAMPLE rows a module (a full checkout holds ~10,000 managers' quarter files, ~1.8 GB: inlining them all ran node out of memory)
+const SAMPLE=300;
+const inline=(rows,load)=>{const out=[];for(const r of rows||[]){if(out.length>=SAMPLE)break;const v=load(r);if(v)out.push(v)}return out};
 if(live.modules.holdings)live.modules.holdings.managers=inline(live.modules.holdings.managers,r=>{const m=r.shard?shard(r.shard):r;if(!m)return null;
  m.snapshots=inline(m.snapshots,s=>{if(!s.positions_shard)return s;const p=shard(s.positions_shard);if(!p)return null;s.positions=p;return s});return m});
 if(live.modules.congress)live.modules.congress.reports=inline(live.modules.congress.reports,r=>r.shard?shard(r.shard):r);
