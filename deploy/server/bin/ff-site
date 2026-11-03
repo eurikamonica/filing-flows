@@ -230,22 +230,43 @@ apply() {
   need_root
   local new="$CADDYFILE.new"
   render "$mode" > "$new"
-  if ! caddy validate --adapter caddyfile --config "$new" > /tmp/ff-site-validate.log 2>&1; then
+  chmod 644 "$new"
+  # validate as the user Caddy runs as: same file permissions, and files it opens (the access log) stay its own
+  local as=()
+  if id caddy >/dev/null 2>&1 && command -v runuser >/dev/null; then as=(runuser -u caddy --); fi
+  if ! "${as[@]}" caddy validate --adapter caddyfile --config "$new" > /tmp/ff-site-validate.log 2>&1; then
     echo "新配置没有通过检查，网站保持原样 / the new configuration failed validation, nothing changed:" >&2
     tail -20 /tmp/ff-site-validate.log >&2
     rm -f "$new"
     exit 1
   fi
-  [ -f "$CADDYFILE" ] && cp "$CADDYFILE" "$CADDYFILE.bak"
+  if id caddy >/dev/null 2>&1 && [ -d "$(dirname "$LOG")" ] && [ "$LOG" != off ]; then
+    chown -R caddy:caddy "$(dirname "$LOG")"
+  fi
+  local had_old=no
+  if [ -f "$CADDYFILE" ]; then cp "$CADDYFILE" "$CADDYFILE.bak"; had_old=yes; fi
   mv "$new" "$CADDYFILE"
-  chmod 644 "$CADDYFILE"
-  conf_set MODE "$mode"
+  if start_or_reload; then
+    conf_set MODE "$mode"
+    echo "✔ 网站配置已切换为 $mode / web server now in mode $mode"
+    return 0
+  fi
+  echo "Caddy 没能用新配置启动 / Caddy did not take the new configuration:" >&2
+  journalctl -u caddy -n 25 --no-pager >&2 2>/dev/null || true
+  if [ "$had_old" = yes ]; then
+    cp "$CADDYFILE.bak" "$CADDYFILE"
+    start_or_reload || true
+    echo "已换回原来的配置 / the previous configuration is back" >&2
+  fi
+  exit 1
+}
+
+start_or_reload() {
   if systemctl is-active -q caddy; then
     systemctl reload caddy
   else
-    systemctl enable --now caddy
+    systemctl enable -q caddy && systemctl restart caddy
   fi
-  echo "✔ 网站配置已切换为 $mode / web server now in mode $mode"
 }
 
 server_ipv4() {

@@ -76,6 +76,12 @@ jobs:
             /deploy/
       - name: The one-step install (as on a new server)
         run: sudo bash deploy/server/setup.sh --no-swap --fail2ban --host 127.0.0.1
+      - name: Caddy's log (when something failed)
+        if: failure()
+        run: |
+          sudo systemctl status caddy --no-pager || true
+          sudo journalctl -u caddy -n 60 --no-pager || true
+          ls -la /var/log/caddy /etc/caddy || true
       - name: Run it again (nothing breaks, the deploy key stays)
         run: |
           before=$(sudo sha256sum /home/deploy/.ssh/authorized_keys)
@@ -127,4 +133,9 @@ jobs:
           [ ! -e "$tmp/x.conf" ]
       - name: The other modes are valid configurations
         run: |
-          ff-site render live > live.caddy && caddy validate --adapter caddyfile --config live.caddy
+          FF_LOG=off ff-site render live > live.caddy && caddy validate --adapter caddyfile --config live.caddy
+      - name: Caddy's log (when something failed)
+        if: failure()
+        run: |
+          sudo systemctl status caddy --no-pager || true
+          sudo journalctl -u caddy -n 60 --no-pager || true
