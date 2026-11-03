@@ -35,6 +35,14 @@ on:
         description: Re-download stored SEC / House documents
         type: boolean
         default: false
+      chain:
+        description: 'Officials back-fill chain (module congress): start the next run while House reports are waiting'
+        type: boolean
+        default: false
+      hop:
+        description: Chain hop (the chain stops after 40)
+        type: string
+        default: '0'
   schedule:
     - cron: '7,22,37,52 * * * *'
     - cron: '17 * * * *'
@@ -63,6 +71,7 @@ on:
       - '.github/workflows/disclosures.yml'
 permissions:
   contents: write
+  actions: write        # the officials back-fill chain starts its next run
 concurrency:
   # light runs (insiders + 8-K + 13D / 13G / Form 144 + short interest + Senate PTRs + news, market views) queue separately so the long 13F / officials runs never cancel them.
   # The once-a-day run after the close (option chains, 52-week and all-time highs and lows) has a group of its own: in the light group a
@@ -205,6 +214,22 @@ jobs:
           path: disclosures/storage/
           retention-days: 30
           if-no-files-found: ignore
+      - name: Start the next officials run (the back-fill chain)
+        # workflow_dispatch with chain=true, module congress: while House reports are waiting (the index years back to
+        # 2012), the next run starts itself — a relay like holdings-backfill.yml — unless another run of this workflow is
+        # already queued (the 13F schedule keeps its turn), up to 40 hops; the hourly schedule carries on after that.
+        if: success() && inputs.chain == true && steps.pick.outputs.module == 'congress' && steps.collect.outputs.ptr_pending != '' && steps.collect.outputs.ptr_pending != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOP: ${{ inputs.hop || '0' }}
+          PENDING: ${{ steps.collect.outputs.ptr_pending }}
+        working-directory: .
+        run: |
+          if [ "$HOP" -ge 40 ]; then echo "chain cap reached (40 runs); the hourly schedule carries on"; exit 0; fi
+          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow disclosures.yml --status queued --json databaseId --jq length)
+          if [ "${n:-0}" -gt 0 ]; then echo "another run is already waiting"; exit 0; fi
+          gh workflow run disclosures.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f module=congress -f chain=true -f hop=$((HOP + 1))
+          echo "officials chain: hop $((HOP + 1)) started ($PENDING House reports waiting)"
       - name: Flag failed collection
         # app/collect.py exits 1 only when a source could not be read at all (an error annotation names it); partial
         # coverage — a batch cut short by a size or time limit, a few unreadable documents — is a warning annotation

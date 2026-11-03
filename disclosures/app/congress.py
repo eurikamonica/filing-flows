@@ -6,6 +6,7 @@ import datetime as dt
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -346,6 +347,8 @@ def collect_congress(client,cfg,old,revalidate=False):
     reports=list(result.values())
     monitor=house_monitor(catalog,result)
     print('house PTRs: '+json.dumps(monitor),flush=True)
+    if os.environ.get('GITHUB_OUTPUT') and not cfg.get('quick_house'):     # the workflow's officials chain reads the backlog
+        with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write(f"ptr_pending={monitor['ptr_pending']}\n")
     if (monitor['lag_days'] or 0)>3 or monitor['ptr_pending']>40:
         print(f"::warning::officials: {monitor['ptr_pending']} House PTRs waiting; newest read {monitor['newest_ptr_read']} vs newest filed {monitor['newest_ptr_filed']}",flush=True)
     for r in reports:   # keep names/offices in step with the (re-cleaned) catalog
