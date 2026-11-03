@@ -35,7 +35,7 @@ from core import read_json, write_json, now  # noqa: E402
 from shards import compact_write, safe_path  # noqa: E402
 from holdings13f.build import filing_list, load_filing  # noqa: E402
 from holdings13f.core import resolve, compare  # noqa: E402
-from holdings13f.ranges import size_of, target_since  # noqa: E402
+from holdings13f.ranges import deep_ciks, size_of, target_since  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = 'holdings-backfill.json'
@@ -114,17 +114,18 @@ def pending(catalog, state, shard=None, now_iso=None, cfg=None):
         if (r.get('last_attempt') or '') > (dt.datetime.fromisoformat(now_iso) - dt.timedelta(hours=2)).isoformat():
             continue                                         # the collector just refreshed it: not this hop (the two would write the same files)
         known = done.get(c) or r                             # the relay's own summary row, else the catalog's range fields
-        current = known.get('since') or r.get('since')
+        current = known.get('since') or r.get('since') or cfg['since']   # a catalog row without the range: read under `since`
         usd, n = size_of(known)
         if usd is None or n is None:
             usd, n = size_of(r)
-        if not current or usd is None or n is None:
-            continue
-        target = target_since(cfg, c, usd, n)
+        target = target_since(cfg, c, usd, n)                # the watched funds need no size: watch_since
+        if usd is None or n is None:
+            usd = 0
         if target < current:
             deeper.append({**r, 'since': target, 'total_usd': usd})
     fresh.sort(key=lambda r: (str(r.get('latest_filing') or ''), int(r.get('filing_count') or 0)), reverse=True)
-    deeper.sort(key=lambda r: (float(r.get('total_usd') or 0), str(r.get('latest_filing') or '')), reverse=True)
+    watched = deep_ciks(cfg) if cfg else set()               # the watched funds first (the videos' and market views' names)
+    deeper.sort(key=lambda r: (str(int(r['cik'])) in watched, float(r.get('total_usd') or 0), str(r.get('latest_filing') or '')), reverse=True)
     return fresh + deeper
 
 
