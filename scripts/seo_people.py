@@ -138,7 +138,7 @@ def official_page(o, base):
     role = "Senator" if o.get("chamber") == "US Senate" else "Representative" if o.get("chamber") == "US House" else "Official"
     who = f"{name}" + (f" ({(o.get('party') or '')[:1]}-{o.get('state')})" if o.get("party") and o.get("state") else "")
     title = f"{name} stock trades: disclosed transactions, performance against SPY and committees | Filing Flows"
-    desc = (f"{role} {name}'s disclosed stock trades: {perf.get('n') or 0} on file"
+    desc = (f"{role} {seo.poss(name)} disclosed stock trades: {perf.get('n') or 0} on file"
             + (f", the scored ones averaging {pct(perf.get('follow'))} against SPY over the 63 trading days after disclosure"
                if perf.get("follow") is not None else "")
             + (f"; committees: {', '.join(c[1] for c in (o.get('committees') or [])[:3] if len(c[0]) == 4)}" if o.get("committees") else "") + ".")

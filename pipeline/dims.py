@@ -59,8 +59,8 @@ def clean_label(text, elid=""):
     """A member's label as a chart writes it: "[Member]", "[Members]" and a trailing "Member" word gone ("Cabinetry And
     Millwork Member", "Direct to Consumer [member]"); a documentation sentence put in the label's place ("This member
     stands for the information pertaining to …") replaced by the element's own name in words."""
-    t = re.sub(r"\s*\[\s*members?\s*\]\s*$", "", (text or "").strip(), flags=re.I)
-    t = re.sub(r"\s+Members?$", "", t)
+    t = re.sub(r"\s*\[\s*(?:members?|domain|axis|line items?|abstract)\s*\]", "", (text or "").strip(), flags=re.I)   # "[Member] [Domain]"
+    t = re.sub(r"\s+Members?$", "", t.strip())
     if elid and (DOCUMENTATION.search(t) or len(t) > 90 or (t.endswith(".") and len(t) > 40)):
         t = humanize(elid.split("_", 1)[-1]) if "_" in elid else humanize(elid)
     return t.strip()
