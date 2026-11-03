@@ -179,7 +179,7 @@ def page_for(co, base, slug, site, hub, stats, istats):
         {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
                                                          {'@type': 'ListItem', 'position': 2, 'name': name, 'item': f"{base}/c/{slug}/"},
                                                          {'@type': 'ListItem', 'position': 3, 'name': 'Timeline', 'item': url}]},
-        {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': f"Are {name} insiders buying or selling?", 'acceptedAnswer': {'@type': 'Answer', 'text': re.sub('<[^>]+>', '', ins_h)[:600] or lead}}]},
+        {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': f"Are {name} insiders buying or selling?", 'acceptedAnswer': {'@type': 'Answer', 'text': faq_text(ins_h) or lead}}]},
         {'@type': 'WebPage', 'name': title, 'url': url, 'dateModified': days[-1], 'description': lead[:300]}]}
     # the sitemap's date: the newest disclosure on the chart, not the newest close (a new price every day would have
     # every timeline sent to IndexNow every day)
@@ -241,6 +241,14 @@ def link_from_company(site, slug):
     if 'timeline/' in t:
         return
     open(p, 'w', encoding='utf-8').write(t.replace('<nav class="seo-toc" aria-label="On this page">', '<nav class="seo-toc" aria-label="On this page"><a href="timeline/">Timeline</a>', 1))
+
+
+def faq_text(h):
+    """a section's prose as a FAQ answer: tags and the 'Every pattern →' link gone, the heading too"""
+    t = re.sub(r"<a [^>]*>[^<]*→</a>", "", h)                   # a link's text is not part of the answer
+    t = re.sub(r"<h2[^>]*>.*?</h2>", "", t)
+    t = re.sub(r"<[^>]+>", "", t)
+    return re.sub(r"\s+", " ", t).strip()[:600]
 
 
 def write(site, base):

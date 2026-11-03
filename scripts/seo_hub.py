@@ -482,6 +482,13 @@ _AMT = re.compile(r'\$\s?(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(billion
 _MULT = {'billion': 1e9, 'bn': 1e9, 'b': 1e9, 'million': 1e6, 'mm': 1e6, 'm': 1e6, 'thousand': 1e3, 'k': 1e3}
 
 
+def tidy_quote(t):
+    """a press release's page furniture out of the quoted words: 'Page 2', '-more-', '(more)', '###'; spaces collapsed"""
+    t = re.sub(r"\s*(?:-\s*more\s*-|\(more\)|###+)\s*", " ", t or "", flags=re.I)
+    t = re.sub(r"\s+Page \d+(?: of \d+)?\s+", " ", t)
+    return re.sub(r"\s+", " ", t).strip()
+
+
 def amounts(text):
     """dollar amounts named in a filing's text, largest first (a 'per share' figure is left out)"""
     out = []
@@ -605,6 +612,7 @@ def event_pages(site, base, L, evs, ES=None):
             if r.get('headline'):
                 body += f"<p class='seo-hl'><span>{e(topic)}</span>{e(r['headline'])}</p>"
             if r.get('quote'):
+                r['quote'] = tidy_quote(r['quote'])
                 body += f"<h2>What the filing says</h2><blockquote class='seo-quote'>{e(r['quote'][:1600])}</blockquote>"
             amt = amounts((r.get('headline') or '') + ' ' + (r.get('quote') or ''))
             if amt and row and (row.get('revenue') or 0) > 0:
