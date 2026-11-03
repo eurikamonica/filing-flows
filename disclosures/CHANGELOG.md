@@ -1,5 +1,20 @@
 # Changelog
 
+## Fair value: every fixed number beside what the market and the filings say it is today
+
+app/assumption_check.py reads, after every build, a market or data estimate for each number the valuation fixes in
+advance and compares them on each Fair value page (public/assumptions.json): the equity risk premium (4.5% fixed) against
+the implied premium of the 500 largest covered companies and their earnings yield less the real 10-year yield; terminal
+growth and the Gordon cap against the 10-year yield (the ceiling) and the breakeven inflation (the floor); the exit-
+multiple stage premium against the market's extra implied return for high-growth companies; the liquidation haircut
+against what distressed companies trade at; Graham's no-growth P/E against the P/E of companies not growing; working
+capital, the default tax rate, the terminal ROIC band, revenue per dollar of capital, the Blume beta weight, the WACC band,
+the half-life of peer multiples (their quarterly persistence, bias-corrected) and the 60-day filing lag against the
+covered companies' own figures; loss given default against the CDS convention; and the method choices with no market
+counterpart, each with why it is fixed. Each company's DCF is shown with each market number swapped in and with all of
+them together, and the appendix's assumptions carry today's estimate beside their basis. The fixed numbers stay fixed:
+a gap is a reason to look, not an automatic switch.
+
 ## Fair value: every method against the share price, and the present value of growth in it
 
 Each method on the Fair value page now says what it means for the share price and for growth: its value per share

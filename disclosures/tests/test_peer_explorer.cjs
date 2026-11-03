@@ -61,4 +61,13 @@ const sh = FV.splitHtml(dsp);
 ok(sh.includes('how much of it is growth') && sh.includes('$40.00') && sh.includes('+11.0% a year') && sh.includes('none (below the no-growth value)') && sh.includes('+8.0% a year') && !/NaN|undefined/.test(sh), 'the price and growth table');
 ok(sh.indexOf('>DCF<') < sh.indexOf('>EPV<') && sh.includes('<svg'), 'sorted by value, with the chart');
 ok(FV.splitHtml({ price: 100, football: [] }) === '', 'nothing without the split');
+// fixed numbers vs the market today
+const E = { generated_at: '2026-11-02', note: 'n', entries: [{ key: 'erp', label: 'Equity risk premium', fixed: 0.045, market: 0.0156, low: 0.0156, high: 0.0214, gap: -0.0294, kind: 'market', how: 'implied', feeds: 'every WACC', n: 422 },
+  { key: 'lag_days', label: 'Days', fixed: 60, market: 45, gap: -15, kind: 'data', how: 'filings', feeds: 'base rates', n: 3788, low: 37 },
+  { key: 'graham_y0', label: 'Graham base', fixed: 4.4, fixed_text: '4.4%', market_text: '6.22% today', kind: 'definition', how: 'part of the formula', feeds: 'Graham' },
+  { key: 'years', label: 'Forecast years', fixed_text: '5', kind: 'choice', how: 'why' }] };
+const ah = FV.assumeHtml(E, { ticker: 'X', price: 100, assumption_swaps: { value: 150, wacc: 0.09, rows: [{ key: 'erp', fixed: 0.045, market: 0.0156, used: 0.065, value: 260, change: 0.733 },
+  { key: 'terminal_g_floor', fixed: 0.025, market: 0.0247, used: 0.0247, value: 149, change: -0.007 }], all: 600, all_change: 3 } });
+ok(ah.includes('Fixed numbers vs the market today') && ah.includes('4.50%') && ah.includes('1.56%') && ah.includes('−2.94 pts') && ah.includes('45 days') && ah.includes('6.22% today'), 'the fixed-vs-market table');
+ok(ah.includes('X DCF with the market') && ah.includes('+73%') && ah.includes('the floor') && ah.includes('All of them together') && ah.includes('Method choices with no market counterpart (1)') && !/NaN|undefined/.test(ah), 'the swaps and the choices');
 console.log(`Peer explorer: ${n} checks passed`);
