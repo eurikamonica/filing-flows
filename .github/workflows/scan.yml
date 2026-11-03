@@ -416,6 +416,13 @@ jobs:
 
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.
+      - name: Page audit (data/page-audit.json; the worst items as warnings and in this run's summary)
+        # every company page about to be published: revenue lines named like something that is not revenue, lines
+        # that mix two breakdowns or do not add up, static pages missing or out of step with their data, preliminary
+        # quarters whose 10-Q / 10-K was never read (scripts/audit_pages.py). It never stops the publish.
+        continue-on-error: true
+        run: python scripts/audit_pages.py --site _site --github
+
       - name: Publish the site to the "site" branch (for your own server)
         if: vars.SELF_HOST == 'true'
         continue-on-error: true

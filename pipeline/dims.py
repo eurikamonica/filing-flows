@@ -26,8 +26,26 @@ def find_files(cik, accn):
     return url(inst), url(lab)
 
 
+NOT_A_NAME = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization)\b", re.I)
+DOC_LIKE = re.compile(r"^(this|the) (member|element|axis|domain)\b|\bstands for\b|\belement represents\b", re.I)
+
+
+def clean_label(t):
+    """A member's name without XBRL furniture: "[Member]", "[Domain]", a closing full stop ("Japan." → "Japan")."""
+    t = re.sub(r"\s*\[(member|domain|axis|line items|table|abstract)\]", "", t or "", flags=re.I)
+    t = re.sub(r"(?<=[a-z]{3})\.$", "", re.sub(r"\s+", " ", t).strip())
+    return t.strip()
+
+
 def parse_labels(xml_text):
-    """element id (e.g. 'aapl_IPhoneMember') -> preferred label."""
+    """element id (e.g. 'aapl_IPhoneMember') -> preferred label.
+
+    Every label the company gives the element counts (one element can have several label resources, each with its
+    own arc). The terse label first, then the standard and the verbose one, then any other role — never the
+    documentation, a sentence ("This member stands for …"). A label that names a cost, an expense or a liability is
+    passed over when another one does not: companies give a revenue member the terse label of a cost table it also
+    appears in (Workday: professional services → "Costs of professional services"; Delta: passenger → "Air traffic
+    liability"; Xenia: rooms → "Rooms expenses"). When every label names one, the terse label stays, as before."""
     root = ET.fromstring(xml_text.encode() if isinstance(xml_text, str) else xml_text)
     xl = "{http://www.w3.org/1999/xlink}"
     loc, lab_by_res, arcs = {}, {}, []
@@ -40,14 +58,25 @@ def parse_labels(xml_text):
             lab_by_res.setdefault(el.get(xl + "label"), []).append((role, (el.text or "").strip()))
         elif name == "labelArc":
             arcs.append((el.get(xl + "from"), el.get(xl + "to")))
-    out = {}
+    by_el = {}
     for frm, to in arcs:
         elid = loc.get(frm)
-        labels = dict(lab_by_res.get(to, []))
-        text = (labels.get("http://www.xbrl.org/2003/role/terseLabel") or labels.get("http://www.xbrl.org/2003/role/label")
-                or next(iter(labels.values()), ""))
-        if elid and text:
-            out[elid] = re.sub(r"\s*\[Member\]$", "", text)
+        if elid:
+            by_el.setdefault(elid, []).extend(lab_by_res.get(to, []))
+    order = ("terseLabel", "label", "verboseLabel")
+    out = {}
+    for elid, labs in by_el.items():
+        roles = {}
+        for role, text in labs:
+            r = role.rsplit("/", 1)[-1]
+            t = clean_label(text)
+            if r != "documentation" and t and not DOC_LIKE.search(t):
+                roles.setdefault(r, t)
+        cands = [roles[r] for r in order if r in roles] + [t for r, t in roles.items() if r not in order]
+        if not cands:
+            continue
+        plain = [t for t in cands if not NOT_A_NAME.search(t)]
+        out[elid] = plain[0] if plain else cands[0]
     return out
 
 

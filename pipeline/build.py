@@ -138,11 +138,71 @@ def companyfacts(cik, accn=None):
         _cf[cik] = {"raw": raw, "cur": cur, "index": {}}
         _cur.setdefault(cik, cur)
     c = _cf[cik]
+    if accn and accn not in c.setdefault("inst", set()):
+        c["inst"].add(accn)
+        if facts._filed_on(c["raw"], accn) is None:      # SEC's company facts lacks the filing: its own instance
+            _merge_instance(cik, accn, c)
+            c["index"].pop(accn, None)
     if accn not in c["index"]:
         if len(c["index"]) >= 8:                          # the indexes share the facts; a few per company is enough
             c["index"].pop(next(iter(c["index"])))
         c["index"][accn] = facts.index_facts(c["raw"], c["cur"], accn)
     return c["index"][accn]
+
+
+INSTANCE_FORMS = ("10-Q", "10-K", "10-Q/A", "10-K/A", "10-KT", "20-F", "40-F", "20-F/A")
+
+
+def _merge_instance(cik, accn, c):
+    """A 10-Q / 10-K that SEC's company facts does not have (yet, or at all: Verisk's and Humana's Q2 2026 10-Qs were
+    still missing in November): its figures from the filing's own XBRL instance (pipeline/instance.py)."""
+    from . import instance
+    try:
+        row = next((r for r in recent_rows(submissions(cik)) if r["accessionNumber"] == accn), None)
+        if not row or row["form"] not in INSTANCE_FORMS:
+            return
+        inst_url, _ = dims.find_files(cik, accn)
+        if not inst_url:
+            return
+        n = instance.merge(c["raw"], instance.to_companyfacts(sec.get(inst_url), accn, row["form"], row["filingDate"]))
+        print(f"  {cik} {accn}: not in SEC's company facts; {n} facts read from the filing's own XBRL")
+    except Exception as e:
+        print(f"  {cik} {accn}: the filing's own XBRL not read: {e}", file=sys.stderr)
+
+
+INSTANCE_REQUEUE = 1         # bump to give filings skipped for missing company facts another try (_merge_instance)
+REQUEUE_PER_RUN = 120        # companies whose skipped filings are looked up per run (one submissions request each)
+
+
+def requeue_missing_facts(store, limit=REQUEUE_PER_RUN):
+    """Filings given up because SEC's company facts did not have them ("XBRL facts not available yet": 465 filings of
+    249 companies by Nov 2 2026) go back in the queue once, now that they are read from their own XBRL instead."""
+    st = store.state
+    if st.get("instance_requeue", 0) >= INSTANCE_REQUEUE:
+        return
+    by_cik = {}
+    for accn, v in st["seen"].items():
+        if str(v.get("s", "")).startswith("skip: XBRL facts not available") and v.get("cik"):
+            by_cik.setdefault(int(v["cik"]), []).append(accn)
+    n, queued = 0, 0
+    for cik, accns in sorted(by_cik.items()):
+        if n >= limit or time_up(CATCH_UP_SHARE, "filings skipped for missing company facts"):
+            break
+        n += 1
+        try:
+            rows = {r["accessionNumber"]: r for r in recent_rows(submissions(cik))}
+        except Exception as e:
+            print(f"  {cik}: filing list not read: {e}", file=sys.stderr)
+            continue
+        for a in accns:
+            r = rows.get(a)
+            st["seen"].pop(a, None)
+            if r and r["form"] in INSTANCE_FORMS and a not in st["pending"]:
+                st["pending"][a] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0, "items": None}
+                queued += 1
+    if n >= len(by_cik):
+        st["instance_requeue"] = INSTANCE_REQUEUE
+    print(f"filings skipped for missing company facts: {queued} queued again ({n} of {len(by_cik)} companies looked up)")
 
 
 INTRO_RANK = {"10-K": 3, "8-K": 2, "6-K": 2, "10-Q": 1}    # where the company description comes from, best first
@@ -292,6 +352,69 @@ DA_VERSION = 5           # bump when the way figures are read changes: stored fi
 #    (facts.version: Pixelworks' Q2 2025 revenue $8.3M, not the $0.2M a year later without the Shanghai business)
 REFRESH_FLAGS = ("rev_bank", "rev_tagged", "q4_fixed")    # what facts.extract adds beside the figures
 DA_PER_RUN = 120            # one SEC request each and a fraction of a second's reading: the budget (time_up) is the limit
+LABEL_VERSION = 1        # bump when revenue-line names are chosen differently (dims.parse_labels): names read again
+LABELS_PER_RUN = 60      # two SEC requests each (the filing's index and its label file)
+# a stored line name that may be a cost table's label, a documentation sentence or XBRL furniture (page audit, Nov 2026)
+LABEL_SUSPECT = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization)\b|"
+                           r"stands for|element represents|\[(member|domain)\]|(?<=[a-z]{3})\.$", re.I)
+
+
+def refresh_labels(store, limit=LABELS_PER_RUN):
+    """Revenue-line names stored before dims.parse_labels looked at all of a member's labels: Workday's professional
+    services were "Costs of professional services", Delta's passenger revenue "Air traffic liability", Autodesk's
+    subscriptions "Cost of subscription revenue" (the terse label of a cost table the member also appears in). Only
+    companies with a name that looks like that are read again — from their latest 10-Q / 10-K's label file, applied
+    to every period that has the same members; a name the company gives no better label for stays. Once a full pass
+    finds none left, the store notes it and the pass stops running."""
+    st = store.state
+    if st.get("labels_v", 0) >= LABEL_VERSION:
+        return
+    n, left = 0, 0
+    for cik in store.ciks():
+        c = store.company(cik)
+        if c.get("lab_v", 0) >= LABEL_VERSION:
+            continue
+        rows = [q for q in list((c.get("quarters") or {}).values()) + list((c.get("years") or {}).values())
+                if q.get("lines_struct") and q.get("form") != "8-K" and q.get("accn")
+                and q["lines_struct"].get("axis") not in ("release", "bank")]
+        names = [x.get("label") or "" for q in rows for x in q["lines_struct"].get("leaves", []) + q["lines_struct"].get("groups", [])]
+        if not any(LABEL_SUSPECT.search(t) for t in names):
+            continue
+        if n >= limit or time_up(CATCH_UP_SHARE, "revenue-line names"):
+            left += 1
+            continue
+        latest = max(rows, key=lambda q: q.get("end") or "")
+        n += 1
+        try:
+            _, lab_url = dims.find_files(cik, latest["accn"])
+            labels = dims.parse_labels(sec.get(lab_url)) if lab_url else {}
+        except Exception as e:
+            print(f"  names of {cik} not read again: {e}", file=sys.stderr)
+            c["lab_tries"] = c.get("lab_tries", 0) + 1
+            if c["lab_tries"] >= 3:
+                c["lab_v"] = LABEL_VERSION                      # given up: the names stay as they are
+            store.put(cik, c)
+            continue
+        changed = []
+        for q in rows:
+            ls = q["lines_struct"]
+            for x in ls.get("leaves", []) + ls.get("groups", []):
+                new = labels.get(str(x.get("id", "")).replace(":", "_"))
+                if new and new != x.get("label"):
+                    notes = q.get("notes") or {}
+                    if x.get("label") in notes and new not in notes:
+                        notes[new] = notes.pop(x["label"])      # the line's notes are keyed by its name
+                    changed.append(f"{x.get('label')} → {new}")
+                    x["label"] = new
+        c["lab_v"] = LABEL_VERSION
+        store.put(cik, c)
+        if changed:
+            print(f"  {cik}: line names read again: " + "; ".join(sorted(set(changed)))[:300])
+    if not left:
+        st["labels_v"] = LABEL_VERSION
+    print(f"revenue-line names: {n} companies read again, {left} left for the next runs")
+
+
 
 
 def _xbrl_parts(fx, end, annual=False, keep_capex=False):
@@ -1938,9 +2061,11 @@ def run(args):
             json.dump({str(k): v for k, v in unbuildable.items()}, fh)
     backfill_history(store)
     queue_missed_filings(store)
+    requeue_missing_facts(store)
     refresh_periods(store)
     reread(store, getattr(args, "reread_ciks", None) or [])
     refresh_da(store)
+    refresh_labels(store)
     refresh_reported(store)
     refresh_quality(store)
     refresh_invest(store)
