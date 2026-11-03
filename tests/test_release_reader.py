@@ -194,3 +194,68 @@ def test_net_income_available_for_common_stockholders_and_the_minority_row_alone
     r2 = release.parse(_doc("<p>(In millions)</p>", _table(rows[:-1], "CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME")), dt.date(2026, 10, 15))
     rec2 = release.reconcile(r2["is"], r2["labels"])
     assert rec2["ni"] == 314e6 and rec2["pl"] == 1348e6
+
+
+# ---- revenue lines: one breakdown, from rows that end in (or follow) the release's total-revenue row
+def _lines_table(rows):
+    """rows: (label,) for a heading, (label, current, year-ago) for a line."""
+    head = '<tr><td></td><td colspan="4">Three Months Ended September 30,</td></tr><tr><td></td><td>2026</td><td>2025</td></tr>'
+    body = ''.join(f'<tr><td>{r[0]}</td></tr>' if len(r) == 1 else ROW.format(r[0], r[1], r[2], '') for r in rows)
+    return f'<table>{head}{body}</table>'
+
+
+def _lines(rows, revenue, prev=None, py=None):
+    tables = release.read_tables(_doc(_lines_table(rows)))
+    out = release.revenue_lines(tables, revenue, 1e6, {"q1": None, "py": py}, prev=prev)
+    return out and ({l["label"]: out["cur"][l["id"]] / 1e6 for l in out["struct"]["leaves"]},
+                    [g["label"] for g in out["struct"]["groups"]])
+
+
+APPLE = [("Net sales:",), ("Products", "82,904", "73,716"), ("Services", "31,573", "28,750"),
+         ("Total net sales", "114,477", "102,466"), ("Cost of sales:",), ("Products", "52,064", "47,019"),
+         ("Services", "7,593", "7,106"), ("Total cost of sales", "59,657", "54,125"),
+         ("(1) Net sales by reportable segment:",), ("Americas", "48,680", "44,192"), ("Europe", "32,008", "28,703"),
+         ("Greater China", "17,539", "14,493"), ("Japan", "6,540", "6,636"), ("Rest of Asia Pacific", "9,710", "8,442"),
+         ("Total net sales", "114,477", "102,466"), ("(1) Net sales by category:",), ("iPhone", "57,583", "49,025"),
+         ("Mac", "10,792", "8,726"), ("iPad", "6,229", "6,952"), ("Wearables, Home and Accessories", "8,300", "9,013"),
+         ("Services", "31,573", "28,750"), ("Total net sales", "114,477", "102,466")]
+
+
+def test_release_lines_never_mix_two_breakdowns():
+    # Apple, Q4 FY26: regions and products in one table. Europe + Greater China + Mac + Rest of Asia Pacific + Japan +
+    # iPad + Services came within 0.075% of total net sales and was drawn; each real breakdown adds up exactly.
+    regions = {"Americas", "Europe", "Greater China", "Japan", "Rest of Asia Pacific"}
+    products = {"iPhone", "Mac", "iPad", "Wearables, Home and Accessories", "Services"}
+    lines, groups = _lines(APPLE, 114477e6, py=102466e6)
+    assert set(lines) in (regions, products)
+    lines, groups = _lines(APPLE, 114477e6, py=102466e6,
+                           prev=["iPhone", "Mac", "Wearables, Home and Accessories", "iPad", "Products", "Services"])
+    assert set(lines) == products and groups == ["Products"]        # the 10-Q's breakdown, as readers saw it before
+    assert abs(sum(lines.values()) - 114477) < 1e-6
+
+
+def test_release_lines_ignore_rows_that_only_add_up_by_chance():
+    # Starbucks, Visa, American Airlines …: balance-sheet items within 0.4% of revenue were drawn as revenue lines
+    rows = [("Revenue", "9,141", "9,074"), ("Net income", "1,000", "900"), ("ASSETS",), ("Accounts receivable, net", "1,301", "1,200"),
+            ("Inventories", "2,140", "2,000"), ("Goodwill", "3,300", "3,200"), ("Long-term investments", "2,390", "2,300"),
+            ("Total assets", "31,000", "30,000")]
+    assert _lines(rows, 9141e6) is None
+
+
+def test_release_lines_total_printed_first():
+    # Old Dominion: "Total revenue" above its two lines, then operating income
+    rows = [("Total revenue", "1,590,726", "1,406,511"), ("LTL services revenue", "1,576,567", "1,394,338"),
+            ("Other services revenue", "14,159", "12,173"), ("Operating income", "452,645", "360,844")]
+    tables = release.read_tables(_doc(_lines_table(rows)))
+    out = release.revenue_lines(tables, 1590726e3, 1e3, {"q1": None, "py": None})
+    assert sorted(l["label"] for l in out["struct"]["leaves"]) == ["LTL services revenue", "Other services revenue"]
+
+
+def test_release_lines_small_line_makes_the_sum_exact():
+    # Vertex: a new drug's first $10.1M (under 0.4% of revenue) is what makes the lines add up
+    rows = [("TRIKAFTA/KAFTRIO", "2,436.9", "2,653.6"), ("ALYFTREK", "705.8", "247.0"), ("Other CF product revenues", "130.5", "139.3"),
+            ("Total CF product revenues, net", "3,273.2", "3,039.9"), ("CASGEVY", "99.2", "16.9"), ("JOURNAVX", "58.3", "19.6"),
+            ("PALSONIFY", "10.1", "0.0"), ("Product revenues, net", "3,440.8", "3,076.4"), ("Total revenues", "3,440.8", "3,076.4")]
+    lines, groups = _lines(rows, 3440.8e6)
+    assert set(lines) == {"TRIKAFTA/KAFTRIO", "ALYFTREK", "Other CF product revenues", "CASGEVY", "JOURNAVX", "PALSONIFY"}
+    assert groups == ["CF product revenues, net"]
