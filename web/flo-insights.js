@@ -60,14 +60,14 @@
     ['guidanceRecord', /guidance (track record|record|history|reliab|accura|changes?|raises?|cuts?)|(raised|lowered|raises|lowers|cut|cuts|withdrew|withdrawn|reaffirmed) (its |their )?guidance|上调(了)?指引|下调(了)?指引|指引(上调|下调|变化)|(meet|meets|met|hit|hits|beat|beats|miss|misses) (its |their )?(own )?guidance|sandbag|guidance credib|指引(兑现|可信|记录|历史|准确)|兑现率|说到做到/i],
     ['investments', /\binvestments\b(?! (bank|banking|grade|advis))|investment gains?|investment portfolio|gains? on (its )?investments?|stakes? in (other )?companies|equity investments?|venture (bets|stakes)|what (did|does) .{0,20}invest in|投资收益|投资了哪些|持有哪些公司|股权投资|投了谁/i],
     ['quality', /earnings quality|quality (score|grade|of (its |the )?(earnings|profits?))|accruals?|beneish|dechow|piotroski|manipulat|cook(ing|ed) the books|aggressive accounting|red flags? in (its |the )?(accounting|earnings)|盈余质量|财报质量|利润质量|盈利质量|做假账|操纵利润|会计(质量|风险)|财务造假/i],
-    ['runway', /cash runway|\brunway\b|how long (can|will|does) .{0,25}(last|survive|fund)|months of cash|run(s|ning)? out of (cash|money)|going concern|现金(能|还能)?撑|还能撑|现金跑道|现金够(用|不够)|会不会(破产|没钱)|能撑多久/i],
+    ['runway', /cash runway|\brunway\b|how long (can|will|does) .{0,25}(last|survive|fund)|months of cash|run(s|ning)? out of (cash|money)|going concern|现金(能|还能)?撑|还能撑|现金跑道|现金够(用|不够)|会不会(破产|没钱)|能撑多久|(快|将|要)?没(有)?(现金|钱)了?|现金(不足|告急|紧张)|缺钱/i],
     ['screen', /\bscreen(er|s)?\b|which (stocks|companies) (have|are|with|show)|find (me )?(stocks|companies|names)|(stocks|companies) (with|that have|where|whose)|momentum stocks|short squeeze|fallen (leaders|angels)|cash machines|distress(ed)? (watch|stocks|companies)|筛选|选股|找(一些|几个|出)?(股票|公司)|哪些公司.{0,8}(有|在|是|正在)|有哪些.{0,6}(股票|公司)/i],
     ['afterEvent', /what (usually |typically |normally )?happens? after|after (an? |the )?8-?k|8-?k (impact|reaction|effect|items?)|which 8-?k|items? \d\.\d\d|(move|reaction|react) (after|following|to) (an? )?(8-?k|filing|announcement)|公告(之)?后|8-?k ?(之后|后|影响|反应)|哪种公告|公告.{0,4}(涨|跌)/i],
     ['insiderSignal', /insider (trades?|buys?|buying|signals?) (predict|work|track record|backtest|reliab|matter|mean)|do insiders? (know|predict|beat)|follow(ing)? (the )?insiders|insider (signal|pattern|backtest|track record)|cluster buy|内部人.{0,8}(准不准|靠谱|信号|预测|跟着|胜率|有用)|跟着内部人/i],
     ['backtest', /if (i|you|one) (had )?(bought|invested|put)|had i (bought|invested)|what would .{0,40}(bought|invested|put in|ago).{0,40} be worth|worth (now|today) if|(bought|invested) .{0,30}\b(in|on|at) (20\d\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|\d+ years? ago.{0,30}(worth|now|today)|如果.{0,10}(买|投)(了|入)?|当初买|要是.{0,8}买了|(买了|投了).{0,12}现在值多少|回测/i],
   ];
   // words that ask about the market rather than one company ("who reports this week", "biggest insider buys")
-  const MARKET = /which sectors?|sectors? (are|is) |by revenue|largest companies|biggest companies|this week|next week|today|lately|recent(ly)?|latest|biggest|largest|most|top \d*|which (stocks|companies)|what (stocks|companies)|any (stocks|companies)|list|ranking|leaderboard|across the market|in the market|本周|这周|下周|今天|最近|最新|最大|最多|哪些|哪几|排行|榜|全市场|有哪/i;
+  const MARKET = /which sectors?|sectors? (are|is) |by revenue|largest companies|biggest companies|this week|next week|today|lately|recent(ly)?|latest|biggest|largest|most|lowest|highest|worst|best|shortest|top \d*|which (stocks|companies)|what (stocks|companies)|any (stocks|companies)|list|ranking|leaderboard|across the market|in the market|本周|这周|下周|今天|最近|最新|最大|最多|哪些|哪几|排行|榜|全市场|有哪/i;
   const PRONOUN = /\b(it|its|this (company|stock)|they|their|the company)\b|这家|它|该公司|这只/i;
   function classify(q) {
     const s = String(q || ''), out = [];
@@ -687,18 +687,26 @@
       if (!fin(cash)) return null;
       const debt = fin(v.debt) ? v.debt : (v.b_ltd || 0) + (v.b_stb || 0);
       const fcf = fin(v.ocf) ? v.ocf - (fin(v.capex) ? Math.abs(v.capex) : 0) : null;
-      const burn = fin(fcf) && fcf < 0 ? -fcf : null;
+      // a runway only when operations themselves consume cash; capital spending above operating cash flow is a choice
+      const burn = fin(fcf) && fcf < 0 && fin(v.ocf) && v.ocf < 0 ? -fcf : null;
       const due = fin(v.b_ltd_c) ? (v.b_ltd_c || 0) + (v.b_stb || 0) : null;
-      return { cash, debt, fcf, burn, months: burn ? 12 * cash / burn : null, due, ocf: v.ocf, end: v.end };
+      return { cash, debt, fcf, burn, months: burn && cash > 0 ? 12 * cash / burn : null, due, ocf: v.ocf, end: v.end };
     };
     async function runway(c, lg) {
       const d = await json(DATA + 'c/' + c.cik + '.json');
       const r = d ? runwayOf(d) : null;
       if (!r) return null;
       const yrs = (m) => (m >= 24 ? L(lg, `${num(m / 12, 1)} years`, `${num(m / 12, 1)} 年`) : L(lg, `${num(m)} months`, `${num(m)} 个月`));
-      const html = r.burn
-        ? L(lg, `<b>${esc(c.ticker)}</b> ${r.ocf < 0 ? 'is burning cash: operations consumed' : 'spends more on capital than operations bring in:'} free cash flow of <b>${big(-r.burn)}</b> over the trailing twelve months against <b>${big(r.cash)}</b> of cash and investments — a runway of about <b>${yrs(r.months)}</b> at that rate, before any new financing${fin(r.due) && r.due > 0 ? `; ${big(r.due)} of debt comes due within a year${r.cash >= r.due + r.burn ? ', which the cash covers' : ', which would need refinancing'}` : ''}.`,
-          `<b>${esc(c.ticker)}</b> ${r.ocf < 0 ? '在烧钱：经营活动消耗现金，' : '资本开支超过经营现金流：'}过去十二个月自由现金流 <b>${big(-r.burn)}</b>，账上现金及投资 <b>${big(r.cash)}</b}——按此速度现金跑道约 <b>${yrs(r.months)}</b>（不计新融资）${fin(r.due) && r.due > 0 ? `；一年内到期债务 ${big(r.due)}${r.cash >= r.due + r.burn ? '，现金足以覆盖' : '，需要再融资'}` : ''}。`)
+      const gap = !r.burn && fin(r.fcf) && r.fcf < 0 && fin(r.ocf) && r.ocf > 0;
+      const html = gap
+        ? L(lg, `<b>${esc(c.ticker)}</b>'s operations bring cash in (<b>${big(r.ocf)}</b> over twelve months) and it spends more than that on capital projects: a gap of <b>${big(-r.fcf)}</b> funded from <b>${big(r.cash)}</b> of cash and investments and from borrowing${r.debt ? ` (${big(r.debt)} of debt)` : ''}. That is a choice to invest, not a cash runway running down.`,
+          `<b>${esc(c.ticker)}</b> 的经营活动在产生现金（过去十二个月 <b>${big(r.ocf)}</b>），只是资本开支更大：缺口 <b>${big(-r.fcf)}</b> 由 <b>${big(r.cash)}</b> 现金及投资和借款填补${r.debt ? `（债务 ${big(r.debt)}）` : ''}。这是主动投资，不是现金在耗尽。`)
+        : r.burn && r.months == null
+        ? L(lg, `<b>${esc(c.ticker)}</b>'s operations consume cash (free cash flow <b>${big(r.fcf)}</b> over twelve months), and no cash balance is on file to set against it.`,
+          `<b>${esc(c.ticker)}</b> 的经营活动在消耗现金（过去十二个月自由现金流 <b>${big(r.fcf)}</b>），但没有可用的现金余额数据来计算还能撑多久。`)
+        : r.burn
+        ? L(lg, `<b>${esc(c.ticker)}</b> is burning cash: its operations consume cash, a free cash flow of <b>${big(-r.burn)}</b> over the trailing twelve months against <b>${big(r.cash)}</b> of cash and investments — a runway of about <b>${yrs(r.months)}</b> at that rate, before any new financing${fin(r.due) && r.due > 0 ? `; ${big(r.due)} of debt comes due within a year${r.cash >= r.due + r.burn ? ', which the cash covers' : ', which would need refinancing'}` : ''}.`,
+          `<b>${esc(c.ticker)}</b> 在烧钱：经营活动本身在消耗现金，过去十二个月自由现金流 <b>${big(-r.burn)}</b>，账上现金及投资 <b>${big(r.cash)}</b}——按此速度现金跑道约 <b>${yrs(r.months)}</b>（不计新融资）${fin(r.due) && r.due > 0 ? `；一年内到期债务 ${big(r.due)}${r.cash >= r.due + r.burn ? '，现金足以覆盖' : '，需要再融资'}` : ''}。`)
         : L(lg, `<b>${esc(c.ticker)}</b> funds itself: free cash flow of <b>${big(r.fcf)}</b> over the trailing twelve months, <b>${big(r.cash)}</b> of cash and investments against ${r.debt ? `<b>${big(r.debt)}</b> of debt` : 'no debt'}${fin(r.due) && r.due > 0 ? ` (${big(r.due)} due within a year, ${num(r.cash / r.due, 1)}× covered)` : ''}. No runway question arises while it generates cash.`,
           `<b>${esc(c.ticker)}</b> 能自我造血：过去十二个月自由现金流 <b>${big(r.fcf)}</b>，账上现金及投资 <b>${big(r.cash)}</b>，${r.debt ? `债务 <b>${big(r.debt)}</b>` : '没有债务'}${fin(r.due) && r.due > 0 ? `（一年内到期 ${big(r.due)}，现金覆盖 ${num(r.cash / r.due, 1)} 倍）` : ''}。只要持续产生现金，就不存在跑道问题。`);
       return { html: html.replace('</b}', '</b>'), facts: [`cash ${big(r.cash)}, debt ${big(r.debt)}, FCF ttm ${big(r.fcf)}` + (r.months ? `, runway ${num(r.months)} months` : '')], mood: r.months != null && r.months < 12 ? 'worried' : 'talk',

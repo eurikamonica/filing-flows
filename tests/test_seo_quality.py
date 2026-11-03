@@ -56,7 +56,7 @@ def test_runway():
     rw = C.runway(c, q, ttm)
     assert rw['burn'] == 100e6 and rw['months'] == 24 and rw['due12'] == 10e6 and rw['net'] == 150e6 and rw['buckets'] == [(1, 10e6), (2, 40e6)]
     body, line = C.runway_section('Alpha', rw)
-    assert 'runway of about' in line and 'operations themselves consumed cash' in line and 'Cash runway' in body and 'debt maturities by year' in body
+    assert 'runway of about' in line and 'operations consume cash' in line and 'Cash runway' in body and 'debt maturities by year' in body
     # self-funding, and a burn that is new (latest quarter annualised)
     ttm2 = {'label': 'TTM', 'items': {'ocf': 90e6, 'capex': -20e6}}
     q3 = [{'label': f'Q{k}', 'items': {'ocf': 25e6, 'capex': -5e6}} for k in range(4)]
@@ -65,6 +65,13 @@ def test_runway():
     rw2 = C.runway(c, q2, ttm2)
     assert rw2['burn'] == 40e6 and rw2['months'] == 60
     assert C.runway({'quality': {}}, q, ttm) is None
+    # operations bring cash in, capital spending is larger (Amazon, a utility): no runway, a gap funded by choice
+    q4 = [{'label': f'Q{k}', 'items': {'ocf': 12e6, 'capex': -20e6}} for k in range(4)]
+    rw4 = C.runway(c, q4, {'label': 'TTM', 'items': {'ocf': 50e6, 'capex': -80e6}})
+    assert rw4['burn'] is None and rw4['months'] is None and 'choice to invest' in C.runway_section('Alpha', rw4)[1]
+    # no cash on file: no zero-month runway
+    c0 = {'quality': {'val': {'cash_all': 0, 'debt': 5e6}, 'cap': {}}}
+    assert C.runway(c0, q, ttm)['months'] is None
 
 
 def test_chain_index(tmp_path):
