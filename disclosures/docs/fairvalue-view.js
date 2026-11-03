@@ -67,11 +67,199 @@
 .fv-bar{height:5px;border-radius:3px;background:var(--line,#e5e5e5);overflow:hidden}.fv-bar i{display:block;height:100%;background:var(--accent,#2a78d6)}
 .fv-heat td.n{min-width:64px}.fv-tog{font:inherit;font-size:12px;border:1px solid var(--line,#ddd);background:none;border-radius:8px;padding:3px 9px;cursor:pointer;color:var(--muted,#666);margin-right:6px}.fv-tog.on{color:var(--ink,#222);border-color:var(--ink,#222)}
 .fv-x{margin:6px 0 4px;max-width:82ch}.fv-x p{margin:5px 0;font-size:13.5px;line-height:1.55}.fv-x p b{font-weight:600}.fv-x .fv-here{border-left:3px solid var(--accent,#2a78d6);padding-left:8px}.fv-terms{font-size:12.5px;color:var(--muted,#666);line-height:1.6}.fv-terms b{color:var(--ink,#222)}.fv-prose p{font-size:13.5px;line-height:1.6;margin:6px 0;max-width:82ch}.fv-gl td:first-child{font-weight:600;white-space:nowrap}.fv-gl .fv-tbl td,.fv-gl .fv-tbl th{white-space:normal;vertical-align:top;line-height:1.45}.fv-gl .fv-tbl td:first-child{white-space:nowrap}.fv-gl .fv-tbl td:not(:first-child){min-width:14em}.fv-apx.fv-guide>summary b{color:var(--accent,#2a78d6)}
+.fv-sotp td small{white-space:normal;display:inline-block;max-width:220px}.fv-px-bar{display:flex;flex-wrap:wrap;gap:8px 14px;margin:8px 0}.fv-px-f{font-size:12.5px;color:var(--muted,#666);display:flex;flex-direction:column;gap:2px}.fv-px-f select{font:inherit;font-size:13px;padding:3px 6px}
+.fv-px-pre{font-size:12.5px;color:var(--muted,#666);margin:4px 0 8px}.fv-head2{font-size:14.5px;margin:8px 0}.fv-px-t td{font-size:12.5px}.fv-px-out{opacity:.72}.fv-px-own{background:var(--surface-2,#f3f2ee)}
 @media (max-width:640px){.fv table.fv-tbl{display:block;overflow-x:auto;max-width:100%}}`;
     document.head.appendChild(s);
   }
   const pp = (v) => (fin(v) ? (v > 0 && v < 0.005 ? '<1%' : v < 1 && v > 0.995 ? '>99%' : num(100 * v, 0) + '%') : '—');
   const card = (label, value, cls = '', note = '') => `<div class="fv-card"><span>${esc(label)}</span><b class="${cls}">${value}</b>${note ? `<i>${note}</i>` : ''}</div>`;
+
+  // ---------- the peer tiers and the peer explorer (app/peer_tiers.py, data/research/valuation/peers-list.json) ----------
+  let BASE = 'data/research/valuation/';
+  const TIERS = [['plain', 'Broad (tier 1)'], ['weighted', 'Weighted'], ['matched', 'Matched (tier 2)'], ['selected', 'Selected (tier 3)'], ['adjusted', 'Fitted']];
+  const MET = { pe: 'P/E', ev_ebitda: 'EV/EBITDA', ev_sales: 'EV/Sales' };
+  const WIN = { tight: 'tight: same 3-digit SIC and stage, revenue ¼–4×, growth and margin ±10 pts', medium: 'medium: same 3-digit SIC, same side of break-even, 1/10–10×, ±15 pts',
+    wide: 'wide: same 2-digit SIC, same side of break-even, 1/30–30×, ±25 pts' };
+  const valueOf = (k, m, b) => {
+    if (!fin(m) || !b) return null;
+    if (k === 'pe') return fin(b.eps) && b.eps > 0 ? m * b.eps : null;
+    const base = k === 'ev_ebitda' ? b.ebitda : b.revenue;
+    return fin(base) && base > 0 && fin(b.shares) && b.shares > 0 ? (m * base - (b.net_debt || 0)) / b.shares : null;
+  };
+  function tiersHtml(d) {
+    const P = d.peers || {}, b = d.peer_base, ks = Object.keys(MET).filter((k) => P[k]);
+    if (!ks.length) return '';
+    const x = (v) => (fin(v) ? num(v, 1) + '×' : '—');
+    const cell = (k, t) => {
+      const p = P[k], T = t === 'plain' ? p : p[t];
+      if (T && T.weak) return `<td class="n"><small>fit too weak<br>(r² ${num(T.r2, 2)})</small></td>`;
+      if (!T || !fin(T.p50)) {
+        const why = t === 'matched' && T && T.tried ? `none like it: ${T.tried.map(([w, n]) => `${w} ${n}`).join(', ')} peers` : t === 'selected' && T ? `${num(T.n)} on file, needs 3` : t === 'selected' ? 'no selected list' : t === 'adjusted' ? 'too few peers to fit' : '—';
+        return `<td class="n"><small>${esc(why)}</small></td>`;
+      }
+      const n = t === 'plain' ? `${num(p.n)} peers` : t === 'weighted' ? `${num(T.n_eff, 1)} effective` : t === 'matched' ? `${num(T.n)} · ${esc(T.window)} window` : t === 'selected' ? `${num(T.n)} chosen` : `${num(T.n)} peers, r² ${num(T.r2, 2)}`;
+      return `<td class="n"><b>${x(T.p50)}</b> → ${esc(usd(valueOf(k, T.p50, b)))}<br><small>${n}</small></td>`;
+    };
+    let h = `<h3>Peer multiples — four ways to pick and weigh the peers</h3><p class="fv-sub">Each cell: the peers' multiple and the value per share it gives this company. <b>Broad</b>: the median of its SIC industry (every peer alike). <b>Weighted</b>: the same peers weighted by market value, revenue and trading value (none above 20%) and their quarters since 2022 by recency. <b>Matched</b>: only peers like it — the same industry and stage, a similar size, revenue growth and operating margin (${esc(Object.values(WIN).join('; '))}). <b>Selected</b>: companies chosen by business model, each with its reason. <b>Fitted</b>: how much its peers' multiple rises with growth (and, for EV/Sales, margin), read at its own figures. All but the broad median are lenses: the ledger scores them before any counts in the stage-weighted value. Explore and re-filter every peer below.</p>`;
+    h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Multiple</th>${TIERS.map(([, l]) => `<th class="n">${esc(l)}</th>`).join('')}</tr></thead><tbody>${ks.map((k) => `<tr><td>${MET[k]}<br><small>own ${x(P[k].own)}</small></td>${TIERS.map(([t]) => cell(k, t)).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const sel = ks.map((k) => P[k].selected).find((s) => s && (s.comps || []).length);
+    if (sel) h += `<p class="fv-sub">Selected companies: ${sel.comps.map(([t, why]) => `<b>${esc(t)}</b> (${esc(why)})`).join('; ')}${(sel.missing || []).length ? `. Not on file: ${esc(sel.missing.join(', '))}` : ''}. The list lives in config/peer-map.json.</p>`;
+    const ad = P.ev_sales && P.ev_sales.adjusted;
+    if (ad && ad.per10) h += `<p class="fv-sub">Fit across ${num(ad.n)} peers: ${Object.entries(ad.per10).map(([k, v]) => `every 10 points of ${k === 'growth' ? 'revenue growth' : 'operating margin'} ${spct(v, 0)} on EV/Sales`).join(', ')} (r² ${num(ad.r2, 2)}); at its own ${Object.entries(ad.x || {}).map(([k, v]) => `${k} ${pct(v, 0)}`).join(', ')}${ad.clamped ? ' (held inside the peers\' range)' : ''} the fitted EV/Sales is ${x(ad.p50)}.</p>`;
+    h += `<div data-fvtiersc></div>`;
+    h += `<details class="fv-apx" data-fvpx-open><summary><b>Explore the peers</b> — every company, your filters and windows</summary><div data-fvpx><p class="fv-sub">Opening the peer list…</p></div></details>`;
+    return h;
+  }
+  const PX = { data: null, loading: null };
+  const PX_OPTS = {
+    metric: [['ev_sales', 'EV/Sales'], ['pe', 'P/E'], ['ev_ebitda', 'EV/EBITDA']],
+    group: [['sic4', 'SIC, 4 digits'], ['sic3', 'SIC, 3 digits'], ['sic2', 'SIC, 2 digits'], ['sector', 'sector'], ['all', 'every company']],
+    stage: [['any', 'any stage'], ['profit', 'same side of break-even'], ['same', 'same stage']],
+    size: [['0', 'any size'], ['30', 'revenue 1/30–30×'], ['10', 'revenue 1/10–10×'], ['4', 'revenue ¼–4×'], ['2', 'revenue ½–2×']],
+    growth: [['0', 'any growth'], ['0.25', 'growth ±25 pts'], ['0.15', 'growth ±15 pts'], ['0.10', 'growth ±10 pts'], ['0.05', 'growth ±5 pts']],
+    margin: [['0', 'any margin'], ['0.25', 'margin ±25 pts'], ['0.15', 'margin ±15 pts'], ['0.10', 'margin ±10 pts'], ['0.05', 'margin ±5 pts']],
+    hist: [['0', 'today only'], ['1', 'today and the last year'], ['5', 'today and every quarter since 2022']],
+    weight: [['equal', 'every peer alike'], ['mcap', 'by market value'], ['revenue', 'by revenue'], ['dvol', 'by trading value'], ['all', 'market value × revenue × trading value']],
+    trim: [['0', 'keep every peer'], ['0.05', 'drop the top and bottom 5%'], ['0.10', 'drop the top and bottom 10%']],
+  };
+  const PX_LABEL = { metric: 'Multiple', group: 'Industry', stage: 'Stage', size: 'Size', growth: 'Revenue growth', margin: 'Operating margin', hist: 'History window', weight: 'Weights', trim: 'Outliers' };
+  function wq(vals, ws, q) {   // weighted quantile: linear between weight midpoints (equal weights: the plain percentile), as app/peer_weights.py
+    const p = vals.map((v, i) => [v, ws[i]]).filter(([v, w]) => fin(v) && fin(w) && w > 0).sort((a, b) => a[0] - b[0]);
+    if (!p.length) return null;
+    if (p.length === 1) return p[0][0];
+    const tot = p.reduce((s, [, w]) => s + w, 0), w0 = p[0][1], wl = p[p.length - 1][1], span = tot - (w0 + wl) / 2;
+    let c = 0;
+    const pos = p.map(([, w]) => { const x = (c + w / 2 - w0 / 2) / span; c += w; return x; });
+    if (q <= 0) return p[0][0];
+    if (q >= 1) return p[p.length - 1][0];
+    for (let i = 1; i < p.length; i++) if (pos[i] >= q) { const a = pos[i - 1], b = pos[i]; return p[i - 1][0] + (b > a ? (q - a) / (b - a) : 0) * (p[i][0] - p[i - 1][0]); }
+    return p[p.length - 1][0];
+  }
+  function capW(w, cap = 0.2) {
+    const keys = Object.keys(w), tot = keys.reduce((s, k) => s + w[k], 0);
+    if (!tot) return w;
+    let x = {};
+    keys.forEach((k) => { x[k] = w[k] / tot; });
+    if (keys.length * cap < 1) return x;
+    const fixed = new Set();
+    for (let it = 0; it < keys.length; it++) {
+      const over = keys.filter((k) => x[k] > cap + 1e-12 && !fixed.has(k));
+      if (!over.length) break;
+      over.forEach((k) => fixed.add(k));
+      const free = keys.filter((k) => !fixed.has(k)), rest = 1 - cap * fixed.size, ft = free.reduce((s, k) => s + x[k], 0);
+      const y = {};
+      keys.forEach((k) => { y[k] = fixed.has(k) ? cap : ft ? x[k] / ft * rest : rest / Math.max(1, free.length); });
+      x = y;
+    }
+    return x;
+  }
+  function sizeW(rows, how) {   // geometric mean of each peer's shares of the measures most peers have, capped at 20%
+    const parts = how === 'all' ? ['mcap', 'revenue', 'dvol'] : [how];
+    const sh = {};
+    for (const k of parts) {
+      const have = rows.filter((r) => fin(r[k]) && r[k] > 0);
+      if (have.length < Math.max(2, Math.ceil(rows.length / 2))) continue;
+      const tot = have.reduce((s, r) => s + r[k], 0);
+      sh[k] = {};
+      have.forEach((r) => { sh[k][r.cik] = r[k] / tot; });
+    }
+    const used = Object.keys(sh), w = {};
+    if (!used.length) { rows.forEach((r) => { w[r.cik] = 1; }); return [capW(w), used]; }
+    rows.forEach((r) => { const xs = used.map((k) => sh[k][r.cik]).filter(fin); w[r.cik] = xs.length ? Math.exp(xs.reduce((s, v) => s + Math.log(v), 0) / xs.length) : null; });
+    const mn = Math.min(...Object.values(w).filter(fin));
+    Object.keys(w).forEach((k) => { if (!fin(w[k])) w[k] = mn; });
+    return [capW(w), used];
+  }
+  function pxRun(D, d, o) {
+    const F = D.fields, ix = Object.fromEntries(F.map((f, i) => [f, i]));
+    const rows = D.rows.map((r) => Object.fromEntries(F.map((f, i) => [f, r[i]])));
+    const own = rows.find((r) => String(r.cik) === String(d.cik)) || Object.assign({ cik: d.cik }, d.peer_base || {});
+    const b = d.peer_base || {}, sic = String(own.sic || b.sic || ''), k = o.metric, H = { pe: 'pe_hist', ev_sales: 'evs_hist' }[k];
+    const pre = o.group === 'sic4' ? sic.slice(0, 4) : o.group === 'sic3' ? sic.slice(0, 3) : o.group === 'sic2' ? sic.slice(0, 2) : null;
+    const inc = [], exc = [];
+    for (const r of rows) {
+      if (String(r.cik) === String(own.cik)) continue;
+      let why = null;
+      if (pre != null && !String(r.sic || '').startsWith(pre)) continue;                        // outside the industry: not listed at all
+      if (o.group === 'sector' && r.sector !== own.sector) continue;
+      if (!fin(r[k])) why = `no ${MET[k]} (negative or out of range)`;
+      else if (o.stage === 'same' && own.stage && r.stage !== own.stage) why = `stage: ${String(r.stage || '—').replace('_', ' ')}`;
+      else if (o.stage === 'profit' && fin(own.margin) && fin(r.margin) && (own.margin > 0) !== (r.margin > 0)) why = r.margin > 0 ? 'profitable (it is not)' : 'loss-making';
+      else if (+o.size && fin(own.revenue) && own.revenue > 0 && !(fin(r.revenue) && r.revenue >= own.revenue / +o.size && r.revenue <= own.revenue * +o.size)) why = 'size outside the window';
+      else if (+o.growth && fin(own.growth) && !(fin(r.growth) && Math.abs(r.growth - own.growth) <= +o.growth + 1e-9)) why = 'growth outside the window';
+      else if (+o.margin && fin(own.margin) && !(fin(r.margin) && Math.abs(r.margin - own.margin) <= +o.margin + 1e-9)) why = 'margin outside the window';
+      (why ? exc : inc).push(why ? [r, why] : r);
+    }
+    if (+o.trim && inc.length >= 10) {
+      const vs = inc.map((r) => r[k]).sort((a, c) => a - c), lo = wq(vs, vs.map(() => 1), +o.trim), hi = wq(vs, vs.map(() => 1), 1 - +o.trim);
+      for (let i = inc.length - 1; i >= 0; i--) if (inc[i][k] < lo || inc[i][k] > hi) exc.push([inc.splice(i, 1)[0], 'outlier, trimmed']);
+    }
+    const [sw, used] = o.weight === 'equal' ? [Object.fromEntries(inc.map((r) => [r.cik, 1 / Math.max(1, inc.length)])), []] : sizeW(inc, o.weight);
+    const vals = [], ws = [];
+    for (const r of inc) {
+      const obs = [[r[k], 0]];
+      if (+o.hist && H && r[H]) r[H].forEach((v, i) => { const a = D.ages[i]; if (fin(v) && a > 0 && a <= +o.hist) obs.push([v, a]); });
+      const t = obs.map(([, a]) => Math.pow(0.5, a / (D.half_life || 1))), tt = t.reduce((s, v) => s + v, 0);
+      obs.forEach(([v], i) => { vals.push(v); ws.push(sw[r.cik] * t[i] / tt); });
+    }
+    const q = (p) => wq(vals, ws, p);
+    const neff = 1 / Object.values(sw).reduce((s, v) => s + v * v, 0);
+    return { own, inc, exc, sw, used, n_obs: vals.length, p25: q(0.25), p50: q(0.5), p75: q(0.75), neff, k, b };
+  }
+  function pxHtml(D, d, o) {
+    const R = pxRun(D, d, o), k = R.k, x = (v) => (fin(v) ? num(v, 1) + '×' : '—');
+    const sel = (key) => `<label class="fv-px-f">${esc(PX_LABEL[key])} <select data-fvpxo="${key}">${PX_OPTS[key].map(([v, l]) => `<option value="${esc(v)}"${String(o[key]) === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
+    const P = (d.peers || {})[k] || {}, mt = P.matched || {};
+    let h = `<div class="fv-px-bar">${Object.keys(PX_OPTS).map(sel).join('')}</div><div class="fv-px-pre">Presets: <button type="button" class="fv-tog" data-fvpxp="broad">Broad (tier 1)</button><button type="button" class="fv-tog" data-fvpxp="weighted">Broad, weighted</button>${mt.window ? `<button type="button" class="fv-tog" data-fvpxp="matched">Matched (${esc(mt.window)})</button>` : ''}</div>`;
+    h += R.inc.length ? `<p class="fv-head2"><b>${num(R.inc.length)} peers</b>${o.weight !== 'equal' ? ` (${num(R.neff, 1)} effective)` : ''}${R.n_obs > R.inc.length ? `, ${num(R.n_obs)} observations` : ''}: median ${MET[k]} <b>${x(R.p50)}</b>, middle half ${x(R.p25)} – ${x(R.p75)} → <b>${esc(usd(valueOf(k, R.p50, R.b)))}</b> a share (${esc(usd(valueOf(k, R.p25, R.b)))} – ${esc(usd(valueOf(k, R.p75, R.b)))}); its own ${MET[k]} ${x(R.own[k])}, price ${esc(usd(d.price))}.${R.inc.length < 6 ? ' <span class="fv-tag">fewer than 6 peers</span>' : ''}</p>` : '<p class="fv-sub">No peer passes these filters.</p>';
+    const head = ['Company', 'SIC', 'Stage', 'Market value', 'Enterprise value', 'Revenue', 'Growth', 'Op. margin', MET[k], 'Weight', 'Data date'];
+    const line = (r, w, why) => `<tr${why ? ' class="fv-px-out"' : ''}><td><b>${esc(r.ticker)}</b> <small>${esc(String(r.name || '').slice(0, 28))}</small></td><td>${esc(r.sic)}</td><td><small>${esc(String(r.stage || '—').replace('_', ' '))}</small></td><td class="n">${big(r.mcap)}</td><td class="n">${big(r.ev)}</td><td class="n">${big(r.revenue)}</td><td class="n">${spct(r.growth)}</td><td class="n">${pct(r.margin, 0)}</td><td class="n">${x(r[k])}</td><td class="n">${why ? `<small>${esc(why)}</small>` : pct(w, 1)}</td><td><small>${esc(r.date || '')}</small></td></tr>`;
+    const inc = R.inc.slice().sort((a, c) => (R.sw[c.cik] || 0) - (R.sw[a.cik] || 0) || (c.mcap || 0) - (a.mcap || 0));
+    const own = R.own;
+    h += `<div class="fv-wrap"><table class="fv-tbl fv-px-t"><thead><tr>${head.map((c, i) => `<th${i >= 3 && i <= 9 ? ' class="n"' : ''}>${esc(c)}</th>`).join('')}</tr></thead><tbody><tr class="fv-px-own"><td><b>${esc(own.ticker || d.ticker)}</b> <small>this company</small></td><td>${esc(own.sic || '')}</td><td><small>${esc(String(own.stage || '—').replace('_', ' '))}</small></td><td class="n">${big(own.mcap)}</td><td class="n">${big(own.ev)}</td><td class="n">${big(own.revenue)}</td><td class="n">${spct(own.growth)}</td><td class="n">${pct(own.margin, 0)}</td><td class="n">${x(own[k])}</td><td class="n"><small>excluded: itself</small></td><td><small>${esc(own.date || '')}</small></td></tr>${inc.slice(0, o.all ? 1e9 : 40).map((r) => line(r, R.sw[r.cik])).join('')}</tbody></table></div>`;
+    if (inc.length > 40 && !o.all) h += `<button type="button" class="fv-tog" data-fvpxall="1">Show all ${num(inc.length)} peers</button>`;
+    if (R.exc.length) h += `<details class="fv-apx"><summary>Left out by these filters: ${num(R.exc.length)} — and why</summary><div class="fv-wrap"><table class="fv-tbl fv-px-t"><thead><tr>${head.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${R.exc.slice(0, 300).map(([r, why]) => line(r, null, why)).join('')}</tbody></table></div></details>`;
+    h += `<p class="fv-sub">Figures as the build used them (${esc(D.as_of || '')}): revenue and growth over four quarters, operating margin = operating income ÷ revenue, trading value = the median daily close × volume over 63 sessions. Weights: each peer's share of the group's market value, revenue and trading value (their geometric mean for "all three"), none above 20%; with a history window, each peer's quarters count with a one-year half-life. Every number can be checked against the company's own page.</p>`;
+    return h;
+  }
+  const TIER_KEYS = { plain: 'Broad', weighted: 'Weighted', matched: 'Matched', selected: 'Selected', adjusted: 'Fitted' };
+  function scoresHtml(L) {   // the ledger's rank correlation (IC) of each tier's gap to the price with the return that followed
+    const S = (L && L.scores) || [];
+    const avg = (key, h) => { const xs = S.filter((s) => s.horizon_months === h && fin(s['ic_' + key]) && (s['n_' + key] || 0) >= 30); return xs.length ? [xs.reduce((a, s) => a + s['ic_' + key], 0) / xs.length, xs.length] : null; };
+    const rows = [];
+    for (const [m, lab] of [['evs', 'EV/Sales'], ['pe', 'P/E'], ['evebitda', 'EV/EBITDA']]) {
+      for (const [t, tl] of Object.entries(TIER_KEYS)) {
+        const c = [3, 6, 12].map((h) => avg(`${m}_${t}_gap`, h));
+        if (c.some(Boolean)) rows.push(`<tr><td>${lab} · ${tl}</td>${c.map((x) => `<td class="n">${x ? `${num(x[0], 3)}<br><small>${x[1]} month${x[1] === 1 ? '' : 's'}</small>` : '—'}</td>`).join('')}</tr>`);
+      }
+    }
+    if (!rows.length) return `<p class="fv-sub"><b>Track record:</b> every tier's value is now frozen in the monthly ledger (${esc((L && L.snapshots || []).slice(-1)[0] || 'this month')} on); the first scores come three months after the first snapshot that holds them, then 6 and 12 months. Until a tier has been scored it stays a lens.</p>`;
+    return `<h4>Track record of the tiers (the ledger)</h4><p class="fv-sub">Rank correlation between each tier's value-to-price gap and the return over the next 3, 6 and 12 months, across every company, averaged over the monthly snapshots scored so far (higher is better; 0 = no information).</p><div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Tier</th><th class="n">3 months</th><th class="n">6 months</th><th class="n">12 months</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+  }
+  function bindPx(el, d) {
+    const sc = el.querySelector('[data-fvtiersc]');
+    if (sc) get(BASE + 'ledger.json').then((L) => { sc.innerHTML = scoresHtml(L); }).catch(() => { sc.innerHTML = ''; });
+    const box = el.querySelector('[data-fvpx]'), det = el.querySelector('[data-fvpx-open]');
+    if (!box || !det) return;
+    const P = d.peers || {}, first = ['ev_sales', 'pe', 'ev_ebitda'].find((k) => P[k]) || 'ev_sales', g0 = String((P[first] || {}).group || 'sic');
+    const broad = { metric: first, group: /^sic\d{4}$/.test(g0) ? 'sic4' : /^sic\d{3}$/.test(g0) ? 'sic3' : /^sic\d{2}$/.test(g0) ? 'sic2' : g0.startsWith('sec:') ? 'sector' : 'sic4', stage: 'any', size: '0', growth: '0', margin: '0', hist: '0', weight: 'equal', trim: '0' };
+    let o = Object.assign({}, broad);
+    const draw_ = () => {
+      box.innerHTML = pxHtml(PX.data, d, o);
+      box.querySelectorAll('[data-fvpxo]').forEach((s) => s.addEventListener('change', () => { o[s.dataset.fvpxo] = s.value; draw_(); }));
+      box.querySelectorAll('[data-fvpxall]').forEach((bt) => bt.addEventListener('click', () => { o.all = true; draw_(); }));
+      box.querySelectorAll('[data-fvpxp]').forEach((bt) => bt.addEventListener('click', () => {
+        const p = bt.dataset.fvpxp, m = (P[o.metric] || {}).matched || {}, c = m.criteria || {};
+        o = Object.assign({}, broad, { metric: o.metric }, p === 'weighted' ? { weight: 'all', hist: '5' } : p === 'matched' && c.key ? { group: 'sic' + c.sic, stage: c.stage, size: String(c.size), growth: c.growth.toFixed(2), margin: c.margin.toFixed(2) } : {});
+        draw_();
+      }));
+    };
+    det.addEventListener('toggle', () => {
+      if (!det.open || PX.data) { if (det.open && PX.data) draw_(); return; }
+      (PX.loading || (PX.loading = get(BASE + 'peers-list.json'))).then((D) => { PX.data = D; draw_(); }).catch((e) => { PX.loading = null; box.innerHTML = `<p class="fv-sub">The peer list could not load (${esc(e.message)}).</p>`; });
+    });
+  }
 
   // ---------- the peer multiples, plain and weighted (app/peer_weights.py) ----------
   const W_LAB = { pe: 'P/E', ev_ebitda: 'EV/EBITDA', ev_sales: 'EV/Sales', p_ffo: 'P/FFO (REITs)' };
@@ -81,7 +269,7 @@
     const rows = Object.keys(W_LAB).filter((k) => P[k] && P[k].weighted);
     if (!rows.length) return '';
     const x = (v) => (fin(v) ? num(v, 1) + '×' : '—');
-    return `<h3>Peer multiples — plain and weighted</h3><p class="fv-sub">The plain median counts every peer alike and only today's price. The weighted one gives each peer a weight from its share of the group's market value, revenue and trading value (none above 20%), and counts each peer's multiple at every quarter since 2022 with a one-year half-life — so small, thinly traded peers and old quarters move it less. "Effective peers": how many equal peers the weights amount to. The weighted rows on the football field are lenses: shown, not yet part of the stage-weighted value.</p>
+    return `<h4>Plain and weighted, by each weight alone</h4><p class="fv-sub">The plain median counts every peer alike and only today's price. The weighted one gives each peer a weight from its share of the group's market value, revenue and trading value (none above 20%), and counts each peer's multiple at every quarter since 2022 with a one-year half-life — so small, thinly traded peers and old quarters move it less. "Effective peers": how many equal peers the weights amount to. The weighted rows on the football field are lenses: shown, not yet part of the stage-weighted value.</p>
       <div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Multiple</th><th class="n">Plain median</th><th class="n">By market value</th><th class="n">By revenue</th><th class="n">By trading value</th><th class="n">By recency</th><th class="n">Weighted (all)</th><th class="n">Weighted middle half</th><th class="n">Peers · effective</th><th>Largest weights</th></tr></thead><tbody>${rows.map((k) => {
         const p = P[k], w = p.weighted, b = w.by || {};
         return `<tr><td>${W_LAB[k]}</td><td class="n">${x(p.p50)}</td><td class="n">${x(b.mcap)}</td><td class="n">${x(b.revenue)}</td><td class="n">${x(b.dvol)}</td><td class="n">${w.timed ? x(b.time) : '<small>today only</small>'}</td><td class="n"><b>${x(w.p50)}</b></td><td class="n">${x(w.p25)} – ${x(w.p75)}</td><td class="n">${num(w.n)} · ${num(w.n_eff, 1)}</td><td><small>${esc((w.top || []).map(([t, v]) => `${t} ${num(100 * v)}%`).join(', '))}</small></td></tr>`;
@@ -350,6 +538,7 @@
     let h = `<details class="fv-apx fv-guide"><summary><b>${esc(P.title)}</b> — start here if valuation is new to you</summary><div class="fv-prose">${P.paras.map((x) => `<p>${esc(x)}</p>`).join('')}</div></details>`;
     h += `<details class="fv-apx fv-guide"${young ? ' open' : ''}><summary><b>${esc(S.title)}</b>${young ? ' <span class="fv-tag">this company\'s stage</span>' : ''}</summary><div class="fv-prose">${S.paras.map((x) => `<p>${esc(x)}</p>`).join('')}</div>`
       + `<div class="fv-gl">${tbl(['Approach', 'How it works', 'On this site'], S.classic || [])}</div></details>`;
+    if (guide.peers) h += `<details class="fv-apx fv-guide"><summary><b>${esc(guide.peers.title)}</b></summary><div class="fv-prose">${guide.peers.paras.map((x) => `<p>${esc(x)}</p>`).join('')}</div></details>`;
     const G = guide.glossary || [];
     h += `<details class="fv-apx fv-guide"><summary><b>Glossary</b> — every term and abbreviation in full (${G.length})</summary>`
       + `<div class="fv-gl">${tbl(['Term', 'In full', 'What it means'], G.map((g) => [g.term, g.full, g.plain]))}</div></details>`;
@@ -409,7 +598,7 @@
       ${d.implied_return ? card('Return the price implies', pct(d.implied_return.median, 1), fin(d.implied_return.spread) ? (d.implied_return.spread > 0.01 ? 'fv-good' : d.implied_return.spread < -0.01 ? 'fv-bad' : '') : '', fin(d.implied_return.ke) ? `a year, vs ${pct(d.implied_return.ke, 1)} cost of equity` : 'a year') : ''}</div>`;
     h += `<h3>Valuation football field</h3><p class="fv-sub">Each bar is one method's range, the black tick its central value, the dashed line today's price. Green: the whole range above the price; red: below.</p><div class="fv-wrap">${football(d.football || [], price)}</div>`;
     h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th>How</th></tr></thead><tbody>${(d.football || []).map((r) => `<tr><td>${esc(r.method)}${r.lens ? '<span class="fv-tag" title="Shown with its algebra in the appendix; not part of the stage-weighted value or the headline range until the ledger has scored it">lens</span>' : ''}</td><td class="n">${usd(r.low)}</td><td class="n">${usd(r.point)}</td><td class="n">${usd(r.high)}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>`;
-    h += weightedHtml(d) + tilesHtml(d) + combinedHtml(d.combined);
+    h += tiersHtml(d) + weightedHtml(d) + tilesHtml(d) + combinedHtml(d.combined);
     if (d.reverse && d.reverse.status === 'ok') h += `<p><b>Reverse DCF:</b> today's price needs revenue growth of <b>${pct(d.reverse.implied_growth)}</b> a year for five years (then ${pct((dc && dc.assumptions.g) || 0.025)}), with the margins and cost of capital below. The last four quarters grew ${pct(d.reverse.history_growth)} on the four before.</p>`;
     else if (d.reverse) h += `<p class="fv-sub">Reverse DCF: no single growth rate between −30% and 60% gives today's price with these assumptions.</p>`;
     if (pv) {
@@ -444,8 +633,10 @@
       else h += `<p class="fv-sub">FFO ${esc(big(sm.ffo))}${fin(sm.p_ffo) ? `; P/FFO ${num(sm.p_ffo, 1)}×` : ''}${sm.peers ? ` vs a REIT median of ${num(sm.peers.p50, 1)}×` : ''}. ${esc(sm.note || '')}</p>`;
     }
     if (d.sotp) {
-      const sw = d.sotp.weighted, wc = d.sotp.parts.some((p) => fin(p.ev_sales_w));
-      h += `<h3>Sum of the parts</h3><div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Segment</th><th class="n">Revenue (annualised)</th><th>Priced like</th><th class="n">EV/Sales</th><th class="n">Value</th>${wc ? '<th class="n">EV/Sales, weighted</th><th class="n">Value, weighted</th><th>Largest weights</th>' : ''}</tr></thead><tbody>${d.sotp.parts.map((p) => `<tr><td>${esc(p.segment)}</td><td class="n">${big(p.revenue)}</td><td>${esc(String(p.group).replace(/^sic/, 'SIC ').replace(/^sec:/, 'sector '))}</td><td class="n">${num(p.ev_sales, 1)}×</td><td class="n">${big(p.ev)}</td>${wc ? `<td class="n">${fin(p.ev_sales_w) ? num(p.ev_sales_w, 1) + '×' : '—'}</td><td class="n">${big(p.ev_w)}</td><td><small>${esc((p.top || []).map(([t, w]) => `${t} ${num(100 * w)}%`).join(', '))}</small></td>` : ''}</tr>`).join('')}</tbody></table></div><p class="fv-sub">${esc(d.sotp.note)}${sw ? `. Weighted: ${esc(usd(sw.point))} a share (${esc(usd(sw.low))}–${esc(usd(sw.high))}) — ${esc(sw.note)}.` : ''}</p>`;
+      const sw = d.sotp.weighted, ss = d.sotp.selected, wc = d.sotp.parts.some((p) => fin(p.ev_sales_w)), sc = d.sotp.parts.some((p) => fin(p.ev_sales_s));
+      const priced = (p) => `${esc(p.tag_short || p.tag_label || String(p.group).replace(/^sic/, 'SIC ').replace(/^sec:/, 'sector '))}<br><small>${esc(p.how || '')}${fin(p.n) ? ` · ${num(p.n)} peers` : ''}</small>`;
+      const mv = (m, v, extra) => (fin(m) ? `${num(m, 1)}× → ${big(v)}${extra ? `<br><small>${extra}</small>` : ''}` : '<small>—</small>');
+      h += `<h3>Sum of the parts</h3><p class="fv-sub">Each segment is priced by the peers of its business model: the company's own mapping first (config/peer-map.json), then rules on the segment's name; a generic name such as "Services" or "Products" is priced like the company itself rather than guessed from one word. Each cell: EV/Sales → the segment's value.</p><div class="fv-wrap"><table class="fv-tbl fv-sotp"><thead><tr><th>Segment</th><th class="n">Revenue (annualised)</th><th>Priced like</th><th class="n">Broad median</th>${wc ? '<th class="n">Weighted</th>' : ''}${sc ? '<th class="n">Selected companies</th>' : ''}</tr></thead><tbody>${d.sotp.parts.map((p) => `<tr><td>${esc(p.segment)}</td><td class="n">${big(p.revenue)}</td><td>${priced(p)}</td><td class="n">${mv(p.ev_sales, p.ev)}</td>${wc ? `<td class="n">${mv(p.ev_sales_w, p.ev_w, esc((p.top || []).map(([t, w]) => `${t} ${num(100 * w)}%`).join(', ')))}</td>` : ''}${sc ? `<td class="n">${fin(p.ev_sales_s) ? mv(p.ev_sales_s, p.ev_s, esc((p.comps || []).slice(0, 4).map(([t, , m]) => `${t} ${num(m, 1)}×`).join(', ') + ((p.comps || []).length > 4 ? ` +${p.comps.length - 4} more` : ''))) : '<small>no list: the broad median</small>'}</td>` : ''}</tr>`).join('')}<tr><td><b>Per share</b></td><td></td><td><small>after net debt, ÷ diluted shares</small></td><td class="n"><b>${esc(usd(d.sotp.point))}</b><br><small>${esc(usd(d.sotp.low))}–${esc(usd(d.sotp.high))}</small></td>${wc ? `<td class="n"><b>${esc(usd(sw && sw.point))}</b>${sw ? `<br><small>${esc(usd(sw.low))}–${esc(usd(sw.high))}</small>` : ''}</td>` : ''}${sc ? `<td class="n"><b>${esc(usd(ss && ss.point))}</b>${ss ? `<br><small>${esc(usd(ss.low))}–${esc(usd(ss.high))}</small>` : ''}</td>` : ''}</tr></tbody></table></div><p class="fv-sub">${esc(d.sotp.note)}.${sw ? ` Weighted: ${esc(sw.note)}.` : ''}${ss ? ` Selected: ${esc(ss.note)}.` : ''}</p>`;
     }
     if ((d.notes || []).length) h += `<p class="fv-note">${d.notes.map(esc).join('<br>')}</p>`;
     h += `<div data-fvapxwrap>${appendixHtml(d.appendix)}</div>`;
@@ -458,6 +649,7 @@
     if (svEl) loadSim().then((SV) => SV.mount(svEl, d)).catch((e) => { svEl.innerHTML = `<p class="fv-sub">The simulations could not load (${esc(e.message)}).</p>`; });
     const bindApx = () => el.querySelectorAll('[data-fvapx]').forEach((b) => b.addEventListener('click', () => { el.querySelectorAll('details.fv-apx').forEach((x) => { x.open = b.dataset.fvapx === 'open'; }); }));
     bindApx();
+    bindPx(el, d);
     if (!guide && d.appendix && typeof window !== 'undefined') loadGuide().then(() => {      // the guide arrived after the page: redraw the appendix
       const w = el.querySelector('[data-fvapxwrap]');
       if (w && el.isConnected !== false) { w.innerHTML = appendixHtml(d.appendix); bindApx(); }
@@ -479,6 +671,7 @@
 
   async function render(el, ctx) {
     const base = (ctx && ctx.hub != null ? ctx.hub : '') + 'data/research/valuation/';
+    BASE = base;
     el.innerHTML = '<p class="muted">Loading the valuation…</p>';
     let d;
     const gReady = loadGuide().catch(() => null);                       // in parallel with the company's data
@@ -495,7 +688,7 @@
     draw(el, d, fits);
   }
 
-  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp, weightedHtml };
+  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp, weightedHtml, tiersHtml, pxRun, pxHtml, wq, capW, scoresHtml };
   if (typeof window !== 'undefined') window.FairValueView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();
