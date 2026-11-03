@@ -49,3 +49,11 @@ def test_one_image_object_per_picture():
     second, bare ImageObject of the same picture"""
     o = seo.image_ld(BASE, "https://img/x.jpg?v=1", "alt")
     assert o["@id"] == "https://img/x.jpg#image" and o["license"].endswith("/license/") and o["creditText"]
+
+
+def test_translated_pages_have_translated_chrome():
+    doc = seo.localize(seo.page("T", "d", BASE + "/es/c/aaa/", "<p>x</p>", 3, "i"), "es")
+    assert '<html lang="es">' in doc and ">Empresas</a>" in doc and ">Companies</a>" not in doc
+    assert "No es asesoramiento de inversión" in doc and "Figures read automatically" not in doc and ">Acerca de</a>" in doc
+    zh = seo.localize(seo.page("T", "d", BASE + "/zh/c/aaa/", "<p>x</p>", 3, "i"), "zh-Hans")
+    assert ">公司</a>" in zh and "每日图表发布在 X：@" in zh
