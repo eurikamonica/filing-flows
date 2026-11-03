@@ -268,9 +268,15 @@ def segment_metrics(c):
         lbl = n[k][0]
         s = slug_of(lbl)
         if s and s not in ('revenue', 'other-revenues', 'other'):
-            was = slug_of(seo.html.unescape(str(raw.get(k) or '')))        # the slug the label's XBRL leftover gave the page before
-            out.append((f'{s}-revenue' if 'revenue' not in s else s, f'{lbl} revenue', k,
-                        (f'{was}-revenue' if 'revenue' not in was else was) if was and was != s else None))
+            page = f'{s}-revenue' if 'revenue' not in s else s
+            # the addresses the label's XBRL leftover gave the page before it was cleaned ("Ethanol Member" →
+            # ethanol-member-revenue): the raw name's, and the name with " Member" back on it (the data is cleaned too)
+            olds = []
+            for was in (slug_of(seo.html.unescape(str(raw.get(k) or ''))), slug_of(lbl + ' member')):
+                o = (f'{was}-revenue' if 'revenue' not in was else was) if was else None
+                if o and o != page and o not in olds:
+                    olds.append(o)
+            out.append((page, f'{lbl} revenue', k, olds))
     return out
 
 
@@ -416,13 +422,13 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 put(os.path.join(d, mslug), *out, 'metrics')
                 counts['metrics'] += 1
                 mlinks.append((f'{mslug}/', f'{name} {label} by quarter'))
-        for mslug, label, key, old_slug in segment_metrics(c):
+        for mslug, label, key, olds in segment_metrics(c):
             out = metric_page(r, c, base, slug, who, name, mslug, label, key, 'value')
             if out:
                 put(os.path.join(d, mslug), *out, 'metrics')
                 counts['metrics'] += 1
                 mlinks.append((f'{mslug}/', f'{name} {label} by quarter'))
-                if old_slug and old_slug != mslug:                                        # "ethanol-member-revenue" → ethanol-revenue
+                for old_slug in olds:                                                     # "ethanol-member-revenue" → ethanol-revenue
                     send_on(d, old_slug, out[0], f'{who} {label} by quarter')
         rec = read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))
         if rec:

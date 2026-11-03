@@ -74,6 +74,7 @@ def test_history(tmp_path):
     gaming = (s / "c" / "nvda" / "gaming-revenue" / "index.html").read_text()                  # "Gaming Member" → Gaming
     assert "Gaming revenue by quarter" in gaming and "Gaming Member" not in gaming
     moved = (s / "c" / "nvda" / "gaming-member-revenue" / "index.html").read_text()            # the old address sends on
+    assert "/c/nvda/data-center-revenue/" in (s / "c" / "nvda" / "data-center-member-revenue" / "index.html").read_text()   # the data cleaned already: the "Member" address still sends on
     assert "noindex" in moved and "/c/nvda/gaming-revenue/" in moved and "gaming-member-revenue" not in (s / "sitemap-metrics.xml").read_text()
     gh = (s / "c" / "nvda" / "guidance-history" / "index.html").read_text().replace("&#x27;", "'")
     assert "met or beat its own guidance twice (100%)" in gh and "raised guidance 3 times and lowered it once" in gh
