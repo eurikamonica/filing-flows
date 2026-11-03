@@ -81,6 +81,8 @@ ok(M.classify('Find stocks with insiders buying').join() === 'screen' && M.class
 ok(M.classify('What usually happens after an 8-K?').join() === 'afterEvent' && has('什么公告之后股价会涨', 'afterEvent') && has('NVDA latest 8-K', 'events'), 'what follows an 8-K, not the latest one');
 ok(M.classify('Do insider trades predict the stock?').join() === 'insiderSignal' && has('跟着内部人买靠谱吗', 'insiderSignal') && has('Are NVDA insiders buying?', 'insiders'), 'insider patterns');
 ok(has('If I had bought NVDA in January 2024', 'backtest') && has('What would $5,000 in AAPL 3 years ago be worth now', 'backtest') && has('如果2020年买了特斯拉现在值多少', 'backtest'), 'backtest');
+ok(has('哪些公司快没现金了？', 'runway') && M.classify('Show me momentum stocks').join() === 'screen' && I.marketWords('Lowest earnings quality scores'), 'runway in Chinese; a screen and "lowest" are market questions');
+ok(['momentum', 'happens', 'quality', 'item'].every((w) => !I.fuzzyCompany(w + ' stocks', { companies: [{ ticker: 'MNTS', name: 'Momentus Inc', cik: 1 }, { ticker: 'HAPN', name: 'Happen Corp', cik: 2 }, { ticker: 'QIND', name: 'Quality Industrial Corp', cik: 3 }] }, M.WORDS || new Set(['momentum', 'happens', 'quality', 'item', 'stocks']))), 'question words are not misspelt company names');
 ok(I.MARKET_ASK.some(([k]) => k === 'screen') && I.followUps(['quality'], { ticker: 'NVDA' }, 'en').some((a) => /cash/i.test(a.label)), 'market asks and follow-ups cover the new models');
 
 (async () => {

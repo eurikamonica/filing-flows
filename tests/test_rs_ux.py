@@ -130,6 +130,23 @@ console.log(JSON.stringify([m.v, m.lines[1][1], spec.links.filter(l => l.t === '
     assert lines[3] == [100, "$100 · 100% of revenue", 1, True, 0.5, 0.2, 26.4, ["revenue", "cor", "gp", "opex", "oi", "pretax", "net", "tax"], 2.64]
 
 
+def test_search_ranking_across_groups():
+    """A strong hit in one group hides letters-in-order noise everywhere else, and its group comes first."""
+    out = _node(r"""
+const S = require('./web/search.js');
+S._setIndex({ site: [{k:'company', id:1, tk:'PXLW', name:'Pixelworks, Inc', rev:1e9, href:'#c-1'}, {k:'company', id:2, tk:'KRSP', name:'Krispy Kreme', rev:1e9, href:'#c-2'},
+    {k:'company', id:3, tk:'TSTP', name:'T Stamp Inc', rev:1e8, href:'#c-3'}],
+  sec: [{k:'company', id:4, tk:'TSM', name:'Taiwan Semiconductor Manufacturing Co Ltd', rev:-5, off:true, href:'#c-4'}, {k:'company', id:5, tk:'SPY', name:'SPDR S&P 500 ETF Trust', rev:-9, off:true, href:'#c-5'}],
+  mgr: [], off: [{k:'official', id:'Nancy Pelosi', tk:'', name:'Nancy Pelosi', w:40, href:'x'}], etf: [{k:'etf', id:'SPY', tk:'SPY', name:'SPDR S&P 500', w:1, href:'y'}], pages: [], groups: [] });
+const heads = (q) => S.find(q).map(([h, l]) => h + ':' + l.map((e) => e.tk || e.name).join(','));
+console.log(JSON.stringify([heads('pelosi'), heads('spy'), heads('tsmc')]));
+""")
+    pelosi, spy, tsmc = json.loads(out)
+    assert pelosi == ["Officials:Nancy Pelosi"], pelosi
+    assert spy == ["ETFs:SPY", "Companies:SPY"], spy
+    assert tsmc == ["Companies:TSM"], tsmc
+
+
 def test_site_wiring():
     html = open(os.path.join(ROOT, "web", "index.html"), encoding="utf-8").read()
     for s in ("ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js"):

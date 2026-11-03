@@ -28,6 +28,7 @@ import datetime as dt
 import gzip
 import json
 import math
+import re
 import sys
 import time
 from pathlib import Path
@@ -84,6 +85,7 @@ ANNUAL = [
     ('debt_issue', [('us-gaap', 'ProceedsFromIssuanceOfLongTermDebt', 'USD'), ('us-gaap', 'ProceedsFromIssuanceOfDebt', 'USD')]),
 ]
 # income statement, annual and quarterly: the hub's frames cache (app/frames.py)
+PAYMENTS = re.compile(r'^(Payments|Proceeds)')         # cash-flow amounts the taxonomy defines as positive
 HUB_ANNUAL = [('rev', FR.REVENUE), ('gp', ['GrossProfit']), ('cogs', FR.COST), ('oi', ['OperatingIncomeLoss']), ('ni', ['NetIncomeLoss'])]
 FIN_SECTORS = {'financials', 'real-estate'}
 MIN_MCAP = 300e6                                      # the research universe: smaller companies are left out
@@ -182,7 +184,10 @@ def fiscal_years(root, hub_root, today=None):
             for y in ann:
                 for cik, row in _read_gz(_qpath(root, tax, concept, unit, y)).items():
                     if isinstance(row, list) and len(row) == 2:
-                        put(cik, row[1], field, row[0])
+                        # a payment or a proceeds line is an amount, never negative: a filer that tags its dividends
+                        # with a minus (Crown Castle's FY2025 10-K: −$2.08B) made a −5.7% dividend yield
+                        v = abs(row[0]) if PAYMENTS.match(concept) and isinstance(row[0], (int, float)) else row[0]
+                        put(cik, row[1], field, v)
     inst = {}
     for field, specs in INSTANT:
         for tax, concept, unit in specs:

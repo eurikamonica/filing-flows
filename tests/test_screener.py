@@ -40,3 +40,23 @@ def test_build(tmp_path):
     page = (s / 'disclosures' / 'screener' / 'index.html').read_text()
     assert 'Stock screener: 2 companies' in page and "href='../../c/aaa/'" in page and 'Distress watch' in page and '6 mo' in page and 'No company passes today' in page
     assert 'sitemap-screener.xml' in (s / 'robots.txt').read_text()
+
+
+def test_values_that_are_not_measurements():
+    """A margin on a sliver of revenue (Tiptree: −3,879,800%), FINRA's 999.99 days to cover, a runway of 545 years."""
+    assert S.fmt('runway_months', 6547.4) == '10+ yrs' and S.fmt('runway_months', 30) == '2.5 yrs' and S.fmt('runway_months', 6) == '6 mo'
+
+
+def test_build_drops_sliver_margins_and_sentinel_days(tmp_path):
+    s = tmp_path
+    hub = s / 'disclosures' / 'data'
+    w(s / 'data' / 'index.json', {'companies': [{'cik': 1, 'ticker': 'TIPT', 'name': 'TIPTREE INC', 'revenue': 3000, 'om': -3879800.0},
+                                              {'cik': 2, 'ticker': 'TSEOQ', 'name': 'TRINSEO', 'revenue': 7e8, 'om': -12.0}]})
+    w(hub / 'research' / 'quality' / 'index.json', {'fields': ['ticker', 'mcap'], 'rows': [['TIPT', 7e8], ['TSEOQ', 4e8]]})
+    w(hub / 'market' / 'short-interest.json', {'rows': [{'ticker': 'TSEOQ', 'dtc': 999.99, 'change_pct': 25.9}]})
+    w(s / 'data' / 'runway.json', {})
+    S.write(str(s), 'https://example.com')
+    d = json.loads((s / 'disclosures' / 'data' / 'screener.json').read_text())
+    rows = {r[0]: dict(zip(d['fields'], r)) for r in d['rows']}
+    assert rows['TIPT']['om'] is None and rows['TSEOQ']['om'] == -12.0
+    assert rows['TSEOQ']['short_dtc'] is None and rows['TSEOQ']['short_chg'] == 25.9
