@@ -53,7 +53,7 @@ def block(site, today=None):
     explore = [('c/', 'Every company A–Z'), ('daily/', 'Today in the filings'), ('events/', 'Material 8-K events'), ('disclosures/signals/', 'Stock signals'),
                ('disclosures/smart-money/', '13F smart money'), ('disclosures/insider-trades/', 'Insider trading'), ('disclosures/congress-trades/', 'Congress stock trades'),
                ('disclosures/activist-stakes/', 'Activist 13D stakes'), ('disclosures/guidance-track-record/', 'Guidance track record'),
-               ('disclosures/short-interest/', 'Short interest'), ('disclosures/insider-signals/', 'Do insider trades predict the stock?'), ('events/impact/', 'Which 8-K items move stocks'), ('disclosures/earnings-quality/', 'Earnings quality scores'), ('disclosures/cash-runway/', 'Cash runway'), ('disclosures/sector-rotation/', 'Sector rotation'), ('gamma/', 'Industries'),
+               ('disclosures/short-interest/', 'Short interest'), ('disclosures/insider-signals/', 'Do insider trades predict the stock?'), ('events/impact/', 'Which 8-K items move stocks'), ('disclosures/earnings-quality/', 'Earnings quality scores'), ('disclosures/cash-runway/', 'Cash runway'), ('disclosures/screener/', 'Stock screener'), ('disclosures/sector-rotation/', 'Sector rotation'), ('gamma/', 'Industries'),
                ('chains/', 'Supply chains & themes'), ('m/', '13F managers'), ('o/', 'Officials’ trades'), ('compare/', 'Compare companies'), ('zh/', '中文')]
     out.append("<h2>Explore</h2><ul>" + ''.join(f"<li><a href='{u}'>{e(l)}</a></li>" for u, l in explore if has(*u.strip('/').split('/'))) + '</ul></section>')
     return ''.join(out)

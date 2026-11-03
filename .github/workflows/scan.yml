@@ -390,6 +390,11 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/seo_quality.py --site _site
+      - name: The screener's table and preset screens (disclosures/data/screener.json, disclosures/screener/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/screener.py --site _site
       - name: Stock timelines with every disclosure marked (c/<slug>/timeline/, disclosures/insider-signals/)
         continue-on-error: true
         env:
