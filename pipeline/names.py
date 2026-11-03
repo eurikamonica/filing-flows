@@ -37,6 +37,11 @@ CASED = {"MCMORAN": "McMoRan", "CONOCOPHILLIPS": "ConocoPhillips", "JPMORGAN": "
          "ECHOSTAR": "EchoStar", "SPACEMOBILE": "SpaceMobile", "IONQ": "IonQ", "SOUNDHOUND": "SoundHound", "BIGBEAR": "BigBear",
          "UIPATH": "UiPath", "SENTINELONE": "SentinelOne", "GITLAB": "GitLab", "LENDINGCLUB": "LendingClub", "QUALCOMM": "Qualcomm",
          "BROADCOM": "Broadcom", "SALESFORCE": "Salesforce", "SUPERMICRO": "Supermicro", "PALANTIR": "Palantir", "ROBINHOOD": "Robinhood",
+         # the apostrophe a 13F drops: "MOODYS CORP", "KOHLS CORP", "LOWES COS INC", "MACYS INC", "DILLARDS INC", "WENDYS CO"
+         "MOODYS": "Moody's", "KOHLS": "Kohl's", "LOWES": "Lowe's", "MACYS": "Macy's", "DILLARDS": "Dillard's", "CARTERS": "Carter's",
+         "WENDYS": "Wendy's", "DENNYS": "Denny's", "CAMPBELLS": "Campbell's", "DICKS": "Dick's", "BJS": "BJ's", "KELLOGGS": "Kellogg's",
+         "HERSHEYS": "Hershey's", "LANDS": "Lands'", "CHURCHS": "Church's", "COS": "Cos",
+         "COCA": "Coca", "COLA": "Cola", "MCKESSON": "McKesson", "MCCORMICK": "McCormick", "MCDONALD": "McDonald",
          # the abbreviations a 13F issuer name is filed with: "VANGUARD INDEX FDS", "COSTCO WHSL CORP NEW", "ALPHABET INC CL A"
          "FDS": "Funds", "FD": "Fund", "TR": "Trust", "WHSL": "Wholesale", "HLDGS": "Holdings", "HLDG": "Holding", "SVCS": "Services",
          "SVC": "Service", "INTL": "International", "PHARMS": "Pharmaceuticals", "PHARMA": "Pharma", "INDS": "Industries", "FINL": "Financial",
@@ -112,7 +117,7 @@ def cased(name):
         name = " ".join(w.lower() if i and w in LOWER_INSIDE else _cased(w) for i, w in enumerate(words))
     else:
         name = " ".join(_cased(w) if re.fullmatch(r"[A-Z][A-Z,.;:'’&/\-]{3,}", w) else w for w in name.split())
-    return name.replace("Jpmorgan", "JPMorgan").replace("Amazon Com", "Amazon.com").rstrip(" ,/")
+    return name.replace("Jpmorgan", "JPMorgan").replace("Amazon Com", "Amazon.com").replace("O Reilly", "O'Reilly").rstrip(" ,/")
 
 
 SUFFIXES = {"JR": "Jr.", "JR.": "Jr.", "SR": "Sr.", "SR.": "Sr.", "II": "II", "III": "III", "IV": "IV"}
