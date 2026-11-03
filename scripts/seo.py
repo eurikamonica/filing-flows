@@ -817,7 +817,15 @@ def write_pages(data_dir, out_dir, base):
             c = json.load(open(os.path.join(data_dir, "c", f"{cik}.json"), encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        peers = sorted((x for x in by_industry.get(r.get("sic") or r.get("industry"), []) if x["cik"] != cik), key=lambda x: -(x.get("revenue") or 0))[:8]
+        peers, seen_figs = [], set()
+        for x in sorted((x for x in by_industry.get(r.get("sic") or r.get("industry"), []) if x["cik"] != cik), key=lambda x: -(x.get("revenue") or 0)):
+            figs = (x.get("revenue"), x.get("yoy"), x.get("label"))             # a co-registrant files the same statements
+            if figs in seen_figs and x.get("revenue"):                          # (Sunoco LP and SunocoCorp LLC): listed once
+                continue
+            seen_figs.add(figs)
+            peers.append(x)
+            if len(peers) == 8:
+                break
         url, doc = company_page(c, r, peers, names.get(r.get("sector"), r.get("sector") or "Other"), base, image=images.get(f"c-{cik}"),
                                 all_rows=by_industry.get(r.get("sic") or r.get("industry"), []), chains=chain_of.get(str(r.get("ticker") or "").upper(), []), images=images,
                                 ties=ties.get(str(cik)), pages=pages)
