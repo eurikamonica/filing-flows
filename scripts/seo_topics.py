@@ -366,7 +366,7 @@ def revenue(co, c):
     val = lambda nid: (into.get(nid) or [None])[0]               # noqa: E731
     gp, oi, net = val('gp'), val('oi'), val('net')
     g = chg(rev[0], rev[2])
-    lead = f"{name} ({t}) made {money(tot)} of revenue in the {words} ({q.get('label')})" + (f", {g:+.0f}% from a year earlier" if g is not None else '') + '.'
+    lead = f"{name} ({t}) made {money(tot)} of revenue in the {words} ({q.get('label')})" + (f", {seo.pct(g)} from a year earlier" if g is not None else '') + '.'
     if len(segs) > 1:
         lead += ' ' + '; '.join(f"{n_} brought in {money(v[0])} ({100 * v[0] / tot:.0f}%)" for n_, v, _ in segs[:3]) + '.'
     cents = [(k, x) for k, x in (('gross profit', gp), ('operating profit', oi), ('net earnings', net)) if seo.ratio(x, tot) is not None]
@@ -389,7 +389,7 @@ def revenue(co, c):
         s0 = segs[0]
         g0 = chg(s0[1][0], s0[1][2])
         qa.append((f"What is {name}'s biggest business?", f"{s0[0]}: {money(s0[1][0])} in the {words}, {100 * s0[1][0] / tot:.0f}% of revenue"
-                   + (f", {g0:+.0f}% from a year earlier" if g0 is not None else '') + '.'))
+                   + (f", {seo.pct(g0)} from a year earlier" if g0 is not None else '') + '.'))
     if seo.ratio(net, tot) is not None:
         qa.append((f"What is {seo.poss(name)} profit margin?", f"Net {'earnings were' if net >= 0 else 'loss was'} {money(abs(net))}, {abs(100 * net / tot):.1f}% of revenue, in the {words}"
                    + (f"; the operating margin was {100 * oi / tot:.1f}%." if seo.ratio(oi, tot) is not None else '.')))
@@ -495,7 +495,7 @@ def earnings_date(co, er, c, cons, today=None):
         grow = sorted(grow, key=lambda g: -g[1])[:6]
         if grow:
             watch = (f"<h2>What to watch</h2><p>Last quarter ({e(q.get('label'))}) the lines that make up revenue grew like this; the report shows whether the trend holds:</p>"
-                     + SV.diverging([(g[0], g[2]) for g in grow], lambda v: f"{v:+.0f}%", f"{name}: revenue lines, growth year over year, {q.get('label')}", n=6))
+                     + SV.diverging([(g[0], g[2]) for g in grow], seo.pct, f"{name}: revenue lines, growth year over year, {q.get('label')}", n=6))
             ours = er.get('ours') or {}
             if ours.get('eps') is not None and cs.get('eps') is not None:
                 watch += (f"<p>Filing Flows' own estimate from the SEC figures — the same quarter last year times recent growth — is EPS {seo.usd2(ours['eps'])}"

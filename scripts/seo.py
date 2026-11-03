@@ -160,6 +160,8 @@ def pct(v, signed=True):
     if v is None:
         return "—"
     if signed:
+        if v >= MEANINGFUL:                                     # +2627% from a sliver: 27× reads
+            return f"{1 + v / 100:,.0f}×"
         return "0%" if abs(v) < 0.05 else f"{v:+.1f}%" if abs(v) < 0.95 else f"{v:+.0f}%"    # never "-0%": −0.4%, or 0%
     return f"{v:.1f}%" if abs(v) < MEANINGFUL else "n/m"
 
