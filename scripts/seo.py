@@ -274,7 +274,7 @@ LICENSE = "/license/"
 def image_ld(base, image, alt, caption=None):
     """ImageObject for Google Images: the credit, the creator and the terms (a licence page and where to get it), so
     the picture can carry the "Licensable" badge and the credit line in image results"""
-    return {"@type": "ImageObject", "contentUrl": image, "url": image, "name": alt, **({"caption": caption} if caption else {}), "width": 1200, "height": 630,
+    return {"@type": "ImageObject", "@id": image.split("?")[0] + "#image", "contentUrl": image, "url": image, "name": alt, **({"caption": caption} if caption else {}), "width": 1200, "height": 630,
             "creditText": "Filing Flows (filing-flows.com)", "creator": {"@type": "Organization", "name": "Filing Flows", "url": base + "/"},
             "copyrightNotice": "© Filing Flows — free to use with credit and a link", "license": base + LICENSE, "acquireLicensePage": base + LICENSE}
 
@@ -466,7 +466,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Corporation", "name": name, "tickerSymbol": t or None, "url": url},
         {"@type": "WebPage", "name": title, "url": url, "datePublished": q.get("filed"), "dateModified": q.get("filed"),
-         **({"primaryImageOfPage": {"@type": "ImageObject", "contentUrl": image}} if image else {})},
+         **({"primaryImageOfPage": {"@id": image.split("?")[0] + "#image"}} if image else {})},     # the one ImageObject below, credit and licence included
         *([image_ld(base, image, alt, f"{name} {q.get('label', '')} revenue breakdown")] if image else []),
         {"@type": "BreadcrumbList", "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Filing Flows", "item": base + "/"},

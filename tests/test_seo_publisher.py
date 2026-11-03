@@ -42,3 +42,10 @@ def test_about_page(tmp_path, monkeypatch):
     g = ld(doc)["@graph"]
     assert g[0]["@type"] == "AboutPage" and g[0]["about"] == {"@id": BASE + "/#org"}
     assert f"rel='me noopener'>@{seo.X_HANDLE}</a>" in doc
+
+
+def test_one_image_object_per_picture():
+    """the company page's primaryImageOfPage points at the full ImageObject (credit, licence) by @id instead of a
+    second, bare ImageObject of the same picture"""
+    o = seo.image_ld(BASE, "https://img/x.jpg?v=1", "alt")
+    assert o["@id"] == "https://img/x.jpg#image" and o["license"].endswith("/license/") and o["creditText"]
