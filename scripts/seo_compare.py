@@ -33,7 +33,7 @@ def read(path):
 
 
 def money(v):
-    return '—' if v is None else (('−' if v < 0 else '') + f'${abs(v) / 1e12:.2f}T') if abs(v) >= 1e12 else seo.money(v)
+    return seo.money(v)            # $6.90T above a trillion
 
 
 def pct(v, signed=False):
@@ -206,7 +206,7 @@ def write(site, base, k=3):
         open(main, 'w', encoding='utf-8').write(txt.replace('</main>', block + '</main>', 1))
     if urls:
         # one industry at a time, folded: 6,700 links in one column made a page 200,000 pixels tall
-        lis = ''.join(f"<details class='seo-fold'><summary><b>{e(ind)}</b> <span class='muted'>{len(L):,} comparisons</span></summary><ul class='seo-list'>" + ''.join(
+        lis = ''.join(f"<details class='seo-fold'><summary><b>{e(ind)}</b> <span class='muted'>{seo.n_of(len(L), 'comparison')}</span></summary><ul class='seo-list'>" + ''.join(
             f"<li><a href='{slug_for(a)}-vs-{slug_for(b)}/'>{e(display_name(a.get('name')))} vs {e(display_name(b.get('name')))}</a></li>" for a, b in L) + '</ul></details>'
             for ind, L in sorted(by_ind.items()))
         body = (f"<p class='crumbs'><a href='../'>Filing Flows</a> › Comparisons</p><h1>Company comparisons</h1>"

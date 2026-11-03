@@ -123,6 +123,8 @@ def money(v):
     a, s = abs(v), "−" if v < 0 else ""
     if a < 500:
         return "$0" if a < 0.5 else f"{s}${a:,.0f}"                # "$0 in penalties", not "$0K"
+    if a >= 999.95e9:
+        return f"{s}${a / 1e12:.2f}T"                              # $6.90T (a 13F filer's assets), not $6897.7B
     if a >= 999.5e6:
         return f"{s}${a / 1e9:.1f}B"                               # $1.0B, $113.2B
     if a >= 99.95e6:
@@ -885,6 +887,7 @@ def write_pages(data_dir, out_dir, base):
         f"The latest quarterly results of {len(az):,} US-listed companies, read from their 10-Q, 10-K and earnings releases: revenue, growth, operating margin, net income and cash flow, each as a Sankey chart. A–Z.",
         base + "/c/", f"{len(az)} companies with an income-statement Sankey, newest quarter first in each page.", az, 1, index_charts(latest, names)))
     urls.append((base + "/c/", None))
+    sectors_lis = []
     for sid, sname in names.items():
         items = sorted((x for x in latest.values() if x.get("sector") == sid), key=lambda x: -(x.get("revenue") or 0))
         if not items:
@@ -895,6 +898,16 @@ def write_pages(data_dir, out_dir, base):
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(list_page(
             f"{sname} earnings", f"Latest quarterly earnings of {len(items)} {sname} companies as Sankey diagrams: revenue, growth, margins.",
             url, f"{len(items)} {sname} companies by revenue, each with its latest quarter drawn from the SEC filing.", items, 2, sector_charts(items, sname)))
+        urls.append((url, None))
+        sectors_lis.append(f"<li><a href='{e(sid)}/'>{e(sname)}</a> <span class='muted'>{n_of(len(items), 'company', 'companies')} · {e(money(sum(x.get('revenue') or 0 for x in items)))} of quarterly revenue</span></li>")
+    if sectors_lis:                                              # sector/ itself: the sectors (the address a crumb or a reader may try)
+        url = f"{base}/sector/"
+        body = (f"<p class='crumbs'><a href='../'>Filing Flows</a> › Sectors</p><h1>Earnings by sector</h1>"
+                f"<p class='lead'>The latest quarterly results of US-listed companies by sector, each company's latest quarter drawn from its SEC filing.</p>"
+                f"<ul class='seo-list'>{''.join(sectors_lis)}</ul>")
+        open(os.path.join(out_dir, "sector", "index.html"), "w", encoding="utf-8").write(page(
+            "Earnings by sector | Filing Flows", f"Quarterly earnings of US-listed companies by sector: {len(sectors_lis)} sectors, each company's latest quarter as a Sankey chart.",
+            url, body, 1, base + "/og.png"))
         urls.append((url, None))
     urls += chain_pages(data_dir, out_dir, base, images)
     urls += gamma_pages(data_dir, out_dir, base, {slug_for(r) for r in latest.values()}, images)
