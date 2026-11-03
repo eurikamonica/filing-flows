@@ -5773,7 +5773,7 @@
           "title": "Scripps Safe, Inc. FY 2022 vs FY 2021: what changed",
           "bullets": [
             "Revenue rose $203K versus FY 2021, but operating profit fell $46K: costs grew by more than sales.",
-            "The largest single swing was Cost of revenue, +$59K (+17%).",
+            "The largest single swing was Sales & marketing, +$189K (+43%).",
             "Operating cash flow fell $280K to \u2212$418K, while net earnings fell $102K to \u2212$370K."
           ]
         },
@@ -5948,28 +5948,53 @@
             "source": "Inline XBRL tag CostOfRevenue in the S-1/A, fiscal year ended Dec 31, 2022."
           },
           {
-            "id": "I:opex",
+            "id": "I:sm",
             "col": 3,
             "color": "cost",
-            "name": "Operating expenses",
+            "name": "Sales &amp; marketing",
             "pos": "right",
-            "v": 628968.0,
-            "y": 438675.0,
+            "v": 626285.0,
+            "y": 437261.0,
             "lines": [
               [
                 "name",
-                "Operating expenses"
+                "Sales &amp; marketing"
               ],
               [
                 "val",
-                "$629K \u00b7 60% of operating costs"
+                "$626K \u00b7 60% of operating costs"
               ],
               [
                 "mut",
                 "Y/Y +43%"
               ]
             ],
-            "cmp_y": "\u0394 +$190K \u00b7 scale +0.14 \u00b7 mix +0.05"
+            "cmp_y": "\u0394 +$189K \u00b7 scale +0.14 \u00b7 mix +0.05",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1/A, fiscal year ended Dec 31, 2022."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 2683.0,
+            "y": 1414.0,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$3K \u00b7 0.3% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +90%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1K \u00b7 scale +0.00 \u00b7 mix +0.00"
           },
           {
             "id": "bridge",
@@ -6116,9 +6141,16 @@
           },
           {
             "s": "opcosts",
-            "t": "I:opex",
-            "v": 628968.0,
-            "y": 438675.0,
+            "t": "I:sm",
+            "v": 626285.0,
+            "y": 437261.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 2683.0,
+            "y": 1414.0,
             "color": "cost"
           },
           {
@@ -6150,7 +6182,7 @@
         },
         "analysis": [
           "Revenue was $708K in FY 2022, up 40% year over year.",
-          "Gross margin was 41.6%, up 11.8 points from FY 2021. Operating costs exceeded revenue by $334K, an operating margin of -47.2%. Operating expenses grew 43% against revenue growth of 40%. The year ended with a net loss of $370K.",
+          "Gross margin was 41.6%, up 11.8 points from FY 2021. Operating costs exceeded revenue by $334K, an operating margin of -47.2%. Operating expenses grew 43% against revenue growth of 40%. The fastest-growing cost line was Other operating costs (+90%). The year ended with a net loss of $370K.",
           "Operating cash flow was \u2212$418K. Working capital and other items used $48K."
         ],
         "headline": {
@@ -6357,21 +6389,46 @@
             "source": "Inline XBRL tag CostOfRevenue in the S-1/A, nine months ended Sep 30, 2022."
           },
           {
-            "id": "I:opex",
+            "id": "I:sm",
             "col": 3,
             "color": "cost",
-            "name": "Operating expenses",
+            "name": "Sales &amp; marketing",
             "pos": "right",
-            "v": 495927.0,
+            "v": 493739.0,
             "y": null,
             "lines": [
               [
                 "name",
-                "Operating expenses"
+                "Sales &amp; marketing"
               ],
               [
                 "val",
-                "$496K \u00b7 60% of operating costs"
+                "$494K \u00b7 60% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1/A, nine months ended Sep 30, 2022."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 2188.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$2K \u00b7 0.3% of operating costs"
               ],
               [
                 "mut",
@@ -6525,8 +6582,15 @@
           },
           {
             "s": "opcosts",
-            "t": "I:opex",
-            "v": 495927.0,
+            "t": "I:sm",
+            "v": 493739.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 2188.0,
             "y": null,
             "color": "cost"
           },
@@ -7037,21 +7101,46 @@
             "source": "Inline XBRL tag CostOfRevenue in the S-1/A, fiscal year ended Dec 31, 2021."
           },
           {
-            "id": "I:opex",
+            "id": "I:sm",
             "col": 3,
             "color": "cost",
-            "name": "Operating expenses",
+            "name": "Sales &amp; marketing",
             "pos": "right",
-            "v": 438675.0,
+            "v": 437261.0,
             "y": null,
             "lines": [
               [
                 "name",
-                "Operating expenses"
+                "Sales &amp; marketing"
               ],
               [
                 "val",
-                "$439K \u00b7 55% of operating costs"
+                "$437K \u00b7 55% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the S-1/A, fiscal year ended Dec 31, 2021."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 1414.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$1K \u00b7 0.2% of operating costs"
               ],
               [
                 "mut",
@@ -7201,8 +7290,15 @@
           },
           {
             "s": "opcosts",
-            "t": "I:opex",
-            "v": 438675.0,
+            "t": "I:sm",
+            "v": 437261.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 1414.0,
             "y": null,
             "color": "cost"
           },
@@ -7346,7 +7442,7 @@
     "classification": "unclassified"
   },
   "lifecycle": null,
-  "generated_at": "2026-11-03T01:14:51+00:00",
+  "generated_at": "2026-11-03T07:56:45+00:00",
   "scan": {
     "state": "queued",
     "last_attempt": null,
