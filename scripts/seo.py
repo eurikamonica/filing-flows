@@ -688,7 +688,8 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
         links = "".join(f"<li>{e(x.get('supplier'))} → {e(x.get('customer'))}"
                         + (f" <span class='muted'>{100 * x['share']:.0f}% of the supplier's revenue" + (f", {money(x['value_usd'])}" if x.get("value_usd") else "") + "</span>" if x.get("share") else "")
                         + "</li>" for x in sorted(rel, key=lambda x: -(x.get("value_usd") or 0))[:25])
-        fct = "".join(f"<tr><td>{e(qname(q))}</td><td class='num'>{100 * g:+.1f}%</td><td class='num'>{e(money(rv))}</td><td class='num'>{e(money(lo))} – {e(money(hi))}</td></tr>"
+        fct = "".join(f"<tr><td>{e(qname(q))}</td><td class='num'>{100 * g:+.1f}%</td><td class='num'>{e(money(rv))}</td>"
+                      f"<td class='num'>{e(money(lo)) + ' – ' + e(money(hi)) if lo is not None and hi is not None else '—'}</td></tr>"
                       for q, g, rv, lo, hi, *_ in (mdl.get("fc") or [])) if mdl.get("fc") else ""
         body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Industries</a> › {e(sector)} › {e(nm)}</p>"
                 f"<h1>{e(nm)} <span class='muted'>SIC {e(sic)}</span></h1><p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>"
