@@ -1127,6 +1127,16 @@ def _release_cash(rel, fx, q1_end, fq, py_end=None):
     return hint
 
 
+def prev_line_labels(c, end):
+    """The revenue-line labels (leaves and groups) of the company's latest chart before `end` that has a breakdown from
+    its 10-Q or 10-K: an earnings release's lines are matched to it (release.revenue_lines)."""
+    for k, q in sorted((c.get("quarters") or {}).items(), reverse=True):
+        ls = q.get("lines_struct")
+        if k < end and ls and q.get("form") != "8-K" and ls.get("axis") != "release":
+            return [x.get("label") for x in ls.get("leaves", []) + ls.get("groups", [])]
+    return None
+
+
 def process_release(store, cik, accn, form, starred=False):
     """A preliminary quarter from an earnings release (8-K Item 2.02); the 10-Q/10-K replaces it when filed."""
     sub = submissions(cik)
@@ -1218,7 +1228,7 @@ def process_release(store, cik, accn, form, starred=False):
         raise NotApplicable("earnings release lacks revenue or net income")
     rev_ref = {"q1": facts.value(fx, "revenue", q1_end) if q1_end else None,
                "py": facts.value(fx, "revenue", py_end) if py_end else None}
-    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref)
+    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref, prev=prev_line_labels(c, end))
     ls = segs["struct"] if segs else None
     notes = {}
     paras = release.note_paragraphs(doc)
@@ -1584,7 +1594,7 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         raw_py, py_end = stored_py["raw"], stored_py["end"]   # (a half keeps its report's own, restated, column)
     q1_end, raw_q1 = (prev["end"], prev["raw"]) if prev else (None, None)
     rev_ref = {"q1": (raw_q1 or {}).get("revenue"), "py": (raw_py or {}).get("revenue")}
-    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref)
+    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref, prev=prev_line_labels(c, end))
     ls = segs["struct"] if segs else None
     notes = {}
     paras = release.note_paragraphs(doc)
@@ -1877,7 +1887,9 @@ def company_ciks(tokens):
     return sorted(set(out))
 
 
-RELEASE_READER = 5              # bump when the 8-K reader changes: stored 8-K quarters are read again once
+RELEASE_READER = 6              # bump when the 8-K reader changes: stored 8-K quarters are read again once
+# v6 (Nov 2026): revenue lines only from rows that end in or follow the total-revenue row, one breakdown per chart,
+# exact to the table's rounding (Apple Q4 FY26 had regions and products mixed; Starbucks, Visa, AAL balance-sheet rows)
 
 
 def _superseded(accn, filed):
