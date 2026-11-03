@@ -133,8 +133,12 @@ def insiders(hub, link, today, code):
     word = 'bought' if buy else 'sold'
     lead = (f"Company insiders {word} {money(tot)} of their own companies' shares in {len(rows)} open-market trades over the last two weeks. "
             + sentence('The largest: ' + '; '.join(f"{person(r.get('insider'))} ({r.get('role') or 'insider'}) {word} {money(r.get('value'))} of {cased(r.get('issuer'))} ({r['ticker']})" for r in big)))
-    body = SV.hbars([(f"{r['ticker']} · {person(r.get('insider'))}", r.get('value')) for r in sorted(rows, key=lambda r: -(r.get('value') or 0))[:12]], money,
-                    f"Largest insider {'purchases' if buy else 'sales'}, last two weeks", color=SV.GREEN if buy else SV.RED, n=12)
+    by_who = {}                                                # one bar per insider and company: a holder's trades of two weeks summed
+    for r in rows:
+        k = (r['ticker'], person(r.get('insider')))
+        by_who[k] = by_who.get(k, 0) + (r.get('value') or 0)
+    body = SV.hbars([(f"{t} · {w}", v) for (t, w), v in sorted(by_who.items(), key=lambda kv: -kv[1])[:12]], money,
+                    f"Largest insider {'purchases' if buy else 'sales'} by insider, last two weeks", color=SV.GREEN if buy else SV.RED, n=12)
     by_co = {}
     for r in rows:
         by_co[r['ticker']] = by_co.get(r['ticker'], 0) + (r.get('value') or 0)

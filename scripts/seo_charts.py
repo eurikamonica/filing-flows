@@ -110,6 +110,12 @@ def live(cik, ticker, sic, sector, chains, images, depth=2):
             f"<script src='{up}asia-links.js' defer></script><script src='{up}seo-embed.js' defer></script>")
 
 
+# the outlook topics (pipeline/outlook.py TOPICS) as the chart names them; the rest are the key capitalized
+TOPIC_WORDS = {'ai': 'AI', 'capex': 'Capital spending', 'macro': 'The economy', 'deals': 'Deals', 'returns': 'Buybacks & dividends',
+               'people': 'People', 'legal': 'Legal & regulation', 'supply': 'Supply chain', 'margin': 'Margins', 'costs': 'Costs',
+               'demand': 'Demand', 'financing': 'Financing', 'products': 'Products', 'tax': 'Tax', 'backlog': 'Backlog'}
+
+
 def _ufmt(unit):
     return (lambda v: f"${v:.2f}") if unit == 'ps' else (lambda v: f"{v:.1f}%") if unit == 'pct' else None
 
@@ -129,7 +135,7 @@ def guidance_outlook(name, rec, ol, money):
     doc = next((d for d in (ol or {}).get('docs') or [] if d.get('kind') == 'mdna' and d.get('counts')), None)
     if doc:
         c = doc['counts']
-        out.append(SV.hbars([(k.replace('_', ' ').capitalize(), v) for k, v in c.get('topics') or []], str,
+        out.append(SV.hbars([(TOPIC_WORDS.get(k, k.replace('_', ' ').capitalize()), v) for k, v in c.get('topics') or []], str,
                              f"{name}: what its forward-looking statements are about ({doc.get('form')} filed {doc.get('filed')})",
                              note=f"{c.get('n') or 0} statements" + (f"; tone {c['tone']:+.2f} (−1 all cautious, +1 all confident)" if isinstance(c.get('tone'), (int, float)) else '')
                              + f"; {c.get('hedged') or 0} hedged."))

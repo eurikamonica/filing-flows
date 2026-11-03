@@ -302,17 +302,28 @@ def _from(links, node, target):
 
 def segment_river(name, qs, n=12):
     """the lines that make up revenue, quarter by quarter (a stacked area): how the mix shifted"""
-    rows = []
+    rows, shown = [], {}
     for q in qs[:n]:
         nodes = {x.get('id'): x for x in q.get('nodes') or []}
         d = {}
         for ln in q.get('links') or []:
             s = nodes.get(ln.get('s'))
             if ln.get('t') == 'revenue' and s and s.get('name') and ln.get('v'):
-                d[seo.label(s['name'])] = d.get(seo.label(s['name']), 0) + ln['v']
+                lab = seo.label(s['name'])
+                key = lab.casefold()                          # "MEDTECH" and "MedTech" are one line
+                shown.setdefault(key, lab)                    # … shown with the latest quarter's spelling
+                d[key] = d.get(key, 0) + ln['v']
         if len(d) >= 2:
             rows.append((q.get('label'), d))
-    rows.reverse()
+    # one breakdown throughout: a quarter whose lines are another partition of revenue (product/service against
+    # segments) would draw bands that start and stop; the run of quarters sharing the latest quarter's lines is drawn
+    keep = []
+    for lab, d in rows:
+        same = len(set(d) & set(rows[0][1])) / max(1, len(set(d) | set(rows[0][1])))
+        if same < 0.5:
+            break
+        keep.append((lab, d))
+    rows = list(reversed(keep))
     if len(rows) < 3:
         return ''
     names = sorted({k for _, d in rows for k in d}, key=lambda k: -sum(d.get(k, 0) for _, d in rows))[:8]
@@ -321,9 +332,9 @@ def segment_river(name, qs, n=12):
     both = [k for k in names if k in first and k in last]        # a line reported at both ends: a relabelled one is no shift in the mix
     shift = sorted(((k, last[k] / tl - first[k] / tf) for k in both), key=lambda kv: -abs(kv[1]))[0] if both else None
     note = ('' if shift is None else
-            f"{shift[0]} went from {100 * first[shift[0]] / tf:.0f}% of revenue in {rows[0][0]} to {100 * last[shift[0]] / tl:.0f}% in {rows[-1][0]}, the largest shift in the mix."
+            f"{shown[shift[0]]} went from {100 * first[shift[0]] / tf:.0f}% of revenue in {rows[0][0]} to {100 * last[shift[0]] / tl:.0f}% in {rows[-1][0]}, the largest shift in the mix."
             if abs(shift[1]) >= 0.02 else f"The mix barely moved between {rows[0][0]} and {rows[-1][0]}.")
-    return SV.river([l for l, _ in rows], [(k, [d.get(k) for _, d in rows]) for k in names], money, f"{name}: revenue by line, {rows[0][0]} to {rows[-1][0]}", note=note)
+    return SV.river([l for l, _ in rows], [(shown[k], [d.get(k) for _, d in rows]) for k in names], money, f"{name}: revenue by line, {rows[0][0]} to {rows[-1][0]}", note=note)
 
 
 def revenue(co, c):

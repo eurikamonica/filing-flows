@@ -179,6 +179,47 @@ def _needs_facts(c):
         or any(y.get("src") is None for y in (c.get("years") or {}).values())
 
 
+LABEL_VERSION = 2      # 2: a 52/53-week year ending in early January is the year it mostly falls in (facts.fiscal_label)
+
+
+def relabel(store):
+    """Stored quarters and years named again from their end dates once per LABEL_VERSION (Johnson & Johnson's quarter
+    ended 2026-09-27 was 'Q3 FY27'; it is Q3 2026). A renamed quarter keeps its first name in label_was, so the static
+    pages can send the old address on."""
+    if store.state.get("label_v") == LABEL_VERSION:
+        return 0
+    n = 0
+    for cik in store.ciks():
+        try:
+            c = store.company(cik)
+            fye = (c.get("profile") or {}).get("fye") or "1231"
+            changed = False
+            for q in (c.get("quarters") or {}).values():
+                if not q.get("end") or q.get("period") == "half":
+                    continue
+                label, fq, fy = facts.fiscal_label(q["end"], fye)
+                if label != q.get("label"):
+                    q.setdefault("label_was", q.get("label"))
+                    q["label"], q["fq"], q["fy"] = label, fq, fy
+                    changed = True
+            for y in (c.get("years") or {}).values():
+                if not y.get("end"):
+                    continue
+                label, fy = facts.fiscal_year_label(y["end"], fye)
+                if label != y.get("label"):
+                    y.setdefault("label_was", y.get("label"))
+                    y["label"], y["fy"] = label, fy
+                    changed = True
+            if changed:
+                store.put(cik, c)
+                n += 1
+        except Exception as e:
+            print(f"  relabel skipped for {cik}: {e}", file=sys.stderr)
+    store.state["label_v"] = LABEL_VERSION
+    print(f"  relabelled the periods of {n} companies (label version {LABEL_VERSION})")
+    return n
+
+
 def refresh_periods(store, limit=PERIODS_PER_RUN):
     """Companies stored before the period list or the per-figure sources existed get them from SEC's company facts
     (largest first, a few per run): which tag each stored figure was read from, with SEC's standard label."""
@@ -1938,6 +1979,7 @@ def run(args):
             json.dump({str(k): v for k, v in unbuildable.items()}, fh)
     backfill_history(store)
     queue_missed_filings(store)
+    relabel(store)
     refresh_periods(store)
     reread(store, getattr(args, "reread_ciks", None) or [])
     refresh_da(store)
@@ -2178,6 +2220,11 @@ def apply_reported(q, Nc, Ny, draw=True):
 FCF_ALT_KEYS = ("nodes", "links", "kind", "footer", "checks", "analysis", "headline", "compare", "compare_y")
 
 
+def _aggregate_line(q):
+    ls = q.get("lines_struct") or {}
+    return any(dims.AGGREGATE_ID.search(str(x.get("id") or "")) for x in (ls.get("leaves") or []) + (ls.get("groups") or []))
+
+
 def quarter_payload(c, q, prev_q):
     """A quarter's chart, analysis and checks. When the company's own free cash flow is drawn, the payload also carries
     the same quarter on operating cash flow − capex ("fcf_alt"): readers choose the definition in their alerts
@@ -2185,6 +2232,9 @@ def quarter_payload(c, q, prev_q):
     shown = q
     if _unmatched(q):                                   # lines that do not add up: hidden unless the reader asks
         q = dict(q, lines_struct=None)
+    elif _aggregate_line(q):                            # a subtotal member drawn as a line (stored before dims.AGGREGATE_ID): no lines
+        q = dict(q, lines_struct=None)
+        shown = q
     pl = _quarter_payload(c, q, prev_q)
     if not pl:
         return pl
@@ -2314,6 +2364,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
         "compare": compare, "compare_y": compare_y, "preliminary": q["form"] == "8-K",
         "release_check": q.get("from_release"),
         "end": q["end"], "label": q["label"], "cal": q["cal"], "form": q["form"], "filed": q["filed"],
+        **({"label_was": q["label_was"]} if q.get("label_was") else {}),
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,
         "title": f"{name} {q['label']} earnings &amp; cash flow",
         "subtitle": (f"Quarter ended {_date(q['end'])} · GAAP · Y/Y vs. {_short(q.get('py_end'))} "
@@ -2370,7 +2421,7 @@ def year_payload(c, y):
     Nc, Ny = normalize(y["raw"]), normalize(y.get("raw_py"))
     if not Nc:
         return None
-    ls = None if _unmatched(y) or sliver_lines(y, Nc["R"]) else clean_lines(y.get("lines_struct"))
+    ls = None if _unmatched(y) or _aggregate_line(y) or sliver_lines(y, Nc["R"]) else clean_lines(y.get("lines_struct"))
     try:
         nodes, links, kind = build_spec(Nc, None, Ny, ls, (y.get("lines"), None, y.get("lines_py")))
     except Exception as e:
@@ -2412,6 +2463,7 @@ def year_payload(c, y):
         "cite": sources.citation(name, y, "fy"),
         "period": "fy", "key": "fy-" + y["end"], "compare": None, "compare_y": compare_y, "preliminary": False,
         "end": y["end"], "label": y["label"], "cal": f"FY{y['fy']}", "form": y["form"], "filed": y["filed"],
+        **({"label_was": y["label_was"]} if y.get("label_was") else {}),
         "doc_url": y.get("doc_url"), "index_url": y.get("index_url"), "kind": kind,
         "title": f"{name} {y['label']} earnings &amp; cash flow",
         "subtitle": f"Fiscal year ended {_date(y['end'])} · GAAP · Y/Y vs. {_short(y.get('py_end'))}",

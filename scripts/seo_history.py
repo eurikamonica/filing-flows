@@ -274,6 +274,15 @@ def segment_metrics(c):
     return out
 
 
+def send_on(d, old_slug, url, name):
+    """the old address of a renamed page (c/<slug>/<old_slug>/) sends on to url, unless a page of its own is there"""
+    if not old_slug or os.path.exists(os.path.join(d, old_slug, 'index.html')):
+        return
+    os.makedirs(os.path.join(d, old_slug), exist_ok=True)
+    with open(os.path.join(d, old_slug, 'index.html'), 'w', encoding='utf-8') as f:
+        f.write(moved_page(url, name))
+
+
 def moved_page(url, name):
     """a page whose address changed (a line's label cleaned of 'Member'): the old address sends search engines on"""
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{e(name)} | Filing Flows</title>'
@@ -386,12 +395,20 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 put(os.path.join(d, qslug(lab)), *out, 'quarters')
                 counts['quarters'] += 1
                 links.append((f'{qslug(lab)}/', f'{lab} results'))
+                if q.get('label_was') and qslug(q['label_was']) != qslug(lab):         # "Q3 FY27" → Q3 2026 (pipeline relabel)
+                    send_on(d, qslug(q['label_was']), out[0], f'{who} {lab} results')
             if has_period:
                 for mode in ('qoq', 'yoy'):
                     out = period_page(r, c, i, base, slug, who, name, mode)
                     if out:
-                        put(os.path.join(d, out[0].rstrip('/').rsplit('/', 1)[1]), *out, 'periods')
+                        pslug = out[0].rstrip('/').rsplit('/', 1)[1]
+                        put(os.path.join(d, pslug), *out, 'periods')
                         counts[mode] += 1
+                        other = c['quarters'][i + 1] if mode == 'qoq' and i + 1 < len(c['quarters']) else None
+                        o_was = (other.get('label_was') or other.get('label')) if other else year_ago(q.get('label_was') or lab)
+                        old = f"{qslug(q.get('label_was') or lab)}-vs-{qslug(o_was)}" if o_was else None
+                        if old and old != pslug:
+                            send_on(d, old, out[0], f'{who} {lab} compared')
         mlinks = []
         for mslug, label, (key, kind) in METRICS:
             out = metric_page(r, c, base, slug, who, name, mslug, label, key, kind)
@@ -405,10 +422,8 @@ def write(site, base, period_pages=PERIOD_PAGES):
                 put(os.path.join(d, mslug), *out, 'metrics')
                 counts['metrics'] += 1
                 mlinks.append((f'{mslug}/', f'{name} {label} by quarter'))
-                if old_slug and old_slug != mslug and not os.path.exists(os.path.join(d, old_slug, 'index.html')):
-                    os.makedirs(os.path.join(d, old_slug), exist_ok=True)                 # "ethanol-member-revenue" → ethanol-revenue
-                    with open(os.path.join(d, old_slug, 'index.html'), 'w', encoding='utf-8') as f:
-                        f.write(moved_page(out[0], f'{who} {label} by quarter'))
+                if old_slug and old_slug != mslug:                                        # "ethanol-member-revenue" → ethanol-revenue
+                    send_on(d, old_slug, out[0], f'{who} {label} by quarter')
         rec = read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))
         if rec:
             out = guidance_page(r, rec, base, slug, who, name)

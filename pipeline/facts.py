@@ -622,6 +622,8 @@ def fiscal_label(end, fiscal_year_end):
     q = min(4, max(1, round(((e - base).days / 30.44) / 3)))
     if mm == 12 and dd >= 25:
         return f"Q{q} {fy}", q, fy
+    if mm == 1 and dd <= 7:                 # a 52/53-week year ending the Saturday or Sunday nearest December 31 (Johnson &
+        return f"Q{q} {fy - 1}", q, fy - 1  # Johnson's 2026 ends January 3, 2027): the company's year is the one it mostly falls in
     return f"Q{q} FY{str(fy)[2:]}", q, fy
 
 
