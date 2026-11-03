@@ -412,6 +412,69 @@ def list_page(title, desc, url, intro, items, depth, extra=''):
     return page(f"{title} | Filing Flows", desc, url, body, depth, url.split("/c/")[0].split("/sector/")[0] + "/og.png")
 
 
+def _cal(end):
+    """the calendar quarter holding a period end: '2026-07-26' → ('CY2026Q3', 'Q3 2026')"""
+    y, m = int(end[:4]), int(end[5:7])
+    q = (m - 1) // 3 + 1
+    return f"CY{y}Q{q}", f"Q{q} {y}"
+
+
+def chain_index(data_dir, d, n=12):
+    """The theme's own quarterly series from its members' filings: the suppliers' revenue attributed to the chain (each
+    company's quarterly revenue scaled by the share the chain takes of its trailing twelve months) and, for a spend chain,
+    the buyers' capital spending — by calendar quarter, over the quarters where at least 70% of the members report.
+    Returns {'revenue': [(label, value, members)], 'capex': [...], 'yoy': …} or None."""
+    sup = [r for r in d.get('companies') or [] if r.get('role') != 'tier2' and r.get('cik') and (r.get('attr') or 0) > 0 and (r.get('rev') or 0) > 0]
+    buy = [b for b in d.get('buyers') or [] if isinstance(b, dict) and b.get('cik')]
+    rev, cap = {}, {}
+    for r in sup:
+        c = _load(os.path.join(data_dir, 'c', f"{r['cik']}.json"))
+        h = ((c or {}).get('quality') or {}).get('hist') or {}
+        if not h.get('periods'):
+            continue
+        vs = (h.get('v') or {}).get('revenue') if isinstance(h.get('v'), dict) else None     # [[period index, [[value, evidence] …]] …]
+        if not vs:
+            continue
+        scale = min(1.0, (r.get('attr') or 0) / r['rev'])
+        qs, fys = {}, []
+        for pi, evs in vs:
+            per = h['periods'][pi] if 0 <= pi < len(h['periods']) else None
+            val = evs[0][0] if evs and evs[0] else None
+            if not per or not isinstance(val, (int, float)):
+                continue
+            if per[2] == 'q':
+                qs[(per[0], per[1])] = val
+            elif per[2] == 'fy':
+                fys.append((per[0], per[1], val))
+        for (a, b), val in qs.items():
+            rev.setdefault(_cal(b), {})[r['cik']] = val * scale
+        for a, b, val in fys:                                   # the fourth quarter: the year less its three reported quarters
+            inside = [v for (qa, qb), v in qs.items() if qa >= a and qb < b]
+            if len(inside) == 3 and r['cik'] not in rev.get(_cal(b), {}):
+                rev.setdefault(_cal(b), {})[r['cik']] = (val - sum(inside)) * scale
+    for b in buy:
+        c = _load(os.path.join(data_dir, 'c', f"{b['cik']}.json"))
+        hq = (((c or {}).get('quality') or {}).get('cap') or {}).get('hq') or {}
+        ks = hq.get('keys') or []
+        if 'capex' not in ks:
+            continue
+        ci = ks.index('capex')
+        for row in hq.get('rows') or []:
+            if row[0] and row[1 + ci] is not None:
+                cap.setdefault(_cal(row[0]), {})[b['cik']] = -row[1 + ci]
+    def series(m, members):
+        need = max(1, int(0.7 * len(members)))
+        ks = sorted(k for k, v in m.items() if len(v) >= need)[-n:]
+        return [(k[1], sum(m[k].values()), len(m[k])) for k in ks]
+    out = {'revenue': series(rev, sup) if sup else [], 'capex': series(cap, buy) if buy else []}
+    if not out['revenue'] and not out['capex']:
+        return None
+    for key in ('revenue', 'capex'):
+        xs = out[key]
+        out[key + '_yoy'] = xs[-1][1] / xs[-5][1] - 1 if len(xs) >= 5 and xs[-5][1] else None
+    return out
+
+
 def chain_pages(data_dir, out_dir, base, images=None):
     """chains/<id>/: one page per supply chain or theme (pipeline/chains.py), with the app's chart a click away."""
     try:
@@ -441,7 +504,23 @@ def chain_pages(data_dir, out_dir, base, images=None):
         pic = (f"<figure class='seo-pic'><a href='../../#chain-{e(c['id'])}'><img src='{e(img)}' alt='{e(d['name'])} money flow chart' width='1200' height='630' "
                f"loading='lazy' style='width:100%;height:auto;border-radius:8px'></a><figcaption class='muted small'>The money-flow chart (open the interactive one above).</figcaption></figure>" if img else '')
         bars = SV.hbars([(f"{r['t']} · {r.get('name') or ''}", r.get('attr')) for r in rows], money, f"{d['name']}: the largest companies by revenue in the chain", n=15)
-        body = body.replace("<h2>Companies</h2>", pic + bars + "<h2>Companies</h2>", 1)
+        idx = ''
+        try:
+            ci = chain_index(data_dir, d)
+        except Exception:  # noqa: BLE001
+            ci = None
+        if ci:
+            idx = "<h2 id='index'>The theme quarter by quarter</h2>"
+            if ci['revenue']:
+                idx += SV.bars([(l, v) for l, v, _ in ci['revenue']], money, f"{d['name']}: the chain's revenue by calendar quarter",
+                               note=f"Each supplier's quarterly revenue scaled by the share of it this chain takes (its attributed share of the trailing twelve months), summed; "
+                                    f"{ci['revenue'][-1][2]} companies in the latest quarter" + (f", {pct(100 * ci['revenue_yoy'])} against a year earlier" if ci.get('revenue_yoy') is not None else '') + '.')
+                lead += f" The chain's attributed revenue was {money(ci['revenue'][-1][1])} in {ci['revenue'][-1][0]}" + (f", {pct(100 * ci['revenue_yoy'])} year over year" if ci.get('revenue_yoy') is not None else '') + '.'
+            if ci['capex']:
+                idx += SV.bars([(l, v) for l, v, _ in ci['capex']], money, f"{d['name']}: the buyers' capital spending by calendar quarter",
+                               note=f"Capital expenditures of the chain's buyers from their cash-flow statements, by calendar quarter; {ci['capex'][-1][2]} companies in the latest quarter"
+                                    + (f", {pct(100 * ci['capex_yoy'])} against a year earlier" if ci.get('capex_yoy') is not None else '') + '.', color=SV.BLUE)
+        body = body.replace("<h2>Companies</h2>", pic + bars + idx + "<h2>Companies</h2>", 1)
         desc = f"{d['name']}: where the money flows, from SEC filings. {lead}"[:300]
         os.makedirs(os.path.join(out_dir, "chains", c["id"]), exist_ok=True)
         open(os.path.join(out_dir, "chains", c["id"], "index.html"), "w", encoding="utf-8").write(

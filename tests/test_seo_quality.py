@@ -65,3 +65,24 @@ def test_runway():
     rw2 = C.runway(c, q2, ttm2)
     assert rw2['burn'] == 40e6 and rw2['months'] == 60
     assert C.runway({'quality': {}}, q, ttm) is None
+
+
+def test_chain_index(tmp_path):
+    import seo
+    data = tmp_path / 'data'
+    periods = [['2025-01-01', '2025-03-31', 'q', 'Q1 2025'], ['2025-04-01', '2025-06-30', 'q', 'Q2 2025'], ['2025-07-01', '2025-09-30', 'q', 'Q3 2025'], ['2025-01-01', '2025-12-31', 'fy', 'FY2025'],
+               ['2026-01-01', '2026-03-31', 'q', 'Q1 2026']]
+    for cik, base in ((1, 100.0), (2, 50.0)):
+        (data / 'c').mkdir(parents=True, exist_ok=True)
+        (data / 'c' / f'{cik}.json').write_text(json.dumps({'quality': {'hist': {'keys': ['revenue'], 'periods': periods, 'v': {'revenue': [[i, [[base * (i + 1), None]]] for i in range(5)]}},
+                                                                         'cap': {'hq': {'keys': ['ocf', 'capex'], 'rows': [['2025-12-31', 10, -7], ['2026-03-31', 12, -9]]}}}}))
+    d = {'companies': [{'cik': 1, 'role': 'supplier', 'attr': 500, 'rev': 1000}, {'cik': 2, 'role': 'supplier', 'attr': 100, 'rev': 100}, {'cik': 3, 'role': 'tier2', 'attr': 1, 'rev': 1}],
+         'buyers': [{'cik': 1, 't': 'A'}, {'cik': 2, 't': 'B'}]}
+    ci = seo.chain_index(str(data), d)
+    labels = [l for l, _, _ in ci['revenue']]
+    assert labels == ['Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025', 'Q1 2026']
+    assert abs(ci['revenue'][0][1] - (100 * 0.5 + 50)) < 1e-9 and ci['revenue'][0][2] == 2
+    assert abs(ci['revenue'][3][1] - ((400 - 600) * 0.5 + (200 - 300))) < 1e-9          # Q4 = FY − three quarters, per company
+    assert abs(ci['revenue_yoy'] - ((500 * 0.5 + 250) / 100 - 1)) < 1e-9
+    assert ci['capex'] == [('Q4 2025', 14, 2), ('Q1 2026', 18, 2)] and abs(ci['capex_yoy'] or 0) == 0 or ci['capex_yoy'] is None
+    assert seo.chain_index(str(data), {'companies': [], 'buyers': []}) is None
