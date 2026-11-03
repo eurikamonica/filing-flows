@@ -202,7 +202,11 @@ def signals_page(site, base, istats, cards):
     b, s = pat['buy'], pat['sell']
     lead = (f"Insiders’ open-market trades from the last 400 days, {istats['trades']:,} of them old enough to score against the market over the following 63 sessions. "
             f"Buys were followed by the stock beating SPY {100 * b['hit']:.0f}% of the time (median excess {spct(b['median_excess'])}); sales by the stock lagging {100 * s['hit']:.0f}% of the time."
-            + (f" Size mattered most: buys of $1M or more were right {100 * pat['buy_large']['hit']:.0f}% of the time against {100 * pat['buy_small']['hit']:.0f}% for buys under $100k." if pat.get('buy_large') and pat.get('buy_small') else ''))
+            + (f" Buys of $1M or more were right {100 * pat['buy_large']['hit']:.0f}% of the time, buys under $100k {100 * pat['buy_small']['hit']:.0f}%"
+               + (" — the large ones did better" if pat['buy_large']['hit'] > pat['buy_small']['hit'] + 0.03 else
+                  " — the small ones did better" if pat['buy_small']['hit'] > pat['buy_large']['hit'] + 0.03 else " — about the same")
+               + (f"; cluster buys (three or more insiders within 30 days) {100 * pat['buy_cluster']['hit']:.0f}%" if pat.get('buy_cluster') else '') + '.'
+               if pat.get('buy_large') and pat.get('buy_small') else ''))
     heavy = sorted([c for c in cards if c['buys'] >= 2], key=lambda c: -c['buy_usd'])[:25]
     sellers = sorted([c for c in cards if c['sells'] >= 2], key=lambda c: -c['sell_usd'])[:25]
     L = lambda c: f"<a href='../../c/{c['slug']}/timeline/'><b>{e(c['ticker'])}</b></a> {e(c['name'])}"

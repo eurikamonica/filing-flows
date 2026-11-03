@@ -180,8 +180,8 @@ def index_page(site, base, scored, slugs):
     for x in scored:
         by_sec.setdefault(x.get('sector') or 'other', []).append(x['score'])
     grades = {g: sum(1 for x in scored if x['grade'] == g) for g in 'ABCDE'}
-    lead = (f"{len(scored)} companies scored 0–100 on eight published measures of earnings quality: accruals, discretionary accruals, Beneish M, Dechow F, Montier C, Piotroski F, "
-            f"the non-GAAP gap and smoothness. {grades['A']} grade A, {grades['B']} B, {grades['C']} C, {grades['D']} D and {grades['E']} E. "
+    lead = (f"{len(scored):,} companies scored 0–100 on eight published measures of earnings quality: accruals, discretionary accruals, Beneish M, Dechow F, Montier C, Piotroski F, "
+            f"the non-GAAP gap and smoothness. {grades['A']:,} grade A, {grades['B']:,} B, {grades['C']:,} C, {grades['D']:,} D and {grades['E']:,} E. "
             f"The median score is {sorted(x['score'] for x in scored)[len(scored) // 2]}.")
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Earnings quality</p><h1>Earnings quality scores: every company, 0 to 100</h1>"
             f"<p class='lead'>{e(lead)}</p>"

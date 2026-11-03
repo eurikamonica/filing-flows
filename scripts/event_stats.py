@@ -113,6 +113,9 @@ def summarise(vals):
 
 
 ITEM_NAMES = {'1.01': 'Material definitive agreement', '1.02': 'Termination of a material agreement', '1.03': 'Bankruptcy or receivership',
+              '1.04': 'Mine safety violation', '5.06': 'Change in shell company status (a SPAC merger closing)', '6.01': 'Asset-backed securities: servicer information',
+              '6.02': 'Asset-backed securities: change of servicer or trustee', '6.03': 'Asset-backed securities: change in credit enhancement',
+              '6.04': 'Asset-backed securities: failure to make a distribution', '6.05': 'Asset-backed securities: securities act updating',
               '1.05': 'Material cybersecurity incident', '2.01': 'Completed acquisition or disposition', '2.02': 'Results of operations',
               '2.03': 'New debt or off-balance-sheet obligation', '2.04': 'Triggering event accelerating an obligation', '2.05': 'Exit or disposal costs',
               '2.06': 'Material impairment', '3.01': 'Delisting notice or listing-rule failure', '3.02': 'Unregistered sale of equity',

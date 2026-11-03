@@ -172,7 +172,8 @@ def duo(points, names, fmt, title, note=None):
             x = cx - bw - 1 if j == 0 else cx + 1
             y = y0 - hgt if v >= 0 else y0
             # the series' colour whatever the sign (a loss is below the line already; red on both would hide which is which)
-            out.append(f"<rect x='{x:.0f}' y='{y:.0f}' width='{bw:.0f}' height='{max(hgt, 1):.0f}' rx='2' fill='{c}'{' opacity=\'.6\'' if v < 0 else ''}/>")
+            dim = " opacity='.6'" if v < 0 else ''        # no backslash inside the f-string: the workflows run Python 3.11
+            out.append(f"<rect x='{x:.0f}' y='{y:.0f}' width='{bw:.0f}' height='{max(hgt, 1):.0f}' rx='2' fill='{c}'{dim}/>")
             if len(pts) <= 8:
                 ty = y - 4 if v >= 0 else y + hgt + 11
                 # the figure sits outside the pair (left series to the left, right series to the right) so it never crosses the

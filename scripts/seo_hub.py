@@ -557,8 +557,8 @@ def impact_page(site, base, ES):
             [e(k.replace('+', ' + ')), f"{s['h1']['n']:,}", sp(s['h1']['median']), f"±{100 * s['h1']['abs_median']:.1f}%", f"{100 * s['h1']['up']:.0f}%", sp(s['h21']['median']) if s.get('h21') else '—'] for k, s in sets])
     big = rows[0]
     lead = (f"{ES.get('events', 0):,} 8-Ks from {ES.get('companies', 0):,} companies, each measured from the close before it reached EDGAR to the close 1, 5 and 21 sessions later. "
-            f"The item that moves stocks most is {big[0]} ({big[1].get('name', '').lower()}): a typical next-session move of ±{100 * big[1]['h1']['abs_median']:.1f}%, against "
-            f"±{100 * items['5.02']['h1']['abs_median']:.1f}% for a routine officer change" if items.get('5.02') else '.')
+            f"The item that moves stocks most is {big[0]} ({(lambda n: n[:1].lower() + n[1:])(big[1].get('name', ''))}): a typical next-session move of ±{100 * big[1]['h1']['abs_median']:.1f}%, against "
+            f"±{100 * items['5.02']['h1']['abs_median']:.1f}% for a routine officer change." if items.get('5.02') else '.')
     url = f"{base}/events/impact/"
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>8-K events</a> › Impact</p><h1>Which 8-K items move stocks? Every item, scored</h1>"
             f"<p class='lead'>{lead}</p>{chart}<h2 id='items'>Every item</h2>{tbl}<p class='muted'>{e(ES.get('note') or '')}</p>{sets_h}"

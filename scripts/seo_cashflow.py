@@ -385,10 +385,10 @@ def runway_page(site, base, cards):
     forts = sorted([c for c in cards if c['net'] > 0 and (c.get('fcf_ttm') or 0) > 0], key=lambda c: -c['net'])[:30]
     yrs = lambda m: f"{m / 12:.1f} yrs" if m >= 24 else f"{m:.0f} mo"
     n_burn = len(burners)
-    lead = (f"Of {len(cards)} companies with a balance sheet on file, {n_burn} have negative free cash flow at the current rate, "
+    lead = (f"Of {len(cards):,} companies with a balance sheet on file, {n_burn:,} have negative free cash flow at the current rate, "
             f"{sum(1 for c in burners if (c.get('ocf_ttm') or 0) < 0)} of them because operations themselves consume cash"
-            + (f"; {sum(1 for c in burners if c['months'] < 12)} have less than a year of runway without new money" if burners else '')
-            + f". {len(walls)} have more debt due within a year than cash on hand. Figures are from the companies' own cash-flow statements and balance sheets as filed.")
+            + (f"; {sum(1 for c in burners if c['months'] < 12):,} have less than a year of runway without new money" if burners else '')
+            + f". {len(walls):,} have more debt due within a year than cash on hand. Figures are from the companies' own cash-flow statements and balance sheets as filed.")
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Cash runway</p><h1>Cash runway: who is burning cash, and how long it lasts</h1>"
             f"<p class='lead'>{e(lead)}</p>")
     if burners:
