@@ -95,7 +95,9 @@ def components(r, ranks, i):
     g = r.get('ng_gap')
     if g is not None:
         s = clamp(1 - abs(g) / 0.3)
-        out['nongaap'] = (s, f"adjusted earnings {abs(100 * g):.0f}% {'above' if g < 0 else 'below'} GAAP" if abs(g) >= 0.005 else 'adjusted and GAAP earnings agree')
+        out['nongaap'] = (s, (f"adjusted earnings {abs(100 * g):.0f}% {'above' if g < 0 else 'below'} GAAP" if abs(g) < 10          # a gap beyond ten times the
+                              else f"adjusted earnings {'far above' if g < 0 else 'far below'} GAAP (more than ten times apart)")  # adjusted figure: no percentage
+                          if abs(g) >= 0.005 else 'adjusted and GAAP earnings agree')
     sm = r.get('smooth')
     if sm is not None:
         s = clamp((sm - 0.2) / 0.5) if sm < 0.7 else 1.0
