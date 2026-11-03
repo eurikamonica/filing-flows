@@ -93,7 +93,7 @@
     const st = parse(arg);
     const save = () => { try { history.replaceState(null, '', '#' + serialize(st)); } catch (e) { /* file:// */ } };
     app.innerHTML = `<div class="page-head"><div class="eyebrow">Backtest · <a href="#studio/k=growth&t=${encodeURIComponent(st.t)},SPY">Video with dividends and a monthly plan →</a></div><h1>If I had bought on that day</h1>
-      <p class="muted" style="max-width:72ch">Put a sum into one company on any day of the last ten years and see what it is worth now against the same money in the market, with every earnings report, insider trade and material 8-K along the way marked on the path.</p></div>
+      <p class="muted" style="max-width:72ch">Put a sum into one company on any day of its price history and see what it is worth now against the same money in the market, with every earnings report, insider trade and material 8-K along the way marked on the path.</p></div>
       <form id="bt-form" class="fx-row" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
         <label class="v-f"><span>Ticker</span><span class="v-in"><input id="bt-t" value="${esc(st.t)}" style="width:7em" autocomplete="off"></span></label>
         <label class="v-f"><span>Bought on</span><span class="v-in"><input id="bt-from" type="date" value="${esc(st.from)}"></span></label>
@@ -113,6 +113,9 @@
       const S = decode(a);
       const [nd, sm, er] = S ? await Promise.all([U.hub(`research/paths/moves/n/${key}.json`), U.hub(`smart/t/${key}.json`), U.hub(`research/earnings/c/${key}.json`)]) : [];
       if (!here()) return;
+      // the name as the company writes it (the site's index), not the SEC's capitals ("NVIDIA Corp", not "NVIDIA CORP")
+      if (S) { try { const ix = root.FFApp && await root.FFApp.getJSON('index.json'); const row = ix && (ix.companies || []).find((c) => fileT(c.ticker || '') === key); if (row && row.name) S.name = U.dec ? U.dec(row.name) : row.name; } catch (e) { /* keep the file's name */ } }
+      if (!here()) return;
       if (!S) { out.innerHTML = `<div class="q-warn">No daily price history for ${esc(key)} in the move-odds universe (about 1,800 listed companies and the main ETFs). Try another ticker.</div>`; return; }
       if (!st.from || st.from < S.days[0]) st.from = S.days[Math.max(0, S.days.length - 252)];
       if (st.from > S.days[S.days.length - 2]) st.from = S.days[S.days.length - 2];
@@ -121,18 +124,21 @@
       const bdoc = vsKey === key ? null : await U.hub(`research/paths/moves/a/${vsKey}.json`);
       if (!here()) return;
       const BS = decode(bdoc);
+      const vsName = (S.names && S.names[vsKey]) || (BS && BS.name) || vsKey;
+      // both from the same day: a benchmark whose history starts later (SPY: January 1993) moves the start to its first close
+      let late = '';
+      if (BS && st.from < BS.days[0]) { st.from = BS.days[0]; $('#bt-from').value = st.from; late = `<p class="muted q-small">${esc(vsName)}'s price history starts on ${esc(day(BS.days[0]))}, so both are measured from that day.</p>`; }
       const P = path(S, st.from, st.amt), B = BS ? path(BS, st.from, st.amt) : null;
       if (!P) { out.innerHTML = '<div class="q-warn">That date is after the last close on file.</div>'; return; }
       const mk = marks(st, S, nd, sm, er, P.start);
-      const vsName = (S.names && S.names[vsKey]) || (BS && BS.name) || vsKey;
       const cls = (v) => (v > 0 ? 'positive' : v < 0 ? 'negative' : '');
       const buys = mk.filter((m) => m.k === 'buy'), sells = mk.filter((m) => m.k === 'sell');
       const byDay = new Map(P.days.map((d, i) => [d, i]));
       const at = (d) => { let i = byDay.get(d); if (i == null) i = idxFrom(P.days, d); return i < P.vals.length ? i : null; };
       const after = (i, h) => (i != null && i + h < P.vals.length ? P.vals[i + h] / P.vals[i] - 1 : null);
-      out.innerHTML = `<div class="v-result" style="margin-top:12px"><div><small>${usd(st.amt, 0)} in ${esc(S.name || key)} on ${esc(day(P.start))}</small><strong class="${cls(P.ret)}">${usd(P.end, 0)}</strong><span class="muted">${spct(P.ret)} · ${P.shares.toFixed(P.shares < 10 ? 3 : 1)} shares at ${usd(P.p0)}, now ${usd(S.last)}${P.cagr != null ? ` · ${spct(P.cagr)} a year` : ''}</span></div>
+      out.innerHTML = `${late}<div class="v-result" style="margin-top:12px"><div><small>${usd(st.amt, 0)} in ${esc(S.name || key)} on ${esc(day(P.start))}</small><strong class="${cls(P.ret)}">${usd(P.end, 0)}</strong><span class="muted">${spct(P.ret)} · ${P.shares.toLocaleString('en-US', { maximumFractionDigits: P.shares < 10 ? 3 : 1 })} shares at ${usd(P.p0)}, now ${usd(S.last)}${P.cagr != null ? ` · ${spct(P.cagr)} a year` : ''}</span></div>
           ${B ? `<div><small>The same in ${esc(vsName)}</small><strong class="${cls(B.ret)}">${usd(B.end, 0)}</strong><span class="muted">${spct(B.ret)}${B.cagr != null ? ` · ${spct(B.cagr)} a year` : ''} · ${esc(key)} ${P.end >= B.end ? 'ahead' : 'behind'} by ${usd(Math.abs(P.end - B.end), 0)}</span></div>` : ''}
-          <div><small>Worst fall from a peak</small><strong class="negative">${spct(P.mdd)}</strong><span class="muted">best day ${spct(P.best[0])} (${esc(day(P.best[1]))}) · worst ${spct(P.worst[0])} (${esc(day(P.worst[1]))})</span></div></div>
+          <div><small>Worst fall from a peak</small><strong class="negative">${spct(P.mdd)}</strong><span class="muted">${[P.best[1] ? `best day ${spct(P.best[0])} (${esc(day(P.best[1]))})` : '', P.worst[1] ? `worst ${spct(P.worst[0])} (${esc(day(P.worst[1]))})` : ''].filter(Boolean).join(' · ')}</span></div></div>
         <div class="q-card" style="padding:10px 12px"><canvas id="bt-cv" style="width:100%;display:block"></canvas>
           <p class="muted q-small" style="margin:6px 0 0">Black: ${esc(key)} · grey: ${esc(vsName)} · dashed: the money put in. Marks: <span style="color:${COLOR.earnings}">●</span> earnings report <span style="color:${COLOR.event}">◆</span> material 8-K <span style="color:${COLOR.buy}">▲</span> insider buy <span style="color:${COLOR.sell}">▼</span> insider sale. Prices as traded, no dividends; closes through ${esc(day(S.asOf))}.</p></div>
         ${mk.length ? `<h3 style="margin-top:18px">Along the way <span class="muted" style="font-weight:400">${mk.length} disclosures${buys.length || sells.length ? ` · insiders ${buys.length} buy${buys.length === 1 ? '' : 's'} (${U.money(buys.reduce((s, m) => s + m.usd, 0))}), ${sells.length} sale${sells.length === 1 ? '' : 's'} (${U.money(sells.reduce((s, m) => s + m.usd, 0))})` : ''}</span></h3>
