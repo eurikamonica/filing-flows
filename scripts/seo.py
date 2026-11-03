@@ -260,13 +260,14 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 
 CHROME = {   # the header's links and the footer of a translated page (seo_zh.py, seo_intl.py): page() writes them in English
     "zh-Hans": {"nav": ["最新", "公司", "行业", "主题", "模型", "今日", "信号", "8-K 事件", "方法"],
-                "foot": "数据由程序自动读取自 SEC 文件（XBRL 与财报新闻稿），可能存在误差，不构成投资建议。", "about": "关于", "x": "每日图表发布在 X："},
+                "foot": "数据由程序自动读取自 SEC 文件（XBRL 与财报新闻稿），可能存在误差，不构成投资建议。", "about": "关于", "x": "每日图表发布在 X：",
+                "drawing": "正在绘制 Sankey 图…"},
     "es": {"nav": ["Últimos", "Empresas", "Industrias", "Temas", "Modelo", "Hoy", "Señales", "Eventos 8-K", "Método"],
            "foot": "Cifras leídas automáticamente de los informes presentados ante la SEC (XBRL y comunicados de resultados); puede haber errores. No es asesoramiento de inversión.",
-           "about": "Acerca de", "x": "Gráficos diarios en X:"},
+           "about": "Acerca de", "x": "Gráficos diarios en X:", "drawing": "Dibujando el diagrama de Sankey…"},
     "fr": {"nav": ["Récents", "Entreprises", "Secteurs", "Thèmes", "Modèle", "Aujourd’hui", "Signaux", "Événements 8-K", "Méthode"],
            "foot": "Chiffres lus automatiquement dans les documents déposés auprès de la SEC (XBRL et communiqués de résultats) ; des erreurs sont possibles. Ce n’est pas un conseil en investissement.",
-           "about": "À propos", "x": "Graphiques publiés chaque jour sur X :"},
+           "about": "À propos", "x": "Graphiques publiés chaque jour sur X :", "drawing": "Tracé du diagramme de Sankey…"},
 }
 _NAV_EN = ["Latest", "Companies", "Industries", "Themes", "Model", "Today", "Signals", "8-K events", "Method"]
 
@@ -283,7 +284,7 @@ def localize(doc, lang):
     doc = head + sep + rest
     doc = doc.replace("Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice.", t["foot"], 1)
     doc = doc.replace('/">About</a>', f'/">{t["about"]}</a>', 1).replace("Charts posted daily on X: ", t["x"] + ("" if lang == "zh-Hans" else " "), 1)
-    return doc
+    return doc.replace("Drawing the Sankey…", t["drawing"])                  # the chart's placeholder until sankey.js draws it
 
 
 def fit(title, site=" | Filing Flows", width=62):

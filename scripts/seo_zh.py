@@ -197,7 +197,7 @@ def company(r, c, er, cons, base, en_has):
             + '<h2>常见问题</h2>' + ''.join(f'<h3>{e(x)}</h3><p>{e(y)}</p>' for x, y in qa)
             + f"<p><a class='seo-cta' href='../../../#c-{r['cik']}'>打开交互式 Sankey 图 →</a> <a href='../../../c/{slug}/' hreflang='en'>English</a></p>"
             + (f"<p class='muted'>更多：{more}</p>" if more else '')
-            + f"<p class='muted'>数据自动读取自 {e(en)} 向美国证监会（SEC）提交的 {e(q.get('form'))} 文件，可能存在误差，不构成投资建议。</p>")
+            + f"<p class='muted'>数据自动读取自 {e(en)} 向美国证监会（SEC）提交的 {e(q.get('form'))} 文件。</p>")
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'WebPage', 'name': f"{who}{per}财报", 'url': url, 'inLanguage': 'zh-Hans', 'dateModified': (q.get('filed') or '')[:10],
          'about': {'@type': 'Corporation', 'name': en, 'alternateName': zh or None, 'tickerSymbol': t}},

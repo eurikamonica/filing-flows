@@ -70,3 +70,11 @@ def test_text_already_encoded_is_not_encoded_twice():
     """An FDA recall's "PACK A &#38; B" showed as "A &amp;#38; B" on c/mdln/risks/; "S&P" and "AT&T" are plain text."""
     assert seo.e("OPEN HEART PACK A &#38; B") == "OPEN HEART PACK A &amp; B" and seo.e("Procter &amp; Gamble") == "Procter &amp; Gamble"
     assert seo.e("S&P 500") == "S&amp;P 500" and seo.e("Procter&regulation") == "Procter&amp;regulation" and seo.e("<b>") == "&lt;b&gt;"
+
+
+def test_translated_page_placeholder_and_one_disclaimer():
+    """The chart's placeholder in the page's language; the footer carries the disclaimer, the source line names the filing."""
+    doc = seo.page("T", "d", "https://x/", "<figure><p class='muted'>Drawing the Sankey…</p></figure>", 1, "https://x/og.png")
+    assert "正在绘制 Sankey 图…" in seo.localize(doc, "zh-Hans") and "Dibujando el diagrama de Sankey…" in seo.localize(doc, "es")
+    import seo_intl as I
+    assert I.L["es"]["source"]("Apple", "10-Q").endswith("ante la SEC de EE. UU.") and "conseil" not in I.L["fr"]["source"]("Apple", "10-Q")
