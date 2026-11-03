@@ -148,7 +148,9 @@ def page_for(co, er, rec, base, slug, c=None):
                 rev_rows[by_label[r['label']]] = r
     beats = sum(1 for h in hist if h.get('beat') == 1)
     n = len(hist)
-    surprises = [h['surprise'] for h in hist if h.get('surprise') is not None]
+    # a surprise against an estimate within a nickel of zero (−$0.05 reported against $0.01) is a −600% that says nothing:
+    # n/m in the table, left out of the average (the beat or miss still counts)
+    surprises = [h['surprise'] for h in hist if h.get('surprise') is not None and abs(h.get('est') or 0) >= 0.05]
     avg_s = sum(surprises) / len(surprises) if surprises else None
     mm = move_model(hist, er.get('implied'), er.get('avg_move'))
     cred = credibility(rec)
@@ -177,7 +179,7 @@ def page_for(co, er, rec, base, slug, c=None):
         gl = (rv.get('guides') or [{}])[-1] if rv else {}
         guided = f"{money(gl['lo'])}–{money(gl['hi'])}" if gl.get('lo') is not None and gl.get('hi') is not None else '—'
         rows.append(f"<tr><td>{e(quarter_label(q, labels))}</td><td>{e(fdate(h.get('reported')))}</td><td class='num'>{usd2(h.get('est'))}</td><td class='num'><b>{usd2(h.get('act'))}</b></td>"
-                    f"<td class='num {'up' if (h.get('surprise') or 0) > 0 else 'down' if (h.get('surprise') or 0) < 0 else ''}'>{pc(h.get('surprise'))}</td>"
+                    f"<td class='num {'up' if (h.get('surprise') or 0) > 0 else 'down' if (h.get('surprise') or 0) < 0 else ''}'>{pc(h.get('surprise')) if abs(h.get('est') or 0) >= 0.05 else 'n/m'}</td>"
                     f"<td class='num'>{usd2(g.get('gaap')) if g else '—'}</td><td class='num'>{guided}</td><td class='num'>{money(rv.get('actual')) if rv.get('actual') is not None else '—'}"
                     f"{' <span class=muted>(' + e(rv.get('outcome')) + ')</span>' if rv.get('outcome') else ''}</td>"
                     f"<td class='num {'up' if (h.get('move') or 0) > 0 else 'down' if (h.get('move') or 0) < 0 else ''}'>{pc(h.get('move'))}</td><td class='num'>{pc(h.get('excess'))}</td></tr>")
@@ -189,7 +191,7 @@ def page_for(co, er, rec, base, slug, c=None):
     charts = SV.duo([(lab(h), h['est'], h['act']) for h in hist[-8:]], ('Estimate', 'Reported'), seo.usd2, f"{name}: EPS reported against the estimate")
     charts += SV.diverging([(lab(h), 100 * h['move']) for h in reversed(hist[-10:]) if h.get('move') is not None], lambda v: f"{v:+.1f}%",
                            f"{t}: the stock's move on each report day", n=10, note='Close to close around the report, from the daily price history.')
-    pts = [(lab(h), 100 * h['surprise'], 100 * h['move'], 1) for h in hist if h.get('surprise') is not None and h.get('move') is not None]
+    pts = [(lab(h), 100 * h['surprise'], 100 * h['move'], 1) for h in hist if h.get('surprise') is not None and h.get('move') is not None and abs(h.get('est') or 0) >= 0.05]
     if len(pts) >= 6:
         charts += SV.scatter(pts, 'EPS surprise', 'the stock on the day', f"{t}: does a bigger beat mean a bigger move?", me=None,
                              note='Each dot is one report. Dashed lines are the medians.', xfmt=lambda v: f"{v:+.0f}%", yfmt=lambda v: f"{v:+.0f}%")
