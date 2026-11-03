@@ -2324,10 +2324,22 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
         "analysis": analysis.paragraphs(f, q["label"], Nc, Nq, Ny, ls, (q.get("lines"), lines_q1, q.get("lines_py")),
                                         py_label=py_label),
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
-                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100,
+                     "ni": net_drawn(nodes, Nc), "ni_fmt": f.money(net_drawn(nodes, Nc)), "om": Nc["oi"] / Nc["R"] * 100,
                      "oi": Nc["oi"], "ocf": Nc.get("ocf")},
         "_N": (Nc, Nq, Ny),
     }
+
+
+def net_drawn(nodes, Nc):
+    """The net figure the chart's net node shows, for the page's headline, tiles and history beside it: net earnings to
+    shareholders when minority interests are drawn (Exxon's $15.4B, not the $16.0B including them), the consolidated
+    figure otherwise (a loss layout's net loss is the consolidated one, with the shareholders' figure in its note)."""
+    for n in nodes:
+        if n["id"] in ("net", "netinc"):
+            return n["v"]
+        if n["id"] == "netloss":
+            return -n["v"]
+    return Nc["pl"]
 
 
 ANNUAL_NOTE = ("Source: SEC EDGAR XBRL data ({form} filed {filed}): the full fiscal year as reported. Percentages show each "
@@ -2398,7 +2410,7 @@ def year_payload(c, y):
         "analysis": [_yearly(x) for x in analysis.paragraphs(f, y["label"], Nc, None, Ny, ls,
                                                              (y.get("lines"), None, y.get("lines_py")), py_label=py_label or "a year earlier")],
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
-                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100,
+                     "ni": net_drawn(nodes, Nc), "ni_fmt": f.money(net_drawn(nodes, Nc)), "om": Nc["oi"] / Nc["R"] * 100,
                      "oi": Nc["oi"], "ocf": Nc.get("ocf")},
     }
 

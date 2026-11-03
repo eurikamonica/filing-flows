@@ -158,14 +158,16 @@ class Px:
 def compact_snapshots(m, cap):
     """A manager's cached 13F history → [[period, filed, total_usd, [[cusip, shares, value], …] or None]] (common shares
     only; the first quarter on file lists no positions in the cache, only its total)."""
+    from holdings13f.core import in_thousands
     out = []
     for s in m.get('snapshots') or []:
         if not s.get('complete') or s.get('confidential') or not s.get('period'):
             continue
-        pos = [[c.get('cusip'), c.get('shares') or 0, c.get('value_usd') or 0] for c in s.get('changes') or []
-               if c.get('status') != 'EXIT' and c.get('put_call') == 'NONE' and c.get('share_type') == 'SH' and (c.get('value_usd') or 0) > 0]
+        rows = [c for c in s.get('changes') or [] if c.get('status') != 'EXIT' and c.get('put_call') == 'NONE' and c.get('share_type') == 'SH']
+        k = 1000 if in_thousands(rows) else 1          # a filing cached before the parser read thousands as thousands
+        pos = [[c.get('cusip'), c.get('shares') or 0, (c.get('value_usd') or 0) * k] for c in rows if (c.get('value_usd') or 0) > 0]
         pos.sort(key=lambda x: -x[2])
-        out.append([s['period'], (s.get('filed') or s.get('available_at') or '')[:10], s.get('total_usd') or 0, pos[:cap] if pos else None,
+        out.append([s['period'], (s.get('filed') or s.get('available_at') or '')[:10], (s.get('total_usd') or 0) * k, pos[:cap] if pos else None,
                     {c.get('cusip'): [c.get('status'), r4(c.get('delta_pct'), 1)] for c in (s.get('changes') or [])[:600]
                      if c.get('put_call') == 'NONE' and c.get('status') in ('NEW', 'EXIT', 'INCREASE', 'DECREASE')} if pos else None])
     out.sort(key=lambda x: x[0])
