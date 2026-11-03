@@ -406,6 +406,11 @@ jobs:
       - name: One sitemap index (sitemap-index.xml) listing every sitemap in robots.txt
         continue-on-error: true
         run: python scripts/sitemap_index.py --site _site
+      - name: Link audit (sitemaps, internal links, titles and canonicals of the static pages; warnings only)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/audit_links.py --site _site --github
 
       - name: Integrate SIC relationships, markets and audit-visible research pages
         run: |
