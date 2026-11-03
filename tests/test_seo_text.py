@@ -28,7 +28,7 @@ def test_a_loss_in_cents_and_a_sliver_of_revenue():
 
 
 def test_manager_holders_cased_and_changes_signed_once():
-    m = {"name": "Example Capital", "slug": "example-capital", "cik": "1", "period": "2026-09-30", "filed": "2026-11-01", "positions": 3, "aum": 1e9,
+    m = {"name": "BNP PARIBAS FINANCIAL MARKETS", "slug": "example-capital", "cik": "1", "period": "2026-09-30", "filed": "2026-11-01", "positions": 3, "aum": 1e9,
          "holdings": [["AMZN", "AMAZON COM INC", 40.0, 4e8, "DECREASE", -31.3], ["GOOGL", "ALPHABET INC CL A", 35.0, 3.5e8, "DECREASE", -0.02],
                       ["NVDA", "NVIDIA CORP", 25.0, 2.5e8, "INCREASE", 5.5], ["NEW", "SOMETHING NEW INC", 0.0, 1, "NEW", None]],
          "adds": [["NVDA", "INCREASE", 5.5], ["NEW", "NEW", None]], "cuts": [["AMZN", "DECREASE", -31.3]],
@@ -38,3 +38,5 @@ def test_manager_holders_cased_and_changes_signed_once():
     assert "<td>-31.3%</td>" in doc and "<td>+5.5%</td>" in doc and "<td>&lt;0.1%</td>" in doc and "<td>new</td>" in doc
     assert "decrease -" not in doc and "increase +" not in doc
     assert "1 filing since Aug 13, 2026" in doc and "Of 1 position change scored in 1 separate decision" in doc
+    assert "<h1>BNP Paribas Financial Markets: 13F portfolio" in doc and "BNP Paribas Financial Markets' 13F for the quarter" in doc.replace('&#x27;', "'")   # the filer's capitals cased
+    assert "3 common-share positions" in doc and "PARIBAS" not in doc

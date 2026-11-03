@@ -194,7 +194,7 @@ def insiders(hub, L):
     cs = [r for r in sells if r.get('ceo_cfo_sell')]
     bv, sv = sum(r.get('buy_value') or 0 for r in sm), sum(r.get('sell_value') or 0 for r in sm)
     lead = (f"Since {fdate(d.get('since') or '')}, insiders bought {money(bv)} and sold {money(sv)} of their own companies' stock in the open market "
-            f"(Form 4, codes P and S) across {len(sm)} companies. {len(clus)} companies had a cluster — three or more insiders buying within 30 days — "
+            f"(Form 4, codes P and S) across {seo.n_of(len(sm), 'company', 'companies')}. {seo.n_of(len(clus), 'company', 'companies')} had a cluster — three or more insiders buying within 30 days — "
             f"the pattern studies find most informative" + (f"; the largest purchase total was at {nm(buys[0].get('issuer'))} ({money(buys[0]['buy_value'])})." if buys else '.'))
     body = tiles([('Companies', num(len(sm))), ('Bought', money(bv)), ('Sold', money(sv)), ('Buying clusters', num(len(clus))), ('CEO/CFO selling', num(len(cs)))])
     body += SV.hbars([(r.get('ticker') or nm(r.get('issuer')), r['buy_value']) for r in buys], money, 'Largest insider buying, by company', n=12, color=SV.GREEN)
@@ -250,7 +250,7 @@ def stakes(hub, L):
     big = sorted([r for r in sm if r.get('max_percent')], key=lambda r: -r['max_percent'])
     lat = [r for r in d.get('latest') or [] if str(r.get('form', '')).upper().replace('SC ', '').startswith('13D') and not r.get('amendment')]
     lead = (f"{len(sm)} companies with Schedule 13D or 13G filings since {fdate(d.get('since') or '')}: holders crossing 5% must file within days. "
-            f"A 13D (rather than the passive 13G) means the holder may seek to influence the company; {len(act)} companies drew a new 13D"
+            f"A 13D (rather than the passive 13G) means the holder may seek to influence the company; {seo.n_of(len(act), 'company', 'companies')} drew a new 13D"
             + (f", most at {nm(act[0].get('issuer'))} ({act[0]['new13d']})." if act else '.'))
     body = tiles([('Companies', num(len(sm))), ('With a new 13D', num(len(act))), ('Filings on file', num(d.get('on_file'))),
                   ('Largest stake', f"{big[0]['max_percent']:.1f}%" if big else '')])

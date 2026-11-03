@@ -304,9 +304,9 @@ def industry_page(sic, ind, fl, g, capex, base):
     rev = fl.get('revenue')
     body_ch, lines = [], []
     top3 = sum(x[0][0] for x in cx[:3]) / tot
-    lines.append(f"{len(cx)} companies in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months, "
+    lines.append(f"{seo.n_of(len(cx), 'company', 'companies')} in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months, "
                  f"{tot / ocf * 100:.0f}% of the {money(ocf)} their operations generated" if ocf > 0 else
-                 f"{len(cx)} companies in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months")
+                 f"{seo.n_of(len(cx), 'company', 'companies')} in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months")
     lines[-1] += (f"; the three largest spenders — {', '.join(x[1].get('ticker') or display_name(x[1].get('name')) for x in cx[:3])} — account for {top3 * 100:.0f}%."
                   if len(cx) > 3 else '.')
     if rev:
@@ -354,7 +354,7 @@ def industry_page(sic, ind, fl, g, capex, base):
                                         note='The companies’ cash-flow statements, latest four quarters or fiscal year: every figure filed (grade A).'))
     rel = sorted(g.get('relationships') or [], key=lambda x: -(x.get('value_usd') or 0))
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../../'>Industries</a> › <a href='../'>{e(name)}</a> › Capital spending and supply chain</p>"
-            f"<h1>{e(name)}: capital spending and supply chain</h1><p class='muted'>SIC {e(sic)} · {len(cx)} companies with filed cash-flow statements</p>"
+            f"<h1>{e(name)}: capital spending and supply chain</h1><p class='muted'>SIC {e(sic)} · {seo.n_of(len(cx), 'company', 'companies')} with filed cash-flow statements</p>"
             "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in [
                 ('Capital spending, 12 months', money(tot)), ('Operating cash flow', money(ocf)), ('Capex / cash flow', f"{tot / ocf * 100:.0f}%" if ocf > 0 else None),
                 ('Capex / revenue', f"{tot / rev * 100:.1f}%" if rev else None), ('Top 3 share', f"{top3 * 100:.0f}%")] if v) + '</div>'

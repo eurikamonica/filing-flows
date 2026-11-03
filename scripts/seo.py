@@ -585,7 +585,7 @@ def chain_pages(data_dir, out_dir, base, images=None):
             if ci['revenue']:
                 idx += SV.bars([(l, v) for l, v, _ in ci['revenue']], money, f"{d['name']}: the chain's revenue by calendar quarter",
                                note=f"Each supplier's quarterly revenue scaled by the share of it this chain takes (its attributed share of the trailing twelve months), summed; "
-                                    f"{ci['revenue'][-1][2]} companies in the latest quarter" + (f", {pct(100 * ci['revenue_yoy'])} against a year earlier" if ci.get('revenue_yoy') is not None else '') + '.')
+                                    f"{n_of(ci['revenue'][-1][2], 'company', 'companies')} in the latest quarter" + (f", {pct(100 * ci['revenue_yoy'])} against a year earlier" if ci.get('revenue_yoy') is not None else '') + '.')
                 lead += f" The chain's attributed revenue was {money(ci['revenue'][-1][1])} in {ci['revenue'][-1][0]}" + (f", {pct(100 * ci['revenue_yoy'])} year over year" if ci.get('revenue_yoy') is not None else '') + '.'
             if ci['capex']:
                 idx += SV.bars([(l, v) for l, v, _ in ci['capex']], money, f"{d['name']}: the buyers' capital spending by calendar quarter",
@@ -673,7 +673,7 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
                 + (f" (middle half {100 * sm['p25']:+.0f}% to {100 * sm['p75']:+.0f}%, {n_of(sm['n'], 'company')})" if spread else f" ({n_of(sm.get('n') or n, 'company')})") + "." if med else "")
                 + (f" The growth model expects the industry's combined revenue to grow {100 * fc[1]:+.0f}% in {qname(fc[0])}." if fc else "")
                 + (f" {len(rel)} customer or supplier links named in annual reports." if rel else ""))
-        title = f"{nm} (SIC {sic}): revenue growth{', ' + med + ' Y/Y' if med else ''} — {n} companies | Filing Flows"
+        title = f"{nm} (SIC {sic}): revenue growth{', ' + med + ' Y/Y' if med else ''} — {n_of(n, 'company')} | Filing Flows"
         tiles = "".join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
             ("Companies", str(n)), ("Median growth Y/Y", med or "—"),
             ("Middle half", f"{100 * sm['p25']:+.0f}% to {100 * sm['p75']:+.0f}%" if spread else "—"),
@@ -708,7 +708,7 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
     if by_sector:
         parts = []
         for sname in sorted(by_sector):
-            lis = "".join(f"<li><a href='{e(sic)}/'>{e(nm)}</a> <span class='muted'>SIC {e(sic)} · {n} companies{' · median ' + med + ' Y/Y' if med else ''}</span></li>"
+            lis = "".join(f"<li><a href='{e(sic)}/'>{e(nm)}</a> <span class='muted'>SIC {e(sic)} · {n_of(n, 'company')}{' · median ' + med + ' Y/Y' if med else ''}</span></li>"
                           for nm, sic, n, med in sorted(by_sector[sname]))
             parts.append(f"<h2>{e(sname)}</h2><ul class='seo-list'>{lis}</ul>")
         body = ("<p class='crumbs'><a href='../'>Filing Flows</a> › Industries</p><h1>Every industry, by SEC SIC code</h1>"

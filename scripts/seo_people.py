@@ -34,6 +34,11 @@ def money(v):
     return seo.money(v) if v is not None else "—"
 
 
+def manager_name(m):
+    """a 13F filer's name as the filing writes it ('BNP PARIBAS FINANCIAL MARKETS', 'BERKSHIRE HATHAWAY INC'), cased"""
+    return seo._names.cased(m.get("name") or "")
+
+
 def change(kind, pc):
     """A position's change over the quarter as the 13F comparison scored it: 'new', 'exit', 'unchanged', or the change in
     shares with its sign ('+5.5%', '−31.3%'; under a tenth of a percent either way: '<0.1%')."""
@@ -76,11 +81,11 @@ def line_svg(rows, w=860, h=260):
 
 
 def manager_page(m, base):
-    name, slug = m["name"], m["slug"]
+    name, slug = manager_name(m), m["slug"]
     url = f"{base}/m/{slug}/"
     c = m.get("clone") or {}
     title = f"{name} 13F portfolio: top holdings, latest changes and a copy-the-13F backtest | Filing Flows"
-    desc = (f"{name}'s 13F for the quarter ended {m['period']} (filed {seo.fdate(m['filed'])}): {m['positions']} common-share positions, "
+    desc = (f"{seo.poss(name)} 13F for the quarter ended {m['period']} (filed {seo.fdate(m['filed'])}): {seo.n_of(m['positions'], 'common-share position')}, "
             f"{money(m['aum'])} reported. "
             + (f"Copying each 13F the day after it was filed returned {pct(c.get('total'))} from {seo.fdate(c.get('start'))} to "
                f"{seo.fdate(c.get('end'))}, against {pct(c.get('spy_total'))} for SPY." if c.get("total") is not None else ""))
@@ -201,7 +206,7 @@ def write_pages(people_dir, out_dir, base):
         os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
         urls.append((url, m.get("filed")))
-        items.append((m["slug"], m["name"], f"{money(m['aum'])} · {m['period']}"))
+        items.append((m["slug"], manager_name(m), f"{money(m['aum'])} · {m['period']}"))
         nm += 1
     if items:
         open(os.path.join(out_dir, "m", "index.html"), "w", encoding="utf-8").write(list_page(
@@ -227,7 +232,7 @@ def write_pages(people_dir, out_dir, base):
             os.makedirs(os.path.join(out_dir, "o", a), exist_ok=True)
             open(os.path.join(out_dir, "o", a, "index.html"), "w", encoding="utf-8").write(redirect_page(url, o["name"]))
         urls.append((url, (o.get("performance") or {}).get("last")))
-        items.append((o["slug"], o["name"], f"{o.get('chamber') or ''} · {(o.get('performance') or {}).get('n') or 0} trades"))
+        items.append((o["slug"], o["name"], f"{o.get('chamber') or ''} · {seo.n_of((o.get('performance') or {}).get('n') or 0, 'trade')}"))
         no += 1
     if items:
         open(os.path.join(out_dir, "o", "index.html"), "w", encoding="utf-8").write(list_page(

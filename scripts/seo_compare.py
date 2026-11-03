@@ -158,6 +158,8 @@ def page_for(a, b, fa, fb, va, vb, base):
                                                          {'@type': 'ListItem', 'position': 3, 'name': f'{ta} vs {tb}', 'item': url}]},
         {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': x}} for q, x in qa]}]}
     title = f"{na} vs {nb} ({ta} vs {tb}): revenue, growth and margins compared | Filing Flows"
+    if len(title) > 110:                                           # two long names: the tickers carry the page's name
+        title = f"{na} vs {nb}: {ta} and {tb} compared | Filing Flows"
     return url, mod, seo.page(title, lead[:300], url, body, 2, base + '/og.png', ld)
 
 
