@@ -160,6 +160,17 @@ jobs:
           curl -fsSL --retry 3 "${site%/}/disclosures/data/debt/index.json" -o site/debt-index.json || echo "::warning::no Debt & rates index"
           python disclosures/app/odds.py --public hist/public --root hist --members site/members.json --debt site/debt-index.json \
             --site-index site/index.json --ledger hist/ledger/odds.json --sha "$GITHUB_SHA"
+      - name: Market models (volatility, the six indices, regime, sectors, spreads, the market; public/market-models.json)
+        # Six forecasts of the market as a whole, each refitted yearly and scored walk-forward against a simple benchmark,
+        # published only as far as it has worked out of sample before; each closed week's forecasts are frozen in
+        # hist/ledger/market-models.json and scored as their outcomes arrive (app/market_models.py, under a minute).
+        timeout-minutes: 8
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet numpy
+          members=""; [ -f site/members.json ] && members="--members site/members.json"
+          python disclosures/app/market_models.py --public hist/public --macro hist/cache/macro \
+            --ledger hist/ledger/market-models.json $members
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hist

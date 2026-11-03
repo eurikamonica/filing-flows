@@ -65,6 +65,12 @@ def parse_filing(cover_bytes, table_bytes, meta):
                 raise ValueError('Invalid security identity or quantity type')
             row['id'] = key(row)
             rows.append(row)
+    if multiplier == 1 and in_thousands(rows):
+        # a filer still reporting in thousands after the 2023 change (Baupost: Amazon "892,310" for $892M): the form
+        # says dollars, the figures say otherwise; the summary total is in the same unit
+        multiplier = 1000
+        for row in rows:
+            row['value_usd'] *= 1000
     count = field(root, 'tableEntryTotal')
     total = field(root, 'tableValueTotal')
     if count == '' or total == '':
@@ -80,6 +86,17 @@ def parse_filing(cover_bytes, table_bytes, meta):
             'manager': field(root, 'name'), 'report_type': field(root, 'reportType'),
             'confidential': field(root, 'isConfidentialOmitted').lower() in ('true', '1'),
             'unit_multiplier': multiplier, 'reported_total_usd': expected, 'rows': rows}
+
+
+THOUSANDS_BELOW = 0.5      # a median value per share under this (fifty cents) means the values are in thousands
+
+
+def in_thousands(rows):
+    """True when a filing's values are in thousands of dollars whatever the form says: the median value per share
+    across its common-share positions is under THOUSANDS_BELOW (a real portfolio's median share price is dollars to
+    hundreds of dollars; in thousands it reads as cents). Three positions at least, so one odd line cannot decide."""
+    implied = sorted(r['value_usd'] / r['shares'] for r in rows if r.get('share_type') == 'SH' and r.get('shares') and r.get('value_usd'))
+    return len(implied) >= 3 and implied[len(implied) // 2] < THOUSANDS_BELOW
 
 
 def aggregate(rows):

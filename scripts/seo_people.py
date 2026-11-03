@@ -23,8 +23,29 @@ e = seo.e
 MAX_PAGES = 400             # per kind: the page count and the build stay small
 
 
+def redirect_page(url, name):
+    """a moved page: search engines follow the canonical and the refresh to the one address the person has now"""
+    return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{e(name)} | Filing Flows</title>'
+            f'<meta name="robots" content="noindex, follow"><link rel="canonical" href="{e(url)}"><meta http-equiv="refresh" content="0; url={e(url)}">'
+            f'</head><body><p>This page has moved: <a href="{e(url)}">{e(name)}</a>.</p></body></html>')
+
+
 def money(v):
     return seo.money(v) if v is not None else "—"
+
+
+def manager_name(m):
+    """a 13F filer's name as the filing writes it ('BNP PARIBAS FINANCIAL MARKETS', 'BERKSHIRE HATHAWAY INC'), cased"""
+    return seo._names.cased(m.get("name") or "")
+
+
+def change(kind, pc):
+    """A position's change over the quarter as the 13F comparison scored it: 'new', 'exit', 'unchanged', or the change in
+    shares with its sign ('+5.5%', '−31.3%'; under a tenth of a percent either way: '<0.1%')."""
+    kind = (kind or "unchanged").lower()
+    if kind not in ("increase", "decrease") or pc is None:
+        return kind
+    return pct(pc / 100) if abs(pc) >= 0.05 else "<0.1%"
 
 
 def pct(v, signed=True):
@@ -51,7 +72,8 @@ def line_svg(rows, w=860, h=260):
     x = lambda i: 48 + i * (w - 64) / (len(pts) - 1)
     y = lambda v: 16 + (hi - v) * (h - 48) / (hi - lo)
     path = lambda k: " ".join(f"{'M' if i == 0 else 'L'}{x(i):.1f},{y(r[k]):.1f}" for i, r in enumerate(pts))
-    ticks = "".join(f"<text x='{x(i):.1f}' y='{h - 8}' font-size='11' text-anchor='middle' fill='currentColor' opacity='.65'>{e(r[0])}</text>"
+    anchor = lambda i: 'start' if i == 0 else 'end' if i == len(pts) - 1 else 'middle'       # the ends stay inside the chart
+    ticks = "".join(f"<text x='{x(i):.1f}' y='{h - 8}' font-size='11' text-anchor='{anchor(i)}' fill='currentColor' opacity='.65'>{e(r[0])}</text>"
                     for i, r in enumerate(pts) if i % max(1, len(pts) // 6) == 0 or i == len(pts) - 1)
     base = f"<line x1='48' x2='{w - 16}' y1='{y(1.0):.1f}' y2='{y(1.0):.1f}' stroke='currentColor' opacity='.25' stroke-dasharray='3 3'/>"
     return (f"<svg viewBox='0 0 {w} {h}' role='img' aria-label='Clone portfolio against SPY'>{base}"
@@ -60,23 +82,23 @@ def line_svg(rows, w=860, h=260):
 
 
 def manager_page(m, base):
-    name, slug = m["name"], m["slug"]
+    name, slug = manager_name(m), m["slug"]
     url = f"{base}/m/{slug}/"
     c = m.get("clone") or {}
     title = f"{name} 13F portfolio: top holdings, latest changes and a copy-the-13F backtest | Filing Flows"
-    desc = (f"{name}'s 13F for the quarter ended {m['period']} (filed {seo.fdate(m['filed'])}): {m['positions']} common-share positions, "
+    desc = (f"{seo.poss(name)} 13F for the quarter ended {m['period']} (filed {seo.fdate(m['filed'])}): {seo.n_of(m['positions'], 'common-share position')}, "
             f"{money(m['aum'])} reported. "
             + (f"Copying each 13F the day after it was filed returned {pct(c.get('total'))} from {seo.fdate(c.get('start'))} to "
                f"{seo.fdate(c.get('end'))}, against {pct(c.get('spy_total'))} for SPY." if c.get("total") is not None else ""))
-    rows = "".join(f"<tr><td>{e(h[0])}</td><td>{e(h[1])}</td><td class='num'>{pct(h[2], False)}</td><td class='num'>{money(h[3])}</td>"
-                   f"<td>{e((h[4] or 'unchanged').lower())}{' ' + pct(h[5] / 100) if h[5] is not None and h[4] in ('INCREASE', 'DECREASE') else ''}</td></tr>"
+    rows = "".join(f"<tr><td>{e(h[0])}</td><td>{e(seo.display_name(h[1]))}</td><td class='num'>{pct(h[2], False)}</td><td class='num'>{money(h[3])}</td>"
+                   f"<td>{e(change(h[4], h[5]))}</td></tr>"
                    for h in (m.get("holdings") or [])[:25] if h[0])
-    lst = lambda xs: "".join(f"<li><b>{e(a[0])}</b> <span class='muted'>{e((a[1] or '').lower())}{' ' + pct(a[2] / 100) if a[2] is not None and a[1] not in ('NEW', 'EXIT') else ''}</span></li>" for a in xs)
+    lst = lambda xs: "".join(f"<li><b>{e(a[0])}</b> <span class='muted'>{e(change(a[1], a[2]))}</span></li>" for a in xs)
     tiles = "".join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
         ("Reported 13F assets", money(m["aum"])), ("Positions (common)", f"{m['positions']}"), ("Quarter", m["period"]),
         ("Clone return", pct(c.get("total"))), ("SPY, same days", pct(c.get("spy_total"))), ("Clone max drawdown", pct(c.get("max_dd")))))
     rec = m.get("record") or {}
-    record = (f"<h2>Track record</h2><p>Of {rec.get('scored')} position changes scored in {rec.get('decisions')} separate decisions, "
+    record = (f"<h2>Track record</h2><p>Of {seo.n_of(rec.get('scored'), 'position change')} scored in {seo.n_of(rec.get('decisions'), 'separate decision')}, "
               f"{pct(rec.get('hit'), False)} were on the right side of SPY over the next three months (Disclosures → Smart money).</p>"
               if rec.get("scored") else "")
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../">13F managers</a> › {e(name)}</p>
@@ -87,12 +109,13 @@ def manager_page(m, base):
 <figure class="seo-chart" style="width:auto;margin:12px 0">{line_svg(c.get('monthly') or [])}</figure>
 <p class="muted">Each 13F bought at the close of the first trading day after it was filed and held, drifting, until the next one;
 value-weighted over the common-share positions with a price ({pct(c.get('coverage'), False)} of the portfolio on average);
-{c.get('filings') or 0} filings since {e(seo.fdate(c.get('first_filing')))}. Price returns for the clone and SPY alike (no dividends,
+{seo.n_of(c.get('filings') or 0, 'filing')} since {e(seo.fdate(c.get('first_filing')))}. Price returns for the clone and SPY alike (no dividends,
 no costs). A 13F lists only US long positions at quarter end, reported up to 45 days later.</p>
 <h2>Largest holdings ({e(m['period'])})</h2>
-{SV.hbars([(f"{h[0]} · {h[1]}", h[3]) for h in (m.get('holdings') or []) if h[0]], money, f"{name}: largest 13F holdings, {m['period']}", n=15)}
-{SV.diverging([(a[0], a[2]) for a in (m.get('adds') or []) if a[2] is not None] + [(a[0], -abs(a[2])) for a in (m.get('cuts') or []) if a[2] is not None],
-              lambda v: f"{v:+.0f}%", f"{name}: biggest adds and cuts in the quarter (change in shares)", n=14)}
+{SV.hbars([(f"{h[0]} · {seo.display_name(h[1])}", h[3]) for h in (m.get('holdings') or []) if h[0]], money, f"{name}: largest 13F holdings, {m['period']}", n=15)}
+{SV.diverging([(a[0], a[2]) for a in (m.get('adds') or []) if a[2] is not None and (a[1] or '').upper() == 'INCREASE']
+              + [(a[0], -abs(a[2])) for a in (m.get('cuts') or []) if a[2] is not None and (a[1] or '').upper() == 'DECREASE'],
+              lambda v: f"{v:+.0f}%", f"{name}: positions grown and trimmed in the quarter (change in shares; new positions and exits are listed below)", n=14)}
 <div class="tbl-wrap"><table><thead><tr><th>Ticker</th><th>Company</th><th class="num">Weight</th><th class="num">Value</th><th>Change in the quarter</th></tr></thead><tbody>{rows}</tbody></table></div>
 <h2>Biggest adds</h2><ul class="seo-list">{lst(m.get('adds') or []) or '<li class="muted">None reported.</li>'}</ul>
 <h2>Biggest cuts</h2><ul class="seo-list">{lst(m.get('cuts') or []) or '<li class="muted">None reported.</li>'}</ul>
@@ -129,6 +152,8 @@ def official_page(o, base):
                   for t in (o.get("recent") or [])[:30])
     tot = {}
     for x in o.get("recent") or []:
+        if not x[1]:                                            # a trade without a ticker (a fund, a bond): not a bar
+            continue
         mid = ((x[3] or 0) + (x[4] or x[3] or 0)) / 2
         k = (x[1], 'buy' if 'purchase' in str(x[2]).lower() else 'sell')
         tot[k] = tot.get(k, 0) + mid
@@ -185,7 +210,7 @@ def write_pages(people_dir, out_dir, base):
         os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
         urls.append((url, m.get("filed")))
-        items.append((m["slug"], m["name"], f"{money(m['aum'])} · {m['period']}"))
+        items.append((m["slug"], manager_name(m), f"{money(m['aum'])} · {m['period']}"))
         nm += 1
     if items:
         open(os.path.join(out_dir, "m", "index.html"), "w", encoding="utf-8").write(list_page(
@@ -195,6 +220,7 @@ def write_pages(people_dir, out_dir, base):
     of = load("officials.json") or {}
     F = of.get("fields") or []
     items = []
+    mains = {dict(zip(F, r)).get("slug") for r in of.get("rows") or []}
     for r in (of.get("rows") or [])[:MAX_PAGES]:
         row = dict(zip(F, r))
         o = load(f"o/{row['slug']}.json")
@@ -204,8 +230,13 @@ def write_pages(people_dir, out_dir, base):
         d = os.path.join(out_dir, "o", o["slug"])
         os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
+        for a in o.get("aliases") or []:            # another spelling of the same member's name: its old address forwards here
+            if a in mains or not re.fullmatch(r"[a-z0-9-]{1,80}", a):
+                continue
+            os.makedirs(os.path.join(out_dir, "o", a), exist_ok=True)
+            open(os.path.join(out_dir, "o", a, "index.html"), "w", encoding="utf-8").write(redirect_page(url, o["name"]))
         urls.append((url, (o.get("performance") or {}).get("last")))
-        items.append((o["slug"], o["name"], f"{o.get('chamber') or ''} · {(o.get('performance') or {}).get('n') or 0} trades"))
+        items.append((o["slug"], o["name"], f"{o.get('chamber') or ''} · {seo.n_of((o.get('performance') or {}).get('n') or 0, 'trade')}"))
         no += 1
     if items:
         open(os.path.join(out_dir, "o", "index.html"), "w", encoding="utf-8").write(list_page(

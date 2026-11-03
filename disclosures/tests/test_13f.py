@@ -30,6 +30,27 @@ class Tests(unittest.TestCase):
     def test_new_form_old_period(self):
         self.assertEqual(filing(period='12-31-2022')['unit_multiplier'],1)
 
+    def test_thousands_after_the_change_read_from_the_values(self):
+        """Baupost's 2026 13F still reports in thousands (Amazon "892,310" for 3.6M shares): a median value per share
+        in cents means thousands, whatever the form's date says; the summary total is in the same unit."""
+        from holdings13f.core import in_thousands
+        rows=''.join(f'<infoTable><nameOfIssuer>I{i}</nameOfIssuer><titleOfClass>COM</titleOfClass><cusip>12345678{i}</cusip><value>{v}</value>'
+                     f'<shrsOrPrnAmt><sshPrnamt>{sh}</sshPrnamt><sshPrnamtType>SH</sshPrnamtType></shrsOrPrnAmt><putCall></putCall></infoTable>'
+                     for i,(v,sh) in enumerate([(892310,3600000),(493140,1200000),(489612,7000000)]))
+        table=f'<informationTable xmlns="urn:table">{rows}</informationTable>'.encode()
+        total=892310+493140+489612
+        cover=('<edgarSubmission xmlns="urn:cover"><formData><coverPage><reportCalendarOrQuarter>06-30-2026</reportCalendarOrQuarter>'
+               '<filingManager><name>Baupost</name></filingManager><amendmentType></amendmentType></coverPage><summaryPage>'
+               f'<tableEntryTotal>3</tableEntryTotal><tableValueTotal>{total}</tableValueTotal><isConfidentialOmitted>false</isConfidentialOmitted>'
+               '</summaryPage></formData></edgarSubmission>').encode()
+        f=parse_filing(cover,[table],dict(form='13F-HR',filed='2026-08-13',accession='a',url='https://www.sec.gov/'))
+        self.assertEqual(f['unit_multiplier'],1000)
+        self.assertEqual(f['rows'][0]['value_usd'],892310000)
+        self.assertEqual(f['reported_total_usd'],total*1000)
+        # the same positions in dollars (a real portfolio: $248 a share) are left alone
+        self.assertFalse(in_thousands([{'share_type':'SH','shares':3600000,'value_usd':892310000},{'share_type':'SH','shares':1200,'value_usd':493140},{'share_type':'SH','shares':70,'value_usd':4896}]))
+        self.assertEqual(filing()['unit_multiplier'],1)                 # one position cannot decide
+
     def test_summary_mismatch(self):
         c,t,m=fixture()
         with self.assertRaises(ValueError):

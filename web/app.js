@@ -933,7 +933,7 @@
             ${ticker ? `<button class="btn follow primary" type="button" hidden data-follow="ticker:${t(ticker)}">☆ Follow</button>` : ''}
             ${cmpId ? '' : `<button class="btn send" type="button" hidden data-send="${p.cik}|${(all ? qs : [q]).map((x) => x.end).join(',')}|${fy ? 'fy' : 'q'}"
               title="Sent to the address you signed in with: chart, analysis and what changed">✉ Email me ${all ? `all ${qs.length} quarters` : t(q.label) + (fy ? ' full year' : '')}</button>`}
-            ${ticker ? `<a class="btn" href="#studio/k=fund&amp;t=${encodeURIComponent(ticker)}&amp;m=revenue&amp;ttm=0" title="Animated videos of this company's figures and its share price (web/studio.js)">▶ <span class="co-long">Make a </span>video</a>` : ''}
+            ${ticker ? `<a class="btn" href="#studio/k=fund&amp;t=${encodeURIComponent(ticker)}&amp;m=revenue&amp;ttm=0" title="Animated videos of this company's figures and its share price (web/studio.js)">▶ <span class="co-long">Make a </span>video</a><a class="btn" href="#backtest/t=${encodeURIComponent(ticker)}" title="If I had bought on a date: the path since, against the market, with every disclosure marked (web/backtest.js)">Backtest</a>` : ''}
           </div>
         </div>
         <div class="meta">
@@ -1167,7 +1167,7 @@
   }
   // five groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
-    ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
+    ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts'], ['x-composer']]],
     ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-moves'], ['x-highs'], ['x-opportunity'], ['x-odds']]],
@@ -2439,7 +2439,8 @@
     const field = (k, label, unit, opt) => {
       const sc = (opt && opt.scale) || 1, v = A[k] == null ? '' : +(A[k] / sc).toFixed(sc > 1 ? 1 : 4);
       return `<label class="v-f"><span>${label}${opt && opt.tag ? ` <em class="v-tag ${opt.tag}">${opt.tag}</em>` : ''}</span>
-      <span class="v-in"><input type="number" step="${opt && opt.step || 0.1}" data-k="${k}" data-scale="${sc}" value="${v}" ${opt && opt.min != null ? `min="${opt.min}"` : ''}>${unit ? `<i>${unit}</i>` : ''}</span></label>`;
+      <span class="v-in"><input type="number" step="${opt && opt.step || 0.1}" data-k="${k}" data-scale="${sc}" value="${v}" ${opt && opt.min != null ? `min="${opt.min}"` : ''}>${unit ? `<i>${unit}</i>` : ''}</span>${
+      opt && opt.range ? `<input type="range" class="v-slide" data-slide="${k}" min="${opt.range[0]}" max="${opt.range[1]}" step="${opt.step || 0.5}" value="${v === '' ? opt.range[0] : v}" aria-label="${label} slider">` : ''}</label>`;
     };
 
     function heat(grid, rows, cols, fmtR, fmtC, price, rl, cl, cap) {
@@ -2535,9 +2536,9 @@
             <div class="v-fields">
               ${field('price', 'Share price', '$', { step: 0.01, tag: px ? 'market' : 'enter' })}${field('shares', 'Diluted shares', 'M', { step: 1, scale: 1e6 })}
               ${A.cons && CS ? (() => { const cp = consPath(0, 0); return `<p class="v-consline">Year${cp.n > 1 ? 's 1–' + cp.n : ' 1'}: analysts’ consensus — revenue ${pct(cp.F.growth * 100)} a year${cp.F.margin != null ? `, EBIT margin ${pct(cp.F.margin * 100)}` : ''}. The fields below apply after that.</p>`; })() : ''}
-              ${field('growth', A.cons && CS ? 'Revenue growth, later years' : 'Revenue growth', '%/yr', { tag: 'assumption' })}${field('margin', 'EBIT margin', '%', { tag: 'assumption' })}
-              ${field('tax', 'Tax rate', '%', { tag: 'assumption' })}${field('da', 'D&A', '% rev')}${field('capex', 'Capex', '% rev')}
-              ${field('wc', 'Working capital', '% of Δrev', { tag: 'assumption' })}${field('wacc', 'WACC', '%', { tag: 'assumption' })}${field('g', 'Terminal growth', '%', { tag: 'assumption' })}
+              ${field('growth', A.cons && CS ? 'Revenue growth, later years' : 'Revenue growth', '%/yr', { tag: 'assumption', range: [-20, 60] })}${field('margin', 'EBIT margin', '%', { tag: 'assumption', range: [-20, 70] })}
+              ${field('tax', 'Tax rate', '%', { tag: 'assumption', range: [0, 40] })}${field('da', 'D&A', '% rev')}${field('capex', 'Capex', '% rev', { range: [0, 40] })}
+              ${field('wc', 'Working capital', '% of Δrev', { tag: 'assumption' })}${field('wacc', 'WACC', '%', { tag: 'assumption', range: [3, 20], step: 0.1 })}${field('g', 'Terminal growth', '%', { tag: 'assumption', range: [-2, 6], step: 0.1 })}
               <label class="v-f"><span>Terminal method</span><span class="v-in"><select data-k="terminal"><option value="roic" ${A.terminal === 'roic' ? 'selected' : ''}>Reinvestment = g ÷ ROIC</option><option value="simple" ${A.terminal === 'simple' ? 'selected' : ''}>Last FCFF × (1 + g)</option></select></span></label>
               ${A.terminal === 'roic' ? field('roic', 'Terminal ROIC', '%', { tag: 'assumption' }) : ''}
               <label class="v-f"><span>Tax on losses</span><span class="v-in"><select data-k="lossTax"><option value="none" ${A.lossTax === 'none' ? 'selected' : ''}>No benefit</option><option value="symmetric" ${A.lossTax === 'symmetric' ? 'selected' : ''}>Benefit at the tax rate</option></select></span></label>
@@ -2628,6 +2629,14 @@
       });
       const nc = $('#v-nocons', box);
       if (nc) nc.addEventListener('click', () => { A.cons = false; render(); });
+      // the sliders move the figure as they are dragged: the model re-renders live, and the slider keeps the pointer
+      $$('[data-slide]', box).forEach((el) => el.addEventListener('input', () => {
+        const k = el.dataset.slide, num = $(`[data-k="${k}"]`, box);
+        A[k] = Number(el.value) * Number((num && num.dataset.scale) || 1);
+        if (num) num.value = el.value;
+        clearTimeout(bind.slideTimer);
+        bind.slideTimer = setTimeout(() => { render(); const again = $(`[data-slide="${k}"]`, box); if (again) again.focus(); }, 60);
+      }));
       $$('[data-k]', box).forEach((el) => el.addEventListener('change', () => {
         const k = el.dataset.k;
         A[k] = el.tagName === 'SELECT' ? el.value : (el.value === '' ? null : Number(el.value) * Number(el.dataset.scale || 1));
@@ -5570,6 +5579,7 @@
       else if (h === 'feed' && window.FFFeed) await window.FFFeed.render(app, Object.assign({}, window.FFApp, { here }));
       else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if ((m = /^studio(?:\/([\s\S]*))?$/.exec(h)) && window.FFStudio) await window.FFStudio.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
+      else if ((m = /^backtest(?:\/([\s\S]*))?$/.exec(h)) && window.FFBacktest) await window.FFBacktest.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if (h === 'investors' && window.FFInvestors) await window.FFInvestors.index(app, { getJSON, setNav, here });
       else if ((m = /^investee-(.+)$/.exec(h)) && window.FFInvestors) await window.FFInvestors.investee(app, m[1], { getJSON, setNav, here });
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());

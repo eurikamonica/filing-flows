@@ -16,5 +16,6 @@ assert.ok(passages(company, period, 'revenue').some((p) => p.text.includes('reve
 const fs = require('node:fs'), path = require('node:path');
 const idx = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8'), build = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'build_site.py'), 'utf8');
 assert.ok(idx.includes('<script src="local-model.js"></script>') && idx.includes('href="local-model.css"'), 'index.html loads the local-model client');
-assert.ok(/SCRIPTS = \([^)]*"local-model\.js"[^)]*"app\.js"\)/.test(build) && (build.match(/"local-model\.css"/g) || []).length >= 2, 'build_site.py ships local-model.js/css in both modes');
+// both modes (files and --inline) take the page's assets from page_assets(): the lists name them once
+assert.ok(/SCRIPTS = \([^)]*"local-model\.js"[^)]*"app\.js"\)/.test(build) && /STYLES = \([^)]*"local-model\.css"/.test(build) && /def page_assets/.test(build), 'build_site.py ships local-model.js/css in both modes');
 console.log('Local model evidence: all checks passed');

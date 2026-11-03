@@ -51,7 +51,7 @@ L = {
         'title': lambda who, per, rev, yoy: f'{who}: resultados del {per}, ingresos de {rev}' + (f', {yoy} interanual' if yoy else ''),
         'h1': lambda who, per: f'Resultados de {who} del {per}',
         'lead': lambda who, per, rev, up, g, om, ni, form, date: (f'{who} registró ingresos de {rev} en el {per}'
-                                                                  + (f', {"un aumento" if up else "una caída"} del {g} interanual' if g else '')
+                                                                  + ((f', {g[1:]} veces los ingresos de un año antes' if g.startswith('×') else f', {"un aumento" if up else "una caída"} del {g} interanual') if g else '')
                                                                   + (f', con un margen operativo del {om}' if om else '') + (f' y un beneficio neto de {ni}' if ni else '')
                                                                   + f' ({form} presentado el {date}).'),
         'segs': 'Ingresos por segmento: ', 'cents': lambda gp, net: 'De cada dólar de ingresos, ' + ' y '.join(
@@ -82,7 +82,7 @@ L = {
         'title': lambda who, per, rev, yoy: f'{who} : résultats du {per}, chiffre d’affaires de {rev}' + (f', {yoy} sur un an' if yoy else ''),
         'h1': lambda who, per: f'Résultats de {who} au {per}',
         'lead': lambda who, per, rev, up, g, om, ni, form, date: (f'{who} a réalisé un chiffre d’affaires de {rev} au {per}'
-                                                                  + (f', en {"hausse" if up else "baisse"} de {g} sur un an' if g else '')
+                                                                  + ((f', {g[1:]} fois le chiffre d’affaires d’un an plus tôt' if g.startswith('×') else f', en {"hausse" if up else "baisse"} de {g} sur un an') if g else '')
                                                                   + (f', avec une marge opérationnelle de {om}' if om else '') + (f' et un bénéfice net de {ni}' if ni else '')
                                                                   + f' ({form} déposé le {date}).'),
         'segs': 'Chiffre d’affaires par segment : ', 'cents': lambda gp, net: 'Sur chaque dollar de chiffre d’affaires, ' + ' et '.join(
@@ -117,8 +117,13 @@ def money(v, t):
 
 
 def pct(v, t, signed=False):
+    """+12 % / −3 %; growth from a sliver as a multiple (×86); a margin beyond ±1000 % is n/m (seo.pct's rules)"""
     if v is None:
         return None
+    if signed and v >= seo.MEANINGFUL:
+        return f'×{1 + v / 100:,.0f}'
+    if not signed and abs(v) >= seo.MEANINGFUL:
+        return 'n/m'
     x = f'{abs(v):.0f}' if signed else f'{v:.1f}'.replace('.', ',')
     return (('+' if v >= 0 else '−') if signed else '') + x + t['pct']
 
@@ -160,8 +165,9 @@ def company(lang, r, c, er, cons, base, langs):
     who = f'{en} ({tk})'
     per = period(q.get('label'), t)
     rev = h['revenue']
+    om_ = pct(h.get('om'), t)
     lead = t['lead'](who, per, money(rev, t), (h.get('yoy') or 0) >= 0, pct(h.get('yoy'), t, True) and pct(h.get('yoy'), t, True).lstrip('+−'),
-                     pct(h.get('om'), t), money(h.get('ni'), t) if h.get('ni') is not None else None, q.get('form'), ldate(q.get('filed'), t))
+                     None if om_ == 'n/m' else om_, money(h.get('ni'), t) if h.get('ni') is not None else None, q.get('form'), ldate(q.get('filed'), t))
     lab = {n['id']: H.unescape(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
     into, segs = {}, {}
     for ln in q.get('links') or []:
@@ -228,7 +234,7 @@ def company(lang, r, c, er, cons, base, langs):
         {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': x, 'acceptedAnswer': {'@type': 'Answer', 'text': y}} for x, y in qa]}]}
     title = t['title'](who, per, money(rev, t), pct(h.get('yoy'), t, True)) + ' | Filing Flows'
     doc = seo.page(title, lead[:200], url, body, 3, base + '/og.png', ld)
-    doc = doc.replace('<html lang="en">', f'<html lang="{lang}">', 1).replace('<link rel="canonical"', alternates(slug, base, langs) + '<link rel="canonical"', 1)
+    doc = seo.localize(doc, lang).replace('<link rel="canonical"', alternates(slug, base, langs) + '<link rel="canonical"', 1)
     return url, (q.get('filed') or '')[:10] or None, doc, who, rev
 
 
@@ -294,7 +300,7 @@ def write(site, base, langs=('es', 'fr')):
             items = ''.join(f"<li><a href='c/{s}/'>{e(t['idx_item'](w))}</a></li>" for w, s, _ in sorted(listed[lg], key=lambda x: -x[2]))
             body = (f"<p class='crumbs'><a href='../'>Filing Flows</a> › {e(t['crumb'])}</p><h1>{e(t['idx_h1'](num(len(listed[lg]), 0)))}</h1>"
                     f"<p class='lead'>{e(t['idx_lead'])}</p><ul class='seo-list'>{items}</ul>")
-            doc = seo.page(t['idx_title'], t['idx_lead'][:200], f'{base}/{lg}/', body, 1, base + '/og.png').replace('<html lang="en">', f'<html lang="{lg}">', 1)
+            doc = seo.localize(seo.page(t['idx_title'], t['idx_lead'][:200], f'{base}/{lg}/', body, 1, base + '/og.png'), lg)
             os.makedirs(os.path.join(site, lg), exist_ok=True)
             open(os.path.join(site, lg, 'index.html'), 'w', encoding='utf-8').write(doc)
             urls[lg].insert(0, (f'{base}/{lg}/', None))
