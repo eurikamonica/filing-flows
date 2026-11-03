@@ -109,9 +109,10 @@
       const out = $('#bt-out');
       out.innerHTML = '<p class="muted">Loading…</p>';
       const key = st.t;
-      const [a, nd, sm, er] = await Promise.all([U.hub(`research/paths/moves/a/${key}.json`), U.hub(`research/paths/moves/n/${key}.json`), U.hub(`smart/t/${key}.json`), U.hub(`research/earnings/c/${key}.json`)]);
-      if (!here()) return;
+      const a = await U.hub(`research/paths/moves/a/${key}.json`);       // the prices first: no other file is asked for a ticker without them
       const S = decode(a);
+      const [nd, sm, er] = S ? await Promise.all([U.hub(`research/paths/moves/n/${key}.json`), U.hub(`smart/t/${key}.json`), U.hub(`research/earnings/c/${key}.json`)]) : [];
+      if (!here()) return;
       if (!S) { out.innerHTML = `<div class="q-warn">No daily price history for ${esc(key)} in the move-odds universe (about 1,800 listed companies and the main ETFs). Try another ticker.</div>`; return; }
       if (!st.from || st.from < S.days[0]) st.from = S.days[Math.max(0, S.days.length - 252)];
       if (st.from > S.days[S.days.length - 2]) st.from = S.days[S.days.length - 2];

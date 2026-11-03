@@ -89,7 +89,7 @@ def fmt(k, v):
     if k == 'om' or k == 'yoy' or k == 'short_chg':
         return f"{v:+.1f}%" if k != 'om' else f"{v:.1f}%"
     if k == 'runway_months':
-        return f"{v / 12:.1f} yrs" if v >= 24 else f"{v:.0f} mo"
+        return '10+ yrs' if v > 120 else f"{v / 12:.1f} yrs" if v >= 24 else f"{v:.0f} mo"
     if k == 'report_date':
         return seo.fdate(v)
     if isinstance(v, float):
@@ -144,7 +144,7 @@ def build(site, today=None):
         P = G.get('price') or {}
         F13 = G.get('f13') or {}
         d = {'ticker': t, 'cik': r.get('cik'), 'name': display_name(r.get('name')), 'sector': r.get('sector') or Q.get('sector'), 'industry': r.get('industry'), 'slug': slug,
-             'label': r.get('label'), 'filed': r.get('filed'), 'revenue': r.get('revenue'), 'yoy': r.get('yoy'), 'om': r.get('om'),
+             'label': r.get('label'), 'filed': r.get('filed'), 'revenue': r.get('revenue'), 'yoy': r.get('yoy'), 'om': r.get('om') if r.get('om') is None or abs(r['om']) <= 1000 else None,
              'mcap': Q.get('mcap'), 'price': Q.get('price') or P.get('last'), 'growth': Q.get('growth'), 'margin': Q.get('margin'), 'fcf_y': Q.get('fcf_y'), 'div_y': Q.get('div_y'),
              'bb_y': Q.get('bb_y'), 'sy': Q.get('sy'), 'roic': Q.get('roic'), 'ev_s': Q.get('ev_s'), 'f_score': Q.get('f_score'), 'z': Q.get('z'), 'z_zone': Q.get('z_zone'),
              'm_flag': Q.get('m_flag'), 'qmj': Q.get('qmj'), 'composite': Q.get('composite'), 'qscore': S.get('score'), 'qgrade': S.get('grade'),
@@ -152,7 +152,7 @@ def build(site, today=None):
              'r1m': P.get('r1m'), 'r3m': P.get('r3m'), 'r1y': P.get('r1y'), 'from_high': P.get('from_high'), 'above_ma200': P.get('above_ma200'),
              'f13_net': F13.get('usd_net'), 'f13_buyers': F13.get('buyers'), 'f13_sellers': F13.get('sellers'), 'heat': G.get('heat'),
              'ins_buys': I.get('buys'), 'ins_sells': I.get('sells'), 'ins_buy_usd': I.get('buy_value'), 'ins_sell_usd': I.get('sell_value'),
-             'short_dtc': H.get('dtc'), 'short_chg': H.get('change_pct'),
+             'short_dtc': H.get('dtc') if (H.get('dtc') or 0) < 999 else None, 'short_chg': H.get('change_pct'),     # 999.99: no volume to cover with
              'cash': rw and rw['cash'], 'debt': rw and rw['debt'], 'net_cash': rw and rw['net'], 'fcf_ttm': rw and rw['fcf_ttm'], 'runway_months': rw and rw['months'] and round(rw['months'], 1),
              'tags': G.get('tags') or []}
         for k in ('mcap', 'cash', 'debt', 'net_cash', 'fcf_ttm', 'f13_net', 'ins_buy_usd', 'ins_sell_usd', 'revenue'):

@@ -38,6 +38,7 @@ jobs:
           filter: blob:none
           sparse-checkout: |
             /disclosures/app/
+            /disclosures/config/peer-map.json
             /disclosures/docs/data/cache/prices/
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6

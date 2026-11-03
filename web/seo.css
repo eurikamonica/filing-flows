@@ -27,6 +27,9 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 /* a cell allowed to wrap (the signals list, scripts/seo_hub.py) keeps a readable width: in a table wider than a phone it
    got the width of its longest word, one word a line, rows 300px tall */
 .seo .tbl-wrap td [style*="white-space:normal"], .seo .tbl-wrap td [style*="white-space: normal"] { display: inline-block; min-width: 20em; }
+/* a name that may wrap (scripts/seo_daily.py): a company's or a holder's, so a six-column table keeps its figures in view */
+.seo .tbl-wrap td .wrap { white-space: normal; display: inline-block; min-width: 9em; max-width: 22em; }
+@media (max-width: 640px) { .seo .tbl-wrap td .wrap { white-space: nowrap; min-width: 0; max-width: none; } }   /* a phone scrolls the table sideways anyway: one line a row */
 .seo th { background: var(--surface-2); font-size: 12px; color: var(--muted); font-weight: 500; }
 .seo td.num, .seo th.num { text-align: right; font-family: var(--mono); font-size: 13px; }
 .seo-list { padding-left: 18px; line-height: 1.9; }
@@ -76,7 +79,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 .seo-note p { margin: 12px 0; }
 /* drawn charts as cards (light, like the Sankey, so the dark text reads in dark mode too) */
 figure.seo-svg { margin: 14px 0; padding: 14px 16px 10px; background: #fcfcfb; color: #2b2b2b; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
-figure.seo-svg figcaption { margin-top: 6px; color: #6b6a66; }
+figure.seo-svg figcaption { margin-top: 6px; color: #666561; }
 .seo-grid figure.seo-svg { break-inside: avoid; }
 /* tables: scroll sideways inside their box, never the page */
 .seo .tbl-wrap, .seo .tablebox { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin: 12px 0; }

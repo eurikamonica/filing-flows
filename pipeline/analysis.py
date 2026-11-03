@@ -60,7 +60,10 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
         leaves = [(l["label"], cur.get(l["id"]), py.get(l["id"])) for l in lines_struct["leaves"] if l["id"] in cur]
         if leaves:
             top = max(leaves, key=lambda x: x[1])
-            s += f" {top[0]} was the largest line at {top[1] / R * 100:.0f}% of revenue."
+            if top[1] <= R:
+                s += f" {top[0]} was the largest line at {top[1] / R * 100:.0f}% of revenue."
+            else:                                                # a line above the total: other lines are negative (eliminations, hedges)
+                s += f" {top[0]} was the largest line, {f.money(top[1])} against total revenue of {f.money(R)} (other lines net negative)."
             moves = [(lab, c - p, _pct(c, p)) for lab, c, p in leaves if p]
             if moves and Ny:
                 dR = R - Ny["R"]
@@ -119,7 +122,12 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
         s += f" Net earnings were {f.money(Nc['ni'])}" + (f", {_chg_words(gni)} year over year" if gni is not None else "")
         s += (f" ({f.money(Nc['pl'])} including minority interests, which bore {f.money(-Nc['nci'])} of losses)." if bore else ".")
         if Nc["pretax"] > 0 and Nc["tax"] is not None:
-            s += f" The effective tax rate was {Nc['tax'] / Nc['pretax'] * 100:.1f}%."
+            rate = Nc["tax"] / Nc["pretax"] * 100
+            if -100 <= rate <= 100:
+                s += f" The effective tax rate was {rate:.1f}%."
+            else:                                                # pre-tax earnings near zero: a rate of −518% says nothing
+                s += (f" The tax line was a {'benefit' if Nc['tax'] < 0 else 'charge'} of {f.money(abs(Nc['tax']))} on pre-tax earnings of "
+                      f"{f.money(Nc['pretax'])}.")
     else:
         s += f" The quarter ended with a net loss of {f.money(-Nc['pl'])}"
         if Nq:

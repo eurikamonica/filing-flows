@@ -302,17 +302,28 @@ def _from(links, node, target):
 
 def segment_river(name, qs, n=12):
     """the lines that make up revenue, quarter by quarter (a stacked area): how the mix shifted"""
-    rows = []
+    rows, shown = [], {}
     for q in qs[:n]:
         nodes = {x.get('id'): x for x in q.get('nodes') or []}
         d = {}
         for ln in q.get('links') or []:
             s = nodes.get(ln.get('s'))
             if ln.get('t') == 'revenue' and s and s.get('name') and ln.get('v'):
-                d[seo.label(s['name'])] = d.get(seo.label(s['name']), 0) + ln['v']
+                lab = seo.label(s['name'])
+                key = lab.casefold()                          # "MEDTECH" and "MedTech" are one line
+                shown.setdefault(key, lab)                    # … shown with the latest quarter's spelling
+                d[key] = d.get(key, 0) + ln['v']
         if len(d) >= 2:
             rows.append((q.get('label'), d))
-    rows.reverse()
+    # one breakdown throughout: a quarter whose lines are another partition of revenue (product/service against
+    # segments) would draw bands that start and stop; the run of quarters sharing the latest quarter's lines is drawn
+    keep = []
+    for lab, d in rows:
+        same = len(set(d) & set(rows[0][1])) / max(1, len(set(d) | set(rows[0][1])))
+        if same < 0.5:
+            break
+        keep.append((lab, d))
+    rows = list(reversed(keep))
     if len(rows) < 3:
         return ''
     names = sorted({k for _, d in rows for k in d}, key=lambda k: -sum(d.get(k, 0) for _, d in rows))[:8]
@@ -321,9 +332,9 @@ def segment_river(name, qs, n=12):
     both = [k for k in names if k in first and k in last]        # a line reported at both ends: a relabelled one is no shift in the mix
     shift = sorted(((k, last[k] / tl - first[k] / tf) for k in both), key=lambda kv: -abs(kv[1]))[0] if both else None
     note = ('' if shift is None else
-            f"{shift[0]} went from {100 * first[shift[0]] / tf:.0f}% of revenue in {rows[0][0]} to {100 * last[shift[0]] / tl:.0f}% in {rows[-1][0]}, the largest shift in the mix."
+            f"{shown[shift[0]]} went from {100 * first[shift[0]] / tf:.0f}% of revenue in {rows[0][0]} to {100 * last[shift[0]] / tl:.0f}% in {rows[-1][0]}, the largest shift in the mix."
             if abs(shift[1]) >= 0.02 else f"The mix barely moved between {rows[0][0]} and {rows[-1][0]}.")
-    return SV.river([l for l, _ in rows], [(k, [d.get(k) for _, d in rows]) for k in names], money, f"{name}: revenue by line, {rows[0][0]} to {rows[-1][0]}", note=note)
+    return SV.river([l for l, _ in rows], [(shown[k], [d.get(k) for _, d in rows]) for k in names], money, f"{name}: revenue by line, {rows[0][0]} to {rows[-1][0]}", note=note)
 
 
 def revenue(co, c):
@@ -345,7 +356,7 @@ def revenue(co, c):
     if not rev or not rev[0] or rev[0] <= 0:
         return None
     words = seo.period_words(q.get('label'))
-    chg = lambda a, b: (a / b - 1) * 100 if a and b else None    # noqa: E731
+    chg = lambda a, b: (a / b - 1) * 100 if a is not None and b and b > 0 else None    # noqa: E731  (no growth from a negative base)
     segs = []
     for s_ in dict.fromkeys(kids.get('revenue', [])):
         sub = [(lab.get(k, k), _from(links, k, s_)) for k in dict.fromkeys(kids.get(s_, []))]
@@ -355,7 +366,7 @@ def revenue(co, c):
     val = lambda nid: (into.get(nid) or [None])[0]               # noqa: E731
     gp, oi, net = val('gp'), val('oi'), val('net')
     g = chg(rev[0], rev[2])
-    lead = f"{name} ({t}) made {money(tot)} of revenue in the {words} ({q.get('label')})" + (f", {g:+.0f}% from a year earlier" if g is not None else '') + '.'
+    lead = f"{name} ({t}) made {money(tot)} of revenue in the {words} ({q.get('label')})" + (f", {seo.vs(g, 'a year earlier')}" if g is not None else '') + '.'
     if len(segs) > 1:
         lead += ' ' + '; '.join(f"{n_} brought in {money(v[0])} ({100 * v[0] / tot:.0f}%)" for n_, v, _ in segs[:3]) + '.'
     cents = [(k, x) for k, x in (('gross profit', gp), ('operating profit', oi), ('net earnings', net)) if seo.ratio(x, tot) is not None]
@@ -378,7 +389,7 @@ def revenue(co, c):
         s0 = segs[0]
         g0 = chg(s0[1][0], s0[1][2])
         qa.append((f"What is {name}'s biggest business?", f"{s0[0]}: {money(s0[1][0])} in the {words}, {100 * s0[1][0] / tot:.0f}% of revenue"
-                   + (f", {g0:+.0f}% from a year earlier" if g0 is not None else '') + '.'))
+                   + (f", {seo.vs(g0, 'a year earlier')}" if g0 is not None else '') + '.'))
     if seo.ratio(net, tot) is not None:
         qa.append((f"What is {seo.poss(name)} profit margin?", f"Net {'earnings were' if net >= 0 else 'loss was'} {money(abs(net))}, {abs(100 * net / tot):.1f}% of revenue, in the {words}"
                    + (f"; the operating margin was {100 * oi / tot:.1f}%." if seo.ratio(oi, tot) is not None else '.')))
@@ -434,11 +445,12 @@ def earnings_date(co, er, c, cons, today=None):
         title = f"{name} ({t}) Earnings {verb.capitalize()}: EPS {seo.usd2(last['act'])} vs {seo.usd2(last['est'])}, Revenue {revs}"
         h1 = f"{name} ({t}) earnings: {verb} the estimate"
     if days >= 0:
-        lead += (f"{name} ({t}) {'reports next' if just else 'is expected to report earnings'} on {when}" + (f", in {days} days" if days else ', today')
+        lead += (f"{name} ({t}) {'reports next' if just else 'is expected to report earnings'} on {when}" + (', tomorrow' if days == 1 else f", in {days} days" if days else ', today')
                  + (f", for the quarter ending {fdate(er.get('quarter'))}" if er.get('quarter') else '') + '.')
         if cs.get('eps') is not None:
             lead += (f" Analysts expect EPS of {seo.usd2(cs['eps'])}"
-                     + (f" ({seo.usd2(cs['eps_low'])} to {seo.usd2(cs['eps_high'])}, {cs['n']:.0f} estimates)" if cs.get('eps_low') is not None and cs.get('n') else '')
+                     + ((f" ({seo.usd2(cs['eps_low'])} to {seo.usd2(cs['eps_high'])}, {seo.n_of(cs['n'], 'estimate')})" if cs.get('eps_low') != cs.get('eps_high')
+                         else f" ({seo.n_of(cs['n'], 'estimate')})") if cs.get('eps_low') is not None and cs.get('n') else '')
                      + (f" on revenue of {money(cs['rev'])}" if cs.get('rev') else '')
                      + ((f", against {seo.usd2(cs['year_ago_eps'])}" + (f" and {money(cs['year_ago_rev'])}" if cs.get('year_ago_rev') else '') + ' a year ago')
                         if cs.get('year_ago_eps') is not None else '') + '.')
@@ -484,7 +496,7 @@ def earnings_date(co, er, c, cons, today=None):
         grow = sorted(grow, key=lambda g: -g[1])[:6]
         if grow:
             watch = (f"<h2>What to watch</h2><p>Last quarter ({e(q.get('label'))}) the lines that make up revenue grew like this; the report shows whether the trend holds:</p>"
-                     + SV.diverging([(g[0], g[2]) for g in grow], lambda v: f"{v:+.0f}%", f"{name}: revenue lines, growth year over year, {q.get('label')}", n=6))
+                     + SV.diverging([(g[0], g[2]) for g in grow], seo.pct, f"{name}: revenue lines, growth year over year, {q.get('label')}", n=6))
             ours = er.get('ours') or {}
             if ours.get('eps') is not None and cs.get('eps') is not None:
                 watch += (f"<p>Filing Flows' own estimate from the SEC figures — the same quarter last year times recent growth — is EPS {seo.usd2(ours['eps'])}"

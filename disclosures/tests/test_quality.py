@@ -267,5 +267,19 @@ class Build(unittest.TestCase):
             self.assertEqual(calls, [])
 
 
+class Panel(unittest.TestCase):
+    def test_payments_tagged_negative_count_as_amounts(self):
+        """Crown Castle's FY2025 10-K tags its dividends −$2.08B: the panel keeps $2.08B (a −5.7% dividend yield otherwise)."""
+        with tempfile.TemporaryDirectory() as d:
+            root, hub = Path(d) / 'rq', Path(d) / 'hub'
+            gz(hub / 'cache' / 'frames' / 'Revenues-CY2025.json.gz', {'1051470': [4.2e9, '2025-12-31']})
+            gz(Q._qpath(root, 'us-gaap', 'PaymentsOfDividendsCommonStock', 'USD', 'CY2025'), {'1051470': [-2.08e9, '2025-12-31']})
+            gz(Q._qpath(root, 'us-gaap', 'NetCashProvidedByUsedInOperatingActivities', 'USD', 'CY2025'), {'1051470': [-3e8, '2025-12-31']})
+            rec = Q.fiscal_years(root, hub, today=TODAY)['1051470'][-1]
+            self.assertEqual(rec['div'], 2.08e9)
+            self.assertEqual(rec['ocf'], -3e8)                      # a net cash flow keeps its sign
+            self.assertAlmostEqual(Q.yields(rec, 36.6e9)['div_y'], 2.08 / 36.6, places=4)
+
+
 if __name__ == '__main__':
     unittest.main()
