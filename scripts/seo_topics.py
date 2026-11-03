@@ -356,7 +356,7 @@ def revenue(co, c):
     if not rev or not rev[0] or rev[0] <= 0:
         return None
     words = seo.period_words(q.get('label'))
-    chg = lambda a, b: (a / b - 1) * 100 if a and b else None    # noqa: E731
+    chg = lambda a, b: (a / b - 1) * 100 if a is not None and b and b > 0 else None    # noqa: E731  (no growth from a negative base)
     segs = []
     for s_ in dict.fromkeys(kids.get('revenue', [])):
         sub = [(lab.get(k, k), _from(links, k, s_)) for k in dict.fromkeys(kids.get(s_, []))]
@@ -445,11 +445,12 @@ def earnings_date(co, er, c, cons, today=None):
         title = f"{name} ({t}) Earnings {verb.capitalize()}: EPS {seo.usd2(last['act'])} vs {seo.usd2(last['est'])}, Revenue {revs}"
         h1 = f"{name} ({t}) earnings: {verb} the estimate"
     if days >= 0:
-        lead += (f"{name} ({t}) {'reports next' if just else 'is expected to report earnings'} on {when}" + (f", in {days} days" if days else ', today')
+        lead += (f"{name} ({t}) {'reports next' if just else 'is expected to report earnings'} on {when}" + (', tomorrow' if days == 1 else f", in {days} days" if days else ', today')
                  + (f", for the quarter ending {fdate(er.get('quarter'))}" if er.get('quarter') else '') + '.')
         if cs.get('eps') is not None:
             lead += (f" Analysts expect EPS of {seo.usd2(cs['eps'])}"
-                     + (f" ({seo.usd2(cs['eps_low'])} to {seo.usd2(cs['eps_high'])}, {cs['n']:.0f} estimates)" if cs.get('eps_low') is not None and cs.get('n') else '')
+                     + ((f" ({seo.usd2(cs['eps_low'])} to {seo.usd2(cs['eps_high'])}, {seo.n_of(cs['n'], 'estimate')})" if cs.get('eps_low') != cs.get('eps_high')
+                         else f" ({seo.n_of(cs['n'], 'estimate')})") if cs.get('eps_low') is not None and cs.get('n') else '')
                      + (f" on revenue of {money(cs['rev'])}" if cs.get('rev') else '')
                      + ((f", against {seo.usd2(cs['year_ago_eps'])}" + (f" and {money(cs['year_ago_rev'])}" if cs.get('year_ago_rev') else '') + ' a year ago')
                         if cs.get('year_ago_eps') is not None else '') + '.')
