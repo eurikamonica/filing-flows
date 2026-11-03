@@ -76,6 +76,7 @@ def with_publisher(jsonld, canonical, title):
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))    # the repository: pipeline/names.py
 from pipeline import names as _names  # noqa: E402
+from pipeline import dims as _dims  # noqa: E402
 
 KEEP_UPPER = _names.KEEP_UPPER
 
@@ -83,6 +84,37 @@ KEEP_UPPER = _names.KEEP_UPPER
 def display_name(name):
     """A filing's name as a page shows it (pipeline/names.py): 'W&T OFFSHORE INC' → W&T Offshore, 'AMPHENOL CORP /DE/' → Amphenol."""
     return _names.display(name)
+
+
+def person(name):
+    """A Form 4 or 13D person's name in capitals, cased: 'O'BRIEN MICHAEL J' → O'Brien Michael J (pipeline/names.py)."""
+    return _names.person(name)
+
+
+def label(text):
+    """A chart line's label as the pages print it: the XBRL member leftovers gone ('Retail Revenue Member' → Retail Revenue)."""
+    return _dims.clean_label(html.unescape(str(text or "")))
+
+
+MEANINGFUL = 1000     # a margin or share of revenue beyond ±1000% says the revenue is a sliver, not how profitable the company is
+
+
+def ratio(x, rev):
+    """x as a percentage of revenue, None when there is no revenue to speak of (|ratio| ≥ 1000%: a biotech's $40K of
+    collaboration revenue against a $50M loss is not a −125,000% margin)."""
+    if x is None or not rev or rev <= 0:
+        return None
+    v = 100 * x / rev
+    return v if abs(v) < MEANINGFUL else None
+
+
+def times(n):
+    """'once', 'twice', '3 times'."""
+    try:
+        k = int(round(float(n)))
+    except (TypeError, ValueError):
+        return f"{n} times"
+    return "once" if k == 1 else "twice" if k == 2 else f"{k:,} times"
 
 
 def money(v):
@@ -124,7 +156,12 @@ def usd2(v):
 
 
 def pct(v, signed=True):
-    return "—" if v is None else (f"{v:+.0f}%" if signed else f"{v:.1f}%")
+    """a growth rate (signed, whole percent) or a margin (one decimal); a margin beyond ±1000% is 'n/m' (see ratio)"""
+    if v is None:
+        return "—"
+    if signed:
+        return f"{v:+.0f}%"
+    return f"{v:.1f}%" if abs(v) < MEANINGFUL else "n/m"
 
 
 def fdate(s):
@@ -199,7 +236,7 @@ def segments(q):
     for l in q.get("links") or []:
         s = nodes.get(l.get("s")) or {}
         if l.get("t") == "revenue" and l.get("v") and s.get("name"):
-            out.append((s["name"], l["v"]))
+            out.append((label(s["name"]), l["v"]))
     return sorted(out, key=lambda x: -x[1])
 
 
@@ -273,7 +310,7 @@ def peer_table(me, peers, industry):
     def td(x, k, f):
         v = x.get(k)
         return f"<td class='num'>{e(f(v)) if v is not None else '—'}</td>"
-    om = lambda v: f"{v:.1f}%"
+    om = lambda v: pct(v, False)
     cls_me = " class='me'"
     body = "".join(f"<tr{cls_me if x is me else ''}><td>{('<b>' + e(x.get('ticker') or '') + '</b> ' if x is me else f'<a href=' + chr(39) + '../' + slug_for(x) + '/' + chr(39) + '><b>' + e(x.get('ticker') or '') + '</b></a> ') if x.get('ticker') else ''}{e(display_name(x.get('name')))}</td>"
                    f"<td>{e(x.get('label'))}</td>{td(x, 'revenue', money)}{td(x, 'yoy', pct)}{td(x, 'om', om)}</tr>" for x in rows)
@@ -281,7 +318,7 @@ def peer_table(me, peers, industry):
     note = ''
     for k, lab, f in (('yoy', 'revenue growth', pct), ('om', 'operating margin', om)):
         m = med(k)
-        if len(m) >= 3 and me.get(k) is not None:
+        if len(m) >= 3 and me.get(k) is not None and (k != 'om' or abs(me[k]) < MEANINGFUL):
             mid = m[len(m) // 2]
             note += f" {lab.capitalize()}: {f(me[k])} against the peers' median {f(mid)}."
     return (f"<h2 id='peers'>{e(display_name(me.get('name')))} against its {e(industry)} peers</h2><p class='muted'>The largest companies of the same SEC industry, each at its latest quarter.{e(note)}</p>"
@@ -360,9 +397,9 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     bits = []
     if rev and yoy_ is not None:
         bits.append(f"Revenue {'up' if yoy_ >= 0 else 'down'} <b>{abs(yoy_):.0f}%</b> year over year to <b>{e(money(rev))}</b>")
-    if rev and ni_ is not None and rev > 0:
-        bits.append(f"<b>{100 * ni_ / rev:.0f}¢</b> of every $1 of revenue {'kept as net profit' if ni_ >= 0 else 'lost'}")
-    if h.get("om") is not None:
+    if ratio(ni_, rev) is not None:
+        bits.append(f"<b>{abs(ratio(ni_, rev)):.0f}¢</b> of every $1 of revenue {'kept as net profit' if ni_ >= 0 else 'lost'}")
+    if h.get("om") is not None and abs(h["om"]) < MEANINGFUL:
         bits.append(f"operating margin <b>{h['om']:.1f}%</b>")
     highlight = (f"<p class='seo-hl {'up' if (yoy_ or 0) >= 0 else 'down'}'><span>{e(q.get('label', ''))}</span> " + " · ".join(bits) + "</p>") if bits else ""
     tiles = "".join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (

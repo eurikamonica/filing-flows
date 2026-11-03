@@ -3488,6 +3488,15 @@ def test_company_names_cased_for_the_pages():
     assert names.display("MACY'S, INC.") == "Macy's" and names.display("O'REILLY AUTOMOTIVE INC") == "O'Reilly Automotive"
     assert names.display("BANK OF AMERICA CORP /DE/") == "Bank of America" and names.display("LYONDELLBASELL INDUSTRIES N.V.") == "LyondellBasell Industries N.V."
     assert names.display("E.W. SCRIPPS Co") == "E.W. Scripps" and names.display("Huntsman CORP") == "Huntsman" and names.display("3M CO") == "3M"
+    # a 13F's issuer names: abbreviations, a trailing state marker, a share class; a legal form after another
+    assert names.cased("VANGUARD INDEX FDS") == "Vanguard Index Funds" and names.cased("COSTCO WHSL CORP NEW") == "Costco Wholesale Corp"
+    assert names.cased("BERKSHIRE HATHAWAY INC DEL") == "Berkshire Hathaway Inc" and names.cased("ALPHABET INC CL A") == "Alphabet Inc Class A"
+    assert names.cased("ISHARES CORE S&P TOTAL U.S.") == "iShares Core S&P Total U.S." and names.cased("SPDR GOLD TR") == "SPDR Gold Trust"
+    assert names.display("SK TELECOM CO LTD") == "SK Telecom" and names.display("ELI LILLY & CO") == "Eli Lilly" and names.display("NEW YORK TIMES CO") == "New York Times"
+    # a person's name as a Form 4 or a 13D writes it
+    assert names.person("KIRK RONALD") == "Kirk Ronald" and names.person("O'BRIEN MICHAEL J") == "O'Brien Michael J"
+    assert names.person("MCCARTHY JOHN JR") == "McCarthy John Jr." and names.person("DE LA CRUZ JOSE") == "De la Cruz Jose"
+    assert names.person("Denny Michael B.") == "Denny Michael B." and names.person("SMITH-JONES ANNA III") == "Smith-Jones Anna III"
 
 
 def test_member_labels_cleaned_of_xbrl_leftovers():

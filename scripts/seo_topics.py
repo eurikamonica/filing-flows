@@ -280,7 +280,7 @@ def risks(co, out):
 def _flows(q):
     """(labels, inflow per node {id: [v, q, y]}, children {id: [ids]}) of a Sankey spec."""
     import html as H
-    lab = {n['id']: H.unescape(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
+    lab = {n['id']: seo.label(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
     into, kids = {}, {}
     for ln in q.get('links') or []:
         a = into.setdefault(ln['t'], [0.0, 0.0, 0.0])
@@ -355,9 +355,9 @@ def revenue(co, c):
     lead = f"{name} ({t}) made {money(tot)} of revenue in the {words} ({q.get('label')})" + (f", {g:+.0f}% from a year earlier" if g is not None else '') + '.'
     if len(segs) > 1:
         lead += ' ' + '; '.join(f"{n_} brought in {money(v[0])} ({100 * v[0] / tot:.0f}%)" for n_, v, _ in segs[:3]) + '.'
-    cents = [(k, x) for k, x in (('gross profit', gp), ('operating profit', oi), ('net earnings', net)) if x is not None]
-    if cents:
-        lead += ' Of every dollar of revenue, ' + ', '.join(f"{100 * x / tot:.0f}¢ was left as {k}" for k, x in cents) + '.'
+    cents = [(k, x) for k, x in (('gross profit', gp), ('operating profit', oi), ('net earnings', net)) if seo.ratio(x, tot) is not None]
+    if cents:    # a company whose costs dwarf its revenue has no "cents of every dollar" to speak of (seo.ratio)
+        lead += ' Of every dollar of revenue, ' + ', '.join(f"{abs(100 * x / tot):.0f}¢ was {'left as ' + k if x >= 0 else 'lost at the ' + k + ' line'}" for k, x in cents) + '.'
     rows = ''
     for n_, v, sub in segs:
         rows += (f"<tr><td><b>{e(n_)}</b></td><td class='num'>{e(money(v[0]))}</td><td class='num'>{100 * v[0] / tot:.1f}%</td>"
@@ -367,7 +367,7 @@ def revenue(co, c):
                      f"<td class='num'>{e(pc(chg(sv[0], sv[1])))}</td><td class='num'>{e(pc(chg(sv[0], sv[2])))}</td></tr>")
     ladder = [('Revenue', tot), ('Cost of revenue', val('cor')), ('Gross profit', gp), ('Operating expenses', val('opex')), ('Operating profit', oi),
               ('Income tax', val('tax')), ('Net earnings', net), ('Operating cash flow', val('ocf')), ('Free cash flow', val('fcf'))]
-    lad = ''.join(f"<tr><td>{e(k)}</td><td class='num'>{e(money(x))}</td><td class='num'>{100 * x / tot:.1f}%</td></tr>" for k, x in ladder if x is not None)
+    lad = ''.join(f"<tr><td>{e(k)}</td><td class='num'>{e(money(x))}</td><td class='num'>{e(seo.pct(100 * x / tot, False))}</td></tr>" for k, x in ladder if x is not None)
     hist = ''.join(f"<tr><td>{e(x.get('label'))}</td><td class='num'>{e(money((x.get('headline') or {}).get('revenue')))}</td>"
                    f"<td class='num'>{e(pc((x.get('headline') or {}).get('yoy')))}</td></tr>" for x in qs[:8])
     qa = [(f"How does {name} make money?", lead)]
@@ -376,14 +376,15 @@ def revenue(co, c):
         g0 = chg(s0[1][0], s0[1][2])
         qa.append((f"What is {name}'s biggest business?", f"{s0[0]}: {money(s0[1][0])} in the {words}, {100 * s0[1][0] / tot:.0f}% of revenue"
                    + (f", {g0:+.0f}% from a year earlier" if g0 is not None else '') + '.'))
-    if net is not None:
-        qa.append((f"What is {name}'s profit margin?", f"Net earnings were {money(net)}, {100 * net / tot:.1f}% of revenue, in the {words}"
-                   + (f"; the operating margin was {100 * oi / tot:.1f}%." if oi is not None else '.')))
+    if seo.ratio(net, tot) is not None:
+        qa.append((f"What is {seo.poss(name)} profit margin?", f"Net {'earnings were' if net >= 0 else 'loss was'} {money(abs(net))}, {abs(100 * net / tot):.1f}% of revenue, in the {words}"
+                   + (f"; the operating margin was {100 * oi / tot:.1f}%." if seo.ratio(oi, tot) is not None else '.')))
     body = (f"<p class='lead'>{e(lead)}</p>" + sankey_figure(co.get('cik') or 0, q.get('label'), f"{name} {q.get('label')} revenue to profit and cash Sankey")
             + (SV.hbars([(n_, v[0]) for n_, v, _ in segs], money, f"{name} revenue by segment, {q.get('label')}") if len(segs) > 1 else '')
             + segment_river(name, qs)
             + SV.bars([(x.get('label'), (x.get('headline') or {}).get('revenue')) for x in reversed(qs[:8])], money, f"{name} revenue by quarter")
-            + SV.hbars([(k, x) for k, x in ladder[1:] if x is not None and x > 0], lambda v, tt=tot: f"{100 * v / tt:.0f}¢", f"{name}: where each dollar of revenue goes", n=9)
+            + (SV.hbars([(k, x) for k, x in ladder[1:] if x is not None and x > 0], lambda v, tt=tot: f"{100 * v / tt:.0f}¢", f"{name}: where each dollar of revenue goes", n=9)
+               if all(seo.ratio(x, tot) is not None for k, x in ladder[1:] if x is not None and x > 0) else '')
             + (f"<h2>Revenue by segment, {e(q.get('label'))}</h2><div class='tbl-wrap'><table><thead><tr><th>Segment</th><th class='num'>Revenue</th><th class='num'>Share</th>"
                f"<th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>" if len(segs) > 1 else '')
             + f"<h2>Where each dollar of revenue goes</h2><div class='tbl-wrap'><table><thead><tr><th>Line</th><th class='num'>{e(q.get('label'))}</th><th class='num'>% of revenue</th></tr></thead><tbody>{lad}</tbody></table></div>"

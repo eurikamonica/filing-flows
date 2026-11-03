@@ -14,7 +14,6 @@
     python scripts/seo_history.py --site _site --site-url https://filing-flows.com
 """
 import argparse
-import html as H
 import json
 import os
 import re
@@ -63,7 +62,7 @@ def year_ago(label):
 
 def nodes(q):
     """{id: (label, this, previous quarter, year ago)} of a quarter's Sankey."""
-    return {n['id']: (H.unescape(n.get('name') or n.get('label') or n['id']), n.get('v'), n.get('q'), n.get('y')) for n in q.get('nodes') or []}
+    return {n['id']: (seo.label(n.get('name') or n.get('label') or n['id']), n.get('v'), n.get('q'), n.get('y')) for n in q.get('nodes') or []}
 
 
 def chg(a, b):
@@ -71,8 +70,9 @@ def chg(a, b):
 
 
 def margin(n, k, i):
+    """the line as a percentage of revenue; None when the revenue is a sliver next to it (seo.ratio)"""
     r, x = n.get('revenue'), n.get(k)
-    return 100 * x[i] / r[i] if r and x and r[i] and x[i] is not None else None
+    return seo.ratio(x[i], r[i]) if r and x and r[i] and x[i] is not None else None
 
 
 KEY = [('revenue', 'Revenue'), ('gp', 'Gross profit'), ('oi', 'Operating profit'), ('net', 'Net earnings'), ('ocf', 'Operating cash flow'), ('fcf', 'Free cash flow')]
@@ -118,7 +118,7 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
     # net earnings: the figure the chart draws (headline.ni), whichever node holds it (net, netinc, or netloss as a loss)
     net = h.get('ni') if h.get('ni') is not None else (n['net'][1] if 'net' in n else n['netinc'][1] if 'netinc' in n else -n['netloss'][1] if 'netloss' in n and n['netloss'][1] is not None else None)
     om = margin(n, 'oi', 1)
-    nm = 100 * net / rev[1] if net is not None and rev[1] else None
+    nm = seo.ratio(net, rev[1])
     if om is not None:
         lead += f" Operating margin was {om:.1f}%" + (f", net {'earnings' if net >= 0 else 'loss'} {money(abs(net))} ({abs(nm):.1f}% of revenue)" if nm is not None else '') + '.'
     rows = ''.join(f"<tr><td>{e(t)}</td><td class='num'>{e(money(n[k][1]))}</td><td class='num'>{e(pc(chg(n[k][1], n[k][2])))}</td><td class='num'>{e(pc(chg(n[k][1], n[k][3])))}</td></tr>"
@@ -291,12 +291,12 @@ def guidance_page(r, rec, base, slug, who, name):
     said = rec.get('said') or {}
     lead = f"{name} gave guidance in {seo.n_of(rec.get('releases') or 0, 'earnings release')} on file since {fdate(rec.get('since'))}."
     if n:
-        lead += f" Of {n} guided periods since reported, it met or beat its own guidance {hit} times ({round(100 * hit / n)}%)."
+        lead += f" Of {seo.n_of(n, 'guided period')} since reported, it met or beat its own guidance {seo.times(hit)} ({round(100 * hit / n)}%)."
         best = max(judged, key=lambda m: m['hits']['n'])
         lead += f" {best['name']}: {best['hits']['hitOrBeat']} of {best['hits']['n']}" + (
             f", on average {best['hits']['avgVsMid']:+.1f}{' pts' if best['unit'] == 'pct' else '%'} against the guided midpoint" if best['hits'].get('avgVsMid') is not None else '') + '.'
     if said.get('raised') or said.get('lowered'):
-        lead += f" Its releases raised guidance {said.get('raised', 0)} times and lowered it {said.get('lowered', 0)} times."
+        lead += f" Its releases raised guidance {seo.times(said.get('raised', 0))} and lowered it {seo.times(said.get('lowered', 0))}."
     OUT = {'above': 'above the range', 'within': 'within the range', 'below': 'below the range', 'met': 'met'}
     body = ''
     for m in ms[:6]:
@@ -317,7 +317,7 @@ def guidance_page(r, rec, base, slug, who, name):
                  + f"<div class='tbl-wrap'><table><thead><tr><th>Period</th><th>Guided (and how it moved)</th><th class='num'>Reported</th><th>Result</th><th class='num'>vs midpoint</th></tr></thead><tbody>{rows}</tbody></table></div>")
     qa = [(f"Does {name} beat its guidance?", lead.split(' Its releases')[0] if n else lead)]
     if said.get('raised') or said.get('lowered'):
-        qa.append((f"How often does {name} raise guidance?", f"Its earnings releases raised guidance {said.get('raised', 0)} times and lowered it {said.get('lowered', 0)} times since {fdate(rec.get('since'))}."))
+        qa.append((f"How often does {name} raise guidance?", f"Its earnings releases raised guidance {seo.times(said.get('raised', 0))} and lowered it {seo.times(said.get('lowered', 0))} since {fdate(rec.get('since'))}."))
     url = f"{base}/c/{slug}/guidance-history/"
     title = f"{who} guidance history: guided vs reported" + (f", met or beat {round(100 * hit / n)}% of the time" if n else '') + ' | Filing Flows'
     page_body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › Guidance history</p>"

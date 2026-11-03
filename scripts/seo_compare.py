@@ -9,7 +9,6 @@ flow, the largest segments, and, when the Disclosure Hub has them, market value,
     python scripts/seo_compare.py --site _site --site-url https://filing-flows.com [--peers 3]
 """
 import argparse
-import html as H
 import json
 import math
 import os
@@ -38,7 +37,7 @@ def money(v):
 
 
 def pct(v, signed=False):
-    return '—' if v is None else (f'{v:+.0f}%' if signed else f'{v:.1f}%')
+    return seo.pct(v, signed)        # a margin beyond ±1000% (a sliver of revenue) is 'n/m'
 
 
 def figures(c):
@@ -50,7 +49,7 @@ def figures(c):
     h = q.get('headline') or {}
     if not h.get('revenue'):
         return None
-    into, lab = {}, {n['id']: H.unescape(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
+    into, lab = {}, {n['id']: seo.label(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
     segs = {}
     for ln in q.get('links') or []:
         into[ln['t']] = into.get(ln['t'], 0) + (ln.get('v') or 0)
@@ -59,8 +58,8 @@ def figures(c):
     rev = h['revenue']
     g = lambda k: into.get(k)    # noqa: E731
     return {'label': q.get('label'), 'filed': q.get('filed'), 'form': q.get('form'), 'revenue': rev, 'yoy': h.get('yoy'),
-            'om': h.get('om'), 'ni': h.get('ni'), 'ocf': h.get('ocf'), 'gm': (100 * g('gp') / rev) if g('gp') else None,
-            'nm': (100 * h['ni'] / rev) if h.get('ni') is not None else None, 'fcf': g('fcf'),
+            'om': h.get('om'), 'ni': h.get('ni'), 'ocf': h.get('ocf'), 'gm': seo.ratio(g('gp'), rev) if g('gp') else None,
+            'nm': seo.ratio(h.get('ni'), rev), 'fcf': g('fcf'),
             'segs': sorted(segs.items(), key=lambda x: -x[1])[:4] if len(segs) > 1 else []}
 
 
@@ -107,7 +106,7 @@ def page_for(a, b, fa, fb, va, vb, base):
     if fa.get('yoy') is not None and fb.get('yoy') is not None:
         fast, slow = (na, nb) if fa['yoy'] >= fb['yoy'] else (nb, na)
         parts.append(f"{fast} is growing faster ({pct(max(fa['yoy'], fb['yoy']), True)} against {pct(min(fa['yoy'], fb['yoy']), True)} a year earlier).")
-    if fa.get('om') is not None and fb.get('om') is not None:
+    if fa.get('om') is not None and fb.get('om') is not None and max(abs(fa['om']), abs(fb['om'])) < seo.MEANINGFUL:
         hi = na if fa['om'] >= fb['om'] else nb
         parts.append(f"{hi} is more profitable, with an operating margin of {pct(max(fa['om'], fb['om']))} against {pct(min(fa['om'], fb['om']))}.")
     lead = ' '.join(parts)

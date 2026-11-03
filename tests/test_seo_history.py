@@ -65,7 +65,7 @@ def test_history(tmp_path):
     assert "gross margin was 74.8% in Q2 FY27" in gm.replace("&#x27;", "'") and "Over the last 4 quarters" in gm
     assert (s / "c" / "nvda" / "data-center-revenue" / "index.html").exists() and (s / "c" / "nvda" / "research-and-development" / "index.html").exists()
     gh = (s / "c" / "nvda" / "guidance-history" / "index.html").read_text().replace("&#x27;", "'")
-    assert "met or beat its own guidance 2 times (100%)" in gh and "raised guidance 3 times and lowered it 1 times" in gh
+    assert "met or beat its own guidance twice (100%)" in gh and "raised guidance 3 times and lowered it once" in gh
     assert "$91.0B–$95.0B (May 27, 2026)" in gh and "above the range" in gh and "+3.4%" in gh and "to be reported" in gh
     main = (s / "c" / "nvda" / "index.html").read_text()
     assert 'class="seo-history"' in main and "q3-fy26/" in main and "guidance-history/" in main

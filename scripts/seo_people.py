@@ -34,6 +34,15 @@ def money(v):
     return seo.money(v) if v is not None else "—"
 
 
+def change(kind, pc):
+    """A position's change over the quarter as the 13F comparison scored it: 'new', 'exit', 'unchanged', or the change in
+    shares with its sign ('+5.5%', '−31.3%'; under a tenth of a percent either way: '<0.1%')."""
+    kind = (kind or "unchanged").lower()
+    if kind not in ("increase", "decrease") or pc is None:
+        return kind
+    return pct(pc / 100) if abs(pc) >= 0.05 else "<0.1%"
+
+
 def pct(v, signed=True):
     if v is None:
         return "—"
@@ -75,15 +84,15 @@ def manager_page(m, base):
             f"{money(m['aum'])} reported. "
             + (f"Copying each 13F the day after it was filed returned {pct(c.get('total'))} from {seo.fdate(c.get('start'))} to "
                f"{seo.fdate(c.get('end'))}, against {pct(c.get('spy_total'))} for SPY." if c.get("total") is not None else ""))
-    rows = "".join(f"<tr><td>{e(h[0])}</td><td>{e(h[1])}</td><td class='num'>{pct(h[2], False)}</td><td class='num'>{money(h[3])}</td>"
-                   f"<td>{e((h[4] or 'unchanged').lower())}{' ' + pct(h[5] / 100) if h[5] is not None and h[4] in ('INCREASE', 'DECREASE') else ''}</td></tr>"
+    rows = "".join(f"<tr><td>{e(h[0])}</td><td>{e(seo.display_name(h[1]))}</td><td class='num'>{pct(h[2], False)}</td><td class='num'>{money(h[3])}</td>"
+                   f"<td>{e(change(h[4], h[5]))}</td></tr>"
                    for h in (m.get("holdings") or [])[:25] if h[0])
-    lst = lambda xs: "".join(f"<li><b>{e(a[0])}</b> <span class='muted'>{e((a[1] or '').lower())}{' ' + pct(a[2] / 100) if a[2] is not None and a[1] not in ('NEW', 'EXIT') else ''}</span></li>" for a in xs)
+    lst = lambda xs: "".join(f"<li><b>{e(a[0])}</b> <span class='muted'>{e(change(a[1], a[2]))}</span></li>" for a in xs)
     tiles = "".join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
         ("Reported 13F assets", money(m["aum"])), ("Positions (common)", f"{m['positions']}"), ("Quarter", m["period"]),
         ("Clone return", pct(c.get("total"))), ("SPY, same days", pct(c.get("spy_total"))), ("Clone max drawdown", pct(c.get("max_dd")))))
     rec = m.get("record") or {}
-    record = (f"<h2>Track record</h2><p>Of {rec.get('scored')} position changes scored in {rec.get('decisions')} separate decisions, "
+    record = (f"<h2>Track record</h2><p>Of {seo.n_of(rec.get('scored'), 'position change')} scored in {seo.n_of(rec.get('decisions'), 'separate decision')}, "
               f"{pct(rec.get('hit'), False)} were on the right side of SPY over the next three months (Disclosures → Smart money).</p>"
               if rec.get("scored") else "")
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../">13F managers</a> › {e(name)}</p>
@@ -94,7 +103,7 @@ def manager_page(m, base):
 <figure class="seo-chart" style="width:auto;margin:12px 0">{line_svg(c.get('monthly') or [])}</figure>
 <p class="muted">Each 13F bought at the close of the first trading day after it was filed and held, drifting, until the next one;
 value-weighted over the common-share positions with a price ({pct(c.get('coverage'), False)} of the portfolio on average);
-{c.get('filings') or 0} filings since {e(seo.fdate(c.get('first_filing')))}. Price returns for the clone and SPY alike (no dividends,
+{seo.n_of(c.get('filings') or 0, 'filing')} since {e(seo.fdate(c.get('first_filing')))}. Price returns for the clone and SPY alike (no dividends,
 no costs). A 13F lists only US long positions at quarter end, reported up to 45 days later.</p>
 <h2>Largest holdings ({e(m['period'])})</h2>
 {SV.hbars([(f"{h[0]} · {h[1]}", h[3]) for h in (m.get('holdings') or []) if h[0]], money, f"{name}: largest 13F holdings, {m['period']}", n=15)}
