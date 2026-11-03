@@ -361,7 +361,8 @@ def industry_page(sic, ind, fl, g, capex, base):
             + "<h2>Analysis</h2><div class='seo-note'>" + ''.join(f"<p>{e(s)}</p>" for s in lines) + '</div>'
             + "<h2>Charts</h2><div class='seo-grid'>" + ''.join(x for x in body_ch if x) + '</div>')
     body += "<h2>Capital spending by company</h2>" + seo_table(['Company', 'Capital spending', 'Operating cash flow', 'Capex / OCF', 'Period'], [
-        [f"<a href='../../../c/{x[0][3]}/cash-flow/'>{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}</a>", money(x[0][0]), money(x[0][1]),
+        [(f"<a href='../../../c/{x[0][3]}/cash-flow/'>{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}</a>" if x[0][3]
+          else f"{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}"), money(x[0][0]), money(x[0][1]),
          f"{x[0][0] / x[0][1] * 100:.0f}%" if x[0][1] and x[0][1] > 0 else '—', e(x[0][2] or '')] for x in cx[:60]])
     if rel:
         body += ("<h2>Customers and suppliers named in annual reports</h2>" + seo_table(['Supplier', 'Customer', 'Share of supplier revenue', 'Evidence', 'Source'], [
@@ -464,6 +465,9 @@ def write(site, base):
             urls.insert(0, (u, None))
     except Exception as err:  # noqa: BLE001
         print(f"cash runway page skipped: {err}")
+    for k, v in list(capex.items()):        # a company with fewer than four quarters of cash flow has no cash-flow page to link to
+        if not os.path.exists(os.path.join(site, 'c', v[3], 'cash-flow', 'index.html')):
+            capex[k] = v[:3] + (None,) + v[4:]
     try:
         urls += industry_pages(site, base, capex)
     except Exception as err:  # noqa: BLE001

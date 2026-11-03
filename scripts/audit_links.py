@@ -24,7 +24,7 @@ from urllib.parse import unquote, urlsplit
 SKIP = ('data/', 'disclosures/data/', 'beta/', 'feeds/', 'media/', 'disclosures/docs/')
 HREF = re.compile(r'''<(a|link|script|img|source|iframe)\b[^>]*?\s(href|src)=["']([^"']+)["']''', re.I)
 TITLE = re.compile(r'<title>(.*?)</title>', re.S)
-SMELLS = [(re.compile(r'>[^<]*\b(None|NaN|nan|undefined)\b[^<]*<'), 'None/NaN/undefined'), (re.compile(r'\$-\d'), '$-N (sign after $)'),
+SMELLS = [(re.compile(r'>[^<]*(\(None\)|\$None|None%|[:=·] None\b(?! reported)|None ·|\bNaN\b|\bnan%|\bundefined\b)[^<]*<'), 'None/NaN/undefined'), (re.compile(r'\$-\d'), '$-N (sign after $)'),
           (re.compile(r'&amp;(amp|lt|gt|#x?\d+);'), 'double-escaped entity'), (re.compile(r'>[^<]*\{[a-z_]+[\(\[\}][^<]*<|\$\{'), 'template leak')]
 
 
