@@ -27,6 +27,9 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 /* a cell allowed to wrap (the signals list, scripts/seo_hub.py) keeps a readable width: in a table wider than a phone it
    got the width of its longest word, one word a line, rows 300px tall */
 .seo .tbl-wrap td [style*="white-space:normal"], .seo .tbl-wrap td [style*="white-space: normal"] { display: inline-block; min-width: 20em; }
+/* a name that may wrap (scripts/seo_daily.py): a company's or a holder's, so a six-column table keeps its figures in view */
+.seo .tbl-wrap td .wrap { white-space: normal; display: inline-block; min-width: 9em; max-width: 22em; }
+@media (max-width: 640px) { .seo .tbl-wrap td .wrap { white-space: nowrap; min-width: 0; max-width: none; } }   /* a phone scrolls the table sideways anyway: one line a row */
 .seo th { background: var(--surface-2); font-size: 12px; color: var(--muted); font-weight: 500; }
 .seo td.num, .seo th.num { text-align: right; font-family: var(--mono); font-size: 13px; }
 .seo-list { padding-left: 18px; line-height: 1.9; }

@@ -104,9 +104,13 @@ def sentence(s):
     return s if s.endswith(('.', '!', '?')) else s + '.'
 
 
-def table(head, rows):
+WRAP = "<span class='wrap'>{}</span>"                     # a long name wraps in its cell (web/seo.css .wrap), so the figures stay in view
+
+
+def table(head, rows, wrap=()):
+    """wrap: the columns (by index) whose text may wrap — company and holder names — so a six-column table fits the page"""
     return (f"<div class='tbl-wrap'><table><thead><tr>{''.join(f'<th>{e(h)}</th>' for h in head)}</tr></thead><tbody>"
-            + ''.join('<tr>' + ''.join(f'<td>{c}</td>' for c in r) + '</tr>' for r in rows) + '</tbody></table></div>')
+            + ''.join('<tr>' + ''.join(f'<td>{WRAP.format(c) if i in wrap else c}</td>' for i, c in enumerate(r)) + '</tr>' for r in rows) + '</tbody></table></div>')
 
 
 # ---------------------------------------------------------------- the lists: (slug, title, h1, lead, body, top lines, n)
@@ -137,7 +141,7 @@ def insiders(hub, link, today, code):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Insider', 'Role', 'Value', 'Price', 'Shares'], [
             [link(r['ticker'], f"{r['ticker']} · {cased(r.get('issuer'))}", 'who-owns'), e(person(r.get('insider'))), e(r.get('role') or r.get('title') or ''),
              e(money(r.get('value'))) + (" <span class='muted'>10b5-1 plan</span>" if r.get('plan_10b5_1') else ''), e(f"${r['price']:,.2f}" if r.get('price') else '—'),
-             e(f"{r['shares']:,.0f}" if r.get('shares') else '—')] for r in sorted(rs, key=lambda r: -(r.get('value') or 0))])
+             e(f"{r['shares']:,.0f}" if r.get('shares') else '—')] for r in sorted(rs, key=lambda r: -(r.get('value') or 0))], wrap=(0, 1))
     slug = 'insider-buying' if buy else 'insider-selling'
     title = (f"Insider buying today ({fdate(today.isoformat())}): the largest open-market purchases by executives and directors" if buy else
              f"Insider selling today ({fdate(today.isoformat())}): the largest share sales by executives and directors")
@@ -165,7 +169,7 @@ def congress(hub, link, today):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Who', 'Trade', 'Amount', 'Disclosed'], [
             [link(r['ticker'], r['ticker'], 'who-owns'), e(r.get('person')) + f" <span class='muted'>{e(r.get('jurisdiction') or '')}</span>", e(r.get('type')),
              e(f"{money(r.get('amount_min'))}–{money(r.get('amount_max'))}"), e(r.get('filed_date') or '') + (f" · <a href='{e(r.get('source_url'))}' rel='nofollow'>filing</a>" if r.get('source_url') else '')]
-            for r in rs[:60]])
+            for r in rs[:60]], wrap=(1,))
     tops = [f"{r['ticker']}: {r.get('person')} {r.get('type')} ({r.get('date')})" for r in sorted(rows, key=lambda r: r.get('date') or '', reverse=True)[:3]]
     return ('congress-trades', f"Congress stock trades today ({fdate(today.isoformat())}): what members of Congress bought and sold", 'Congress stock trades',
             lead, body, tops, len(rows))
@@ -189,7 +193,7 @@ def guidance(hub, link, today):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Guidance', 'Release'], [
             [link(r['ticker'], r['ticker'], 'guidance'), e(GUIDE.get(r['guidance'], r['guidance'])),
              (f"<a href='{e(r.get('url'))}' rel='nofollow'>{e(r.get('headline') or r.get('company') or '8-K')}</a>" if r.get('url') else e(r.get('headline') or ''))]
-            for r in sorted(rs, key=lambda r: (r['guidance'] != 'raised', r['ticker']))])
+            for r in sorted(rs, key=lambda r: (r['guidance'] != 'raised', r['ticker']))], wrap=(2,))
     tops = [f"{r['ticker']} {GUIDE.get(r['guidance'], r['guidance'])}" for r in (up + down)[:4]]
     return ('guidance-changes', f"Guidance raised and lowered today ({fdate(today.isoformat())}): companies changing their outlook", 'Guidance changes',
             lead, body, tops, len(rows))
@@ -212,7 +216,7 @@ def rumors(hub, link, today):
             seen.add((r[1], r[3]))
             out.append([link(r[1], r[1], 'takeover'), e(KIND.get(r[3], r[3])), (f"<a href='{e(r[6])}' rel='nofollow'>{e(r[4])}</a>" if r[6] else e(r[4]))
                         + (f" <span class='muted'>— {e(r[5])}</span>" if r[5] and r[3] == 'news' else '')])
-        body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Kind', 'What'], out[:40])
+        body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Kind', 'What'], out[:40], wrap=(2,))
     return ('takeover-rumors', f"Takeover rumors and buyout news today ({fdate(today.isoformat())}): companies exploring a sale or receiving offers",
             'Takeover rumors', lead, body, [f"{r[1]}: {r[4][:90]}" for r in rows[:3]], len(cos))
 
@@ -268,7 +272,7 @@ def stakes(hub, link, today):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Holder', 'Stake', 'Filing', 'Purpose'], [
             [link(tick(r), cased(r.get('issuer'))) if tick(r) else e(cased(r.get('issuer'))), e(holder(r)), e(stake(r.get('percent'))),
              (f"<a href='{e(r.get('url'))}' rel='nofollow'>{e(r.get('form'))}</a>" if r.get('url') else e(r.get('form'))) + (' (amended)' if r.get('amendment') else ''),
-             e((r.get('purpose') or '')[:160])] for r in rs[:50]])
+             e((r.get('purpose') or '')[:160])] for r in rs[:50]], wrap=(0, 1, 4))
     return ('activist-stakes', f"New 13D filings today ({fdate(today.isoformat())}): activist stakes above 5%", 'Activist stakes (13D)', lead, body,
             [f"{holder(r)} {stake(r.get('percent'))} of {cased(r.get('issuer'))}" for r in new[:3]], len(rows))
 
