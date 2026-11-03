@@ -60,9 +60,11 @@ jobs:
           git add --sparse docs/data/holdings-backfill.json docs/data/cache/holdings docs/data/shards/holdings 2>/dev/null || git add --sparse docs/data/holdings-backfill.json
           if git diff --cached --quiet; then echo "nothing new"; exit 0; fi
           git commit -qm "13F back-fill: ${{ steps.fill.outputs.managers }} managers (${{ steps.fill.outputs.remaining }} left)"
+          # -X theirs: a manager the collector refreshed during this run (its own, shallower files) takes this run's
+          # deeper reading; the collector's next refresh of it starts from the merged row (holdings-backfill.json)
           for attempt in 1 2 3 4 5; do
             git fetch -q --depth 60 origin main
-            if git rebase -q origin/main && git push -q origin HEAD:main; then echo "pushed on attempt $attempt"; exit 0; fi
+            if git rebase -q -X theirs origin/main && git push -q origin HEAD:main; then echo "pushed on attempt $attempt"; exit 0; fi
             git rebase --abort 2>/dev/null || true
             sleep $((attempt * 15))
           done

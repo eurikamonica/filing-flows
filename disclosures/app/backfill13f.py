@@ -111,6 +111,8 @@ def pending(catalog, state, shard=None, now_iso=None, cfg=None):
             continue
         if not cfg:
             continue
+        if (r.get('last_attempt') or '') > (dt.datetime.fromisoformat(now_iso) - dt.timedelta(hours=2)).isoformat():
+            continue                                         # the collector just refreshed it: not this hop (the two would write the same files)
         known = done.get(c) or r                             # the relay's own summary row, else the catalog's range fields
         current = known.get('since') or r.get('since')
         usd, n = size_of(known)
