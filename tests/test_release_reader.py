@@ -259,3 +259,12 @@ def test_release_lines_small_line_makes_the_sum_exact():
     lines, groups = _lines(rows, 3440.8e6)
     assert set(lines) == {"TRIKAFTA/KAFTRIO", "ALYFTREK", "Other CF product revenues", "CASGEVY", "JOURNAVX", "PALSONIFY"}
     assert groups == ["CF product revenues, net"]
+
+
+def test_release_lines_never_per_share_rows_or_captions():
+    # Starbucks: "Net earnings per common share - diluted" was drawn as a revenue line beside the coffeehouses
+    rows = [("Three Months Ended September 28, 2026", "2026", "2025"), ("Company-operated coffeehouses", "7,429.6", "7,862.0"),
+            ("Licensed coffeehouses", "1,196.1", "1,093.0"), ("Other", "515.5", "614.0"), ("Total net revenues", "9,141.2", "9,569.0"),
+            ("Net earnings per common share - diluted", "0.39", "0.69"), ("Dividends declared per common share", "0.62", "0.61")]
+    lines, groups = _lines(rows, 9141.2e6)
+    assert set(lines) == {"Company-operated coffeehouses", "Licensed coffeehouses", "Other"}

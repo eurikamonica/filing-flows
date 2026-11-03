@@ -649,7 +649,16 @@ def reconcile(raw, labels=None, tax_checked=False):
 
 GENERIC_REV = re.compile(r"^(total )?(net )?(revenues?|sales|net sales|net revenues?)$")
 NOT_A_LINE = re.compile(r"per share|margin|%|income|expense|cost|profit|loss|eps|tax|depreciation|amortization|"
-                        r"compensation|cash|assets|liabilities|equity|shares|interest|capital|total$")
+                        r"compensation|cash|assets|liabilities|equity|shares|interest|capital|total$|"
+                        # never revenue lines either, though they print as rows of figures (page audit, Nov 2026):
+                        # Starbucks' "Net earnings per common share - diluted", Tractor Supply's "Dividends declared per
+                        # common share", a column caption ("Three Months Ended September 30,", "(in millions, except
+                        # per share data)"), volumes and ratios
+                        r"per (common |diluted |basic )?(share|unit)|earnings applicable|dividends?( declared)?\b|"
+                        r"weighted average|(months|weeks|quarters?|years?) ended|fiscal q\d|^\(?(in|dollars|\$) |"
+                        r"except (per|share|for)|unaudited|non-gaap|adjusted|ebitda|ebita\b|volumes?\b|\bmbpd\b|mmcf|"
+                        r"\btons\b|payable|receivable|goodwill|inventor(y|ies)|\bdebt\b|borrowings|\blease liabilit|"
+                        r"deposits$|retained earnings|accrued|salaries|wages|occupancy|professional fees|\bratio\b")
 SEG_CTX = re.compile(r"segment|business unit|business group|by product|product line|division|reportable|by market|end market", re.I)
 GEO_CTX = re.compile(r"geograph|region|country|by location|domestic|international", re.I)
 
