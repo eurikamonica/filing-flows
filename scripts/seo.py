@@ -92,6 +92,11 @@ def money(v):
     return f"{s}${a / 1e9:.1f}B" if a >= 0.95e9 else f"{s}${a / 1e6:.0f}M" if a >= 0.95e6 else f"{s}${a / 1e3:.0f}K"
 
 
+def usd2(v):
+    """a per-share dollar figure with its sign in front: −$0.24, not $-0.24"""
+    return "—" if v is None else f"{'−' if v < 0 else ''}${abs(v):,.2f}"
+
+
 def pct(v, signed=True):
     return "—" if v is None else (f"{v:+.0f}%" if signed else f"{v:.1f}%")
 
@@ -132,6 +137,8 @@ def _signs(body):
 
 
 def page(title, desc, canonical, body, depth, image, jsonld=None):
+    if len(title) > 70 and title.endswith(" | Filing Flows"):      # a long title keeps its own words; search shows the site's name anyway
+        title = title[:-len(" | Filing Flows")]
     body = _signs(body)
     up = "../" * depth
     jsonld = with_publisher(jsonld, canonical, title)

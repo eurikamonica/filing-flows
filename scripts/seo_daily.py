@@ -209,7 +209,7 @@ def calendar(hub, link, today):
                        note='The number is how many report that day; the shade is their combined latest-quarter revenue, so a dark day is a heavy one.', fmt=money)
     for day, rs in sorted(by_date(rows, lambda r: r.get('report_date')), key=lambda x: x[0]):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'EPS estimate', 'Analysts', 'Beat rate', 'Beat odds (model)'], [
-            [link(r['ticker'], f"{r['ticker']} · {display_name(r.get('name'))}", 'earnings-date'), e(f"${r['eps']:.2f}" if r.get('eps') is not None else '—'),
+            [link(r['ticker'], f"{r['ticker']} · {display_name(r.get('name'))}", 'earnings-date'), e(f"{'−' if r['eps'] < 0 else ''}${abs(r['eps']):.2f}" if r.get('eps') is not None else '—'),
              e(f"{r['n']:.0f}" if r.get('n') else '—'), e(f"{round(100 * r['beat_rate'])}%" if r.get('beat_rate') is not None else '—'),
              e(f"{round(100 * r['model'])}%" if isinstance(r.get('model'), (int, float)) else '—')] for r in sorted(rs, key=lambda r: r['ticker'])[:80]])
     return ('earnings-calendar', f"Earnings calendar this week and next ({fdate(today.isoformat())}): who reports, EPS estimates and beat odds", 'Earnings calendar',

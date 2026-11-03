@@ -278,6 +278,7 @@ def write(site, base):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--site', default='_site')
-    ap.add_argument('--base', default='https://filing-flows.com')
+    ap.add_argument('--site-url', default=os.environ.get('SITE_URL', '') or 'https://filing-flows.com')
     a = ap.parse_args()
-    print('timeline pages:', write(a.site, a.base))
+    m = re.search(r'https?://[^\s"]+', a.site_url or '')
+    print('timeline pages:', write(a.site, m.group(0) if m else 'https://filing-flows.com'))

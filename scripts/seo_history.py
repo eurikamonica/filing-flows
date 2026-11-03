@@ -129,10 +129,10 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
         navs.append(f"<a href='../{qslug(next_q['label'])}/'>← {e(next_q['label'])}</a>")
     if prev_q:
         navs.append(f"<a href='../{qslug(prev_q['label'])}/'>{e(prev_q['label'])} →</a>")
-    if has_period:
-        if prev_q:
+    if has_period:                                   # only the comparisons period_page() writes: both revenues on file
+        if prev_q and rev[1] and rev[2]:
             navs.append(f"<a href='../{qslug(lab)}-vs-{qslug(prev_q['label'])}/'>{e(lab)} vs {e(prev_q['label'])} (Q/Q)</a>")
-        if ya:
+        if ya and rev[1] and rev[3]:
             navs.append(f"<a href='../{qslug(lab)}-vs-{qslug(ya)}/'>{e(lab)} vs {e(ya)} (Y/Y)</a>")
     analysis = ''.join(f'<p>{e(a)}</p>' for a in (q.get('analysis') or [])[:4])
     qa = [(f"What was {name}'s revenue in the {words}?", first(lead))]
@@ -270,7 +270,7 @@ def segment_metrics(c):
 def unit_fmt(v, unit):
     if v is None:
         return '—'
-    return money(v) if unit == 'usd' else f'${v:.2f}' if unit == 'ps' else f'{v:.1f}%'
+    return money(v) if unit == 'usd' else seo.usd2(v) if unit == 'ps' else f'{v:.1f}%'
 
 
 def vs_mid(v, unit):

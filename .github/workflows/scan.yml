@@ -399,7 +399,7 @@ jobs:
         continue-on-error: true
         env:
           SITE_URL: ${{ vars.SITE_URL }}
-        run: python scripts/seo_timeline.py --site _site --base "${SITE_URL:-https://filing-flows.com}"
+        run: python scripts/seo_timeline.py --site _site
       - name: The home page's plain HTML (who reported this week, who reports next, links to every page type)
         continue-on-error: true
         run: python scripts/seo_home.py --site _site

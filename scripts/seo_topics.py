@@ -56,7 +56,7 @@ def read(path):
 
 
 def usd(v, d=2):
-    return '—' if v is None else f'${v:,.{d}f}'
+    return '—' if v is None else f"{'−' if v < 0 else ''}${abs(v):,.{d}f}"
 
 
 def pc(v, d=0, signed=True):
@@ -423,23 +423,23 @@ def earnings_date(co, er, c, cons, today=None):
     lead = ''
     if just:
         verb = 'beat' if last['act'] > last['est'] else 'missed' if last['act'] < last['est'] else 'matched'
-        lead = (f"{name} ({t}) reported on {fdate(last['reported'])} and {verb} the EPS estimate: ${last['act']:.2f} against ${last['est']:.2f}"
+        lead = (f"{name} ({t}) reported on {fdate(last['reported'])} and {verb} the EPS estimate: {seo.usd2(last['act'])} against {seo.usd2(last['est'])}"
                 + (f" ({100 * last['surprise']:+.1f}%)" if last.get('surprise') is not None else '')
                 + (f". Revenue was {revs} for {q.get('label')}" + (f", {pc(h.get('yoy'))} year over year" if h.get('yoy') is not None else '') if h.get('revenue') else '')
                 + (f". The stock moved {100 * last['move']:+.1f}% on the report" if last.get('move') is not None else '') + '. ')
-        title = f"{name} ({t}) Earnings {verb.capitalize()}: EPS ${last['act']:.2f} vs ${last['est']:.2f}, Revenue {revs}"
+        title = f"{name} ({t}) Earnings {verb.capitalize()}: EPS {seo.usd2(last['act'])} vs {seo.usd2(last['est'])}, Revenue {revs}"
         h1 = f"{name} ({t}) earnings: {verb} the estimate"
     if days >= 0:
         lead += (f"{name} ({t}) {'reports next' if just else 'is expected to report earnings'} on {when}" + (f", in {days} days" if days else ', today')
                  + (f", for the quarter ending {fdate(er.get('quarter'))}" if er.get('quarter') else '') + '.')
         if cs.get('eps') is not None:
-            lead += (f" Analysts expect EPS of ${cs['eps']:.2f}"
-                     + (f" (${cs['eps_low']:.2f} to ${cs['eps_high']:.2f}, {cs['n']:.0f} estimates)" if cs.get('eps_low') is not None and cs.get('n') else '')
+            lead += (f" Analysts expect EPS of {seo.usd2(cs['eps'])}"
+                     + (f" ({seo.usd2(cs['eps_low'])} to {seo.usd2(cs['eps_high'])}, {cs['n']:.0f} estimates)" if cs.get('eps_low') is not None and cs.get('n') else '')
                      + (f" on revenue of {money(cs['rev'])}" if cs.get('rev') else '')
-                     + ((f", against ${cs['year_ago_eps']:.2f}" + (f" and {money(cs['year_ago_rev'])}" if cs.get('year_ago_rev') else '') + ' a year ago')
+                     + ((f", against {seo.usd2(cs['year_ago_eps'])}" + (f" and {money(cs['year_ago_rev'])}" if cs.get('year_ago_rev') else '') + ' a year ago')
                         if cs.get('year_ago_eps') is not None else '') + '.')
         if not just:
-            title = f"{name} ({t}) Earnings {fdate(d)[:-6]}: What to Expect" + (f" (EPS Est. ${cs['eps']:.2f})" if cs.get('eps') is not None else '')
+            title = f"{name} ({t}) Earnings {fdate(d)[:-6]}: What to Expect" + (f" (EPS Est. {seo.usd2(cs['eps'])})" if cs.get('eps') is not None else '')
             h1 = f"{name} ({t}) earnings on {fdate(d)}: what to expect"
     elif not just:
         lead = (f"{name} ({t}) last reported on {fdate(last['reported'] if last else d)}"
@@ -454,19 +454,19 @@ def earnings_date(co, er, c, cons, today=None):
     if just:
         qa.insert(0, (f"Did {name} beat earnings?", lead.split('. ')[0].rstrip('.') + '.'))
     if cs.get('eps') is not None and days >= 0:
-        qa.append((f"What are analysts expecting from {name}?", f"EPS of ${cs['eps']:.2f}" + (f" and revenue of {money(cs['rev'])}" if cs.get('rev') else '') + ' for the quarter.'))
+        qa.append((f"What are analysts expecting from {name}?", f"EPS of {seo.usd2(cs['eps'])}" + (f" and revenue of {money(cs['rev'])}" if cs.get('rev') else '') + ' for the quarter.'))
     if beat is not None:
         qa.append((f"Does {name} usually beat earnings?", f"It beat the consensus EPS estimate in {round(100 * beat)}% of the quarters on record."))
     tiles = ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
         ('Last result', (f"{'+' if last['act'] >= last['est'] else '−'}{abs(100 * (last.get('surprise') or 0)):.1f}% vs estimate") if just else None),
         ('Report date', when if days >= 0 else None), ('Days to go', str(days) if days >= 0 else None),
-        ('EPS estimate', f"${cs['eps']:.2f}" if cs.get('eps') is not None and days >= 0 else None),
+        ('EPS estimate', f"{seo.usd2(cs['eps'])}" if cs.get('eps') is not None and days >= 0 else None),
         ('Revenue estimate', money(cs.get('rev')) if cs.get('rev') and days >= 0 else None), ('Beat rate', f"{round(100 * beat)}%" if beat is not None else None),
         ('Implied move', f"±{100 * mv:.1f}%" if mv and days >= 0 else None)) if v)
     charts = ''
     hh = [x for x in hist[-8:] if x.get('est') is not None and x.get('act') is not None]
     if len(hh) >= 3:
-        charts += SV.duo([(fdate(x['reported'])[:3] + ' ' + x['reported'][2:4], x['est'], x['act']) for x in hh], ('Estimate', 'Reported'), lambda v: f"${v:.2f}",
+        charts += SV.duo([(fdate(x['reported'])[:3] + ' ' + x['reported'][2:4], x['est'], x['act']) for x in hh], ('Estimate', 'Reported'), seo.usd2,
                          f"{name}: EPS against the estimate, last {len(hh)} reports")
     mm = [x for x in hist[-8:] if x.get('move') is not None]
     if len(mm) >= 3:
@@ -483,8 +483,8 @@ def earnings_date(co, er, c, cons, today=None):
                      + SV.diverging([(g[0], g[2]) for g in grow], lambda v: f"{v:+.0f}%", f"{name}: revenue lines, growth year over year, {q.get('label')}", n=6))
             ours = er.get('ours') or {}
             if ours.get('eps') is not None and cs.get('eps') is not None:
-                watch += (f"<p>Filing Flows' own estimate from the SEC figures — the same quarter last year times recent growth — is EPS ${ours['eps']:.2f}"
-                          + (f" on revenue of {money(ours['rev'])}" if ours.get('rev') else '') + f", against the analysts' ${cs['eps']:.2f}.</p>")
+                watch += (f"<p>Filing Flows' own estimate from the SEC figures — the same quarter last year times recent growth — is EPS {seo.usd2(ours['eps'])}"
+                          + (f" on revenue of {money(ours['rev'])}" if ours.get('rev') else '') + f", against the analysts' {seo.usd2(cs['eps'])}.</p>")
     lastq = (f"<h2>The last report</h2><p>{e(name)} reported revenue of {e(revs)} for the {e(seo.period_words(q.get('label')))}"
              + (f" ({e(pc(h.get('yoy')))} Y/Y)" if h.get('yoy') is not None else '') + (f", net earnings {e(h.get('ni_fmt') or money(h.get('ni')))}" if h.get('ni') is not None else '')
              + (": " + ', '.join(f"{e(n)} {e(money(v))}" for n, v in segs[:4]) if len(segs) >= 2 else '')
