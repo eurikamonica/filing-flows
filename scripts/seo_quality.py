@@ -133,7 +133,7 @@ def reasons(x):
     return lost, won
 
 
-def page_for(x, slug, base, universe):
+def page_for(x, slug, base, universe, has_cf=True):
     name = display_name(x.get('name'))
     t = x.get('ticker') or ''
     lost, won = reasons(x)
@@ -158,7 +158,7 @@ def page_for(x, slug, base, universe):
             "accruals 20, discretionary accruals 10, Beneish M 15, Dechow F 15, Montier C 15, Piotroski F 10, the non-GAAP gap 10, smoothness 5. "
             "A measure that cannot be computed (Beneish for a bank, say) drops out and the rest is rescaled, so every company is scored on what applies to it.</p></div>"
             f"<p><a class='seo-cta' href='../../../disclosures/earnings-quality/'>Every company ranked →</a> <a href='../../../disclosures/#quality'>The full quality workbench, live →</a> "
-            f"<a href='../cash-flow/'>{e(name)}: cash flow →</a></p>{DISCLAIMER}")
+            + (f"<a href='../cash-flow/'>{e(name)}: cash flow →</a>" if has_cf else '') + f"</p>{DISCLAIMER}")
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
                                                          {'@type': 'ListItem', 'position': 2, 'name': name, 'item': f"{base}/c/{slug}/"},
@@ -180,8 +180,8 @@ def index_page(site, base, scored, slugs):
     for x in scored:
         by_sec.setdefault(x.get('sector') or 'other', []).append(x['score'])
     grades = {g: sum(1 for x in scored if x['grade'] == g) for g in 'ABCDE'}
-    lead = (f"{len(scored)} companies scored 0–100 on eight published measures of earnings quality: accruals, discretionary accruals, Beneish M, Dechow F, Montier C, Piotroski F, "
-            f"the non-GAAP gap and smoothness. {grades['A']} grade A, {grades['B']} B, {grades['C']} C, {grades['D']} D and {grades['E']} E. "
+    lead = (f"{len(scored):,} companies scored 0–100 on eight published measures of earnings quality: accruals, discretionary accruals, Beneish M, Dechow F, Montier C, Piotroski F, "
+            f"the non-GAAP gap and smoothness. {grades['A']:,} grade A, {grades['B']:,} B, {grades['C']:,} C, {grades['D']:,} D and {grades['E']:,} E. "
             f"The median score is {sorted(x['score'] for x in scored)[len(scored) // 2]}.")
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Earnings quality</p><h1>Earnings quality scores: every company, 0 to 100</h1>"
             f"<p class='lead'>{e(lead)}</p>"
@@ -241,7 +241,7 @@ def write(site, base, today=None):
         if not slug:
             continue
         try:
-            url, doc = page_for(x, slug, base, scored)
+            url, doc = page_for(x, slug, base, scored, os.path.exists(os.path.join(site, 'c', slug, 'cash-flow', 'index.html')))
         except Exception as err:  # noqa: BLE001
             print(f"quality page skipped ({x.get('ticker')}): {err}")
             continue
@@ -251,7 +251,7 @@ def write(site, base, today=None):
         link_from_company(site, slug)
         urls.append(url)
     urls.insert(0, index_page(site, base, scored, slugs))
-    today_s = (today or dt.date.today()).isoformat()
+    today_s = str(ix.get('asof') or (today or dt.date.today()).isoformat())[:10]     # the fundamentals' date: changes when they do
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     sm += [f'<url><loc>{xesc(u)}</loc><lastmod>{today_s}</lastmod></url>' for u in urls]
     sm.append('</urlset>')

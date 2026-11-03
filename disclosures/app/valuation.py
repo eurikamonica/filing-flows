@@ -46,6 +46,10 @@ Methods (every assumption is in the output, nothing is hidden):
   PVGO        no-growth value = NOPAT ÷ WACC − net debt (financials: net income ÷ cost of equity); the rest of the market
               value is the price of expected growth.
   Peers       median and interquartile range of P/E, EV/EBITDA, EV/Sales in the narrowest SIC group with ≥ 6 peers.
+  Weighted    the same peers weighted by size and recency (app/peer_weights.py): each peer's share of the group's market
+  peers       value, revenue and trading value (geometric mean, none above 20%), its multiple today and at every quarter
+              since 2022 with a one-year half-life; weighted quartiles. Lenses beside the plain medians (P/E, EV/EBITDA,
+              EV/Sales, P/FFO and the sum of the parts).
   Residual    book value + the discounted earnings above the cost of equity, ROE fading to the cost of equity over 10
   income      years, half of earnings retained.
   Banks       P/TBV regressed on ROTCE across banks; insurers P/B on ROE; REITs P/FFO (FFO ≈ net income + D&A − gains on
@@ -95,6 +99,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import base_rates as BR
 import valuation_methods as VMx  # noqa: E402
 import valuation_extra as VX  # noqa: E402  (more lenses and the implied return, app/valuation_extra.py)
+import peer_weights as PW  # noqa: E402  (the weighted peer multiples, app/peer_weights.py)
 import markov  # noqa: E402  (regime-switching Monte Carlo, app/markov.py)
 import valuation_sim as VS  # noqa: E402  (pipeline rNPV and the Schwartz–Moon simulation, app/valuation_sim.py)
 import sim_backtest as SB  # noqa: E402  (walk-forward backtest of the simulations, app/sim_backtest.py)
@@ -234,12 +239,14 @@ def stdev(xs):
 
 
 # ------------------------------------------------------------------ prices, returns, beta
-def load_prices(prices_dir, ticker):
+def load_prices(prices_dir, ticker, raw=False):
     """Daily [(date, close)] from the hub's price cache, or []. prices_dir may be a list of folders (the hub's cache,
-    then this branch's top-up, collect_prices): the series reaching the latest day wins."""
+    then this branch's top-up, collect_prices): the series reaching the latest day wins. raw=True: (that, and the rows
+    [date, close, volume] of the most recent file that has volumes — the weighted peers' trading value; the top-up's
+    weekly closes have none)."""
     if not prices_dir or not ticker:
-        return []
-    best = []
+        return ([], []) if raw else []
+    best, best_raw = [], []
     for folder in (prices_dir if isinstance(prices_dir, (list, tuple)) else [prices_dir]):
         if not folder:
             continue
@@ -249,8 +256,10 @@ def load_prices(prices_dir, ticker):
                 rows = [(r[0], float(r[1])) for r in d['rows'] if len(r) > 1 and fin(r[1]) and r[1] > 0]
                 if rows and (not best or rows[-1][0] > best[-1][0]):
                     best = rows
+                if raw and any(len(r) > 2 for r in d['rows'][-20:]) and (not best_raw or d['rows'][-1][0] > best_raw[-1][0]):
+                    best_raw = d['rows']
                 break
-    return best
+    return (best, best_raw) if raw else best
 
 
 YAHOO_CHART = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&interval=1d&events=div%2Csplit'
@@ -848,8 +857,9 @@ def segments_of(slim):
     return leaves if len(leaves) >= 2 else []
 
 
-def sotp(segs, evs_buckets, own, shares, net_debt):
-    """Sum of the parts on annualised segment revenue × the median EV/Sales of the peers each segment maps to."""
+def sotp(segs, evs_buckets, own, shares, net_debt, pw=None):
+    """Sum of the parts on annualised segment revenue × the median EV/Sales of the peers each segment maps to; with pw
+    (the weighted peers' inputs, app/peer_weights.py), each segment also at its peers' weighted EV/Sales."""
     if not segs or not fin(shares) or shares <= 0:
         return None
     parts, groups = [], set()
@@ -865,13 +875,59 @@ def sotp(segs, evs_buckets, own, shares, net_debt):
         else:
             mult, lo, hi = pctile(xs, 0.5), pctile(xs, 0.25), pctile(xs, 0.75)
         groups.add(key)
-        parts.append({'segment': name, 'revenue': qv * 4, 'group': key, 'ev_sales': mult, 'ev': qv * 4 * mult, 'ev_lo': qv * 4 * lo, 'ev_hi': qv * 4 * hi})
+        part = {'segment': name, 'revenue': qv * 4, 'group': key, 'ev_sales': mult, 'ev': qv * 4 * mult, 'ev_lo': qv * 4 * lo, 'ev_hi': qv * 4 * hi}
+        if pw:
+            w = PW.weighted([c for c, _ in evs_buckets.get(key, []) if c != own['cik']], pw['cur'].get('ev_sales') or {},
+                            (pw.get('hist') or {}).get('ev_sales'), pw['info'], pw.get('tick'))
+            if w and all(fin(w[k]) for k in ('p25', 'p50', 'p75')):
+                part.update({'ev_sales_w': w['p50'], 'ev_w': qv * 4 * w['p50'], 'ev_w_lo': qv * 4 * w['p25'], 'ev_w_hi': qv * 4 * w['p75'],
+                             'n_eff': w['n_eff'], 'top': w['top'][:3]})
+        parts.append(part)
     if len(groups) < 2:
         return None
     nd = net_debt or 0
     ev, lo, hi = (sum(p[k] for p in parts) for k in ('ev', 'ev_lo', 'ev_hi'))
-    return {'parts': parts, 'point': (ev - nd) / shares, 'low': (lo - nd) / shares, 'high': (hi - nd) / shares,
-            'note': 'latest quarter ×4 for each segment, priced at the median EV/Sales of the industry its name maps to — a rough guide'}
+    out = {'parts': parts, 'point': (ev - nd) / shares, 'low': (lo - nd) / shares, 'high': (hi - nd) / shares,
+           'note': 'latest quarter ×4 for each segment, priced at the median EV/Sales of the industry its name maps to — a rough guide'}
+    if pw and all('ev_w' in p for p in parts):
+        ew, lw, hw = (sum(p[k] for p in parts) for k in ('ev_w', 'ev_w_lo', 'ev_w_hi'))
+        out['weighted'] = {'point': (ew - nd) / shares, 'low': (lw - nd) / shares, 'high': (hw - nd) / shares,
+                           'note': 'each segment at the weighted EV/Sales of its industry: peers weighted by market value, revenue and trading '
+                                   'value (none above 20%), their quarters since 2022 fading by half each year'}
+    return out
+
+
+WEIGHT_ASSUMPTIONS = [['Size weight', 'geometric mean of the peer\'s shares of market value, revenue and trading value', 'app/peer_weights.py'],
+                      ['Cap', f'{PW.CAP:.0%} of the weight a peer', 'an assumption: the largest peer weighs most but is never the whole answer'],
+                      ['Recency', f'0.5 ^ (age ÷ {PW.HALF_LIFE:g} year) over its quarters since 2022', 'an assumption: last year\'s quarters count half'],
+                      ['Trading value', f'median daily close × volume, last {PW.DVOL_DAYS} sessions', "the hub's daily prices"]]
+
+
+def weighted_calc(metric, label, w, plain, F, sh, low, point, high, base=None):
+    """The appendix entry of a weighted peer multiple (formula, the numbers in it, the weights used)."""
+    name = label.split(' vs')[0]
+    base_label, base_v = {'pe': ('EPS, four quarters', F.get('eps')), 'ev_ebitda': ('EBITDA, four quarters', F.get('ebitda')),
+                          'ev_sales': ('Revenue, four quarters', F.get('revenue')), 'p_ffo': ('FFO, four quarters', base)}[metric]
+    by = w.get('by') or {}
+    alone = '; '.join(f'{PW.LABEL[k]} {VMx.xm(by.get(k), 1)}' for k in ('equal', 'mcap', 'revenue', 'dvol', 'time') if fin(by.get(k)))
+    nd = (F.get('debt') or 0) - (F.get('cash') or 0) + (F.get('claims') or 0)
+    if metric == 'pe':
+        last = f'= {VMx.xm(w["p50"], 1)} × {VMx.ps(base_v)} = {VMx.ps(point)}'
+    elif metric == 'p_ffo':
+        last = f'= {VMx.xm(w["p50"], 1)} × {VMx.money(base_v)} ÷ {VMx.num(sh)} = {VMx.ps(point)}'
+    else:
+        last = f'= ({VMx.xm(w["p50"], 1)} × {VMx.money(base_v)} {VMx.less_nd(nd)}) ÷ {VMx.num(sh)} = {VMx.ps(point)}'
+    steps = [f'{w["n"]} peers, {w["n_obs"]} observations ({"today and every quarter since 2022" if w.get("timed") else "today only"}); '
+             f'the weights amount to {w["n_eff"]:.1f} equal peers',
+             f'medians: {alone}; all together {VMx.xm(w["p50"], 1)}',
+             last + f'  (weighted middle half {VMx.xm(w["p25"], 1)} – {VMx.xm(w["p75"], 1)} → {VMx.ps(low)} – {VMx.ps(high)})']
+    formula = (f'Value per share = weighted peer median {name} × {base_label.split(",")[0]}' + ('' if metric == 'pe' else ' (− net debt, ÷ shares)')
+               + '; weight of a peer\'s multiple = size weight × recency weight')
+    inputs = [[base_label, VMx.ps(base_v) if metric == 'pe' else VMx.money(base_v), 'SEC XBRL frames / main site'],
+              ['Largest weights', ', '.join(f'{t} {x:.0%}' for t, x in w.get('top') or []), 'shares of the peers\' market value, revenue and trading value']]
+    if metric not in ('pe', 'p_ffo'):
+        inputs.append(['Net debt', VMx.money(nd), 'debt − cash + claims'])
+    return VMx.calc(formula, steps, inputs, WEIGHT_ASSUMPTIONS)
 
 
 # ------------------------------------------------------------------ one company
@@ -1157,6 +1213,17 @@ def analyse(F, ctx):
         if fin(lo) and fin(hi) and fin(mid) and hi > 0:
             out['football'].append({'method': label, 'low': min(lo, hi), 'high': max(lo, hi), 'point': mid,
                                     'note': f'{n} peers ({group_label(g)}): median {p50:.1f}x, middle half {p25:.1f}–{p75:.1f}x'})
+        # the same peers weighted by size, trading and recency (app/peer_weights.py): a lens beside the plain median
+        pw = ctx.get('pw')
+        if pw:
+            w = PW.weighted([c for c, _ in ctx['buckets'][metric].get(g, []) if c != F['cik']], pw['cur'].get(metric) or {},
+                            (pw.get('hist') or {}).get(metric), pw['info'], pw.get('tick'))
+            if w and all(fin(w[k]) for k in ('p25', 'p50', 'p75')):
+                peers[metric]['weighted'] = w
+                wl, wm, wh = fn(w['p25']), fn(w['p50']), fn(w['p75'])
+                if fin(wl) and fin(wh) and fin(wm) and wh > 0:
+                    out['football'].append({'method': label + ', weighted', 'low': min(wl, wh), 'high': max(wl, wh), 'point': wm, 'lens': True,
+                                            'note': PW.note(w, p50, f'peers ({group_label(g)})'), 'calc': weighted_calc(metric, label, w, p50, F, sh, wl, wm, wh)})
     out['peers'] = peers
     # ---- residual income
     if W and fin(F['equity']) and F['equity'] > 0 and fin(F['ni']) and fin(sh) and sh > 0:
@@ -1205,13 +1272,36 @@ def analyse(F, ctx):
                 sec['peers'] = {'n': n, 'p25': p25, 'p50': p50, 'p75': p75}
                 out['football'].append({'method': 'P/FFO vs REIT peers', 'low': p25 * ffo / sh, 'high': p75 * ffo / sh, 'point': p50 * ffo / sh,
                                         'note': f'{n} REITs: median {p50:.1f}x FFO'})
+                pw = ctx.get('pw')
+                w = PW.weighted([c for c, _ in ctx['buckets']['p_ffo'].get(g, []) if c != F['cik']], pw['cur'].get('p_ffo') or {}, None,
+                                pw['info'], pw.get('tick')) if pw else None
+                if w and all(fin(w[k]) for k in ('p25', 'p50', 'p75')):
+                    sec['peers']['weighted'] = w
+                    out['football'].append({'method': 'P/FFO vs REIT peers, weighted', 'low': w['p25'] * ffo / sh, 'high': w['p75'] * ffo / sh,
+                                            'point': w['p50'] * ffo / sh, 'lens': True, 'note': PW.note(w, p50, 'REITs'),
+                                            'calc': weighted_calc('p_ffo', 'P/FFO vs REIT peers', w, p50, F, sh, w['p25'] * ffo / sh, w['p50'] * ffo / sh,
+                                                                  w['p75'] * ffo / sh, base=ffo)})
         out['sector_model'] = sec
     # ---- sum of the parts
-    so = sotp(ctx.get('segments') or [], ctx['buckets'].get('ev_sales', {}), F, sh, F['debt'] - F['cash'] + F['claims']) if not fin_kind else None
+    so = sotp(ctx.get('segments') or [], ctx['buckets'].get('ev_sales', {}), F, sh, F['debt'] - F['cash'] + F['claims'], ctx.get('pw')) if not fin_kind else None
     if so:
         out['sotp'] = so
         out['football'].append({'method': 'Sum of the parts (segments × peer EV/Sales)', 'low': so['low'], 'high': so['high'], 'point': so['point'],
                                 'note': so['note']})
+        sw = so.get('weighted')
+        if sw and fin(sw['point']):
+            nd = F['debt'] - F['cash'] + F['claims']
+            out['football'].append({'method': 'Sum of the parts, weighted (segments × weighted peer EV/Sales)', 'low': min(sw['low'], sw['high']), 'high': max(sw['low'], sw['high']),
+                                    'point': sw['point'], 'lens': True, 'note': sw['note'],
+                                    'calc': VMx.calc('Value = (Σ segment revenue × its peers\' weighted EV/Sales − net debt) ÷ shares',
+                                                     [f'{p["segment"]}: {VMx.money(p["revenue"])} × {VMx.xm(p["ev_sales_w"], 1)} (plain {VMx.xm(p["ev_sales"], 1)}; '
+                                                      f'{p["n_eff"]:.1f} effective peers) = {VMx.money(p["ev_w"])}' for p in so['parts']][:8]
+                                                     + [f'= ({VMx.money(sum(p["ev_w"] for p in so["parts"]))} {VMx.less_nd(nd)}) ÷ {VMx.num(sh)} = {VMx.ps(sw["point"])} '
+                                                        f'({VMx.ps(sw["low"])} – {VMx.ps(sw["high"])} at the weighted quartiles)'],
+                                                     [['Segments', f'{len(so["parts"])}', 'the 10-K/10-Q segment note (main site)'],
+                                                      ['Largest weights by segment', '; '.join(f'{p["segment"]}: ' + ', '.join(f'{t} {w:.0%}' for t, w in p.get('top') or [])
+                                                                                              for p in so['parts']), 'market value, revenue and trading value shares']],
+                                                     WEIGHT_ASSUMPTIONS)})
     # ---- the market's and the analysts' numbers
     cons = ctx.get('cons') or {}
     a = cons.get('analysts') or {}
@@ -1452,7 +1542,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     Fs = {}
     for meta in companies:
         cik = str(meta['cik'])
-        px = load_prices(prices, meta['ticker'])
+        px, px_raw = load_prices(prices, meta['ticker'], raw=True)
         if not px:
             continue
         slim = read_json(root / 'site' / 'c' / f'{cik}.json.gz', {}) or {}
@@ -1460,6 +1550,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
         cons_c = _load_dir(consensus, f'c/{cik}.json') or {}
         F = company_inputs(cik, meta, P.get(cik), slim, drec, cons_c, px[-1][1], periods)
         F['_px'], F['_slim'], F['_debt'], F['_cons'] = px, slim, drec, cons_c
+        F['dvol'] = PW.dollar_volume(px_raw)              # trading value: the weighted peers' third size measure
         if fin(F['mcap']) and F['mcap'] > 0:
             F['pe'] = F['price'] / F['eps'] if fin(F['eps']) and F['eps'] > 0 and F['price'] / F['eps'] <= 200 else None
             F['ev_ebitda'] = F['ev'] / F['ebitda'] if fin(F['ev']) and fin(F['ebitda']) and F['ebitda'] > 0 and 0 < F['ev'] / F['ebitda'] <= 100 else None
@@ -1483,14 +1574,18 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
             D.add(m, F.get(m), F.get('sic'), size, today.year, cik)
         D.add('wacc', (F['_W'] or {}).get('wacc'), F.get('sic'), size, today.year, cik)
     o_rows, o_live = BR.origin_rows(M, Fs, P, periods, sic_of, today)
+    pw_hist = {'pe': {}, 'ev_sales': {}}                   # each company's multiple at each quarter origin, and its age (years)
     for r in o_rows:
         F = Fs[r['cik']]
+        age = (today - dt.date.fromisoformat(r['date'])).days / 365.25
         if fin(r.get('e4')) and r['e4'] > 0 and fin(r['price']) and 0 < r['price'] / r['e4'] <= 200:
             D.add('pe_hist', r['price'] / r['e4'], r['sic'], r['size'], int(r['date'][:4]), r['cik'])
+            pw_hist['pe'].setdefault(r['cik'], []).append((r['price'] / r['e4'], age))
         if fin(r.get('shares')) and fin(r['price']) and r['r4'] > 0:
             evs = (r['price'] * r['shares'] + (F['debt'] or 0) - (F['cash'] or 0) + (F['claims'] or 0)) / r['r4']
             if 0 < evs <= 50:
                 D.add('evs_hist', evs, r['sic'], r['size'], int(r['date'][:4]), r['cik'])
+                pw_hist['ev_sales'].setdefault(r['cik'], []).append((evs, age))
     D.finish({int(r['date'][:4]) for r in o_rows}, ('cagr5',))
     # the regime model's history: the annual frames since CY2010, then the latest trailing year from the quarterly frames
     annual = getattr(D, 'annual', None) or {}
@@ -1524,6 +1619,10 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     br_ctx = {'D': D, 'names': names, 'periods': periods, 'combined': comb}
     rows_all = list(Fs.values())
     buckets = {m: peer_stats([r for r in rows_all if (m != 'p_ffo' or r['kind'] == 'reit')], m) for m in ('pe', 'ev_ebitda', 'ev_sales', 'p_ffo')}
+    # the weighted peers (app/peer_weights.py): each company's size measures, today's multiples and their quarterly history
+    pw = {'info': {c: {'mcap': F.get('mcap'), 'revenue': F.get('revenue'), 'dvol': F.get('dvol')} for c, F in Fs.items()},
+          'tick': {c: F.get('ticker') for c, F in Fs.items()}, 'hist': pw_hist,
+          'cur': {m: {c: F.get(m) for c, F in Fs.items() if fin(F.get(m))} for m in ('pe', 'ev_ebitda', 'ev_sales', 'p_ffo')}}
     # cross-section fits for banks and insurers
     regs = {}
     pts = {'bank': [], 'insurer': []}
@@ -1570,7 +1669,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
         ctx = {'rates': rates, 'buckets': buckets, 'regressions': regs, 'debt': drec, 'cons': cons_c, 'pm': pm, 'beta': b,
                'vol': annual_vol(px), 'segments': segments_of(slim), 'range52': [min(last_year), max(last_year)] if last_year else None,
                'bands': bd, 'price_date': px[-1][0], 'br': br_ctx, 'panel': P.get(cik) or {}, 'crow': crow,
-               'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None, 'markov_prior': mk_prior,
+               'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None, 'markov_prior': mk_prior, 'pw': pw,
                'trials': (_load_dir(outside, f'c/{cik}.json') or {}).get('trials'), 'backtest': (sim_bt or {}).get('summary'), 'sm_panel': sm_panel}
         A = analyse(F, ctx)
         write_json(pub / 'c' / f'{cik}.json', clean(A))

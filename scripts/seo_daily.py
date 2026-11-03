@@ -73,6 +73,47 @@ def by_date(rows, key):
     return sorted(out.items(), reverse=True)
 
 
+def cased(name):
+    """a company name as a filing writes it, in capitals, cased for the page (pipeline/names.py); a mixed-case one kept"""
+    return seo._names.cased(name) if name else name
+
+
+ENTITY = re.compile(r"\b(?:INC|LLC|L\.L\.C|LP|L\.P|LLP|LTD|LIMITED|CORP|CORPORATION|CO|COMPANY|FUNDS?|CAPITAL|PARTNERS(?:HIP)?|MANAGEMENT|TRUSTS?|TRUSTEES?"
+                    r"|ADVISORS|ADVISERS|ADVISORY|HOLDINGS?|GROUP|GMBH|SA|S\.A|NV|N\.V|BV|B\.V|PLC|AG|SE|SARL|PTE|SPA|S\.P\.A|SICAV|SICAF|VENTURES"
+                    r"|INVESTMENTS?|INVESTORS|ASSOCIATES|ASSETS?|EQUITY|EQUITIES|FOUNDATION|BANK|BANCORP|ENTERPRISES|INDUSTRIES|TECHNOLOGIES|SYSTEMS"
+                    r"|INTERNATIONAL|GLOBAL|ACQUISITION|SPONSOR|ESTATE|UNIVERSITY|COLLEGE|PENSION|RETIREMENT|INSURANCE|SECURITIES|FINANCIAL|FINANCE"
+                    r"|RESEARCH|MASTER|OFFSHORE|STRATEGIES|STRATEGIC|OPPORTUNIT(?:Y|IES)|SUB|MERGER|FAMILY|OFFICE|KG|OY|AB|ASA|AS|SPV)\b", re.I)
+
+
+def person(name):
+    """a Form 4 or 13D filer's name as the filing writes it, in capitals, cased: a person's word by word ('KIRK RONALD' →
+    Kirk Ronald, the filing's word order kept), an entity's as a company's ('KKR GROUP LP' → KKR Group LP)"""
+    if not name:
+        return name
+    return cased(name) if ENTITY.search(name) else seo.person(name)
+
+
+def holder(r):
+    """a 13D filer: the fund or the person"""
+    return person(r.get('filer') or r.get('person'))
+
+
+def stake(v):
+    """a 13D stake: '25.33%', '5.5%', '7%' (the filing's third decimal is noise on a page)"""
+    if v is None:
+        return '—'
+    try:
+        return f"{float(v):.2f}".rstrip('0').rstrip('.') + '%'
+    except (TypeError, ValueError):
+        return f"{v}%"
+
+
+def sentence(s):
+    """A sentence ended once: a name that ends in "Inc." does not get a second period ("of NewHydrogen, Inc..")."""
+    s = (s or '').rstrip()
+    return s if s.endswith(('.', '!', '?')) else s + '.'
+
+
 def table(head, rows):
     return (f"<div class='tbl-wrap'><table><thead><tr>{''.join(f'<th>{e(h)}</th>' for h in head)}</tr></thead><tbody>"
             + ''.join('<tr>' + ''.join(f'<td>{c}</td>' for c in r) + '</tr>' for r in rows) + '</tbody></table></div>')
@@ -91,8 +132,8 @@ def insiders(hub, link, today, code):
     big = sorted(rows, key=lambda r: -(r.get('value') or 0))[:3]
     word = 'bought' if buy else 'sold'
     lead = (f"Company insiders {word} {money(tot)} of their own companies' shares in {len(rows)} open-market trades over the last two weeks. "
-            + 'The largest: ' + '; '.join(f"{r.get('insider')} ({r.get('role') or 'insider'}) {word} {money(r.get('value'))} of {r.get('issuer')} ({r['ticker']})" for r in big) + '.')
-    body = SV.hbars([(f"{r['ticker']} · {r.get('insider')}", r.get('value')) for r in sorted(rows, key=lambda r: -(r.get('value') or 0))[:12]], money,
+            + sentence('The largest: ' + '; '.join(f"{person(r.get('insider'))} ({r.get('role') or 'insider'}) {word} {money(r.get('value'))} of {cased(r.get('issuer'))} ({r['ticker']})" for r in big)))
+    body = SV.hbars([(f"{r['ticker']} · {person(r.get('insider'))}", r.get('value')) for r in sorted(rows, key=lambda r: -(r.get('value') or 0))[:12]], money,
                     f"Largest insider {'purchases' if buy else 'sales'}, last two weeks", color=SV.GREEN if buy else SV.RED, n=12)
     by_co = {}
     for r in rows:
@@ -100,13 +141,13 @@ def insiders(hub, link, today, code):
     body += SV.hbars(sorted(by_co.items(), key=lambda kv: -kv[1]), money, f"By company: insider {'buying' if buy else 'selling'}, last two weeks", n=12)
     for day, rs in by_date(rows, lambda r: r.get('date')):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Insider', 'Role', 'Value', 'Price', 'Shares'], [
-            [link(r['ticker'], f"{r['ticker']} · {r.get('issuer')}", 'who-owns'), e(r.get('insider')), e(r.get('role') or r.get('title') or ''),
+            [link(r['ticker'], f"{r['ticker']} · {cased(r.get('issuer'))}", 'who-owns'), e(person(r.get('insider'))), e(r.get('role') or r.get('title') or ''),
              e(money(r.get('value'))) + (" <span class='muted'>10b5-1 plan</span>" if r.get('plan_10b5_1') else ''), e(f"${r['price']:,.2f}" if r.get('price') else '—'),
              e(f"{r['shares']:,.0f}" if r.get('shares') else '—')] for r in sorted(rs, key=lambda r: -(r.get('value') or 0))])
     slug = 'insider-buying' if buy else 'insider-selling'
     title = (f"Insider buying today ({fdate(today.isoformat())}): the largest open-market purchases by executives and directors" if buy else
              f"Insider selling today ({fdate(today.isoformat())}): the largest share sales by executives and directors")
-    tops = [f"{r['ticker']}: {r.get('insider')} {word} {money(r.get('value'))}" for r in big]
+    tops = [f"{r['ticker']}: {person(r.get('insider'))} {word} {money(r.get('value'))}" for r in big]
     return slug, title, 'Insider buying' if buy else 'Insider selling', lead, body, tops, len(rows)
 
 
@@ -118,7 +159,7 @@ def congress(hub, link, today):
         return None
     buys = [r for r in rows if r.get('type') == 'purchase']
     people = len({r.get('person') for r in rows})
-    lead = (f"{people} members of Congress and other officials disclosed {len(rows)} stock trades made in the last 45 days: {len(buys)} purchases and "
+    lead = (f"{seo.n_of(people, 'member')} of Congress and other officials disclosed {seo.n_of(len(rows), 'stock trade')} made in the last 45 days: {len(buys)} purchases and "
             f"{len(rows) - len(buys)} sales. Disclosures are filed up to 45 days after the trade; amounts are given in ranges.")
     agg = {}
     for r in rows:
@@ -144,9 +185,10 @@ def guidance(hub, link, today):
         return None
     up = [r for r in rows if r['guidance'] == 'raised']
     down = [r for r in rows if r['guidance'] in ('lowered', 'withdrawn')]
-    lead = (f"{len(rows)} companies updated their guidance in earnings releases over the last two weeks: {len(up)} raised it and {len(down)} lowered or withdrew it."
+    lead = (f"{seo.n_of(len(rows), 'company', 'companies')} updated {'its' if len(rows) == 1 else 'their'} guidance in earnings releases over the last two weeks: "
+            f"{len(up)} raised it and {len(down)} lowered or withdrew it."
             + (' Raised: ' + ', '.join(r['ticker'] for r in up[:8]) + '.' if up else '') + (' Lowered: ' + ', '.join(r['ticker'] for r in down[:6]) + '.' if down else ''))
-    body = SV.bars([(fdate(day)[:6], sum(1 for r in rs if r['guidance'] == 'raised') - sum(1 for r in rs if r['guidance'] in ('lowered', 'withdrawn')))
+    body = SV.bars([(fdate(day)[:-6].rstrip(','), sum(1 for r in rs if r['guidance'] == 'raised') - sum(1 for r in rs if r['guidance'] in ('lowered', 'withdrawn')))
                     for day, rs in sorted(by_date(rows, lambda r: r.get('filed')), key=lambda x: x[0])], lambda v: f"{v:+.0f}",
                    'Guidance raised minus lowered, day by day (companies)')
     for day, rs in by_date(rows, lambda r: r.get('filed')):
@@ -166,7 +208,7 @@ def rumors(hub, link, today):
     if not rows:
         return None
     cos = list(dict.fromkeys(r[1] for r in rows))
-    lead = f"{len(cos)} listed companies were the subject of takeover talk or deal filings in the last two weeks: " + ', '.join(cos[:12]) + '. A headline is not a deal; most reported talks end without one.'
+    lead = f"{seo.n_of(len(cos), 'listed company', 'listed companies')} were the subject of takeover talk or deal filings in the last two weeks: " + ', '.join(cos[:12]) + '. A headline is not a deal; most reported talks end without one.'
     body = ''
     for day, rs in by_date(rows, lambda r: r[0]):
         seen, out = set(), []
@@ -192,7 +234,7 @@ def calendar(hub, link, today):
     if not rows:
         return None
     first = sorted(rows, key=lambda r: r['report_date'])
-    lead = (f"{len(rows)} companies report earnings in the next two weeks. Coming up first: "
+    lead = (f"{seo.n_of(len(rows), 'company')} report earnings in the next two weeks. Coming up first: "
             + ', '.join(f"{r['ticker']} ({fdate(r['report_date'])})" for r in first[:8]) + '.')
     rev = {}
     try:
@@ -209,7 +251,7 @@ def calendar(hub, link, today):
                        note='The number is how many report that day; the shade is their combined latest-quarter revenue, so a dark day is a heavy one.', fmt=money)
     for day, rs in sorted(by_date(rows, lambda r: r.get('report_date')), key=lambda x: x[0]):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'EPS estimate', 'Analysts', 'Beat rate', 'Beat odds (model)'], [
-            [link(r['ticker'], f"{r['ticker']} · {display_name(r.get('name'))}", 'earnings-date'), e(f"${r['eps']:.2f}" if r.get('eps') is not None else '—'),
+            [link(r['ticker'], f"{r['ticker']} · {display_name(r.get('name'))}", 'earnings-date'), e(f"{'−' if r['eps'] < 0 else ''}${abs(r['eps']):.2f}" if r.get('eps') is not None else '—'),
              e(f"{r['n']:.0f}" if r.get('n') else '—'), e(f"{round(100 * r['beat_rate'])}%" if r.get('beat_rate') is not None else '—'),
              e(f"{round(100 * r['model'])}%" if isinstance(r.get('model'), (int, float)) else '—')] for r in sorted(rs, key=lambda r: r['ticker'])[:80]])
     return ('earnings-calendar', f"Earnings calendar this week and next ({fdate(today.isoformat())}): who reports, EPS estimates and beat odds", 'Earnings calendar',
@@ -223,18 +265,18 @@ def stakes(hub, link, today):
     if not rows:
         return None
     new = [r for r in rows if not r.get('amendment')]
-    lead = (f"{len(rows)} Schedule 13D filings in the last two weeks, {len(new)} of them new: holders above 5% of a company who may seek to influence it. "
-            + ('Largest new stakes: ' + '; '.join(f"{r.get('filer')} {r.get('percent')}% of {r.get('issuer')}" for r in sorted(new, key=lambda r: -(r.get('percent') or 0))[:3]) + '.' if new else ''))
+    lead = (f"{seo.n_of(len(rows), 'Schedule 13D filing')} in the last two weeks, {len(new)} of them new: holders above 5% of a company who may seek to influence it. "
+            + (sentence('Largest new stakes: ' + '; '.join(f"{holder(r)} {stake(r.get('percent'))} of {cased(r.get('issuer'))}" for r in sorted(new, key=lambda r: -(r.get('percent') or 0))[:3])) if new else ''))
     tick = lambda r: (r.get('ticker') or '')   # noqa: E731
-    body = SV.hbars([(f"{r.get('issuer')} · {r.get('filer') or r.get('person')}", r.get('percent')) for r in sorted(rows, key=lambda r: -(r.get('percent') or 0))],
+    body = SV.hbars([(f"{cased(r.get('issuer'))} · {holder(r)}", r.get('percent')) for r in sorted(rows, key=lambda r: -(r.get('percent') or 0))],
                     lambda v: f"{v:.1f}%", 'Largest stakes filed (Schedule 13D), last two weeks', n=12)
     for day, rs in by_date(rows, lambda r: r.get('filed')):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Holder', 'Stake', 'Filing', 'Purpose'], [
-            [link(tick(r), r.get('issuer')) if tick(r) else e(r.get('issuer')), e(r.get('filer') or r.get('person')), e(f"{r.get('percent')}%" if r.get('percent') is not None else '—'),
+            [link(tick(r), cased(r.get('issuer'))) if tick(r) else e(cased(r.get('issuer'))), e(holder(r)), e(stake(r.get('percent'))),
              (f"<a href='{e(r.get('url'))}' rel='nofollow'>{e(r.get('form'))}</a>" if r.get('url') else e(r.get('form'))) + (' (amended)' if r.get('amendment') else ''),
              e((r.get('purpose') or '')[:160])] for r in rs[:50]])
     return ('activist-stakes', f"New 13D filings today ({fdate(today.isoformat())}): activist stakes above 5%", 'Activist stakes (13D)', lead, body,
-            [f"{r.get('filer')} {r.get('percent')}% of {r.get('issuer')}" for r in new[:3]], len(rows))
+            [f"{holder(r)} {stake(r.get('percent'))} of {cased(r.get('issuer'))}" for r in new[:3]], len(rows))
 
 
 def write(site, base, today=None):

@@ -24,6 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'app'))
+from holdings13f.core import in_thousands  # noqa: E402  (13F values a filer still reports in thousands)
 DOCS = ROOT / 'docs'
 DATA = DOCS / 'data'
 
@@ -61,6 +62,7 @@ def holders_index():
             continue
         s = snaps[-1]
         changes = {c['id']: c for c in s.get('changes', [])}
+        k = 1000 if in_thousands(s.get('positions', [])) else 1     # a filing cached before the parser read thousands as thousands
         for p in s.get('positions', []):
             if p.get('put_call') != 'NONE' or p.get('share_type') != 'SH':
                 continue
@@ -70,7 +72,7 @@ def holders_index():
             ch = changes.get(p['id'], {})
             out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []})['institutional'].append({
                 'manager': m.get('label') or m.get('name'), 'cik': m.get('cik'), 'period': s.get('period'), 'filed': s.get('filed'),
-                'issuer': p.get('issuer'), 'cusip': p.get('cusip'), 'shares': p.get('shares'), 'value_usd': p.get('value_usd'),
+                'issuer': p.get('issuer'), 'cusip': p.get('cusip'), 'shares': p.get('shares'), 'value_usd': (p.get('value_usd') or 0) * k or p.get('value_usd'),
                 'weight': p.get('weight'), 'status': ch.get('status', 'BASE'), 'delta_shares': ch.get('delta_shares'),
                 'price_avg_q': p.get('price_avg_q'), 'source_url': (s.get('sources') or [{}])[-1].get('url')})
         for c in s.get('changes', []):                       # sold out this quarter: gone from the positions, kept for the pie
@@ -80,7 +82,7 @@ def holders_index():
             if ticker:
                 out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []}).setdefault('exits', []).append({
                     'manager': m.get('label') or m.get('name'), 'cik': m.get('cik'), 'period': s.get('period'), 'filed': s.get('filed'),
-                    'prior_shares': c.get('prior_shares'), 'prior_value_usd': c.get('prior_value_usd'),
+                    'prior_shares': c.get('prior_shares'), 'prior_value_usd': (c.get('prior_value_usd') or 0) * k or c.get('prior_value_usd'),
                     'source_url': (s.get('sources') or [{}])[-1].get('url')})
     # officials: reviewed, source-checked rows only
     for r in (live.get('modules', {}).get('congress', {}) or {}).get('records', []):

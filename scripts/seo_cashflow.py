@@ -304,9 +304,9 @@ def industry_page(sic, ind, fl, g, capex, base):
     rev = fl.get('revenue')
     body_ch, lines = [], []
     top3 = sum(x[0][0] for x in cx[:3]) / tot
-    lines.append(f"{len(cx)} companies in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months, "
+    lines.append(f"{seo.n_of(len(cx), 'company', 'companies')} in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months, "
                  f"{tot / ocf * 100:.0f}% of the {money(ocf)} their operations generated" if ocf > 0 else
-                 f"{len(cx)} companies in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months")
+                 f"{seo.n_of(len(cx), 'company', 'companies')} in {name} (SIC {sic}) spent {money(tot)} on capital projects over their latest twelve months")
     lines[-1] += (f"; the three largest spenders — {', '.join(x[1].get('ticker') or display_name(x[1].get('name')) for x in cx[:3])} — account for {top3 * 100:.0f}%."
                   if len(cx) > 3 else '.')
     if rev:
@@ -354,14 +354,15 @@ def industry_page(sic, ind, fl, g, capex, base):
                                         note='The companies’ cash-flow statements, latest four quarters or fiscal year: every figure filed (grade A).'))
     rel = sorted(g.get('relationships') or [], key=lambda x: -(x.get('value_usd') or 0))
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../../'>Industries</a> › <a href='../'>{e(name)}</a> › Capital spending and supply chain</p>"
-            f"<h1>{e(name)}: capital spending and supply chain</h1><p class='muted'>SIC {e(sic)} · {len(cx)} companies with filed cash-flow statements</p>"
+            f"<h1>{e(name)}: capital spending and supply chain</h1><p class='muted'>SIC {e(sic)} · {seo.n_of(len(cx), 'company', 'companies')} with filed cash-flow statements</p>"
             "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in [
                 ('Capital spending, 12 months', money(tot)), ('Operating cash flow', money(ocf)), ('Capex / cash flow', f"{tot / ocf * 100:.0f}%" if ocf > 0 else None),
                 ('Capex / revenue', f"{tot / rev * 100:.1f}%" if rev else None), ('Top 3 share', f"{top3 * 100:.0f}%")] if v) + '</div>'
             + "<h2>Analysis</h2><div class='seo-note'>" + ''.join(f"<p>{e(s)}</p>" for s in lines) + '</div>'
             + "<h2>Charts</h2><div class='seo-grid'>" + ''.join(x for x in body_ch if x) + '</div>')
     body += "<h2>Capital spending by company</h2>" + seo_table(['Company', 'Capital spending', 'Operating cash flow', 'Capex / OCF', 'Period'], [
-        [f"<a href='../../../c/{x[0][3]}/cash-flow/'>{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}</a>", money(x[0][0]), money(x[0][1]),
+        [(f"<a href='../../../c/{x[0][3]}/cash-flow/'>{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}</a>" if x[0][3]
+          else f"{e(x[1].get('ticker') or '')} {e(display_name(x[1].get('name')))}"), money(x[0][0]), money(x[0][1]),
          f"{x[0][0] / x[0][1] * 100:.0f}%" if x[0][1] and x[0][1] > 0 else '—', e(x[0][2] or '')] for x in cx[:60]])
     if rel:
         body += ("<h2>Customers and suppliers named in annual reports</h2>" + seo_table(['Supplier', 'Customer', 'Share of supplier revenue', 'Evidence', 'Source'], [
@@ -385,10 +386,10 @@ def runway_page(site, base, cards):
     forts = sorted([c for c in cards if c['net'] > 0 and (c.get('fcf_ttm') or 0) > 0], key=lambda c: -c['net'])[:30]
     yrs = lambda m: f"{m / 12:.1f} yrs" if m >= 24 else f"{m:.0f} mo"
     n_burn = len(burners)
-    lead = (f"Of {len(cards)} companies with a balance sheet on file, {n_burn} have negative free cash flow at the current rate, "
+    lead = (f"Of {len(cards):,} companies with a balance sheet on file, {n_burn:,} have negative free cash flow at the current rate, "
             f"{sum(1 for c in burners if (c.get('ocf_ttm') or 0) < 0)} of them because operations themselves consume cash"
-            + (f"; {sum(1 for c in burners if c['months'] < 12)} have less than a year of runway without new money" if burners else '')
-            + f". {len(walls)} have more debt due within a year than cash on hand. Figures are from the companies' own cash-flow statements and balance sheets as filed.")
+            + (f"; {sum(1 for c in burners if c['months'] < 12):,} have less than a year of runway without new money" if burners else '')
+            + f". {len(walls):,} have more debt due within a year than cash on hand. Figures are from the companies' own cash-flow statements and balance sheets as filed.")
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Cash runway</p><h1>Cash runway: who is burning cash, and how long it lasts</h1>"
             f"<p class='lead'>{e(lead)}</p>")
     if burners:
@@ -452,13 +453,21 @@ def write(site, base):
         link_from_company(site, slug)
         urls.append((f"{base}/c/{slug}/cash-flow/", out[1]))
         if len(out) > 2 and out[2]:
-            cards.append({**out[2], 'slug': slug, 'ticker': r.get('ticker') or '', 'name': display_name(r.get('name'))})
+            cards.append({**out[2], 'cik': int(r['cik']), 'slug': slug, 'ticker': r.get('ticker') or '', 'name': display_name(r.get('name'))})
+    try:                                    # the screener reads the runways from here instead of every company file again
+        with open(os.path.join(site, 'data', 'runway.json'), 'w', encoding='utf-8') as f:
+            json.dump({str(x['cik']): {k: x.get(k) for k in ('cash', 'debt', 'net', 'fcf_ttm', 'burn', 'months', 'due12')} for x in cards}, f, separators=(',', ':'))
+    except OSError as err:
+        print(f"runway file not written: {err}")
     try:
         u = runway_page(site, base, cards)
         if u:
             urls.insert(0, (u, None))
     except Exception as err:  # noqa: BLE001
         print(f"cash runway page skipped: {err}")
+    for k, v in list(capex.items()):        # a company with fewer than four quarters of cash flow has no cash-flow page to link to
+        if not os.path.exists(os.path.join(site, 'c', v[3], 'cash-flow', 'index.html')):
+            capex[k] = v[:3] + (None,) + v[4:]
     try:
         urls += industry_pages(site, base, capex)
     except Exception as err:  # noqa: BLE001
