@@ -367,7 +367,10 @@ jobs:
           python scripts/seo_compare.py --site _site
           python scripts/seo_zh.py --site _site
           python scripts/seo_intl.py --site _site
-      - name: Crawlable pages for the hub's views (disclosures/<view>/) and one page per material 8-K (events/<…>/)
+      - name: What follows an 8-K and an insider trade (data/event-stats.json, data/insider-stats.json)
+        continue-on-error: true
+        run: python scripts/event_stats.py --site _site
+      - name: Crawlable pages for the hub's views (disclosures/<view>/) and one page per material 8-K (events/<…>/, events/impact/)
         continue-on-error: true
         env:
           SITE_URL: ${{ vars.SITE_URL }}
@@ -377,6 +380,26 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/seo_cashflow.py --site _site
+      - name: Earnings report cards (c/<slug>/report-card/, disclosures/report-cards/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_reportcard.py --site _site
+      - name: Earnings quality scores (c/<slug>/earnings-quality/, disclosures/earnings-quality/, data/quality-score.json)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_quality.py --site _site
+      - name: The screener's table and preset screens (disclosures/data/screener.json, disclosures/screener/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/screener.py --site _site
+      - name: Stock timelines with every disclosure marked (c/<slug>/timeline/, disclosures/insider-signals/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_timeline.py --site _site --base "${SITE_URL:-https://filing-flows.com}"
       - name: The home page's plain HTML (who reported this week, who reports next, links to every page type)
         continue-on-error: true
         run: python scripts/seo_home.py --site _site
