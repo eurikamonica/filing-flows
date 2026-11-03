@@ -522,6 +522,25 @@ jobs:
             echo "fast lane: short scan $((HOP + 1)) started"
           fi
 
+      - name: The next scan, and a disclosure collection (a relay; GitHub starts few of the schedules)
+        # GitHub's own clock started 5 of the 96 quarter-hourly scans on Nov 1, 2026 and 3 on Nov 2 (6-7 hours apart: the
+        # site barely moved on a quiet day), and about 20 of ~200 disclosure collections. Like post-to-x.yml and the fast
+        # lane, each scan that succeeds starts the next one; it waits for this run's deploy (same concurrency group). A
+        # failed scan does not (no loop of failures): the schedule or the next push starts the chain again. It also starts
+        # the light disclosure collection (insiders, 8-K, 13D / 13G, Form 144, short interest, Senate, news). Repository
+        # variable SCAN_RELAY=off stops both; an outside clock (README, Supabase pg_cron) works as well.
+        if: vars.SCAN_RELAY != 'off' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          waiting() { gh run list -R "$GITHUB_REPOSITORY" --workflow "$1" --limit 30 --json status --jq '[.[] | select(.status == "queued" or .status == "pending" or .status == "waiting" or .status == "requested")] | length'; }
+          if [ "$(waiting scan.yml)" -gt 0 ]; then echo "a scan is already waiting: it carries on"; else
+            gh workflow run scan.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" && echo "next scan started (it runs after this deploy)"
+          fi
+          # its own concurrency group keeps one running and one waiting at most, so a second start never piles up
+          gh workflow run disclosures.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f module=insiders && echo "light disclosure collection started"
+
 
       - name: Earnings fast lane overlay, once more (releases published while this scan ran)
         # a release the fast lane published after the step above would otherwise go back to the older page with this
