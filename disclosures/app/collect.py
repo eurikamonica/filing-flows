@@ -70,6 +70,7 @@ def main():
         options={**cfg[key],'_data_root':str(args.output)}
         if key in ('holdings','npx') and args.manager_cik:options['priority_cik']=args.manager_cik
         if key=='congress' and args.report_id:options['priority_report_id']=args.report_id
+        if key=='congress' and args.only=='all':options['time_budget_minutes']=min(float(options.get('time_budget_minutes',20)),float(options.get('all_run_minutes',6)))   # the daily all-source run shares its 40 minutes
         if key=='banks' and args.bank_cert:options['priority_id']=str(int(args.bank_cert))
         if key=='cot' and args.market_id:options['priority_id']=args.market_id
         if args.batch_size is not None:options['batch_size']=args.batch_size

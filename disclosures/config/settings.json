@@ -226,7 +226,8 @@
     "ocr_dpi": 200,
     "reviewed_file": "config/reviewed-disclosures.csv",
     "imports_manifest": "config/imports.json",
-    "batch_size": 90,
+    "batch_size": 250,
+    "time_budget_minutes": 20,
     "refresh_hours": 168,
     "auto_current_year": true,
     "jurisdictions": {
@@ -295,12 +296,13 @@
       }
     },
     "batch_shares": {
-      "US House": 40,
+      "US House": 200,
       "New York State": 8,
       "California": 30,
       "Canada (federal public office holders)": 10
     },
-    "quick_house_batch": 12
+    "quick_house_batch": 30,
+    "quick_minutes": 4
   },
   "prices": {
     "enabled": true,
