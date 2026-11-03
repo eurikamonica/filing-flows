@@ -179,7 +179,10 @@ def page_for(co, base, slug, site, hub, stats, istats):
                                                          {'@type': 'ListItem', 'position': 3, 'name': 'Timeline', 'item': url}]},
         {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': f"Are {name} insiders buying or selling?", 'acceptedAnswer': {'@type': 'Answer', 'text': re.sub('<[^>]+>', '', ins_h)[:600] or lead}}]},
         {'@type': 'WebPage', 'name': title, 'url': url, 'dateModified': days[-1], 'description': lead[:300]}]}
-    return url, days[-1], seo.page(seo.fit(title), lead[:300], url, body, 3, base + '/og.png', ld), {
+    # the sitemap's date: the newest disclosure on the chart, not the newest close (a new price every day would have
+    # every timeline sent to IndexNow every day)
+    changed = max(m[0] for m in marks if m[0] <= days[-1]) if any(m[0] <= days[-1] for m in marks) else days[-1]
+    return url, changed, seo.page(seo.fit(title), lead[:300], url, body, 3, base + '/og.png', ld), {
         'ticker': t, 'name': name, 'slug': slug, 'buys': sum(1 for m in marks if m[1] == 'buy'), 'sells': sum(1 for m in marks if m[1] == 'sell'),
         'buy_usd': sum(m[3].get('size') or 0 for m in marks if m[1] == 'buy'), 'sell_usd': sum(m[3].get('size') or 0 for m in marks if m[1] == 'sell'), 'chg': chg}
 

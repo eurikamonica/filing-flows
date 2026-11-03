@@ -251,7 +251,7 @@ def write(site, base, today=None):
         link_from_company(site, slug)
         urls.append(url)
     urls.insert(0, index_page(site, base, scored, slugs))
-    today_s = (today or dt.date.today()).isoformat()
+    today_s = str(ix.get('asof') or (today or dt.date.today()).isoformat())[:10]     # the fundamentals' date: changes when they do
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     sm += [f'<url><loc>{xesc(u)}</loc><lastmod>{today_s}</lastmod></url>' for u in urls]
     sm.append('</urlset>')
