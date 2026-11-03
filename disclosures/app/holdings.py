@@ -16,6 +16,8 @@ def collect_holdings(client,cfg,old,revalidate=False):
     discovery=discover_sec(client,cfg,old.get('discovery',{})) if cfg.get('discover_all') else old.get('discovery',{})
     items={r['cik']:r for r in discovery.get('directory',[]) if r['kind']=='holdings'}
     items.update({str(int(r['cik'])):r for r in cfg.get('managers',[])})
+    for w in cfg.get('watch',[]):                           # the watched funds are always in the queue (4.4 below)
+        items.setdefault(str(int(w['cik'])),{'cik':str(int(w['cik'])),'name':w.get('name') or 'CIK '+str(int(w['cik']))})
     managers=dict(old_managers);errors=list(discovery.get('errors',[]))
     attempts=dict(old.get('attempts',{}))
     # managers the 13F back-fill workflow finished (app/backfill13f.py, holdings-backfill.json): lazy rows, merged once
@@ -27,8 +29,14 @@ def collect_holdings(client,cfg,old,revalidate=False):
             if key not in old_managers or (old_managers[key].get('last_success') or '')<(row.get('last_success') or ''):
                 old_managers[key]=row;managers[key]=row
                 attempts[key]={**attempts.get(key,{}),'last_attempt':row.get('last_success'),'last_success':row.get('last_success'),'error':None}
+    # 4.5 the watched funds and the listed managers carry their history from `watch_since` (the 13F XML era began with
+    # 2013 Q2) rather than the universe's `since`: the quarter-by-quarter videos of Berkshire, Scion or Pershing Square
+    deep={str(int(w['cik'])) for w in cfg.get('watch',[])}|{str(int(m['cik'])) for m in cfg.get('managers',[])} if cfg.get('watch_since') else set()
+    since_of=lambda c:cfg['watch_since'] if c in deep else cfg['since']
     history={key:{**m,**attempts.get(key,{})} for key,m in old_managers.items()}
     history.update({key:value for key,value in attempts.items() if key not in history})
+    for key,m in old_managers.items():                     # a manager whose range changed is read again like a new one
+        if m.get('since')!=since_of(key):history[key]={k:v for k,v in history[key].items() if k!='last_success'}
     target=cfg.get('priority_cik')
     if target:items.setdefault(str(int(target)),{'cik':str(int(target)),'name':'CIK '+str(int(target))})
     work=[items[str(int(target))]] if target else list(items.values())
@@ -82,10 +90,6 @@ def collect_holdings(client,cfg,old,revalidate=False):
                 prioritized.append(row)
                 seen.add(key)
         selected=prioritized
-    # 4.5 the watched funds and the listed managers carry their history from `watch_since` (the 13F XML era began with
-    # 2013 Q2) rather than the universe's `since`: the quarter-by-quarter videos of Berkshire, Scion or Pershing Square
-    deep={str(int(w['cik'])) for w in cfg.get('watch',[])}|{str(int(m['cik'])) for m in cfg.get('managers',[])} if cfg.get('watch_since') else set()
-    since_of=lambda c:cfg['watch_since'] if c in deep else cfg['since']
     for item in selected:
         cik=str(int(item['cik']))
         cached=old_managers.get(cik,{})

@@ -139,12 +139,16 @@ class WatchedHistory(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             cfg = {'since': '2025-01-01', 'watch_since': '2013-06-30', 'watch': [{'cik': '42', 'name': 'Test Manager'}], 'managers': [],
                    'batch_size': 4, '_data_root': d, 'discover_all': False}
-            old = {'managers': [{'cik': '42', 'name': 'TEST MANAGER', 'since': '2025-01-01', 'snapshots': [], 'filings': []}], 'discovery': {'directory': []}}
-            out = H.collect_holdings(Client(), cfg, old)
+            import datetime as dt
+            recent = dt.datetime.now(dt.timezone.utc).isoformat()
+            old = {'managers': [{'cik': '42', 'name': 'TEST MANAGER', 'since': '2025-01-01', 'snapshots': [], 'filings': [], 'last_success': recent}],
+                   'attempts': {'42': {'last_attempt': recent, 'last_success': recent}}, 'discovery': {'directory': []}}
+            out = H.collect_holdings(Client(), cfg, old)            # read an hour ago with the shallow range: due again at once
             m = next(x for x in out['managers'] if x['cik'] == '42')
             self.assertEqual(m['since'], '2013-06-30')
             self.assertEqual([x['period'] for x in m['snapshots']], ['2013-12-31', '2025-03-31', '2025-06-30'])
             # not watched: the universe's range, the 2013 filing left alone
             cfg2 = {**cfg, 'watch': [], 'managers': [{'cik': '42', 'name': 'Test Manager'}], 'watch_since': None}
-            m2 = next(x for x in H.collect_holdings(Client(), cfg2, old)['managers'] if x['cik'] == '42')
+            fresh = {**old, 'managers': [], 'attempts': {}}                   # never read: the universe's range
+            m2 = next(x for x in H.collect_holdings(Client(), cfg2, fresh)['managers'] if x['cik'] == '42')
             self.assertEqual((m2['since'], [x['period'] for x in m2['snapshots']]), ('2025-01-01', ['2025-03-31', '2025-06-30']))
