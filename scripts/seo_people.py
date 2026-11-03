@@ -106,7 +106,7 @@ value-weighted over the common-share positions with a price ({pct(c.get('coverag
 {seo.n_of(c.get('filings') or 0, 'filing')} since {e(seo.fdate(c.get('first_filing')))}. Price returns for the clone and SPY alike (no dividends,
 no costs). A 13F lists only US long positions at quarter end, reported up to 45 days later.</p>
 <h2>Largest holdings ({e(m['period'])})</h2>
-{SV.hbars([(f"{h[0]} · {h[1]}", h[3]) for h in (m.get('holdings') or []) if h[0]], money, f"{name}: largest 13F holdings, {m['period']}", n=15)}
+{SV.hbars([(f"{h[0]} · {seo.display_name(h[1])}", h[3]) for h in (m.get('holdings') or []) if h[0]], money, f"{name}: largest 13F holdings, {m['period']}", n=15)}
 {SV.diverging([(a[0], a[2]) for a in (m.get('adds') or []) if a[2] is not None] + [(a[0], -abs(a[2])) for a in (m.get('cuts') or []) if a[2] is not None],
               lambda v: f"{v:+.0f}%", f"{name}: biggest adds and cuts in the quarter (change in shares)", n=14)}
 <div class="tbl-wrap"><table><thead><tr><th>Ticker</th><th>Company</th><th class="num">Weight</th><th class="num">Value</th><th>Change in the quarter</th></tr></thead><tbody>{rows}</tbody></table></div>

@@ -159,9 +159,9 @@ def owners(co, h):
     if top:
         lead += f" The largest holder is {display_name(top[0].get('manager'))} ({money(top[0].get('value_usd'))})."
     if qlast.get('buyers') is not None:
-        lead += f" Last quarter {qlast.get('buyers')} funds added to their stakes and {qlast.get('sellers')} cut them."
+        lead += f" Last quarter {seo.n_of(qlast.get('buyers'), 'fund')} added to their stakes and {qlast.get('sellers')} cut them."
     if off:
-        lead += f" Members of Congress and other officials disclosed {len(off)} trades ({len(buys)} buys, {len(sells)} sales)."
+        lead += f" Members of Congress and other officials disclosed {seo.n_of(len(off), 'trade')} ({len(buys)} buys, {len(sells)} sales)."
     shares = lambda r: f"{(r.get('shares') or 0):,.0f}"   # noqa: E731
     rows = ''.join(f"<tr><td>{e(display_name(r.get('manager')))}</td><td class='num'>{e(shares(r))}</td>"
                    f"<td class='num'>{e(money(r.get('value_usd')))}</td><td>{e((r.get('status') or '').lower())}</td><td>{e(r.get('period'))}</td></tr>" for r in top)
@@ -170,7 +170,7 @@ def owners(co, h):
     qa = [(f"Who owns the most {t} stock?", f"By the latest 13F filings: " + '; '.join(f"{display_name(r.get('manager'))} ({money(r.get('value_usd'))})" for r in top[:5]) + '.')] if top else []
     if off:
         last = max(off, key=lambda r: r.get('date') or '')
-        qa.append((f"Has Congress traded {t} stock?", f"Officials disclosed {len(off)} trades on file: {len(buys)} buys and {len(sells)} sales. The latest: "
+        qa.append((f"Has Congress traded {t} stock?", f"Officials disclosed {seo.n_of(len(off), 'trade')} on file: {len(buys)} buys and {len(sells)} sales. The latest: "
                    f"{last.get('person')}, {last.get('transaction_type')} on {last.get('date')}."))
     if short and len(short) >= 3:
         qa.append((f"What is the short interest in {t}?", f"{short[1]:,.0f} shares were sold short at the {short[0]} settlement, {short[2]}% of the float."))
@@ -480,7 +480,7 @@ def earnings_date(co, er, c, cons, today=None):
         grow = []
         for n in q.get('nodes') or []:
             if n.get('color') == 'rev' and n.get('v') and n.get('y'):
-                grow.append((n.get('name'), n['v'], (n['v'] / n['y'] - 1) * 100))
+                grow.append((seo.label(n.get('name')), n['v'], (n['v'] / n['y'] - 1) * 100))
         grow = sorted(grow, key=lambda g: -g[1])[:6]
         if grow:
             watch = (f"<h2>What to watch</h2><p>Last quarter ({e(q.get('label'))}) the lines that make up revenue grew like this; the report shows whether the trend holds:</p>"

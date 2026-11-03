@@ -563,7 +563,7 @@ def chain_pages(data_dir, out_dir, base, images=None):
         cov = d.get("coverage") or {}
         lead = (f"{money(cov.get('spend'))} spent in the last twelve months by {', '.join(b['t'] for b in d.get('buyers') or [])}; "
                 f"{money(cov.get('traced'))} traced to {cov.get('suppliers')} listed suppliers." if d.get("kind") == "spend"
-                else f"{len(rows)} companies, {money(sum(r.get('attr') or 0 for r in rows))} of revenue in the last twelve months.")
+                else f"{n_of(len(rows), 'company', 'companies')}, {money(sum(r.get('attr') or 0 for r in rows))} of revenue in the last twelve months.")
         lis = "".join(f"<li><a href='../../c/{e(r['t'].lower())}/'>{e(r['t'])}</a> {e(r.get('name') or '')} "
                       f"<span class='muted'>{money(r.get('attr'))} · {e(r.get('line') or '')}</span></li>" for r in rows[:60])
         body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Chains</a> › {e(d['name'])}</p>"
