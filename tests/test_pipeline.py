@@ -3488,3 +3488,17 @@ def test_company_names_cased_for_the_pages():
     assert names.display("MACY'S, INC.") == "Macy's" and names.display("O'REILLY AUTOMOTIVE INC") == "O'Reilly Automotive"
     assert names.display("BANK OF AMERICA CORP /DE/") == "Bank of America" and names.display("LYONDELLBASELL INDUSTRIES N.V.") == "LyondellBasell Industries N.V."
     assert names.display("E.W. SCRIPPS Co") == "E.W. Scripps" and names.display("Huntsman CORP") == "Huntsman" and names.display("3M CO") == "3M"
+
+
+def test_member_labels_cleaned_of_xbrl_leftovers():
+    """A filer's label linkbase can hand a chart "Cabinetry And Millwork Member", "Direct to Consumer [member]" or a
+    documentation sentence in the label's place ("This member stands for the information pertaining to …"): the chart
+    writes the name without them, and a stored breakdown is cleaned when drawn (build.clean_lines)."""
+    from pipeline import dims, build
+    assert dims.clean_label("Cabinetry And Millwork Member", "x_CabinetryAndMillworkMember") == "Cabinetry And Millwork"
+    assert dims.clean_label("Direct to Consumer [member]", "x_DirectToConsumerMember") == "Direct to Consumer"
+    assert dims.clean_label("Operating lease revenues from automobile rentals [Members]", "x_A") == "Operating lease revenues from automobile rentals"
+    assert dims.clean_label('This member stands for the information pertaining to "Net revenue non-core services".', "abc_NetRevenueNonCoreServicesMember") == "Net Revenue Non Core Services"
+    assert dims.clean_label("iPhone [Member]", "aapl_IPhoneMember") == "iPhone" and dims.clean_label("Services", "aapl_ServiceMember") == "Services"
+    ls = {"leaves": [{"id": "x:CabinetryAndMillworkMember", "label": "Cabinetry And Millwork Member"}], "groups": [], "axis": "a"}
+    assert build.clean_lines(ls)["leaves"][0]["label"] == "Cabinetry And Millwork" and ls["leaves"][0]["label"].endswith("Member")

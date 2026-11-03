@@ -44,11 +44,26 @@ def parse_labels(xml_text):
     for frm, to in arcs:
         elid = loc.get(frm)
         labels = dict(lab_by_res.get(to, []))
+        named = [t for r, t in labels.items() if not r.endswith(("/documentation", "/definitionGuidance", "/commentaryGuidance"))]
         text = (labels.get("http://www.xbrl.org/2003/role/terseLabel") or labels.get("http://www.xbrl.org/2003/role/label")
-                or next(iter(labels.values()), ""))
+                or next(iter(named), "") or next(iter(labels.values()), ""))
         if elid and text:
-            out[elid] = re.sub(r"\s*\[Member\]$", "", text)
+            out[elid] = clean_label(text, elid)
     return out
+
+
+DOCUMENTATION = re.compile(r"^(this member|represents|information (pertaining|about)|the member|a member|member stands|element)", re.I)
+
+
+def clean_label(text, elid=""):
+    """A member's label as a chart writes it: "[Member]", "[Members]" and a trailing "Member" word gone ("Cabinetry And
+    Millwork Member", "Direct to Consumer [member]"); a documentation sentence put in the label's place ("This member
+    stands for the information pertaining to …") replaced by the element's own name in words."""
+    t = re.sub(r"\s*\[\s*members?\s*\]\s*$", "", (text or "").strip(), flags=re.I)
+    t = re.sub(r"\s+Members?$", "", t)
+    if elid and (DOCUMENTATION.search(t) or len(t) > 90 or (t.endswith(".") and len(t) > 40)):
+        t = humanize(elid.split("_", 1)[-1]) if "_" in elid else humanize(elid)
+    return t.strip()
 
 
 def label_roles(xml_text):

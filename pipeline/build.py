@@ -2274,7 +2274,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     if q["raw"].get("rev_reported") is not None:
         Nc["rev_calc"] = q["raw"]["rev_reported"]
     apply_reported(q, Nc, Ny, draw=draw_company)
-    ls = None if sliver_lines(q, Nc["R"]) else q.get("lines_struct")
+    ls = None if sliver_lines(q, Nc["R"]) else clean_lines(q.get("lines_struct"))
     lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)
     if lines_q1 and ls and not all(l["id"] in lines_q1 for l in ls["leaves"]):
         lines_q1 = None
@@ -2330,6 +2330,17 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     }
 
 
+def clean_lines(ls):
+    """A stored breakdown with its labels cleaned of XBRL leftovers (dims.clean_label: "[Member]", a documentation
+    sentence in a label's place): charts stored before the labels were cleaned draw clean."""
+    if not ls:
+        return ls
+    out = dict(ls)
+    for key in ("leaves", "groups"):
+        out[key] = [dict(l, label=dims.clean_label(l.get("label") or "", l.get("id") or "")) for l in ls.get(key) or []]
+    return out
+
+
 def net_drawn(nodes, Nc):
     """The net figure the chart's net node shows, for the page's headline, tiles and history beside it: net earnings to
     shareholders when minority interests are drawn (Exxon's $15.4B, not the $16.0B including them), the consolidated
@@ -2359,7 +2370,7 @@ def year_payload(c, y):
     Nc, Ny = normalize(y["raw"]), normalize(y.get("raw_py"))
     if not Nc:
         return None
-    ls = None if _unmatched(y) or sliver_lines(y, Nc["R"]) else y.get("lines_struct")
+    ls = None if _unmatched(y) or sliver_lines(y, Nc["R"]) else clean_lines(y.get("lines_struct"))
     try:
         nodes, links, kind = build_spec(Nc, None, Ny, ls, (y.get("lines"), None, y.get("lines_py")))
     except Exception as e:
