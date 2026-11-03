@@ -133,14 +133,24 @@
         basis:'Share of reported 13F value', note:'Quarter-end reported long holdings, not current positions or total AUM. Options and unmatched securities remain in Other. Weight changes include price movement, not just trading. Latest amended reports may restate history; this is not a point-in-time backtest.', evidence:rows};
     }
     if (st.aw === 'official') {
-      const doc = await api.json(api.hub + 'market/officials-trades.json');
       const person = String(st.ap || '').trim();
       if (!person) throw new Error('Enter the official’s disclosed name');
+      // every disclosed trade of the official (market/officials/<slug>.json, app/market.py officials_by_person); the
+      // shared feed (officials-trades.json) only when that file is missing: it keeps the newest 4,000 trades of everyone
+      const slug = person.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
+      const own = slug ? await Promise.resolve(api.json(api.hub + 'market/officials/' + slug + '.json')).catch(() => null) : null;
+      let rows, capped = false;
+      if (own && Array.isArray(own.fields) && Array.isArray(own.trades)) {
+        rows = own.trades.map((r) => ({ person: own.name, date: r[0], ticker: r[1], type: r[2], amount_min: r[3], amount_max: r[4] }));
+      } else {
+        const doc = await api.json(api.hub + 'market/officials-trades.json');
+        rows = (doc && doc.trades || []).filter((t) => String(t.person || '').toLowerCase() === person.toLowerCase());
+        capped = true;
+      }
       const months = new Map();
       const evidence = [];
-      for (const t of (doc && doc.trades || [])) {
-        if (String(t.person || '').toLowerCase() !== person.toLowerCase() || !isDate(t.date) ||
-          (st.from && t.date < st.from) || (st.to && t.date > st.to) || (st.ao && st.ao !== 'all' && t.type !== st.ao)) continue;
+      for (const t of rows) {
+        if (!isDate(t.date) || (st.from && t.date < st.from) || (st.to && t.date > st.to) || (st.ao && st.ao !== 'all' && t.type !== st.ao)) continue;
         const k = symbol(t.ticker_canon || t.ticker), v = Number(t.amount_min);
         if (!k || !Number.isFinite(v) || v <= 0) continue;
         const d = new Date(Date.UTC(+t.date.slice(0,4), +t.date.slice(5,7), 0)).toISOString().slice(0,10);
@@ -151,7 +161,9 @@
         const total = [...m.values()].reduce((a,b)=>a+b,0);
         return {date, source:'Official PTR disclosed amount lower bounds', positions:[...m].map(([k,v])=>[k,v/total])};
       }), basis:'Monthly disclosed transaction lower-bound share', evidence,
-        note:'NOT actual holdings or net exposure. Monthly composition uses disclosed transaction amount LOWER BOUNDS, not exact dollars; buys and sells are gross, never netted. Only ticker-resolved transactions are included. Months without records are not zero activity. Disclosure can lag the trade date. The published feed is capped at 4,000 recent transactions across all officials, so history and boundary months can be incomplete.'};
+        note:'NOT actual holdings or net exposure. Monthly composition uses disclosed transaction amount LOWER BOUNDS, not exact dollars; buys and sells are gross, never netted. Only ticker-resolved transactions are included. Months without records are not zero activity. Disclosure can lag the trade date. '
+          + (capped ? 'The published feed is capped at 4,000 recent transactions across all officials, so history and boundary months can be incomplete.'
+                    : 'Every disclosed trade of this official on file (US House reports read by machine since 2023, Senate electronic reports), from ' + (own.first || '') + ' to ' + (own.last || '') + '.')};
     }
     return null;
   }

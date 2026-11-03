@@ -82,16 +82,20 @@ def collect_holdings(client,cfg,old,revalidate=False):
                 prioritized.append(row)
                 seen.add(key)
         selected=prioritized
+    # 4.5 the watched funds and the listed managers carry their history from `watch_since` (the 13F XML era began with
+    # 2013 Q2) rather than the universe's `since`: the quarter-by-quarter videos of Berkshire, Scion or Pershing Square
+    deep={str(int(w['cik'])) for w in cfg.get('watch',[])}|{str(int(m['cik'])) for m in cfg.get('managers',[])} if cfg.get('watch_since') else set()
+    since_of=lambda c:cfg['watch_since'] if c in deep else cfg['since']
     for item in selected:
         cik=str(int(item['cik']))
         cached=old_managers.get(cik,{})
         attempts[cik]={'last_attempt':now()}
         # Refuse to mix a previous as-of/range build with another request.
-        if cached.get('since') != cfg['since'] or cached.get('as_of') != cfg.get('as_of'):
+        if cached.get('since') != since_of(cik) or cached.get('as_of') != cfg.get('as_of'):
             cached={}
         try:
             if cached.get('cache'):cached=load_manager(cfg['_data_root'],cached)
-            name,metas=filing_list(adapter,cik,cfg['since'])
+            name,metas=filing_list(adapter,cik,since_of(cik))
             prior={f['accession']:f for f in cached.get('filings',[])}
             filings,notices=[],[]
             for meta in metas:
@@ -105,7 +109,7 @@ def collect_holdings(client,cfg,old,revalidate=False):
             for i,s in enumerate(snapshots):
                 s['changes']=compare(snapshots[i-1],s) if i else []
                 s['baseline_period']=snapshots[i-1]['period'] if i else None
-            managers[cik]={'cik':cik,'name':name,'label':item.get('name',name),'since':cfg['since'],
+            managers[cik]={'cik':cik,'name':name,'label':item.get('name',name),'since':since_of(cik),
                              'as_of':cfg.get('as_of'),'filings':filings,'snapshots':snapshots,
                              'notices':notices,'last_success':now(),'stale':False,
                              'discovered_filing_count':item.get('filing_count')}

@@ -418,6 +418,7 @@ def process_nport(zpath, keep_series, holdings=True, top=150, active=None):
 
 HIST_CAP = 20000        # long equity lines kept per quarterly report (the largest portfolios have about 10,000)
 HIST_FIRST = (2019, 4)  # the first N-PORT data set the SEC publishes
+HIST_VERSION = 2        # 2: the unit investment trusts' reports (SPY, DIA, QQQ: no series id) kept under the trust's CIK
 
 
 def _ident(s):
@@ -426,21 +427,41 @@ def _ident(s):
     return s if len(s) >= 6 and s.strip('0') and s not in ('N/A', 'NONE', 'UNKNOWN') and re.fullmatch(r'[0-9A-Z]+', s) else None
 
 
-def nport_weights(zpath, keep_series, cap=HIST_CAP):
+def uit_ciks(root):
+    """{registrant CIK: 'cik<CIK>'} of the ETFs that are unit investment trusts (SPY, DIA, QQQ): a trust is one fund and
+    its N-PORT reports carry no series id (or one the ETF list never saw), so the history keeps them under its CIK."""
+    out = {}
+    for e in universe(root):
+        if e.get('act') == 'uit' and str(e.get('cik') or '').isdigit():
+            out[int(e['cik'])] = f'cik{int(e["cik"])}'
+    return out
+
+
+def nport_weights(zpath, keep_series, keep_cik=None, cap=HIST_CAP):
     """One quarterly N-PORT set → {'keys': [...], 'funds': {series: {report date: report}}, 'ids': {CUSIP or ISIN: ticker}}
     for the quarterly holdings history (the videos of how each ETF's portfolio changed). A report: 'acc', 'filed', 'na'
     (net assets), 'n' (long equity lines), 'eq' (their total weight), and every line, largest first, as two lists: 'k' (an
     index into 'keys': the ticker the fund gives, else the CUSIP, else the ISIN; lines of one security added together) and
     'v' (the fund's own percentage of net assets in millionths). One report per series and date: the latest filed (an
     amendment replaces the original). 'ids': for the keys that are a bare CUSIP / ISIN, the ticker most of the funds that
-    give both write."""
+    give both write. keep_cik (uit_ciks): a unit investment trust's reports, which name no series the ETF list knows,
+    are kept under 'cik<CIK>' of the registrant."""
     z = zipfile.ZipFile(zpath)
     sub = {r['ACCESSION_NUMBER']: (_d(r['REPORT_DATE']), _d(r['FILING_DATE'])) for r in tsv(z, 'SUBMISSION.tsv')}
+    reg = {}
+    if keep_cik:
+        for r in tsv(z, 'REGISTRANT.tsv'):
+            try:
+                reg[r['ACCESSION_NUMBER']] = int(r.get('CIK') or 0)
+            except ValueError:
+                pass
     info, best = {}, {}
     for r in tsv(z, 'FUND_REPORTED_INFO.tsv'):
         s, acc = r['SERIES_ID'], r['ACCESSION_NUMBER']
         if s not in keep_series:
-            continue
+            s = (keep_cik or {}).get(reg.get(acc))
+            if not s:
+                continue
         rd, fd = sub.get(acc, (None, None))
         if not rd:
             continue
@@ -715,12 +736,12 @@ def hist_path(root, name, ids=False):
 
 
 def save_history(root, name, zp, ets):
-    """The quarterly holdings of one downloaded N-PORT set, kept for good (each set is read once)."""
+    """The quarterly holdings of one downloaded N-PORT set, kept for good (each set is read once per HIST_VERSION)."""
     t0 = time.time()
-    d = nport_weights(zp, ets)
+    d = nport_weights(zp, ets, uit_ciks(root))
     save_gz(hist_path(root, name, ids=True), {'source': name, 'ids': d['ids']})
     save_gz(hist_path(root, name), {'source': name, 'keys': d['keys'], 'funds': d['funds']})
-    return {'at': now(), 'series': len(d['funds']), 'reports': sum(len(v) for v in d['funds'].values()), 'seconds': round(time.time() - t0)}
+    return {'at': now(), 'v': HIST_VERSION, 'series': len(d['funds']), 'reports': sum(len(v) for v in d['funds'].values()), 'seconds': round(time.time() - t0)}
 
 
 def collect_history(root, links, tmp, max_new=3, budget=720.0):
@@ -734,7 +755,7 @@ def collect_history(root, links, tmp, max_new=3, budget=720.0):
     for u in urls:
         name = Path(u).name
         rec = hs.get(name) or {}
-        if hist_path(root, name).exists() and hist_path(root, name, ids=True).exists() and not rec.get('error'):
+        if hist_path(root, name).exists() and hist_path(root, name, ids=True).exists() and not rec.get('error') and rec.get('v') == HIST_VERSION:
             continue
         if rec.get('error') and (rec.get('at') or '') > week:
             continue
@@ -831,7 +852,7 @@ def collect_datasets(h, root, tmp='/tmp/etf-dl', max_new=None, history=3):
                 p.unlink()
     if history:
         write_json(root / 'state.json', st)
-        rep = collect_history(root, links, tmp, max_new=history)
+        rep = collect_history(root, links, tmp, max_new=history, budget=max(720.0, 200.0 * history))
         if rep:
             report['history'] = rep
     return report
@@ -879,14 +900,14 @@ def collect_uit(root):
     return {k: len(v['rows']) for k, v in out.items()}
 
 
-def collect(root, minutes=30.0, datasets=True):
+def collect(root, minutes=30.0, datasets=True, history=3):
     root = Path(root)
     t0 = time.time()
     h = Http({'www.sec.gov': 0.15, 'www.nasdaqtrader.com': 1, 'query2.finance.yahoo.com': 0.6, 'fc.yahoo.com': 0.5})
     src = collect_universe(h, root)
     rep = {'universe': len(universe(root, src))}
     if datasets:
-        rep['datasets'] = collect_datasets(h, root)
+        rep['datasets'] = collect_datasets(h, root, history=history)
     rep['uit'] = collect_uit(root)
     etfs = universe(root)
     caps = {}
@@ -1051,6 +1072,10 @@ def history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock
         if sc and sc != 'other' and len(c) == 9:
             issuer.setdefault(c[:6], sc)
     sym_series = {e['symbol']: e.get('series') for e in etfs if e.get('series')}
+    sym_keys = {sym: [series] for sym, series in sym_series.items()}
+    for e in etfs:                                        # a unit investment trust's reports sit under its CIK (uit_ciks):
+        if e.get('act') == 'uit' and str(e.get('cik') or '').isdigit() and e.get('symbol'):   # some quarters under a series id, some not
+            sym_keys.setdefault(e['symbol'], []).append(f'cik{int(e["cik"])}')
     member = {}
     for sym, sc in SECTOR_ETFS.items():
         for k, w, v in ((holds.get(sym_series.get(sym)) or {}).get('weights') or []):
@@ -1086,10 +1111,15 @@ def history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock
     sector_of = lambda t: classify(t)[1]
     hist = quarterly_history(files, classify) if files else {}
     out = {}
-    for sym, series in sym_series.items():
+    for sym, keys in sym_keys.items():
+        by_date = {}
+        for series in keys:
+            for x in hist.get(series) or []:
+                if x['positions'] and (x['date'] not in by_date or (x.get('filed') or '') > (by_date[x['date']].get('filed') or '')):
+                    by_date[x['date']] = x
         snaps = [{'date': x['date'], 'date_basis': 'reported', 'source': 'SEC N-PORT (quarter-end)', 'accession': x['accession'],
                   'positions': x['positions'], 'sector_weights': x['sector_weights'], 'equity_weight_covered': x['eq'],
-                  'n': x['n'], 'net_assets': x['net_assets'], 'partial': True} for x in hist.get(series) or [] if x['positions']]
+                  'n': x['n'], 'net_assets': x['net_assets'], 'partial': True} for _, x in sorted(by_date.items())]
         if snaps:
             out[sym] = snaps
     return out, sector_of
@@ -1482,12 +1512,13 @@ def main():
     ap.add_argument('--root', default='etf')
     ap.add_argument('--minutes', type=float, default=30)
     ap.add_argument('--no-datasets', action='store_true')
+    ap.add_argument('--history', type=int, default=3, help='N-PORT sets read for the quarterly holdings history this run (newest first)')
     ap.add_argument('--hub', default=None, help="the Hub's data folder (disclosures/docs/data): 13F, officials, short interest, insiders, N-PX")
     ap.add_argument('--consensus', default=None, help='public/ of the consensus-history branch')
     ap.add_argument('--debt', default=None, help='public/ of the debt-history branch')
     a = ap.parse_args()
     if a.cmd == 'collect':
-        print(json.dumps(collect(a.root, a.minutes, datasets=not a.no_datasets)), flush=True)
+        print(json.dumps(collect(a.root, a.minutes, datasets=not a.no_datasets, history=a.history)), flush=True)
     else:
         print(json.dumps(build(a.root, a.hub, a.consensus, a.debt)), flush=True)
 

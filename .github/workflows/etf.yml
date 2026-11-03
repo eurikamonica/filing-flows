@@ -12,6 +12,9 @@ on:
       minutes:
         description: 'Minutes for the market batch (after the filings sets)'
         default: '35'
+      history:
+        description: 'N-PORT sets read for the quarterly holdings history this run (newest first; 3 on the schedule)'
+        default: '3'
   schedule:
     - cron: '17 */4 * * *'
 permissions:
@@ -64,7 +67,7 @@ jobs:
           du -sh etf; ls etf
       - name: ETF list, filings sets and market data
         timeout-minutes: 95
-        run: python disclosures/app/etf.py collect --root etf --minutes "${{ inputs.minutes || '35' }}"
+        run: python disclosures/app/etf.py collect --root etf --minutes "${{ inputs.minutes || '35' }}" --history "${{ inputs.history || '3' }}"
       - name: Build public/
         timeout-minutes: 15
         run: python disclosures/app/etf.py build --root etf --hub disclosures/docs/data --consensus _consensus-history/public --debt _debt-history/public

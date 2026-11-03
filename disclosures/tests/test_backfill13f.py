@@ -112,3 +112,39 @@ class Backfill(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class WatchedHistory(unittest.TestCase):
+    def test_a_watched_fund_carries_its_history_from_watch_since(self):
+        """The watched funds (config holdings.watch) and the listed managers are read from `watch_since` (the 13F XML
+        era) rather than the universe's `since`; a row read with the shallow range is read again, and every other
+        manager keeps the universe's range."""
+        sec = FakeSec()
+        sec.docs['https://data.sec.gov/submissions/CIK0000000042.json'] = json.dumps({'name': 'TEST MANAGER', 'filings': {'recent': {
+            'form': ['13F-HR', '13F-HR', '13F-HR'], 'accessionNumber': ['0000000042-14-000001', '0000000042-25-000001', '0000000042-25-000002'],
+            'filingDate': ['2014-02-14', '2025-05-15', '2025-08-14'], 'acceptanceDateTime': ['', '', ''],
+            'primaryDocument': ['primary_doc.xml', 'primary_doc.xml', 'primary_doc.xml']}, 'files': []}}).encode()
+        base = 'https://www.sec.gov/Archives/edgar/data/42/000000004214000001/'
+        sec.docs[base + 'index.json'] = json.dumps({'directory': {'item': [{'name': 'primary_doc.xml'}, {'name': 'infotable.xml'}]}}).encode()
+        sec.docs[base + 'primary_doc.xml'] = cover('12-31-2013', 500)
+        sec.docs[base + 'infotable.xml'] = table(5, 500)
+
+        class Client:
+            def get(self, url, sec=False):
+                return FakeSec.get(sec_, url)
+
+            def json(self, url, sec=False):
+                return json.loads(FakeSec.get(sec_, url))
+        sec_ = sec
+        with tempfile.TemporaryDirectory() as d:
+            cfg = {'since': '2025-01-01', 'watch_since': '2013-06-30', 'watch': [{'cik': '42', 'name': 'Test Manager'}], 'managers': [],
+                   'batch_size': 4, '_data_root': d, 'discover_all': False}
+            old = {'managers': [{'cik': '42', 'name': 'TEST MANAGER', 'since': '2025-01-01', 'snapshots': [], 'filings': []}], 'discovery': {'directory': []}}
+            out = H.collect_holdings(Client(), cfg, old)
+            m = next(x for x in out['managers'] if x['cik'] == '42')
+            self.assertEqual(m['since'], '2013-06-30')
+            self.assertEqual([x['period'] for x in m['snapshots']], ['2013-12-31', '2025-03-31', '2025-06-30'])
+            # not watched: the universe's range, the 2013 filing left alone
+            cfg2 = {**cfg, 'watch': [], 'managers': [{'cik': '42', 'name': 'Test Manager'}], 'watch_since': None}
+            m2 = next(x for x in H.collect_holdings(Client(), cfg2, old)['managers'] if x['cik'] == '42')
+            self.assertEqual((m2['since'], [x['period'] for x in m2['snapshots']]), ('2025-01-01', ['2025-03-31', '2025-06-30']))
