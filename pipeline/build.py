@@ -73,7 +73,7 @@ class Store:
 
 
 # ---------------------------------------------------------------- the run's time budget
-# GitHub stops the job after 55 minutes, and a stopped job saves nothing: the next run would redo the same work and be
+# GitHub stops the job after 70 minutes (scan.yml), and a stopped job saves nothing: the next run would redo the same work and be
 # stopped again. So the run keeps to a budget (RUN_BUDGET_MINUTES, default 32): catch-up work (re-reading stored
 # figures, history, company-reported figures) may use the first part of it, new filings the rest; rendering the site
 # and the steps after it (e-mails, saving the data) fit in the time left. Unfinished work waits for the next run.

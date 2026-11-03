@@ -87,7 +87,10 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    # the scan step stops at 42 minutes, and everything after it (EPS, the hub, the static pages, the audits, saving the
+    # data store, the upload) takes 17-20: at 55 a run whose filings loop used its whole budget (Nov 3, 2026, earnings
+    # season: 37.6 minutes) was stopped in the upload with the store saved but no site deployed
+    timeout-minutes: 70
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}   # a secret keeps the email out of public logs
     steps:
@@ -454,7 +457,7 @@ jobs:
       - name: The owner's daily report (8:00 owner time) and X threads (e-mail, or the X API)
         if: steps.claim.outputs.fast != 'true'  # the owner's fast lane skips it: the next regular scan sends
         continue-on-error: true                 # sending trouble never blocks the site
-        timeout-minutes: 8                      # leaves time to save the data store within the job's 55 minutes
+        timeout-minutes: 8                      # leaves time to save the data store within the job's 70 minutes
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's settings (#owner page) and address
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
