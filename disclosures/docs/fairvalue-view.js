@@ -73,6 +73,21 @@
   const pp = (v) => (fin(v) ? (v > 0 && v < 0.005 ? '<1%' : v < 1 && v > 0.995 ? '>99%' : num(100 * v, 0) + '%') : '—');
   const card = (label, value, cls = '', note = '') => `<div class="fv-card"><span>${esc(label)}</span><b class="${cls}">${value}</b>${note ? `<i>${note}</i>` : ''}</div>`;
 
+  // ---------- the peer multiples, plain and weighted (app/peer_weights.py) ----------
+  const W_LAB = { pe: 'P/E', ev_ebitda: 'EV/EBITDA', ev_sales: 'EV/Sales', p_ffo: 'P/FFO (REITs)' };
+  function weightedHtml(d) {
+    const P = Object.assign({}, d.peers || {});
+    if (d.sector_model && d.sector_model.peers && d.sector_model.peers.weighted) P.p_ffo = d.sector_model.peers;
+    const rows = Object.keys(W_LAB).filter((k) => P[k] && P[k].weighted);
+    if (!rows.length) return '';
+    const x = (v) => (fin(v) ? num(v, 1) + '×' : '—');
+    return `<h3>Peer multiples — plain and weighted</h3><p class="fv-sub">The plain median counts every peer alike and only today's price. The weighted one gives each peer a weight from its share of the group's market value, revenue and trading value (none above 20%), and counts each peer's multiple at every quarter since 2022 with a one-year half-life — so small, thinly traded peers and old quarters move it less. "Effective peers": how many equal peers the weights amount to. The weighted rows on the football field are lenses: shown, not yet part of the stage-weighted value.</p>
+      <div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Multiple</th><th class="n">Plain median</th><th class="n">By market value</th><th class="n">By revenue</th><th class="n">By trading value</th><th class="n">By recency</th><th class="n">Weighted (all)</th><th class="n">Weighted middle half</th><th class="n">Peers · effective</th><th>Largest weights</th></tr></thead><tbody>${rows.map((k) => {
+        const p = P[k], w = p.weighted, b = w.by || {};
+        return `<tr><td>${W_LAB[k]}</td><td class="n">${x(p.p50)}</td><td class="n">${x(b.mcap)}</td><td class="n">${x(b.revenue)}</td><td class="n">${x(b.dvol)}</td><td class="n">${w.timed ? x(b.time) : '<small>today only</small>'}</td><td class="n"><b>${x(w.p50)}</b></td><td class="n">${x(w.p25)} – ${x(w.p75)}</td><td class="n">${num(w.n)} · ${num(w.n_eff, 1)}</td><td><small>${esc((w.top || []).map(([t, v]) => `${t} ${num(100 * v)}%`).join(', '))}</small></td></tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+
   // ---------- football field: one bar per method, the price as a line ----------
   function football(rows, price) {
     rows = rows.filter((r) => fin(r.low) && fin(r.high));
@@ -394,7 +409,7 @@
       ${d.implied_return ? card('Return the price implies', pct(d.implied_return.median, 1), fin(d.implied_return.spread) ? (d.implied_return.spread > 0.01 ? 'fv-good' : d.implied_return.spread < -0.01 ? 'fv-bad' : '') : '', fin(d.implied_return.ke) ? `a year, vs ${pct(d.implied_return.ke, 1)} cost of equity` : 'a year') : ''}</div>`;
     h += `<h3>Valuation football field</h3><p class="fv-sub">Each bar is one method's range, the black tick its central value, the dashed line today's price. Green: the whole range above the price; red: below.</p><div class="fv-wrap">${football(d.football || [], price)}</div>`;
     h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th>How</th></tr></thead><tbody>${(d.football || []).map((r) => `<tr><td>${esc(r.method)}${r.lens ? '<span class="fv-tag" title="Shown with its algebra in the appendix; not part of the stage-weighted value or the headline range until the ledger has scored it">lens</span>' : ''}</td><td class="n">${usd(r.low)}</td><td class="n">${usd(r.point)}</td><td class="n">${usd(r.high)}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>`;
-    h += tilesHtml(d) + combinedHtml(d.combined);
+    h += weightedHtml(d) + tilesHtml(d) + combinedHtml(d.combined);
     if (d.reverse && d.reverse.status === 'ok') h += `<p><b>Reverse DCF:</b> today's price needs revenue growth of <b>${pct(d.reverse.implied_growth)}</b> a year for five years (then ${pct((dc && dc.assumptions.g) || 0.025)}), with the margins and cost of capital below. The last four quarters grew ${pct(d.reverse.history_growth)} on the four before.</p>`;
     else if (d.reverse) h += `<p class="fv-sub">Reverse DCF: no single growth rate between −30% and 60% gives today's price with these assumptions.</p>`;
     if (pv) {
@@ -428,7 +443,10 @@
       else if (sm.model.startsWith('P/B')) h += `<p class="fv-sub">${fin(sm.combined_ratio) ? `Combined ratio ${pct(sm.combined_ratio)} (claims + acquisition and other underwriting costs ÷ premiums earned, trailing four quarters). ` : 'Combined ratio: not tagged in XBRL. '}${fin(sm.roe) ? `ROE ${pct(sm.roe)}; P/B ${num(sm.pb, 2)}× vs ${num(sm.fitted_pb, 2)}× fitted across ${num(sm.fit && sm.fit.n)} insurers.` : ''}</p>${scatter(fits && fits.insurer, fin(sm.roe) && fin(sm.pb) ? [sm.roe, sm.pb] : null, 'ROE', 'P/B')}`;
       else h += `<p class="fv-sub">FFO ${esc(big(sm.ffo))}${fin(sm.p_ffo) ? `; P/FFO ${num(sm.p_ffo, 1)}×` : ''}${sm.peers ? ` vs a REIT median of ${num(sm.peers.p50, 1)}×` : ''}. ${esc(sm.note || '')}</p>`;
     }
-    if (d.sotp) h += `<h3>Sum of the parts</h3><table class="fv-tbl"><thead><tr><th>Segment</th><th class="n">Revenue (annualised)</th><th>Priced like</th><th class="n">EV/Sales</th><th class="n">Value</th></tr></thead><tbody>${d.sotp.parts.map((p) => `<tr><td>${esc(p.segment)}</td><td class="n">${big(p.revenue)}</td><td>${esc(String(p.group).replace(/^sic/, 'SIC ').replace(/^sec:/, 'sector '))}</td><td class="n">${num(p.ev_sales, 1)}×</td><td class="n">${big(p.ev)}</td></tr>`).join('')}</tbody></table><p class="fv-sub">${esc(d.sotp.note)}</p>`;
+    if (d.sotp) {
+      const sw = d.sotp.weighted, wc = d.sotp.parts.some((p) => fin(p.ev_sales_w));
+      h += `<h3>Sum of the parts</h3><div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Segment</th><th class="n">Revenue (annualised)</th><th>Priced like</th><th class="n">EV/Sales</th><th class="n">Value</th>${wc ? '<th class="n">EV/Sales, weighted</th><th class="n">Value, weighted</th><th>Largest weights</th>' : ''}</tr></thead><tbody>${d.sotp.parts.map((p) => `<tr><td>${esc(p.segment)}</td><td class="n">${big(p.revenue)}</td><td>${esc(String(p.group).replace(/^sic/, 'SIC ').replace(/^sec:/, 'sector '))}</td><td class="n">${num(p.ev_sales, 1)}×</td><td class="n">${big(p.ev)}</td>${wc ? `<td class="n">${fin(p.ev_sales_w) ? num(p.ev_sales_w, 1) + '×' : '—'}</td><td class="n">${big(p.ev_w)}</td><td><small>${esc((p.top || []).map(([t, w]) => `${t} ${num(100 * w)}%`).join(', '))}</small></td>` : ''}</tr>`).join('')}</tbody></table></div><p class="fv-sub">${esc(d.sotp.note)}${sw ? `. Weighted: ${esc(usd(sw.point))} a share (${esc(usd(sw.low))}–${esc(usd(sw.high))}) — ${esc(sw.note)}.` : ''}</p>`;
+    }
     if ((d.notes || []).length) h += `<p class="fv-note">${d.notes.map(esc).join('<br>')}</p>`;
     h += `<div data-fvapxwrap>${appendixHtml(d.appendix)}</div>`;
     const src = Object.entries(d.sources || {}).map(([k, v]) => `${k}: ${v}`).join(' · ');
@@ -477,7 +495,7 @@
     draw(el, d, fits);
   }
 
-  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp };
+  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp, weightedHtml };
   if (typeof window !== 'undefined') window.FairValueView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();
