@@ -155,10 +155,10 @@ def pack(paragraphs, max_posts=2, prefix=""):
 
 
 def display_name(name):
-    name = re.sub(r"\s*[/(\\][A-Z]{2}[/)\\]?\s*$", "", name.strip())          # "ACUITY INC. (DE)" -> "ACUITY INC."
-    if name.upper() == name:
-        name = " ".join(w if (w.upper() in KEEP_UPPER or re.search(r"\d", w)) else w.capitalize() for w in name.split())
-    return name
+    """The company's name as a post writes it (pipeline/names.py): 'ACUITY INC. (DE)' → Acuity Inc., 'W&T OFFSHORE INC' →
+    W&T Offshore Inc, 'FREEPORT-MCMORAN INC' → Freeport-McMoRan Inc."""
+    from . import names
+    return names.cased(name)
 
 
 def money(v, big):

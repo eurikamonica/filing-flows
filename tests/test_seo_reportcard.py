@@ -41,7 +41,7 @@ def test_pages(tmp_path):
         {'label': l, 'actual': a, 'outcome': 'above' if a > 100e6 else 'within', 'vsMid': 5, 'guides': [{'lo': 90e6, 'hi': 100e6}]} for l, a in [('Q2 2026', 105e6), ('Q1 2026', 99e6), ('Q4 2025', 97e6), ('Q3 2025', 101e6)]]}]})
     assert R.write(str(s), 'https://example.com') == 1
     p = (s / 'c' / 'aaa' / 'report-card' / 'index.html').read_text()
-    assert 'beat the analysts&#x27; EPS estimate in 3 of its last 4 reports (75%)' in p and '<td>Q2 2026</td>' in p and '$90M–$100M' in p and '(above)' in p
+    assert 'beat the analysts&#x27; EPS estimate in 3 of its last 4 reports (75%)' in p and '<td>Q2 2026</td>' in p and '$90.0M–$100M' in p and '(above)' in p
     assert 'options price in about <b>±5.0%</b>' in p and 'How credible is its guidance' in p and 'href="report-card/"' in (s / 'c' / 'aaa' / 'index.html').read_text()
     idx = (s / 'disclosures' / 'report-cards' / 'index.html').read_text()
     assert 'Most reliable beaters' in idx and "c/aaa/report-card/" in idx

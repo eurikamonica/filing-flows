@@ -223,8 +223,13 @@ async function loadServer(){
    {const e=Error('Public Supabase connection is not configured');e.floIssue='site_config_missing';throw e;}
  server={url:data.supabase_url,key:data.supabase_key};return server;
 }
+// a feed that is not deployed (the table missing, 404) is not asked for again for six hours: every page of the site
+// asked once a minute and logged a 404 in each reader's console
+const MISSING_KEY='ff:flo-5m-missing',MISSING_FOR=6*3600000;
+function missingRecently(){try{const t=+(root.localStorage?.getItem(MISSING_KEY)||0);return t>0&&Date.now()-t<MISSING_FOR;}catch(_){return false;}}
 async function poll(){
  if(!started||busy||(doc&&doc.visibilityState==='hidden'))return;
+ if(missingRecently()){status='schema_missing';error='';updateView();return;}
  busy=true;
  try{
    const cfg=await loadServer();
@@ -235,6 +240,7 @@ async function poll(){
      try{body=await res.json();}catch(_){}
      const e=Error('Minute scanner feed HTTP '+res.status);
      e.floIssue=classifyHttpError(res.status,body);
+     if(e.floIssue==='schema_missing'||e.floIssue==='endpoint_not_found'){try{root.localStorage?.setItem(MISSING_KEY,String(Date.now()));}catch(_){}}
      throw e;
    }
    const rows=await res.json();
@@ -244,7 +250,7 @@ async function poll(){
    if(top)notifyLeader(top);
    error='';
  }catch(e){status=e&&e.floIssue||'network_error';error=String(e.message||'Unavailable').slice(0,150);feed=null;}
- finally{busy=false;updateView();if(timer)clearTimeout(timer);if(started&&doc?.visibilityState!=='hidden')timer=setTimeout(poll,TIMER);}
+ finally{busy=false;updateView();if(timer)clearTimeout(timer);if(started&&doc?.visibilityState!=='hidden'&&!missingRecently())timer=setTimeout(poll,TIMER);}
 }
 function style(){
  const css='.flo-five-panel[hidden],.flo-five-toast[hidden]{display:none!important}.flo-five-launch{position:fixed;bottom:70px;right:12px;z-index:450;border:1px solid var(--line,#999);border-radius:22px;padding:8px 12px;background:var(--surface,#fff);color:inherit;font:600 12px system-ui;cursor:pointer;box-shadow:0 3px 14px #0002}.flo-five-panel{position:fixed;bottom:115px;right:12px;z-index:452;width:min(95vw,450px);max-height:65vh;overflow:auto;background:var(--surface,#fff);color:inherit;padding:12px;border:1px solid var(--line,#999);border-radius:13px;box-shadow:0 6px 25px #0003;font:12px system-ui}.flo-five-head{display:flex;justify-content:space-between;font-weight:700;font-size:15px}.flo-five-panel select,.flo-five-panel input{max-width:125px;border:1px solid var(--line,#aaa);border-radius:5px;background:transparent;color:inherit;padding:5px}.flo-five-controls{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}.flo-five-controls label{font-size:10px;display:flex;gap:4px;align-items:center}.flo-five-controls input{max-width:85px}.flo-five-results ol{padding-left:22px}.flo-five-results li{margin:5px 0}.flo-five-results button{width:100%;text-align:left;border:1px solid var(--line,#ddd);background:transparent;color:inherit;border-radius:5px;padding:7px;cursor:pointer}.flo-five-meta,.flo-five-disclaimer{font-size:11px;color:var(--muted,#777)}.flo-five-toast{position:fixed;bottom:120px;right:12px;z-index:453;padding:12px;border:1px solid var(--line,#aaa);border-radius:9px;background:var(--surface,#fff);box-shadow:0 8px 20px #0002}.flo-five-table{width:100%;font-size:12px;border-collapse:collapse}.flo-five-table th,.flo-five-table td{border-bottom:1px solid var(--line,#ccc);padding:5px;text-align:right}.flo-five-table td:nth-child(2){font-weight:bold}.flo-five-table th:nth-child(2){text-align:left}';

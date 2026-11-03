@@ -194,7 +194,7 @@ def insiders(hub, L):
     cs = [r for r in sells if r.get('ceo_cfo_sell')]
     bv, sv = sum(r.get('buy_value') or 0 for r in sm), sum(r.get('sell_value') or 0 for r in sm)
     lead = (f"Since {fdate(d.get('since') or '')}, insiders bought {money(bv)} and sold {money(sv)} of their own companies' stock in the open market "
-            f"(Form 4, codes P and S) across {len(sm)} companies. {len(clus)} companies had a cluster — three or more insiders buying within 30 days — "
+            f"(Form 4, codes P and S) across {seo.n_of(len(sm), 'company', 'companies')}. {seo.n_of(len(clus), 'company', 'companies')} had a cluster — three or more insiders buying within 30 days — "
             f"the pattern studies find most informative" + (f"; the largest purchase total was at {nm(buys[0].get('issuer'))} ({money(buys[0]['buy_value'])})." if buys else '.'))
     body = tiles([('Companies', num(len(sm))), ('Bought', money(bv)), ('Sold', money(sv)), ('Buying clusters', num(len(clus))), ('CEO/CFO selling', num(len(cs)))])
     body += SV.hbars([(r.get('ticker') or nm(r.get('issuer')), r['buy_value']) for r in buys], money, 'Largest insider buying, by company', n=12, color=SV.GREEN)
@@ -250,7 +250,7 @@ def stakes(hub, L):
     big = sorted([r for r in sm if r.get('max_percent')], key=lambda r: -r['max_percent'])
     lat = [r for r in d.get('latest') or [] if str(r.get('form', '')).upper().replace('SC ', '').startswith('13D') and not r.get('amendment')]
     lead = (f"{len(sm)} companies with Schedule 13D or 13G filings since {fdate(d.get('since') or '')}: holders crossing 5% must file within days. "
-            f"A 13D (rather than the passive 13G) means the holder may seek to influence the company; {len(act)} companies drew a new 13D"
+            f"A 13D (rather than the passive 13G) means the holder may seek to influence the company; {seo.n_of(len(act), 'company', 'companies')} drew a new 13D"
             + (f", most at {nm(act[0].get('issuer'))} ({act[0]['new13d']})." if act else '.'))
     body = tiles([('Companies', num(len(sm))), ('With a new 13D', num(len(act))), ('Filings on file', num(d.get('on_file'))),
                   ('Largest stake', f"{big[0]['max_percent']:.1f}%" if big else '')])
@@ -495,13 +495,23 @@ def amounts(text):
     return sorted(out, reverse=True)
 
 
-def archive(site, store):
+def archive(site, store, L=None):
+    """every material 8-K on file (store/seo-events.json, by accession), each with the address it was first published at:
+    an event's slug is fixed the first time it is written, so a company that gains a page (or a ticker) later does not
+    move its old events to new addresses and leave the indexed ones answering 404."""
     rows = (read(os.path.join(site, 'disclosures', 'data', 'market', 'events8k.json')) or {}).get('rows') or []
     path = os.path.join(store, 'seo-events.json') if store else None
     old = (read(path) if path else None) or {}
     for r in rows:
         if r.get('accession') and material(r):
+            prev = old.get(r['accession']) or {}
             old[r['accession']] = {k: r.get(k) for k in KEEP}
+            if prev.get('slug'):
+                old[r['accession']]['slug'] = prev['slug']
+    if L is not None:
+        for v in old.values():
+            if not v.get('slug'):
+                v['slug'] = event_slug(v, L)
     keep = dict(sorted(old.items(), key=lambda kv: kv[1].get('filed') or '', reverse=True)[:20000])
     if path:
         os.makedirs(store, exist_ok=True)
@@ -547,8 +557,8 @@ def impact_page(site, base, ES):
             [e(k.replace('+', ' + ')), f"{s['h1']['n']:,}", sp(s['h1']['median']), f"±{100 * s['h1']['abs_median']:.1f}%", f"{100 * s['h1']['up']:.0f}%", sp(s['h21']['median']) if s.get('h21') else '—'] for k, s in sets])
     big = rows[0]
     lead = (f"{ES.get('events', 0):,} 8-Ks from {ES.get('companies', 0):,} companies, each measured from the close before it reached EDGAR to the close 1, 5 and 21 sessions later. "
-            f"The item that moves stocks most is {big[0]} ({big[1].get('name', '').lower()}): a typical next-session move of ±{100 * big[1]['h1']['abs_median']:.1f}%, against "
-            f"±{100 * items['5.02']['h1']['abs_median']:.1f}% for a routine officer change" if items.get('5.02') else '.')
+            f"The item that moves stocks most is {big[0]} ({(lambda n: n[:1].lower() + n[1:])(big[1].get('name', ''))}): a typical next-session move of ±{100 * big[1]['h1']['abs_median']:.1f}%, against "
+            f"±{100 * items['5.02']['h1']['abs_median']:.1f}% for a routine officer change." if items.get('5.02') else '.')
     url = f"{base}/events/impact/"
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>8-K events</a> › Impact</p><h1>Which 8-K items move stocks? Every item, scored</h1>"
             f"<p class='lead'>{lead}</p>{chart}<h2 id='items'>Every item</h2>{tbl}<p class='muted'>{e(ES.get('note') or '')}</p>{sets_h}"
@@ -569,9 +579,12 @@ def event_pages(site, base, L, evs, ES=None):
     """one page per material 8-K: what the item means, the company's own words, the company's figures and its other events"""
     evs = sorted(evs, key=lambda r: (r.get('filed') or '', r.get('accession') or ''), reverse=True)
     by_co, by_topic, urls = {}, {}, []
+    same_day = {}
     for r in evs:
-        r['_slug'] = event_slug(r, L)
+        r['_slug'] = r.get('slug') or event_slug(r, L)
         by_co.setdefault(str(r.get('cik')), []).append(r)
+        k = (str(r.get('cik')), r.get('filed'), (r.get('topics') or [r.get('code')])[0])
+        same_day[k] = same_day.get(k, 0) + 1
         for t in r.get('topics') or ['other']:
             by_topic.setdefault(t, []).append(r)
     for r in evs:
@@ -583,6 +596,9 @@ def event_pages(site, base, L, evs, ES=None):
             kind = ITEMS.get(r.get('code')) or (ITEMS.get(its[0]) if its else '8-K')
             topic = TOPIC.get((r.get('topics') or [None])[0], kind)
             title = f"{name}{' (' + tk + ')' if tk else ''} 8-K, {fdate(r.get('filed'))}: {topic.lower() if topic != kind else kind.lower()}"
+            if same_day.get((str(r.get('cik')), r.get('filed'), (r.get('topics') or [r.get('code')])[0]), 0) > 1:   # two filings that day on the same subject: tell them apart
+                hl = re.sub(r'\s+', ' ', r.get('headline') or '').strip()
+                title += f" — {hl[:48].rsplit(' ', 1)[0] if len(hl) > 48 else hl}" if hl else f" (items {', '.join(its) or r.get('code') or ''}, {str(r.get('accession') or '')[-6:]})"
             body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>8-K events</a> › {e(name)}</p>"
                     f"<h1>{e(name)}: {e(kind.lower())}</h1><p class='muted'>Form {e(r.get('form') or '8-K')} filed {e(fdate(r.get('filed')))} · items "
                     f"{e(', '.join(its) or '—')}</p>")
@@ -621,7 +637,11 @@ def event_pages(site, base, L, evs, ES=None):
                     f"<li><a href='../{x['_slug']}/'>{e(nm(x.get('company')))}</a> <span class='muted'>{e(fdate(x.get('filed')))}</span></li>" for x in same) + '</ul>'
             body += DISCLAIMER
             url = f"{base}/events/{r['_slug']}/"
-            desc = (r.get('headline') or r.get('quote') or '')[:250] or f"{name} filed an 8-K on {fdate(r.get('filed'))}: {kind}."
+            desc = (r.get('headline') or r.get('quote') or '').strip()
+            if len(desc) < 90:                       # a headline cut short ("… Names Jeroen Delsman as"): say what was filed, then the words
+                desc = (f"{name}{' (' + tk + ')' if tk else ''} filed an 8-K on {fdate(r.get('filed'))}: {kind.lower()}. "
+                        + ' '.join(x for x in (r.get('headline'), r.get('quote')) if x)).strip()
+            desc = desc[:250].rsplit(' ', 1)[0] + '…' if len(desc) > 250 else desc
             ld = {'@context': 'https://schema.org', '@graph': [
                 {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
                                                                  {'@type': 'ListItem', 'position': 2, 'name': '8-K events', 'item': base + '/events/'},
@@ -669,7 +689,7 @@ def events_view(hub, L, evs):
     body = SV.hbars([(TOPIC.get(k, k.capitalize()), v) for k, v in cnt.items()], str, '8-K filings by what they announce', n=18)
     body += '<h2>Latest material events</h2>' + table(['Filed', 'Company', 'What', 'Headline'], [
         [e(fdate(r.get('filed'))), L(r.get('ticker'), nm(r.get('company')), r.get('cik')),
-         f"<a href='../../events/{event_slug(r, L)}/'>{e(TOPIC.get((r.get('topics') or [None])[0]) or ITEMS.get(r.get('code'), '8-K'))}</a>", e((r.get('headline') or r.get('quote') or '')[:140])]
+         f"<a href='../../events/{r.get('slug') or event_slug(r, L)}/'>{e(TOPIC.get((r.get('topics') or [None])[0]) or ITEMS.get(r.get('code'), '8-K'))}</a>", e((r.get('headline') or r.get('quote') or '')[:140])]
         for r in rows[:50]])
     body += "<p><a href='../../events/'>Every material 8-K event, by kind →</a></p>"
     return ('8-k-events', 'events', '8-K events: deals, debt, leadership changes and other material news', '8-K events', lead, body)
@@ -681,7 +701,7 @@ def write(site, base, store=None, today=None):
     today = (today or dt.date.today()).isoformat()
     hub = os.path.join(site, 'disclosures', 'data')
     L = Links(site)
-    evs = archive(site, store)
+    evs = archive(site, store, L)
     made = []
     for fn in (signals, smart, insiders, congress, stakes, form144, lambda h, l: events_view(h, l, evs), shorts, rotation, options, guidance, cross, investors):
         try:

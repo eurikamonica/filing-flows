@@ -658,7 +658,9 @@ NOT_A_LINE = re.compile(r"per share|margin|%|income|expense|cost|profit|loss|eps
                         r"weighted average|(months|weeks|quarters?|years?) ended|fiscal q\d|^\(?(in|dollars|\$) |"
                         r"except (per|share|for)|unaudited|non-gaap|adjusted|ebitda|ebita\b|volumes?\b|\bmbpd\b|mmcf|"
                         r"\btons\b|payable|receivable|goodwill|inventor(y|ies)|\bdebt\b|borrowings|\blease liabilit|"
-                        r"deposits$|retained earnings|accrued|salaries|wages|occupancy|professional fees|\bratio\b")
+                        r"deposits$|retained earnings|accrued|salaries|wages|occupancy|professional fees|\bratio\b|"
+                        # and main's per-share and dividend rows
+                        r"per (\w+ )?(\w+ )?share|per ads|dividend|^basic$|^diluted$|weighted")
 SEG_CTX = re.compile(r"segment|business unit|business group|by product|product line|division|reportable|by market|end market", re.I)
 GEO_CTX = re.compile(r"geograph|region|country|by location|domestic|international", re.I)
 
