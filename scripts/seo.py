@@ -250,6 +250,34 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 </body></html>"""
 
 
+CHROME = {   # the header's links and the footer of a translated page (seo_zh.py, seo_intl.py): page() writes them in English
+    "zh-Hans": {"nav": ["最新", "公司", "行业", "主题", "模型", "今日", "信号", "8-K 事件", "方法"],
+                "foot": "数据由程序自动读取自 SEC 文件（XBRL 与财报新闻稿），可能存在误差，不构成投资建议。", "about": "关于", "x": "每日图表发布在 X："},
+    "es": {"nav": ["Últimos", "Empresas", "Industrias", "Temas", "Modelo", "Hoy", "Señales", "Eventos 8-K", "Método"],
+           "foot": "Cifras leídas automáticamente de los informes presentados ante la SEC (XBRL y comunicados de resultados); puede haber errores. No es asesoramiento de inversión.",
+           "about": "Acerca de", "x": "Gráficos diarios en X:"},
+    "fr": {"nav": ["Récents", "Entreprises", "Secteurs", "Thèmes", "Modèle", "Aujourd’hui", "Signaux", "Événements 8-K", "Méthode"],
+           "foot": "Chiffres lus automatiquement dans les documents déposés auprès de la SEC (XBRL et communiqués de résultats) ; des erreurs sont possibles. Ce n’est pas un conseil en investissement.",
+           "about": "À propos", "x": "Graphiques publiés chaque jour sur X :"},
+}
+_NAV_EN = ["Latest", "Companies", "Industries", "Themes", "Model", "Today", "Signals", "8-K events", "Method"]
+
+
+def localize(doc, lang):
+    """a page() document in another language: <html lang>, the header's links and the footer"""
+    t = CHROME.get(lang)
+    if not t:
+        return doc
+    doc = doc.replace('<html lang="en">', f'<html lang="{lang}">', 1)
+    head, sep, rest = doc.partition('</header>')
+    for en, tr in zip(_NAV_EN, t["nav"]):
+        head = head.replace(f'">{en}</a>', f'">{tr}</a>', 1)
+    doc = head + sep + rest
+    doc = doc.replace("Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice.", t["foot"], 1)
+    doc = doc.replace('/">About</a>', f'/">{t["about"]}</a>', 1).replace("Charts posted daily on X: ", t["x"] + ("" if lang == "zh-Hans" else " "), 1)
+    return doc
+
+
 def fit(title, site=" | Filing Flows", width=62):
     """the site name only when the title still fits in a search result (about 60 characters); Google shows the
     site's name beside the result anyway"""
@@ -274,7 +302,7 @@ LICENSE = "/license/"
 def image_ld(base, image, alt, caption=None):
     """ImageObject for Google Images: the credit, the creator and the terms (a licence page and where to get it), so
     the picture can carry the "Licensable" badge and the credit line in image results"""
-    return {"@type": "ImageObject", "contentUrl": image, "url": image, "name": alt, **({"caption": caption} if caption else {}), "width": 1200, "height": 630,
+    return {"@type": "ImageObject", "@id": image.split("?")[0] + "#image", "contentUrl": image, "url": image, "name": alt, **({"caption": caption} if caption else {}), "width": 1200, "height": 630,
             "creditText": "Filing Flows (filing-flows.com)", "creator": {"@type": "Organization", "name": "Filing Flows", "url": base + "/"},
             "copyrightNotice": "© Filing Flows — free to use with credit and a link", "license": base + LICENSE, "acquireLicensePage": base + LICENSE}
 
@@ -466,7 +494,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Corporation", "name": name, "tickerSymbol": t or None, "url": url},
         {"@type": "WebPage", "name": title, "url": url, "datePublished": q.get("filed"), "dateModified": q.get("filed"),
-         **({"primaryImageOfPage": {"@type": "ImageObject", "contentUrl": image}} if image else {})},
+         **({"primaryImageOfPage": {"@id": image.split("?")[0] + "#image"}} if image else {})},     # the one ImageObject below, credit and licence included
         *([image_ld(base, image, alt, f"{name} {q.get('label', '')} revenue breakdown")] if image else []),
         {"@type": "BreadcrumbList", "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Filing Flows", "item": base + "/"},

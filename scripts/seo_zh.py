@@ -104,7 +104,7 @@ def zpage(title, desc, url, en_url, body, image):
     alt = (f'<link rel="alternate" hreflang="zh-Hans" href="{e(url)}"><link rel="alternate" hreflang="en" href="{e(en_url)}">'
            f'<link rel="alternate" hreflang="x-default" href="{e(en_url)}">')
     doc = seo.page(title, desc, url, body, 3, image)
-    return doc.replace('<html lang="en">', '<html lang="zh-Hans">', 1).replace('<link rel="canonical"', alt + '<link rel="canonical"', 1)
+    return seo.localize(doc, 'zh-Hans').replace('<link rel="canonical"', alt + '<link rel="canonical"', 1)
 
 
 def company(r, c, er, cons, base, en_has):
@@ -254,7 +254,7 @@ def write(site, base):
         idx = seo.page('美股财报：美国上市公司最新财报、收入构成与财报日期 | Filing Flows',
                        f'{len(listed):,} 家美国上市公司的最新财报：营收、增长、利润率、收入构成与下一次财报日期，读取自 SEC 文件。', base + '/zh/', body, 1, base + '/og.png')
         os.makedirs(os.path.join(site, 'zh'), exist_ok=True)
-        open(os.path.join(site, 'zh', 'index.html'), 'w', encoding='utf-8').write(idx.replace('<html lang="en">', '<html lang="zh-Hans">', 1))
+        open(os.path.join(site, 'zh', 'index.html'), 'w', encoding='utf-8').write(seo.localize(idx, 'zh-Hans'))
         urls.insert(0, (base + '/zh/', None))
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     sm += [f'<url><loc>{xesc(u)}</loc>' + (f'<lastmod>{m}</lastmod>' if m else '') + '</url>' for u, m in urls]

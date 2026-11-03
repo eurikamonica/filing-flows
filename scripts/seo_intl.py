@@ -234,7 +234,7 @@ def company(lang, r, c, er, cons, base, langs):
         {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': x, 'acceptedAnswer': {'@type': 'Answer', 'text': y}} for x, y in qa]}]}
     title = t['title'](who, per, money(rev, t), pct(h.get('yoy'), t, True)) + ' | Filing Flows'
     doc = seo.page(title, lead[:200], url, body, 3, base + '/og.png', ld)
-    doc = doc.replace('<html lang="en">', f'<html lang="{lang}">', 1).replace('<link rel="canonical"', alternates(slug, base, langs) + '<link rel="canonical"', 1)
+    doc = seo.localize(doc, lang).replace('<link rel="canonical"', alternates(slug, base, langs) + '<link rel="canonical"', 1)
     return url, (q.get('filed') or '')[:10] or None, doc, who, rev
 
 
@@ -300,7 +300,7 @@ def write(site, base, langs=('es', 'fr')):
             items = ''.join(f"<li><a href='c/{s}/'>{e(t['idx_item'](w))}</a></li>" for w, s, _ in sorted(listed[lg], key=lambda x: -x[2]))
             body = (f"<p class='crumbs'><a href='../'>Filing Flows</a> › {e(t['crumb'])}</p><h1>{e(t['idx_h1'](num(len(listed[lg]), 0)))}</h1>"
                     f"<p class='lead'>{e(t['idx_lead'])}</p><ul class='seo-list'>{items}</ul>")
-            doc = seo.page(t['idx_title'], t['idx_lead'][:200], f'{base}/{lg}/', body, 1, base + '/og.png').replace('<html lang="en">', f'<html lang="{lg}">', 1)
+            doc = seo.localize(seo.page(t['idx_title'], t['idx_lead'][:200], f'{base}/{lg}/', body, 1, base + '/og.png'), lg)
             os.makedirs(os.path.join(site, lg), exist_ok=True)
             open(os.path.join(site, lg, 'index.html'), 'w', encoding='utf-8').write(doc)
             urls[lg].insert(0, (f'{base}/{lg}/', None))
