@@ -276,18 +276,24 @@ def river(periods, series, fmt, title, note=None, colors=None):
     series = [(n, [max(0, x or 0) for x in v]) for n, v in series if any(x for x in v if x)]
     if len(periods) < 3 or not series:
         return ''
-    W, H, top, bot, left, right = 640, 260, 46, 30, 6, 6
+    W, bot, left, right = 640, 30, 6, 6
+    cols = colors or PALETTE
+    out, x, row = [], 0, 0
+    for k, (n, v) in enumerate(series[:9]):                   # the legend wraps: nine long names do not fit one row
+        w = 20 + 6.2 * min(len(n), 22)
+        if x and x + w > W - right:
+            x, row = 0, row + 1
+        y = 24 + 14 * row
+        out.append(f"<rect x='{x}' y='{y}' width='10' height='10' fill='{cols[k % len(cols)]}'/><text x='{x + 13}' y='{y + 9}' font-size='10.5' fill='{INK}'>{_e(_clip(n, 22))}</text>")
+        x += w
+    top = 46 + 14 * row
+    H = 260 + 14 * row
     tot = [sum(v[i] for _, v in series) for i in range(len(periods))]
     mx = max(tot) or 1
     ph = H - top - bot
     X = lambda i: left + (W - left - right) * i / (len(periods) - 1)
     Y = lambda v: top + ph * (1 - v / mx)
-    cols = colors or PALETTE
     base = [0.0] * len(periods)
-    out, x = [], 0
-    for k, (n, v) in enumerate(series[:9]):
-        out.append(f"<rect x='{x}' y='24' width='10' height='10' fill='{cols[k % len(cols)]}'/><text x='{x + 13}' y='33' font-size='10.5' fill='{INK}'>{_e(_clip(n, 22))}</text>")
-        x += 20 + 6.2 * min(len(n), 22)
     for k, (n, v) in enumerate(series):
         topl = [base[i] + v[i] for i in range(len(periods))]
         path = 'M' + ' L'.join(f"{X(i):.1f},{Y(topl[i]):.1f}" for i in range(len(periods))) + ' L' + ' L'.join(f"{X(i):.1f},{Y(base[i]):.1f}" for i in reversed(range(len(periods)))) + ' Z'

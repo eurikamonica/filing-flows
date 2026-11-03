@@ -74,7 +74,12 @@ def yuan(v):
 
 
 def zpct(v, signed=True):
-    return '—' if v is None else (f'{"+" if v >= 0 and signed else ""}{v:.0f}%' if signed else f'{v:.1f}%')
+    """同比 +12% / 27倍（千分之一的基数）；利润率 12.3%，超出 ±1000% 为 n/m（seo.pct 的规则）"""
+    if v is None:
+        return '—'
+    if signed:
+        return f'{1 + v / 100:,.0f}倍' if v >= seo.MEANINGFUL else f'{"+" if v >= 0 else ""}{v:.0f}%'
+    return f'{v:.1f}%' if abs(v) < seo.MEANINGFUL else 'n/m'
 
 
 def period(label):
@@ -99,7 +104,7 @@ def zpage(title, desc, url, en_url, body, image):
     alt = (f'<link rel="alternate" hreflang="zh-Hans" href="{e(url)}"><link rel="alternate" hreflang="en" href="{e(en_url)}">'
            f'<link rel="alternate" hreflang="x-default" href="{e(en_url)}">')
     doc = seo.page(title, desc, url, body, 3, image)
-    return doc.replace('<html lang="en">', '<html lang="zh-Hans">', 1).replace('<link rel="canonical"', alt + '<link rel="canonical"', 1)
+    return seo.localize(doc, 'zh-Hans').replace('<link rel="canonical"', alt + '<link rel="canonical"', 1)
 
 
 def company(r, c, er, cons, base, en_has):
@@ -121,8 +126,9 @@ def company(r, c, er, cons, base, en_has):
         who = f"{zh}（{t}）" if zh else f"{en}（{t}）"
     per = period(q.get('label'))
     rev = h['revenue']
-    lead = f"{who}{per}营收 {yuan(rev)}" + (f"，同比{'增长' if h['yoy'] >= 0 else '下降'} {abs(h['yoy']):.0f}%" if h.get('yoy') is not None else '')
-    if h.get('om') is not None:
+    lead = f"{who}{per}营收 {yuan(rev)}" + ((f"，同比增至 {zpct(h['yoy'])}" if h['yoy'] >= seo.MEANINGFUL else
+                                             f"，同比{'增长' if h['yoy'] >= 0 else '下降'} {abs(h['yoy']):.0f}%") if h.get('yoy') is not None else '')
+    if h.get('om') is not None and abs(h['om']) < seo.MEANINGFUL:
         lead += f"，营业利润率 {h['om']:.1f}%"
     if h.get('ni') is not None:
         lead += f"，净利润 {yuan(h['ni'])}"
@@ -248,7 +254,7 @@ def write(site, base):
         idx = seo.page('美股财报：美国上市公司最新财报、收入构成与财报日期 | Filing Flows',
                        f'{len(listed):,} 家美国上市公司的最新财报：营收、增长、利润率、收入构成与下一次财报日期，读取自 SEC 文件。', base + '/zh/', body, 1, base + '/og.png')
         os.makedirs(os.path.join(site, 'zh'), exist_ok=True)
-        open(os.path.join(site, 'zh', 'index.html'), 'w', encoding='utf-8').write(idx.replace('<html lang="en">', '<html lang="zh-Hans">', 1))
+        open(os.path.join(site, 'zh', 'index.html'), 'w', encoding='utf-8').write(seo.localize(idx, 'zh-Hans'))
         urls.insert(0, (base + '/zh/', None))
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     sm += [f'<url><loc>{xesc(u)}</loc>' + (f'<lastmod>{m}</lastmod>' if m else '') + '</url>' for u, m in urls]

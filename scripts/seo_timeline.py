@@ -55,12 +55,12 @@ def marks_for(t, cik, hub, er, days):
     ins = [dict(zip(F, x)) for x in sm.get('trades') or [] if len(x) >= 6 and x[3] == 'ins']
     for x in ins:
         if x['date'] >= t0:
-            out.append((x['date'], 'buy' if x['d'] > 0 else 'sell', f"{x['name']} {'bought' if x['d'] > 0 else 'sold'} {money(x.get('size') or 0)}", x))
+            out.append((x['date'], 'buy' if x['d'] > 0 else 'sell', f"{seo.filer(x['name'])} {'bought' if x['d'] > 0 else 'sold'} {money(x.get('size') or 0)}", x))
     hd = read(os.path.join(hub, 'holders', re.sub(r'[^A-Za-z0-9-]', '_', t) + '.json')) or {}
     for x in hd.get('form144') or []:
         d = x.get('sale_date') or x.get('filed')
         if d and d >= t0 and (x.get('value') or 0) > 0:
-            out.append((d, 'plan', f"Form 144: {x.get('seller_name') or x.get('seller') or 'an affiliate'} plans to sell {money(x['value'])}", x))
+            out.append((d, 'plan', f"Form 144: {seo.filer(x.get('seller_name') or x.get('seller') or 'an affiliate')} plans to sell {money(x['value'])}", x))
     for h in (er or {}).get('history') or []:
         if h.get('reported') and h['reported'] >= t0:
             s = h.get('surprise')
@@ -126,7 +126,7 @@ def page_for(co, base, slug, site, hub, stats, istats):
     if ins:
         nb, ns = sum(1 for x in ins if x['d'] > 0), sum(1 for x in ins if x['d'] < 0)
         ub, us = sum(x.get('size') or 0 for x in ins if x['d'] > 0), sum(x.get('size') or 0 for x in ins if x['d'] < 0)
-        s = (f"In the year on the chart, {name}'s insiders reported <b>{nb} open-market buy{'s' if nb != 1 else ''}</b> ({money(ub)}) and <b>{ns} sale{'s' if ns != 1 else ''}</b> ({money(us)}).")
+        s = (f"In the year on the chart, {seo.poss(name)} insiders reported <b>{nb} open-market buy{'s' if nb != 1 else ''}</b> ({money(ub)}) and <b>{ns} sale{'s' if ns != 1 else ''}</b> ({money(us)}).")
         if scored:
             right = sum(1 for x in scored if (x['ex'] > 0) == (x['d'] > 0))
             s += (f" Of the {len(scored)} old enough to score, <b>{right}</b> were followed by the stock doing what the trade implied over the next 63 sessions "
@@ -179,7 +179,7 @@ def page_for(co, base, slug, site, hub, stats, istats):
         {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
                                                          {'@type': 'ListItem', 'position': 2, 'name': name, 'item': f"{base}/c/{slug}/"},
                                                          {'@type': 'ListItem', 'position': 3, 'name': 'Timeline', 'item': url}]},
-        {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': f"Are {name} insiders buying or selling?", 'acceptedAnswer': {'@type': 'Answer', 'text': re.sub('<[^>]+>', '', ins_h)[:600] or lead}}]},
+        {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': f"Are {name} insiders buying or selling?", 'acceptedAnswer': {'@type': 'Answer', 'text': faq_text(ins_h) or lead}}]},
         {'@type': 'WebPage', 'name': title, 'url': url, 'dateModified': days[-1], 'description': lead[:300]}]}
     # the sitemap's date: the newest disclosure on the chart, not the newest close (a new price every day would have
     # every timeline sent to IndexNow every day)
@@ -241,6 +241,14 @@ def link_from_company(site, slug):
     if 'timeline/' in t:
         return
     open(p, 'w', encoding='utf-8').write(t.replace('<nav class="seo-toc" aria-label="On this page">', '<nav class="seo-toc" aria-label="On this page"><a href="timeline/">Timeline</a>', 1))
+
+
+def faq_text(h):
+    """a section's prose as a FAQ answer: tags and the 'Every pattern →' link gone, the heading too"""
+    t = re.sub(r"<a [^>]*>[^<]*→</a>", "", h)                   # a link's text is not part of the answer
+    t = re.sub(r"<h2[^>]*>.*?</h2>", "", t)
+    t = re.sub(r"<[^>]+>", "", t)
+    return re.sub(r"\s+", " ", t).strip()[:600]
 
 
 def write(site, base):

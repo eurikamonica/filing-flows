@@ -455,13 +455,17 @@ def _derived(b, out, F, W, M):
 CANDIDATES = {   # every method the build knows, by company type: what it needs (for "not used, because …")
     'industrial': ['DCF — Monte Carlo 10th–90th percentile', 'Regime-switching Monte Carlo 10th–90th', 'Outside view — base-rate Monte Carlo',
                    'P/E vs peers', 'EV/EBITDA vs peers', 'EV/Sales vs peers', 'P/E vs peers, weighted', 'EV/EBITDA vs peers, weighted',
-                   'EV/Sales vs peers, weighted', 'Residual income', 'Owner earnings capitalized',
+                   'EV/Sales vs peers, weighted', 'P/E vs peers, matched', 'EV/EBITDA vs peers, matched', 'EV/Sales vs peers, matched',
+                   'P/E vs peers, selected', 'EV/EBITDA vs peers, selected', 'EV/Sales vs peers, selected', 'P/E vs peers, growth-adjusted',
+                   'EV/EBITDA vs peers, growth-adjusted', 'EV/Sales vs peers, growth & margin adjusted', 'Residual income', 'Owner earnings capitalized',
                    'Shareholder yield (dividends + buybacks)', 'Normalized (mid-cycle) P/E', 'Normalized (mid-cycle) DCF', 'Path-to-margin DCF',
                    'Path-to-margin DCF, dilution-adjusted', 'Exit-multiple (venture) method', 'Survival-weighted value',
                    'EV/Sales vs Rule of 40 (all-company fit)', 'Tangible book (asset value)', 'Net cash (floor)', 'Sum of the parts (segments × peer EV/Sales)',
-                   'Sum of the parts, weighted (segments × weighted peer EV/Sales)'],
-    'bank': ['Residual income', 'P/TBV vs ROTCE (bank peers)', 'Justified P/TBV (Gordon growth)', 'Dividend discount (Gordon)', 'P/E vs peers', 'P/E vs peers, weighted'],
-    'insurer': ['Residual income', 'P/B vs ROE (insurer peers)', 'Justified P/B (Gordon growth)', 'Dividend discount (Gordon)', 'P/E vs peers', 'P/E vs peers, weighted'],
+                   'Sum of the parts, weighted (segments × weighted peer EV/Sales)', 'Sum of the parts, selected (segments × business-model comps)'],
+    'bank': ['Residual income', 'P/TBV vs ROTCE (bank peers)', 'Justified P/TBV (Gordon growth)', 'Dividend discount (Gordon)', 'P/E vs peers', 'P/E vs peers, weighted',
+             'P/E vs peers, matched', 'P/E vs peers, selected', 'P/E vs peers, growth-adjusted'],
+    'insurer': ['Residual income', 'P/B vs ROE (insurer peers)', 'Justified P/B (Gordon growth)', 'Dividend discount (Gordon)', 'P/E vs peers', 'P/E vs peers, weighted',
+                'P/E vs peers, matched', 'P/E vs peers, selected', 'P/E vs peers, growth-adjusted'],
     'reit': ['P/FFO vs REIT peers', 'P/FFO vs REIT peers, weighted', 'Dividend discount (Gordon)', 'Residual income', 'P/E vs peers', 'P/E vs peers, weighted'],
 }
 WHY_NOT = {
@@ -489,6 +493,12 @@ WHY_NOT = {
     'EV/Sales vs peers, weighted': 'needs the plain peer EV/Sales',
     'P/FFO vs REIT peers, weighted': 'needs the plain REIT P/FFO',
     'Sum of the parts, weighted (segments × weighted peer EV/Sales)': 'needs the plain sum of the parts and two or more peers for every segment',
+    'Sum of the parts, selected (segments × business-model comps)': 'needs the plain sum of the parts and a segment whose business model has three or more selected companies on file',
+    **{f'{m} vs peers, matched': 'needs six or more peers like it in the window ladder (same industry, stage, size, growth and margin)' for m in ('P/E', 'EV/EBITDA', 'EV/Sales')},
+    **{f'{m} vs peers, selected': 'no selected comparable companies for it in config/peer-map.json (or fewer than three on file)' for m in ('P/E', 'EV/EBITDA', 'EV/Sales')},
+    'P/E vs peers, growth-adjusted': 'needs its revenue growth and twelve or more peers with P/E and growth',
+    'EV/EBITDA vs peers, growth-adjusted': 'needs its revenue growth and twelve or more peers with EV/EBITDA and growth',
+    'EV/Sales vs peers, growth & margin adjusted': 'needs its growth and margin and twelve or more peers with all three',
     'P/TBV vs ROTCE (bank peers)': 'needs positive tangible book and the bank fit',
     'P/B vs ROE (insurer peers)': 'needs positive book and the insurer fit',
     'Justified P/TBV (Gordon growth)': 'needs positive tangible book, net income and ROTCE above its growth',
@@ -509,6 +519,14 @@ def fit_reason(name, F, out):
     if ', weighted' in name:                                # the weighted peers (app/peer_weights.py): the plain method's reason, and why weight
         return (fit_reason(name.replace(', weighted', ''), F, out) + ' Weighting the peers by market value, revenue and trading value, and '
                 'their quarters by recency, keeps small, thinly traded peers and old prices from moving the multiple as much.')
+    for suf, why in ((', matched', ' Here only the peers like it count: the same industry and stage, a similar size, growth and operating margin.'),
+                     (', selected', ' Here the peers are companies chosen for the same business model, each with its reason (config/peer-map.json).'),
+                     (', growth & margin adjusted', ' A plain median ignores that faster-growing, higher-margin peers earn higher multiples; the fit '
+                                                    'across its peers reads the multiple for its own growth and margin.'),
+                     (', growth-adjusted', ' A plain median ignores that faster-growing peers earn higher multiples; the fit across its peers '
+                                           'reads the multiple for its own growth.')):
+        if suf in name:                                     # the peer tiers (app/peer_tiers.py)
+            return fit_reason(name.replace(suf, ''), F, out) + why
     st = out.get('stage') or {}
     m = st.get('metrics') or {}
     rev, oi, ni, eps, g0 = F.get('revenue'), F.get('oi'), F.get('ni'), F.get('eps'), F.get('g0')
@@ -625,7 +643,8 @@ def appendix(M, out, F, W, rates):
         c = b.pop('calc', None) or _derived(b, out, F, W, M)
         seen.add(b['method'])
         methods.append({'method': b['method'], 'low': b.get('low'), 'point': b.get('point'), 'high': b.get('high'), 'weight': wts.get(b['method']), **c,
-                        'fit': fit_reason(b['method'], F, out)})
+                        'fit': fit_reason(b['method'], F, out),
+                        **{k: b[k] for k in ('vs_price', 'pv_growth', 'pv_growth_share', 'implied_growth') if fin(b.get(k))}})
     kind = F.get('kind') if F.get('kind') in CANDIDATES else 'industrial'
     import valuation_extra as VX
     import valuation_sim as VS

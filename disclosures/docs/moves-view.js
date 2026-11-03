@@ -383,14 +383,48 @@
     for (let y = Math.ceil((y0 + 1) / st) * st; y <= y1; y += st) out.push(y);
     return out;
   }
+  /* The bars of a histogram. `step` (in the chart's own units: % for moves and returns, σ, a level) when it is a number
+     that gives 4–400 bars — the bars then start on a multiple of it, so 0 is an edge; otherwise `auto` equal bars across
+     [lo, hi]. → {lo, hi, nb, bw, fixed} */
+  function bars(lo, hi, step, auto) {
+    if (step > 0) {
+      const a = Math.floor(lo / step + 1e-9) * step, b = Math.ceil(hi / step - 1e-9) * step, n = Math.round((b - a) / step);
+      if (n >= 4 && n <= 400) return { lo: a, hi: b, nb: n, bw: step, fixed: true };
+    }
+    return { lo, hi, nb: auto, bw: (hi - lo) / auto, fixed: false };
+  }
+  // the bar widths worth offering for a range: round numbers (1, 2, 2.5, 5 × a power of ten) giving 10–200 bars
+  function stepChoices(lo, hi) {
+    const span = hi - lo, out = [];
+    if (!(span > 0)) return out;
+    for (let e = -3; e <= 5; e++) for (const m of [1, 2, 2.5, 5]) { const s = +(m * 10 ** e).toPrecision(3), n = span / s; if (n >= 10 && n <= 200) out.push(s); }
+    return out.length > 6 ? out.filter((_, i) => i >= out.length - 6) : out;
+  }
+  const stepTxt = (v, u) => `${+(+v).toPrecision(2)}${u}`;
+  // one row of "one bar =" buttons under a histogram (Auto shows the width it works out to)
+  function barPills(key, cur, choices, autoW, u) {
+    const on = (v) => (String(cur) === String(v) ? ' on' : '');
+    return `<div class="mv-bar"><div><label>One bar =</label><div class="mv-pills"><button type="button" class="mv-pill${cur === 'auto' || !choices.some((c) => String(c) === String(cur)) ? ' on' : ''}" data-mv="${key}" data-v="auto">Auto (≈${esc(stepTxt(autoW, u))})</button>${choices.map((c) => `<button type="button" class="mv-pill${on(c)}" data-mv="${key}" data-v="${c}">${esc(stepTxt(c, u))}</button>`).join('')}</div></div></div>`;
+  }
+  // where the move ranks: the range shown (every value between the 0.4th and 99.6th percentile, and the one looked at)
+  function rankRange(R, o) {
+    const vals = Array.from(R.s, (v) => disp(o, v)), tv = disp(o, R.value);
+    let lo = quantile(Float64Array.from(vals), 0.4), hi = quantile(Float64Array.from(vals), 99.6);
+    lo = Math.min(lo, tv); hi = Math.max(hi, tv);
+    const pad = (hi - lo) * 0.04;
+    return { vals, tv, lo: lo - pad, hi: hi + pad };
+  }
+  function rankBarPills(R, o) {
+    if (R.error || !R.s) return '';
+    const g = rankRange(R, o);
+    return barPills('bw', o.bw || 'auto', stepChoices(g.lo, g.hi), (g.hi - g.lo) / 56, unit(o));
+  }
   // where the move ranks: every day's move as a histogram, the move looked at marked, the tail beyond it shaded
   function rankSvg(R, o) {
     const W = o.narrow ? 440 : 720;
-    const vals = Array.from(R.s, (v) => disp(o, v)), tv = disp(o, R.value), u = unit(o);
-    let lo = quantile(Float64Array.from(vals), 0.4), hi = quantile(Float64Array.from(vals), 99.6);
-    lo = Math.min(lo, tv); hi = Math.max(hi, tv);
-    const pad = (hi - lo) * 0.04; lo -= pad; hi += pad;
-    const nb = 56, bw = (hi - lo) / nb, cnt = new Array(nb).fill(0), bin = (v) => Math.min(nb - 1, Math.max(0, Math.floor((v - lo) / bw)));
+    const rr = rankRange(R, o), vals = rr.vals, tv = rr.tv, u = unit(o);
+    const Bn = bars(rr.lo, rr.hi, +o.bw, 56), lo = Bn.lo, hi = Bn.hi;
+    const nb = Bn.nb, bw = Bn.bw, cnt = new Array(nb).fill(0), bin = (v) => Math.min(nb - 1, Math.max(0, Math.floor((v - lo) / bw)));
     const eq = R.sw ? new Array(nb).fill(0) : null;                   // weighted: each bar its share of the weight; dashed, every day the same
     if (eq) { const Wt = R.sw.reduce((a, b) => a + b, 0); vals.forEach((v, i) => { cnt[bin(v)] += R.sw[i] / Wt; eq[bin(v)] += 1 / vals.length; }); }
     else vals.forEach((v) => { cnt[bin(v)]++; });
@@ -411,18 +445,30 @@
     g += `<line x1="${xt}" x2="${xt}" y1="${T - 8}" y2="${Hh - B}" style="stroke:${COL.ink};stroke-width:1.5;stroke-dasharray:4 3"/>`;
     const lab = `${o.mode === 'whatif' ? 'what if' : esc(mdy(R.A.days[R.t]))}: ${esc(fmtX(o, R.value))} · ${rankWords(R.at)}`;
     g += `<text class="mv-l" x="${Math.min(Math.max(xt, L + 110), W - Rr - 110)}" y="${T - 12}" text-anchor="middle" style="font-weight:600">${lab}</text>`;
-    g += `<text class="mv-t" x="${L}" y="${Hh - 4}">${esc(num(R.n))} ${esc(whats(o))} since ${esc(my(R.A.days[0]))}</text></svg>`;
+    g += `<text class="mv-t" x="${L}" y="${Hh - 4}">${esc(num(R.n))} ${esc(whats(o))} since ${esc(my(R.A.days[0]))}</text>`;
+    g += `<text class="mv-t" x="${W - Rr}" y="${Hh - 4}" text-anchor="end">one bar = ${Bn.fixed ? '' : '≈'}${esc(stepTxt(bw, u))}</text></svg>`;
     return g;
   }
   // what came next, for one horizon: the chosen days' returns and every day's, as share-of-days histograms
-  function nextSvg(R, o, h, which) {
+  // the range of the next-returns chart (fractions): 1st–99th percentile of both sets, 0 and what happened inside it
+  function nextRange(R, h, which) {
     const S = R.h[h][which], A = R.h[h].all;
-    if (!S || !A) return '<p class="mv-sub">No days to show.</p>';
+    if (!S || !A) return null;
     const pool = Float64Array.from([...S.s, ...A.s]).sort();
     let lo = Math.min(quantile(pool, 1), 0), hi = Math.max(quantile(pool, 99), 0);
     if (fin(R.actual[h])) { lo = Math.min(lo, R.actual[h]); hi = Math.max(hi, R.actual[h]); }
-    const pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
-    const nb = 40, bw = (hi - lo) / nb;
+    const pad = (hi - lo) * 0.05;
+    return { lo: lo - pad, hi: hi + pad };
+  }
+  function nextBarPills(R, o, h, which) {
+    const g = !R.error && R.h && R.h[h] ? nextRange(R, h, which) : null;
+    return g ? barPills('bwn', o.bwn || 'auto', stepChoices(g.lo * 100, g.hi * 100), (g.hi - g.lo) * 100 / 40, '%') : '';
+  }
+  function nextSvg(R, o, h, which) {
+    const S = R.h[h][which], A = R.h[h].all;
+    if (!S || !A) return '<p class="mv-sub">No days to show.</p>';
+    const rg = nextRange(R, h, which), Bn = bars(rg.lo * 100, rg.hi * 100, +o.bwn, 40);
+    const lo = Bn.lo / 100, hi = Bn.hi / 100, nb = Bn.nb, bw = Bn.bw / 100;
     const hist = (s, w) => {                                         // each bin's share of the days (of their weight, when weighted)
       const c = new Array(nb).fill(0); let tot = 0;
       s.forEach((v, i) => { const u = w ? w[i] : 1; c[Math.min(nb - 1, Math.max(0, Math.floor((v - lo) / bw)))] += u; tot += u; });
@@ -443,7 +489,7 @@
     const mark = (v, lab, col, y) => { g += `<line x1="${sx(v)}" x2="${sx(v)}" y1="${T - 4}" y2="${Hh - B}" style="stroke:${col};stroke-width:1.6;stroke-dasharray:5 3"/><text class="mv-l" x="${Math.min(Math.max(sx(v), L + 70), W - Rr - 70)}" y="${y}" text-anchor="middle">${lab}</text>`; };
     mark(S.median, `median ${esc(sp(S.median))}`, COL.band, T - 8);
     if (fin(R.actual[h])) mark(R.actual[h], `what happened: ${esc(sp(R.actual[h]))}`, COL.warn, Hh - B - 6);
-    g += '</svg>';
+    g += `<text class="mv-t" x="${W - Rr}" y="${Hh - 4}" text-anchor="end">one bar = ${Bn.fixed ? '' : '≈'}${esc(stepTxt(Bn.bw, '%'))}</text></svg>`;
     return g;
   }
   // one row's box: 5–95% whiskers, 25–75% box, median tick, on a shared axis
@@ -988,7 +1034,7 @@
       + `<div><label>Alike in</label><div class="mv-pills">${pill('amatch', 'size', 'size and shape', !AN.shape)}${pill('amatch', 'shape', 'shape only', AN.shape)}</div></div></div>`;
     if (AN.error) return h + `<p class="mv-sub">${esc(AN.error)}</p>`;
     const name = esc(doc.ticker || doc.name), L = AN.L, F = AN.F, E = AN.E, nI = AN.items.length, upN = AN.items.filter((x) => x.fwd[F] > 0).length;
-    const ev = AN.every[F], cN = R.c[R.c.length - 1], last = (R.A.last || doc.last) * Math.exp(R.c[AN.t] - cN);
+    const ev = AN.every[F], cN = R.c[R.c.length - 1], last = (R.A.last || doc.last || 100) * Math.exp(R.c[AN.t] - cN);
     h += `<p class="mv-sub">The ${words(nI, 'stretch')} of ${esc(tdWords(L))} in ${name}'s history since ${esc(my(AN.from))} whose path was most like the ${esc(tdWords(L))} to ${esc(mdy(R.A.days[AN.t]))}${AN.shape ? ' in shape (each scaled to its own swings)' : ' in size and shape'}, none overlapping, each ended before that stretch began, and what followed each over the next ${esc(tdWords(F))}: green when higher at the end, red when lower; the thick blue line is the expected path (their average${R.hl ? ', older days counting less' : ''}), the dotted one the median, the blue band the middle half; grey, the range of every ${esc(tdWords(F))} in its history (5–95%).${AN.actual.length > 1 ? ` Orange: what followed ${esc(mdy(R.A.days[AN.t]))}.` : ''}</p>`;
     h += `<p class="mv-head" style="font-size:16px">${num(upN)} of ${num(nI)} were higher ${esc(tdWords(F))} later. Expected after a stretch like this: ${aMarks(F).filter(([hz]) => hz < E.mean.length).map(([hz, l]) => `${esc(l)} <b class="${tone(E.mean[hz])}">${sp(E.mean[hz])}</b>`).join(' · ')}`
       + `${ev ? ` <span class="mv-sub" style="display:inline">(every ${esc(tdWords(F))}: ${sp(ev.mean)} on average, ${share(ev.up)} higher)</span>` : ''}.</p>`;
@@ -1346,7 +1392,7 @@
     });
   }
   function drawSim(x, box, R, o, doc) {
-    const AN = R.an, S = AN.sim, F = S.F, cN = R.c[R.c.length - 1], last = (R.A.last || doc.last) * Math.exp(R.c[AN.t] - cN), dp = last >= 1000 ? 0 : last >= 100 ? 1 : 2;
+    const AN = R.an, S = AN.sim, F = S.F, cN = R.c[R.c.length - 1], last = (R.A.last || doc.last || 100) * Math.exp(R.c[AN.t] - cN), dp = last >= 1000 ? 0 : last >= 100 ? 1 : 2;
     const pv = (v) => last * (1 + v);
     const P = card(x, box.x, box.y, box.w, box.h, `A simulation: ${num(S.M)} paths over the next ${tdWords(F)}, from what followed the stretches like it`,
       `median ${num(pv(S.band.q50[F]), dp)} (${sp(S.band.q50[F])}) · 90% of paths ${num(pv(S.band.q5[F]), dp)}–${num(pv(S.band.q95[F]), dp)} · higher in ${share(S.up)} · fell 10% on the way in ${share(S.down10)}, rose 10% in ${share(S.up10)}`);
@@ -1436,12 +1482,12 @@
     if (R.error) return `<p class="mv-err">${esc(R.error)}</p>`;
     const which = st.set === 'ext' ? 'ext' : 'sim';
     let h = headline(R, st, doc) + weightNote(R, st) + cards(R, st) + pngBar(st, R);
-    h += `<h3>Where it ranks</h3><p class="mv-sub">Every ${esc(what(st))} ${st.measure === 'raw' || st.measure === 'level' || st.measure === 'rv' ? '' : esc(measureName(st, doc.kind)) + ' '}on file. The coloured bars are the ${st.measure === 'level' || st.measure === 'rv' ? 'days' : 'moves'} at least as ${R.side > 0 ? 'high' : 'low'}; the dashed line is the one looked at.${st.before && st.mode === 'date' ? ' Only the days up to it are counted.' : ''}</p>${rankSvg(R, st)}`;
+    h += `<h3>Where it ranks</h3><p class="mv-sub">Every ${esc(what(st))} ${st.measure === 'raw' || st.measure === 'level' || st.measure === 'rv' ? '' : esc(measureName(st, doc.kind)) + ' '}on file. The coloured bars are the ${st.measure === 'level' || st.measure === 'rv' ? 'days' : 'moves'} at least as ${R.side > 0 ? 'high' : 'low'}; the dashed line is the one looked at.${st.before && st.mode === 'date' ? ' Only the days up to it are counted.' : ''}</p>${rankSvg(R, st)}${rankBarPills(R, st)}`;
     h += `<h3>What came next${R.out ? ` for ${esc(R.out)}` : ''}</h3><p class="mv-sub">${R.out ? `${esc(R.out)}'s close-to-close returns from each day:` : 'Close-to-close returns from the day of each move:'} after the days whose ${st.measure === 'level' ? 'level' : st.measure === 'rv' ? 'volatility' : 'move'} ranked within ±${fb(st.band)} percentile points of this one, after the days at least as ${R.side > 0 ? 'high' : 'low'}, and after every day. An episode groups chosen days that fall within the horizon of each other: they are the independent tries, and what "within chance" is judged on.${R.hl ? ` With older days counting less, the medians, shares and ranges are weighted; ≈ is how many days of full weight the days are worth, and the episodes are scaled by it.` : ''}</p>`;
     h += nextTable(R, st);
     h += `<div class="mv-bar"><div><label>Distribution</label><div class="mv-pills">${H.map(([hz, l]) => `<button type="button" class="mv-pill${st.h === hz ? ' on' : ''}" data-mv="h" data-v="${hz}">${esc(l)}</button>`).join('')}</div></div>`
       + `<div><label>Compared with every day</label><div class="mv-pills"><button type="button" class="mv-pill${which === 'sim' ? ' on' : ''}" data-mv="set" data-v="sim">days like it</button><button type="button" class="mv-pill${which === 'ext' ? ' on' : ''}" data-mv="set" data-v="ext">at least as ${R.side > 0 ? 'high' : 'low'}</button></div></div></div>`;
-    h += nextSvg(R, st, st.h, which) + `<div class="mv-legend"><span><b style="background:${COL.up};opacity:.6"></b><b style="background:${COL.down};opacity:.6"></b>after the ${which === 'sim' ? 'days like it' : 'more extreme days'} (share of those days)</span><span><b style="background:none;border:1.5px solid ${COL.ink}"></b>after every day</span>${R.eq ? `<span><b style="background:none;border-top:2px dashed ${COL.band};height:0"></b>${which === 'sim' ? 'days like it' : 'the more extreme days'}, unweighted</span>` : ''}${fin(R.actual[st.h]) ? `<span><b style="background:${COL.warn}"></b>what happened after this day</span>` : ''}</div>`;
+    h += nextSvg(R, st, st.h, which) + nextBarPills(R, st, st.h, which) + `<div class="mv-legend"><span><b style="background:${COL.up};opacity:.6"></b><b style="background:${COL.down};opacity:.6"></b>after the ${which === 'sim' ? 'days like it' : 'more extreme days'} (share of those days)</span><span><b style="background:none;border:1.5px solid ${COL.ink}"></b>after every day</span>${R.eq ? `<span><b style="background:none;border-top:2px dashed ${COL.band};height:0"></b>${which === 'sim' ? 'days like it' : 'the more extreme days'}, unweighted</span>` : ''}${fin(R.actual[st.h]) ? `<span><b style="background:${COL.warn}"></b>what happened after this day</span>` : ''}</div>`;
     h += casesSection(R, st, doc, news);
     h += analogSection(R, st, doc);
     h += recoverySection(R, st, doc);
@@ -1474,7 +1520,7 @@
       if (here()) el.innerHTML = `<p class="mv-sub">No daily price history for ${esc(home)} yet: it is collected for the valued companies, the market, its sectors and industries (refreshed after every US close).</p>`;
       return;
     }
-    const st = Object.assign({ key: home, w: 1, measure: homeDoc.kind === 'volatility' ? 'level' : 'raw', mode: 'latest', date: '', whatif: '', band: 2.5, before: false,
+    const st = Object.assign({ key: home, bw: 'auto', bwn: 'auto', w: 1, measure: homeDoc.kind === 'volatility' ? 'level' : 'raw', mode: 'latest', date: '', whatif: '', band: 2.5, before: false,
       h: 21, set: 'sim', rk: 'back', outcome: 'spx', vreg: 'any', hl: 0, alen: 63, afwd: 63, ak: 10, amatch: 'size', png: ['now', 'paths', '5', '21', '63', 'back'] }, opts.state || {});
     const egOf = (m) => (m === 'vol' ? -3 : m === 'level' ? 30 : m === 'rv' ? 60 : -5);
     const docs = { [home]: homeDoc }, dec = {};
@@ -1526,6 +1572,7 @@
           if (k === 'mode' && v === 'date' && !st.date) st.date = (dec[st.key] || A).days[Math.max(0, (dec[st.key] || A).days.length - 22)];
           if (k === 'mode' && v === 'whatif' && !fin(st.whatif)) st.whatif = egOf(st.measure);
           if (k === 'measure' && st.mode === 'whatif') st.whatif = egOf(v);
+          if (k === 'measure') st.bw = 'auto';                       // another unit (%, σ, a level): the old width means nothing
           draw();
         };
       });
@@ -1557,7 +1604,7 @@
     await draw();
   }
 
-  const api = { render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf };
+  const api = { bars, stepChoices, render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf };
   if (typeof window !== 'undefined') window.MovesView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

@@ -40,3 +40,47 @@ def test_manager_holders_cased_and_changes_signed_once():
     assert "1 filing since Aug 13, 2026" in doc and "Of 1 position change scored in 1 separate decision" in doc
     assert "<h1>BNP Paribas Financial Markets: 13F portfolio" in doc and "BNP Paribas Financial Markets' 13F for the quarter" in doc.replace('&#x27;', "'")   # the filer's capitals cased
     assert "3 common-share positions" in doc and "PARIBAS" not in doc
+
+
+def test_revenue_river_keeps_one_breakdown_and_one_spelling():
+    """The river of revenue lines merges 'MEDTECH' and 'MedTech' into one band (the latest spelling), and stops where
+    an older quarter's lines are another partition of revenue (product/service against segments), so no band starts
+    or stops mid-chart; the mix note names a line reported at both ends."""
+    import seo_topics as T
+
+    def q(label, lines):
+        return {"label": label, "nodes": [{"id": f"S{i}", "name": n} for i, (n, _) in enumerate(lines)] + [{"id": "revenue", "name": "Revenue"}],
+                "links": [{"s": f"S{i}", "t": "revenue", "v": v} for i, (_, v) in enumerate(lines)]}
+    qs = [q("Q3 FY27", [("Innovative Medicine", 16.8), ("MedTech", 8.6)]), q("Q2 FY27", [("Innovative Medicine", 15.2), ("MEDTECH", 8.5)]),
+          q("Q1 FY27", [("Innovative Medicine", 15.0), ("MEDTECH", 8.0)]), q("Q4 FY26", [("Innovative Medicine", 14.0), ("MEDTECH", 8.1)]),
+          q("Q3 FY26", [("Net product sales", 20.0), ("Net service sales", 3.0)]), q("Q2 FY26", [("Net product sales", 19.0), ("Net service sales", 3.0)])]
+    svg = T.segment_river("J&J", qs)
+    assert "revenue by line, Q4 FY26 to Q3 FY27" in svg and "MEDTECH" not in svg and "MedTech" in svg
+    assert "Net product sales" not in svg and "went from" in svg and "0% in" not in svg
+    assert T.segment_river("J&J", qs[:2]) == ''                                 # fewer than three comparable quarters: no chart
+
+
+def test_site_build_has_a_sector_index_and_growth_as_a_multiple(tmp_path):
+    """scripts/seo.py on a stand-in data directory: sector/ lists the sectors (the address was a 404), a company that
+    grew from a sliver shows 27× rather than +2627%, and a 13F-sized figure prints in trillions."""
+    import json
+    import seo as S
+    data = tmp_path / "data"
+    (data / "c").mkdir(parents=True)
+    rows = [{"cik": 1, "ticker": "AAA", "name": "ALPHA INC", "sector": "tech", "sic": "7372", "revenue": 3.15e7, "yoy": 2627.0, "om": -30.0, "label": "Q2 2026", "filed": "2026-08-01"},
+            {"cik": 2, "ticker": "BBB", "name": "BETA CORP", "sector": "health", "sic": "2834", "revenue": 2e9, "yoy": 5.0, "om": 20.0, "label": "Q2 2026", "filed": "2026-08-02"}]
+    (data / "index.json").write_text(json.dumps({"companies": rows, "sector_names": {"tech": "Technology", "health": "Health care"}}))
+    for r, ni in ((rows[0], -1e7), (rows[1], 3e8)):
+        c, ix = company(r["revenue"], ni, r["om"])
+        c["profile"].update({"cik": r["cik"], "name": r["name"], "tickers": [r["ticker"]], "sector": r["sector"]})
+        c["quarters"][0]["headline"]["yoy"] = r["yoy"]
+        (data / "c" / f"{r['cik']}.json").write_text(json.dumps(c))
+    out = tmp_path / "site"
+    S.write_pages(str(data), str(out), "https://example.com")
+    sectors = (out / "sector" / "index.html").read_text()
+    assert "<h1>Earnings by sector</h1>" in sectors and "href='tech/'" in sectors and "1 company" in sectors
+    assert "Technology" in (out / "sector" / "tech" / "index.html").read_text()
+    az = (out / "c" / "index.html").read_text()
+    assert "27× Y/Y" in az and "+2627%" not in az and "+5% Y/Y" in az
+    assert S.money(6.8977e12) == "$6.90T" and S.money(999e9) == "$999.0B"
+    assert "https://example.com/sector/" in (out / "sitemap.xml").read_text()

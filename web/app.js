@@ -1167,7 +1167,7 @@
   }
   // five groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
-    ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
+    ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts'], ['x-composer']]],
     ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-moves'], ['x-highs'], ['x-opportunity'], ['x-odds']]],

@@ -3511,3 +3511,40 @@ def test_member_labels_cleaned_of_xbrl_leftovers():
     assert dims.clean_label("iPhone [Member]", "aapl_IPhoneMember") == "iPhone" and dims.clean_label("Services", "aapl_ServiceMember") == "Services"
     ls = {"leaves": [{"id": "x:CabinetryAndMillworkMember", "label": "Cabinetry And Millwork Member"}], "groups": [], "axis": "a"}
     assert build.clean_lines(ls)["leaves"][0]["label"] == "Cabinetry And Millwork" and ls["leaves"][0]["label"].endswith("Member")
+
+
+def test_a_year_ending_in_early_january_is_named_for_the_year_it_mostly_falls_in(tmp_path):
+    """Johnson & Johnson's fiscal years end the Sunday nearest December 31 (its 2026 ends January 3, 2027; SEC's profile
+    says 0103): the quarter ended 2026-09-27 is Q3 2026, not 'Q3 FY27', and the year ended 2025-12-28 is FY2025. A
+    retailer's year ending January 31 keeps the site's FY naming (Walmart's quarter ended 2025-10-31: Q3 FY26). The
+    stored periods are renamed once, keeping the first name so the static pages can send the old address on."""
+    from pipeline import build, facts
+    assert facts.fiscal_label("2026-09-27", "0103") == ("Q3 2026", 3, 2026) and facts.fiscal_label("2025-12-28", "0103") == ("Q4 2025", 4, 2025)
+    assert facts.fiscal_label("2026-01-03", "0103")[0] == "Q4 2025" and facts.fiscal_year_label("2025-12-28", "0103") == ("FY2025", 2025)
+    assert facts.fiscal_label("2025-10-31", "0131")[0] == "Q3 FY26" and facts.fiscal_label("2026-09-30", "1231")[0] == "Q3 2026"
+    store = build.Store(str(tmp_path / "store"))
+    store.put(200406, {"profile": {"name": "JOHNSON & JOHNSON", "fye": "0103"},
+                       "quarters": {"2026-09-27": {"end": "2026-09-27", "label": "Q3 FY27", "fq": 3, "fy": 2027, "form": "10-Q"}},
+                       "years": {"2025-12-28": {"end": "2025-12-28", "label": "FY26", "fy": 2026, "form": "10-K"}}})
+    store.put(104169, {"profile": {"name": "WALMART INC", "fye": "0131"},
+                       "quarters": {"2025-10-31": {"end": "2025-10-31", "label": "Q3 FY26", "fq": 3, "fy": 2026, "form": "10-Q"}}})
+    assert build.relabel(store) == 1
+    q = store.company(200406)["quarters"]["2026-09-27"]
+    assert (q["label"], q["fq"], q["fy"], q["label_was"]) == ("Q3 2026", 3, 2026, "Q3 FY27")
+    y = store.company(200406)["years"]["2025-12-28"]
+    assert (y["label"], y["fy"], y["label_was"]) == ("FY2025", 2025, "FY26")
+    assert "label_was" not in store.company(104169)["quarters"]["2025-10-31"]
+    assert build.relabel(store) == 0                                     # once per label version
+
+
+def test_a_segment_aggregation_member_is_no_revenue_line():
+    """ASU 2023-07's 'all reportable segments' member (Chevron's ReportableSegmentAggregationBeforeOtherOperatingSegment
+    Member, labelled 'Segment Total') is a subtotal: a breakdown of {Segment Total, All Other} is no breakdown, and the
+    quarter shows no lines rather than that; the segments themselves are taken when they add up."""
+    agg = "us-gaap:ReportableSegmentAggregationBeforeOtherOperatingSegmentMember"
+    members = {agg: ("Segment Total", 67.174), "us-gaap:AllOtherSegmentsMember": ("All Other", 1.0),
+               "cvx:UpstreamMember": ("Upstream", 50.0), "cvx:DownstreamMember": ("Downstream", 25.0)}
+    assert dims.best_partition(members, 68.174) is None
+    members["cvx:UpstreamMember"] = ("Upstream", 40.0); members["cvx:DownstreamMember"] = ("Downstream", 27.174)
+    part = dims.best_partition(members, 68.174)
+    assert sorted(l["label"] for l in part["leaves"]) == ["All Other", "Downstream", "Upstream"]

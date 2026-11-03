@@ -42,7 +42,7 @@ def test_daily(tmp_path):
     assert "1 company updated its guidance" in (s / "daily" / "guidance-changes" / "index.html").read_text()
     st = (s / "daily" / "activist-stakes" / "index.html").read_text()
     assert "Auto Services Company, Inc. 25.32% of Bassett Furniture Industries Inc" in st and "Dai Junyi 7% of Indaptus" in st
-    assert "25.325" not in st and "<td>Dai Junyi</td>" in st and "2 Schedule 13D filings" in st
+    assert "25.325" not in st and ">Dai Junyi</span></td>" in st and "2 Schedule 13D filings" in st
     idx = (s / "daily" / "index.html").read_text()
     assert "Today in the filings: Oct 30, 2026" in idx and "href='insider-buying/'" in idx
     assert (s / "sitemap-daily.xml").read_text().count("<url>") == 5

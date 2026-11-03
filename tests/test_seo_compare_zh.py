@@ -98,7 +98,7 @@ def test_a_sliver_of_revenue_makes_no_margin():
     assert ("Product Revenue", 6e7) in fa["segs"] and ("Services", 5e7) in fa["segs"]
     url, _, doc = C.page_for(a, b, fa, fb, None, None, "https://example.com")
     assert "more profitable" not in doc and "5817056" not in doc and "n/m" in doc
-    assert seo.pct(-5817056.8, False) == "n/m" and seo.pct(-19.0, False) == "-19.0%" and seo.pct(1500) == "+1500%"
+    assert seo.pct(-5817056.8, False) == "n/m" and seo.pct(-19.0, False) == "-19.0%" and seo.pct(1500) == "16×" and seo.pct(150) == "+150%"
     assert seo.ratio(-3e6, 50) is None and seo.ratio(-2.2e7, 1.1e8) == -20.0 and seo.ratio(5, 0) is None
     assert seo.times(1) == "once" and seo.times(2) == "twice" and seo.times(3) == "3 times" and seo.times(0) == "0 times"
     assert seo.label("Retail Revenue Member") == "Retail Revenue" and seo.label("Direct to Consumer [member]") == "Direct to Consumer"

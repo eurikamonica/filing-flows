@@ -87,9 +87,12 @@ def normalize(raw):
         labels = {k: label for k, label, _, _ in _lines(raw["cost_lines"])}
     items = [(k, v) for k, v in items if v and v > 0]
     used = sum(v for _, v in items)
-    if pool <= 0 or used > pool * 1.005:
+    # within the chart's own conservation check (sankey._check: 0.4%), or the quarter is not drawn at all: lines
+    # 0.4-0.5% over the total (Dollar Tree's Q2 FY26) or short of it (Leidos', Parsons', Dentsply's) used to pass
+    # here and fail there — 71 quarters and 26 years left undrawn, their pages on the quarter before
+    if pool <= 0 or used > pool * 1.003:
         items = []                                      # tags overlap: show the total only
-    elif pool - used > max(0.005 * pool, 1):
+    elif pool - used > max(0.003 * pool, 1):
         items.append(("other_opex", pool - used))
     if len(items) == 1:
         items = []

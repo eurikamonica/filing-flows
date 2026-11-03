@@ -66,9 +66,9 @@ def test_stored_names_are_read_again_once(tmp_path, monkeypatch):
     build.refresh_labels(store)
     c = store.company(1327811)
     leaf = c["quarters"]["2026-07-31"]["lines_struct"]["leaves"][1]
-    assert leaf["label"] == "Professional Services" and c["lab_v"] == build.LABEL_VERSION
+    assert leaf["label"] == "Professional Services" and c["lab_v"] == build.LINE_LABEL_VERSION
     assert c["quarters"]["2026-07-31"]["notes"] == {"Professional Services": [{"text": "a note"}]}
     assert asked == [1327811]                                   # a company whose names look right is not fetched
-    assert store.state["labels_v"] == build.LABEL_VERSION       # done: the pass no longer runs
+    assert store.state["labels_v"] == build.LINE_LABEL_VERSION       # done: the pass no longer runs
     build.refresh_labels(store)
     assert asked == [1327811]

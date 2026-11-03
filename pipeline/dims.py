@@ -81,7 +81,7 @@ def clean_label(text, elid=""):
     Millwork Member", "Direct to Consumer [member]"); a documentation sentence put in the label's place ("This member
     stands for the information pertaining to …") replaced by the element's own name in words; "[Domain]", "[Axis]" and
     a closing full stop ("Japan." → "Japan") gone too."""
-    t = re.sub(r"\s*\[\s*(members?|domain|axis|line items|table|abstract)\s*\]", "", (text or "").strip(), flags=re.I)
+    t = re.sub(r"\s*\[\s*(?:members?|domain|axis|line items?|table|abstract)\s*\]", "", (text or "").strip(), flags=re.I)   # "[Member] [Domain]"
     t = re.sub(r"\s+", " ", t).strip()
     t = re.sub(r"\s+Members?$", "", t)
     if elid and (DOCUMENTATION.search(t) or len(t) > 90 or (t.endswith(".") and len(t) > 40)):
@@ -304,14 +304,31 @@ def ytd_values(facts, end):
 # members that are no revenue line: the total itself, or per-share rows that slip onto the axis (Interactive Brokers:
 # "Basic" and "Diluted" beside "Revenues"); a member below the tolerance cannot be told from rounding either
 NOT_LINES = {"basic", "diluted", "revenues", "revenue", "total revenues", "total revenue", "total", "net revenues"}
-NOT_A_LINE = re.compile(r"\bper\b.*\bshare\b|\bper unit\b|\bdividend|\bweighted\b|\beps\b")    # per-share rows (Tractor Supply's
+NOT_A_LINE = re.compile(r"\bper\b.*\bshare\b|\bper unit\b|\bdividend|\bweighted\b|\beps\b|^segment total$|^total (?:reportable )?segments$|^reportable segments total$")    # per-share rows (Tractor Supply's
+# a member that is itself a subtotal of other members (ASU 2023-07's "all reportable segments" aggregation: Chevron's
+# ReportableSegmentAggregationBeforeOtherOperatingSegmentMember, "Segment Total"): never a revenue line
+AGGREGATE_ID = re.compile(r"Aggregation|SegmentTotal|TotalSegments|TotalReportableSegment", re.I)
                                                                                                # "dividends declared per common share")
 
 
-def best_partition(members, total):
-    """Largest set of members adding up to total, plus groups = other members equal to a subset of it."""
+def tight(err, n, unit, ref):
+    """Within the rounding of n figures printed to `unit` (half a unit each, and the total's own), capped at TOL."""
+    return unit is not None and err <= min(0.5 * unit * (n + 1), TOL * abs(ref))
+
+
+def best_partition(members, total, unit=None):
+    """Largest set of members adding up to total, plus groups = other members equal to a subset of it.
+
+    unit (the rounding of figures read from a table, e.g. 1e6 for "in millions"): a set that adds up to the total
+    within that rounding beats any set that only comes within TOL. With many lines from one table a loose match is
+    often a coincidence: Apple's Q4 FY26 release, where six region and product lines plus Services came within 0.075%
+    of total net sales while the real breakdowns add up exactly. Without unit (XBRL members) the rule is unchanged."""
+    # lines under TOL of the total are left out (slivers) — except when figures from a table are matched to its
+    # rounding (unit): then a small line is what makes the sum exact (Vertex: a new drug's first $10M)
+    floor = unit if unit is not None else TOL * abs(total)
     items = [(m, lab, v) for m, (lab, v) in members.items()
-             if v > TOL * abs(total) and str(lab or "").strip().lower() not in NOT_LINES and not NOT_A_LINE.search(str(lab or "").lower())]
+             if v >= floor and v > 0 and str(lab or "").strip().lower() not in NOT_LINES
+             and not NOT_A_LINE.search(str(lab or "").lower()) and not AGGREGATE_ID.search(str(m or ""))]
     items.sort(key=lambda x: -x[2])
     items = items[:14]
     best = None
@@ -320,9 +337,10 @@ def best_partition(members, total):
         s = sum(items[i][2] for i in range(n) if mask >> i & 1)
         if abs(s - total) <= TOL * abs(total):
             size = bin(mask).count("1")
-            if best is None or size > best[0]:
-                best = (size, mask)
-    if not best or best[0] < 2:
+            key = (size >= 2 and tight(abs(s - total), size, unit, total), size, -abs(s - total) if unit is not None else 0)
+            if best is None or key > best[0]:
+                best = (key, mask)
+    if not best or best[0][1] < 2:
         return None
     leaves = [items[i] for i in range(n) if best[1] >> i & 1]
     rest = [items[i] for i in range(n) if not best[1] >> i & 1]
@@ -333,7 +351,8 @@ def best_partition(members, total):
         k = len(cand)
         for mask in range(1, 1 << k):
             sub = [cand[i] for i in range(k) if mask >> i & 1]
-            if 2 <= len(sub) < len(leaves) and abs(sum(x[2] for x in sub) - gv) <= TOL * gv:
+            err = abs(sum(x[2] for x in sub) - gv)
+            if 2 <= len(sub) < len(leaves) and (tight(err, len(sub), unit, gv) if unit is not None else err <= TOL * gv):
                 groups.append({"id": gm, "label": glab, "members": [x[0] for x in sub]})
                 used.update(x[0] for x in sub)
                 break

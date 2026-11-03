@@ -84,7 +84,8 @@
     + 'segment segments revenue sales profit margin growth record track meet meets beat beats miss next last first this that these those their there here with from into over '
     + 'under same also just only still very really good great bad big small open close closed live real true data compare versus life care health energy power gold silver '
     + 'water bank banks home land city star sun sky blue green red black white best leading lagging improving weakening reading since sectors companies '
-    + 'company stocks largest smallest anything everything something someone buying selling').split(' '));
+    + 'company stocks largest smallest anything everything something someone buying selling momentum happens happen usually typically item items '
+    + 'quality score scores lowest highest runway screen screener find show cluster predict pattern patterns').split(' '));
   function findCompany(q, ix) {
     const list = (ix && ix.companies) || [];
     if (!list.length) return null;
@@ -506,7 +507,10 @@
       const onPage = !!pageCik();                                   // the company of the page, not the last one talked about
       const mkt = mine.filter((k) => R.MK[k]);
       const fz = named ? null : IN.fuzzyCompany(q, ix, WORDS);       // "appel short interest" is about Apple; "most shorted stocks" is not
-      if ((mkt.length || R.STAKES.test(q)) && IN.isMarket(q, named || (IN.marketWords(q) ? null : fz), onPage)) {
+      // a screen, what follows an 8-K and whether insider trades predict anything are about the market by nature: a
+      // word that also spells a company ("momentum" → Momentus) does not turn them into a company question
+      const marketOnly = !named && mkt.some((k) => ['screen', 'afterEvent', 'insiderSignal'].includes(k));
+      if ((mkt.length || R.STAKES.test(q)) && (marketOnly || IN.isMarket(q, named || (IN.marketWords(q) ? null : fz), onPage))) {
         const keys = mkt.length ? mkt.slice(0, 2) : ['stakes'];
         const parts = (await Promise.all(keys.map((k) => (k === 'stakes' ? R.MK.stakes : R.MK[k])(lg, ix, q).catch(() => null)))).filter(Boolean);
         if (parts.length) {

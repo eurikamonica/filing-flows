@@ -421,9 +421,10 @@ def ras(prior, row_t, col_t, iters=400, tol=1e-7):
 # ------------------------------------------------------------------------------------------------ building one chain
 
 def _short(name):
+    from . import names
     n = re.sub(r"(?i),?\s+(inc\.?|corp(oration)?\.?|co\.?|ltd\.?|limited|plc|n\.v\.|s\.a\.|holdings?|group|company|"
-               r"technologies|technology|platforms|com)\b\.?", "", name or "").strip(" ,.")
-    return n.title() if n.isupper() and len(n) > 4 else n
+               r"technologies|technology|platforms|com)\b\.?", "", names.cased(name or "")).strip(" ,.")
+    return n                                                   # NVIDIA, Amphenol, Dell (names.cased: no "Nvidia", no "/De/")
 
 
 def _resolve(m, co):
