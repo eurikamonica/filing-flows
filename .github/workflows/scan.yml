@@ -185,6 +185,15 @@ jobs:
       - name: Share pictures drawn so far (og/index.json on the media branch; pipeline/ogimg.py)
         run: curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/og/index.json" -o _og.json || echo "no share pictures yet"
 
+      - name: Earnings fast lane overlay (releases earnings-fast.yml published before this scan read them)
+        # S&P 500 / Nasdaq-100 releases the fast lane put on the site minutes after the SEC accepted them: laid over this
+        # scan's data where they are newer, before the site is assembled, so every page drawn from the data has them
+        continue-on-error: true
+        run: |
+          git clone --quiet --depth 1 --branch fastlane "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" lane 2>/dev/null \
+            || { echo "no fast-lane branch yet"; exit 0; }
+          python -m pipeline.fastlane apply --data _site/data --lane lane
+
       - name: Assemble site
         env:                                   # public values (repository variables): the sign-in box on the site
           OG_MANIFEST: _og.json                          # each page's own share picture, when one is drawn
@@ -506,6 +515,20 @@ jobs:
             echo "fast lane: short scan $((HOP + 1)) started"
           fi
 
+
+      - name: Earnings fast lane overlay, once more (releases published while this scan ran)
+        # a release the fast lane published after the step above would otherwise go back to the older page with this
+        # deploy: its data and its page (c/<slug>/) are put in again (pipeline/fastlane.py; the watcher re-publishes
+        # any that still slip through)
+        continue-on-error: true
+        env:
+          OG_MANIFEST: _og.json
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          rm -rf lane
+          git clone --quiet --depth 1 --branch fastlane "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" lane 2>/dev/null \
+            || { echo "no fast-lane branch yet"; exit 0; }
+          python -m pipeline.fastlane apply --data _site/data --lane lane --pages "${SITE_URL:-https://filing-flows.com}"
 
       - uses: actions/upload-pages-artifact@v3
         with:
