@@ -368,7 +368,7 @@ def revenue(co, c):
     ladder = [('Revenue', tot), ('Cost of revenue', val('cor')), ('Gross profit', gp), ('Operating expenses', val('opex')), ('Operating profit', oi),
               ('Income tax', val('tax')), ('Net earnings', net), ('Operating cash flow', val('ocf')), ('Free cash flow', val('fcf'))]
     lad = ''.join(f"<tr><td>{e(k)}</td><td class='num'>{e(money(x))}</td><td class='num'>{100 * x / tot:.1f}%</td></tr>" for k, x in ladder if x is not None)
-    hist = ''.join(f"<tr><td>{e(x.get('label'))}</td><td class='num'>{e((x.get('headline') or {}).get('rev_fmt') or money((x.get('headline') or {}).get('revenue')))}</td>"
+    hist = ''.join(f"<tr><td>{e(x.get('label'))}</td><td class='num'>{e(money((x.get('headline') or {}).get('revenue')))}</td>"
                    f"<td class='num'>{e(pc((x.get('headline') or {}).get('yoy')))}</td></tr>" for x in qs[:8])
     qa = [(f"How does {name} make money?", lead)]
     if len(segs) > 1:
@@ -418,7 +418,7 @@ def earnings_date(co, er, c, cons, today=None):
     beat = (cons or {}).get('beat_rate', er.get('beat_rate'))
     p = (er.get('model') or {}).get('p')
     mv = (er.get('implied') or {}).get('move')
-    revs = h.get('rev_fmt') or money(h.get('revenue'))
+    revs = money(h.get('revenue'))
     segs = seo.segments(q) if q.get('nodes') else []
     lead = ''
     if just:
@@ -486,7 +486,7 @@ def earnings_date(co, er, c, cons, today=None):
                 watch += (f"<p>Filing Flows' own estimate from the SEC figures — the same quarter last year times recent growth — is EPS {seo.usd2(ours['eps'])}"
                           + (f" on revenue of {money(ours['rev'])}" if ours.get('rev') else '') + f", against the analysts' {seo.usd2(cs['eps'])}.</p>")
     lastq = (f"<h2>The last report</h2><p>{e(name)} reported revenue of {e(revs)} for the {e(seo.period_words(q.get('label')))}"
-             + (f" ({e(pc(h.get('yoy')))} Y/Y)" if h.get('yoy') is not None else '') + (f", net earnings {e(h.get('ni_fmt') or money(h.get('ni')))}" if h.get('ni') is not None else '')
+             + (f" ({e(pc(h.get('yoy')))} Y/Y)" if h.get('yoy') is not None else '') + (f", net {'earnings' if h['ni'] >= 0 else 'loss'} {e(money(abs(h['ni'])))}" if h.get('ni') is not None else '')
              + (": " + ', '.join(f"{e(n)} {e(money(v))}" for n, v in segs[:4]) if len(segs) >= 2 else '')
              + ". <a href='../revenue/'>How it makes money →</a> · <a href='../'>Every quarter →</a></p>") if h.get('revenue') else ''
     body = f"<p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>{watch}{lastq}" + (f"<div class='seo-grid'>{charts}</div>" if charts else '')

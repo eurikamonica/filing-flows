@@ -322,7 +322,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     form = q.get("form") or ""
     status = " (preliminary, from the earnings release)" if form == "8-K" else ""
     words = period_words(q.get("label"))
-    revs = h.get('rev_fmt') or money(h.get('revenue'))
+    revs = money(h.get('revenue'))
     # the company page is the evergreen one ("amazon earnings", "amazon revenue breakdown"); the quarter's own page
     # (c/<slug>/q3-2026/) answers "amazon q3 2026 earnings": two pages aimed at one query split its ranking
     title = fit(f"{who} Earnings & Revenue Breakdown: {revs}" + (f" ({pct(h.get('yoy'))})" if h.get("yoy") is not None else ""))
@@ -330,13 +330,13 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     desc = (f"{name} made {revs} in {q.get('label', '')}" + (f" ({pct(h.get('yoy'))} Y/Y)" if h.get("yoy") is not None else "")
             + (": " + ", ".join(f"{n} {money(v)}" for n, v in segs[:3]) if len(segs) >= 2 else "")
             + (f". Operating margin {pct(h.get('om'), False)}" if h.get("om") is not None else "")
-            + (f", net earnings {h.get('ni_fmt') or money(h.get('ni'))}" if h.get("ni") is not None else "")
+            + (f", net {'earnings' if h['ni'] >= 0 else 'loss'} {money(abs(h['ni']))}" if h.get("ni") is not None else "")
             + f". See where every dollar goes — costs, profit and cash — as a Sankey from the {form} filed {fdate(q.get('filed'))}{status}.")
     url = f"{base}/c/{slug_for(ix_entry)}/"
     app = "../" * depth + f"#c-{p['cik']}"
     rows = "".join(
         f"<tr><td>{e(x.get('label'))}</td><td>{e(x.get('form'))}</td><td>{e(fdate(x.get('filed')))}</td>"
-        f"<td class='num'>{e((x.get('headline') or {}).get('rev_fmt') or money((x.get('headline') or {}).get('revenue')))}</td>"
+        f"<td class='num'>{e(money((x.get('headline') or {}).get('revenue')))}</td>"
         f"<td class='num'>{e(pct((x.get('headline') or {}).get('yoy')))}</td><td class='num'>{e(pct((x.get('headline') or {}).get('om'), False))}</td>"
         f"<td class='num'>{e(money((x.get('headline') or {}).get('ni')))}</td><td class='num'>{e(money((x.get('headline') or {}).get('ocf')))}</td></tr>"
         for x in quarters[:8])
@@ -359,15 +359,15 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     rev, ni_, yoy_ = h.get("revenue"), h.get("ni"), h.get("yoy")
     bits = []
     if rev and yoy_ is not None:
-        bits.append(f"Revenue {'up' if yoy_ >= 0 else 'down'} <b>{abs(yoy_):.0f}%</b> year over year to <b>{e(h.get('rev_fmt') or money(rev))}</b>")
+        bits.append(f"Revenue {'up' if yoy_ >= 0 else 'down'} <b>{abs(yoy_):.0f}%</b> year over year to <b>{e(money(rev))}</b>")
     if rev and ni_ is not None and rev > 0:
         bits.append(f"<b>{100 * ni_ / rev:.0f}¢</b> of every $1 of revenue {'kept as net profit' if ni_ >= 0 else 'lost'}")
     if h.get("om") is not None:
         bits.append(f"operating margin <b>{h['om']:.1f}%</b>")
     highlight = (f"<p class='seo-hl {'up' if (yoy_ or 0) >= 0 else 'down'}'><span>{e(q.get('label', ''))}</span> " + " · ".join(bits) + "</p>") if bits else ""
     tiles = "".join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
-        ("Revenue", h.get("rev_fmt") or money(h.get("revenue"))), ("Year over year", pct(h.get("yoy"))),
-        ("Operating margin", pct(h.get("om"), False)), ("Net earnings", h.get("ni_fmt") or money(h.get("ni"))),
+        ("Revenue", money(h.get("revenue"))), ("Year over year", pct(h.get("yoy"))),
+        ("Operating margin", pct(h.get("om"), False)), ("Net earnings", money(h.get("ni"))),
         ("Operating cash flow", money(h.get("ocf")))))
     tweet = f"{who} {q.get('label', '')} revenue breakdown"
     import seo_history as SH

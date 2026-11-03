@@ -3348,6 +3348,12 @@ def test_sliver_revenue_lines_and_total_members():
     assert dims.best_partition(members, 1914e6) is None
     good = {"m:A": ("Commissions", 1000e6), "m:B": ("Net interest", 900e6), "m:C": ("Other", 14e6)}
     assert [l["id"] for l in dims.best_partition(good, 1914e6)["leaves"]] == ["m:A", "m:B", "m:C"]
+    # Tractor Supply's release: "Dividends declared per common share outstanding" beside "Sales" is no revenue line
+    from pipeline import release
+    tsco = {"m:S": ("Sales", 3.9e9), "m:D": ("Dividends declared per common share outstanding", 20e6)}
+    assert dims.best_partition(tsco, 3.92e9) is None
+    assert release.NOT_A_LINE.search("dividends declared per common share outstanding") and release.NOT_A_LINE.search("earnings per diluted share")
+    assert not release.NOT_A_LINE.search("net sales") and not release.NOT_A_LINE.search("aerospace products revenue")
 
 
 def test_audit_finds_figures_that_disagree(tmp_path):

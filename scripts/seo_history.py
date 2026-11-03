@@ -115,9 +115,12 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
     yoy, qoq = chg(rev[1], rev[3]), chg(rev[1], rev[2])
     lead = f"{who} reported revenue of {money(rev[1])} for the {words} ({lab})" + (f", {pc(yoy)} from a year earlier" if yoy is not None else '') + (
         f" and {pc(qoq)} from the quarter before" if qoq is not None else '') + '.'
-    om, nm = margin(n, 'oi', 1), margin(n, 'net', 1)
+    # net earnings: the figure the chart draws (headline.ni), whichever node holds it (net, netinc, or netloss as a loss)
+    net = h.get('ni') if h.get('ni') is not None else (n['net'][1] if 'net' in n else n['netinc'][1] if 'netinc' in n else -n['netloss'][1] if 'netloss' in n and n['netloss'][1] is not None else None)
+    om = margin(n, 'oi', 1)
+    nm = 100 * net / rev[1] if net is not None and rev[1] else None
     if om is not None:
-        lead += f" Operating margin was {om:.1f}%" + (f", net earnings {money(n['net'][1])} ({nm:.1f}% of revenue)" if nm is not None else '') + '.'
+        lead += f" Operating margin was {om:.1f}%" + (f", net {'earnings' if net >= 0 else 'loss'} {money(abs(net))} ({abs(nm):.1f}% of revenue)" if nm is not None else '') + '.'
     rows = ''.join(f"<tr><td>{e(t)}</td><td class='num'>{e(money(n[k][1]))}</td><td class='num'>{e(pc(chg(n[k][1], n[k][2])))}</td><td class='num'>{e(pc(chg(n[k][1], n[k][3])))}</td></tr>"
                    for k, t in KEY if k in n and n[k][1] is not None)
     qs = c['quarters']
@@ -137,14 +140,14 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
     analysis = ''.join(f'<p>{e(a)}</p>' for a in (q.get('analysis') or [])[:4])
     qa = [(f"What was {seo.poss(name)} revenue in the {words}?", first(lead))]
     if om is not None:
-        qa.append((f"Was {name} profitable in the {words}?", f"Operating profit was {money(n['oi'][1])} ({om:.1f}% of revenue)" + (f" and net earnings {money(n['net'][1])}." if 'net' in n and n['net'][1] is not None else '.')))
+        qa.append((f"Was {name} profitable in the {words}?", f"Operating profit was {money(n['oi'][1])} ({om:.1f}% of revenue)" + (f" and net {'earnings' if net >= 0 else 'loss'} {money(abs(net))}." if net is not None else '.')))
     url = f"{base}/c/{slug}/{qslug(lab)}/"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(lab)}</p>"
             f"<h1>{e(who)} {e(lab)} earnings results ({e(words)})</h1><p class='muted'>{e(q.get('form'))} filed {e(fdate(q.get('filed')))}</p>"
             f"<nav class='seo-more'>{' · '.join(navs)}</nav><p class='lead'>{e(lead)}</p>"
             + "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{k}</span><b>{e(v)}</b></div>" for k, v in (
                 ('Revenue', money(rev[1])), ('Year over year', pc(yoy)), ('Quarter over quarter', pc(qoq)),
-                ('Operating margin', f'{om:.1f}%' if om is not None else '—'), ('Net earnings', money(n['net'][1]) if 'net' in n else '—'))) + "</div>"
+                ('Operating margin', f'{om:.1f}%' if om is not None else '—'), ('Net earnings', money(net) if net is not None else '—'))) + "</div>"
             + f"{sankey_figure(r['cik'], lab, f'{who} {lab} income statement Sankey')}"
             f"<div class='tbl-wrap'><table><thead><tr><th>{e(lab)}</th><th class='num'>Amount</th><th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>"
             + (f"<h2>What changed</h2>{analysis}" if analysis else '') + faq(qa)
