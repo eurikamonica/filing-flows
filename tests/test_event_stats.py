@@ -77,6 +77,7 @@ def test_stats_and_pages(tmp_path):
     assert T.write(str(s), 'https://example.com') == 3
     page = (s / 'c' / 'aaa' / 'timeline' / 'index.html').read_text()
     assert 'Alpha stock timeline' in page and 'Insider buy' in page and 'Form 144: A Director plans to sell $3M' in page and 'Officer change' in page
+    assert "href='../report-card/'" not in page                       # no report card for this company: no link to one
     assert 'What this kind of 8-K usually did' in page and '<b>5.02</b>' in page and 'Insiders’ record here' in page and 'old enough to score' in page
     assert 'href="timeline/"' in (s / 'c' / 'aaa' / 'index.html').read_text()
     sig = (s / 'disclosures' / 'insider-signals' / 'index.html').read_text()

@@ -171,8 +171,10 @@ def page_for(co, base, slug, site, hub, stats, istats):
             "<nav class='seo-toc'><a href='#chart'>Chart</a><a href='#marks'>Each mark</a>" + ("<a href='#insiders'>Insiders</a>" if ins_h else '') + ("<a href='#kind'>8-K kinds</a>" if ev_h else '') + "</nav>"
             f"<p class='lead'>{e(lead)}</p><div id='chart'>{chart}</div>"
             f"<h2 id='marks'>Each mark, and what followed</h2>{table}{ins_h}{ev_h}"
-            f"<p><a class='seo-cta' href='../report-card/'>Report card: every quarter against the estimate →</a> <a href='../'>{e(name)}: every quarter →</a> "
-            f"<a href='../../../disclosures/#insiders'>Live insider trades →</a></p>{DISCLAIMER}")
+            + (f"<p><a class='seo-cta' href='../report-card/'>Report card: every quarter against the estimate →</a> <a href='../'>{e(name)}: every quarter →</a> "
+               if os.path.exists(os.path.join(site, 'c', slug, 'report-card', 'index.html')) else      # report cards: companies with four reports on file
+               f"<p><a class='seo-cta' href='../'>{e(name)}: every quarter →</a> ")
+            + f"<a href='../../../disclosures/#insiders'>Live insider trades →</a></p>{DISCLAIMER}")
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
                                                          {'@type': 'ListItem', 'position': 2, 'name': name, 'item': f"{base}/c/{slug}/"},
