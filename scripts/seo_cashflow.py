@@ -128,11 +128,11 @@ def runway_section(name, rw):
     tiles = [('Cash & investments', money(rw['cash'])), ('Debt', money(rw['debt']) if rw['debt'] else 'none'), ('Net cash' if rw['net'] >= 0 else 'Net debt', money(abs(rw['net']))),
              ('Due within a year', money(rw['due12']) if rw['due12'] else None)]
     if rw['months'] is not None:
-        tiles.append(('Cash runway', f"{rw['months'] / 12:.1f} years" if rw['months'] >= 24 else f"{rw['months']:.0f} months"))
+        tiles.append(('Cash runway', f"{rw['months'] / 12:.1f} years" if rw['months'] >= 24 else seo.n_of(rw['months'], 'month')))
     if rw['burn'] and rw['months'] is not None:
         how = f"{name} is burning cash: its operations consume cash, a free cash flow of {money(-rw['burn'])} a year at the current rate"
         line = (how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{rw['months'] / 12:.1f} years</b>" if rw['months'] >= 24 else
-                how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{rw['months']:.0f} months</b>")
+                how + f" against {money(rw['cash'])} of cash and investments: a runway of about <b>{seo.n_of(rw['months'], 'month')}</b>")
         if rw['due12']:
             line += f"; {money(rw['due12'])} of debt also comes due within a year, which {'the cash covers' if rw['cash'] >= rw['due12'] + rw['burn'] else 'would need refinancing or new money'}"
         line += ' before any new financing.'

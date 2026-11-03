@@ -609,8 +609,9 @@ def event_pages(site, base, L, evs, ES=None):
             amt = amounts((r.get('headline') or '') + ' ' + (r.get('quote') or ''))
             if amt and row and (row.get('revenue') or 0) > 0:
                 yr, a = row['revenue'] * 4, amt[0]
-                body += (f"<p class='seo-hl'><span>Scale</span>The filing names <b>{money(a)}</b>: about <b>{100 * a / yr:.0f}%</b> of {e(name)}'s annual revenue "
-                         f"({money(yr)}, four times the latest quarter)" + (f", or {a / row['revenue']:.1f} quarters of sales" if a >= yr else '') + ".</p>")
+                scale = f"{a / yr:,.0f}× {e(seo.poss(name))} annual revenue" if a >= 10 * yr else f"about <b>{100 * a / yr:.0f}%</b> of {e(seo.poss(name))} annual revenue"
+                body += (f"<p class='seo-hl'><span>Scale</span>The filing names <b>{money(a)}</b>: {scale} "
+                         f"({money(yr)}, four times the latest quarter)" + (f", or {a / row['revenue']:.1f} quarters of sales" if yr <= a < 10 * yr else '') + ".</p>")
             body += f"<p><a class='seo-cta' href='{e(r.get('url'))}' rel='nofollow'>Read the filing on SEC EDGAR →</a></p>"
             body += usually(its, ES, row)
             why = [f"<p><b>Item {e(i)} — {e(ITEMS.get(i, ''))}.</b> {e(WHY[i])}</p>" for i in its if i in WHY]
@@ -620,7 +621,7 @@ def event_pages(site, base, L, evs, ES=None):
                 s = seo.slug_for(row)
                 body += (f"<h2>{e(name)} at a glance</h2>" + tiles([('Latest quarter', row.get('label')), ('Revenue', row.get('rev')),
                                                                        ('Revenue Y/Y', seo.pct(row.get('yoy')) if row.get('yoy') is not None else None),
-                                                                       ('Operating margin', f"{row['om']:.1f}%" if row.get('om') is not None else None),
+                                                                       ('Operating margin', seo.pct(row['om'], False) if row.get('om') is not None else None),
                                                                        ('Industry', row.get('industry'))]))
                 import seo_history as SH
                 body += SH.sankey_figure(row['cik'], row.get('label') or '', f"{name} income statement and cash flow, {row.get('label')}", up='../../')

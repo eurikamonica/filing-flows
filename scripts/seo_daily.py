@@ -78,19 +78,9 @@ def cased(name):
     return seo._names.cased(name) if name else name
 
 
-ENTITY = re.compile(r"\b(?:INC|LLC|L\.L\.C|LP|L\.P|LLP|LTD|LIMITED|CORP|CORPORATION|CO|COMPANY|FUNDS?|CAPITAL|PARTNERS(?:HIP)?|MANAGEMENT|TRUSTS?|TRUSTEES?"
-                    r"|ADVISORS|ADVISERS|ADVISORY|HOLDINGS?|GROUP|GMBH|SA|S\.A|NV|N\.V|BV|B\.V|PLC|AG|SE|SARL|PTE|SPA|S\.P\.A|SICAV|SICAF|VENTURES"
-                    r"|INVESTMENTS?|INVESTORS|ASSOCIATES|ASSETS?|EQUITY|EQUITIES|FOUNDATION|BANK|BANCORP|ENTERPRISES|INDUSTRIES|TECHNOLOGIES|SYSTEMS"
-                    r"|INTERNATIONAL|GLOBAL|ACQUISITION|SPONSOR|ESTATE|UNIVERSITY|COLLEGE|PENSION|RETIREMENT|INSURANCE|SECURITIES|FINANCIAL|FINANCE"
-                    r"|RESEARCH|MASTER|OFFSHORE|STRATEGIES|STRATEGIC|OPPORTUNIT(?:Y|IES)|SUB|MERGER|FAMILY|OFFICE|KG|OY|AB|ASA|AS|SPV)\b", re.I)
-
-
 def person(name):
-    """a Form 4 or 13D filer's name as the filing writes it, in capitals, cased: a person's word by word ('KIRK RONALD' →
-    Kirk Ronald, the filing's word order kept), an entity's as a company's ('KKR GROUP LP' → KKR Group LP)"""
-    if not name:
-        return name
-    return cased(name) if ENTITY.search(name) else seo.person(name)
+    """a Form 4 or 13D filer's name as the filing writes it, cased (seo.filer: a person's word by word, an entity's as a company's)"""
+    return seo.filer(name)
 
 
 def holder(r):
