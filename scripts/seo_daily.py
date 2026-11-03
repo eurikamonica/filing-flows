@@ -194,8 +194,19 @@ def calendar(hub, link, today):
     first = sorted(rows, key=lambda r: r['report_date'])
     lead = (f"{len(rows)} companies report earnings in the next two weeks. Coming up first: "
             + ', '.join(f"{r['ticker']} ({fdate(r['report_date'])})" for r in first[:8]) + '.')
-    body = SV.bars([(fdate(day)[:6], len(rs)) for day, rs in sorted(by_date(rows, lambda r: r.get('report_date')), key=lambda x: x[0])],
-                   lambda v: f"{v:.0f}", 'Companies reporting, day by day', color=SV.GREY)
+    rev = {}
+    try:
+        for r in (read(os.path.join(hub, '..', '..', 'data', 'index.json')) or {}).get('companies') or []:
+            if r.get('ticker'):
+                rev[r['ticker'].upper()] = r.get('revenue') or 0
+    except AttributeError:
+        pass
+    cal = {}
+    for r in rows:
+        n, w = cal.get(r['report_date'], (0, 0))
+        cal[r['report_date']] = (n + 1, w + (rev.get(str(r['ticker']).upper(), 0) or 0))
+    body = SV.calendar(today.isoformat(), cal, 'Who reports when: companies a day, shaded by their combined quarterly revenue',
+                       note='The number is how many report that day; the shade is their combined latest-quarter revenue, so a dark day is a heavy one.', fmt=money)
     for day, rs in sorted(by_date(rows, lambda r: r.get('report_date')), key=lambda x: x[0]):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'EPS estimate', 'Analysts', 'Beat rate', 'Beat odds (model)'], [
             [link(r['ticker'], f"{r['ticker']} · {display_name(r.get('name'))}", 'earnings-date'), e(f"${r['eps']:.2f}" if r.get('eps') is not None else '—'),
