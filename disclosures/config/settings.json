@@ -199,10 +199,24 @@
       }
     ],
     "watch_refresh_hours": 6,
+    "watch_since": "2013-06-30",
+    "tiers": [[1000000000, 500, "2013-06-30"], [0, 500, "2021-01-01"]],
     "active_index_refresh_minutes": 20
   },
   "congress": {
     "years": [
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
       2024,
       2025,
       2026
@@ -212,7 +226,8 @@
     "ocr_dpi": 200,
     "reviewed_file": "config/reviewed-disclosures.csv",
     "imports_manifest": "config/imports.json",
-    "batch_size": 90,
+    "batch_size": 450,
+    "time_budget_minutes": 20,
     "refresh_hours": 168,
     "auto_current_year": true,
     "jurisdictions": {
@@ -281,12 +296,13 @@
       }
     },
     "batch_shares": {
-      "US House": 40,
+      "US House": 400,
       "New York State": 8,
       "California": 30,
       "Canada (federal public office holders)": 10
     },
-    "quick_house_batch": 12
+    "quick_house_batch": 30,
+    "quick_minutes": 4
   },
   "prices": {
     "enabled": true,
@@ -383,7 +399,7 @@
     "_note": "FINRA consolidated short interest (twice a month): the newest `keep_dates` settlement dates; rows of at least `min_short` shares are published."
   },
   "senate": {
-    "since": "2024-01-01",
+    "since": "2012-01-01",
     "batch": 40,
     "min_interval_minutes": 90,
     "recent_days": 60,

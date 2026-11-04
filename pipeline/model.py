@@ -65,6 +65,14 @@ def normalize(raw):
     else:
         gp = None
         pool = R - oi                                   # all operating costs
+    opgain = 0.0
+    if pool < 0 and oi > 0:
+        # operating profit above what revenue (or gross profit) leaves: gains inside it larger than the costs — a sale
+        # of a business or of property (Antero Midstream, TDS, Centerspace), crypto marked to market (Strategy). Drawn
+        # as one inflow into operating profit, net of the costs, which are not known apart; without an operating
+        # profit tag (oi_missing) the gains are pre-tax ones (HASI's equity income, Prairie's derivatives)
+        opgain, pool = -pool, 0.0
+        flags.append("op_gain")
     items = []
     if not gp_path and cor is not None and 0 < cor < pool:
         items.append(("cor", cor))
@@ -87,9 +95,12 @@ def normalize(raw):
         labels = {k: label for k, label, _, _ in _lines(raw["cost_lines"])}
     items = [(k, v) for k, v in items if v and v > 0]
     used = sum(v for _, v in items)
-    if pool <= 0 or used > pool * 1.005:
+    # within the chart's own conservation check (sankey._check: 0.4%), or the quarter is not drawn at all: lines
+    # 0.4-0.5% over the total (Dollar Tree's Q2 FY26) or short of it (Leidos', Parsons', Dentsply's) used to pass
+    # here and fail there — 71 quarters and 26 years left undrawn, their pages on the quarter before
+    if pool <= 0 or used > pool * 1.003:
         items = []                                      # tags overlap: show the total only
-    elif pool - used > max(0.005 * pool, 1):
+    elif pool - used > max(0.003 * pool, 1):
         items.append(("other_opex", pool - used))
     if len(items) == 1:
         items = []
@@ -111,7 +122,7 @@ def normalize(raw):
     bridge_lines = _lines(raw.get("bridge_lines")) if ocf is not None else []
     return {
         "R": R, "gp": gp, "cor": cor if gp_path else (cor if cor and cor < pool else None), "gp_path": gp_path,
-        "pool": pool, "items": items, "oi": oi, "nonop": nonop, "pretax": pretax, "tax": tax,
+        "pool": pool, "items": items, "oi": oi, "nonop": nonop, "opgain": opgain, "pretax": pretax, "tax": tax,
         "ni": ni, "nci": nci, "pl": pl, "ocf": ocf, "da": da or 0.0, "sbc": sbc or 0.0,
         "capex": raw.get("capex"), "flags": flags + (["bank"] if raw.get("rev_bank") else []),
         "da_label": "Depreciation" if dep_only else "Depreciation &amp; amortization",
@@ -162,6 +173,8 @@ def quantities(N, lines=None):
         Q["co_fcf"] = use["fcf"]
         for p in use["parts"]:
             Q["co:" + p["key"]] = p["amount"]
+    Q["opgain"] = N.get("opgain") or None                 # gains inside operating profit beyond revenue (normalize)
+    Q["oi_core"] = N["oi"] - (N.get("opgain") or 0)      # the part of operating profit revenue (or gross profit) leaves
     Q["pretax_less_nci"] = N["pretax"] - N["nci"]
     Q["opcosts"] = N["R"] - N["oi"]
     Q["funding"] = N["R"] + max(N["nonop"], 0) + max(-N["tax"], 0) + max(-N["pl"], 0)

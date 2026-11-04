@@ -6,11 +6,13 @@ import datetime as dt
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import re
 import shutil
 import subprocess
 import tempfile
+import time
 from urllib.parse import urljoin
 import zipfile
 from core import now, read_json, write_json
@@ -321,7 +323,11 @@ def collect_congress(client,cfg,old,revalidate=False):
             if name=='US House':selected+=house_select(items,history,int(shares.get(name,default)),revalidate,bool(cfg.get('quick_house')));continue
             selected+=select_batch(items,history,int(shares.get(name,default)),'report_id',cfg.get('refresh_hours',168),revalidate)
         selected=selected[:max(budget,len(groups))]
+    # a time budget (time_budget_minutes; the quick pass inside 13F runs: quick_minutes) so a large batch — the House
+    # index years back to 2012, scanned reports that need OCR — never runs the job into its timeout and loses the run
+    t0=time.time();budget=60*float(cfg.get('quick_minutes',4) if cfg.get('quick_house') else cfg.get('time_budget_minutes',20));cut=0
     for meta in selected:
+        if time.time()-t0>budget:cut+=1;continue
         rid=meta['report_id'];prior=previous.get(rid)
         try:
             if prior and prior.get('shard'):
@@ -337,9 +343,12 @@ def collect_congress(client,cfg,old,revalidate=False):
                 result[rid]={**(prior or meta),'needs_ocr':True};continue
             errors.append(f'{rid}: {str(exc)[:3000]}')
             result[rid]={**(prior or meta),'last_attempt':now(),'stale':True,'status':'error','error':str(exc)[:300],'candidates':(prior or{}).get('candidates',[])}
+    if cut:print(f'officials: {cut} of {len(selected)} selected documents left for the next run (time budget {budget/60:g} min)',flush=True)
     reports=list(result.values())
     monitor=house_monitor(catalog,result)
     print('house PTRs: '+json.dumps(monitor),flush=True)
+    if os.environ.get('GITHUB_OUTPUT') and not cfg.get('quick_house'):     # the workflow's officials chain reads the backlog
+        with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write(f"ptr_pending={monitor['ptr_pending']}\n")
     if (monitor['lag_days'] or 0)>3 or monitor['ptr_pending']>40:
         print(f"::warning::officials: {monitor['ptr_pending']} House PTRs waiting; newest read {monitor['newest_ptr_read']} vs newest filed {monitor['newest_ptr_filed']}",flush=True)
     for r in reports:   # keep names/offices in step with the (re-cleaned) catalog

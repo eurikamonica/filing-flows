@@ -51,6 +51,8 @@
     const parts = q.split(/\s+/).filter(Boolean);
     if (parts.every((p) => words.some((w) => w.startsWith(p)))) return 600 - words.length;
     if (name.includes(q)) return 400;
+    // initials: "tsmc" is Taiwan Semiconductor Manufacturing Co, "ibm" International Business Machines
+    if (q.length >= 3 && parts.length === 1 && words.length >= q.length && words.map((w) => w[0]).join('').startsWith(q)) return 450;
     let i = 0;                                          // fuzzy: every character, in order
     for (const ch of name) { if (ch === q[i]) i++; if (i === q.length) break; }
     return i === q.length && q.length >= 3 ? 100 - (name.length - q.length) * 0.1 : 0;
@@ -58,12 +60,21 @@
   function find(q, per = 6) {
     q = String(q || '').trim().toLowerCase();
     if (!IX || !q) return [];
-    const pick = (list, n, tie) => list.map((e) => [score(e, q), e]).filter((x) => x[0] > 0)
-      .sort((a, b) => b[0] - a[0] || tie(b[1]) - tie(a[1])).slice(0, n).map((x) => x[1]);
-    const co = pick(IX.site, per, (e) => e.rev);
-    const more = co.length < per ? pick(IX.sec, per - co.length, (e) => e.rev) : [];
-    return [['Companies', co.concat(more)], ['Industries & themes', pick((IX.groups || []).filter((e) => score(e, q) >= 400), 3, () => 0)], ['13F managers', pick(IX.mgr, 4, (e) => e.w)], ['Officials', pick(IX.off, 4, (e) => e.w)],
-      ['ETFs', pick(IX.etf, 4, (e) => e.w)], ['Pages', pick(IX.pages, 3, () => 0)]].filter((g) => g[1].length);
+    const scored = (list) => (list || []).map((e) => [score(e, q), e]).filter((x) => x[0] > 0);
+    const L = { site: scored(IX.site), sec: scored(IX.sec), groups: scored(IX.groups).filter((x) => x[0] >= 400), mgr: scored(IX.mgr), off: scored(IX.off), etf: scored(IX.etf), pages: scored(IX.pages) };
+    const best = Object.values(L).reduce((m, xs) => xs.reduce((a, x) => Math.max(a, x[0]), m), 0);
+    // a strong hit anywhere (a ticker, a name, a word) hides the weak ones (substring, letters in order) everywhere else:
+    // "SPY" is the ETF, not Krispy Kreme; "pelosi" is the official, not Pixelworks
+    const floor = best >= 900 ? 500 : best >= 400 ? 400 : 0;
+    const pick = (xs, n, tie) => xs.filter((x) => x[0] >= floor).sort((a, b) => b[0] - a[0] || tie(b[1]) - tie(a[1])).slice(0, n);
+    // companies with a page and every other SEC registrant in one ranking: a better match wins, then a page, then size
+    const co = pick(L.site.concat(L.sec), per, (e) => (e.off ? -1e15 : 0) + e.rev);
+    const groups = [['Companies', co], ['Industries & themes', pick(L.groups, 3, () => 0)], ['13F managers', pick(L.mgr, 4, (e) => e.w)], ['Officials', pick(L.off, 4, (e) => e.w)],
+      ['ETFs', pick(L.etf, 4, (e) => e.w)], ['Pages', pick(L.pages, 3, () => 0)]].filter((g) => g[1].length);
+    // the group with the best match first (ties keep this order, companies first — unless the company has no page yet:
+    // "SPY" opens the ETF before the SEC registrant of the same ticker)
+    const top = (g) => g[1].reduce((a, x) => Math.max(a, x[0] - (x[1].off && x[0] >= 900 ? 1 : 0)), 0);
+    return groups.map((g, i) => [top(g), i, g]).sort((a, b) => b[0] - a[0] || a[1] - b[1]).map(([, , [h, xs]]) => [h, xs.map((x) => x[1])]);
   }
   const KIND = { company: '', manager: '13F', official: 'Official', etf: 'ETF', page: 'Page', sector: 'Sector', industry: 'Industry', chain: 'Theme', action: 'Do', flo: 'Flo' };
   const row = (e, i, hi) => `<a href="${U.esc(e.href)}" class="${i === hi ? 'hi' : ''}${e.off ? ' off' : ''}" data-i="${i}">${e.tk ? `<span class="mono">${U.esc(e.tk)}</span>` : `<span class="fx-kind">${KIND[e.k]}</span>`}<span>${U.esc(e.name)}${e.sub ? ` <small class="muted">${U.esc(e.sub)}</small>` : ''}</span>${e.off ? '<span class="tag">no chart yet</span>' : ''}</a>`;

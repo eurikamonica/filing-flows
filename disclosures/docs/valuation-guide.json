@@ -1259,6 +1259,111 @@
    "why": "Drug developers have no profits to multiply and a DCF of today's losses says nothing about them; what matters is how likely each drug is to succeed and how much it could sell. Turning the price into the peak sales it requires gives a number that can be checked against what drugs for the same diseases actually sell.",
    "fits": "Drug developers (SIC 2833–2836, or research companies under 8731) without operating profit, whose trials on ClinicalTrials.gov are sponsored under their own name.",
    "watch": "Success rates are industry averages; a specific drug, disease or company can be far better or worse. Programs are grouped by drug name, so a drug listed under a code name and a generic name that never appear together counts twice. Partnered drugs, royalties and marketed products are not separated out."
+  },
+  "P/E vs peers, weighted": {
+   "family": "Relative (multiples)",
+   "what": "The same peers as the plain P/E comparison, but weighted: Each peer's weight is the geometric mean of its share of the group's market value, of its revenue and of its trading value (the median daily close × volume over the last 63 sessions), capped at 20% so that one giant is never the whole answer; and where the multiple has a quarterly history, each peer counts its multiple today and at every quarter since 2022 with a one-year half-life, so last year's quarters count half as much as today's and three years ago an eighth. The weighted median P/E multiplies the weighted median by this company's EPS; the weighted middle half gives the range.",
+   "why": "A plain median gives a tiny, thinly traded peer the same say as the industry leader and uses only today's prices. Large, liquid companies are priced by many more investors, and the latest quarters say more about today's market than old ones; weighting by both moves the multiple toward what the market pays for businesses like this one now, while the history steadies it against one day's swings.",
+   "fits": "Profitable companies with enough peers.",
+   "watch": "The largest peers can differ most from a small company (scale, margins, growth), so a small company may deserve a multiple nearer the plain median; the half-life and the 20% cap are assumptions, and the effective number of peers (shown beside it) can be much smaller than the count. Shown beside the plain median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "EV/EBITDA vs peers, weighted": {
+   "family": "Relative (multiples)",
+   "what": "The same peers as the plain EV/EBITDA comparison, but weighted: Each peer's weight is the geometric mean of its share of the group's market value, of its revenue and of its trading value (the median daily close × volume over the last 63 sessions), capped at 20% so that one giant is never the whole answer (it has no quarterly history here, so today only). The weighted median EV/EBITDA multiplies the weighted median by its EBITDA, subtracts net debt and divides by diluted shares; the weighted middle half gives the range.",
+   "why": "A plain median gives a tiny, thinly traded peer the same say as the industry leader and uses only today's prices. Large, liquid companies are priced by many more investors, and the latest quarters say more about today's market than old ones; weighting by both moves the multiple toward what the market pays for businesses like this one now, while the history steadies it against one day's swings.",
+   "fits": "Companies with positive EBITDA and enough peers.",
+   "watch": "The largest peers can differ most from a small company (scale, margins, growth), so a small company may deserve a multiple nearer the plain median; the half-life and the 20% cap are assumptions, and the effective number of peers (shown beside it) can be much smaller than the count. Shown beside the plain median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "EV/Sales vs peers, weighted": {
+   "family": "Relative (multiples)",
+   "what": "The same peers as the plain EV/Sales comparison, but weighted: Each peer's weight is the geometric mean of its share of the group's market value, of its revenue and of its trading value (the median daily close × volume over the last 63 sessions), capped at 20% so that one giant is never the whole answer; and where the multiple has a quarterly history, each peer counts its multiple today and at every quarter since 2022 with a one-year half-life, so last year's quarters count half as much as today's and three years ago an eighth. The weighted median EV/Sales multiplies the weighted median by its revenue, subtracts net debt and divides by diluted shares; the weighted middle half gives the range.",
+   "why": "A plain median gives a tiny, thinly traded peer the same say as the industry leader and uses only today's prices. Large, liquid companies are priced by many more investors, and the latest quarters say more about today's market than old ones; weighting by both moves the multiple toward what the market pays for businesses like this one now, while the history steadies it against one day's swings.",
+   "fits": "Companies with revenue and enough peers, profitable or not.",
+   "watch": "The largest peers can differ most from a small company (scale, margins, growth), so a small company may deserve a multiple nearer the plain median; the half-life and the 20% cap are assumptions, and the effective number of peers (shown beside it) can be much smaller than the count. Shown beside the plain median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "P/FFO vs REIT peers, weighted": {
+   "family": "Relative (multiples)",
+   "what": "The same peers as the plain P/FFO comparison, but weighted: Each peer's weight is the geometric mean of its share of the group's market value, of its revenue and of its trading value (the median daily close × volume over the last 63 sessions), capped at 20% so that one giant is never the whole answer (it has no quarterly history here, so today only). The weighted median P/FFO multiplies the weighted median by its FFO and divides by diluted shares; the weighted middle half gives the range.",
+   "why": "A plain median gives a tiny, thinly traded peer the same say as the industry leader and uses only today's prices. Large, liquid companies are priced by many more investors, and the latest quarters say more about today's market than old ones; weighting by both moves the multiple toward what the market pays for businesses like this one now, while the history steadies it against one day's swings.",
+   "fits": "REITs with positive FFO.",
+   "watch": "The largest peers can differ most from a small company (scale, margins, growth), so a small company may deserve a multiple nearer the plain median; the half-life and the 20% cap are assumptions, and the effective number of peers (shown beside it) can be much smaller than the count. Shown beside the plain median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "Sum of the parts, weighted (segments × weighted peer EV/Sales)": {
+   "family": "Relative (multiples)",
+   "what": "Values each reported segment at the weighted EV/Sales of the industry its name maps to instead of the plain median: Each peer's weight is the geometric mean of its share of the group's market value, of its revenue and of its trading value (the median daily close × volume over the last 63 sessions), capped at 20% so that one giant is never the whole answer; and where the multiple has a quarterly history, each peer counts its multiple today and at every quarter since 2022 with a one-year half-life, so last year's quarters count half as much as today's and three years ago an eighth. The segments' values are added up, net debt subtracted and the result divided by diluted shares.",
+   "why": "A plain median gives a tiny, thinly traded peer the same say as the industry leader and uses only today's prices. Large, liquid companies are priced by many more investors, and the latest quarters say more about today's market than old ones; weighting by both moves the multiple toward what the market pays for businesses like this one now, while the history steadies it against one day's swings. Within one company, it keeps a segment from being priced by the small companies of its industry.",
+   "fits": "Companies reporting two or more segments.",
+   "watch": "The largest peers can differ most from a small company (scale, margins, growth), so a small company may deserve a multiple nearer the plain median; the half-life and the 20% cap are assumptions, and the effective number of peers (shown beside it) can be much smaller than the count. Shown beside the plain median, not part of the stage-weighted value until the ledger has scored it. Segment names are matched to industries automatically: a rough guide."
+  },
+  "P/E vs peers, matched": {
+   "family": "Relative (multiples)",
+   "what": "The median P/E (price ÷ earnings per share) of the peers that look like this company, not of its whole industry: a window ladder tried in order — tight (same 3-digit SIC industry and the same stage, revenue a quarter to four times its own, revenue growth and operating margin within 10 points), medium (profitable or not alike, revenue a tenth to ten times, growth and margin within 15 points), wide (2-digit SIC, 1/30–30×, within 25 points) — the first with six or more peers is used, and the page says which.",
+   "why": "Two companies in one industry code can be a fast-growing leader and a shrinking, loss-making small one; a multiple says what the market pays for a business with a given growth, profitability and stage, so the peers should share them.",
+   "fits": "Companies whose industry has enough members of their size, stage and economics.",
+   "watch": "A tight match can leave few peers, and a wide one is close to the broad median; the windows are assumptions fixed in advance. Matching on today's growth and margin can pair companies that differ in risk. Shown beside the broad median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "P/E vs peers, selected": {
+   "family": "Relative (multiples)",
+   "what": "The median P/E (price ÷ earnings per share) of comparable companies chosen by business model rather than by industry code, each listed with the reason it was chosen (config/peer-map.json, editable); used when three or more of them are on file.",
+   "why": "Industry codes group companies by what they make, not by how they earn: an app store, a payment network and a software vendor can share a code and nothing else. A hand-picked list is how analysts build comparable sets.",
+   "fits": "Large companies with a selected list; any company once one is added.",
+   "watch": "A chosen list can be bent toward the answer one wants. The reasons are shown, the list is kept in the repository, and the ledger scores the selected tier against the broad and matched ones before it may count."
+  },
+  "EV/EBITDA vs peers, matched": {
+   "family": "Relative (multiples)",
+   "what": "The median EV/EBITDA (enterprise value ÷ earnings before interest, taxes, depreciation and amortization) of the peers that look like this company, not of its whole industry: a window ladder tried in order — tight (same 3-digit SIC industry and the same stage, revenue a quarter to four times its own, revenue growth and operating margin within 10 points), medium (profitable or not alike, revenue a tenth to ten times, growth and margin within 15 points), wide (2-digit SIC, 1/30–30×, within 25 points) — the first with six or more peers is used, and the page says which.",
+   "why": "Two companies in one industry code can be a fast-growing leader and a shrinking, loss-making small one; a multiple says what the market pays for a business with a given growth, profitability and stage, so the peers should share them.",
+   "fits": "Companies whose industry has enough members of their size, stage and economics.",
+   "watch": "A tight match can leave few peers, and a wide one is close to the broad median; the windows are assumptions fixed in advance. Matching on today's growth and margin can pair companies that differ in risk. Shown beside the broad median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "EV/EBITDA vs peers, selected": {
+   "family": "Relative (multiples)",
+   "what": "The median EV/EBITDA (enterprise value ÷ earnings before interest, taxes, depreciation and amortization) of comparable companies chosen by business model rather than by industry code, each listed with the reason it was chosen (config/peer-map.json, editable); used when three or more of them are on file.",
+   "why": "Industry codes group companies by what they make, not by how they earn: an app store, a payment network and a software vendor can share a code and nothing else. A hand-picked list is how analysts build comparable sets.",
+   "fits": "Large companies with a selected list; any company once one is added.",
+   "watch": "A chosen list can be bent toward the answer one wants. The reasons are shown, the list is kept in the repository, and the ledger scores the selected tier against the broad and matched ones before it may count."
+  },
+  "EV/Sales vs peers, matched": {
+   "family": "Relative (multiples)",
+   "what": "The median EV/Sales (enterprise value ÷ revenue) of the peers that look like this company, not of its whole industry: a window ladder tried in order — tight (same 3-digit SIC industry and the same stage, revenue a quarter to four times its own, revenue growth and operating margin within 10 points), medium (profitable or not alike, revenue a tenth to ten times, growth and margin within 15 points), wide (2-digit SIC, 1/30–30×, within 25 points) — the first with six or more peers is used, and the page says which.",
+   "why": "Two companies in one industry code can be a fast-growing leader and a shrinking, loss-making small one; a multiple says what the market pays for a business with a given growth, profitability and stage, so the peers should share them.",
+   "fits": "Companies whose industry has enough members of their size, stage and economics.",
+   "watch": "A tight match can leave few peers, and a wide one is close to the broad median; the windows are assumptions fixed in advance. Matching on today's growth and margin can pair companies that differ in risk. Shown beside the broad median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "EV/Sales vs peers, selected": {
+   "family": "Relative (multiples)",
+   "what": "The median EV/Sales (enterprise value ÷ revenue) of comparable companies chosen by business model rather than by industry code, each listed with the reason it was chosen (config/peer-map.json, editable); used when three or more of them are on file.",
+   "why": "Industry codes group companies by what they make, not by how they earn: an app store, a payment network and a software vendor can share a code and nothing else. A hand-picked list is how analysts build comparable sets.",
+   "fits": "Large companies with a selected list; any company once one is added.",
+   "watch": "A chosen list can be bent toward the answer one wants. The reasons are shown, the list is kept in the repository, and the ledger scores the selected tier against the broad and matched ones before it may count."
+  },
+  "P/E vs peers, growth-adjusted": {
+   "family": "Relative (multiples)",
+   "what": "A line fitted across the broad peer group, ln(P/E) = a + b × growth, read at this company's own revenue growth: the multiple its peers' pattern says a company like it earns. The slopes are shrunk toward zero (ridge) because a dozen peers give noisy ones, the company's own figures are held inside the group's 5th–95th percentiles so the line is not extrapolated, and the middle half of the spread around the line gives the range.",
+   "why": "A median assumes the company is an average peer. A business growing faster earns a higher multiple; the fit measures how much more among its own peers, instead of filtering them away.",
+   "fits": "Companies with twelve or more peers that report the same figures.",
+   "watch": "The fit is only as good as its r² (shown); one year's growth is a noisy guide to the future, and a line across a group still inherits that group's mispricing. Shown beside the broad median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "EV/EBITDA vs peers, growth-adjusted": {
+   "family": "Relative (multiples)",
+   "what": "A line fitted across the broad peer group, ln(EV/EBITDA) = a + b × growth, read at this company's own revenue growth: the multiple its peers' pattern says a company like it earns. The slopes are shrunk toward zero (ridge) because a dozen peers give noisy ones, the company's own figures are held inside the group's 5th–95th percentiles so the line is not extrapolated, and the middle half of the spread around the line gives the range.",
+   "why": "A median assumes the company is an average peer. A business growing faster earns a higher multiple; the fit measures how much more among its own peers, instead of filtering them away.",
+   "fits": "Companies with twelve or more peers that report the same figures.",
+   "watch": "The fit is only as good as its r² (shown); one year's growth is a noisy guide to the future, and a line across a group still inherits that group's mispricing. Shown beside the broad median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "EV/Sales vs peers, growth & margin adjusted": {
+   "family": "Relative (multiples)",
+   "what": "A line fitted across the broad peer group, ln(EV/Sales) = a + b × growth + c × margin, read at this company's own revenue growth and operating margin: the multiple its peers' pattern says a company like it earns. The slopes are shrunk toward zero (ridge) because a dozen peers give noisy ones, the company's own figures are held inside the group's 5th–95th percentiles so the line is not extrapolated, and the middle half of the spread around the line gives the range.",
+   "why": "A median assumes the company is an average peer. A business growing faster or keeping more of each dollar of sales as profit earns a higher multiple; the fit measures how much more among its own peers, instead of filtering them away.",
+   "fits": "Companies with twelve or more peers that report the same figures.",
+   "watch": "The fit is only as good as its r² (shown); one year's growth is a noisy guide to the future, and a line across a group still inherits that group's mispricing. Shown beside the broad median, not part of the stage-weighted value until the ledger has scored it."
+  },
+  "Sum of the parts, selected (segments × business-model comps)": {
+   "family": "Relative (multiples)",
+   "what": "Values each reported segment at the median EV/Sales of the companies selected for its business model (cloud infrastructure, digital advertising, marketplaces, payments, media subscriptions, digital platform services …; config/peer-map.json, each with its reason), adds them up, subtracts net debt and divides by diluted shares; a segment whose business model has no selected list keeps its broad median.",
+   "why": "Each segment is priced by businesses that earn the same way, not by every company sharing an industry code: AWS by cloud companies, Amazon's third-party seller services by marketplaces.",
+   "fits": "Companies reporting two or more segments with a business-model tag.",
+   "watch": "The lists are chosen and the segment-to-model map is partly by hand (shown); sales multiples still ignore each segment's margin. Scored in the ledger before it may count."
   }
  },
  "aliases": {
@@ -1266,5 +1371,19 @@
   "Combined forecast": "Our model",
   "Stage-weighted value (": "Stage-weighted value",
   "Our model (": "Our model"
+ },
+ "peers": {
+  "title": "Comparing with peers — what can go wrong, and what this page does about it",
+  "paras": [
+   "A peer multiple says what the market pays today for businesses like this one. Every part of that sentence can fail: the peers may not be like it, the market may misprice all of them at once, and today's price may be a passing mood.",
+   "Who counts as a peer. An industry code groups companies by what they make, not by how they earn: SIC 7389 holds Visa, PayPal, eBay, Uber and Accenture. The page shows the broad industry median (tier 1), the peers that also match its stage, size, growth and operating margin (tier 2, matched) and companies chosen by business model with their reasons (tier 3, selected), with every peer listed in the peer explorer.",
+   "Margins and growth. A plain median treats the company as an average peer, but a business growing faster or keeping more of each dollar as profit earns a higher multiple. EV/Sales is the most exposed: a 40% margin company and a 5% one are worth very different multiples of sales. The matched tier filters on growth and margin, and the adjusted rows fit how much the multiple rises with them across the peers and read it at the company's own figures.",
+   "Stage. A pre-profit company has no meaningful P/E and its peers' EV/Sales mixes start-ups with mature firms; a declining one should not be priced like a growing one. The matched tier requires the same stage (tight window) or the same side of break-even, and the stage decides which methods count at all.",
+   "Size and liquidity. Small, thinly traded companies trade at noisier and often discounted multiples, yet a plain median gives each the same say as the industry leader. The weighted rows weigh peers by market value, revenue and trading value, none above 20%.",
+   "Time. One day's multiples carry that day's mood; a long history carries old regimes. The weighted rows count each peer's quarters since 2022 with a one-year half-life.",
+   "Accounting and capital structure. P/E is bent by one-off items, buybacks, tax and leverage; EV-based multiples are steadier across capital structures but need clean debt and cash figures. Stock-based compensation is a real cost the EBITDA of software peers leaves out. Negative earnings drop out of P/E, so the peers left are only the profitable ones.",
+   "The whole group can be wrong. If every peer is overvalued, the company looks fairly valued at their median. Peer methods say whether it is cheap relative to its peers, not whether the peers are cheap; that is what the cash-flow methods and the outside view are for.",
+   "Which tier to trust is an empirical question. Every tier's value is frozen in the monthly ledger and scored at 3, 6 and 12 months (how well its gap to the price ranked the returns that followed); a tier joins the stage-weighted value only after it has been scored."
+  ]
  }
 }

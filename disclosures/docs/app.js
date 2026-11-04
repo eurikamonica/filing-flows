@@ -98,7 +98,10 @@ function baseRender(){
    sourceNotice(state.tab,d.modules||{},published)
    ||(typeof marketStore!=='undefined'?derivedMarketNotice(state.tab,d.modules||{},marketStore):null)
    ||(typeof (window.HUB_NOTICES||{})[state.tab]==='function'?window.HUB_NOTICES[state.tab]():null)
-   ||healthText(state.tab,d.modules?.[state.tab]||{},published);
+   // a tab with a collector of its own reports that collector's health; a view built from the other files (smart money,
+   // ETFs, quality, fair value …) has no status file, and "Status STALE · unknown" there was a false alarm
+   ||(d.modules?.[state.tab]?healthText(state.tab,d.modules[state.tab],published)
+     :{stale:false,text:'Official derived view · built from the data files published with the site'+(published?' · Site published '+published:'')});
  $('notice').className=state.mode==='demo'||(derived?derived.stale:['error','partial'].includes(m.status))?'warn':'';
  $('notice').textContent=state.mode==='demo'?'DEMO: All figures in this mode are fictional. Use only to explore the interface.':
    state.tab==='status'?'Sources run independently. Errors retain the previous valid data and never substitute demo figures.':

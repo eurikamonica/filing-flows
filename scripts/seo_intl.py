@@ -26,6 +26,12 @@ from seo_history import sankey_figure  # noqa: E402
 e, display_name, slug_for = seo.e, seo.display_name, seo.slug_for
 
 
+def de(n):
+    """French elision before a vowel: "d’Apple", "d’Intel", "de Microsoft" ("Résultats de Apple" read wrong)"""
+    n = str(n or '')
+    return ('d’' if re.match(r'[AEIOUYÀÂÉÈÊËÎÏÔÛÜaeiouyàâéèêëîïôûü]', n) else 'de ') + n
+
+
 def read(path):
     try:
         with open(path, encoding='utf-8') as f:
@@ -51,7 +57,7 @@ L = {
         'title': lambda who, per, rev, yoy: f'{who}: resultados del {per}, ingresos de {rev}' + (f', {yoy} interanual' if yoy else ''),
         'h1': lambda who, per: f'Resultados de {who} del {per}',
         'lead': lambda who, per, rev, up, g, om, ni, form, date: (f'{who} registró ingresos de {rev} en el {per}'
-                                                                  + (f', {"un aumento" if up else "una caída"} del {g} interanual' if g else '')
+                                                                  + ((f', {g[1:]} veces los ingresos de un año antes' if g.startswith('×') else f', {"un aumento" if up else "una caída"} del {g} interanual') if g else '')
                                                                   + (f', con un margen operativo del {om}' if om else '') + (f' y un beneficio neto de {ni}' if ni else '')
                                                                   + f' ({form} presentado el {date}).'),
         'segs': 'Ingresos por segmento: ', 'cents': lambda gp, net: 'De cada dólar de ingresos, ' + ' y '.join(
@@ -65,7 +71,7 @@ L = {
         'h_hist': 'Resultados trimestrales recientes', 'hist_head': ['Trimestre', 'Ingresos', 'Interanual', 'Margen operativo', 'Beneficio neto'],
         'faq': 'Preguntas frecuentes', 'q_last': lambda n: f'¿Cómo fueron los últimos resultados de {n}?', 'q_how': lambda n: f'¿Cómo gana dinero {n}?',
         'q_when': lambda n: f'¿Cuándo presenta resultados {n}?',
-        'cta': 'Abrir el diagrama Sankey interactivo →', 'source': lambda n, f: f'Datos leídos automáticamente del {f} que {n} presentó ante la SEC de EE. UU.; pueden contener errores. No es asesoramiento de inversión.',
+        'cta': 'Abrir el diagrama Sankey interactivo →', 'source': lambda n, f: f'Datos leídos automáticamente del {f} que {n} presentó ante la SEC de EE. UU.',
         'idx_title': 'Resultados de empresas de EE. UU.: ingresos, márgenes y próxima fecha de resultados | Filing Flows',
         'idx_h1': lambda n: f'Resultados trimestrales de {n} empresas cotizadas en EE. UU.',
         'idx_lead': 'Los últimos ingresos, crecimiento, márgenes, beneficio neto e ingresos por segmento de cada empresa, con la próxima fecha de resultados y lo que esperan los analistas, leídos de sus informes ante la SEC y actualizados cada día.',
@@ -80,9 +86,9 @@ L = {
         'bn': 'milliards de dollars', 'mn': 'millions de dollars', 'th': 'milliers de dollars', 'usd': 'dollars', 'pct': ' %',
         'thou': ' ', 'sep': ' ; ',
         'title': lambda who, per, rev, yoy: f'{who} : résultats du {per}, chiffre d’affaires de {rev}' + (f', {yoy} sur un an' if yoy else ''),
-        'h1': lambda who, per: f'Résultats de {who} au {per}',
+        'h1': lambda who, per: f'Résultats {de(who)} au {per}',
         'lead': lambda who, per, rev, up, g, om, ni, form, date: (f'{who} a réalisé un chiffre d’affaires de {rev} au {per}'
-                                                                  + (f', en {"hausse" if up else "baisse"} de {g} sur un an' if g else '')
+                                                                  + ((f', {g[1:]} fois le chiffre d’affaires d’un an plus tôt' if g.startswith('×') else f', en {"hausse" if up else "baisse"} de {g} sur un an') if g else '')
                                                                   + (f', avec une marge opérationnelle de {om}' if om else '') + (f' et un bénéfice net de {ni}' if ni else '')
                                                                   + f' ({form} déposé le {date}).'),
         'segs': 'Chiffre d’affaires par segment : ', 'cents': lambda gp, net: 'Sur chaque dollar de chiffre d’affaires, ' + ' et '.join(
@@ -91,16 +97,16 @@ L = {
         'expect': lambda eps, rev, ya: f' Les analystes attendent un bénéfice par action (BPA) de {eps} dollars' + (f' et un chiffre d’affaires de {rev}' if rev else '') + (f', contre {ya} dollars un an plus tôt' if ya else '') + '.',
         'beat': lambda b: f' Le BPA a dépassé le consensus dans {b} % des trimestres connus.',
         'tiles': ['Chiffre d’affaires', 'Sur un an', 'Marge opérationnelle', 'Bénéfice net', 'Flux de trésorerie d’exploitation'],
-        'h_seg': lambda n, per: f'Chiffre d’affaires de {n} par segment ({per})', 'seg_head': ['Segment', 'Chiffre d’affaires', 'Part', 'Sur un an'],
+        'h_seg': lambda n, per: f'Chiffre d’affaires {de(n)} par segment ({per})', 'seg_head': ['Segment', 'Chiffre d’affaires', 'Part', 'Sur un an'],
         'chart_rev': 'chiffre d’affaires par trimestre', 'chart_ni': 'bénéfice net par trimestre', 'chart_sankey': 'diagramme de Sankey du chiffre d’affaires au cash',
         'h_hist': 'Résultats trimestriels récents', 'hist_head': ['Trimestre', 'Chiffre d’affaires', 'Sur un an', 'Marge opérationnelle', 'Bénéfice net'],
-        'faq': 'Questions fréquentes', 'q_last': lambda n: f'Quels sont les derniers résultats de {n} ?', 'q_how': lambda n: f'Comment {n} gagne-t-il de l’argent ?',
+        'faq': 'Questions fréquentes', 'q_last': lambda n: f'Quels sont les derniers résultats {de(n)} ?', 'q_how': lambda n: f'Comment {n} gagne-t-il de l’argent ?',
         'q_when': lambda n: f'Quand {n} publie-t-il ses résultats ?',
-        'cta': 'Ouvrir le diagramme de Sankey interactif →', 'source': lambda n, f: f'Données lues automatiquement dans le {f} déposé par {n} auprès de la SEC américaine ; des erreurs sont possibles. Ceci n’est pas un conseil en investissement.',
+        'cta': 'Ouvrir le diagramme de Sankey interactif →', 'source': lambda n, f: f'Données lues automatiquement dans le {f} déposé par {n} auprès de la SEC américaine.',
         'idx_title': 'Résultats des entreprises américaines : chiffre d’affaires, marges et date des prochains résultats | Filing Flows',
         'idx_h1': lambda n: f'Résultats trimestriels de {n} entreprises cotées aux États-Unis',
         'idx_lead': 'Le dernier chiffre d’affaires, la croissance, les marges, le bénéfice net et la répartition par segment de chaque entreprise, avec la date des prochains résultats et les attentes des analystes, lus dans ses documents déposés auprès de la SEC et mis à jour chaque jour.',
-        'idx_item': lambda who: f'Résultats de {who}', 'crumb': 'Filing Flows en français', 'other': 'Autres langues',
+        'idx_item': lambda who: f'Résultats {de(who)}', 'crumb': 'Filing Flows en français', 'other': 'Autres langues',
     },
 }
 LANG_NAME = {'en': 'English', 'zh-Hans': '中文', 'es': 'Español', 'fr': 'Français'}
@@ -117,8 +123,13 @@ def money(v, t):
 
 
 def pct(v, t, signed=False):
+    """+12 % / −3 %; growth from a sliver as a multiple (×86); a margin beyond ±1000 % is n/m (seo.pct's rules)"""
     if v is None:
         return None
+    if signed and v >= seo.MEANINGFUL:
+        return f'×{1 + v / 100:,.0f}'
+    if not signed and abs(v) >= seo.MEANINGFUL:
+        return 'n/m'
     x = f'{abs(v):.0f}' if signed else f'{v:.1f}'.replace('.', ',')
     return (('+' if v >= 0 else '−') if signed else '') + x + t['pct']
 
@@ -160,8 +171,9 @@ def company(lang, r, c, er, cons, base, langs):
     who = f'{en} ({tk})'
     per = period(q.get('label'), t)
     rev = h['revenue']
+    om_ = pct(h.get('om'), t)
     lead = t['lead'](who, per, money(rev, t), (h.get('yoy') or 0) >= 0, pct(h.get('yoy'), t, True) and pct(h.get('yoy'), t, True).lstrip('+−'),
-                     pct(h.get('om'), t), money(h.get('ni'), t) if h.get('ni') is not None else None, q.get('form'), ldate(q.get('filed'), t))
+                     None if om_ == 'n/m' else om_, money(h.get('ni'), t) if h.get('ni') is not None else None, q.get('form'), ldate(q.get('filed'), t))
     lab = {n['id']: H.unescape(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
     into, segs = {}, {}
     for ln in q.get('links') or []:
@@ -228,7 +240,7 @@ def company(lang, r, c, er, cons, base, langs):
         {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': x, 'acceptedAnswer': {'@type': 'Answer', 'text': y}} for x, y in qa]}]}
     title = t['title'](who, per, money(rev, t), pct(h.get('yoy'), t, True)) + ' | Filing Flows'
     doc = seo.page(title, lead[:200], url, body, 3, base + '/og.png', ld)
-    doc = doc.replace('<html lang="en">', f'<html lang="{lang}">', 1).replace('<link rel="canonical"', alternates(slug, base, langs) + '<link rel="canonical"', 1)
+    doc = seo.localize(doc, lang).replace('<link rel="canonical"', alternates(slug, base, langs) + '<link rel="canonical"', 1)
     return url, (q.get('filed') or '')[:10] or None, doc, who, rev
 
 
@@ -294,7 +306,7 @@ def write(site, base, langs=('es', 'fr')):
             items = ''.join(f"<li><a href='c/{s}/'>{e(t['idx_item'](w))}</a></li>" for w, s, _ in sorted(listed[lg], key=lambda x: -x[2]))
             body = (f"<p class='crumbs'><a href='../'>Filing Flows</a> › {e(t['crumb'])}</p><h1>{e(t['idx_h1'](num(len(listed[lg]), 0)))}</h1>"
                     f"<p class='lead'>{e(t['idx_lead'])}</p><ul class='seo-list'>{items}</ul>")
-            doc = seo.page(t['idx_title'], t['idx_lead'][:200], f'{base}/{lg}/', body, 1, base + '/og.png').replace('<html lang="en">', f'<html lang="{lg}">', 1)
+            doc = seo.localize(seo.page(t['idx_title'], t['idx_lead'][:200], f'{base}/{lg}/', body, 1, base + '/og.png'), lg)
             os.makedirs(os.path.join(site, lg), exist_ok=True)
             open(os.path.join(site, lg, 'index.html'), 'w', encoding='utf-8').write(doc)
             urls[lg].insert(0, (f'{base}/{lg}/', None))

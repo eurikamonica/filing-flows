@@ -215,6 +215,7 @@ function curve(pts,smooth){                           // straight segments, or a
 }
 
 function rotSize(ratio,minH,maxH){            // the drawing follows the page width so text stays near its real size
+ if(ROT.exportW)return [ROT.exportW,ROT.exportH||Math.min(maxH||9999,Math.max(minH,Math.round(ROT.exportW*ratio)))];   // a video export (rotExport)
  const ws=document.getElementById('workspace'),cw=ws&&ws.clientWidth?ws.clientWidth:900;
  const W=Math.round(Math.max(320,Math.min(1080,cw-44)));return [W,Math.min(maxH||9999,Math.max(Math.min(minH,W),Math.round(W*ratio)))];
 }
@@ -294,8 +295,14 @@ function rotationView(){
  out+=`<details><summary>How these charts are built</summary><p>${esc(g.data.note||'')}</p><p class="sub">Scales: “signed log” keeps small values as they are and compresses large ones (k·asinh(x/k), k = the variable's typical spread), so one outlier no longer flattens everyone else; “rank” and “standard score” place each company against all companies in the same period, which also removes market-wide swings. Smoothing uses past values only (exponential: half-life one quarter or three months; moving average: two quarters or three months), so a smoothed path never knows the future. In the monthly view the stock, volatility and volume are monthly; the quarterly figures (margins, growth, 13F, officials) are drawn in a straight line between quarter-ends — that is a drawing, not new information.</p><p class="sub">A path that circles clockwise means the vertical variable turns first and the horizontal one follows; counter-clockwise, the reverse. With the default axes, clockwise = the stock turned before profit momentum (the market anticipating). A pattern, not a forecast.</p></details>`;
  return out;
 }
+const ROT_SPEEDS=[['0.5','½× speed'],['1','1× speed'],['2','2× speed'],['4','4× speed']];
+const ROT_SHAPES=[['16x9','16:9 wide video'],['9x16','9:16 phone video'],['1x1','1:1 square video']];
+const rotSpeed=()=>ROT_SPEEDS.some(x=>x[0]===String(state.rspd))?+state.rspd:1;
+const rotShape=()=>ROT_SHAPES.some(x=>x[0]===state.rshape)?state.rshape:'16x9';
 function rotPlayer(Q,P){
- return `<div class="rot-player"><button class="action" id="rplay" type="button">${ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(rotSpan(P),Q.length)} ${rotUnit(P)}`}</button><input type="range" id="rframe" min="0" max="${Q.length-1}" step="1" value="${state.rf}" aria-label="Period shown"><span id="rflabel" class="rot-flabel">${esc(rotFlabel(P,Q[state.rf]))}</span></div>`;
+ // play, the frame slider, the speed, and the same play as an MP4 (rot-video.js: every frame drawn and encoded in the browser)
+ return `<div class="rot-player"><button class="action" id="rplay" type="button">${ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(rotSpan(P),Q.length)} ${rotUnit(P)}`}</button><input type="range" id="rframe" min="0" max="${Q.length-1}" step="1" value="${state.rf}" aria-label="Period shown"><span id="rflabel" class="rot-flabel">${esc(rotFlabel(P,Q[state.rf]))}</span>`+
+  `<select id="rspeed" aria-label="Playback speed">${options(ROT_SPEEDS,String(rotSpeed()))}</select>${window.RotVideo?`<select id="rshape" aria-label="Video shape">${options(ROT_SHAPES,rotShape())}</select><button class="action" id="rmp4" type="button">${ROT.exporting?'Cancel':'Export MP4 ↓'}</button><span id="rmp4s" class="sub rot-mp4s" role="status">${esc(ROT.exportMsg||'')}</span>`:''}</div>`;
 }
 function rotLayers(o){                                 // what the clock and the 3-D box draw
  const {P,picks,sec}=o,ref=picks.length?P.suns[picks[0].s]:null;
@@ -898,14 +905,50 @@ function rotStop(){if(ROT.timer){clearInterval(ROT.timer);ROT.timer=null}}
 function rotToggle(){
  if(ROT.timer){rotStop();render();return}
  const c=ROT.ctx,n=c?c.Q.length:0;if(!n)return;
- const span=rotSpan(c.P);
- if(state.rf>=n-1)state.rf=Math.max(0,n-span);
+ // a chart can set the stretch to play (from / to: the RRG's frozen forecast and the periods after it)
+ const span=rotSpan(c.P),to=c.to!=null?Math.min(n-1,c.to):n-1,from=c.from!=null?c.from:Math.max(0,n-span);
+ if(state.rf>=to||(c.from!=null&&state.rf<c.from))state.rf=from;
  ROT.timer=setInterval(()=>{
   if(state.tab!=='rotation'||!(document.getElementById('rot-plot')||document.getElementById('rot-3d')||document.getElementById('gal-canvas'))){rotStop();return}
-  if(state.rf>=n-1){rotStop();render();return}
-  state.rf++;rotDraw()},(c.P&&c.P.ms||(c.P&&c.P.monthly?380:850))*(rotReduced()?2.5:1));
+  if(state.rf>=to){rotStop();render();return}
+  state.rf++;rotDraw()},rotMs(c.P));
  rotDraw();
 }
+const rotMs=P=>(P&&P.ms||(P&&P.monthly?380:850))*(rotReduced()?2.5:1)/rotSpeed();   // one period on screen, at the speed chosen
+// the size the charts are drawn at for a video (rotSize; a canvas chart: its CSS width): small, so the video scales them up
+// and their text reads at about 18–21 px on a 1080p frame; wide for 16:9, near square for 1:1, tall for the phone
+const ROT_EXPORT_SIZE={'16x9':[760,400],'1x1':[600,500],'9x16':[560,760]};
+// the play as a video file: the frames the Play button would show (from the frame shown, or the last span when it sits
+// at the end), each on screen for its share of a second at the speed chosen, composed with the chart's title and source
+async function rotExport(){
+ const c=ROT.ctx,V=window.RotVideo;if(!c||!V)return;
+ if(ROT.exporting){ROT.cancel=true;rotSay('Cancelling…');return}
+ const n=c.Q.length,span=rotSpan(c.P),end=c.to!=null?Math.min(n-1,c.to):n-1,start=c.from!=null?c.from:state.rf>=end?Math.max(0,n-span):state.rf;
+ if(end<=start){rotSay('Nothing to play from here: drag the slider back.');return}
+ rotStop();ROT.exporting=true;ROT.cancel=false;const f0=state.rf,began=performance.now(),shape=rotShape();
+ if($('rmp4'))$('rmp4').textContent='Cancel';
+ const box=document.querySelector('#rot-plot[data-ffs-chart],#rot-3d[data-ffs-chart],#gal-canvas[data-ffs-chart]')||(document.getElementById('rot-plot')||document.getElementById('rot-3d')||{closest:()=>null}).closest('[data-ffs-chart]');
+ const key=c.key||(box&&box.getAttribute('data-ffs-chart'))||'rotation';
+ const spec=(window.FFShare&&FFShare.get?FFShare.get(key):null)||{},host=/^https?:/.test(location.protocol)?location.host:'Filing Flows';
+ const title=(spec.title||(document.querySelector('#workspace .panel h3')||{}).textContent||'Rotation').replace(/ — [^—]*$/,'');
+ const sz=ROT_EXPORT_SIZE[shape];ROT.exportW=sz[0];ROT.exportH=sz[1];   // the frames drawn at the video's proportions, whatever the page's width
+ const cv=c.paint?(document.getElementById('rot-3d')||document.getElementById('gal-canvas')):null,cw0=cv?cv.style.width:'';
+ if(cv)cv.style.width=sz[0]+'px';                       // a canvas chart sizes itself from its width (rrgPaint3d)
+ try{
+  const r=await V.exportFrames({title,subtitle:spec.subtitle||'',source:spec.source||'',host,fps:30,ms:rotMs(c.P),hold:[.6,2],shape,frames:end-start+1,
+   label:k=>rotFlabel(c.P,c.Q[start+k]),
+   element:async k=>{state.rf=start+k;if(c.paint){c.paint(state.rf);return document.getElementById('rot-3d')||document.getElementById('gal-canvas')}
+    const plot=document.getElementById('rot-plot');if(!plot)throw new Error('the chart left the page');plot.innerHTML=c.draw(state.rf);return plot.querySelector('svg')},
+   progress:x=>rotSay(`Rendering ${Math.round(100*x)}%…`),cancelled:()=>ROT.cancel||state.tab!=='rotation'});
+  if(r==='cancelled'){rotSay('Export cancelled');return}
+  const name=`filing-flows-${String(key).replace(/[^a-z0-9-]+/gi,'-').toLowerCase()}-${c.Q[start]}-${c.Q[end]}-${shape}.${r.blob.type.includes('mp4')?'mp4':'webm'}`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(r.blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+  ROT.lastVideo=r;
+  rotSay(`Saved ${name} · ${(r.blob.size/1e6).toFixed(1)} MB · ${r.w}×${r.h}, ${r.fps} fps, ${r.seconds} s${r.recorded?' (recorded: this browser has no video encoder)':''} · made in ${Math.round((performance.now()-began)/1000)} s`);
+ }catch(e){rotSay('The video could not be made: '+(e.message||e))}
+ finally{ROT.exporting=false;ROT.cancel=false;ROT.exportW=ROT.exportH=0;if(cv)cv.style.width=cw0;state.rf=f0;if($('rmp4'))$('rmp4').textContent='Export MP4 ↓';rotDraw()}
+}
+function rotSay(t){ROT.exportMsg=t;const el=$('rmp4s');if(el)el.textContent=t}
 function bindRotSuns(){document.querySelectorAll('#workspace [data-rsec]').forEach(b=>b.onclick=()=>{rotStop();state.rsec=b.dataset.rsec;state.rview=state.rview==='scan'?'solar':state.rview;render()})}
 function rotHybrid(el){                                  // rrg-hybrid.js loads only when the Hybrid RRG view is opened
  if(window.RRGHybrid){RRGHybrid.render(el);return}
@@ -916,13 +959,21 @@ function rotHybrid(el){                                  // rrg-hybrid.js loads 
  document.head.appendChild(s);el.innerHTML=empty('Loading the Hybrid RRG…');
 }
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgsolo','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
  {const dd=document.getElementById('rrgl-hist');if(dd)dd.ontoggle=()=>{if(state.rrglopen!==dd.open){state.rrglopen=dd.open;if(dd.open)render()}}}
  if($('rrglcsv'))$('rrglcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.csv)||[];downloadCSV();exported=keep};
  document.querySelectorAll('#workspace a[data-rview]').forEach(a=>a.onclick=e=>{e.preventDefault();rotStop();state.rview=a.dataset.rview;render();scrollTo({top:0,behavior:'smooth'})});
  if($('rrgtk')){$('rrgtk').onchange=e=>{state.rrgtk=e.target.value;render()};$('rrgtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rtk')){$('rtk').onchange=e=>{state.rtk=e.target.value;render()};$('rtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rplay'))$('rplay').onclick=rotToggle;
+ if($('rspeed'))$('rspeed').onchange=e=>{state.rspd=e.target.value;if(ROT.timer){rotStop();rotToggle()}};
+ if($('rshape'))$('rshape').onchange=e=>{state.rshape=e.target.value};
+ if($('rmp4'))$('rmp4').onclick=rotExport;
+ // the RRG's frozen forecast (rrg-lab.js): freeze the frame shown, or unfreeze; its scorecard as CSV; the backtest when opened
+ if($('rrgfzb'))$('rrgfzb').onclick=e=>{rotStop();const v=e.currentTarget.dataset.fz;
+  if(!v)state.rrgfz='';else{const z=v.split('|'),Q=ROT.ctx&&ROT.ctx.Q;if(Q&&Q.length)z[3]=Q[Math.min(state.rf,Q.length-1)];state.rrgfz=z.join('|')}render()};
+ if($('rrglfzcsv'))$('rrglfzcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.fzcsv)||[];downloadCSV();exported=keep};
+ {const dd=document.getElementById('rrgl-bt');if(dd)dd.ontoggle=()=>{if(state.rrgbtopen!==dd.open){state.rrgbtopen=dd.open;if(dd.open)render()}}}
  if($('rframe')){$('rframe').oninput=e=>{rotStop();state.rf=+e.target.value;ROT.drag=true;try{rotDraw()}finally{ROT.drag=false}};$('rframe').onchange=e=>{state.rf=+e.target.value;render()}}
  document.querySelectorAll('#workspace [data-raxes]').forEach(b=>b.onclick=()=>{const [x,y,z]=b.dataset.raxes.split('|');state.rview='clock';state.rx=x;state.ry=y;state.rz=z||state.rz;render();scrollTo({top:0,behavior:'smooth'})});
  bindRotSuns();

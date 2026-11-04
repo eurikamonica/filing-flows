@@ -233,3 +233,22 @@ class Senate(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class OfficialsHistory(unittest.TestCase):
+    def test_every_trade_of_an_official_in_their_own_file(self):
+        """officials-trades.json keeps the newest 4,000 trades of everyone; market/officials/<slug>.json holds every
+        disclosed trade of one official, oldest first, for the Video Studio's transaction-mix history."""
+        trades = [{'person': 'Nancy Pelosi', 'ticker_canon': 'BE', 'date': '2026-09-08', 'type': 'purchase', 'amount_min': 500001, 'amount_max': 1000000,
+                   'owner': 'SP', 'filed_date': '2026-10-02', 'source_url': 'u2', 'jurisdiction': 'US House'},
+                  {'person': 'Nancy Pelosi', 'ticker_canon': 'NVDA', 'date': '2023-01-10', 'type': 'purchase', 'amount_min': 1000001, 'amount_max': 5000000,
+                   'owner': 'SP', 'filed_date': '2023-02-01', 'source_url': 'u1', 'jurisdiction': 'US House'},
+                  {'person': 'Nancy Pelosi', 'ticker_canon': '', 'date': '2024-01-10', 'type': 'sale'},             # no ticker: a bond
+                  {'person': 'Tommy Tuberville', 'ticker_canon': 'AAPL', 'date': '2025-03-03', 'type': 'sale', 'amount_min': 1001, 'amount_max': 15000,
+                   'owner': 'Self', 'filed_date': '2025-04-01', 'source_url': 'u3', 'jurisdiction': 'US Senate'}]
+        out = market.officials_by_person(trades, '2026-11-03T00:00:00+00:00')
+        self.assertEqual(sorted(out), ['nancy-pelosi', 'tommy-tuberville'])
+        p = out['nancy-pelosi']
+        self.assertEqual((p['name'], p['n'], p['first'], p['last']), ('Nancy Pelosi', 2, '2023-01-10', '2026-09-08'))
+        self.assertEqual(p['trades'][0], ['2023-01-10', 'NVDA', 'purchase', 1000001, 5000000, 'SP', '2023-02-01', 'u1'])
+        self.assertEqual(market.person_slug('Hon. Marjorie Taylor Greene'), 'hon-marjorie-taylor-greene')

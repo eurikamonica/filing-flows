@@ -35,6 +35,14 @@ on:
         description: Re-download stored SEC / House documents
         type: boolean
         default: false
+      chain:
+        description: 'Started by the officials back-fill chain (any finished run starts a congress run while House reports are waiting)'
+        type: boolean
+        default: false
+      hop:
+        description: Chain hop (the chain stops after 400)
+        type: string
+        default: '0'
   schedule:
     - cron: '7,22,37,52 * * * *'
     - cron: '17 * * * *'
@@ -44,6 +52,13 @@ on:
     - cron: '20 21 * * 1-5'
     - cron: '11 */6 * * *'
     - cron: '41 */3 * * *'
+  # GitHub starts only some of the schedules above when it is busy (Nov 2, 2026: 20 of about 200 in a day, so the
+  # insider and 8-K tabs went 6+ hours without a run). An outside clock can start the two frequent ones on time:
+  # Supabase pg_cron with public.github_dispatch('disclosures-light') / ('disclosures-13f'), see README "Scan more often".
+  repository_dispatch:
+    types:
+      - disclosures-light          # = the '28,58' schedule: insiders, 8-K, 13D / 13G, Form 144, short interest, Senate, news
+      - disclosures-13f            # = the '7,22,37,52' schedule: the 13F managers
   push:
     branches: [main]
     paths:
@@ -56,11 +71,12 @@ on:
       - '.github/workflows/disclosures.yml'
 permissions:
   contents: write
+  actions: write        # the officials back-fill chain starts its next run
 concurrency:
   # light runs (insiders + 8-K + 13D / 13G / Form 144 + short interest + Senate PTRs + news, market views) queue separately so the long 13F / officials runs never cancel them.
   # The once-a-day run after the close (option chains, 52-week and all-time highs and lows) has a group of its own: in the light group a
   # pending run is replaced by the next half-hourly one, so it was cancelled most days and the highs / lows posts had nothing to read.
-  group: disclosures-${{ (github.event.schedule == '11 */6 * * *' || inputs.module == 'prices') && 'prices' || (github.event.schedule == '20 21 * * 1-5' || inputs.module == 'options' || inputs.module == 'extremes') && 'close' || ((github.event.schedule == '28,58 * * * *' || github.event.schedule == '41 */3 * * *' || inputs.module == 'insiders' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit') && 'light' || 'main') }}
+  group: disclosures-${{ (github.event.schedule == '11 */6 * * *' || inputs.module == 'prices') && 'prices' || (github.event.schedule == '20 21 * * 1-5' || inputs.module == 'options' || inputs.module == 'extremes') && 'close' || ((github.event.schedule == '28,58 * * * *' || github.event.schedule == '41 */3 * * *' || inputs.module == 'insiders' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit' || github.event.action == 'disclosures-light') && 'light' || 'main') }}
   cancel-in-progress: false
 defaults:
   run:
@@ -81,9 +97,13 @@ jobs:
           REQUESTED_MODULE: ${{ inputs.module }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
           EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
           module="${REQUESTED_MODULE:-all}"
           if [ "$EVENT_NAME" = push ]; then module=congress; fi   # code pushes: a quick officials run; schedules cover the rest
+          if [ "$EVENT_NAME" = repository_dispatch ]; then         # the outside clock: the same runs as the two frequent schedules
+            case "$EVENT_ACTION" in disclosures-light) module=insiders ;; disclosures-13f) module=holdings ;; *) module=insiders ;; esac
+          fi
           case "$EVENT_SCHEDULE" in
             '7,22,37,52 * * * *') module=holdings ;;
             '17 * * * *') module=congress ;;
@@ -96,12 +116,17 @@ jobs:
           esac
           echo "module=$module" >> "$GITHUB_OUTPUT"
           # light sources never read or write the 13F quarter files or the N-PX records; 13F runs never touch N-PX.
-          # N-PX, the market data (COT, FDIC, N-PX), prices and the daily all-source run keep the full checkout.
+          # N-PX, the market data (COT, FDIC, N-PX), prices and the daily all-source run keep the rest. The 13F quarter
+          # files before last year (the history the back-fill relay deepens, app/backfill13f.py: many GB, read by no
+          # run here; a refreshed manager rewrites its own) stay out of every checkout except the watched funds' (the
+          # next step adds them back: the market views' race reads every quarter of theirs).
+          old=''
+          for ((yy = 2000; yy < $(date -u +%Y) - 1; yy++)); do old="$old"$'\n'"!/disclosures/docs/data/shards/holdings/*-$yy-*.json"; done
           case "$module" in
             insiders|ownership|shorts|senate|events8k|news|reddit|options|extremes|market|congress)
               skip=$'!/disclosures/docs/data/shards/holdings/\n!/disclosures/docs/data/shards/npx/' ;;
-            holdings) skip='!/disclosures/docs/data/shards/npx/' ;;
-            *) skip='' ;;
+            holdings) skip="!/disclosures/docs/data/shards/npx/$old" ;;
+            *) skip="${old#$'\n'}" ;;
           esac
           if [ -n "$skip" ]; then
             { echo 'sparse<<EOF'; echo '/*'; printf '%b\n' "$skip"; echo 'EOF'; echo 'filter=blob:none'; } >> "$GITHUB_OUTPUT"
@@ -113,6 +138,15 @@ jobs:
           filter: ${{ steps.pick.outputs.filter }}
           sparse-checkout: ${{ steps.pick.outputs.sparse }}
           sparse-checkout-cone-mode: false
+      - name: The watched funds' quarter files
+        if: steps.pick.outputs.module == 'holdings' || steps.pick.outputs.module == 'all' || steps.pick.outputs.module == 'markets'
+        working-directory: .
+        shell: bash
+        run: |
+          pats=$(python3 -c "import json; print(' '.join('/disclosures/docs/data/shards/holdings/%d-*.json' % int(w['cik']) for w in json.load(open('disclosures/config/settings.json'))['holdings'].get('watch', []) if str(w.get('cik', '')).strip().isdigit()))")
+          set -f    # the patterns' * must reach git, not the shell
+          if [ -n "$pats" ] && [ -f .git/info/sparse-checkout ]; then git sparse-checkout add $pats; fi
+          ls disclosures/docs/data/shards/holdings 2>/dev/null | wc -l
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -129,7 +163,7 @@ jobs:
       - name: Data and template checks
         # Full test suite is valuable on push/manual and the daily all-source run;
         # running it before every 15-minute disclosure poll delays freshness.
-        if: github.event_name != 'schedule' || github.event.schedule == '43 10 * * *'
+        if: (github.event_name != 'schedule' && github.event_name != 'repository_dispatch') || github.event.schedule == '43 10 * * *'
         run: |
           python -m pip install --quiet numpy    # the price-path / analog / index-RRG modules' tests (not needed to collect)
           python -m unittest discover -s tests -v
@@ -180,6 +214,25 @@ jobs:
           path: disclosures/storage/
           retention-days: 30
           if-no-files-found: ignore
+      - name: Start the next officials run (the back-fill chain)
+        # While House reports are waiting (the index years back to 2012: live.json's congress counts.house_ptr, written
+        # by every officials run), the end of any run of this workflow starts a congress run — a relay like
+        # holdings-backfill.yml — unless a run of this workflow is already queued. The concurrency group keeps one
+        # pending run, so a queued chain hop is replaced by a push or scheduled run that comes behind it; the next run to
+        # finish, of any module, starts the chain again, and the scheduled runs keep their turns in between.
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOP: ${{ inputs.hop || '0' }}
+        working-directory: .
+        run: |
+          pending=$(python3 -c "import json; print(((json.load(open('disclosures/docs/data/live.json'))['modules'].get('congress') or {}).get('counts') or {}).get('house_ptr', {}).get('ptr_pending', 0))" 2>/dev/null || echo 0)
+          if [ "${pending:-0}" -le 0 ]; then echo "no House reports waiting"; exit 0; fi
+          if [ "$HOP" -ge 400 ]; then echo "chain cap reached (400 runs)"; exit 0; fi
+          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow disclosures.yml --status queued --json databaseId --jq length)
+          if [ "${n:-0}" -gt 0 ]; then echo "another run is already waiting ($pending House reports waiting)"; exit 0; fi
+          gh workflow run disclosures.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f module=congress -f chain=true -f hop=$((HOP + 1))
+          echo "officials chain: hop $((HOP + 1)) started ($pending House reports waiting)"
       - name: Flag failed collection
         # app/collect.py exits 1 only when a source could not be read at all (an error annotation names it); partial
         # coverage — a batch cut short by a size or time limit, a few unreadable documents — is a warning annotation

@@ -87,7 +87,10 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    # the scan step stops at 42 minutes, and everything after it (EPS, the hub, the static pages, the audits, saving the
+    # data store, the upload) takes 17-20: at 55 a run whose filings loop used its whole budget (Nov 3, 2026, earnings
+    # season: 37.6 minutes) was stopped in the upload with the store saved but no site deployed
+    timeout-minutes: 70
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}   # a secret keeps the email out of public logs
     steps:
@@ -151,7 +154,11 @@ jobs:
       - name: Scan new 10-Q / 10-K filings and build charts
         timeout-minutes: 42          # never the whole job: the data store is still saved below, so no work is lost
         env:
-          RUN_BUDGET_MINUTES: ${{ steps.claim.outputs.fast == 'true' && '9' || '32' }}   # the pipeline stops taking on new work after this (pipeline/build.py time_up); the owner's fast lane: 9
+          # the pipeline stops taking on new work after this (pipeline/build.py time_up); the owner's fast lane: 9. What
+          # follows the budget (the chains, rendering 4,000 companies, the audit) takes 10-12 minutes: at 32 a run that
+          # used its whole budget (a re-read backlog keeps the filings loop busy to the end) hit the 42 and saved no site
+          RUN_BUDGET_MINUTES: ${{ steps.claim.outputs.fast == 'true' && '9' || '27' }}
+          PYTHONUNBUFFERED: "1"                                # the log's timestamps say when each phase ran
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's X post options for the threads on company pages
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           OWNER_FAST: ${{ steps.claim.outputs.fast }}          # a fast scan never makes way; a regular one does (owner lane)
@@ -180,6 +187,15 @@ jobs:
 
       - name: Share pictures drawn so far (og/index.json on the media branch; pipeline/ogimg.py)
         run: curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/og/index.json" -o _og.json || echo "no share pictures yet"
+
+      - name: Earnings fast lane overlay (releases earnings-fast.yml published before this scan read them)
+        # S&P 500 / Nasdaq-100 releases the fast lane put on the site minutes after the SEC accepted them: laid over this
+        # scan's data where they are newer, before the site is assembled, so every page drawn from the data has them
+        continue-on-error: true
+        run: |
+          git clone --quiet --depth 1 --branch fastlane "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" lane 2>/dev/null \
+            || { echo "no fast-lane branch yet"; exit 0; }
+          python -m pipeline.fastlane apply --data _site/data --lane lane
 
       - name: Assemble site
         env:                                   # public values (repository variables): the sign-in box on the site
@@ -367,7 +383,10 @@ jobs:
           python scripts/seo_compare.py --site _site
           python scripts/seo_zh.py --site _site
           python scripts/seo_intl.py --site _site
-      - name: Crawlable pages for the hub's views (disclosures/<view>/) and one page per material 8-K (events/<…>/)
+      - name: What follows an 8-K and an insider trade (data/event-stats.json, data/insider-stats.json)
+        continue-on-error: true
+        run: python scripts/event_stats.py --site _site
+      - name: Crawlable pages for the hub's views (disclosures/<view>/) and one page per material 8-K (events/<…>/, events/impact/)
         continue-on-error: true
         env:
           SITE_URL: ${{ vars.SITE_URL }}
@@ -377,12 +396,37 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/seo_cashflow.py --site _site
+      - name: Earnings report cards (c/<slug>/report-card/, disclosures/report-cards/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_reportcard.py --site _site
+      - name: Earnings quality scores (c/<slug>/earnings-quality/, disclosures/earnings-quality/, data/quality-score.json)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_quality.py --site _site
+      - name: The screener's table and preset screens (disclosures/data/screener.json, disclosures/screener/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/screener.py --site _site
+      - name: Stock timelines with every disclosure marked (c/<slug>/timeline/, disclosures/insider-signals/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_timeline.py --site _site
       - name: The home page's plain HTML (who reported this week, who reports next, links to every page type)
         continue-on-error: true
         run: python scripts/seo_home.py --site _site
       - name: One sitemap index (sitemap-index.xml) listing every sitemap in robots.txt
         continue-on-error: true
         run: python scripts/sitemap_index.py --site _site
+      - name: Link audit (sitemaps, internal links, titles and canonicals of the static pages; warnings only)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/audit_links.py --site _site --github
 
       - name: Integrate SIC relationships, markets and audit-visible research pages
         run: |
@@ -391,22 +435,17 @@ jobs:
           test -s _site/supplier-revenue/index.html
           test -s _site/integration-health/index.html
 
-      # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
-      # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.
-      - name: Publish the site to the "site" branch (for your own server)
-        if: vars.SELF_HOST == 'true'
+      - name: Page audit (data/page-audit.json; the worst items as warnings and in this run's summary)
+        # every company page about to be published: revenue lines named like something that is not revenue, lines
+        # that mix two breakdowns or do not add up, static pages missing or out of step with their data, preliminary
+        # quarters whose 10-Q / 10-K was never read (scripts/audit_pages.py). It never stops the publish.
         continue-on-error: true
-        run: |
-          rm -rf "$RUNNER_TEMP/site" && cp -r _site "$RUNNER_TEMP/site" && cd "$RUNNER_TEMP/site"
-          git init -q -b site
-          git add -A
-          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "site $(date -u +%Y-%m-%dT%H:%MZ)"
-          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:site
+        run: python scripts/audit_pages.py --site _site --github
 
       - name: The owner's daily report (8:00 owner time) and X threads (e-mail, or the X API)
         if: steps.claim.outputs.fast != 'true'  # the owner's fast lane skips it: the next regular scan sends
         continue-on-error: true                 # sending trouble never blocks the site
-        timeout-minutes: 8                      # leaves time to save the data store within the job's 55 minutes
+        timeout-minutes: 8                      # leaves time to save the data store within the job's 70 minutes
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's settings (#owner page) and address
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -431,6 +470,10 @@ jobs:
           LOCAL_BASE_MODEL: ${{ vars.LOCAL_BASE_MODEL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}               # reads the trained adapter from the "model" branch
           SITE_URL: ${{ vars.SITE_URL }}                       # your own domain, when the site has one
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}            # own server (deploy/README.md): its state goes
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}    # into the daily report (pipeline/server_status.py)
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER }}
         run: |
           owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
           export X_SITE_URL="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"   # works on scheduled runs too
@@ -474,13 +517,50 @@ jobs:
             echo "fast lane: short scan $((HOP + 1)) started"
           fi
 
+      - name: The next scan, and a disclosure collection (a relay; GitHub starts few of the schedules)
+        # GitHub's own clock started 5 of the 96 quarter-hourly scans on Nov 1, 2026 and 3 on Nov 2 (6-7 hours apart: the
+        # site barely moved on a quiet day), and about 20 of ~200 disclosure collections. Like post-to-x.yml and the fast
+        # lane, each scan that succeeds starts the next one; it waits for this run's deploy (same concurrency group). A
+        # failed scan does not (no loop of failures): the schedule or the next push starts the chain again. It also starts
+        # the light disclosure collection (insiders, 8-K, 13D / 13G, Form 144, short interest, Senate, news). Repository
+        # variable SCAN_RELAY=off stops both; an outside clock (README, Supabase pg_cron) works as well.
+        if: vars.SCAN_RELAY != 'off' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          waiting() { gh run list -R "$GITHUB_REPOSITORY" --workflow "$1" --limit 30 --json status --jq '[.[] | select(.status == "queued" or .status == "pending" or .status == "waiting" or .status == "requested")] | length'; }
+          if [ "$(waiting scan.yml)" -gt 0 ]; then echo "a scan is already waiting: it carries on"; else
+            gh workflow run scan.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" && echo "next scan started (it runs after this deploy)"
+          fi
+          # its own concurrency group keeps one running and one waiting at most, so a second start never piles up
+          gh workflow run disclosures.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f module=insiders && echo "light disclosure collection started"
+
+
+      - name: Earnings fast lane overlay, once more (releases published while this scan ran)
+        # a release the fast lane published after the step above would otherwise go back to the older page with this
+        # deploy: its data and its page (c/<slug>/) are put in again (pipeline/fastlane.py; the watcher re-publishes
+        # any that still slip through)
+        continue-on-error: true
+        env:
+          OG_MANIFEST: _og.json
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          rm -rf lane
+          git clone --quiet --depth 1 --branch fastlane "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" lane 2>/dev/null \
+            || { echo "no fast-lane branch yet"; exit 0; }
+          python -m pipeline.fastlane apply --data _site/data --lane lane --pages "${SITE_URL:-https://filing-flows.com}"
 
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
 
+  # Where the site is served (deploy/README.md): GitHub Pages and/or your own server. Both get every build while
+  # both are kept; the repository variable PAGES_DEPLOY = off stops the GitHub Pages one after Pages is turned off.
+  # The jobs below run once either deploy is done, so they wait for whichever one serves the domain.
   deploy:
     needs: scan
+    if: vars.PAGES_DEPLOY != 'off'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -491,11 +571,18 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
+  # Your own server: rsync of the changed files, then one switch on the server (deploy-server.yml; does nothing
+  # until the secrets DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS and DEPLOY_HOST exist).
+  deploy-server:
+    needs: scan
+    uses: ./.github/workflows/deploy-server.yml
+    secrets: inherit
+
   # A successful artifact upload or deploy job is not proof that the current browser
   # receives the code. Test public URLs and the exact Actions build id after deploy.
   verify-integration:
-    needs: deploy
-    if: needs.deploy.result == 'success'
+    needs: [deploy, deploy-server]
+    if: ${{ !cancelled() && (needs.deploy.result == 'success' || needs.deploy-server.outputs.deployed == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 12          # the probes wait out the CDN's ten-minute cache (scripts/verify_production.py)
     steps:
@@ -520,8 +607,8 @@ jobs:
   # Seznam and Yep in one request. The last accepted list is kept in the Actions cache; without it, every page is sent.
   # Google does not take part: it reads sitemap.xml (Search Console). Problems are warnings, never a failed site.
   indexnow:
-    needs: deploy
-    if: needs.deploy.result == 'success'
+    needs: [deploy, deploy-server]
+    if: ${{ !cancelled() && (needs.deploy.result == 'success' || needs.deploy-server.outputs.deployed == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     continue-on-error: true
@@ -556,8 +643,8 @@ jobs:
   # Needs the repository variable SUPABASE_URL and the secret SUPABASE_SERVICE_KEY; uses the same MAIL_* secrets.
   # Sending from your own computer instead (scripts/alerts-laptop.ps1)? Leave SUPABASE_SERVICE_KEY out of GitHub.
   alerts:
-    needs: deploy
-    if: vars.SUPABASE_URL != ''
+    needs: [deploy, deploy-server]
+    if: ${{ !cancelled() && vars.SUPABASE_URL != '' && (needs.deploy.result == 'success' || needs.deploy-server.outputs.deployed == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -603,8 +690,8 @@ jobs:
   # Threads queued in Buffer (config/x.json "mode": "buffer"): after the site is live, because Buffer loads the chart
   # images from their public URLs. Needs the secret BUFFER_API_KEY; BUFFER_CHANNEL_ID (variable) picks the X channel.
   buffer:
-    needs: deploy
-    if: always() && needs.deploy.result == 'success'
+    needs: [deploy, deploy-server]
+    if: ${{ !cancelled() && (needs.deploy.result == 'success' || needs.deploy-server.outputs.deployed == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:

@@ -695,6 +695,30 @@ def officials_trades(root, universe, live=None):
     return trades, dict(stats)
 
 
+def person_slug(name):
+    """'Nancy Pelosi' → nancy-pelosi (the same rule the Video Studio applies to the name it is given)"""
+    return re.sub(r'[^a-z0-9]+', '-', (name or '').lower()).strip('-')[:60].strip('-') or 'x'
+
+
+def officials_by_person(trades, stamp):
+    """{slug: {name, trades}} — every disclosed trade of each official, oldest first, uncapped (officials-trades.json
+    keeps the newest 4,000 across everyone): [date, ticker, type, amount_min, amount_max, owner, filed, source_url]."""
+    out = {}
+    for t in trades:
+        if not t.get('person') or not t.get('ticker_canon') or not t.get('date'):
+            continue
+        slug = person_slug(t['person'])
+        doc = out.setdefault(slug, {'name': t['person'], 'generated_at': stamp, 'jurisdiction': t.get('jurisdiction'),
+                                    'fields': ['date', 'ticker', 'type', 'amount_min', 'amount_max', 'owner', 'filed', 'source_url'], 'trades': []})
+        doc['trades'].append([t['date'], t['ticker_canon'], t.get('type'), t.get('amount_min'), t.get('amount_max'), t.get('owner'),
+                              t.get('filed_date'), t.get('source_url')])
+    for doc in out.values():
+        doc['trades'].sort(key=lambda r: (r[0] or '', r[1] or ''))
+        doc['n'] = len(doc['trades'])
+        doc['first'], doc['last'] = doc['trades'][0][0], doc['trades'][-1][0]
+    return out
+
+
 def latest_reports(root, live=None, trades=None, n=40):
     """The newest US House periodic transaction reports, read or still waiting, with how many trades each gave —
     and the collector's freshness check (newest filed vs newest read)."""
@@ -1033,6 +1057,8 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
            'latest_reports': latest, 'monitor': monitor,
            'trades': trades[:4000]}
     _write(out_dir / 'officials-trades.json', off)
+    for slug, doc in officials_by_person(trades, stamp).items():      # every disclosed trade of each official: the videos' history
+        _write(out_dir / 'officials' / f'{slug}.json', doc)
     q_now = (ctx or {}).get('quarter')
     legacy_clock = {'view_id': 'legacy_snapshot', 'mixed_clock': True, 'report_quarter_end': q_now,
                     'managers_filed': ((ctx or {}).get('coverage') or {}).get(q_now), 'x': 'net managers, every change on file',

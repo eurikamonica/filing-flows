@@ -110,5 +110,150 @@ class Backfill(unittest.TestCase):
             self.assertEqual(json.loads((d / 'holdings-backfill.json').read_text())['managers'], {})
 
 
+class WatchedHistory(unittest.TestCase):
+    def test_a_watched_fund_carries_its_history_from_watch_since(self):
+        """The watched funds (config holdings.watch) and the listed managers are read from `watch_since` (the 13F XML
+        era) rather than the universe's `since`; a row read with the shallow range is read again, and every other
+        manager keeps the universe's range."""
+        sec = FakeSec()
+        sec.docs['https://data.sec.gov/submissions/CIK0000000042.json'] = json.dumps({'name': 'TEST MANAGER', 'filings': {'recent': {
+            'form': ['13F-HR', '13F-HR', '13F-HR'], 'accessionNumber': ['0000000042-14-000001', '0000000042-25-000001', '0000000042-25-000002'],
+            'filingDate': ['2014-02-14', '2025-05-15', '2025-08-14'], 'acceptanceDateTime': ['', '', ''],
+            'primaryDocument': ['primary_doc.xml', 'primary_doc.xml', 'primary_doc.xml']}, 'files': []}}).encode()
+        base = 'https://www.sec.gov/Archives/edgar/data/42/000000004214000001/'
+        sec.docs[base + 'index.json'] = json.dumps({'directory': {'item': [{'name': 'primary_doc.xml'}, {'name': 'infotable.xml'}]}}).encode()
+        sec.docs[base + 'primary_doc.xml'] = cover('12-31-2013', 500)
+        sec.docs[base + 'infotable.xml'] = table(5, 500)
+
+        class Client:
+            def get(self, url, sec=False):
+                return FakeSec.get(sec_, url)
+
+            def json(self, url, sec=False):
+                return json.loads(FakeSec.get(sec_, url))
+        sec_ = sec
+        with tempfile.TemporaryDirectory() as d:
+            cfg = {'since': '2025-01-01', 'watch_since': '2013-06-30', 'watch': [{'cik': '42', 'name': 'Test Manager'}], 'managers': [],
+                   'batch_size': 4, '_data_root': d, 'discover_all': False}
+            import datetime as dt
+            recent = dt.datetime.now(dt.timezone.utc).isoformat()
+            old = {'managers': [{'cik': '42', 'name': 'TEST MANAGER', 'since': '2025-01-01', 'snapshots': [], 'filings': [], 'last_success': recent}],
+                   'attempts': {'42': {'last_attempt': recent, 'last_success': recent}}, 'discovery': {'directory': []}}
+            out = H.collect_holdings(Client(), cfg, old)            # read an hour ago with the shallow range: due again at once
+            m = next(x for x in out['managers'] if x['cik'] == '42')
+            self.assertEqual(m['since'], '2013-06-30')
+            self.assertEqual([x['period'] for x in m['snapshots']], ['2013-12-31', '2025-03-31', '2025-06-30'])
+            # not watched: the universe's range, the 2013 filing left alone
+            cfg2 = {**cfg, 'watch': [], 'managers': [{'cik': '42', 'name': 'Test Manager'}], 'watch_since': None}
+            fresh = {**old, 'managers': [], 'attempts': {}}                   # never read: the universe's range
+            m2 = next(x for x in H.collect_holdings(Client(), cfg2, fresh)['managers'] if x['cik'] == '42')
+            self.assertEqual((m2['since'], [x['period'] for x in m2['snapshots']]), ('2025-01-01', ['2025-03-31', '2025-06-30']))
+
+    def test_a_manager_keeps_the_range_on_file_until_the_relay_deepens_it(self):
+        """A manager outside the watch list is refreshed with the range of its reading on file (the relay deepens it by
+        size); a merged relay row with a deeper date carries that date on, and the catalog row shows the range and size."""
+        sec = FakeSec()
+
+        class Client:
+            def get(self, url, sec=False):
+                return FakeSec.get(sec_, url)
+
+            def json(self, url, sec=False):
+                return json.loads(FakeSec.get(sec_, url))
+        sec_ = sec
+        with tempfile.TemporaryDirectory() as d:
+            cfg = {'since': '2025-01-01', 'watch_since': '2013-06-30', 'watch': [], 'managers': [], 'tiers': [[0, 500, '2021-01-01']],
+                   'batch_size': 4, '_data_root': d, 'discover_all': False}
+            old = {'managers': [{'cik': '42', 'name': 'TEST MANAGER', 'since': '2021-01-01', 'snapshots': [], 'filings': [], 'last_success': '2020-01-01T00:00:00+00:00'}],
+                   'attempts': {}, 'discovery': {'directory': [{'cik': '42', 'name': 'Test Manager', 'kind': 'holdings'}]}}
+            out = H.collect_holdings(Client(), cfg, old)
+            m = next(x for x in out['managers'] if x['cik'] == '42')
+            self.assertEqual(m['since'], '2021-01-01')                      # the deeper reading on file is kept, not the universe's 2025
+            row = next(r for r in out['directory'] if r['cik'] == '42')
+            self.assertEqual((row['since'], row['total_usd'], row['position_count']), ('2021-01-01', 1800.0, 1))
+
+
+class Gaps(unittest.TestCase):
+    def test_an_unreadable_old_filing_is_a_gap_not_a_failed_manager(self):
+        """A 2014 cover page whose totals do not match its table (common in the first XML years) leaves that quarter
+        out and is noted under 'unreadable'; the same fault in a filing from the universe's range still fails the
+        manager (the relay's process and the collector alike)."""
+        sec = FakeSec()
+        sec.docs['https://data.sec.gov/submissions/CIK0000000042.json'] = json.dumps({'name': 'TEST MANAGER', 'filings': {'recent': {
+            'form': ['13F-HR', '13F-HR', '13F-HR'], 'accessionNumber': ['0000000042-14-000001', '0000000042-25-000001', '0000000042-25-000002'],
+            'filingDate': ['2014-02-14', '2025-05-15', '2025-08-14'], 'acceptanceDateTime': ['', '', ''],
+            'primaryDocument': ['primary_doc.xml', 'primary_doc.xml', 'primary_doc.xml']}, 'files': []}}).encode()
+        base = 'https://www.sec.gov/Archives/edgar/data/42/000000004214000001/'
+        sec.docs[base + 'index.json'] = json.dumps({'directory': {'item': [{'name': 'primary_doc.xml'}, {'name': 'infotable.xml'}]}}).encode()
+        sec.docs[base + 'primary_doc.xml'] = cover('12-31-2013', 999999)          # the cover's total: not the table's
+        sec.docs[base + 'infotable.xml'] = table(5, 500)
+        row = B.process(sec, '42', 'Test Manager', '2013-06-30', strict_from='2025-01-01')
+        self.assertEqual([x['period'] for x in row['snapshots']], ['2025-03-31', '2025-06-30'])
+        self.assertEqual([(u['accession'], u['filed']) for u in row['unreadable']], [('0000000042-14-000001', '2014-02-14')])
+        self.assertIn('reconciliation', row['unreadable'][0]['error'])
+        with self.assertRaises(ValueError):                                      # strict for the universe's range
+            B.process(sec, '42', 'Test Manager', '2013-06-30', strict_from='2013-01-01')
+        # the collector: the same gap for a watched fund read from 2013
+        sec_ = sec
+
+        class Client:
+            def get(self, url, sec=False):
+                return FakeSec.get(sec_, url)
+
+            def json(self, url, sec=False):
+                return json.loads(FakeSec.get(sec_, url))
+        with tempfile.TemporaryDirectory() as d:
+            cfg = {'since': '2025-01-01', 'watch_since': '2013-06-30', 'watch': [{'cik': '42', 'name': 'Test Manager'}], 'managers': [],
+                   'batch_size': 4, '_data_root': d, 'discover_all': False}
+            out = H.collect_holdings(Client(), cfg, {'managers': [], 'attempts': {}, 'discovery': {'directory': []}})
+            m = next(x for x in out['managers'] if x['cik'] == '42')
+            self.assertEqual(([x['period'] for x in m['snapshots']], len(m['unreadable'])), (['2025-03-31', '2025-06-30'], 1))
+            self.assertEqual(out['errors'], [])
+
+
+class Tiers(unittest.TestCase):
+    def test_target_since_by_size(self):
+        from holdings13f.ranges import target_since, size_of
+        cfg = {'since': '2025-01-01', 'watch_since': '2013-06-30', 'watch': [{'cik': '1067983'}], 'managers': [],
+               'tiers': [[1e9, 500, '2013-06-30'], [0, 500, '2021-01-01']]}
+        self.assertEqual(target_since(cfg, '1067983'), '2013-06-30')                          # watched
+        self.assertEqual(target_since(cfg, '42'), '2025-01-01')                               # size unknown: the universe's range
+        self.assertEqual(target_since(cfg, '42', 5e9, 40), '2013-06-30')                      # a large concentrated fund
+        self.assertEqual(target_since(cfg, '42', 5e9, 4000), '2025-01-01')                    # an index giant: no tier
+        self.assertEqual(target_since(cfg, '42', 2e8, 60), '2021-01-01')                      # the long tail
+        self.assertEqual(target_since(cfg, '42', 2e8, 60, current='2016-01-01'), '2016-01-01')   # never shallower than on file
+        self.assertEqual(size_of({'total_usd': 5, 'position_count': 2}), (5.0, 2))
+        self.assertEqual(size_of({'snapshots': [{'total_usd': 7, 'positions': [{}, {}, {}]}]}), (7.0, 3))
+        self.assertEqual(size_of({}), (None, None))
+
+    def test_the_relay_deepens_processed_managers_by_tier(self):
+        """After the first pass, the relay reads the managers whose size calls for a deeper date again from that date:
+        the largest first, the index giants and the managers already deep enough left alone."""
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / 'catalogs').mkdir()
+            (d / 'catalogs' / 'holdings.json').write_text(json.dumps([
+                {'cik': '42', 'name': 'Test Manager', 'kind': 'holdings', 'processed': True, 'latest_filing': '2025-08-14', 'filing_count': 2,
+                 'since': '2025-01-01', 'total_usd': 1800, 'position_count': 1},
+                {'cik': '7', 'name': 'Giant', 'kind': 'holdings', 'processed': True, 'latest_filing': '2025-08-14', 'filing_count': 2,
+                 'since': '2025-01-01', 'total_usd': 5e11, 'position_count': 4000},
+                {'cik': '8', 'name': 'Deep already', 'kind': 'holdings', 'processed': True, 'latest_filing': '2025-08-14', 'filing_count': 2,
+                 'since': '2013-06-30', 'total_usd': 3e9, 'position_count': 30},
+                {'cik': '9', 'name': 'Unknown size', 'kind': 'holdings', 'processed': True, 'latest_filing': '2025-08-14', 'filing_count': 2}]))
+            cfg = {'since': '2025-01-01', 'tiers': [[1e9, 500, '2013-06-30'], [0, 500, '2021-01-01']]}
+            todo = B.pending(json.loads((d / 'catalogs' / 'holdings.json').read_text()), {}, cfg=cfg)
+            self.assertEqual([(r['cik'], r['since']) for r in todo], [('42', '2021-01-01')])
+            stats = B.run(d, cfg, minutes=1, sec=FakeSec())
+            self.assertEqual((stats['managers'], stats['remaining']), (1, 0))
+            st = json.loads((d / 'holdings-backfill.json').read_text())
+            self.assertEqual(st['managers']['42']['since'], '2021-01-01')      # the relay's row carries the deeper date on
+            self.assertEqual(B.run(d, cfg, minutes=1, sec=FakeSec())['managers'], 0)
+            # the relay's own earlier row (a shallow first pass) is deepened too, by the size it recorded
+            st['managers']['42'] = {**st['managers']['42'], 'since': '2025-01-01', 'total_usd': 2e9, 'position_count': 1}
+            (d / 'holdings-backfill.json').write_text(json.dumps(st))
+            todo = B.pending(json.loads((d / 'catalogs' / 'holdings.json').read_text()), st, cfg=cfg)
+            self.assertEqual([(r['cik'], r['since']) for r in todo], [('42', '2013-06-30')])
+
+
 if __name__ == '__main__':
     unittest.main()

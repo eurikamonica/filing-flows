@@ -9,7 +9,6 @@ flow, the largest segments, and, when the Disclosure Hub has them, market value,
     python scripts/seo_compare.py --site _site --site-url https://filing-flows.com [--peers 3]
 """
 import argparse
-import html as H
 import json
 import math
 import os
@@ -34,11 +33,11 @@ def read(path):
 
 
 def money(v):
-    return '—' if v is None else (('−' if v < 0 else '') + f'${abs(v) / 1e12:.2f}T') if abs(v) >= 1e12 else seo.money(v)
+    return seo.money(v)            # $6.90T above a trillion
 
 
 def pct(v, signed=False):
-    return '—' if v is None else (f'{v:+.0f}%' if signed else f'{v:.1f}%')
+    return seo.pct(v, signed)        # a margin beyond ±1000% (a sliver of revenue) is 'n/m'
 
 
 def figures(c):
@@ -50,7 +49,7 @@ def figures(c):
     h = q.get('headline') or {}
     if not h.get('revenue'):
         return None
-    into, lab = {}, {n['id']: H.unescape(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
+    into, lab = {}, {n['id']: seo.label(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
     segs = {}
     for ln in q.get('links') or []:
         into[ln['t']] = into.get(ln['t'], 0) + (ln.get('v') or 0)
@@ -59,8 +58,8 @@ def figures(c):
     rev = h['revenue']
     g = lambda k: into.get(k)    # noqa: E731
     return {'label': q.get('label'), 'filed': q.get('filed'), 'form': q.get('form'), 'revenue': rev, 'yoy': h.get('yoy'),
-            'om': h.get('om'), 'ni': h.get('ni'), 'ocf': h.get('ocf'), 'gm': (100 * g('gp') / rev) if g('gp') else None,
-            'nm': (100 * h['ni'] / rev) if h.get('ni') is not None else None, 'fcf': g('fcf'),
+            'om': h.get('om'), 'ni': h.get('ni'), 'ocf': h.get('ocf'), 'gm': seo.ratio(g('gp'), rev) if g('gp') else None,
+            'nm': seo.ratio(h.get('ni'), rev), 'fcf': g('fcf'),
             'segs': sorted(segs.items(), key=lambda x: -x[1])[:4] if len(segs) > 1 else []}
 
 
@@ -107,7 +106,7 @@ def page_for(a, b, fa, fb, va, vb, base):
     if fa.get('yoy') is not None and fb.get('yoy') is not None:
         fast, slow = (na, nb) if fa['yoy'] >= fb['yoy'] else (nb, na)
         parts.append(f"{fast} is growing faster ({pct(max(fa['yoy'], fb['yoy']), True)} against {pct(min(fa['yoy'], fb['yoy']), True)} a year earlier).")
-    if fa.get('om') is not None and fb.get('om') is not None:
+    if fa.get('om') is not None and fb.get('om') is not None and max(abs(fa['om']), abs(fb['om'])) < seo.MEANINGFUL:
         hi = na if fa['om'] >= fb['om'] else nb
         parts.append(f"{hi} is more profitable, with an operating margin of {pct(max(fa['om'], fb['om']))} against {pct(min(fa['om'], fb['om']))}.")
     lead = ' '.join(parts)
@@ -121,6 +120,7 @@ def page_for(a, b, fa, fb, va, vb, base):
         rows += [('Market value', money(va.get('mcap')), money(vb.get('mcap'))),
                  ('P/E', f"{va['pe']:.1f}×" if va.get('pe') else '—', f"{vb['pe']:.1f}×" if vb.get('pe') else '—'),
                  ('Analysts’ mean target', f"${va['target_mean']:.2f}" if va.get('target_mean') else '—', f"${vb['target_mean']:.2f}" if vb.get('target_mean') else '—')]
+    rows = [r for r in rows if r[1] != '—' or r[2] != '—']                  # a row neither company has a figure for says nothing
     tbl = (f"<div class='tbl-wrap'><table><thead><tr><th></th><th class='num'>{e(na)} ({e(ta)})</th><th class='num'>{e(nb)} ({e(tb)})</th></tr></thead><tbody>"
            + ''.join(f"<tr><td>{e(k)}</td><td class='num'>{e(x)}</td><td class='num'>{e(y)}</td></tr>" for k, x, y in rows) + '</tbody></table></div>')
     seg = ''
@@ -158,6 +158,8 @@ def page_for(a, b, fa, fb, va, vb, base):
                                                          {'@type': 'ListItem', 'position': 3, 'name': f'{ta} vs {tb}', 'item': url}]},
         {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': x}} for q, x in qa]}]}
     title = f"{na} vs {nb} ({ta} vs {tb}): revenue, growth and margins compared | Filing Flows"
+    if len(title) > 110:                                           # two long names: the tickers carry the page's name
+        title = f"{na} vs {nb}: {ta} and {tb} compared | Filing Flows"
     return url, mod, seo.page(title, lead[:300], url, body, 2, base + '/og.png', ld)
 
 
@@ -203,8 +205,9 @@ def write(site, base, k=3):
                  + '</ul></section>')
         open(main, 'w', encoding='utf-8').write(txt.replace('</main>', block + '</main>', 1))
     if urls:
-        lis = ''.join(f"<h2>{e(ind)}</h2><ul class='seo-list'>" + ''.join(
-            f"<li><a href='{slug_for(a)}-vs-{slug_for(b)}/'>{e(display_name(a.get('name')))} vs {e(display_name(b.get('name')))}</a></li>" for a, b in L) + '</ul>'
+        # one industry at a time, folded: 6,700 links in one column made a page 200,000 pixels tall
+        lis = ''.join(f"<details class='seo-fold'><summary><b>{e(ind)}</b> <span class='muted'>{seo.n_of(len(L), 'comparison')}</span></summary><ul class='seo-list'>" + ''.join(
+            f"<li><a href='{slug_for(a)}-vs-{slug_for(b)}/'>{e(display_name(a.get('name')))} vs {e(display_name(b.get('name')))}</a></li>" for a, b in L) + '</ul></details>'
             for ind, L in sorted(by_ind.items()))
         body = (f"<p class='crumbs'><a href='../'>Filing Flows</a> › Comparisons</p><h1>Company comparisons</h1>"
                 f"<p class='lead'>{len(urls):,} side-by-side comparisons of US-listed companies and their closest peers in the same industry: revenue, growth, margins and cash flow from their latest filings.</p>{lis}")

@@ -649,7 +649,18 @@ def reconcile(raw, labels=None, tax_checked=False):
 
 GENERIC_REV = re.compile(r"^(total )?(net )?(revenues?|sales|net sales|net revenues?)$")
 NOT_A_LINE = re.compile(r"per share|margin|%|income|expense|cost|profit|loss|eps|tax|depreciation|amortization|"
-                        r"compensation|cash|assets|liabilities|equity|shares|interest|capital|total$")
+                        r"compensation|cash|assets|liabilities|equity|shares|interest|capital|total$|"
+                        # never revenue lines either, though they print as rows of figures (page audit, Nov 2026):
+                        # Starbucks' "Net earnings per common share - diluted", Tractor Supply's "Dividends declared per
+                        # common share", a column caption ("Three Months Ended September 30,", "(in millions, except
+                        # per share data)"), volumes and ratios
+                        r"per (common |diluted |basic )?(share|unit)|earnings applicable|dividends?( declared)?\b|"
+                        r"weighted average|(months|weeks|quarters?|years?) ended|fiscal q\d|^\(?(in|dollars|\$) |"
+                        r"except (per|share|for)|unaudited|non-gaap|adjusted|ebitda|ebita\b|volumes?\b|\bmbpd\b|mmcf|"
+                        r"\btons\b|payable|receivable|goodwill|inventor(y|ies)|\bdebt\b|borrowings|\blease liabilit|"
+                        r"deposits$|retained earnings|accrued|salaries|wages|occupancy|professional fees|\bratio\b|"
+                        # and main's per-share and dividend rows
+                        r"per (\w+ )?(\w+ )?share|per ads|dividend|^basic$|^diluted$|weighted")
 SEG_CTX = re.compile(r"segment|business unit|business group|by product|product line|division|reportable|by market|end market", re.I)
 GEO_CTX = re.compile(r"geograph|region|country|by location|domestic|international", re.I)
 
@@ -658,57 +669,232 @@ def _clean_label(s):
     return re.sub(r"\s*\((\d{1,2}|[a-z])\)|[*†‡]", "", s).strip(" :")
 
 
-def revenue_lines(tables, revenue, scale, refs):
-    """Revenue by segment or product from the release: rows of one table that add up to total revenue.
+def _norm_line(s):
+    return re.sub(r"[^a-z0-9]+", " ", str(s or "").lower()).strip()
+
+
+TOL_REV = 0.004                 # the release's total-revenue row: within 0.4% of the revenue read from the statement
+TOTAL_REV = re.compile(r"^(total|consolidated)( total)?( net)? ?(revenues?|sales|net sales|net revenues?)?$")
+REV_HEAD = re.compile(r"revenue|sales|segment|by product|by category|by region|geograph|by market|end market|by type|"
+                      r"by source|by business|by brand|by channel|by customer", re.I)
+GEO_LINE = re.compile(r"\b(americas?|north america|latin america|south america|europe|emea|apac|asia|pacific|china|"
+                      r"japan|india|germany|france|united kingdom|united states|u s|us|canada|mexico|brazil|korea|"
+                      r"taiwan|australia|middle east|africa|international|domestic|rest of (the )?world|other countries)\b")
+
+
+SEG_REV = re.compile(r"(revenues?|sales)(,? net)?$")
+
+
+def _precision(t, scale):
+    """The rounding of the table's figures: scale for whole numbers, scale/10 when they print one decimal, …"""
+    d = 0
+    for r in t["rows"]:                                   # the lines' figures only (not per-share amounts or ratios)
+        if not r["label"] or r["pct"] or NOT_A_LINE.search(r["key"]) or re.search(r"ratio|per |rate|margin", r["key"]):
+            continue
+        for x in (r["vals"] or [])[:1]:
+            if x is None:
+                continue
+            for k in range(0, 4):
+                if abs(round(x, k) - x) < 1e-9:
+                    d = max(d, k)
+                    break
+    return scale / 10 ** d
+
+
+def _blocks(t, unit, revenue, scale=None):
+    """The table cut into blocks of lines, each ended by a heading, a total row or a subtotal.
+
+    Only some blocks give revenue lines (revenue_lines): one that ends in the release's own total-revenue row ("Total
+    net sales", "Total revenues", "Total reported"), one that follows it (a summary that prints the total first), one
+    under a revenue heading or caption, and the segments' own revenue rows ("heads"). Rows elsewhere — balance-sheet
+    items, expenses, volumes — once came within 0.4% of revenue by chance and were drawn as revenue lines (Starbucks:
+    receivables, inventories and goodwill; Morgan Stanley: preferred dividends; Apple: regions and products mixed).
+    A "Revenue" row under a heading, or a "<segment> revenue" row equal to the lines above it, is that segment's own
+    revenue and goes to "heads"; a subtotal row ("Total products", "Subtotal") closes its block and is a line of the
+    next one, so the block it closes can join as its sub-lines.
+    Returns (blocks, heads); a block is {"head", "members": {mid: (label, value)}, "cols": {mid: [values]},
+    "anchored", "after_total", "end", "total"} (empty blocks kept: their order matters)."""
+    from .dims import tight
+    scale = scale or unit
+    blocks = []
+    heads = {"head": "", "members": {}, "cols": {}, "anchored": False, "after_total": False, "end": "", "total": None}
+    section = [""]
+    near = lambda v: abs(v - revenue) <= TOL_REV * abs(revenue)
+
+    def new(after=False):
+        b = {"head": section[0], "members": {}, "cols": {}, "anchored": False, "after_total": after, "end": "end",
+             "total": None}
+        blocks.append(b)
+        return b
+
+    def add(b, label, vals):
+        mid = "R:" + re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
+        if len(mid) >= 3 and mid not in b["members"]:
+            b["members"][mid] = (label, vals[0] * scale)
+            b["cols"][mid] = [x * scale for x in vals]
+
+    cur = new()
+    for r in t["rows"]:
+        if r["label"] and not r["vals"]:
+            cur["end"] = "heading"
+            section[0] = _clean_label(r["label"])
+            cur = new()
+            continue
+        if not r["label"] or not r["vals"] or r["pct"]:
+            continue
+        key, label, v = r["key"], _clean_label(r["label"]), r["vals"][0] * scale
+        sub = key.startswith("total ") or key == "subtotal" or key.startswith("subtotal ")
+        rest = re.sub(r"^(sub)?total\s*", "", key)
+        plain = not NOT_A_LINE.search(rest) and not any(PATTERNS[k].search(rest) for k in IS_KEYS)
+        if GENERIC_REV.match(key) or TOTAL_REV.match(key) or (sub and plain and near(v)):
+            cur["total"] = v
+            if near(v):                                   # the total itself: the lines above (or below) it are lines
+                cur["anchored"], cur["end"] = True, "revtotal"
+                cur = new(after=True)
+                continue
+            if section[0] and GENERIC_REV.match(key):
+                add(heads, section[0], r["vals"])         # "Revenue" under a segment heading
+            cur["end"] = "total"
+            cur = new()
+            continue
+        if sub:                                           # a subtotal: closes its block, a line of the next one
+            cur["total"], cur["end"] = v, ("subtotal" if plain else "total")
+            head = cur["head"]
+            cur = new()
+            if plain:
+                name = re.sub(r"^(sub)?total\s*", "", label, flags=re.I).strip() or head
+                if name:
+                    add(cur, name[:1].upper() + name[1:], r["vals"])
+            continue
+        if NOT_A_LINE.search(key) or any(PATTERNS[k].search(key) for k in IS_KEYS):
+            continue
+        if SEG_REV.search(key) and len(cur["members"]) >= 2 and \
+                tight(abs(sum(x[1] for x in cur["members"].values()) - v), len(cur["members"]), unit, v):
+            cur["total"] = v
+            if near(v):                                   # "Product revenues, net" = all revenue (Vertex): a total
+                cur["anchored"], cur["end"] = True, "revtotal"
+                cur = new(after=True)
+                continue
+            add(heads, label, r["vals"])                  # "Enterprise revenue" under Subscription + Other (Coursera)
+            cur["end"] = "subtotal"
+            cur = new()
+            continue
+        add(cur, label, r["vals"])
+    return blocks, heads
+
+
+def revenue_lines(tables, revenue, scale, refs, prev=None):
+    """Revenue by segment or product from the release: lines of one table that add up to total revenue.
 
     refs = {"q1": previous-quarter revenue, "py": year-ago revenue} (from XBRL) identify which other columns of
-    that table hold the comparison periods, so the lines get Q/Q and Y/Y as well."""
-    from .dims import best_partition
+    that table hold the comparison periods, so the lines get Q/Q and Y/Y as well. prev: the labels of the company's
+    last chart's revenue lines (its 10-Q or 10-K), so the release's breakdown matches the one readers saw before.
+
+    A breakdown is one block of lines (_blocks) that ends in the release's total-revenue row, or sits under a revenue
+    heading and adds up exactly, or the segments' own "Revenue" rows. One table often holds several such blocks
+    (Apple: "Net sales by reportable segment" — Americas, Europe … — and "Net sales by category" — iPhone, Mac …): one is
+    taken, never lines of two. A block that adds up to one of its lines (iPhone + Mac + iPad + Wearables = Products)
+    joins it as sub-lines, and a revenue line elsewhere that is exactly a sum of some of the lines becomes their group."""
+    from .dims import best_partition, tight
+    prev = {_norm_line(x) for x in (prev or ()) if x}
     best = None
     for t in tables:
-        members, colvals, section = {}, {}, None
-        for r in t["rows"]:
-            if r["label"] and not r["vals"]:
-                section = _clean_label(r["label"])
+        unit = _precision(t, scale)                       # Coursera prints $200.9: rounding is $0.05M, not $0.5M
+        blocks, heads = _blocks(t, unit, revenue, scale)
+        caption = t["before"][-120:]
+        first = next((b for b in blocks if b["members"]), None)
+        base = [b for b in blocks if b["members"] and (b["anchored"] or b["after_total"] or REV_HEAD.search(b["head"])
+                                                       or (b is first and REV_HEAD.search(caption)))]
+        if len(heads["members"]) >= 2:
+            base.append(heads)
+        revenueish = {}
+        for b in base:
+            for m, lv in b["members"].items():
+                revenueish.setdefault(m, (lv, b["cols"][m]))
+        for b in base:
+            members, colvals = dict(b["members"]), dict(b["cols"])
+            if b["anchored"] and b in blocks:             # lines just above under revenue headings (Camping World:
+                i = blocks.index(b)                       # "Revenue:" Good Sam, then "RV and Outdoor Retail" …)
+                while i > 0:
+                    p = blocks[i - 1]
+                    if p["anchored"] or not (p["end"] == "subtotal" or (p["end"] == "heading" and REV_HEAD.search(p["head"]))):
+                        break
+                    for m, lv in p["members"].items():
+                        if m not in members:
+                            members[m], colvals[m] = lv, p["cols"][m]
+                    i -= 1
+            part0 = best_partition(members, revenue, unit=unit)
+            if not part0:
                 continue
-            if not r["label"] or not r["vals"] or r["pct"]:
+            got = sum(members[l["id"]][1] for l in part0["leaves"])
+            if not (b["anchored"] or tight(abs(got - revenue), len(part0["leaves"]), unit, revenue)):
+                continue                                  # not ended by the total, and not adding up exactly
+            subs = []
+            for o in blocks:                              # sub-lines of one of this block's lines
+                if o is b or not o["members"]:
+                    continue
+                s2 = sum(v for _, v in o["members"].values())
+                if o["total"] is not None and not tight(abs(s2 - o["total"]), len(o["members"]), unit, o["total"]):
+                    continue
+                if any(tight(abs(v - s2), len(o["members"]), unit, v) for _, v in members.values()):
+                    subs.append(o)
+            seen = {}
+            for o in subs:
+                for m, (lab, v) in o["members"].items():
+                    seen.setdefault(m, set()).add(round(v / unit))
+            for o in subs:
+                for m, (lab, v) in o["members"].items():
+                    if len(seen[m]) > 1 or (m in members and abs(members[m][1] - v) > 0.5 * unit):
+                        lab = f"{o['head']} {lab[:1].lower() + lab[1:]}".strip() if o["head"] else lab
+                        m = "R:" + re.sub(r"[^a-z0-9]+", "-", lab.lower()).strip("-")   # Coursera: Consumer subscription
+                    if m not in members:
+                        members[m], colvals[m] = (lab, v), o["cols"][next(k for k in o["members"] if o["members"][k][1] == v)]
+            part = best_partition(members, revenue, unit=unit)
+            if not part:
                 continue
-            key, label = r["key"], _clean_label(r["label"])
-            if GENERIC_REV.match(key):
-                if not section:
-                    continue                              # the total itself
-                label = section                           # "Revenue" under a segment heading
-            elif NOT_A_LINE.search(key) or any(PATTERNS[k].search(key) for k in IS_KEYS):
-                continue
-            mid = "R:" + re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
-            if mid in members or len(mid) < 3:
-                continue                                  # first occurrence wins (revenue before operating income)
-            members[mid] = (label, r["vals"][0] * scale)
-            colvals[mid] = [v * scale for v in r["vals"]]
-        if len(members) < 2:
-            continue
-        part = best_partition(members, revenue)
-        if not part:
-            continue
-        leaves = [l["id"] for l in part["leaves"]]
-        ncol = min(len(colvals[m]) for m in leaves)
-        sums = [sum(colvals[m][j] for m in leaves) for j in range(ncol)]
-        cols = {}
-        for name, ref in refs.items():
-            j = next((j for j in range(1, ncol) if ref and abs(sums[j] - ref) <= 0.005 * abs(ref)), None)
-            if j is not None:
-                cols[name] = j
-        ctx = t["before"][-500:] + " " + t["text"][:400]
-        score = len(leaves) + 3 * len(cols) + (4 if SEG_CTX.search(ctx) else 0) - (4 if GEO_CTX.search(ctx) else 0)
-        if best is None or score > best[0]:
-            best = (score, part, colvals, cols)
-    if not best or best[0] < 3:
-        return None
-    _, part, colvals, cols = best
+            leaves = [l["id"] for l in part["leaves"]]
+            used = {m for g in part["groups"] for m in g["members"]} | {g["id"] for g in part["groups"]}
+            for gm, ((glab, gv), gcols) in sorted(revenueish.items(), key=lambda kv: -kv[1][0][1]):
+                if gm in leaves or gm in used:
+                    continue
+                cand_l = [m for m in leaves if m not in used]
+                k = len(cand_l)
+                if k > 14:
+                    continue
+                for mask in range(1, 1 << k):
+                    sub = [cand_l[i] for i in range(k) if mask >> i & 1]
+                    if 2 <= len(sub) < len(leaves) and tight(abs(sum(members[m][1] for m in sub) - gv), len(sub), unit, gv):
+                        part["groups"].append({"id": gm, "label": glab, "members": sub})
+                        members[gm], colvals[gm] = (glab, gv), gcols
+                        used.update(sub)
+                        used.add(gm)
+                        break
+            ncol = min(len(colvals[m]) for m in leaves)
+            sums = [sum(colvals[m][j] for m in leaves) for j in range(ncol)]
+            cols = {}
+            for name, ref in refs.items():
+                j = next((j for j in range(1, ncol) if ref and abs(sums[j] - ref) <= 0.005 * abs(ref)), None)
+                if j is not None:
+                    cols[name] = j
+            ctx = t["before"][-500:] + " " + t["text"][:400] + " " + b["head"]
+            labels = [_norm_line(l["label"]) for l in part["leaves"]]
+            same = sum(1 for l in labels if l in prev) / len(labels) if prev else 0
+            exact = tight(abs(sum(members[m][1] for m in leaves) - revenue), len(leaves), unit, revenue)
+            score = (len(leaves) + 3 * len(cols) + (4 if SEG_CTX.search(ctx) else 0) - (4 if GEO_CTX.search(ctx) else 0)
+                     + 5 * same + (3 if exact else 0)
+                     - (1 if sum(1 for l in labels if GEO_LINE.search(l)) * 2 > len(labels) else 0))
+            if best is None or score > best[0]:
+                best = (score, part, colvals, cols, exact)
+    if not best or (best[0] < 3 and not best[4]):
+        return None                                       # a loose match must score; one exact to the rounding need not
+    _, part, colvals, cols, _ = best
     cur = {l["id"]: colvals[l["id"]][0] for l in part["leaves"]}
     out = {"struct": {"leaves": part["leaves"], "groups": part["groups"], "axis": "release"}, "cur": cur}
     for name, j in cols.items():
         out[name] = {m: colvals[m][j] for m in cur}
+        for g in part["groups"]:                          # the groups' own comparison figures, when printed
+            if len(colvals.get(g["id"], [])) > j:
+                out[name][g["id"]] = colvals[g["id"]][j]
     return out
 
 

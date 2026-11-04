@@ -78,7 +78,7 @@
       placed.push(box);
       labels += `<text class="lbl" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${t(s)}</text>`;
     });
-    return `<svg class="ed-scatter" viewBox="0 0 ${W} ${H}" role="img" aria-label="Revenue growth against operating margin for the ${dots.length} largest companies that filed">
+    return `<svg class="ed-scatter" viewBox="0 0 ${W} ${H}" role="group" aria-label="Revenue growth against operating margin for the ${dots.length} largest companies that filed">
       ${g}${circles}${labels}<text class="axis" x="${(L + R) / 2}" y="${H - 6}" text-anchor="middle">Revenue growth, year on year</text>
       <text class="axis" x="14" y="${(T + B) / 2}" text-anchor="middle" transform="rotate(-90 14 ${(T + B) / 2})">Operating margin</text></svg>`;
   }
@@ -95,7 +95,7 @@
       </div>
       <section class="ed-card"><div class="ed-head"><h3>Largest reporters</h3><span class="muted">by quarterly revenue</span></div>
         <div class="tbl-wrap"><table class="ed-top"><thead><tr><th>Company</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Op. margin</th><th>Filing</th></tr></thead><tbody>
-        ${S.top.map((e) => `<tr><td><a href="#c-${+e.cik}">${t(e.ticker || '')}</a> <span class="nm">${t(e.name)}</span></td><td class="num">${money(e.revenue)}</td>
+        ${S.top.map((e) => `<tr><td>${e.ticker ? `<a href="#c-${+e.cik}">${t(e.ticker)}</a> <span class="nm">${t(e.name)}</span>` : `<a href="#c-${+e.cik}" class="nm">${t(e.name)}</a>`}</td><td class="num">${money(e.revenue)}</td>
           <td class="num ${fin(e.yoy) ? (e.yoy >= 0 ? 'pos' : 'neg') : ''}">${fin(e.yoy) ? sgn(+e.yoy, 1) : '—'}</td><td class="num">${fin(e.om) ? (+e.om).toFixed(1) + '%' : '—'}</td>
           <td><span class="mono">${t(e.form)}</span>${e.prelim ? ' <span class="tag prelim">prelim</span>' : ''}</td></tr>`).join('')}</tbody></table></div>
         <p class="ed-empty"><a href="#home" data-ed-all>All ${S.count} filings of the day, with filters ↓</a></p></section>

@@ -23,6 +23,15 @@ const api={hub:'/',rankMeta:async()=>({cos:[['AAPL','Apple','technology']]}),jso
  assert.match(off.foot,/not actual holdings/);assert.equal(off.kind,'rank');
  const onlyBuy=await A.disclosedSource({aw:'official',ap:'Official',ao:'buy'},offapi);
  assert.deepEqual(onlyBuy.snapshots[0].positions,[['AAPL',1]]);
+ assert.match(onlyBuy.note,/capped at 4,000/);
+ // the official's own file (market/officials/<slug>.json): every trade on file, years back, the feed's cap not mentioned
+ const own={name:'Nancy Pelosi',fields:['date','ticker','type','amount_min','amount_max','owner','filed','source_url'],first:'2023-01-10',last:'2026-09-08',
+  trades:[['2023-01-10','NVDA','purchase',1000001,5000000,'SP','2023-02-01',''],['2026-09-08','BE','purchase',500001,1000000,'SP','2026-10-02','']]};
+ const ownapi={...api,json:async u=>u.endsWith('/officials/nancy-pelosi.json')?own:{trades:[]}};
+ const deep=await A.disclosedSource({aw:'official',ap:'Nancy Pelosi'},ownapi);
+ assert.deepEqual(deep.snapshots.map(s=>s.date),['2023-01-31','2026-09-30']);
+ assert.deepEqual(deep.snapshots[0].positions,[['NVDA',1]]);
+ assert.match(deep.note,/from 2023-01-10 to 2026-09-08/);assert(!deep.note.includes('capped'));
 
  const single=out();
  await A.build({aw:'etf',style:'changes',from:'2026-09-01'},single,api);

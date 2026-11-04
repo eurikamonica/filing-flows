@@ -48,7 +48,7 @@ SECTOR_ETFS = [('XLK', 'technology', 'Technology'), ('XLC', 'communication', 'Co
                ('XLE', 'energy', 'Energy'), ('XLB', 'materials', 'Materials'), ('XLI', 'industrials', 'Industrials'),
                ('XLU', 'utilities', 'Utilities')]
 STYLE_ETFS = [('QQQ', 'Nasdaq-100'), ('DIA', 'Dow Jones Industrials'), ('RSP', 'S&P 500 equal weight'), ('MDY', 'S&P MidCap 400'),
-              ('IWM', 'Russell 2000 small caps'), ('IWF', 'Russell 1000 Growth'), ('IWD', 'Russell 1000 Value'),
+              ('IWM', 'Russell 2000 small caps'), ('IJR', 'S&P SmallCap 600'), ('IWF', 'Russell 1000 Growth'), ('IWD', 'Russell 1000 Value'),
               ('MTUM', 'Momentum factor'), ('USMV', 'Minimum volatility'), ('SMH', 'Semiconductors'), ('XBI', 'Biotech'),
               ('KRE', 'Regional banks'), ('ITB', 'Home builders'), ('EFA', 'Developed markets ex-US'),
               ('EEM', 'Emerging markets'), ('TLT', 'Treasuries 20+ years'), ('GLD', 'Gold'), ('USO', 'Crude oil')]

@@ -401,7 +401,8 @@ function rrgFcLayer(o,f,sx,sy){
  if(!fcOn()||o.freq!=='w'||o.n!==14)return '';
  const d=rrgFcLoad();if(!d)return '';
  let s='';const day=o.Q[f];
- for(const l of o.lines){const m=d._by.get(l.e.id);const r=m&&m.get(day);if(!r)continue;const c=l.calc;if(c.x[f]==null||c.y[f]==null)continue;
+ for(const l of o.lines){if(o.solo&&l.e.id!==o.solo)continue;                 // one line shown alone (rrg.js)
+  const m=d._by.get(l.e.id);const r=m&&m.get(day);if(!r)continue;const c=l.calc;if(c.x[f]==null||c.y[f]==null)continue;
   const p=[sx(c.x[f]),sy(c.y[f])],q=[sx(r[3]),sy(r[4])];
   if(state.rfc==='check'&&c.x[f+1]!=null)s+=fcCheckSvg(p,[sx(c.x[f+1]),sy(c.y[f+1])],l.col);
   if(fcTrack()){const rp=f>0&&m.get(o.Q[f-1]);

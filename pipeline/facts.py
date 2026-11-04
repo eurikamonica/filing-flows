@@ -592,7 +592,21 @@ def bank_revenue(raw, rev_concept=None):
     if nii is None and raw.get("int_inc") is not None and raw.get("int_exp") is not None:
         nii = raw["int_inc"] - raw["int_exp"]
         raw["nii"] = nii
-    if rev_concept in TOTAL_TAGS or nii is None or raw.get("nonii") is None or nii + raw["nonii"] <= 0:
+    # one of the two untagged (FVCBankcorp: no noninterest income; New Peoples: no net interest income): from pre-tax
+    # earnings = net interest income + noninterest income − provision − noninterest expense, when the bank tags its
+    # noninterest expense and interest income (so it is a bank)
+    pt, ne, pv = raw.get("pretax"), raw.get("nonint_exp"), raw.get("prov") or 0
+    if pt is not None and ne is not None and (nii is not None or raw.get("int_inc") is not None):
+        if nii is not None and raw.get("nonii") is None and pt + ne + pv - nii >= 0:
+            raw["nonii"], raw["nonii_derived"] = pt + ne + pv - nii, True
+        elif nii is None and raw.get("nonii") is not None and pt + ne + pv - raw["nonii"] > 0:
+            nii = raw["nii"] = pt + ne + pv - raw["nonii"]
+            raw["nii_derived"] = True
+    # a "Revenues" tag far below the two (Zions $182M against $1.1B; Central Pacific's is its noninterest income
+    # alone) is not the bank's total revenue either
+    small_total = (nii is not None and raw.get("nonii") is not None and raw.get("revenue") is not None
+                   and raw["revenue"] < 0.6 * (nii + raw["nonii"]))
+    if (rev_concept in TOTAL_TAGS and not small_total) or nii is None or raw.get("nonii") is None or nii + raw["nonii"] <= 0:
         return raw
     if raw.get("revenue") is not None:
         raw["rev_tagged"] = raw["revenue"]
@@ -622,6 +636,8 @@ def fiscal_label(end, fiscal_year_end):
     q = min(4, max(1, round(((e - base).days / 30.44) / 3)))
     if mm == 12 and dd >= 25:
         return f"Q{q} {fy}", q, fy
+    if mm == 1 and dd <= 7:                 # a 52/53-week year ending the Saturday or Sunday nearest December 31 (Johnson &
+        return f"Q{q} {fy - 1}", q, fy - 1  # Johnson's 2026 ends January 3, 2027): the company's year is the one it mostly falls in
     return f"Q{q} FY{str(fy)[2:]}", q, fy
 
 

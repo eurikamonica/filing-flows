@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, chains, gamma, checks, dims, facts, fx as FX, ixbrl, quality, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, chains, gamma, checks, dims, facts, fx as FX, ixbrl, names, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -73,7 +73,7 @@ class Store:
 
 
 # ---------------------------------------------------------------- the run's time budget
-# GitHub stops the job after 55 minutes, and a stopped job saves nothing: the next run would redo the same work and be
+# GitHub stops the job after 70 minutes (scan.yml), and a stopped job saves nothing: the next run would redo the same work and be
 # stopped again. So the run keeps to a budget (RUN_BUDGET_MINUTES, default 32): catch-up work (re-reading stored
 # figures, history, company-reported figures) may use the first part of it, new filings the rest; rendering the site
 # and the steps after it (e-mails, saving the data) fit in the time left. Unfinished work waits for the next run.
@@ -138,11 +138,71 @@ def companyfacts(cik, accn=None):
         _cf[cik] = {"raw": raw, "cur": cur, "index": {}}
         _cur.setdefault(cik, cur)
     c = _cf[cik]
+    if accn and accn not in c.setdefault("inst", set()):
+        c["inst"].add(accn)
+        if facts._filed_on(c["raw"], accn) is None:      # SEC's company facts lacks the filing: its own instance
+            _merge_instance(cik, accn, c)
+            c["index"].pop(accn, None)
     if accn not in c["index"]:
         if len(c["index"]) >= 8:                          # the indexes share the facts; a few per company is enough
             c["index"].pop(next(iter(c["index"])))
         c["index"][accn] = facts.index_facts(c["raw"], c["cur"], accn)
     return c["index"][accn]
+
+
+INSTANCE_FORMS = ("10-Q", "10-K", "10-Q/A", "10-K/A", "10-KT", "20-F", "40-F", "20-F/A")
+
+
+def _merge_instance(cik, accn, c):
+    """A 10-Q / 10-K that SEC's company facts does not have (yet, or at all: Verisk's and Humana's Q2 2026 10-Qs were
+    still missing in November): its figures from the filing's own XBRL instance (pipeline/instance.py)."""
+    from . import instance
+    try:
+        row = next((r for r in recent_rows(submissions(cik)) if r["accessionNumber"] == accn), None)
+        if not row or row["form"] not in INSTANCE_FORMS:
+            return
+        inst_url, _ = dims.find_files(cik, accn)
+        if not inst_url:
+            return
+        n = instance.merge(c["raw"], instance.to_companyfacts(sec.get(inst_url), accn, row["form"], row["filingDate"]))
+        print(f"  {cik} {accn}: not in SEC's company facts; {n} facts read from the filing's own XBRL")
+    except Exception as e:
+        print(f"  {cik} {accn}: the filing's own XBRL not read: {e}", file=sys.stderr)
+
+
+INSTANCE_REQUEUE = 1         # bump to give filings skipped for missing company facts another try (_merge_instance)
+REQUEUE_PER_RUN = 120        # companies whose skipped filings are looked up per run (one submissions request each)
+
+
+def requeue_missing_facts(store, limit=REQUEUE_PER_RUN):
+    """Filings given up because SEC's company facts did not have them ("XBRL facts not available yet": 465 filings of
+    249 companies by Nov 2 2026) go back in the queue once, now that they are read from their own XBRL instead."""
+    st = store.state
+    if st.get("instance_requeue", 0) >= INSTANCE_REQUEUE:
+        return
+    by_cik = {}
+    for accn, v in st["seen"].items():
+        if str(v.get("s", "")).startswith("skip: XBRL facts not available") and v.get("cik"):
+            by_cik.setdefault(int(v["cik"]), []).append(accn)
+    n, queued = 0, 0
+    for cik, accns in sorted(by_cik.items()):
+        if n >= limit or time_up(CATCH_UP_SHARE, "filings skipped for missing company facts"):
+            break
+        n += 1
+        try:
+            rows = {r["accessionNumber"]: r for r in recent_rows(submissions(cik))}
+        except Exception as e:
+            print(f"  {cik}: filing list not read: {e}", file=sys.stderr)
+            continue
+        for a in accns:
+            r = rows.get(a)
+            st["seen"].pop(a, None)
+            if r and r["form"] in INSTANCE_FORMS and a not in st["pending"]:
+                st["pending"][a] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0, "items": None}
+                queued += 1
+    if n >= len(by_cik):
+        st["instance_requeue"] = INSTANCE_REQUEUE
+    print(f"filings skipped for missing company facts: {queued} queued again ({n} of {len(by_cik)} companies looked up)")
 
 
 INTRO_RANK = {"10-K": 3, "8-K": 2, "6-K": 2, "10-Q": 1}    # where the company description comes from, best first
@@ -177,6 +237,47 @@ def _needs_facts(c):
     """Stored before the period list or the per-figure sources existed."""
     return c.get("periods") is None or any(q.get("src") is None and q.get("form") != "8-K" for q in c["quarters"].values()) \
         or any(y.get("src") is None for y in (c.get("years") or {}).values())
+
+
+LABEL_VERSION = 2      # 2: a 52/53-week year ending in early January is the year it mostly falls in (facts.fiscal_label)
+
+
+def relabel(store):
+    """Stored quarters and years named again from their end dates once per LABEL_VERSION (Johnson & Johnson's quarter
+    ended 2026-09-27 was 'Q3 FY27'; it is Q3 2026). A renamed quarter keeps its first name in label_was, so the static
+    pages can send the old address on."""
+    if store.state.get("label_v") == LABEL_VERSION:
+        return 0
+    n = 0
+    for cik in store.ciks():
+        try:
+            c = store.company(cik)
+            fye = (c.get("profile") or {}).get("fye") or "1231"
+            changed = False
+            for q in (c.get("quarters") or {}).values():
+                if not q.get("end") or q.get("period") == "half":
+                    continue
+                label, fq, fy = facts.fiscal_label(q["end"], fye)
+                if label != q.get("label"):
+                    q.setdefault("label_was", q.get("label"))
+                    q["label"], q["fq"], q["fy"] = label, fq, fy
+                    changed = True
+            for y in (c.get("years") or {}).values():
+                if not y.get("end"):
+                    continue
+                label, fy = facts.fiscal_year_label(y["end"], fye)
+                if label != y.get("label"):
+                    y.setdefault("label_was", y.get("label"))
+                    y["label"], y["fy"] = label, fy
+                    changed = True
+            if changed:
+                store.put(cik, c)
+                n += 1
+        except Exception as e:
+            print(f"  relabel skipped for {cik}: {e}", file=sys.stderr)
+    store.state["label_v"] = LABEL_VERSION
+    print(f"  relabelled the periods of {n} companies (label version {LABEL_VERSION})")
+    return n
 
 
 def refresh_periods(store, limit=PERIODS_PER_RUN):
@@ -279,7 +380,9 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 5           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+DA_VERSION = 6           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+# v6 (Nov 2026): a bank's revenue from net interest + noninterest income when its "Revenues" tag is only the fee part
+# or one of the two is untagged (facts.bank_revenue); companies whose newest quarter is not drawn go first
 # 2: D&A and share-based compensation from the cash-flow statement's tag (facts.CASH_FLOW_KEYS); total revenues
 #    (us-gaap:Revenues) before larger sub-totals, with revenue lines that add up to contract revenue marked "recon"
 # 3: a "Revenues" far below the other revenue tags is the total only when it closes the income statement
@@ -292,6 +395,69 @@ DA_VERSION = 5           # bump when the way figures are read changes: stored fi
 #    (facts.version: Pixelworks' Q2 2025 revenue $8.3M, not the $0.2M a year later without the Shanghai business)
 REFRESH_FLAGS = ("rev_bank", "rev_tagged", "q4_fixed")    # what facts.extract adds beside the figures
 DA_PER_RUN = 120            # one SEC request each and a fraction of a second's reading: the budget (time_up) is the limit
+LINE_LABEL_VERSION = 1        # bump when revenue-line names are chosen differently (dims.parse_labels): names read again
+LABELS_PER_RUN = 60      # two SEC requests each (the filing's index and its label file)
+# a stored line name that may be a cost table's label, a documentation sentence or XBRL furniture (page audit, Nov 2026)
+LABEL_SUSPECT = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization)\b|"
+                           r"stands for|element represents|\[(member|domain)\]|(?<=[a-z]{3})\.$", re.I)
+
+
+def refresh_labels(store, limit=LABELS_PER_RUN):
+    """Revenue-line names stored before dims.parse_labels looked at all of a member's labels: Workday's professional
+    services were "Costs of professional services", Delta's passenger revenue "Air traffic liability", Autodesk's
+    subscriptions "Cost of subscription revenue" (the terse label of a cost table the member also appears in). Only
+    companies with a name that looks like that are read again — from their latest 10-Q / 10-K's label file, applied
+    to every period that has the same members; a name the company gives no better label for stays. Once a full pass
+    finds none left, the store notes it and the pass stops running."""
+    st = store.state
+    if st.get("labels_v", 0) >= LINE_LABEL_VERSION:
+        return
+    n, left = 0, 0
+    for cik in store.ciks():
+        c = store.company(cik)
+        if c.get("lab_v", 0) >= LINE_LABEL_VERSION:
+            continue
+        rows = [q for q in list((c.get("quarters") or {}).values()) + list((c.get("years") or {}).values())
+                if q.get("lines_struct") and q.get("form") != "8-K" and q.get("accn")
+                and q["lines_struct"].get("axis") not in ("release", "bank")]
+        names = [x.get("label") or "" for q in rows for x in q["lines_struct"].get("leaves", []) + q["lines_struct"].get("groups", [])]
+        if not any(LABEL_SUSPECT.search(t) for t in names):
+            continue
+        if n >= limit or time_up(CATCH_UP_SHARE, "revenue-line names"):
+            left += 1
+            continue
+        latest = max(rows, key=lambda q: q.get("end") or "")
+        n += 1
+        try:
+            _, lab_url = dims.find_files(cik, latest["accn"])
+            labels = dims.parse_labels(sec.get(lab_url)) if lab_url else {}
+        except Exception as e:
+            print(f"  names of {cik} not read again: {e}", file=sys.stderr)
+            c["lab_tries"] = c.get("lab_tries", 0) + 1
+            if c["lab_tries"] >= 3:
+                c["lab_v"] = LINE_LABEL_VERSION                      # given up: the names stay as they are
+            store.put(cik, c)
+            continue
+        changed = []
+        for q in rows:
+            ls = q["lines_struct"]
+            for x in ls.get("leaves", []) + ls.get("groups", []):
+                new = labels.get(str(x.get("id", "")).replace(":", "_"))
+                if new and new != x.get("label"):
+                    notes = q.get("notes") or {}
+                    if x.get("label") in notes and new not in notes:
+                        notes[new] = notes.pop(x["label"])      # the line's notes are keyed by its name
+                    changed.append(f"{x.get('label')} → {new}")
+                    x["label"] = new
+        c["lab_v"] = LINE_LABEL_VERSION
+        store.put(cik, c)
+        if changed:
+            print(f"  {cik}: line names read again: " + "; ".join(sorted(set(changed)))[:300])
+    if not left:
+        st["labels_v"] = LINE_LABEL_VERSION
+    print(f"revenue-line names: {n} companies read again, {left} left for the next runs")
+
+
 
 
 def _xbrl_parts(fx, end, annual=False, keep_capex=False):
@@ -348,11 +514,19 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
     with (the owner's re-read request)."""
     todo = []
     first = reread_first() if only is None else set()
+    # companies whose newest quarter could not be drawn in the last render (render: state "undrawn") first, oldest
+    # reading first: their stored figures are often from an old reader (a bank read before net interest income was:
+    # revenue = its fee income alone, smaller than its profit — M&T, Eastern, Glacier … 41 pages in Nov 2026 — and so
+    # last in a queue ordered by that revenue). An undrawn company already on the current reading is read once more
+    # per newest quarter, in case SEC's company facts have caught up since.
+    undrawn = {int(k): v for k, v in (store.state.get("undrawn") or {}).items()} if only is None else {}
     for cik in (only if only is not None else store.ciks()):
         c = store.company(cik)
-        if c.get("quarters") and c.get("profile") and (only is not None or c.get("da_v", 0) < DA_VERSION):
+        stuck = int(cik) in undrawn and c.get("da_undrawn") != undrawn[int(cik)]
+        if c.get("quarters") and c.get("profile") and (only is not None or c.get("da_v", 0) < DA_VERSION or stuck):
             last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
-            todo.append((int(cik) not in first, -((last.get("raw") or {}).get("revenue") or 0), cik))
+            todo.append((int(cik) not in first, int(cik) not in undrawn, c.get("da_v", 0),
+                         -((last.get("raw") or {}).get("revenue") or 0), cik))
     n = 0
     for *_, cik in sorted(todo)[:limit]:
         if only is None and time_up(CATCH_UP_SHARE, "re-reading stored figures"):
@@ -388,6 +562,8 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
                             else:
                                 q["src"].pop(k, None)
             c["da_v"] = DA_VERSION
+            if int(cik) in undrawn:
+                c["da_undrawn"] = undrawn[int(cik)]            # read again for this quarter: not again until a newer one
             set_quality(c, companyfacts(cik))
             store.put(cik, c)
             n += 1
@@ -1086,6 +1262,16 @@ def _release_cash(rel, fx, q1_end, fq, py_end=None):
     return hint
 
 
+def prev_line_labels(c, end):
+    """The revenue-line labels (leaves and groups) of the company's latest chart before `end` that has a breakdown from
+    its 10-Q or 10-K: an earnings release's lines are matched to it (release.revenue_lines)."""
+    for k, q in sorted((c.get("quarters") or {}).items(), reverse=True):
+        ls = q.get("lines_struct")
+        if k < end and ls and q.get("form") != "8-K" and ls.get("axis") != "release":
+            return [x.get("label") for x in ls.get("leaves", []) + ls.get("groups", [])]
+    return None
+
+
 def process_release(store, cik, accn, form, starred=False):
     """A preliminary quarter from an earnings release (8-K Item 2.02); the 10-Q/10-K replaces it when filed."""
     sub = submissions(cik)
@@ -1177,7 +1363,7 @@ def process_release(store, cik, accn, form, starred=False):
         raise NotApplicable("earnings release lacks revenue or net income")
     rev_ref = {"q1": facts.value(fx, "revenue", q1_end) if q1_end else None,
                "py": facts.value(fx, "revenue", py_end) if py_end else None}
-    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref)
+    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref, prev=prev_line_labels(c, end))
     ls = segs["struct"] if segs else None
     notes = {}
     paras = release.note_paragraphs(doc)
@@ -1543,7 +1729,7 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         raw_py, py_end = stored_py["raw"], stored_py["end"]   # (a half keeps its report's own, restated, column)
     q1_end, raw_q1 = (prev["end"], prev["raw"]) if prev else (None, None)
     rev_ref = {"q1": (raw_q1 or {}).get("revenue"), "py": (raw_py or {}).get("revenue")}
-    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref)
+    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref, prev=prev_line_labels(c, end))
     ls = segs["struct"] if segs else None
     notes = {}
     paras = release.note_paragraphs(doc)
@@ -1836,7 +2022,9 @@ def company_ciks(tokens):
     return sorted(set(out))
 
 
-RELEASE_READER = 5              # bump when the 8-K reader changes: stored 8-K quarters are read again once
+RELEASE_READER = 6              # bump when the 8-K reader changes: stored 8-K quarters are read again once
+# v6 (Nov 2026): revenue lines only from rows that end in or follow the total-revenue row, one breakdown per chart,
+# exact to the table's rounding (Apple Q4 FY26 had regions and products mixed; Starbucks, Visa, AAL balance-sheet rows)
 
 
 def _superseded(accn, filed):
@@ -1938,9 +2126,12 @@ def run(args):
             json.dump({str(k): v for k, v in unbuildable.items()}, fh)
     backfill_history(store)
     queue_missed_filings(store)
+    relabel(store)
+    requeue_missing_facts(store)
     refresh_periods(store)
     reread(store, getattr(args, "reread_ciks", None) or [])
     refresh_da(store)
+    refresh_labels(store)
     refresh_reported(store)
     refresh_quality(store)
     refresh_invest(store)
@@ -2178,6 +2369,11 @@ def apply_reported(q, Nc, Ny, draw=True):
 FCF_ALT_KEYS = ("nodes", "links", "kind", "footer", "checks", "analysis", "headline", "compare", "compare_y")
 
 
+def _aggregate_line(q):
+    ls = q.get("lines_struct") or {}
+    return any(dims.AGGREGATE_ID.search(str(x.get("id") or "")) for x in (ls.get("leaves") or []) + (ls.get("groups") or []))
+
+
 def quarter_payload(c, q, prev_q):
     """A quarter's chart, analysis and checks. When the company's own free cash flow is drawn, the payload also carries
     the same quarter on operating cash flow − capex ("fcf_alt"): readers choose the definition in their alerts
@@ -2185,6 +2381,9 @@ def quarter_payload(c, q, prev_q):
     shown = q
     if _unmatched(q):                                   # lines that do not add up: hidden unless the reader asks
         q = dict(q, lines_struct=None)
+    elif _aggregate_line(q):                            # a subtotal member drawn as a line (stored before dims.AGGREGATE_ID): no lines
+        q = dict(q, lines_struct=None)
+        shown = q
     pl = _quarter_payload(c, q, prev_q)
     if not pl:
         return pl
@@ -2274,7 +2473,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     if q["raw"].get("rev_reported") is not None:
         Nc["rev_calc"] = q["raw"]["rev_reported"]
     apply_reported(q, Nc, Ny, draw=draw_company)
-    ls = None if sliver_lines(q, Nc["R"]) else q.get("lines_struct")
+    ls = None if sliver_lines(q, Nc["R"]) else clean_lines(q.get("lines_struct"))
     lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)
     if lines_q1 and ls and not all(l["id"] in lines_q1 for l in ls["leaves"]):
         lines_q1 = None
@@ -2297,7 +2496,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     labels = {e: x["label"] for e, x in c["quarters"].items()}
     py_label = labels.get(q.get("py_end")) or "a year earlier"
     p = c["profile"]
-    name = p["name"]
+    name = names.cased(p["name"])                   # "ILLINOIS TOOL WORKS INC" → Illinois Tool Works Inc
     q1_label = labels.get(q.get("q1_end")) or (facts.fiscal_label(q["q1_end"], p.get("fye") or "1231")[0]
                                                if q.get("q1_end") else None)
     compare = compare_y = None
@@ -2314,6 +2513,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
         "compare": compare, "compare_y": compare_y, "preliminary": q["form"] == "8-K",
         "release_check": q.get("from_release"),
         "end": q["end"], "label": q["label"], "cal": q["cal"], "form": q["form"], "filed": q["filed"],
+        **({"label_was": q["label_was"]} if q.get("label_was") else {}),
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,
         "title": f"{name} {q['label']} earnings &amp; cash flow",
         "subtitle": (f"Quarter ended {_date(q['end'])} · GAAP · Y/Y vs. {_short(q.get('py_end'))} "
@@ -2324,10 +2524,33 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
         "analysis": analysis.paragraphs(f, q["label"], Nc, Nq, Ny, ls, (q.get("lines"), lines_q1, q.get("lines_py")),
                                         py_label=py_label),
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
-                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100,
+                     "ni": net_drawn(nodes, Nc), "ni_fmt": f.money(net_drawn(nodes, Nc)), "om": Nc["oi"] / Nc["R"] * 100,
                      "oi": Nc["oi"], "ocf": Nc.get("ocf")},
         "_N": (Nc, Nq, Ny),
     }
+
+
+def clean_lines(ls):
+    """A stored breakdown with its labels cleaned of XBRL leftovers (dims.clean_label: "[Member]", a documentation
+    sentence in a label's place): charts stored before the labels were cleaned draw clean."""
+    if not ls:
+        return ls
+    out = dict(ls)
+    for key in ("leaves", "groups"):
+        out[key] = [dict(l, label=dims.clean_label(l.get("label") or "", l.get("id") or "")) for l in ls.get(key) or []]
+    return out
+
+
+def net_drawn(nodes, Nc):
+    """The net figure the chart's net node shows, for the page's headline, tiles and history beside it: net earnings to
+    shareholders when minority interests are drawn (Exxon's $15.4B, not the $16.0B including them), the consolidated
+    figure otherwise (a loss layout's net loss is the consolidated one, with the shareholders' figure in its note)."""
+    for n in nodes:
+        if n["id"] in ("net", "netinc"):
+            return n["v"]
+        if n["id"] == "netloss":
+            return -n["v"]
+    return Nc["pl"]
 
 
 ANNUAL_NOTE = ("Source: SEC EDGAR XBRL data ({form} filed {filed}): the full fiscal year as reported. Percentages show each "
@@ -2347,7 +2570,7 @@ def year_payload(c, y):
     Nc, Ny = normalize(y["raw"]), normalize(y.get("raw_py"))
     if not Nc:
         return None
-    ls = None if _unmatched(y) or sliver_lines(y, Nc["R"]) else y.get("lines_struct")
+    ls = None if _unmatched(y) or _aggregate_line(y) or sliver_lines(y, Nc["R"]) else clean_lines(y.get("lines_struct"))
     try:
         nodes, links, kind = build_spec(Nc, None, Ny, ls, (y.get("lines"), None, y.get("lines_py")))
     except Exception as e:
@@ -2372,7 +2595,7 @@ def year_payload(c, y):
         l.pop("q", None)
     f = Fmt(Nc["R"])
     p = c["profile"]
-    name = p["name"]
+    name = names.cased(p["name"])                   # "ILLINOIS TOOL WORKS INC" → Illinois Tool Works Inc
     py_label = facts.fiscal_year_label(y["py_end"], p.get("fye") or "1231")[0] if y.get("py_end") else None
     compare_y = None
     if Ny and py_label:
@@ -2389,6 +2612,7 @@ def year_payload(c, y):
         "cite": sources.citation(name, y, "fy"),
         "period": "fy", "key": "fy-" + y["end"], "compare": None, "compare_y": compare_y, "preliminary": False,
         "end": y["end"], "label": y["label"], "cal": f"FY{y['fy']}", "form": y["form"], "filed": y["filed"],
+        **({"label_was": y["label_was"]} if y.get("label_was") else {}),
         "doc_url": y.get("doc_url"), "index_url": y.get("index_url"), "kind": kind,
         "title": f"{name} {y['label']} earnings &amp; cash flow",
         "subtitle": f"Fiscal year ended {_date(y['end'])} · GAAP · Y/Y vs. {_short(y.get('py_end'))}",
@@ -2398,7 +2622,7 @@ def year_payload(c, y):
         "analysis": [_yearly(x) for x in analysis.paragraphs(f, y["label"], Nc, None, Ny, ls,
                                                              (y.get("lines"), None, y.get("lines_py")), py_label=py_label or "a year earlier")],
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
-                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100,
+                     "ni": net_drawn(nodes, Nc), "ni_fmt": f.money(net_drawn(nodes, Nc)), "om": Nc["oi"] / Nc["R"] * 100,
                      "oi": Nc["oi"], "ocf": Nc.get("ocf")},
     }
 
@@ -2509,6 +2733,7 @@ def render(store, out, stars=frozenset()):
     x_cfg = social.load_cfg("config/x.json")
     index, groups, usd_recs = [], {}, {}
     fx_cache = FX.load_cache(store.root)
+    undrawn = store.state.setdefault("undrawn", {})         # cik → newest quarter end that could not be drawn
     for cik in store.ciks():
         c = store.company(cik)
         halfly = not c.get("quarters") and bool(c.get("halves"))
@@ -2519,6 +2744,11 @@ def render(store, out, stars=frozenset()):
         cur = c.get("currency") or "USD"
         FX._cur[0] = cur                                     # amounts written in the company's own currency
         payloads = _payloads(c, cik)
+        newest = max((q.get("end") or "" for q in c["quarters"].values()), default="")
+        if newest and newest not in {pl.get("end") for pl in payloads}:
+            undrawn[str(cik)] = newest                       # its stored figures are read again first (refresh_da)
+        else:
+            undrawn.pop(str(cik), None)
         if halfly:
             payloads = [_as_half(pl) for pl in payloads]
         if not payloads:
@@ -2575,7 +2805,7 @@ def render(store, out, stars=frozenset()):
                  "rev": pl["headline"]["rev_fmt"], "revenue": pl["headline"]["revenue"], "yoy": pl["headline"]["yoy"]}
                 for pl in payloads[:-1] if (pl.get("filed") or "") >= cut]
         u_latest = next((x for x in (usd or {}).get("quarters") or [] if x["end"] == latest["end"]), None)
-        index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": p["name"], "sector": p["sector"],
+        index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": names.cased(p["name"]), "sector": p["sector"],
                       "industry": p["industry"], "sic": p["sic"], "label": latest["label"], "end": latest["end"],
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
                       "rev": latest["headline"]["rev_fmt"],
@@ -2689,7 +2919,9 @@ def render(store, out, stars=frozenset()):
         "industries": sorted(agg_index["industry"], key=lambda x: x["name"]),
         "sector_names": sectors.SECTORS, "release_audit": audit_out,
     })
-    print(f"rendered {len(index)} companies, {len(agg_index['sector'])} sectors, {len(agg_index['industry'])} industries")
+    print(f"rendered {len(index)} companies, {len(agg_index['sector'])} sectors, {len(agg_index['industry'])} industries; "
+          f"{len(undrawn)} with their newest quarter not drawn")
+    store.commit()                                           # the undrawn list, for the next run's re-reading
 
 
 def cal_label(cal):

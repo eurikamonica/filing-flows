@@ -11,7 +11,9 @@ const live=JSON.parse(fs.readFileSync(path.join(root,'docs/data/live.json'),'utf
 // a module's checkout leaves some shards out (the officials and light runs skip shards/holdings and shards/npx);
 // rows whose shard is absent are dropped so the views render what is on disk instead of reaching for the network
 const shard=p=>{const f=path.join(root,'docs/data',p);return fs.existsSync(f)?JSON.parse(fs.readFileSync(f,'utf8')):null};
-const inline=(rows,load)=>{const out=[];for(const r of rows||[]){const v=load(r);if(v)out.push(v)}return out};
+// at most SAMPLE rows a module (a full checkout holds ~10,000 managers' quarter files, ~1.8 GB: inlining them all ran node out of memory)
+const SAMPLE=300;
+const inline=(rows,load)=>{const out=[];for(const r of rows||[]){if(out.length>=SAMPLE)break;const v=load(r);if(v)out.push(v)}return out};
 if(live.modules.holdings)live.modules.holdings.managers=inline(live.modules.holdings.managers,r=>{const m=r.shard?shard(r.shard):r;if(!m)return null;
  m.snapshots=inline(m.snapshots,s=>{if(!s.positions_shard)return s;const p=shard(s.positions_shard);if(!p)return null;s.positions=p;return s});return m});
 if(live.modules.congress)live.modules.congress.reports=inline(live.modules.congress.reports,r=>r.shard?shard(r.shard):r);
@@ -259,6 +261,40 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   html=run(`rrgView()`);
   assert.ok(html.includes('EWJ $')&&html.includes('14-week window')&&html.includes('rrgl-path'),'the countries on the weekly chart');
   assert.ok(!/NaN|undefined|Infinity/.test(html),'the weekly countries show NaN/undefined');
+  // one line alone (state.rrgsolo): the other lines leave the chart; its forecast path has a dot every week and the marks
+  // +1 / +2 / +4 / +8 / +13 weeks with dates and prices; the player: speed, video shape, MP4 export
+  run(`state.rrgsolo='EWJ'`);html=run(`rrgView()`);
+  {const svg=html.slice(html.indexOf('<svg'),html.indexOf('</svg>'));
+   assert.ok(svg.includes('EWJ $')&&!svg.includes('EWZ $'),'one line alone: the other line is still drawn');
+   assert.ok((svg.match(/rrgl-step/g)||[]).length>=5,'the solo line\'s path lacks a dot each week');
+   assert.ok(svg.includes('+13w ')&&['+1w ','+2w ','+4w ','+8w '].some(t=>svg.includes(t)),'the solo line\'s path lacks its dated marks');}
+  assert.ok(html.includes('EWZ only')&&html.includes('· hidden'),'the Show control or the legend');
+  for(const id of ['rspeed','rshape','rmp4'])assert.ok(html.includes(`id="${id}"`),`the player lacks ${id}`);
+  assert.ok(run(`window.FFShare.get('hub-rrg-2d').title`).includes(' · EWJ'),'the share title does not name the line shown alone');
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'one line alone shows NaN/undefined');
+  run(`state.rrgsolo='';state.rspd='2'`);
+  assert.ok(run(`rotMs({ms:110})`)<=56&&run(`rotPlayer(['a','b'],{span:2})`).includes('value="2" selected'),'the speed');
+  run(`state.rspd=''`);
+  // the frozen forecast: EWJ's path as it stood 20 weeks back, kept as it was and scored; play runs the 13 weeks after it
+  run(`state.rrgsolo='EWJ';state.rrgfz=''`);html=run(`rrgView()`);
+  assert.ok(html.includes('id="rrgfzb"')&&html.includes('Freeze EWJ'),'the freeze button');
+  {const k0=run(`ROT.ctx.Q.length-21`),d0=run(`ROT.ctx.Q[${k0}]`);
+   run(`state.rrgfz='w|14|EWJ|${d0}';state.rf=${k0}+5`);html=run(`rrgView()`);
+   for(const want of ['Frozen forecast · EWJ · made','rrgl-origin','rrgl-real','EWJ +5w $','unfreeze','Where the close fell','13 of 13 weeks have passed','rrglfzcsv','Play 13 weeks'])
+    assert.ok(html.includes(want),`the frozen forecast lacks “${want}”`);
+   assert.ok(!/NaN|undefined|Infinity/.test(html),'the frozen forecast shows NaN/undefined');
+   assert.deepEqual([run(`ROT.ctx.from`),run(`ROT.ctx.to`),run(`RRGL.fzcsv.length`)],[k0,k0+13,13],'the stretch played and the CSV');
+   assert.ok(run(`window.FFShare.get('hub-rrg-2d').post().paras[0]`).startsWith('Forecast frozen on ')&&run(`window.FFShare.get('hub-rrg-2d').title`).includes('forecast frozen'),'the post and the title of a frozen forecast');
+   run(`state.rf=${k0}-3`);assert.ok(!run(`ROT.ctx.draw(${k0}-3)`).includes('rrgl-origin'),'before the freeze: nothing drawn');}
+  run(`state.rrgsolo='EWZ'`);run(`rrgView()`);assert.equal(run(`state.rrgfz`),'','another line in focus drops the freeze');
+  // the frozen backtest of the line in focus, worked out a slice at a time
+  run(`state.rrgsolo='EWJ';state.rrgbtopen=true`);html=run(`rrgView()`);
+  assert.ok(html.includes('Frozen backtest of EWJ')&&html.includes('Scoring'),'the backtest starts');
+  for(let i=0;i<300&&!run(`[...RRGL.bt.values()].every(b=>b.done)`);i++)await new Promise(r=>setTimeout(r,20));
+  html=run(`rrgView()`);
+  for(const want of ['Inside the 80% range','rrgl-pit','forecasts of EWJ, frozen every week','independent'])assert.ok(html.includes(want),`the backtest lacks “${want}”`);
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'the backtest shows NaN/undefined');
+  run(`state.rrgsolo='';state.rrgfz='';state.rrgbtopen=false`);
   run(`state.rrgf='d';state.rrgu='site'`);
   assert.ok(run(`rrgView()`).includes('weekly only'),'site sectors on the daily chart: explained');
   // the Rotation research view from a server file (the browser's own research has the server's shape)

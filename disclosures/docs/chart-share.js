@@ -24,6 +24,7 @@
   const qk = (k) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(k) : String(k).replace(/["\\]/g, '\\$&'));
   const specs = new Map();
   function register(spec) { if (spec && spec.key) specs.set(spec.key, spec); return spec; }
+  const get = (key) => specs.get(key) || null;                 // a bar's spec (title, subtitle, source): the video export composes with it
 
   function css() {
     if (typeof document === 'undefined' || document.getElementById('ffs-css')) return;
@@ -176,5 +177,5 @@
       const x = document.querySelector(`[data-ffs-x="${q}"]`); if (x) x.href = 'https://x.com/intent/post?text=' + encodeURIComponent(ta.value);
     });
   }
-  window.FFShare = { bar, image, analysis, postBox, fit, xlen, register, specs };
+  window.FFShare = { bar, image, analysis, postBox, fit, xlen, register, specs, get, svgImage, colors, wrap };
 })();

@@ -9,7 +9,11 @@
      fund      a company's own figures quarter by quarter — revenue, operating profit, net earnings, operating cash flow,
                margins, growth — as growing columns, lines or a ranking (data/c/<cik>.json: ten years from the filings).
      formula   any arithmetic on the series: + − × ÷ ^, log, exp, sqrt, abs, rebase, ma, ema, pct, chg, lag, min, max,
-               on tickers' prices, total returns, distributions, yields and company figures (NVDA.revenue_ttm …).
+               on tickers' prices, total returns, distributions, yields and company figures (NVDA.revenue_ttm …). With money in
+               the lines (fi=1) it is a growth race of the lines: a lump sum and/or the same amount on a schedule, an end
+               value to reach, cash, inflation and present value as there; each buy takes a line at its level (units of an
+               index), or — a mix a + b + … (0.6*rebase(SPY)+0.4*rebase(GLD)) — is split by its weights as written, with the
+               holdings set back to them never, at each buy, or every month, quarter or year (fsplit=w, frb).
      rank      a leaderboard of every company of the site, ranked again each month, quarter or week: market value,
                revenue, gross / operating / net income, margins, revenue growth, P/E, P/B, P/S, dollar volume, total
                return — within a sector and a market-value range (rank_panel.py's files).
@@ -459,6 +463,81 @@
     });
   }
 
+  /* ---------- money put into formula lines (st.fi = 1): each line bought like an index, or a mix by its weights ---------- */
+  // the parts of a mix: k × (a + b + …) or (a + b + …) ÷ k at the top, then each part c × x (x × c, x ÷ c, x, or a number:
+  // cash at no interest). null when the line is not a sum of two or more parts. `written`: the part's size as written —
+  // c × rebase(x) is c × 100 (or c × the base given) at its own start — so 0.6*rebase(SPY)+0.4*rebase(GLD) is 60/40
+  function mixParts(ast) {
+    let n = ast;
+    for (let g = 0; g < 8; g++) {
+      if (n.op === '*' && n.a.num != null) n = n.b; else if (n.op === '*' && n.b.num != null) n = n.a;
+      else if (n.op === '/' && n.b.num != null) n = n.a; else break;
+    }
+    const parts = [], walk = (x) => { if (x.op === '+') { walk(x.a); walk(x.b); } else parts.push(x); };
+    walk(n);
+    if (parts.length < 2) return null;
+    return parts.map((x) => {
+      let c = 1, inner = x;
+      if (x.op === '*' && x.a.num != null) { c = x.a.num; inner = x.b; }
+      else if (x.op === '*' && x.b.num != null) { c = x.b.num; inner = x.a; }
+      else if (x.op === '/' && x.b.num != null && x.b.num !== 0) { c = 1 / x.b.num; inner = x.a; }
+      const names = [...new Set(ids(inner).map((d) => d.id + (d.field === 'tr' ? '' : '.' + d.field)))];
+      const written = inner.num != null ? c * inner.num
+        : inner.fn === 'rebase' && ids(inner).length ? c * (inner.args[1] && inner.args[1].num != null ? inner.args[1].num : 100) : null;
+      return { node: x, label: inner.num != null ? 'cash' : names.join('/') || 'part', written };
+    });
+  }
+  const REBAL = { 0: 'never rebalanced: the mix drifts with prices', b: 'rebalanced to them at each buy', m: 'rebalanced to them every month',
+    q: 'rebalanced to them every quarter', y: 'rebalanced to them every year' };
+  // the lines on the grid, cut to the week from which every line has a value; {G, T (labels), P (label → {name, fx: {v, mix}}), info}
+  async function formulaPlan(st, tree, G, notes) {
+    const env = new Map();
+    for (const f of tree) for (const x of ids(f.ast)) { const key = x.id + '.' + x.field; if (!env.has(key)) env.set(key, await fieldOn(x.id, x.field, G, notes)); }
+    const split = st.fsplit === 'w', rbKey = REBAL[st.frb] ? st.frb : '0', lines = [];
+    for (const f of tree) {
+      const v = evaluate(f.ast, env, G.length), i0 = v.findIndex(fin);
+      if (i0 < 0) { notes.add(`${f.label}: no values in this window, so nothing to put money in`); continue; }
+      const bad = v.findIndex((x, i) => i >= i0 && fin(x) && !(x > 0));
+      if (bad >= 0) { notes.add(`${f.label} is ${v[bad] < 0 ? 'below zero' : 'zero'} on ${dayLabel(G[bad])}: a line cannot be bought at that level, so it gets no money (a spread or a change is a what-if, not a holding)`); continue; }
+      let mix = null;
+      if (split) {
+        const P0 = mixParts(f.ast);
+        if (!P0) { if (ids(f.ast).length > 1) notes.add(`${f.label} is not a sum of parts (a + b + …): each buy takes the line as it stands`); }
+        else {
+          const parts = P0.map((pt) => ({ ...pt, v: evaluate(pt.node, env, G.length) }));
+          const neg = parts.find((pt) => pt.v.some((x, i) => i >= i0 && fin(v[i]) && !(fin(x) && x > 0)));
+          if (neg) notes.add(`${f.label}: its part ${neg.label} is not above zero all along (a short or a gap), so each buy takes the line as it stands`);
+          else mix = parts;
+        }
+      }
+      lines.push({ f, v, i0, mix });
+    }
+    if (!lines.length) throw new Error('No line to put money in: each one goes to zero or below, or has no values');
+    const c0 = Math.max(...lines.map((x) => x.i0)), G2 = G.slice(c0);
+    if (G2.length < 4) throw new Error('Fewer than four weeks in which every line has a value');
+    if (c0 > 1) notes.add(`The money goes in from ${dayLabel(G2[0])}, when every line has a value`);
+    const rbU = { m: [1, 'm'], q: [3, 'm'], y: [1, 'y'] }[rbKey], rb = rbU ? buySchedule(G2, 1, rbU[0], rbU[1], G2[0]) : null;
+    if (rb) rb[0] = 0;
+    const T = [], P = new Map();
+    let mixes = 0;
+    for (const x of lines) {
+      let key = x.f.label; for (let n = 2; P.has(key); n++) key = `${x.f.label} (${n})`;
+      let mix = null;
+      if (x.mix) {
+        const parts = x.mix.map((pt) => ({ ...pt, v: pt.v.slice(c0) })), asWritten = parts.every((pt) => pt.written > 0);
+        const raw = asWritten ? parts.map((pt) => pt.written) : parts.map((pt) => pt.v[0]), tot = raw.reduce((a, b) => a + b, 0);
+        mix = { parts, w: raw.map((r) => r / tot), rb, atBuy: rbKey === 'b' };
+        mixes++;
+        notes.add(`${key}: each buy split ${parts.map((pt, j) => `${(100 * mix.w[j]).toFixed(1)}% ${pt.label}`).join(' · ')} (${asWritten ? 'the weights as written' : 'the parts’ shares on the first week'}), ${REBAL[rbKey]}.`);
+      }
+      T.push(key); P.set(key, { sym: key, name: x.f.src, fx: { v: x.v.slice(c0), mix } });
+    }
+    notes.add('Money in the formula lines: each buy takes a line at its level that week, like units of an index (dollars ÷ the line). A line is a real holding when it is one — a ticker (total return, dividends inside) or a weighted sum of rebased tickers; a ratio or a company figure bought this way is a what-if.');
+    if (!split && lines.some((x) => mixParts(x.f.ast))) notes.add('Bought as it stands, a mix (a + b + …) is bought in the proportions its parts have drifted to; “Split each buy by the weights” buys them at the formula’s weights instead.');
+    const mode = mixes ? `each buy split by the mix’s weights, ${REBAL[rbKey].split(':')[0].replace(' to them', '')}` : 'each line bought as it stands, like an index';
+    return { G: G2, T, P, info: { mode, split: mixes > 0, rebal: rbKey } };
+  }
+
   /* ---------- the RRG formula (transition_rrg.rrg_states, rrg-company-view.js) ---------- */
   function ema(a, span) {
     const al = 2 / (span + 1), need = Math.min(span, 6), out = new Array(a.length).fill(null); let m = 0, c = 0;
@@ -479,7 +558,7 @@
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
     rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
-    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', sp: 'phone', spi: 'iPhone', spp: '999', spinf: 'pro', spir: '', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0', sphe: 'm', sphn: '1', spe: '', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '' };
+    goal: '', solve: 'rec', yrs: '', fi: '0', fsplit: 'line', frb: '0', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', sp: 'phone', spi: 'iPhone', spp: '999', spinf: 'pro', spir: '', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0', sphe: 'm', sphn: '1', spe: '', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
     ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'],
     ['sankey', 'Earnings flow'], ['cash', 'Where the cash went'], ['snowball', 'Dividend snowball'], ['timing', 'Timing'], ['spend', 'Spend or invest']];
@@ -1397,11 +1476,19 @@
     if (common > from + 10 * DAY && k === 'growth') { notes.add(`Starts ${dayLabel(common)}, when every ticker has prices`); from = common; }
     const to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(), ends.length ? Math.min(...ends) : Date.now());
     const warm = k === 'rrg' ? 130 * WEEK : k === 'momentum' ? (+st.lb + 2) * WEEK : 0;
-    const GW = weeklyGrid(iso(from - warm), iso(to)), G = GW.filter((g) => g >= from - 3 * DAY);
+    const GW = weeklyGrid(iso(from - warm), iso(to));
+    let G = GW.filter((g) => g >= from - 3 * DAY);
     if (G.length < 4) throw new Error('Fewer than four weeks in that range');
     out.grid = G;
     const cut = GW.length - G.length;
-    if (k === 'growth') {
+    // money put into the formula lines (st.fi = 1): each line becomes something to buy, run through the growth race's
+    // own plan (a lump sum, the same amount on a schedule, an end value to reach, cash, inflation, present value)
+    let fx = null;
+    if (k === 'formula' && st.fi === '1') {
+      fx = await formulaPlan(st, tree, G, notes);
+      G = fx.G; out.grid = G; out.kind = 'growth'; out.fx = fx.info;
+    }
+    if (k === 'growth' || fx) {
       // a lump sum on the first week, and (optionally) the same amount bought again on a schedule; or, with an end value
       // to reach, the lump sum or the amount each time that reaches it (worked back for each ticker: the value at the
       // end is linear in the money put in, so one run with $1 gives the answer)
@@ -1410,12 +1497,13 @@
       const rec = solve === 'rec' ? 1 : recIn;
       const lumpIn = solve ? Math.max(0, +st.amt || 0) : dca ? Math.max(0, +st.amt || 0) : Math.max(1, +st.amt || 10000);
       const nEv = Math.max(1, Math.round(+st.ri || 1)), unit = UNITS[st.ru] ? st.ru : 'm';
-      const buys1 = buySchedule(G, 1, nEv, unit, st.from ? Date.parse(st.from + 'T00:00:00Z') : G[0]);
+      const buys1 = buySchedule(G, 1, nEv, unit, st.from && !fx ? Date.parse(st.from + 'T00:00:00Z') : G[0]);
       const L = G.length - 1;
       // adjustments: a tax on dividends; a cash line at a fixed rate or the 3-month bill (and the dividends taken as cash
       // earning it); inflation as a line that keeps up with prices, or every value in dollars of the start
-      const tax = clamp(+st.dtax || 0, 0, 95) / 100, cashR = rateOf(st.cashr), inflR = rateOf(st.inflr);
-      const wantCash = st.cashl === '1' && !solve, wantInt = st.dint === '1' && st.div === 'split', wantInfl = (st.infl === 'line' || st.infl === 'real') && !solve;
+      const divMode = fx ? 'tr' : st.div;                     // formula lines hold their dividends already (QQQ = total return)
+      const tax = fx ? 0 : clamp(+st.dtax || 0, 0, 95) / 100, cashR = rateOf(st.cashr), inflR = rateOf(st.inflr);
+      const wantCash = st.cashl === '1' && !solve, wantInt = st.dint === '1' && divMode === 'split', wantInfl = (st.infl === 'line' || st.infl === 'real') && !solve;
       const Mc = ((wantCash || wantInt) && cashR == null) || (wantInfl && inflR == null) ? await macro() : null;
       let cashIdx = null, cpiIdx = null;
       if (wantCash || wantInt) {
@@ -1458,10 +1546,30 @@
       out.amt = lumpIn;
       let contrib = null, flows = null;
       const need = [];
-      for (const s of T) {
-        const p = P.get(s); if (!p) continue;
-        const tr = trOn(p, G), pr = priceOn(p, G), dv = divsOn(p, G);
-        let mode = st.div;
+      // a formula mix split by its weights: the parts bought at those weights, rebalanced on a schedule or never
+      const runMix = (mix, i0, lump, each) => {
+        const inflow = G.map((_, i) => (i < i0 ? 0 : (i === i0 ? lump : 0) + each * buys1[i]));
+        const n = mix.parts.length, u = new Array(n).fill(0), lastPx = new Array(n).fill(null), v = [], nav = [];
+        let fu = 0, navLast = null;                              // fund units: the value per unit moves with prices only
+        for (let i = 0; i < G.length; i++) {
+          if (i < i0) { v.push(null); nav.push(null); continue; }
+          const px = mix.parts.map((pt, j) => (fin(pt.v[i]) && pt.v[i] > 0 ? (lastPx[j] = pt.v[i]) : lastPx[j]));
+          if (px.some((x) => !fin(x))) { v.push(null); nav.push(null); continue; }
+          let val = u.reduce((a, x, j) => a + x * px[j], 0);
+          const nv = fu > 0 ? val / fu : navLast || 100, F = inflow[i];
+          if ((mix.rb && mix.rb[i] > 0) || (mix.atBuy && F > 0)) { const tot = val + F; for (let j = 0; j < n; j++) u[j] = tot * mix.w[j] / px[j]; }
+          else if (F) for (let j = 0; j < n; j++) u[j] += F * mix.w[j] / px[j];
+          fu += F / nv; navLast = nv;
+          v.push(u.reduce((a, x, j) => a + x * px[j], 0)); nav.push(nv);
+        }
+        const z = G.map(() => 0);
+        return { v, pv: v, cv: z, inflow, dc: z, pd: z, sh: G.map(() => null), known: -1, nav };
+      };
+      const TT = fx ? fx.T : T, PP = fx ? fx.P : P;
+      for (const s of TT) {
+        const p = PP.get(s); if (!p) continue;
+        const tr = p.fx ? p.fx.v : trOn(p, G), pr = p.fx ? null : priceOn(p, G), dv = p.fx ? null : divsOn(p, G);
+        let mode = divMode;
         if ((mode === 'price' || mode === 'split') && (!pr || !pr.some(fin))) { notes.add(`${s}: dividends are not on file yet for this ticker — shown with dividends reinvested (total return)`); mode = 'tr'; }
         let base = mode === 'tr' ? tr : pr;
         const i0 = base.findIndex(fin);
@@ -1472,8 +1580,9 @@
           else notes.add(`${s}: no price as traded on file at the start, so the tax is not taken off its dividends`);
         }
         let lump = lumpIn, each = rec;
+        const go = p.fx && p.fx.mix ? (a, b) => runMix(p.fx.mix, i0, a, b) : (a, b) => run(base, dvN, mode, i0, a, b, pr);
         if (solve) {
-          const endOf = (a, b) => { const r = run(base, dvN, mode, i0, a, b, pr).v[L]; return fin(r) ? r : 0; };
+          const endOf = (a, b) => { const r = go(a, b).v[L]; return fin(r) ? r : 0; };
           if (solve === 'lump') {
             const fromBuys = recIn > 0 ? endOf(0, recIn) : 0, perDollar = endOf(1, 0);
             if (!(perDollar > 0)) continue;
@@ -1486,11 +1595,11 @@
             if (fromLump >= goal) notes.add(`${s}: the money at the start alone ends above ${money(goal, 0)}, so no further buys are needed`);
           }
         }
-        const r = run(base, dvN, mode, i0, lump, each, pr);
+        const r = go(lump, each);
         let c = 0;
         const sc = r.inflow.map((x, i) => (i < i0 ? null : (c += x))), sf = r.inflow.map((x, i) => [G[i], -x]).filter(([, a]) => a);
         if (!contrib) { contrib = sc; flows = sf; }
-        const row = { key: s, label: s, name: p.name, v: r.v, price: mode === 'tr' ? null : r.pv, cash: mode === 'split' ? r.cv : null, mode, idx: base };
+        const row = { key: s, label: s, name: p.name, v: r.v, price: mode === 'tr' ? null : r.pv, cash: mode === 'split' ? r.cv : null, mode, idx: r.nav || base };
         // the distributions paid, in dollars as paid: in all, the last 52 weeks, and (reinvested) what the shares they
         // bought are worth at the end — the total-return value less the same money in the price alone
         if (dv && r.known >= 0) {
@@ -1512,7 +1621,7 @@
         if (wantCash && cashIdx) line('CASH', 'Cash', cashR != null ? `Cash at ${cashR}% a year` : Mc && Mc.exact ? 'Cash in 3-month Treasury bills' : 'Cash at the Fed funds rate', cashIdx, 'cash');
         if (st.infl === 'line' && cpiIdx) line('CPI', 'Inflation', inflR != null ? `Prices rising ${inflR}% a year` : 'Keeping up with consumer prices (CPI)', cpiIdx, 'infl');
       }
-      const md = { tr: 'dividends reinvested', price: 'price only (dividends left out)', split: 'price + dividends taken as cash' }[st.div]
+      const md = fx ? fx.info.mode : { tr: 'dividends reinvested', price: 'price only (dividends left out)', split: 'price + dividends taken as cash' }[st.div]
         + (tax ? ` after a ${Math.round(tax * 100)}% tax` : '') + (cashG ? ', earning the cash rate' : '');
       const names = out.series.filter((x) => !x.bench).map((x) => x.key).join(' vs ');
       const nb = Math.round(buys1.reduce((a, x) => a + x, 0));
@@ -1534,8 +1643,8 @@
         out.base = dca ? null : lumpIn; out.contrib = dca ? contrib : null; out.flows = flows;
         out.dca = dca ? { every, buys: nbR, put } : null;
       }
-      out.split = st.div === 'split' && out.series.some((x) => x.cash);
-      out.div = st.div;
+      out.split = divMode === 'split' && out.series.some((x) => x.cash);
+      out.div = divMode;
       const df = cpiIdx ? cpiIdx.map((x) => cpiIdx[i0b] / x) : null;   // a week's dollars in dollars of the start
       out.adj = { tax, cash: cashIdx ? { rate: cashR, src: cashR != null ? 'fixed' : Mc && Mc.exact ? 'bill' : 'ff' } : null,
         infl: cpiIdx ? { mode: st.infl, rate: inflR, src: inflR != null ? 'fixed' : Mc && Mc.exact ? 'cpi' : 'cpi-yoy', df, rise: cpiIdx[L] / cpiIdx[i0b] - 1 } : null,
@@ -1558,7 +1667,7 @@
       }
       if (cpiIdx && inflR == null && !(Mc && Mc.exact)) notes.add('Consumer prices are rebuilt from the year-on-year CPI rates month by month (approximate) until the CPI index itself is published.');
       if (cashIdx && cashR == null) notes.add(Mc && Mc.exact ? 'Cash earns the 3-month Treasury bill yield of each month (FRED DGS3MO), compounded weekly.' : 'Cash earns the Fed funds rate of each month (FRED FEDFUNDS), compounded weekly, until the 3-month bill history is published.');
-      if (tax) notes.add(`Dividends are counted after a ${Math.round(tax * 100)}% tax${st.div === 'tr' ? ': only the rest is reinvested (the total return is rebuilt from the price and the dividends)' : ''}.`);
+      if (tax) notes.add(`Dividends are counted after a ${Math.round(tax * 100)}% tax${divMode === 'tr' ? ': only the rest is reinvested (the total return is rebuilt from the price and the dividends)' : ''}.`);
       if ((dca || solve === 'rec') && unit === 'd') notes.add('Prices are weekly closes: buys on the trading days of a week all use that week\'s close');
     } else if (k === 'momentum') {
       const B = P.get(bench); if (!B) throw new Error('No prices for the benchmark ' + bench);
@@ -2688,7 +2797,7 @@
     const divTxt = (s) => (V.kind === 'growth' && s.inc && s.inc.total > 0 && s.inc.mode !== 'price' ? `${money(s.inc.total, 0)} dividends ${s.inc.mode === 'tr' ? 'reinvested' : 'taken as cash'}` : '');
     const divSub = (s) => { const t = divTxt(s); if (!t) return ''; const l = s.inc.last12; return `Paid ${t.replace(' dividends', ' in dividends,')}` + (fin(l) && l > 0 ? ` · ${money(l, 0)} in the last 12 months` : ''); };
     if (V.kind === 'growth' && V.goal) {                      // an end value to reach: the amount each ticker needed, smallest first
-      const g = V.goal, mode = V.split ? ' · price + dividends as cash' : st.div === 'price' ? ' · price only' : ' · dividends reinvested';
+      const g = V.goal, mode = V.fx ? ' · ' + V.fx.mode : V.split ? ' · price + dividends as cash' : st.div === 'price' ? ' · price only' : ' · dividends reinvested';
       V.final = V.series.map((s, k) => {
         const r = yrs >= 1 ? xirr(s.flows.concat([[G[L], s.v[L]]])) : null, amt = g.solve === 'lump' ? s.lump : s.each;
         return { k, name: s.label, label: s.label + (fin(r) ? ` · ${(100 * r).toFixed(1)}%/yr` : ''), value: s.need, change: `${money(s.put, 0)} put in`, up: true, irr: r, amt, v: -amt, sub: divSub(s), subTr: s.mode === 'tr', div: divTxt(s) };
@@ -2713,7 +2822,7 @@
       const mags = V.series.map((s) => Math.max(...s.v.filter(fin).map(Math.abs), 1e-12));
       V.panels = Math.max(...mags) / Math.min(...mags) > 8;
     }
-    const mode = V.split ? ' · price + dividends as cash' : st.div === 'price' ? ' · price only' : ' · dividends reinvested';
+    const mode = V.fx ? ' · ' + V.fx.mode : V.split ? ' · price + dividends as cash' : st.div === 'price' ? ' · price only' : ' · dividends reinvested';
     if (V.kind === 'growth' && V.dca) {
       V.endTitle = rows[0] ? `${rows[0].name} ${rows[0].value} from ${money(V.dca.put, 0)} put in` : '';
       V.endSub = `${V.dca.every} · ${V.dca.buys} buys · ${span}${mode}`;
@@ -2771,7 +2880,7 @@
         ...(anyDiv ? [['div', ({ tr: 'Dividends paid, reinvested', split: 'Dividends paid, as cash', price: 'Dividends left out' }[mode] || 'Dividends paid') + taxed, 'In dollars as paid: each payment is the shares then held × the amount per share' + (V.real ? ', then in dollars of the start' : '')],
           ['l12', 'Last 12 months', 'Dividends paid in the last 52 weeks, and that as a share of the money put in']] : []),
         ...(anyGrowth ? [['ig', 'Dividend income growth', 'A year, between the first and the last full calendar year of dividends paid']] : []),
-        ['dd', 'Worst drop', 'The largest fall from a high of the ' + (mode === 'tr' ? 'total-return' : 'price') + ' line'],
+        ['dd', 'Worst drop', V.fx ? 'The largest fall from a high of the line (a mix split by its weights: of the plan’s value per unit, which moves with prices, not with the money put in)' : 'The largest fall from a high of the ' + (mode === 'tr' ? 'total-return' : 'price') + ' line'],
         ['cy', 'Best · worst year', 'Full calendar years in the window'],
       ];
       const irrOf = (flows, v) => (flows && yrs >= 1 && fin(v) ? xirr(flows.concat([[G[L], v]])) : null);
@@ -3041,6 +3150,7 @@
     { name: 'Nvidia revenue', note: 'Quarter by quarter from its filings', s: { k: 'fund', t: 'NVDA', m: 'revenue', ttm: '0', style: 'columns', theme: 'bull' } },
     { name: 'Big Tech earnings race', note: 'Net earnings, trailing four quarters', s: { k: 'fund', t: 'AAPL,MSFT,GOOGL,AMZN,META,NVDA', m: 'ni', ttm: '1', style: 'bars', theme: 'clean' } },
     { name: 'Growth vs value ratio', note: 'IWF ÷ IWD and QQQ ÷ SPY, rebased', s: { k: 'formula', expr: 'Growth ÷ value: rebase(IWF/IWD)\nNasdaq ÷ S&P: rebase(QQQ/SPY)', from: '2010-01-01', style: 'line', theme: 'clean' } },
+    { name: '$500 a month into a mix', note: '80% QQQ, 20% gold, rebalanced yearly, vs QQQ alone', s: { k: 'formula', expr: 'QQQ 80 · gold 20: 0.8*rebase(QQQ)+0.2*rebase(GLD)\nQQQ alone: QQQ', fi: '1', amt: '0', rec: '500', ri: '1', ru: 'm', fsplit: 'w', frb: 'y', from: '2016-01-04', style: 'line', theme: 'bull' } },
     { name: '$500 a month: QQQ vs SPY', note: 'Bought every month for ten years', s: { k: 'growth', t: 'QQQ,SPY', from: '2016-01-04', amt: '0', rec: '500', ri: '1', ru: 'm', div: 'tr', style: 'line', theme: 'bull' } },
     { name: 'Dividend stocks, cash on the side', note: 'KO vs PEP vs JNJ: price + dividends', s: { k: 'growth', t: 'KO,PEP,JNJ', from: '2016-01-04', amt: '10000', div: 'split', style: 'line', theme: 'clean' } },
     { name: 'The most valuable companies', note: 'Top 10 by market value since 2010', s: { k: 'rank', rm: 'cap', top: '10', from: '2010-01-31', step: 'm', style: 'bars', theme: 'bull', dur: '45' } },
@@ -3121,7 +3231,7 @@
     if (root.FFAppearance?.get().video !== 'default' && root.FFAppearance?.videoTheme()) st.theme = 'appearance';
     const sel = (id, items, v) => `<select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
     app.innerHTML = `<div class="page-head"><div class="eyebrow"><a href="#chart">← Charts</a> · Videos</div><h1>Make a market video</h1>
-      <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks — a lump sum or the same amount bought every few days, weeks or months, with dividends reinvested, taken as cash on their own line, or left out, against cash and inflation — what spending costs against investing (a new iPhone every year or Apple stock, a car, a house or renting, a coffee a day), where a company's cash went, leaderboards of every company by market value, revenue, profit, P/E, P/B, volume or return, drawdowns, monthly-return heatmaps, the spread of every stock's year, RRG and momentum replays, companies' own figures and any formula. Animated in four looks and three shapes, at the length and pace you set, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
+      <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks — a lump sum or the same amount bought every few days, weeks or months, with dividends reinvested, taken as cash on their own line, or left out, against cash and inflation — what spending costs against investing (a new iPhone every year or Apple stock, a car, a house or renting, a coffee a day), where a company's cash went, leaderboards of every company by market value, revenue, profit, P/E, P/B, volume or return, drawdowns, monthly-return heatmaps, the spread of every stock's year, RRG and momentum replays, companies' own figures and any formula — or money put into a formula's lines, a mix such as 60% SPY and 40% gold bought by its weights every month and rebalanced. Animated in four looks and three shapes, at the length and pace you set, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
       <div class="st-tpl-bar"><span>Start from a template</span><span class="sp"></span><button class="btn small" id="st-tpl-all" type="button" aria-expanded="false" aria-controls="st-tpl">All ${TEMPLATES.length} ▾</button></div>
       <div class="st-tpl" id="st-tpl">${TEMPLATES.map((x, i) => `<button type="button" data-tpl="${i}"><b>${esc(x.name)}</b><span>${esc(x.note)}</span></button>`).join('')}</div>
       <div class="st-wrap"><div class="st-side" id="st-side"></div><div class="st-main">
@@ -3218,6 +3328,25 @@
       h += `<label for="st-spe">One-off costs — a line each: date, amount, what</label><textarea id="st-spe" spellcheck="false" placeholder="2021-06-15, 1200, New transmission">${esc(st.spe)}</textarea>`;
       return h + `<div class="st-help">The same money goes into the stocks on the same dates, dividends reinvested; money that comes back (a trade-in, rent saved) is taken out of them.</div>`;
     }
+    // a growth race's plan (also money in formula lines): an end value to reach, the sum at the start, the scheduled buys
+    function planHtml() {
+      const L = growthLabels(st);
+      return `<label for="st-goal">End value to reach ($, optional)</label><input class="input" id="st-goal" inputmode="numeric" placeholder="e.g. 1000000 — works out what it took" value="${+st.goal > 0 ? esc(st.goal) : ''}">`
+        + `<label for="st-solve">With an end value, work out</label>${sel('st-solve', [['rec', 'The amount each time (on the schedule below)'], ['lump', 'The amount at the start']], st.solve)}`
+        + `<label for="st-amt">${L.amt}</label><input class="input" id="st-amt" inputmode="numeric" value="${esc(st.amt)}">`
+        + `<label for="st-rec">${L.rec}</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="numeric" placeholder="$ each time" value="${+st.rec > 0 ? esc(st.rec) : ''}" aria-label="Amount each time"></div>`
+        + `<div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="${esc(st.ri)}" aria-label="Every how many"></div><div>${sel('st-ru', [['d', 'trading days'], ['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru)}</div></div>`
+        + `<div class="st-help" id="st-goal-help">${L.help}</div>`;
+    }
+    // adjustments: a tax on dividends (tickers only), cash, inflation, a discount rate for present values
+    function adjustHtml(divs) {
+      return `<h3>Adjust</h3>` + (divs ? `<label for="st-dtax">Tax on dividends (%)</label><input class="input" id="st-dtax" inputmode="decimal" value="${esc(st.dtax)}" placeholder="0 — before tax">` : '')
+        + `<div class="st-row"><div><label for="st-cashl">Compare with cash</label>${sel('st-cashl', [['0', 'No'], ['1', 'Yes: a cash line']], st.cashl)}</div><div><label for="st-cashr">Cash rate, %/yr</label><input class="input" id="st-cashr" inputmode="decimal" value="${esc(st.cashr)}" placeholder="T-bills, actual"></div></div>`
+        + (divs && st.div === 'split' ? `<label for="st-dint">Dividends taken as cash</label>${sel('st-dint', [['0', 'Kept as cash, no interest'], ['1', 'Earn interest at the cash rate']], st.dint)}` : '')
+        + `<div class="st-row"><div><label for="st-infl">Inflation</label>${sel('st-infl', [['none', 'Not adjusted'], ['line', 'A line keeping up with prices'], ['real', 'Every value after inflation']], st.infl)}</div><div><label for="st-inflr">Inflation, %/yr</label><input class="input" id="st-inflr" inputmode="decimal" value="${esc(st.inflr)}" placeholder="CPI, actual"></div></div>`
+        + `<label for="st-disc">Discount rate for present value, %/yr</label><input class="input" id="st-disc" inputmode="decimal" value="${esc(st.disc)}" placeholder="blank: none (shown in the results)">`
+        + `<div class="st-help">A blank rate uses history: the 3-month Treasury bill for cash, the consumer price index for inflation. Cash and inflation take the same money on the same dates, grown at that rate (its future value); after inflation, every value is in dollars of the start; present value discounts each end value back to the start.</div>`;
+    }
     function side() {
       const k = st.k, styles = STYLES[k];
       let h = `<h3>Video</h3><div class="st-pills">${KINDS.map(([v, l]) => `<button type="button" class="pill${v === k ? ' on' : ''}" data-kind="${v}">${esc(l)}</button>`).join('')}</div>`;
@@ -3249,7 +3378,8 @@
             sel('st-ru', [['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru) + '</div></div>';
         }
       }
-      else h += `<label for="st-expr">Formulas — one per line, “Label: expression”</label><textarea id="st-expr" spellcheck="false">${esc(st.expr)}</textarea><div class="st-help">Operators <code>+ − × ÷ ^</code> and <code>( )</code>; functions <code>log exp sqrt abs rebase(x) ma(x,n) ema(x,n) pct(x,n) chg(x,n) lag(x,n) min(a,b) max(a,b)</code>. Series: a ticker (<code>QQQ</code> = total return) or <code>QQQ.price</code>, <code>.div</code>, <code>.yield</code>, company figures <code>NVDA.revenue</code>, <code>.ni_ttm</code>, <code>.margin</code>… Example: <code>rebase(QQQ/SPY)</code>, <code>SCHD.yield*100</code>, <code>NVDA.ni_ttm/NVDA.revenue_ttm</code>.</div>`;
+      else h += `<label for="st-expr">Formulas — one per line, “Label: expression”</label><textarea id="st-expr" spellcheck="false">${esc(st.expr)}</textarea><div class="st-help">Operators <code>+ − × ÷ ^</code> and <code>( )</code>; functions <code>log exp sqrt abs rebase(x) ma(x,n) ema(x,n) pct(x,n) chg(x,n) lag(x,n) min(a,b) max(a,b)</code>. Series: a ticker (<code>QQQ</code> = total return) or <code>QQQ.price</code>, <code>.div</code>, <code>.yield</code>, company figures <code>NVDA.revenue</code>, <code>.ni_ttm</code>, <code>.margin</code>… Example: <code>rebase(QQQ/SPY)</code>, <code>SCHD.yield*100</code>, <code>NVDA.ni_ttm/NVDA.revenue_ttm</code>.</div>`
+        + `<label for="st-fi">Money in each line (a DCA calculator)</label>${sel('st-fi', [['0', 'None: draw the lines as they are'], ['1', 'A sum at the start and/or the same amount on a schedule']], st.fi)}`;
       if (k !== 'holdings') h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
       h += `<div class="st-row" style="margin-top:6px;align-items:center"><div class="st-pills" style="flex:2">${[['1y', 1], ['3y', 3], ['5y', 5], ['10y', 10], ['Max', 30]].map(([l, y]) => `<button type="button" class="pill" data-yrs="${y}">${l}</button>`).join('')}</div>`
         + `<div><input class="input" id="st-yrs" inputmode="decimal" placeholder="or N years" value="${+st.yrs > 0 ? esc(st.yrs) : ''}" aria-label="The last N years (any number, e.g. 7 or 2.5)"></div></div>`;
@@ -3270,25 +3400,21 @@
       }
       if (k === 'spend') h += spendSide();
       if (k === 'snowball') h += '<label for="st-scf">Dividend cash-flow chart</label>' + sel('st-scf', [['monthly', 'Monthly (trailing 24 months)'], ['annual', 'Annual (full history)']], st.scf);
+      if (k === 'formula' && st.fi === '1') {
+        h += `<h3>Money in the lines</h3>` + planHtml();
+        h += `<label for="st-fsplit">Each buy</label>${sel('st-fsplit', [['line', 'Takes the line as it stands (like units of an index)'], ['w', 'Is split by the weights of a mix (a + b + …)']], st.fsplit)}`;
+        if (st.fsplit === 'w') h += `<label for="st-frb">Back to the weights</label>${sel('st-frb', [['0', 'Never: the mix drifts with prices'], ['b', 'At each buy'], ['m', 'Every month'], ['q', 'Every quarter'], ['y', 'Every year']], st.frb)}`;
+        h += `<div class="st-help">Each line is bought at its level that week: a ticker is its total return (dividends inside), <code>0.6*rebase(SPY)+0.4*rebase(GLD)</code> is a 60/40 mix — split by its weights, each buy is 60% SPY and 40% GLD, and the holdings can be set back to 60/40 on a schedule. A line that goes to zero or below gets no money.</div>`;
+        h += `<label for="st-scale">Scale</label>${sel('st-scale', [['lin', 'Linear'], ['log', 'Logarithmic']], st.scale)}`;
+        h += adjustHtml(false);
+      }
       if (k === 'growth') {
-        const L = growthLabels(st);
-        h += `<label for="st-goal">End value to reach ($, optional)</label><input class="input" id="st-goal" inputmode="numeric" placeholder="e.g. 1000000 — works out what it took" value="${+st.goal > 0 ? esc(st.goal) : ''}">`
-          + `<label for="st-solve">With an end value, work out</label>${sel('st-solve', [['rec', 'The amount each time (on the schedule below)'], ['lump', 'The amount at the start']], st.solve)}`;
-        h += `<label for="st-amt">${L.amt}</label><input class="input" id="st-amt" inputmode="numeric" value="${esc(st.amt)}">`;
-        h += `<label for="st-rec">${L.rec}</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="numeric" placeholder="$ each time" value="${+st.rec > 0 ? esc(st.rec) : ''}" aria-label="Amount each time"></div>`
-          + `<div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="${esc(st.ri)}" aria-label="Every how many"></div><div>${sel('st-ru', [['d', 'trading days'], ['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru)}</div></div>`
-          + `<div class="st-help" id="st-goal-help">${L.help}</div>`;
+        h += planHtml();
         h += `<label for="st-div">Dividends</label>${sel('st-div', [['tr', 'Reinvested (total return)'], ['split', 'Taken as cash: their own line'], ['price', 'Left out (price only)']], st.div)}`;
         if (st.div === 'tr') h += `<label for="st-dinc">Dividends paid, in dollars as paid</label>${sel('st-dinc', [['label', 'On the labels and the end card'], ['panel', 'Also their own panel (line race)'], ['off', 'Not on the video (in the results only)']], st.dinc)}`;
         if (st.div === 'split' || (st.div === 'tr' && st.dinc === 'panel')) h += `<label for="st-dview">The dividends panel (line race) shows</label>${sel('st-dview', [['total', 'The running total'], ['year', 'Each calendar year, as bars']], st.dview)}`;
         h += `<label for="st-scale">Scale</label>${sel('st-scale', [['lin', 'Linear'], ['log', 'Logarithmic']], st.scale)}`;
-        // adjustments: a tax on dividends, cash, inflation, a discount rate for present values
-        h += `<h3>Adjust</h3><label for="st-dtax">Tax on dividends (%)</label><input class="input" id="st-dtax" inputmode="decimal" value="${esc(st.dtax)}" placeholder="0 — before tax">`
-          + `<div class="st-row"><div><label for="st-cashl">Compare with cash</label>${sel('st-cashl', [['0', 'No'], ['1', 'Yes: a cash line']], st.cashl)}</div><div><label for="st-cashr">Cash rate, %/yr</label><input class="input" id="st-cashr" inputmode="decimal" value="${esc(st.cashr)}" placeholder="T-bills, actual"></div></div>`
-          + (st.div === 'split' ? `<label for="st-dint">Dividends taken as cash</label>${sel('st-dint', [['0', 'Kept as cash, no interest'], ['1', 'Earn interest at the cash rate']], st.dint)}` : '')
-          + `<div class="st-row"><div><label for="st-infl">Inflation</label>${sel('st-infl', [['none', 'Not adjusted'], ['line', 'A line keeping up with prices'], ['real', 'Every value after inflation']], st.infl)}</div><div><label for="st-inflr">Inflation, %/yr</label><input class="input" id="st-inflr" inputmode="decimal" value="${esc(st.inflr)}" placeholder="CPI, actual"></div></div>`
-          + `<label for="st-disc">Discount rate for present value, %/yr</label><input class="input" id="st-disc" inputmode="decimal" value="${esc(st.disc)}" placeholder="blank: none (shown in the results)">`
-          + `<div class="st-help">A blank rate uses history: the 3-month Treasury bill for cash, the consumer price index for inflation. Cash and inflation take the same money on the same dates, grown at that rate (its future value); after inflation, every value is in dollars of the start; present value discounts each end value back to the start.</div>`;
+        h += adjustHtml(true);
       }
       if (k === 'snowball') h += `<label for="st-dtax">Tax on dividends (%)</label><input class="input" id="st-dtax" inputmode="decimal" value="${esc(st.dtax)}" placeholder="0 — before tax">`;
       if (k === 'rrg') h += `<div class="st-row"><div><label for="st-bench">Benchmark</label><input class="input" id="st-bench" value="${esc(st.bench)}"></div><div><label for="st-tail">Tail (weeks)</label>${sel('st-tail', [['5', '5'], ['8', '8'], ['10', '10'], ['13', '13'], ['26', '26']], st.tail)}</div></div><label for="st-n">RS window</label>${sel('st-n', [['10', '10 weeks'], ['14', '14 weeks'], ['26', '26 weeks']], st.n)}`;
@@ -3463,7 +3589,7 @@
         return;
       }
       if (key === 'sp' && SPEND[st.sp]) { Object.assign(st, SPEND[st.sp].s); st.title = ''; st.sub = ''; }
-      if (['rm', 'bx', 'by', 'sw', 'aw', 'hsrc', 'ssolve', 'sgoal', 'div', 'sp', 'sphab', 'spl', 'spinf', 'sphe'].includes(key)) side();
+      if (['rm', 'bx', 'by', 'sw', 'aw', 'hsrc', 'ssolve', 'sgoal', 'div', 'sp', 'sphab', 'spl', 'spinf', 'sphe', 'fi', 'fsplit'].includes(key)) side();
       rebuild();
     });
     const tplAll = (on) => { const g = $('#st-tpl'), b = $('#st-tpl-all'); g.classList.toggle('all', on); b.setAttribute('aria-expanded', String(on)); b.textContent = on ? 'Fewer ▴' : `All ${TEMPLATES.length} ▾`; };
@@ -3516,6 +3642,6 @@
     if (+st.yrs > 0) { const end = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(); st = Object.assign({}, st, { from: iso(end - (+st.yrs) * 365.25 * DAY) }); }
     const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, headAt, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, mixParts, figure, headAt, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

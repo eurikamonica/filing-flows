@@ -1,5 +1,71 @@
 # Changelog
 
+## Fair value: every fixed number beside what the market and the filings say it is today
+
+app/assumption_check.py reads, after every build, a market or data estimate for each number the valuation fixes in
+advance and compares them on each Fair value page (public/assumptions.json): the equity risk premium (4.5% fixed) against
+the implied premium of the 500 largest covered companies and their earnings yield less the real 10-year yield; terminal
+growth and the Gordon cap against the 10-year yield (the ceiling) and the breakeven inflation (the floor); the exit-
+multiple stage premium against the market's extra implied return for high-growth companies; the liquidation haircut
+against what distressed companies trade at; Graham's no-growth P/E against the P/E of companies not growing; working
+capital, the default tax rate, the terminal ROIC band, revenue per dollar of capital, the Blume beta weight, the WACC band,
+the half-life of peer multiples (their quarterly persistence, bias-corrected) and the 60-day filing lag against the
+covered companies' own figures; loss given default against the CDS convention; and the method choices with no market
+counterpart, each with why it is fixed. Each company's DCF is shown with each market number swapped in and with all of
+them together, and the appendix's assumptions carry today's estimate beside their basis. The fixed numbers stay fixed:
+a gap is a reason to look, not an automatic switch.
+
+## Fair value: every method against the share price, and the present value of growth in it
+
+Each method on the Fair value page now says what it means for the share price and for growth: its value per share
+against today's price (a new column on the football table), how much of that value is the present value of growth —
+the value less the no-growth value, today's earnings capitalized as if they never grew (NOPAT ÷ WACC − net debt; for
+banks and insurers net income ÷ the cost of equity) — and the revenue growth it requires: the constant growth for five
+years, then the terminal rate, at which the page's DCF (its margins, reinvestment and cost of capital) gives that value,
+the reverse DCF solved for the method's value instead of the price. Today's price gets the same split (the share of
+the price paid for growth, the growth it requires). A new section draws each value as the no-growth part and the growth
+part against the price, with a table; each method's appendix entry adds the same line.
+
+## Fair value: peers in tiers (broad, matched, selected, fitted), segments by business model, every peer listed and re-filterable
+
+A plain peer median has known blind spots: industry codes group companies by what they make, not how they earn (SIC 7389
+holds Visa, eBay, Uber and Accenture); it treats the company as an average peer, though faster-growing, higher-margin
+businesses earn higher multiples; it mixes stages (pre-profit with mature); and the list behind it was not published.
+app/peer_tiers.py adds, beside the broad median and its weighted version:
+- matched peers (tier 2): a window ladder on industry, stage, size, revenue growth and operating margin — tight (3-digit
+  SIC, the same stage, revenue ¼–4×, growth and margin within 10 points), medium (within 15, 1/10–10×), wide (2-digit
+  SIC, within 25, 1/30–30×) — the first with six peers; the page says which, and why a mega cap finds none;
+- selected comparable companies (tier 3) by business model, each with its reason, in config/peer-map.json (editable);
+- a fitted multiple: ln(multiple) on revenue growth (and, for EV/Sales, operating margin) across the broad peers,
+  ridge-shrunk, read at the company's own figures held inside the group's range (shown only when the fit explains a
+  tenth of the spread or more);
+- revenue segments mapped by business model (the company's override, then rules; a generic name such as "Services" is
+  priced like the company itself instead of as software): Apple's Services by digital-platform peers, Amazon's AWS by
+  cloud providers and its third-party seller services by marketplaces, Microsoft's server licensing no longer as hardware;
+  a sum of the parts at each business model's selected companies;
+- public/peers-list.json: every company's figures the comparisons use (SIC, stage, market value, EV, revenue, growth,
+  margin, trading value, the multiples, quarterly P/E and EV/Sales since 2022), and on each Fair value page an explorer
+  that re-filters them — industry level, stage, size, growth and margin windows, history window, weights, outlier trim —
+  recomputing the median and the value per share, with every peer left out listed with its reason;
+- the monthly ledger now freezes every tier's value and scores it at 3, 6 and 12 months (rank correlation of the
+  value-to-price gap with the return, and the direction hit rate); the page shows the track record. Every new tier is a
+  lens until it has been scored. The valuation guide explains each tier and the blind spots of peer methods.
+
+## Fair value: weighted peer multiples (size, trading and recency) beside the plain medians
+
+The peer methods (P/E, EV/EBITDA and EV/Sales vs peers, P/FFO vs REIT peers, and the sum of the parts) took the plain
+median of the narrowest SIC group: a tiny, thinly traded company counted as much as the industry leader, and only
+today's price was used. app/peer_weights.py adds a weighted version of each, beside the plain one: a peer's weight is
+the geometric mean of its share of the group's market value, revenue and trading value (the median daily close ×
+volume over 63 sessions, from the hub's prices), capped at 20%; each peer's P/E and EV/Sales count today and at every
+quarter since 2022 with a one-year half-life (EV/EBITDA and P/FFO: today only). The weighted 25th, 50th and 75th
+percentiles price the company as the plain ones do. On the live data Apple's Services segment moves from 4.9× (the
+plain median of 144 SIC 737 companies) to 8.8× EV/Sales (GOOGL, MSFT and META at the 20% cap), its hardware from 2.4×
+to 4.6×, and the sum of the parts from $91 to $170 a share. The page adds a table: the plain median, the median by each
+weight alone, all together, the weighted middle half, the effective number of peers and the largest weights; the sum
+of the parts gets weighted columns. The weighted rows are lenses (shown with their algebra in the appendix, not part
+of the stage-weighted value until the ledger has scored them); the valuation guide explains them.
+
 ## Highs, lows & ranges: at the lows (all-time, 52-week, 3-month) and in a sideways range (narrow or wide)
 
 app/regimes.py (built with the move odds after every US close, beside the highs; public/moves/lows.json, ranges.json

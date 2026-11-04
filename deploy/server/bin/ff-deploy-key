@@ -1,0 +1,94 @@
+#!/bin/bash
+# The deploy key: the SSH key GitHub Actions uses to upload the site. It belongs to the user "deploy" (no sudo, no
+# password) and may only run ff-deploy-gate (rsync into stage/, publish, status).
+#
+#   sudo ff-deploy-key new      make a new key pair (replaces the old one: the old key stops working at once)
+#   sudo ff-deploy-key show     print what goes into the repository's GitHub secrets
+#                               (DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, DEPLOY_HOST)
+#   sudo ff-deploy-key forget   delete the private key from this server once it is saved in GitHub
+#                               (the server never needs it; "new" makes another one when needed)
+set -euo pipefail
+
+CONF="${FF_CONF:-/etc/filing-flows/site.conf}"
+USER_NAME="${FF_DEPLOY_USER:-deploy}"
+KEY_DIR="${FF_KEY_DIR:-/root/.filing-flows}"
+KEY="$KEY_DIR/deploy_key"
+GATE="${FF_GATE:-/usr/local/bin/ff-deploy-gate}"
+
+conf_get() {
+  local v=""
+  [ -f "$CONF" ] && v=$(sed -n "s/^$1=//p" "$CONF" | tail -1 | sed 's/^"\(.*\)"$/\1/')
+  echo "${v:-${2:-}}"
+}
+
+if [ "$(id -u)" -ne 0 ]; then echo "请在命令前加 sudo / run with sudo" >&2; exit 1; fi
+
+home=$(getent passwd "$USER_NAME" | cut -d: -f6)
+[ -n "$home" ] || { echo "user $USER_NAME does not exist (run setup.sh first)" >&2; exit 1; }
+
+ipv4=$(conf_get IPV4 "$(ip -4 -o addr show scope global 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1)")
+ipv6=$(conf_get IPV6 "$(ip -6 -o addr show scope global 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1)")
+host="${FF_DEPLOY_HOST:-$ipv4}"
+
+new_key() {
+  install -d -m 700 "$KEY_DIR"
+  rm -f "$KEY" "$KEY.pub"
+  ssh-keygen -q -t ed25519 -N "" -C "github-actions-deploy@$(hostname)" -f "$KEY"
+  install -d -m 700 -o "$USER_NAME" -g "$USER_NAME" "$home/.ssh"
+  printf 'restrict,command="%s" %s\n' "$GATE" "$(cat "$KEY.pub")" > "$home/.ssh/authorized_keys"
+  chown "$USER_NAME:$USER_NAME" "$home/.ssh/authorized_keys"
+  chmod 600 "$home/.ssh/authorized_keys"
+  rm -f "$KEY.pub"
+}
+
+known_hosts() {
+  local names="$host" f
+  [ -n "$ipv6" ] && [ "$ipv6" != "$host" ] && names="$names,$ipv6"
+  for f in /etc/ssh/ssh_host_ed25519_key.pub /etc/ssh/ssh_host_ecdsa_key.pub; do
+    [ -f "$f" ] && echo "$names $(cut -d' ' -f1,2 "$f")"
+  done
+}
+
+show() {
+  if [ ! -f "$KEY" ]; then
+    echo "本机已经没有部署私钥（运行过 forget）。要重新生成：sudo ff-deploy-key new" >&2
+    exit 1
+  fi
+  cat <<EOF
+
+在 GitHub 仓库 → Settings → Secrets and variables → Actions → New repository secret，添加下面 3 个机密。
+每个机密：Name 填 === 后面的名字，Secret 填它下面的全部内容（包括 BEGIN / END 两行）。
+
+=== DEPLOY_SSH_KEY ===
+$(cat "$KEY")
+
+=== DEPLOY_KNOWN_HOSTS ===
+$(known_hosts)
+
+=== DEPLOY_HOST ===
+$host
+
+（部署用户名默认是 $USER_NAME，不用另外填。）
+EOF
+}
+
+case "${1:-show}" in
+  new)
+    new_key
+    echo "✔ 新的部署钥匙已生成；旧钥匙（如果有）已失效。下一步：sudo ff-deploy-key show"
+    ;;
+  show)
+    show
+    ;;
+  forget)
+    rm -f "$KEY"
+    echo "✔ 本机上的部署私钥已删除（GitHub 里保存的那一份照常使用）。"
+    ;;
+  known-hosts)
+    known_hosts
+    ;;
+  *)
+    sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+    exit 2
+    ;;
+esac

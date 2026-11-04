@@ -126,6 +126,17 @@ select vault.create_secret('<user>/<repo>', 'github_repo');
 select cron.schedule('filing-flows-scan', '*/10 * * * *', $$select public.github_dispatch('scan')$$);
 ```
 
+The Disclosure Hub's frequent collections (`disclosures.yml`) can run on the same clock. GitHub skips most of their
+schedules on busy days (on Nov 2, 2026 it started about 20 of some 200, and the insider and 8-K tabs went six hours
+without a run):
+
+```sql
+select cron.schedule('filing-flows-disclosures-light', '13,43 * * * *', $$select public.github_dispatch('disclosures-light')$$);
+select cron.schedule('filing-flows-disclosures-13f', '7,37 * * * *', $$select public.github_dispatch('disclosures-13f')$$);
+```
+
+(`disclosures-light`: insiders, 8-K, 13D / 13G, Form 144, short interest, Senate, news; `disclosures-13f`: the 13F managers.)
+
 Runs started this way show as *repository_dispatch* on the Actions page. Stop with
 `select cron.unschedule('filing-flows-scan');`. A run that is still busy when the next one is due simply makes the next
 one wait. Faster scans mostly help earnings releases (8-K), which are read straight from the press release; a 10-Q/10-K
@@ -139,13 +150,18 @@ Add its ticker to `config/starred.txt` (one per line) and commit. The next run b
 
 ### Your own domain and server
 
-GitHub Pages keeps running; your own server is added next to it.
+The site can also be served from your own server (any Ubuntu/Debian machine; set up and explained in
+[deploy/README.md](deploy/README.md), the owner's step-by-step list in Chinese in
+[deploy/OWNER-CHECKLIST.zh.md](deploy/OWNER-CHECKLIST.zh.md)). GitHub Actions still scans and builds; after each
+build the changed files go to the server with rsync and become live there in one switch (`deploy-server.yml`).
 
-1. Repository variable `SELF_HOST` = `true`: every scan also pushes the built site to the branch `site` (newest copy only).
-2. The server pulls that branch every few minutes and serves it as static files, e.g. with Caddy (automatic HTTPS):
-   `git clone --depth 1 --branch site https://github.com/<you>/<repo>.git /srv/filing-flows`, then a cron line
-   `*/5 * * * * cd /srv/filing-flows && git fetch -q --depth 1 origin site && git reset -q --hard FETCH_HEAD`.
-   The server needs no GitHub key: it only reads the public repository.
+1. On the server: `curl -fsSL https://raw.githubusercontent.com/<you>/<repo>/main/deploy/server/setup.sh | sudo bash`
+   (Caddy, firewall, automatic updates, the deploy user), then `sudo ff-deploy-key show`: repository secrets
+   `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and `DEPLOY_HOST`. From then on every scan and fast-lane run deploys to
+   both GitHub Pages and the server; `server-monitor.yml` checks both the site and the server every half hour.
+2. Point the domain's DNS at the server, then `sudo ff-site live` (Let's Encrypt) or `sudo ff-site origin`
+   (behind Cloudflare's proxy). Once GitHub Pages is turned off (Settings → Pages), set the repository variable
+   `PAGES_DEPLOY` = `off`.
 3. Repository variable `SITE_URL` = `https://your-domain/`: links in e-mails, X threads and the Android app use it.
    In Supabase (Authentication → URL Configuration) set the Site URL to it and add `https://your-domain/**` to the
    redirect URLs.

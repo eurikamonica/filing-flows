@@ -13,6 +13,10 @@ plus holdings-backfill.json: the summary row of every manager it finished (the c
 its next run, so the catalog, the holders index and the market views pick them up) and its own attempts / back-off.
 It never writes live.json or the catalog, so it can run beside the collector without either overwriting the other.
 
+Once every manager has a first reading (config holdings.since), the relay deepens the history by size: the managers
+whose latest reported value and position count match a tier of holdings.tiers (holdings13f/ranges.py) are read again
+from that tier's date, largest first. The index giants (thousands of positions a quarter) keep the universe's range.
+
     python app/backfill13f.py --data docs/data --minutes 33
 """
 import argparse
@@ -21,7 +25,9 @@ import gzip
 import json
 import os
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -31,9 +37,14 @@ from core import read_json, write_json, now  # noqa: E402
 from shards import compact_write, safe_path  # noqa: E402
 from holdings13f.build import filing_list, load_filing  # noqa: E402
 from holdings13f.core import resolve, compare  # noqa: E402
+from holdings13f.ranges import deep_ciks, size_of, target_since  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = 'holdings-backfill.json'
+
+
+PARSE_ERRORS = ('reconciliation failed', 'Invalid security identity', 'Unknown amendment type', 'Missing summary totals',
+                'No supported XML cover', 'Multiple cover documents')
 
 
 class Blocked(RuntimeError):
@@ -41,8 +52,9 @@ class Blocked(RuntimeError):
 
 
 class SecGet:
-    """SEC fetches at a fixed pace (one request every `interval` seconds across all hosts), with retries and back-off.
-    Nothing is stored on disk (the collector's Client keeps every raw response; a back-fill would fill the runner)."""
+    """SEC fetches at a fixed pace (one request every `interval` seconds across all hosts and threads: a manager's
+    filings are fetched a few at a time, FETCHERS of process), with retries and back-off. Nothing is stored on disk
+    (the collector's Client keeps every raw response; a back-fill would fill the runner)."""
 
     def __init__(self, interval=0.15, max_mb=160, timeout=60):
         ua = (os.environ.get('SEC_USER_AGENT') or '').strip()
@@ -50,21 +62,27 @@ class SecGet:
             raise SystemExit('Set SEC_USER_AGENT to the project name + a real contact e-mail (SEC requires it)')
         self.ua, self.interval, self.max_bytes, self.timeout = ua, interval, max_mb << 20, timeout
         self.last, self.calls, self.bytes = 0.0, 0, 0
+        self.lock = threading.Lock()
 
-    def get(self, url, immutable=False):
-        err = 'request failed'
-        for attempt in range(4):
+    def _pace(self):
+        with self.lock:                                  # the next start, `interval` after the last one, whichever thread
             wait = self.interval - (time.monotonic() - self.last)
             if wait > 0:
                 time.sleep(wait)
             self.last = time.monotonic()
+
+    def get(self, url, immutable=False):
+        err = 'request failed'
+        for attempt in range(4):
+            self._pace()
             try:
                 with urlopen(Request(url, headers={'User-Agent': self.ua, 'Accept': '*/*', 'Accept-Encoding': 'identity'}), timeout=self.timeout) as r:
                     body = r.read(self.max_bytes + 1)
                 if len(body) > self.max_bytes:
                     raise ValueError(f'response over {self.max_bytes >> 20} MB')
-                self.calls += 1
-                self.bytes += len(body)
+                with self.lock:
+                    self.calls += 1
+                    self.bytes += len(body)
                 return body
             except HTTPError as exc:
                 err = f'HTTP {exc.code}'
@@ -83,46 +101,98 @@ class SecGet:
         return json.loads(self.get(url))
 
 
-def pending(catalog, state, shard=None, now_iso=None):
+def pending(catalog, state, shard=None, now_iso=None, cfg=None):
     """Managers on SEC's 13F list that no run has processed (catalog 'processed' false, not finished here), largest
-    filing history and most recent filers first; managers that failed wait out their back-off."""
-    done = set(state.get('managers', {}))
+    filing history and most recent filers first; then, with the config, the managers read so far from a later date than
+    their size calls for (holdings.tiers, holdings13f/ranges.py), largest first — each row carries 'since', the date to
+    read from. Managers that failed wait out their back-off."""
+    done = state.get('managers', {})
     att = state.get('attempts', {})
     now_iso = now_iso or now()
-    rows = []
+    fresh, deeper = [], []
     for r in catalog:
-        if r.get('kind', 'holdings') != 'holdings' or r.get('processed'):
+        if r.get('kind', 'holdings') != 'holdings':
             continue
         c = str(int(r['cik']))
-        if c in done:
-            continue
         a = att.get(c, {})
         if a.get('retry_after') and a['retry_after'] > now_iso:
-            continue
+            # a deepening that failed on an old filing's page (strict before the gaps of `process`) is tried again at once
+            if not (cfg and (r.get('processed') or c in done) and int(a.get('fails') or 0) <= 2 and any(p in (a.get('error') or '') for p in PARSE_ERRORS)):
+                continue
         if shard and int(c) % shard[1] != shard[0]:
             continue
-        rows.append(r)
-    rows.sort(key=lambda r: (str(r.get('latest_filing') or ''), int(r.get('filing_count') or 0)), reverse=True)
-    return rows
+        if not r.get('processed') and c not in done:
+            fresh.append({**r, 'since': cfg['since'] if cfg else None})
+            continue
+        if not cfg:
+            continue
+        if (r.get('last_attempt') or '') > (dt.datetime.fromisoformat(now_iso) - dt.timedelta(hours=2)).isoformat():
+            continue                                         # the collector just refreshed it: not this hop (the two would write the same files)
+        known = done.get(c) or r                             # the relay's own summary row, else the catalog's range fields
+        current = known.get('since') or r.get('since') or cfg['since']   # a catalog row without the range: read under `since`
+        usd, n = size_of(known)
+        if usd is None or n is None:
+            usd, n = size_of(r)
+        target = target_since(cfg, c, usd, n)                # the watched funds need no size: watch_since
+        if usd is None or n is None:
+            usd = 0
+        if target < current:
+            deeper.append({**r, 'since': target, 'total_usd': usd})
+    fresh.sort(key=lambda r: (str(r.get('latest_filing') or ''), int(r.get('filing_count') or 0)), reverse=True)
+    watched = deep_ciks(cfg) if cfg else set()               # the watched funds first (the videos' and market views' names)
+    deeper.sort(key=lambda r: (str(int(r['cik'])) in watched, float(r.get('total_usd') or 0), str(r.get('latest_filing') or '')), reverse=True)
+    return fresh + deeper
 
 
-def process(sec, cik, label, since, as_of=None):
-    """One manager, exactly as holdings.collect_holdings builds it."""
+FETCHERS = 8            # filings of one manager fetched at a time (SecGet keeps the pace across them: ~6.7 requests a second; four reached 3.5)
+
+
+def process(sec, cik, label, since, as_of=None, strict_from=None, fetchers=FETCHERS):
+    """One manager, exactly as holdings.collect_holdings builds it. strict_from (the universe's `since`): a filing from
+    before it that cannot be read — an old cover page whose totals do not match its table — is a gap in the history
+    ('unreadable'), not a failed manager; a filing from strict_from on still fails the manager, as it always has.
+    The filings are fetched `fetchers` at a time (a history of fifty quarters is a hundred requests: one at a time,
+    SEC's latency left the pace at a third of the limit)."""
     name, metas = filing_list(sec, cik, since)
-    filings, notices = [], []
+    filings, notices, unreadable, todo = [], [], [], []
     for meta in metas:
         if as_of and meta['filed'] > as_of:
             continue
         if meta['form'].startswith('13F-NT'):
             notices.append(meta)
             continue
-        filings.append(load_filing(sec, meta))
+        todo.append(meta)
+
+    def fetch(meta):
+        try:
+            return load_filing(sec, meta)
+        except (ValueError, KeyError, TypeError) as exc:
+            return exc
+        except RuntimeError as exc:                      # a document SEC no longer serves (HTTP 404) can be a gap too;
+            if isinstance(exc, Blocked) or not str(exc).startswith('HTTP 4'):   # SEC's block and network trouble stop the manager
+                raise
+            return exc
+    if fetchers > 1 and len(todo) > 1:
+        with ThreadPoolExecutor(max_workers=fetchers) as pool:
+            got = list(pool.map(fetch, todo))        # in the filings' order; Blocked and network errors propagate
+    else:
+        got = [fetch(m) for m in todo]
+    for meta, f in zip(todo, got):
+        if isinstance(f, Exception):
+            if not strict_from or meta['filed'] >= strict_from:
+                raise f
+            unreadable.append({k: meta.get(k) for k in ('accession', 'form', 'filed')} | {'error': str(f)[:200]})
+        else:
+            filings.append(f)
     snapshots = resolve(filings, as_of)
     for i, s in enumerate(snapshots):
         s['changes'] = compare(snapshots[i - 1], s) if i else []
         s['baseline_period'] = snapshots[i - 1]['period'] if i else None
-    return {'cik': str(int(cik)), 'name': name, 'label': label or name, 'since': since, 'as_of': as_of, 'filings': filings,
-            'snapshots': snapshots, 'notices': notices, 'last_success': now(), 'stale': False}
+    row = {'cik': str(int(cik)), 'name': name, 'label': label or name, 'since': since, 'as_of': as_of, 'filings': filings,
+           'snapshots': snapshots, 'notices': notices, 'last_success': now(), 'stale': False}
+    if unreadable:
+        row['unreadable'] = unreadable
+    return row
 
 
 def write_manager(root, row):
@@ -160,7 +230,7 @@ def run(data, cfg, minutes=33.0, interval=0.15, shard=None, sec=None, limit=None
         state = {'since': since, 'as_of': as_of, 'managers': {}, 'attempts': {}, 'runs': []}
     state.setdefault('managers', {})
     state.setdefault('attempts', {})
-    todo = pending(catalog, state, shard)
+    todo = pending(catalog, state, shard, cfg=cfg)
     sec = sec or SecGet(interval)
     done = errors = 0
     blocked = None
@@ -171,7 +241,7 @@ def run(data, cfg, minutes=33.0, interval=0.15, shard=None, sec=None, limit=None
         a = state['attempts'].setdefault(cik, {})
         a['last_attempt'] = now()
         try:
-            row = process(sec, cik, r.get('name'), since, as_of)
+            row = process(sec, cik, r.get('name'), r.get('since') or since, as_of, strict_from=since)
             state['managers'][cik] = write_manager(data, row)
             a.update(last_success=row['last_success'], error=None, fails=0, retry_after=None)
             done += 1
@@ -185,7 +255,7 @@ def run(data, cfg, minutes=33.0, interval=0.15, shard=None, sec=None, limit=None
                 break
         if (done + errors) % 25 == 0:
             write_json(data / STATE, state)
-    left = len(pending(catalog, state, shard))
+    left = len(pending(catalog, state, shard, cfg=cfg))
     stats = {'at': now(), 'minutes': round((time.time() - t0) / 60, 1), 'managers': done, 'errors': errors, 'requests': sec.calls,
              'megabytes': round(sec.bytes / 1e6, 1), 'remaining': left, 'blocked': blocked}
     state['runs'] = (state.get('runs') or [])[-49:] + [stats]
