@@ -613,7 +613,7 @@ def build(public, ledger=None, today=None, verbose=True, force=False):
         log(f'rrg hybrid: week ending {days[t]} already built — kept')
         return None
     doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'version': VERSION, 'asof': str(days[t]),
-           'horizons': list(HORIZONS), 'test_from': TEST_FROM, 'blocks': {b: {'name': BLOCK_NAMES[b], 'inputs': [FEATURE_NAMES[k] for k in BLOCKS[b]]} for b in BLOCKS},
+           'volume_week': str(days[max(t - VOLUME_LAG, 0)]), 'horizons': list(HORIZONS), 'test_from': TEST_FROM, 'blocks': {b: {'name': BLOCK_NAMES[b], 'inputs': [FEATURE_NAMES[k] for k in BLOCKS[b]]} for b in BLOCKS},
            'classic_inputs': [FEATURE_NAMES[k] for k in CLASSIC], 'costs_bp': [[lim, bp] for lim, bp in COST_TIERS], 'panels': {},
            'note': __doc__.split('\n\n')[0]}
     kept = {}

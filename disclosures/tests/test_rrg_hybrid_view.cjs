@@ -17,7 +17,7 @@ const sc = (h) => ({ h, ic: { hybrid: { ic: 0.0665, t: 3.15, pos: 0.7, weeks: 59
   best_minus_worst_classic: { mean: 0.0126 }, top_fifth_vs_spy: { mean: -0.0116, share_beating: 0.473 }, deciles: Array.from({ length: 10 }, (_, k) => ({ decile: k + 1, rel: -0.09 + k * 0.009, beat: 0.41 + k * 0.007 })),
   beat_spy: { brier_skill: 0.0028, base_rate: 0.459, calibration: [] }, range80: 0.797 });
 const d = {
-  asof: '2026-10-30', test_from: 2012, costs_bp: [[500e6, 5], [50e6, 15], [5e6, 40], [0, 100]],
+  asof: '2026-10-30', volume_week: '2026-10-23', test_from: 2012, costs_bp: [[500e6, 5], [50e6, 15], [5e6, 40], [0, 100]],
   panels: {
     funds: { lines: 29, now: 3, rows: [row('XLK', 101.2, 100.8, 0.012, 1.1), row('XLE', 98.9, 101.1, -0.01, 2.4), row('XLU', 99.5, 98.7, 0.002, 0.5)],
       scores: { 13: sc(13) }, weights_now: { 13: { rrg: 0.21, momentum: 0.23, volume: 0.2 } }, spy_drift_week: 0.0025, describe: [] },
@@ -33,6 +33,7 @@ const h = V._html();
 ok(/<svg/.test(h) && /XLK/.test(h) && /Leading/.test(h) && /Improving/.test(h), 'the hybrid chart and its quadrants');
 ok(/0\.028/.test(h) && /0\.067/.test(h), 'the classic and hybrid rank correlations in the lead text');
 ok(/stroke="#111"/.test(h), 'a fund with a volume spike is ringed');
+ok(/Volume, week ending 2026-10-23/.test(h) && /volume in the week ending 2026-10-23: 2\.4×/.test(h), 'the volume column and the ring name their week');
 ok(/\$94\.20 – \$112\.10/.test(h), 'the 13-week price range');
 ok(/Best − worst fifth/.test(h) && /beat SPY/.test(h), 'the portfolio scores');
 ok(/Improving on ≥ 2× volume/.test(h) && /−6\.74%/.test(h), 'the volume findings');

@@ -49,7 +49,7 @@ function chart(rows,mode){
   if(pts.length>1)s+=`<polyline points="${pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${c}" stroke-width="1.4" opacity="0.6"/>`;
   const last=pts[pts.length-1];if(!last)return;
   const spike=r.volume_x!=null&&r.volume_x>=2;
-  s+=`<circle cx="${last[0]}" cy="${last[1]}" r="5" fill="${c}"${spike?' stroke="#111" stroke-width="2"':''}><title>${e_(r.id)} — ${e_(r.name)}: 13-week ${rel((r.h13||{}).rel)} vs SPY, P(beat) ${pct((r.h13||{}).p)}${spike?' · last full week\'s volume '+f_(r.volume_x,1)+'× its 13-week average':''}</title></circle>`;
+  s+=`<circle cx="${last[0]}" cy="${last[1]}" r="5" fill="${c}"${spike?' stroke="#111" stroke-width="2"':''}><title>${e_(r.id)} — ${e_(r.name)}: 13-week ${rel((r.h13||{}).rel)} vs SPY, P(beat) ${pct((r.h13||{}).p)}${spike?' · volume in the '+vweek()+': '+f_(r.volume_x,1)+'× its 13-week average':''}</title></circle>`;
   s+=`<text x="${last[0]+7}" y="${last[1]+4}" font-size="11" fill="${c}">${e_(r.id)}</text>`;
  });
  return s+'</svg>';
@@ -62,7 +62,8 @@ function rowCells(r){
   r.volume_x==null?'—':(r.volume_x>=2?`<b>${f_(r.volume_x,1)}×</b>`:r.volume_x<=0.6?`${f_(r.volume_x,1)}× (quiet)`:`${f_(r.volume_x,1)}×`),
   m?`${e_(HB[m[0]]||m[0])} ${rel(m[1],1)}`:'—'];
 }
-const ROW_HEAD=['Line','Hybrid','Classic','13 weeks vs SPY','P(beat), 13w','13-week price, 80%','4 weeks vs SPY','P(beat), 4w','P(beat), 1w','Volume, last full week','Biggest driver (13w)'];
+const vweek=()=>H.d&&H.d.volume_week?`week ending ${e_(H.d.volume_week)}`:'last full week';   // volume runs a week behind the prices, as in the tests
+const rowHead=()=>['Line','Hybrid','Classic','13 weeks vs SPY','P(beat), 13w','13-week price, 80%','4 weeks vs SPY','P(beat), 4w','P(beat), 1w',`Volume, ${vweek()}`,'Biggest driver (13w)'];
 
 function scoreTable(P){
  const S=P.scores||{};
@@ -98,17 +99,17 @@ function html(){
  const fs=((F.scores||{})['13']||{}).ic||{},cs=((C.scores||{})['13']||{}).ic||{};
  let out=`<div class="explain">The classic RRG shows where a line stands against SPY and which way it is turning; it was not built to say which lines will beat SPY next — and tested on that since ${d.test_from}, it barely does: ranking companies by it gave a rank correlation with the next 13 weeks of ${f_((cs.classic||{}).ic,3)} (funds ${f_((fs.classic||{}).ic,3)}). The hybrid blends the RRG with momentum, reversal, volatility and volume, each block weighted by how well it ranked the lines in earlier years: ${f_((cs.hybrid||{}).ic,3)} for companies (funds ${f_((fs.hybrid||{}).ic,3)}). Every number below is out of sample, each year predicted by fits on the years before it, after trading costs. History and models, not investment advice.</div>`;
  out+=`<div class="toolbar"><div class="field"><label for="hyb-mode">Chart</label><select id="hyb-mode"><option value="hybrid"${H.mode==='hybrid'?' selected':''}>Hybrid RRG (forecasts)</option><option value="classic"${H.mode==='classic'?' selected':''}>Classic RRG (14 weeks)</option></select></div></div>`;
- out+=sec('Sector and style funds',`week ending ${e_(d.asof)} · tails: 8 weeks · ringed: last full week's volume at least twice its 13-week average`);
+ out+=sec('Sector and style funds',`week ending ${e_(d.asof)} · tails: 8 weeks · ringed: volume in the ${vweek()} at least twice its 13-week average`);
  out+=chart(F.rows||[],H.mode);
- out+=tbl(ROW_HEAD,(F.rows||[]).slice().sort((a,b)=>((b.h13||{}).rel||-9)-((a.h13||{}).rel||-9)).map(rowCells));
- out+=note(`Price ranges add SPY's average weekly return of the last ten years (${spct(F.spy_drift_week,2)} a week) to the relative forecast; the market's own direction is not forecast here. "Biggest driver": the block contributing most to the 13-week forecast. Hybrid quadrants read as forecasts: Leading — both the quarter and the month ahead of the funds' average; Weakening — the quarter ahead, the month behind; Improving — the month ahead, the quarter behind.`);
+ out+=tbl(rowHead(),(F.rows||[]).slice().sort((a,b)=>((b.h13||{}).rel||-9)-((a.h13||{}).rel||-9)).map(rowCells));
+ out+=note(`Price ranges add SPY's average weekly return of the last ten years (${spct(F.spy_drift_week,2)} a week) to the relative forecast; the market's own direction is not forecast here. "Biggest driver": the block contributing most to the 13-week forecast. Volume is read a week behind the prices, as in the tests. Hybrid quadrants read as forecasts: Leading — both the quarter and the month ahead of the funds' average; Weakening — the quarter ahead, the month behind; Improving — the month ahead, the quarter behind.`);
  out+=sec('Companies',`${f_(C.now)} liquid companies this week · the 25 best and worst by the 13-week forecast, or type a ticker`);
  out+=`<div class="toolbar"><div class="field wide"><label for="hyb-q">Ticker</label><input id="hyb-q" value="${e_(H.q)}" placeholder="e.g. NVDA, BAC · Enter"></div></div>`;
  let crow=C.rows||[];
  if(H.q){loadCo();const qs=H.q.toUpperCase().split(/[\s,]+/).filter(Boolean);
   if(H.co)crow=(H.co.rows||[]).filter(r=>qs.includes(String(r.id).toUpperCase()));
   else if(H.coErr)out+=note('The full company list could not load ('+e_(H.coErr)+').');else out+=note('Loading every company…')}
- out+=crow.length?tbl(ROW_HEAD,crow.map(rowCells)):note(H.q?'No liquid company with that ticker this week (≥ $3 and ≥ $10M traded a week).':'');
+ out+=crow.length?tbl(rowHead(),crow.map(rowCells)):note(H.q?'No liquid company with that ticker this week (≥ $3 and ≥ $10M traded a week).':'');
  out+=sec('How it has done','out of sample from '+d.test_from+', after trading costs');
  for(const [k,P,lab] of [['funds',F,'Funds'],['companies',C,'Companies']]){
   if(!P.scores)continue;

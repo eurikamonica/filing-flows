@@ -78,6 +78,7 @@ class TestBuild(Built):
     def test_files(self):
         d = json.loads((self.pub / 'rrg-hybrid.json').read_text())
         self.assertEqual(d['asof'], self.days[-1].isoformat())
+        self.assertEqual(d['volume_week'], self.days[-1 - HY.VOLUME_LAG].isoformat())     # volume runs a week behind
         self.assertEqual(set(d['panels']), {'funds', 'companies'})
         co = json.loads((self.pub / 'rrg-hybrid-companies.json').read_text())
         self.assertGreater(len(co['rows']), len(d['panels']['companies']['rows']) - 1)
