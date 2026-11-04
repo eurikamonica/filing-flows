@@ -493,15 +493,25 @@ function rrglLayer(o,f,sx,sy){
     [fmt(st.x50,2)+' / '+fmt(st.y50,2),'median RS-Ratio / RS-Momentum (the dot sits on the path smoothed over three steps)'],
     ...(act!=null?[[rrglMoney(l.e,act)+(act>=st.p10&&act<=st.p90?' · inside the 80% range':' · outside the 80% range'),'what happened']]:[])];
    s+=`<g data-tip="${tip(rows)}" class="mk-hit" tabindex="-1"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="9" fill="transparent"/><circle class="rrgl-mark" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${last?4.2:2.9}" style="fill:${l.col}"/></g>`;
-   if(one||last)labels.push({x:p[0],y:p[1],pri:last?0:j,t:(one?'+'+j+U+' ':'')+rrgDay(st.date).replace(/, \d{4}$/,'')+' · '+rrglMoney(l.e,st.p50)+(one&&last?' (80%: '+rrglMoney(l.e,st.p10)+'–'+rrglMoney(l.e,st.p90)+')':''),col:l.col});
+   if(one||last){const t=(one?'+'+j+U+' ':'')+rrgDay(st.date).replace(/, \d{4}$/,'')+' · '+rrglMoney(l.e,st.p50);   // t2: the 80% range on a second line when one line does not fit
+    labels.push({x:p[0],y:p[1],pri:last?0:j,t,t2:one&&last?'80%: '+rrglMoney(l.e,st.p10)+'–'+rrglMoney(l.e,st.p90):'',col:l.col})}
   }
  }
- const boxes=[];
+ const boxes=[],D=o.dom||{x:[-1e9,1e9],y:[-1e9,1e9]};
+ // inside the plot (the 80% range of the last mark used to run past the right edge on a phone), clear of the other labels
+ const X0=Math.min(sx(D.x[0]),sx(D.x[1]))-6,X1=Math.max(sx(D.x[0]),sx(D.x[1]))+16,Y0=Math.min(sy(D.y[0]),sy(D.y[1]))-4,Y1=Math.max(sy(D.y[0]),sy(D.y[1]))+12;
+ const fits=r=>r[0]>=X0&&r[2]<=X1&&r[1]>=Y0&&r[3]<=Y1,free=r=>!boxes.some(q=>r[0]<q[2]&&r[2]>q[0]&&r[1]<q[3]&&r[3]>q[1]);
  labels.sort((a,b)=>a.pri-b.pri);                                  // the last mark (its price range) placed first, then +1, +2 …
- for(const b of labels){const w=b.t.length*6.2;                  // above right, below right, above left, below left: the first free spot
-  const at=[[b.x+7,b.y-7,'start'],[b.x+7,b.y+15,'start'],[b.x-7,b.y-7,'end'],[b.x-7,b.y+15,'end']].map(([x,y,a])=>({x,y,a,r:a==='start'?[x,y-10,x+w,y+3]:[x-w,y-10,x,y+3]}));
-  const c=at.find(p=>!boxes.some(q=>p.r[0]<q[2]&&p.r[2]>q[0]&&p.r[1]<q[3]&&p.r[3]>q[1]));if(!c)continue;boxes.push(c.r);
-  s+=`<text class="mk-label mk-halo rrgl-label" x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.a}" style="fill:${b.col}">${esc(b.t)}</text>`}
+ for(const b of labels){
+  // the label on one line (its range after it), else on two lines; above right, below right, above left, below left
+  const forms=b.t2?[[b.t+' ('+b.t2+')'],[b.t,b.t2]]:[[b.t]];
+  let c=null;
+  for(const L of forms){const w=Math.max(...L.map(t=>t.length))*6.2,h=13*L.length;
+   c=[[b.x+7,b.y-7-13*(L.length-1),'start'],[b.x+7,b.y+15,'start'],[b.x-7,b.y-7-13*(L.length-1),'end'],[b.x-7,b.y+15,'end']]
+    .map(([x,y,a])=>({x,y,a,L,r:a==='start'?[x,y-10,x+w,y-10+h]:[x-w,y-10,x,y-10+h]})).find(p=>fits(p.r)&&free(p.r));
+   if(c)break}
+  if(!c)continue;boxes.push(c.r);
+  s+=`<text class="mk-label mk-halo rrgl-label" x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.a}" style="fill:${b.col}">${c.L.map((t,i)=>i?`<tspan x="${c.x.toFixed(1)}" dy="13">${esc(t)}</tspan>`:esc(t)).join('')}</text>`}
  return s;
 }
 // the server's research for a frequency: weekly (rotation history) or daily (move odds)
