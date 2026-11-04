@@ -88,7 +88,9 @@ def sig(x, n=6):
 def weekly_rows(days, add_volume=True):
     """[(date, close, volume or None[, close as traded])] in any order → [[friday, the week's last close, its volume[,
     its last close as traded]]] by week. Daily rows add up their volume; weekly bars (add_volume=False) already hold the
-    week's, and a second bar for the same week (Yahoo's latest day of an unfinished week) replaces it."""
+    week's, and a second bar for the same week (Yahoo's latest day of an unfinished week) gives the latest close but not
+    the volume: the week's bar keeps the larger of the two (it used to take the day's, so a file's newest week showed
+    about a fifth of its volume until the next refresh)."""
     weeks = {}
     for row in sorted(days, key=lambda r: r[0]):
         d, c, v = row[:3]
@@ -97,7 +99,7 @@ def weekly_rows(days, add_volume=True):
             continue
         k = friday(d).isoformat()
         w = weeks.get(k)
-        weeks[k] = [k, c, ((w[2] if w else 0) + (v or 0)) if add_volume else (v or (w[2] if w else 0)),
+        weeks[k] = [k, c, ((w[2] if w else 0) + (v or 0)) if add_volume else max(v or 0, w[2] if w else 0),
                     p if p is not None and math.isfinite(p) and p > 0 else None]
     return [[k, sig(c), int(v)] + ([sig(p)] if p is not None else []) for k, c, v, p in (weeks[k] for k in sorted(weeks))]
 

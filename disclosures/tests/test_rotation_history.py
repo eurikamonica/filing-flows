@@ -52,7 +52,8 @@ class Weeks(unittest.TestCase):
         self.assertEqual(len(rows), 10)
         self.assertEqual(rows[0][0], '2010-01-08')
         self.assertAlmostEqual(rows[0][1], 50 * 0.98, places=3)
-        self.assertEqual(rows[-1][2], 5)                  # the unfinished week's latest bar replaces it, volume not added
+        self.assertEqual(rows[-1][2], 1_000_000 + 1000 * 9)   # the unfinished week's latest day gives the close, the week keeps its volume
+        self.assertAlmostEqual(rows[-1][1], 50 * 0.98 * math.exp(0.002 * 9 + 0.08 * math.sin(2 * math.pi * 9 / 40)) * 1.01, places=2)
         with self.assertRaises(ValueError):
             RH.parse_yahoo({'chart': {'result': None, 'error': {'description': 'No data found'}}})
         quarterly = yahoo_payload(40, extra_day=False)
