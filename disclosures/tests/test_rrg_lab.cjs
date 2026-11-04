@@ -52,6 +52,48 @@ for (const fq of ['w', 'm', 'd']) {
   ok(L.forecast({ ...calc, c: null }, M - 1, 'w') === null, 'no closes: no path');
 }
 
+// 3b. the frozen forecast: made at one week, never revised, scored as its weeks pass — and nothing after the freeze in it
+{
+  const M = 600, B = series(M, (i) => 300 * Math.exp(0.0004 * i + 0.01 * Math.sin(i / 5))), Cl = series(M, (i) => B[i] * 0.5 * Math.exp(0.05 * Math.sin(i / 9) + 0.02 * Math.cos(i / 2.7)));
+  const r = Cl.map((v, i) => 100 * v / B[i]), S = L.states(r, 4, 14, 52, 26), calc = { ...S, rs: r, c: Cl, b: B };
+  const k0 = M - 40, F = L.forecast(calc, k0, 'w', { keep: true });
+  ok(F.steps.every((st) => st.cs && st.cs.length === F.n), 'keep: the replayed returns of every step');
+  // point in time: the same forecast from closes cut at the freeze (later weeks gone) — the path cannot use what came after
+  const cut = (a) => a.map((v, i) => (i <= k0 ? v : NaN)), rc = cut(r), Sc = L.states(rc, 4, 14, 52, 26);
+  const Fc = L.forecast({ ...Sc, rs: rc, c: cut(Cl), b: cut(B) }, k0, 'w');
+  ok(F.steps.every((st, i) => Math.abs(st.p50 - Fc.steps[i].p50) < 1e-9 && Math.abs(st.x50 - Fc.steps[i].x50) < 1e-9 && Math.abs(st.y50 - Fc.steps[i].y50) < 1e-9), 'the frozen path is the same without the weeks after the freeze');
+  const Sco = L.score(calc, F);
+  ok(Sco.length === 13 && Sco.every((x) => x && x.t === k0 + x.j), 'every step scored on its own week');
+  ok(Sco.every((x) => x.pit >= 0 && x.pit <= 1 && x.in50 === (x.c >= F.steps[x.j - 1].p25 && x.c <= F.steps[x.j - 1].p75)), 'the percentile and the 50% range');
+  ok(Sco.every((x) => (x.in50 ? x.in80 : true) && x.q === L.quad(calc.x[x.t], calc.y[x.t]) && Math.abs(x.naive - (Cl[x.t] / Cl[k0] - 1)) < 1e-12), 'the 80% range holds the 50%, the quadrant reached, the error of no change');
+  // a close placed on the median of the replays sits at the 50th percentile
+  const med = Cl.slice(); med[k0 + 1] = F.steps[0].p50;
+  near(L.score({ ...calc, c: med }, F)[0].pit, 0.5, 'the median close: the 50th percentile', 1 / F.n);
+  ok(L.score({ ...calc, c: cut(Cl), x: cut(calc.x), y: cut(calc.y) }, F).every((x) => x === null), 'no week passed: nothing scored');
+  // the backtest: every origin, the tally per horizon; the newest origins have only their first weeks passed
+  const ks = L.btOrigins(calc);
+  ok(ks.length > 300 && ks[ks.length - 1] === M - 2 && ks.every((k, i) => !i || k > ks[i - 1]), 'origins: every week up to the one before the last');
+  ok(L.btOrigins(calc, { every: 5 }).every((k) => (M - 2 - k) % 5 === 0) && L.btOrigins(calc, { max: 50 }).length === 50, 'thinned and capped from the newest');
+  const acc = L.btNew([1, 4, 13]);
+  for (const k of ks) L.btAdd(acc, calc, k, 'w');
+  const R = L.btSummary(acc);
+  ok(R[0].n > R[2].n && R[0].n - R[2].n === 12, 'the last 12 origins have no +13-week outcome yet');
+  ok(R.every((x) => x.cov50 <= x.cov80 && x.cov80 <= 1 && Math.abs(x.pit.reduce((a, b) => a + b, 0) - 1) < 1e-9), 'coverage in order, the PIT histogram adds to 1');
+  ok(R.every((x) => x.indep === Math.round(x.n / x.h) && x.base > 0 && x.base <= 1 && x.top >= 0 && x.top <= 1), 'independent outcomes, base rate, hit rates');
+}
+// a random walk: the replayed ranges are close to calibrated (50% range ≈ 50%, 80% ≈ 80%, a flat PIT)
+{
+  let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+  const gauss = () => Math.sqrt(-2 * Math.log(rnd() || 1e-9)) * Math.cos(2 * Math.PI * rnd());
+  const M = 900; let c = 100, b = 100; const Cl = [], B = [];
+  for (let i = 0; i < M; i++) { c *= Math.exp(0.001 + 0.03 * gauss()); b *= Math.exp(0.0008 + 0.02 * gauss()); Cl.push(c); B.push(b); }
+  const r = Cl.map((v, i) => 100 * v / B[i]), calc = { ...L.states(r, 4, 14, 52, 26), rs: r, c: Cl, b: B }, acc = L.btNew([1, 4]);
+  for (const k of L.btOrigins(calc)) L.btAdd(acc, calc, k, 'w');
+  const [h1, h4] = L.btSummary(acc);
+  ok(Math.abs(h1.cov80 - 0.8) < 0.07 && Math.abs(h1.cov50 - 0.5) < 0.08 && Math.abs(h4.cov80 - 0.8) < 0.1, `a random walk: calibrated ranges (${h1.cov50.toFixed(2)} / ${h1.cov80.toFixed(2)}, +4: ${h4.cov80.toFixed(2)})`);
+  ok(Math.max(...h1.pit) < 0.16 && Math.min(...h1.pit) > 0.05, 'a random walk: a flat PIT histogram');
+}
+
 // 4. dates ahead: Fridays, months, trading days (weekends skipped)
 ok(L.ahead('2026-10-30', 'w', 13) === '2027-01-29', '13 weeks after a Friday');
 ok(L.ahead('2026-10', 'm', 3) === '2027-01', 'three months on');

@@ -275,6 +275,26 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   run(`state.rrgsolo='';state.rspd='2'`);
   assert.ok(run(`rotMs({ms:110})`)<=56&&run(`rotPlayer(['a','b'],{span:2})`).includes('value="2" selected'),'the speed');
   run(`state.rspd=''`);
+  // the frozen forecast: EWJ's path as it stood 20 weeks back, kept as it was and scored; play runs the 13 weeks after it
+  run(`state.rrgsolo='EWJ';state.rrgfz=''`);html=run(`rrgView()`);
+  assert.ok(html.includes('id="rrgfzb"')&&html.includes('Freeze EWJ'),'the freeze button');
+  {const k0=run(`ROT.ctx.Q.length-21`),d0=run(`ROT.ctx.Q[${k0}]`);
+   run(`state.rrgfz='w|14|EWJ|${d0}';state.rf=${k0}+5`);html=run(`rrgView()`);
+   for(const want of ['Frozen forecast · EWJ · made','rrgl-origin','rrgl-real','EWJ +5w $','unfreeze','Where the close fell','13 of 13 weeks have passed','rrglfzcsv','Play 13 weeks'])
+    assert.ok(html.includes(want),`the frozen forecast lacks “${want}”`);
+   assert.ok(!/NaN|undefined|Infinity/.test(html),'the frozen forecast shows NaN/undefined');
+   assert.deepEqual([run(`ROT.ctx.from`),run(`ROT.ctx.to`),run(`RRGL.fzcsv.length`)],[k0,k0+13,13],'the stretch played and the CSV');
+   assert.ok(run(`window.FFShare.get('hub-rrg-2d').post().paras[0]`).startsWith('Forecast frozen on ')&&run(`window.FFShare.get('hub-rrg-2d').title`).includes('forecast frozen'),'the post and the title of a frozen forecast');
+   run(`state.rf=${k0}-3`);assert.ok(!run(`ROT.ctx.draw(${k0}-3)`).includes('rrgl-origin'),'before the freeze: nothing drawn');}
+  run(`state.rrgsolo='EWZ'`);run(`rrgView()`);assert.equal(run(`state.rrgfz`),'','another line in focus drops the freeze');
+  // the frozen backtest of the line in focus, worked out a slice at a time
+  run(`state.rrgsolo='EWJ';state.rrgbtopen=true`);html=run(`rrgView()`);
+  assert.ok(html.includes('Frozen backtest of EWJ')&&html.includes('Scoring'),'the backtest starts');
+  for(let i=0;i<300&&!run(`[...RRGL.bt.values()].every(b=>b.done)`);i++)await new Promise(r=>setTimeout(r,20));
+  html=run(`rrgView()`);
+  for(const want of ['Inside the 80% range','rrgl-pit','forecasts of EWJ, frozen every week','independent'])assert.ok(html.includes(want),`the backtest lacks “${want}”`);
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'the backtest shows NaN/undefined');
+  run(`state.rrgsolo='';state.rrgfz='';state.rrgbtopen=false`);
   run(`state.rrgf='d';state.rrgu='site'`);
   assert.ok(run(`rrgView()`).includes('weekly only'),'site sectors on the daily chart: explained');
   // the Rotation research view from a server file (the browser's own research has the server's shape)

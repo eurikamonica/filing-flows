@@ -904,11 +904,12 @@ function rotStop(){if(ROT.timer){clearInterval(ROT.timer);ROT.timer=null}}
 function rotToggle(){
  if(ROT.timer){rotStop();render();return}
  const c=ROT.ctx,n=c?c.Q.length:0;if(!n)return;
- const span=rotSpan(c.P);
- if(state.rf>=n-1)state.rf=Math.max(0,n-span);
+ // a chart can set the stretch to play (from / to: the RRG's frozen forecast and the periods after it)
+ const span=rotSpan(c.P),to=c.to!=null?Math.min(n-1,c.to):n-1,from=c.from!=null?c.from:Math.max(0,n-span);
+ if(state.rf>=to||(c.from!=null&&state.rf<c.from))state.rf=from;
  ROT.timer=setInterval(()=>{
   if(state.tab!=='rotation'||!(document.getElementById('rot-plot')||document.getElementById('rot-3d')||document.getElementById('gal-canvas'))){rotStop();return}
-  if(state.rf>=n-1){rotStop();render();return}
+  if(state.rf>=to){rotStop();render();return}
   state.rf++;rotDraw()},rotMs(c.P));
  rotDraw();
 }
@@ -921,7 +922,7 @@ const ROT_EXPORT_SIZE={'16x9':[760,400],'1x1':[600,500],'9x16':[560,760]};
 async function rotExport(){
  const c=ROT.ctx,V=window.RotVideo;if(!c||!V)return;
  if(ROT.exporting){ROT.cancel=true;rotSay('Cancelling…');return}
- const n=c.Q.length,span=rotSpan(c.P),start=state.rf>=n-1?Math.max(0,n-span):state.rf,end=n-1;
+ const n=c.Q.length,span=rotSpan(c.P),end=c.to!=null?Math.min(n-1,c.to):n-1,start=c.from!=null?c.from:state.rf>=end?Math.max(0,n-span):state.rf;
  if(end<=start){rotSay('Nothing to play from here: drag the slider back.');return}
  rotStop();ROT.exporting=true;ROT.cancel=false;const f0=state.rf,began=performance.now(),shape=rotShape();
  if($('rmp4'))$('rmp4').textContent='Cancel';
@@ -959,6 +960,11 @@ function bindRotation(){
  if($('rspeed'))$('rspeed').onchange=e=>{state.rspd=e.target.value;if(ROT.timer){rotStop();rotToggle()}};
  if($('rshape'))$('rshape').onchange=e=>{state.rshape=e.target.value};
  if($('rmp4'))$('rmp4').onclick=rotExport;
+ // the RRG's frozen forecast (rrg-lab.js): freeze the frame shown, or unfreeze; its scorecard as CSV; the backtest when opened
+ if($('rrgfzb'))$('rrgfzb').onclick=e=>{rotStop();const v=e.currentTarget.dataset.fz;
+  if(!v)state.rrgfz='';else{const z=v.split('|'),Q=ROT.ctx&&ROT.ctx.Q;if(Q&&Q.length)z[3]=Q[Math.min(state.rf,Q.length-1)];state.rrgfz=z.join('|')}render()};
+ if($('rrglfzcsv'))$('rrglfzcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.fzcsv)||[];downloadCSV();exported=keep};
+ {const dd=document.getElementById('rrgl-bt');if(dd)dd.ontoggle=()=>{if(state.rrgbtopen!==dd.open){state.rrgbtopen=dd.open;if(dd.open)render()}}}
  if($('rframe')){$('rframe').oninput=e=>{rotStop();state.rf=+e.target.value;ROT.drag=true;try{rotDraw()}finally{ROT.drag=false}};$('rframe').onchange=e=>{state.rf=+e.target.value;render()}}
  document.querySelectorAll('#workspace [data-raxes]').forEach(b=>b.onclick=()=>{const [x,y,z]=b.dataset.raxes.split('|');state.rview='clock';state.rx=x;state.ry=y;state.rz=z||state.rz;render();scrollTo({top:0,behavior:'smooth'})});
  bindRotSuns();

@@ -153,9 +153,82 @@
       out.push({ j: j + 1, n: m, x50: sq(X, m, 0.5), y50: sq(Y, m, 0.5), x10: sq(X, m, 0.1), x90: sq(X, m, 0.9), y10: sq(Y, m, 0.1), y90: sq(Y, m, 0.9),
         p10: px(0.1), p25: px(0.25), p50: px(0.5), p75: px(0.75), p90: px(0.9), up: up / NP,
         q: qs.map((v) => (m ? v / m : NaN)), left: nl / NP,
-        reached: [0, 1, 2, 3].map((q) => { let c = 0; for (let i = 0; i < NP; i++) c += seen[i][q]; return c / NP; }) });
+        reached: [0, 1, 2, 3].map((q) => { let c = 0; for (let i = 0; i < NP; i++) c += seen[i][q]; return c / NP; }),
+        ...(opt.keep ? { cs: Cs } : {}) });                           // keep: the replayed log returns, sorted (score's PIT)
     }
     return { k, n: paths.length, close, q0, th: thresholds(calc, calc.rs, k), steps: out, window: win };
+  }
+
+  /* ---------- the frozen forecast: made at one period, never revised, scored as its periods pass ---------- */
+  // F (forecast with keep) against what happened: for each step that has passed, the close's place among the replayed
+  // closes (pit: the share of replays below it), inside the 50% / 80% ranges, the error of the median close and of "no
+  // change", the quadrant reached, the share of replays that put it there, whether the most likely quadrant and "stays
+  // where it is" were right, inside the 80% box of positions, and the distance from the median position
+  function score(calc, F) {
+    const out = [];
+    if (!F || !calc || !calc.c) return out;
+    for (const st of F.steps) {
+      const t = F.k + st.j, c = calc.c[t], x = calc.x[t], y = calc.y[t];
+      if (!isF(c) || !isF(x) || !isF(y) || !(c > 0)) { out.push(null); continue; }
+      const r = Math.log(c / F.close);
+      let pit = NaN;
+      if (st.cs && st.cs.length) {
+        const a = st.cs; let lo = 0, hi = a.length;
+        while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < r) lo = m + 1; else hi = m; }
+        let eq = lo; while (eq < a.length && a[eq] === r) eq++;
+        pit = (lo + (eq - lo) / 2) / a.length;
+      }
+      const qa = quad(x, y), qv = st.q.map((v) => (isF(v) ? v : -1)), top = qv.indexOf(Math.max(...qv));
+      out.push({ j: st.j, t, c, x, y, pit, in50: c >= st.p25 && c <= st.p75, in80: c >= st.p10 && c <= st.p90,
+        err: c / st.p50 - 1, naive: c / F.close - 1, q: qa, pq: isF(st.q[qa]) ? st.q[qa] : NaN, top: top === qa, stay: qa === F.q0,
+        box: x >= st.x10 && x <= st.x90 && y >= st.y10 && y <= st.y90, dist: Math.hypot(x - st.x50, y - st.y50), up: c > F.close, pup: st.up });
+    }
+    return out;
+  }
+  // the origins of a frozen backtest: every period with a position and a close from `from` to the one before `last`,
+  // thinned to every `every`-th counted back from the newest, the newest `max` kept
+  function btOrigins(calc, opt = {}) {
+    const last = opt.last != null ? opt.last : calc.c.length - 1, every = Math.max(1, opt.every || 1), out = [];
+    for (let k = last - 1; k >= Math.max(1, opt.from || 0) && out.length < (opt.max || 4000); k -= 1) {
+      if ((last - 1 - k) % every) continue;
+      if (isF(calc.x[k]) && isF(calc.y[k]) && isF(calc.c[k])) out.push(k);
+    }
+    return out.reverse();
+  }
+  // the running tally of a frozen backtest, per horizon of H
+  function btNew(H) { return { H, n: 0, first: null, last: null, by: Object.fromEntries(H.map((h) => [h, { n: 0, in50: 0, in80: 0, pit: new Array(10).fill(0), err: [], naive: [], top: 0, stay: 0, pq: 0, box: 0, dist: 0, quads: [0, 0, 0, 0], bu: 0, b0: 0 }])) }; }
+  function btAdd(acc, calc, k, fq) {
+    const F = forecast(calc, k, fq, { keep: true });
+    if (!F) return false;
+    const S = score(calc, F);
+    acc.n++; acc.first = acc.first == null ? k : Math.min(acc.first, k); acc.last = acc.last == null ? k : Math.max(acc.last, k);
+    for (const h of acc.H) {
+      const r = S[h - 1];
+      if (!r) continue;
+      const b = acc.by[h];
+      b.n++; if (r.in50) b.in50++; if (r.in80) b.in80++;
+      if (isF(r.pit)) b.pit[Math.min(9, Math.floor(r.pit * 10))]++;
+      b.err.push(Math.abs(r.err)); b.naive.push(Math.abs(r.naive));
+      if (r.top) b.top++; if (r.stay) b.stay++; if (isF(r.pq)) b.pq += r.pq; if (r.box) b.box++;
+      b.dist += r.dist; b.quads[r.q]++;
+      b.bu += (r.pup - (r.up ? 1 : 0)) ** 2; b.b0 += (0.5 - (r.up ? 1 : 0)) ** 2;
+    }
+    return true;
+  }
+  // per horizon: coverage of the 50% and 80% ranges (calibrated: about 50% and 80%), the PIT histogram (flat when
+  // calibrated), the median absolute error of the median close and of "no change", the hit rate of the most likely
+  // quadrant and of "stays where it is", the mean share given to the quadrant reached and what the quadrants' own
+  // frequencies would have given (Σ f²), the share inside the 80% box, the mean distance, and the Brier skill of the
+  // chance of a rise against a coin (1 − Brier / Brier of 50%). Overlapping origins: about n / h independent outcomes.
+  function btSummary(acc) {
+    const med = (a) => { if (!a.length) return NaN; const s = a.slice().sort((u, v) => u - v), i = (s.length - 1) / 2; return (s[Math.floor(i)] + s[Math.ceil(i)]) / 2; };
+    return acc.H.map((h) => {
+      const b = acc.by[h], n = b.n, tot = b.quads.reduce((u, v) => u + v, 0);
+      return { h, n, indep: n ? Math.max(1, Math.round(n / h)) : 0, cov50: n ? b.in50 / n : NaN, cov80: n ? b.in80 / n : NaN,
+        pit: b.pit.map((v) => (n ? v / n : NaN)), mae: med(b.err), mae0: med(b.naive), top: n ? b.top / n : NaN, stay: n ? b.stay / n : NaN,
+        pq: n ? b.pq / n : NaN, base: tot ? b.quads.reduce((u, v) => u + (v / tot) ** 2, 0) : NaN, box: n ? b.box / n : NaN, dist: n ? b.dist / n : NaN,
+        brier: n ? 1 - b.bu / b.b0 : NaN };
+    });
   }
   // the date `j` periods after `day` (Fridays a week apart; month labels; weekdays for trading days, holidays ignored)
   function ahead(day, fq, j) {
@@ -405,13 +478,13 @@
     });
   }
 
-  const api = { PAR, BOUNDS, QN, QT, NEAR, SPEED, DEPTH, quad, ema, states, thresholds, ladder, stepPaths, forecast, smoothPath, ahead, qtl, decodeMoves, onDays, toWeekly, makeGrid, research, nowOdds, Hist, RHist };
+  const api = { PAR, BOUNDS, QN, QT, NEAR, SPEED, DEPTH, quad, ema, states, thresholds, ladder, stepPaths, forecast, smoothPath, score, btOrigins, btNew, btAdd, btSummary, ahead, qtl, decodeMoves, onDays, toWeekly, makeGrid, research, nowOdds, Hist, RHist };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RRGLab = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 /* ---------- the hub: daily files, the chart's layers and panels, the Rotation research view ---------- */
-const RRGL={moves:{},grid:null,fc:new Map(),srv:{},redraw:null,now:new Map()};
+const RRGL={moves:{},grid:null,fc:new Map(),srv:{},redraw:null,now:new Map(),bt:new Map()};
 function rrglRedraw(){if(RRGL.redraw)return;RRGL.redraw=setTimeout(()=>{RRGL.redraw=null;if(typeof render==='function')render()},40)}
 function rrglMoves(k){                                 // one asset's daily file (move odds), decoded
  const m=RRGL.moves[k]||(RRGL.moves[k]={});
@@ -463,10 +536,154 @@ function rrglFc(o,l,f,peek){                           // the forecast path from
  if(F)F.steps.forEach(s=>{s.date=RRGLab.ahead(o.Q[f],o.freq,s.j)});
  RRGL.fc.set(key,F);return F;
 }
+/* ---------- the frozen forecast: the path drawn at one period, kept as it was, scored as its periods pass ---------- */
+// the line in focus: the one shown alone, else the one picked for the forecast path
+const rrglFocus=o=>o.solo||(state.rrgfp&&state.rrgfp!=='all'?state.rrgfp:'');
+// state.rrgfz = 'freq|window|line|date': the forecast of that line made at that date, frozen. o.fz: {id, k0, l, F, S}
+function rrglFrozen(o){
+ const z=String(state.rrgfz||'').split('|'),focus=rrglFocus(o);
+ if(z.length!==4||z[0]!==o.freq||+z[1]!==o.n||z[2]!==focus){if(state.rrgfz)state.rrgfz='';return null}
+ const k0=o.Q.indexOf(z[3]),l=o.lines.find(x=>x.e.id===z[2]);
+ if(k0<0||!l||k0>o.lastK){state.rrgfz='';return null}
+ const key='fz|'+l.e.id+'|'+o.freq+'|'+o.n+'|'+k0+'|'+l.calc.x.length;
+ let F=RRGL.fc.get(key);
+ if(F===undefined){F=RRGLab.forecast(l.calc,k0,o.freq,{keep:true});if(F)F.steps.forEach(s=>{s.date=RRGLab.ahead(o.Q[k0],o.freq,s.j)});RRGL.fc.set(key,F)}
+ if(!F)return {id:l.e.id,k0,l,F:null,S:[]};
+ const S=RRGLab.score(l.calc,F).map((r,i)=>r&&r.t<=o.lastK?r:null);
+ return {id:l.e.id,k0,l,F,S,to:Math.min(o.lastK,k0+F.steps.length)};
+}
+// the freeze button (the RRG's toolbar, a line in focus)
+function rrglFreezeField(o){
+ const focus=rrglFocus(o);if(!focus||o.mode!=='2d')return '';
+ const L=o.lines.find(l=>l.e.id===focus),f=Math.min(state.rf,o.lastK);
+ const v=o.fz?'':`${o.freq}|${o.n}|${focus}|${o.Q[f]}`;
+ return `<div class="field"><label for="rrgfzb">Frozen forecast</label><button class="action${o.fz?' primary':''}" id="rrgfzb" type="button" data-fz="${esc(v)}">${o.fz?'❄ Frozen '+esc(rrgDay(o.Q[o.fz.k0]))+' · unfreeze':'❄ Freeze '+esc(L?L.e.name:focus)+'’s forecast of '+esc(rrgDay(o.Q[f]))}</button></div>`;
+}
+// the chart layer of a frozen forecast: the path from the freeze (dashed, dated marks), what happened since up to the frame
+// shown (solid), and, at the frame shown, the gap between the line and where the frozen path had it that period
+function rrglFzLayer(o,f,sx,sy){
+ const z=o.fz;if(!z||!z.F||f<z.k0)return '';
+ const {l,F,k0}=z,c=l.calc,P=RRGLab.PAR[o.freq],U=P.ab,sm=RRGLab.smoothPath(F.steps),at=j=>sm[j-1]?[sx(sm[j-1][0]),sy(sm[j-1][1])]:null;
+ const p0=[sx(c.x[k0]),sy(c.y[k0])];
+ let s=`<path class="rot-line rrgl-path" d="${curve([p0,...sm.filter(Boolean).map(q=>[sx(q[0]),sy(q[1])])],true)}" style="stroke:${l.col}"/>`;
+ const marks=P.marks.filter(j=>F.steps[j-1]),mid=marks[Math.floor(marks.length/2)],lastM=marks[marks.length-1];
+ for(let j=1;j<=F.steps.length;j++){const q=at(j);if(q&&!marks.includes(j))s+=`<circle class="rrgl-step" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="1.9" style="fill:${l.col}"/>`}
+ for(const j of [mid,lastM]){const st=F.steps[j-1];if(st)s+=`<rect class="rrgl-box" x="${Math.min(sx(st.x10),sx(st.x90)).toFixed(1)}" y="${Math.min(sy(st.y10),sy(st.y90)).toFixed(1)}" width="${Math.abs(sx(st.x90)-sx(st.x10)).toFixed(1)}" height="${Math.abs(sy(st.y10)-sy(st.y90)).toFixed(1)}" style="stroke:${l.col}"/>`}
+ // what happened since the freeze, up to the frame shown
+ const e=Math.min(f,z.to),real=[p0];for(let k=k0+1;k<=e;k++)if(c.x[k]!=null&&c.y[k]!=null)real.push([sx(c.x[k]),sy(c.y[k])]);
+ if(real.length>1)s+=`<path class="rot-line rrgl-real-halo" d="${curve(real,true)}"/><path class="rot-line rrgl-real" d="${curve(real,true)}" style="stroke:${l.col}"/>`;
+ real.slice(1).forEach(p=>{s+=`<circle class="rrgl-real-dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" style="fill:${l.col}"/>`});
+ s+=`<circle class="rrgl-origin" cx="${p0[0].toFixed(1)}" cy="${p0[1].toFixed(1)}" r="7" style="stroke:${l.col}"/>`;
+ const labels=[{x:p0[0],y:p0[1],pri:-1,t:'❄ '+rrgDay(o.Q[k0]).replace(/, \d{4}$/,'')+' · '+rrglMoney(l.e,F.close),col:l.col}];
+ for(const j of marks){const st=F.steps[j-1],q=at(j);if(!st||!q)continue;
+  s+=`<circle class="rrgl-mark" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="${j===lastM?4.2:2.9}" style="fill:${l.col}"/>`;
+  labels.push({x:q[0],y:q[1],pri:j===lastM?0:j,t:'+'+j+U+' '+rrgDay(st.date).replace(/, \d{4}$/,'')+' · '+rrglMoney(l.e,st.p50),t2:j===lastM?'80%: '+rrglMoney(l.e,st.p10)+'–'+rrglMoney(l.e,st.p90):'',col:l.col})}
+ // the frame shown: the line against the frozen path's position that period, and how the close stood against its ranges
+ const j=f-k0,r=j>=1&&j<=F.steps.length?z.S[j-1]:null,q=r?at(j):null;
+ if(r&&q){const a=[sx(r.x),sy(r.y)];
+  s+=`<line class="rrgl-gap" x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" style="stroke:${l.col}"/>`;
+  labels.push({x:a[0],y:a[1],pri:-2,t:l.e.name+' +'+j+U+' '+rrglMoney(l.e,r.c)+' · '+(r.in50?'in 50% range':r.in80?'in 80% range':'outside 80%'),col:'var(--ink)'})}
+ return s+rrglPlace(o,sx,sy,labels);
+}
+// labels inside the plot, clear of each other: the first of four spots that fits, on one line or with t2 on a second
+function rrglPlace(o,sx,sy,labels){
+ const boxes=[],D=o.dom||{x:[-1e9,1e9],y:[-1e9,1e9]};
+ const X0=Math.min(sx(D.x[0]),sx(D.x[1]))-6,X1=Math.max(sx(D.x[0]),sx(D.x[1]))+16,Y0=Math.min(sy(D.y[0]),sy(D.y[1]))-4,Y1=Math.max(sy(D.y[0]),sy(D.y[1]))+12;
+ const fits=r=>r[0]>=X0&&r[2]<=X1&&r[1]>=Y0&&r[3]<=Y1,free=r=>!boxes.some(q=>r[0]<q[2]&&r[2]>q[0]&&r[1]<q[3]&&r[3]>q[1]);
+ let s='';
+ labels.sort((a,b)=>a.pri-b.pri);
+ for(const b of labels){
+  const forms=b.t2?[[b.t+' ('+b.t2+')'],[b.t,b.t2]]:[[b.t]];
+  let c=null;
+  for(const L of forms){const w=Math.max(...L.map(t=>t.length))*6.2,h=13*L.length;
+   c=[[b.x+7,b.y-7-13*(L.length-1),'start'],[b.x+7,b.y+15,'start'],[b.x-7,b.y-7-13*(L.length-1),'end'],[b.x-7,b.y+15,'end']]
+    .map(([x,y,a])=>({x,y,a,L,r:a==='start'?[x,y-10,x+w,y-10+h]:[x-w,y-10,x,y-10+h]})).find(p=>fits(p.r)&&free(p.r));
+   if(c)break}
+  if(!c)continue;boxes.push(c.r);
+  s+=`<text class="mk-label mk-halo rrgl-label" x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.a}" style="fill:${b.col}">${c.L.map((t,i)=>i?`<tspan x="${c.x.toFixed(1)}" dy="13">${esc(t)}</tspan>`:esc(t)).join('')}</text>`}
+ return s;
+}
+const rrglPit=v=>v==null||!isFinite(v)?'—':fmt(Math.round(100*v),0)+(Math.round(100*v)%10===1&&Math.round(100*v)!==11?'st':Math.round(100*v)%10===2&&Math.round(100*v)!==12?'nd':Math.round(100*v)%10===3&&Math.round(100*v)!==13?'rd':'th');
+// the scorecard of the frozen forecast, below the chart: every period since the freeze against the path's ranges
+function rrglFrozenPanel(o){
+ const z=o.fz;if(!z)return '';
+ const P=RRGLab.PAR[o.freq],L=z.l,day=rrgDay(o.Q[z.k0]);
+ if(!z.F)return `<div class="panel rrgl-frozen"><h3>❄ Frozen forecast · ${esc(L.e.name)} · ${esc(day)}</h3>${empty('No forecast path for that '+P.one+': too little history before it (the replays need about '+fmt(P.window)+' '+P.many+' of moves).')}</div>`;
+ const F=z.F,S=z.S,done=S.filter(Boolean),last=done[done.length-1],cnt=k=>done.filter(r=>r[k]).length;
+ const head=`<h3>❄ Frozen forecast · ${esc(L.e.name)} · made ${esc(day)}</h3><p class="sub">The forecast path as it stood on ${esc(day)} — every run of ${esc(L.e.name)}’s and ${esc(o.D.benchmark||'SPY')}’s moves in the ${esc(fmt(F.window))} ${esc(P.many)} before it (${esc(fmt(F.n))} replays), replayed through the formula — kept as it was and compared ${esc(P.one)} by ${esc(P.one)} with what happened. Nothing after ${esc(day)} enters it; the closes are today’s adjusted closes. Play shows the ${esc(P.many)} after it unfold.</p>`;
+ const sum=done.length?`<p>${esc(fmt(done.length))} of ${esc(fmt(F.steps.length))} ${esc(P.many)} have passed. The close stayed inside the 50% range ${cnt('in50')} times and the 80% range ${cnt('in80')} times (calibrated: about half and four in five). The most likely quadrant was right ${cnt('top')} times; “stays in ${esc(RRGLab.QT[F.q0])}” would have been right ${cnt('stay')} times. At +${last.j} ${esc(last.j===1?P.one:P.many)} the close was ${rrglMoney(L.e,last.c)}, the median ${rrglMoney(L.e,F.steps[last.j-1].p50)} (error ${rrglPct(last.err)}; “no change” would have erred ${rrglPct(last.naive)}).</p>`:`<p class="sub">No ${esc(P.one)} has passed since ${esc(day)} yet.</p>`;
+ const rows=F.steps.map((st,i)=>{const r=S[i];
+  return [`+${st.j} ${esc(st.j===1?P.one:P.many)}<br><span class="muted">${esc(rrgDay(st.date))}</span>`,
+   r?`<b>${rrglMoney(L.e,r.c)}</b> <span class="${r.naive>=0?'positive':'negative'}">${rrglPct(r.naive)}</span>`:'<span class="muted">not yet</span>',
+   r?`${r.in50?'<span class="badge ready">inside 50%</span>':r.in80?'<span class="badge">inside 80%</span>':'<span class="badge rrg-b-lag">outside 80%</span>'}<br><span class="muted">${rrglPit(r.pit)} percentile of the replays</span>`:'—',
+   `${rrglMoney(L.e,st.p50)}<br><span class="muted">50%: ${rrglMoney(L.e,st.p25)}–${rrglMoney(L.e,st.p75)} · 80%: ${rrglMoney(L.e,st.p10)}–${rrglMoney(L.e,st.p90)}</span>`,
+   r?`<span class="badge rrg-b-${RRG_Q[r.q][0]}">${RRG_Q[r.q][1]}</span><br><span class="muted">${rrglSh(r.pq)} of replays put it there${r.top?' · the likeliest':''}</span>`:`<span class="muted">${st.q.map((v,qi)=>RRGLab.QT[qi][0]+' '+rrglSh(v)).join(' ')}</span>`,
+   r?fmt(r.dist,2):'—']});
+ const keep=exported;
+ exported=F.steps.map((st,i)=>{const r=S[i];return {line:L.e.name,frozen_at:o.Q[z.k0],close_at_freeze:+F.close.toFixed(4),step:st.j,date:st.date,close:r?+r.c.toFixed(4):null,median:+st.p50.toFixed(4),p10:+st.p10.toFixed(4),p25:+st.p25.toFixed(4),p75:+st.p75.toFixed(4),p90:+st.p90.toFixed(4),
+  percentile:r&&isFinite(r.pit)?+r.pit.toFixed(3):null,inside_50:r?r.in50:null,inside_80:r?r.in80:null,quadrant:r?RRG_Q[r.q][1]:null,share_given:r&&isFinite(r.pq)?+r.pq.toFixed(3):null,likeliest_right:r?r.top:null,distance:r?+r.dist.toFixed(3):null}});
+ RRGL.fzcsv=exported;exported=keep;
+ return `<div class="panel rrgl-frozen">${head}${sum}<div class="section-head"><h3>${esc(L.e.name)} after ${esc(day)}</h3><button class="action" id="rrglfzcsv">Export CSV ↓</button></div>`+
+  table(['Step','Close (vs the freeze)','Where the close fell','Frozen path: median · ranges','Quadrant reached','Distance from the path'],rows)+'</div>';
+}
+// the frozen backtest of the line in focus: the forecast frozen at every period of its history (every 5th trading day of
+// the last five years on the daily chart) and scored as the periods passed — worked out a slice at a time
+function rrglBt(o,l){
+ const key=l.e.id+'|'+o.freq+'|'+o.n+'|'+o.lastK+'|'+l.calc.x.length;
+ let b=RRGL.bt.get(key);
+ if(b)return b;
+ if(RRGL.bt.size>8)RRGL.bt.clear();
+ const P=RRGLab.PAR[o.freq],opt=o.freq==='d'?{every:5,max:252}:{max:2500};
+ b={key,ks:RRGLab.btOrigins(l.calc,{last:o.lastK,...opt}),i:0,acc:RRGLab.btNew(P.marks),done:false};
+ RRGL.bt.set(key,b);
+ const step=()=>{
+  if(RRGL.bt.get(key)!==b)return;
+  const t=Date.now();while(b.i<b.ks.length&&Date.now()-t<30){RRGLab.btAdd(b.acc,l.calc,b.ks[b.i],o.freq);b.i++}
+  const el=typeof document!=='undefined'&&document.getElementById?document.getElementById('rrgl-bt-prog'):null;
+  if(el)el.textContent=`Scoring ${fmt(b.ks.length)} frozen forecasts… ${Math.round(100*b.i/Math.max(1,b.ks.length))}%`;
+  if(b.i<b.ks.length)setTimeout(step,0);else{b.done=true;b.sum=RRGLab.btSummary(b.acc);rrglRedraw()}};
+ setTimeout(step,0);
+ return b;
+}
+function rrglPitSvg(pit,label){
+ const W=230,H=86,bw=W/10,mx=Math.max(.2,...pit.filter(isFinite));
+ let s=`<svg class="plot rrgl-pit" viewBox="0 0 ${W} ${H+16}" role="img" aria-label="${esc(label)}">`;
+ pit.forEach((v,i)=>{const h=isFinite(v)?v/mx*H:0;s+=`<rect x="${(i*bw+1).toFixed(1)}" y="${(H-h).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${h.toFixed(1)}" class="rrgl-pit-bar"><title>${10*i}–${10*i+10}th percentile: ${rrglSh(v)}</title></rect>`});
+ const y=H-.1/mx*H;
+ return s+`<line x1="0" x2="${W}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" class="rrgl-pit-flat"/><text class="axis" x="0" y="${H+13}">low</text><text class="axis" x="${W}" y="${H+13}" text-anchor="end">high</text><text class="axis" x="${W/2}" y="${H+13}" text-anchor="middle">${esc(label)}</text></svg>`;
+}
+function rrglBacktestPanel(o){
+ const focus=rrglFocus(o),P=RRGLab.PAR[o.freq];
+ const open=!!state.rrgbtopen,L=focus?o.lines.find(l=>l.e.id===focus):null;
+ let body='';
+ if(!L)body=`<p class="sub">Pick one line under “Show” (or a line under “Forecast path”) to freeze its forecast at every ${esc(P.one)} of its history and score it.</p>`;
+ else if(open){
+  const b=rrglBt(o,L);
+  if(!b.done)body=`<p class="sub" id="rrgl-bt-prog">Scoring ${fmt(b.ks.length)} frozen forecasts… ${Math.round(100*b.i/Math.max(1,b.ks.length))}%</p>`;
+  else if(!b.acc.n)body=empty('Too little history for a backtest.');
+  else{
+   const R=b.sum,h1=R[0],hl=R[R.length-1],hm=R[Math.floor(R.length/2)],pc=v=>isFinite(v)?fmt(Math.round(100*v),0)+'%':'—',ap=v=>isFinite(v)?fmt(100*v,1)+'%':'—';
+   const c8=hl.cov80,at=`at +${hl.h} ${P.many} (it held ${pc(c8)})`;
+   const verdict=c8<.7?`the 80% range was too narrow ${at}: read it as about a ${pc(c8)} range`:c8<.76?`the 80% range was a little narrow ${at}`:c8>.9?`the 80% range was too wide ${at}`:c8>.84?`the 80% range was a little wide ${at}`:`the 80% range held about as stated ${at}`;
+   const beat=hl.mae<hl.mae0?`the median close erred less than “no change” at +${hl.h} ${P.many} (a typical miss of ${ap(hl.mae)} against ${ap(hl.mae0)})`:`the median close did not beat “no change” at +${hl.h} ${P.many} (a typical miss of ${ap(hl.mae)} against ${ap(hl.mae0)})`;
+   const qd=`the most likely quadrant was right ${pc(hl.top)} of the time at +${hl.h} (“stays where it is”: ${pc(hl.stay)}) and ${pc(h1.top)} at +${h1.h} (“stays”: ${pc(h1.stay)})`;
+   body=`<p>${esc(fmt(b.acc.n))} forecasts of ${esc(L.e.name)}, frozen every ${o.freq==='d'?'5 trading days':esc(P.one)} from ${esc(rrgDay(o.Q[b.acc.first]))} to ${esc(rrgDay(o.Q[b.acc.last]))}: ${esc(verdict)}; ${esc(beat)}; ${esc(qd)}.</p>`+
+    table(['Horizon','Inside the 80% range','Inside the 50% range','Typical miss: path · no change','Quadrant: likeliest right · “stays” right','Share given to the quadrant reached (by frequency)','Rise odds: skill vs a coin','Forecasts scored'],R.map(r=>[
+     `+${r.h} ${esc(r.h===1?P.one:P.many)}`,`<b>${pc(r.cov80)}</b> <span class="muted">of 80%</span>`,`<b>${pc(r.cov50)}</b> <span class="muted">of 50%</span>`,
+     `<span class="${r.mae<r.mae0?'positive':''}">${ap(r.mae)}</span> · ${ap(r.mae0)}`,
+     `${pc(r.top)} · ${pc(r.stay)}`,`${pc(r.pq)} <span class="muted">(${pc(r.base)})</span>`,`<span class="${r.brier>=0?'positive':'negative'}">${isFinite(r.brier)?fmt(r.brier,3):'—'}</span>`,
+     `${fmt(r.n)}<br><span class="muted">about ${fmt(r.indep)} independent</span>`]))+
+    `<div class="rrgl-pits">${rrglPitSvg(h1.pit,'+'+h1.h+' '+(h1.h===1?P.one:P.many))}${rrglPitSvg(hm.pit,'+'+hm.h+' '+P.many)}${rrglPitSvg(hl.pit,'+'+hl.h+' '+P.many)}</div>`+
+    `<p class="sub">Where the close fell among the replayed closes, in tenths (the dashed line: 10% each, where a calibrated forecast lands). Tall ends: the ranges were too narrow; a hump in the middle: too wide; tilted: the median leaned the wrong way. A forecast made every ${esc(o.freq==='d'?'5 trading days':P.one)} overlaps the next, so +${hl.h} ${esc(P.many)} rests on about ${fmt(hl.indep)} independent outcomes. History, not investment advice.</p>`;
+  }
+ }
+ return `<details id="rrgl-bt"${open?' open':''}><summary>Frozen backtest${L?' of '+esc(L.e.name):''} — the forecast frozen at every ${esc(o.freq==='d'?'5th trading day':P.one)} of history and scored as the ${esc(P.many)} passed</summary>${body}</details>`;
+}
 const RRGL_FP=o=>[['','Off'],['all','Every line (median paths)'],...o.lines.map(l=>[l.e.id,l.e.name+' — path, dates, prices, ranges'])];
 function rrglFpState(o){const ok=RRGL_FP(o).map(x=>x[0]);if(state.rrgfp===undefined)state.rrgfp='all';if(!ok.includes(state.rrgfp))state.rrgfp=ok.includes(String(state.rrgfp))?state.rrgfp:'all';return state.rrgfp}
 // the chart layer: each line's forecast path (median position each period), the marked periods with date and price
 function rrglLayer(o,f,sx,sy){
+ if(o.fz)return rrglFzLayer(o,f,sx,sy);                // a frozen forecast replaces the moving one
  // a line shown alone (rrg.js, state.rrgsolo) gets its path with dates, prices and ranges, as if picked here
  const mode=state.rrgfp&&o.solo?o.solo:state.rrgfp;if(!mode||!o.lines)return '';   // a line shown alone: its path, whatever line was picked
  const P=RRGLab.PAR[o.freq],one=mode!=='all',U=P.ab;
@@ -497,22 +714,9 @@ function rrglLayer(o,f,sx,sy){
     labels.push({x:p[0],y:p[1],pri:last?0:j,t,t2:one&&last?'80%: '+rrglMoney(l.e,st.p10)+'–'+rrglMoney(l.e,st.p90):'',col:l.col})}
   }
  }
- const boxes=[],D=o.dom||{x:[-1e9,1e9],y:[-1e9,1e9]};
- // inside the plot (the 80% range of the last mark used to run past the right edge on a phone), clear of the other labels
- const X0=Math.min(sx(D.x[0]),sx(D.x[1]))-6,X1=Math.max(sx(D.x[0]),sx(D.x[1]))+16,Y0=Math.min(sy(D.y[0]),sy(D.y[1]))-4,Y1=Math.max(sy(D.y[0]),sy(D.y[1]))+12;
- const fits=r=>r[0]>=X0&&r[2]<=X1&&r[1]>=Y0&&r[3]<=Y1,free=r=>!boxes.some(q=>r[0]<q[2]&&r[2]>q[0]&&r[1]<q[3]&&r[3]>q[1]);
- labels.sort((a,b)=>a.pri-b.pri);                                  // the last mark (its price range) placed first, then +1, +2 …
- for(const b of labels){
-  // the label on one line (its range after it), else on two lines; above right, below right, above left, below left
-  const forms=b.t2?[[b.t+' ('+b.t2+')'],[b.t,b.t2]]:[[b.t]];
-  let c=null;
-  for(const L of forms){const w=Math.max(...L.map(t=>t.length))*6.2,h=13*L.length;
-   c=[[b.x+7,b.y-7-13*(L.length-1),'start'],[b.x+7,b.y+15,'start'],[b.x-7,b.y-7-13*(L.length-1),'end'],[b.x-7,b.y+15,'end']]
-    .map(([x,y,a])=>({x,y,a,L,r:a==='start'?[x,y-10,x+w,y-10+h]:[x-w,y-10,x,y-10+h]})).find(p=>fits(p.r)&&free(p.r));
-   if(c)break}
-  if(!c)continue;boxes.push(c.r);
-  s+=`<text class="mk-label mk-halo rrgl-label" x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.a}" style="fill:${b.col}">${c.L.map((t,i)=>i?`<tspan x="${c.x.toFixed(1)}" dy="13">${esc(t)}</tspan>`:esc(t)).join('')}</text>`}
- return s;
+ // inside the plot (the 80% range of the last mark used to run past the right edge on a phone), clear of the other labels;
+ // the last mark (its price range) placed first, then +1, +2 …
+ return s+rrglPlace(o,sx,sy,labels);
 }
 // the server's research for a frequency: weekly (rotation history) or daily (move odds)
 function rrglServer(fq){
