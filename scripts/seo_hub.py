@@ -632,7 +632,8 @@ def event_pages(site, base, L, evs, ES=None):
                                                                        ('Operating margin', seo.pct(row['om'], False) if row.get('om') is not None else None),
                                                                        ('Industry', row.get('industry'))]))
                 import seo_history as SH
-                body += SH.sankey_figure(row['cik'], row.get('label') or '', f"{name} income statement and cash flow, {row.get('label')}", up='../../')
+                body += SH.sankey_figure(row['cik'], row.get('label') or '', f"{name} income statement and cash flow, {row.get('label')}", up='../../',
+                                         fallback=SH.figure_words(name, row.get('label'), row.get('revenue'), row.get('yoy'), om=row.get('om')))
                 body += f"<p><a href='../../c/{s}/'>{e(name)}: every quarter, Q/Q and Y/Y, holders and guidance →</a></p>"
             other = [x for x in by_co.get(str(r.get('cik')), []) if x is not r][:12]
             if other:

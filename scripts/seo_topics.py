@@ -31,7 +31,7 @@ import seo  # noqa: E402
 import seo_svg as SV  # noqa: E402
 import seo_charts as SC  # noqa: E402
 import seo_lbo  # noqa: E402
-from seo_history import sankey_figure  # noqa: E402
+from seo_history import sankey_figure, quarter_words  # noqa: E402
 
 e, display_name, slug_for, fdate = seo.e, seo.display_name, seo.slug_for, seo.fdate
 
@@ -115,9 +115,12 @@ def forecast(co, v, cons):
     beat = (cons or {}).get('beat_rate')
     qa = []
     if tg.get('median'):
-        qa.append((f"What is the price target for {t} stock?", f"The median of {tg.get('n') or 'the'} analysts' 12-month targets is {usd(tg['median'])}, "
-                   f"{pc(up(tg['median']))} from {usd(price)}; the range is {usd(tg.get('low'))} to {usd(tg.get('high'))}." +
-                   (f" The average rating is {rating.replace('_', ' ')}." if rating else '')))
+        one = tg.get('n') == 1 or (tg.get('low') is not None and usd(tg.get('low')) == usd(tg.get('high')))
+        qa.append((f"What is the price target for {t} stock?",
+                   (f"{'One analyst' + chr(39) + 's' if tg.get('n') == 1 else 'The analysts' + chr(39)} 12-month target is {usd(tg['median'])}, {pc(up(tg['median']))} from {usd(price)}." if one else
+                    f"The median of {tg.get('n') or 'the'} analysts' 12-month targets is {usd(tg['median'])}, "
+                    f"{pc(up(tg['median']))} from {usd(price)}; the range is {usd(tg.get('low'))} to {usd(tg.get('high'))}.")
+                   + (f" The average rating is {rating.replace('_', ' ')}." if rating else '')))
     if mid is not None:
         qa.append((f"What is {seo.poss(name)} fair value?", f"The fair-value methods on Filing Flows (DCF, Monte Carlo, peer multiples and others) put it between "
                    f"{usd(pts[0])} and {usd(pts[-1])}, with a middle value of {usd(mid)} against a price of {usd(price)}. Each method's assumptions are on the page."))
@@ -135,7 +138,8 @@ def forecast(co, v, cons):
                         usd, f"{name} fair value by method (price {usd(price)})", legend=('low – high', 'point estimate'))
             + (f"<h2>Fair value by method</h2><div class='tbl-wrap'><table><thead><tr><th>Method</th><th class='num'>Low</th><th class='num'>Point</th>"
                f"<th class='num'>High</th><th class='num'>vs price</th></tr></thead><tbody>{rows}</tbody></table></div>" if rows else ''))
-    return {'title': f"{name} ({t}) stock forecast, price target and fair value", 'h1': f"{name} ({t}) stock forecast and fair value",
+    what = ('price target and fair value' if tg.get('median') and mid is not None else 'price target' if tg.get('median') else 'fair value')
+    return {'title': f"{name} ({t}) stock forecast, {what}", 'h1': f"{name} ({t}) stock forecast and {'fair value' if mid is not None else 'price target'}",
             'desc': lead[:300], 'body': body, 'qa': qa}
 
 
@@ -186,7 +190,8 @@ def owners(co, h):
             + (f"<h2>Largest holders (13F)</h2><div class='tbl-wrap'><table><thead><tr><th>Fund</th><th class='num'>Shares</th><th class='num'>Value</th>"
                f"<th>Change</th><th>Quarter</th></tr></thead><tbody>{rows}</tbody></table></div>" if rows else '')
             + (f"<h2>Trades by Congress and other officials</h2><div class='tbl-wrap'><table><thead><tr><th>Date</th><th>Who</th><th>Trade</th><th class='num'>Amount</th></tr></thead><tbody>{orow}</tbody></table></div>" if orow else ''))
-    return {'title': f"Who owns {name} ({t}) stock? Top holders, fund buying and Congress trades", 'h1': f"Who owns {name} ({t}) stock",
+    has = ([f"Top holders{', fund buying' if qlast.get('buyers') is not None else ''}"] if top else []) + (['Congress trades'] if off else [])
+    return {'title': f"Who owns {name} ({t}) stock? " + ' and '.join(has), 'h1': f"Who owns {name} ({t}) stock",
             'desc': lead[:300], 'body': body, 'qa': qa}
 
 
@@ -226,15 +231,19 @@ def guidance(co, h, ol, rec=None):
     g = (h or {}).get('guidance') or {}
     docs = (ol or {}).get('docs') or []
     md = next((d for d in docs if d.get('kind') == 'mdna'), None)
+    if md and not (md.get('counts') or {}).get('n') and not md.get('statements'):
+        md = None                                                # "makes 0 forward-looking statements" is nothing to show
     if not g.get('items') and not md:
         return None
     name, t = co['who_name'], co['ticker']
     lead, qa = '', []
     if g.get('items'):
         word = GUIDE.get(g.get('label'), 'gave')
-        its = [i for i in g['items'] if i.get('lo') is not None and not i.get('scope')][:4]
-        lead = f"{name} ({t}) {word} its guidance on {fdate(g.get('filed'))}: " + '; '.join(
-            f"{i.get('name') or i.get('metric')} {grange(i)} for {pword(i.get('period'))}" for i in its) + '.'
+        its = [i for i in g['items'] if i.get('lo') is not None and not i.get('scope')][:4] or \
+            [i for i in g['items'] if i.get('lo') is not None][:4]          # only a segment's or a region's figures: those
+        lead = f"{name} ({t}) {word} its guidance on {fdate(g.get('filed'))}" + (': ' + '; '.join(
+            f"{i.get('name') or i.get('metric')}{(' (' + str(i['scope']) + ')') if i.get('scope') else ''} {grange(i)} for {pword(i.get('period'))}"
+            for i in its) if its else '') + '.'
         qa.append((f"Did {name} raise or lower its guidance?", lead))
     if md:
         c = md.get('counts') or {}
@@ -529,22 +538,35 @@ def risks(co, out):
         parts.append(f"{seo.n_of(cp['last_12m'], 'consumer complaint')} to the CFPB in 12 months" + (f" ({cp['change'] * 100:+.0f}%)" if cp.get('change') is not None else ''))
         qa.append((f"How many complaints does {name} get?", f"{cp['last_12m']:,} complaints to the Consumer Financial Protection Bureau in the last 12 months"
                    + (f", {cp['change'] * 100:+.0f}% on the year before" if cp.get('change') is not None else '') + '.'))
-    if en.get('facilities'):
-        parts.append(f"{seo.n_of(en.get('in_violation', 0), 'EPA-regulated facility', 'EPA-regulated facilities')} in violation, {money(en.get('penalties_5y'))} in penalties over five years")
-        qa.append((f"Has {name} been fined by the EPA?", f"Its {seo.n_of(en['facilities'], 'EPA-regulated facility', 'EPA-regulated facilities')} drew {money(en.get('penalties_5y'))} in penalties over five years; "
-                   f"{en.get('in_violation', 0)} {'is' if en.get('in_violation', 0) == 1 else 'are'} in violation now."))
+    pen = en.get('penalties_5y') or 0
+    fines = f"{money(pen)} in penalties over five years" if pen > 0 else 'no penalties in five years'
+    if en.get('facilities') and (en.get('in_violation') or pen > 0):     # facilities on file with nothing against them: no finding
+        parts.append(f"{seo.n_of(en.get('in_violation', 0), 'EPA-regulated facility', 'EPA-regulated facilities')} in violation, {fines}")
+        qa.append((f"Has {name} been fined by the EPA?", f"The {seo.n_of(en['facilities'], 'EPA-regulated facility', 'EPA-regulated facilities')} on file under its name "
+                   f"drew {fines}; {en.get('in_violation', 0)} {'is' if en.get('in_violation', 0) == 1 else 'are'} in violation now."))
+        fac = [x for x in en.get('top') or [] if isinstance(x, list) and len(x) > 5 and x[5] and 'violation' in str(x[5]).lower() and not str(x[5]).lower().startswith('no ')]
+        if fac:                                                  # which facilities: matched by name, so the reader can see what was matched
+            body += ("<h2>EPA facilities in violation</h2><div class='tbl-wrap'><table><thead><tr><th>Facility (as registered)</th><th>City</th><th>Status</th>"
+                     "<th class='num'>Penalties</th></tr></thead><tbody>"
+                     + ''.join(f"<tr><td>{e(x[0])}</td><td>{e(str(x[1]).title())}, {e(x[2])}</td><td>{e(x[5])}</td><td class='num'>{e(money(x[7]) if x[7] else '—')}</td></tr>" for x in fac[:10])
+                     + "</tbody></table></div><p class='muted'>Facilities in the EPA's ECHO register whose registered name matches the company's; "
+                     "a facility can belong to another business of the same name.</p>")
     if fr.get('count'):
         parts.append(f"{seo.n_of(fr['count'], 'Federal Register document')} in a year")
     if tr.get('active'):
         parts.append(f"{seo.n_of(tr['active'], 'active clinical trial')}")
-        qa.append((f"How many clinical trials does {name} have?", f"{tr['active']} active studies on ClinicalTrials.gov, {((tr.get('phases') or {}).get('PHASE3') or {}).get('active', 0)} in phase 3."))
+        qa.append((f"How many clinical trials does {name} have?", f"{seo.n_of(tr['active'], 'active study', 'active studies')} on ClinicalTrials.gov, "
+                   f"{((tr.get('phases') or {}).get('PHASE3') or {}).get('active', 0)} in phase 3."))
     if not parts:
         return None
     desc = f"{name} ({t}) beyond its filings: " + '; '.join(parts) + '.'
     # nothing found ("0 EPA-regulated facilities in violation, $0 in penalties", a count of Federal Register notices): the
     # page stays for the company page's readers but is no answer a search should land on (noindex, out of the sitemap)
     found = r.get('n') or cp.get('last_12m') or en.get('in_violation') or (en.get('penalties_5y') or 0) > 0 or tr.get('active')
-    return {'title': f"{name} ({t}) recalls, complaints, EPA and regulation", 'h1': f"{name} ({t}): recalls, complaints and regulation",
+    topics = [w for w, ok in (('recalls', r.get('n')), ('consumer complaints', cp.get('last_12m')), ('EPA violations', 'EPA-regulated' in desc),
+                              ('clinical trials', tr.get('active')), ('Federal Register', fr.get('count'))) if ok] or ['regulation']
+    say = ', '.join(topics[:-1]) + (' and ' if len(topics) > 1 else '') + topics[-1]
+    return {'title': f"{name} ({t}) {say}", 'h1': f"{name} ({t}): {say}",
             'desc': desc[:300], 'body': f"<p class='lead'>{e(desc)}</p>" + body, 'qa': qa, 'noindex': not found}
 
 
@@ -674,8 +696,9 @@ def revenue(co, c):
                f"<th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>" if len(segs) > 1 else '')
             + f"<h2>Where each dollar of revenue goes</h2><div class='tbl-wrap'><table><thead><tr><th>Line</th><th class='num'>{e(q.get('label'))}</th><th class='num'>% of revenue</th></tr></thead><tbody>{lad}</tbody></table></div>"
             + f"<h2>Revenue, quarter by quarter</h2><div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>Revenue</th><th class='num'>Y/Y</th></tr></thead><tbody>{hist}</tbody></table></div>"
-            + f"<p class='muted'>From {e(name)}'s {e(q.get('form'))} filed {e(fdate(q.get('filed')))}" + (f" (<a href='{e(q.get('doc_url'))}' rel='nofollow'>on EDGAR</a>)" if q.get('doc_url') else '') + '.</p>')
-    return {'title': f"How {name} ({t}) makes money: revenue by segment, {q.get('label')}", 'h1': f"How {name} ({t}) makes money",
+            + f"<p class='muted'>From {e(seo.poss(name))} {e(q.get('form'))} filed {e(fdate(q.get('filed')))}" + (f" (<a href='{e(q.get('doc_url'))}' rel='nofollow'>on EDGAR</a>)" if q.get('doc_url') else '') + '.</p>')
+    return {'title': f"How {name} ({t}) makes money: " + ('revenue by segment' if len(segs) > 1 else 'revenue, costs and profit') + f", {q.get('label')}",
+            'h1': f"How {name} ({t}) makes money",
             'desc': lead[:300], 'body': body, 'qa': qa, 'modified': (q.get('filed') or '')[:10] or None}
 
 
@@ -829,10 +852,7 @@ def write(site, base, limit=None):
             pages = {k: safe(f, k, t) for k, f in pages.items()}
             q0 = ((cdoc or {}).get('quarters') or [{}])[0] or {}
             latest_q = q0.get('label')
-            hq = q0.get('headline') or {}                           # the quarter in words: what the chart's figure holds before it is drawn
-            in_words = (f"{co['who_name']}, {latest_q}: revenue {money(hq['revenue'])}" + (f" ({pc(hq.get('yoy'))} year over year)" if hq.get('yoy') is not None else '')
-                        + (f", net {'earnings' if hq['ni'] >= 0 else 'loss'} {money(abs(hq['ni']))}" if hq.get('ni') is not None else '')
-                        + '. The chart follows the revenue to costs, profit and cash.') if hq.get('revenue') else ''
+            in_words = quarter_words(co['who_name'], q0)             # what the chart's figure holds before it is drawn
             have =[k for k, v in pages.items() if v]
             if not have:
                 continue
