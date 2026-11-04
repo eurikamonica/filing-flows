@@ -1,7 +1,7 @@
 {
   "status": "partial",
-  "failed_queue": 4,
-  "next_retry_at": "2026-11-04T00:08:34.490161+00:00",
+  "failed_queue": 5,
+  "next_retry_at": "2026-11-04T01:47:20.357382+00:00",
   "error_samples": [
     {
       "key": "0001660280-26-000046",
@@ -26,10 +26,17 @@
     },
     {
       "key": "0001569187-26-000166",
-      "attempts": 2,
-      "last_attempt": "2026-11-03T23:38:34+00:00",
+      "attempts": 3,
+      "last_attempt": "2026-11-04T00:47:23+00:00",
       "error": "Response exceeds configured size; not marked complete",
-      "next_retry_at": "2026-11-04T00:08:34.490161+00:00"
+      "next_retry_at": "2026-11-04T01:47:23.940765+00:00"
+    },
+    {
+      "key": "index:20261103",
+      "attempts": 1,
+      "last_attempt": "2026-11-04T00:47:20+00:00",
+      "error": "HTTP 403 from www.sec.gov",
+      "next_retry_at": "2026-11-04T01:47:20.357382+00:00"
     }
   ],
   "read": 0,
@@ -48,18 +55,18 @@
     "discover_read": 0,
     "discovered": 0,
     "written": 50,
-    "updated_at": "2026-11-03T23:59:28+00:00"
+    "updated_at": "2026-11-04T00:48:14+00:00"
   },
-  "errors": 0,
+  "errors": 2,
   "on_file": 7668,
-  "index_days": 28,
+  "index_days": 27,
   "published": {
     "rows": 2278,
     "with_ticker": 2235
   },
-  "last_attempt": "2026-11-03T23:58:33+00:00",
+  "last_attempt": "2026-11-04T00:47:18+00:00",
   "last_success": null,
-  "last_partial_success": "2026-11-03T23:59:28+00:00",
-  "updated_at": "2026-11-03T23:59:28+00:00",
+  "last_partial_success": "2026-11-04T00:48:14+00:00",
+  "updated_at": "2026-11-04T00:48:14+00:00",
   "latest_filing_date": "2026-11-03"
 }
