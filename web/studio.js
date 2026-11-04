@@ -3200,7 +3200,7 @@
     s.textContent = `.st-wrap{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:22px;align-items:start}.st-main{min-width:0}@media(max-width:900px){.st-wrap{grid-template-columns:1fr}.st-main{order:-1}}
 .st-side{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface)}.st-side h3{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .st-side h3:first-child{margin-top:2px}.st-side label{display:block;font-size:12.5px;color:var(--muted);margin:8px 0 3px}.st-side .input,.st-side select,.st-side textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
-.st-side textarea{min-height:84px;font-family:var(--mono);font-size:13px}.st-row{display:flex;gap:8px}.st-row>*{flex:1}.st-pills{display:flex;flex-wrap:wrap;gap:6px}.st-pills .pill{font-size:12.5px;padding:5px 10px}
+.st-side textarea{min-height:84px;font-family:var(--mono);font-size:13px}.st-range{line-height:1.55;margin-top:6px}.st-range .pill{font-size:12px;padding:2px 8px;margin-left:4px}.st-row{display:flex;gap:8px}.st-row>*{flex:1}.st-pills{display:flex;flex-wrap:wrap;gap:6px}.st-pills .pill{font-size:12.5px;padding:5px 10px}
 .st-stage{background:#0b1220;border-radius:14px;overflow:hidden;display:flex;justify-content:center;align-items:center;box-shadow:var(--shadow)}.st-stage canvas{display:block;max-width:100%;max-height:72vh;height:auto}
 .st-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 6px}.st-bar .sp{flex:1}.st-status{font-size:13px;color:var(--muted)}.st-prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:6px 0}.st-prog i{display:block;height:100%;background:var(--accent);width:0}
 .st-notes{font-size:12.5px;color:var(--muted);line-height:1.5;margin:8px 0 0;padding-left:18px}.st-notes li{margin:2px 0}
@@ -3262,10 +3262,13 @@
     }
     function actualSide() {
       let h = `<label for="st-aw">Weight source</label>${sel('st-aw', [['index', 'Index (tracking ETF proxy)'], ['etf', 'ETF disclosed holdings'], ['13f', '13F manager holdings'], ['official', 'Officials: transaction composition']], st.aw)}`;
-      if (st.aw === 'etf') h += `<label for="st-ah">ETF ticker</label><input class="input" id="st-ah" list="st-list" autocomplete="off" placeholder="SPY, QQQ, DIA" value="${esc(st.ah)}"><datalist id="st-list"></datalist>`;
-      else if (st.aw === '13f') h += `<label for="st-ac">Manager CIK</label><input class="input" id="st-ac" value="${esc(st.ac)}"><div class="st-help">Berkshire: 1067983 · Bridgewater: 1350694 · Scion: 1649339</div>`;
-      else if (st.aw === 'official') h += `<label for="st-ap">Official name (as disclosed)</label><input class="input" id="st-ap" value="${esc(st.ap)}"><label for="st-ao">Transactions</label>${sel('st-ao', [['all','All gross activity'],['buy','Purchases'],['sell','Sales']], st.ao)}`;
+      // a ticker typed, not picked from a list (a phone's list of 5,000 ETFs covers the page); under it, the dates on file
+      // and the most the sources could ever give (rangeInfo)
+      if (st.aw === 'etf') h += `<label for="st-ah">ETF ticker</label><input class="input" id="st-ah" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Type a ticker: SPY, QQQ, XLK, SCHD" value="${esc(st.ah)}">`;
+      else if (st.aw === '13f') h += `<label for="st-ac">Manager CIK</label><input class="input" id="st-ac" inputmode="numeric" autocomplete="off" value="${esc(st.ac)}"><div class="st-help">Berkshire: 1067983 · Bridgewater: 1350694 · Scion: 1649339</div>`;
+      else if (st.aw === 'official') h += `<label for="st-ap">Official name (as disclosed)</label><input class="input" id="st-ap" autocomplete="off" value="${esc(st.ap)}"><label for="st-ao">Transactions</label>${sel('st-ao', [['all','All gross activity'],['buy','Purchases'],['sell','Sales']], st.ao)}`;
       else h += `<label for="st-at">Index</label>${sel('st-at', Object.entries(root.FFActual.TRACKERS).map(([k, v]) => [k, v[0] + ' · ' + v[1]]), st.at)}`;
+      h += `<div class="st-help st-range" id="st-range" aria-live="polite"></div>`;
       if (st.style === 'changes') h += `<label for="st-ag">Group changes</label>${sel('st-ag', [['company','Company'],['sector','Sector']], st.ag)}`;
       h += `<label for="st-an">Top holdings shown</label>${sel('st-an', [['5', '5'], ['10', '10'], ['12', '12'], ['15', '15'], ['20', '20']], st.an)}`;
       return h + '<div class="st-help">ETF NAV weights; 13F reported-value weights; officials show monthly transaction lower-bound shares, NOT holdings. Source dates are retained; official transaction charts use month-end buckets. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Dates before the first actual snapshot cannot be animated.</div>';
@@ -3430,6 +3433,7 @@
       h += `<label for="st-title">Title (blank: written for you)</label><input class="input" id="st-title" value="${esc(st.title)}" placeholder="${esc((V && V.title) || '')}"><label for="st-sub">Subtitle</label><input class="input" id="st-sub" value="${esc(st.sub)}" placeholder="${esc((V && V.sub) || '')}">`;
       h += `<label for="st-end">End card</label>${sel('st-end', [['1', 'The result, ranked'], ['0', 'None']], st.end)}`;
       $('#st-side').innerHTML = h;
+      if (k === 'actual') rangeInfo();
     }
     function relabel() {
       const L = growthLabels(st), a = app.querySelector('label[for="st-amt"]'), r = app.querySelector('label[for="st-rec"]'), hp = $('#st-goal-help');
@@ -3524,6 +3528,53 @@
         c.toBlob((blob) => { if (blob) download(blob, fileStem(V) + '.png'); }, 'image/png');
       }
     });
+    // the dates on file for the fund, manager or official chosen, and the widest range its source could give
+    const fmtD = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d || '')); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '—'; };
+    const NPORT0 = '2019-09-30', F13_0 = '2013-06-30', PTR0 = '2012-01-01';
+    let rangeTok = 0;
+    async function rangeInfo() {
+      const el = $('#st-range'); if (!el || st.k !== 'actual') return;
+      const my = ++rangeTok, set = (html, lo, hi) => {
+        if (my !== rangeTok || !el.isConnected) return;
+        el.innerHTML = html;
+        for (const id of ['#st-from', '#st-to']) { const d = $(id); if (d) { if (lo) d.min = lo; else d.removeAttribute('min'); if (hi) d.max = hi; else d.removeAttribute('max'); } }
+      };
+      const all = (lo, hi) => lo ? ` <button type="button" class="pill" data-range-all="1">Use all on file</button>` : '';
+      try {
+        if (st.aw === 'etf' || st.aw === 'index') {
+          const sym = String(st.aw === 'etf' ? st.ah : ((root.FFActual.TRACKERS[st.at] || [])[1] || '')).trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
+          if (!sym) { set('Type a ticker to see the dates on file.'); return; }
+          set(`Looking up ${esc(sym)}…`);
+          const [ix, w] = await Promise.all([json(HUB + 'etf/index.json'), json(HUB + 'etf/weights/' + encodeURIComponent(sym) + '.json')]);
+          const F = (ix && ix.fields) || [], row = ((ix && ix.rows) || []).find((r) => String(r[F.indexOf('symbol')]).toUpperCase() === sym);
+          const name = row ? row[F.indexOf('name')] : '', inc = row ? row[F.indexOf('inception')] : null;
+          if (!row && !w) { set(`<b>${esc(sym)}</b> is not one of the US-listed ETFs on file. Try SPY, QQQ, DIA, XLK or SCHD.`); return; }
+          const q = (w && w.quarterly && w.quarterly.dates) || [], d = ((w && w.snapshots) || []).map((x) => x.date).filter(Boolean).sort();
+          const lo = [q[0], d[0]].filter(Boolean).sort()[0] || '', hi = [q[q.length - 1], d[d.length - 1]].filter(Boolean).sort().slice(-1)[0] || '';
+          const onFile = q.length || d.length ? [q.length ? `${q.length} quarter-end portfolios, ${fmtD(q[0])} → ${fmtD(q[q.length - 1])} (SEC N-PORT)` : '',
+            d.length ? `${d.length} ${d.length === 1 ? 'snapshot' : 'snapshots'}, ${fmtD(d[0])}${d.length > 1 ? ' → ' + fmtD(d[d.length - 1]) : ''} (${d.length > 1 ? 'daily sponsor files' : 'the latest report'})` : ''].filter(Boolean).join(' · ') : 'nothing yet';
+          const start = inc && inc > NPORT0 ? inc : NPORT0;
+          const maxTxt = `${fmtD(start)} → today. SEC’s data sets of fund portfolios begin ${fmtD(NPORT0)}${inc ? (inc > NPORT0 ? `; ${esc(sym)} launched ${fmtD(inc)}` : `; ${esc(sym)} launched ${fmtD(inc)}, so its earlier years are not in them`) : ''}. Each quarter-end turns up about 60 days after it; some funds’ first reports come later.`;
+          set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Max:</b> ${maxTxt}`, lo, hi);
+        } else if (st.aw === '13f') {
+          const cik = String(st.ac || '').replace(/\D/g, '').replace(/^0+/, '');
+          if (!cik) { set('Type a manager’s CIK to see the quarters on file.'); return; }
+          set(`Looking up CIK ${esc(cik)}…`);
+          const cfg = await json(HUB + 'remote.json'), base = cfg && /^https:\/\//.test(cfg.base || '') && (cfg.prefixes || []).some((x) => 'shards/holdings/'.startsWith(x)) ? cfg.base : HUB;
+          const doc = await json(base + 'shards/holdings/' + cik + '.json');
+          if (!doc) { set(`No 13F manager with CIK ${esc(cik)} on file yet.`); return; }
+          const ps = (doc.snapshots || []).filter((x) => x.complete).map((x) => x.period).sort(), lo = ps[0] || '', hi = ps[ps.length - 1] || '';
+          const since = String(doc.since || ''), deep = since && since <= F13_0;
+          set(`<b>${esc(doc.label || doc.name || 'CIK ' + cik)}</b><br><b>On file:</b> ${ps.length ? `${ps.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}` : 'no complete quarter yet'}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter: 13F holdings are machine-readable from Q2 2013, and each quarter is filed within 45 days. ${deep ? 'This manager is read from then.' : `This manager is read from ${fmtD(since)} so far; the history back-fill deepens it.`}`, lo, hi);
+        } else if (st.aw === 'official') {
+          const name = String(st.ap || '').trim(), slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
+          if (!slug) { set('Type an official’s name to see the trades on file.'); return; }
+          const doc = await json(HUB + 'market/officials/' + slug + '.json');
+          if (!doc) { set(`No trades on file for “${esc(name)}” (the name as the reports spell it, e.g. Nancy Pelosi).`); return; }
+          set(`<b>${esc(doc.name || name)}</b> · ${esc(doc.jurisdiction || '')}<br><b>On file:</b> ${(doc.n || 0).toLocaleString('en-US')} trades, ${fmtD(doc.first)} → ${fmtD(doc.last)}${all(doc.first, doc.last)}<br><b>Max:</b> ${fmtD(PTR0)} → today: periodic transaction reports since the STOCK Act (2012); the House reports are being read back to then.`, doc.first, doc.last);
+        }
+      } catch (e) { set(''); }
+    }
     async function suggest() {
       const list = $('#st-list'); if (!list || list.dataset.done) return; list.dataset.done = '1';
       const [ix, ex] = await Promise.all([json(SITE + 'index.json'), st.k === 'fund' ? null : json(HUB + 'etf/index.json')]);
@@ -3558,16 +3609,19 @@
         if (st.k === 'actual' || st.k === 'holdings') { st.style = 'bars'; st.from = ''; st.to = ''; st.yrs = ''; }
         side(); rebuild(); return;
       }
+      if (e.target.closest('[data-range-all]')) { st.from = ''; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
       const yb = e.target.closest('[data-yrs]');
       if (yb) { st.from = iso(Date.now() - (+yb.dataset.yrs) * 365.25 * DAY); st.to = ''; st.yrs = ''; side(); rebuild(); }
       const sb = e.target.closest('[data-speed]');
       if (sb) { st.dur = String(clamp(Math.round((+st.dur || 20) / +sb.dataset.speed), 4, 300)); const d = $('#st-dur'); if (d) d.value = st.dur; if (V) { paint(); save(); status(); } }
     });
-    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t' || e.target.id === 'st-ah') suggest(); if (e.target.id === 'st-hid') suggestHoldings(); });
+    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t') suggest(); if (e.target.id === 'st-hid') suggestHoldings(); });
     box.addEventListener('input', (e) => {
       const id = e.target.id; if (!id || !id.startsWith('st-') || e.target.tagName === 'SELECT') return;
       const key = id.slice(3); if (!(key in DEF)) return;
+      if (key === 'ah') { const v = e.target.value.toUpperCase(); if (v !== e.target.value) { const p = e.target.selectionStart; e.target.value = v; try { e.target.setSelectionRange(p, p); } catch (x) { /* a phone keyboard */ } } }
       st[key] = e.target.value;
+      if (key === 'ah' || key === 'ac' || key === 'ap') { clearTimeout(rangeInfo.t); rangeInfo.t = setTimeout(rangeInfo, 300); }
       if (key === 'title' || key === 'sub') { if (V) { V.title = st.title || V._title; V.sub = st.sub || V._sub; paint(); save(); } return; }
       if (LOOK.includes(key)) { if (V) { paint(); save(); status(); } return; }
       if (['rec', 'goal'].includes(key)) relabel();
@@ -3590,6 +3644,7 @@
       }
       if (key === 'sp' && SPEND[st.sp]) { Object.assign(st, SPEND[st.sp].s); st.title = ''; st.sub = ''; }
       if (['rm', 'bx', 'by', 'sw', 'aw', 'hsrc', 'ssolve', 'sgoal', 'div', 'sp', 'sphab', 'spl', 'spinf', 'sphe', 'fi', 'fsplit'].includes(key)) side();
+      else if (key === 'at') rangeInfo();
       rebuild();
     });
     const tplAll = (on) => { const g = $('#st-tpl'), b = $('#st-tpl-all'); g.classList.toggle('all', on); b.setAttribute('aria-expanded', String(on)); b.textContent = on ? 'Fewer ▴' : `All ${TEMPLATES.length} ▾`; };
