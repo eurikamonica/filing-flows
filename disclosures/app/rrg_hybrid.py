@@ -26,9 +26,10 @@ by 1 January. The hybrid is the blocks' forecasts weighted by non-negative least
 out-of-sample forecasts (stacking; at least three years of them) — the weights are published, and a block that has not
 helped gets none. The classic RRG (14-week x, y and the last step, the same ridge) is fitted alongside as the yardstick.
 
-Per line and horizon (1, 4, 13 weeks): the expected return against SPY (the panel's past average plus the hybrid),
-the chance of beating SPY (from the hybrid's past out-of-sample errors) and an 80% range (those errors in units of the
-line's own volatility). The Hybrid RRG chart: x = the 13-week forecast, y = the 4-week forecast, each ranked within
+Per line and horizon (1, 4, 13 weeks): the expected return against SPY (the panel's average of the last five years plus
+the hybrid), the chance of beating SPY (from the hybrid's out-of-sample errors in those five years — for companies, the
+errors of lines in the same volatility fifth that week) and an 80% range (those errors in units of the line's own
+volatility). The Hybrid RRG chart: x = the 13-week forecast, y = the 4-week forecast, each ranked within
 the week (100 + z) — the quadrants keep the RRG's names: Leading (both ahead), Weakening (the quarter ahead, the
 month not), Lagging, Improving (the month ahead, the quarter not).
 
@@ -69,6 +70,11 @@ COST_TIERS = ((500e6, 5.0), (50e6, 15.0), (5e6, 40.0), (0.0, 100.0))   # weekly 
 SPIKE, QUIET = math.log(2.0), math.log(0.6)
 VOLUME_LAG = 1                # the volume inputs use the last complete week before the one forecast from: a file's
                               # newest weekly bar can hold only its last day's volume (Yahoo's extra bar of the week)
+CAL_YEARS = 5                 # the level, the base rate and the error distributions come from the last 5 years …
+CAL_GROUPS = {'companies': 5, 'funds': 1}   # … companies' errors kept apart by volatility fifth (within each week).
+                              # Chosen on 2007–2011, before the scored years, among since 1998 / 10 / 5 years × pooled /
+                              # by fifth: by fifth, companies' 80% ranges held 80% in every fifth (pooled: 75% in the
+                              # calmest, 85% in the wildest); funds (29 lines) did better pooled
 TAIL_WEEKS = 8
 LEDGER_MAX_LINES = 800        # the ledger freezes every fund and the 800 companies with the most dollar volume that week
 TOP_ROWS = 25                 # companies in the main file (best and worst by the 13-week forecast); the rest in their own file
@@ -246,6 +252,19 @@ def known_before(days, h, year):
     return (np.arange(W) + h < W) & (days[e] < np.datetime64(f'{year}-01-01'))
 
 
+def vol_groups(vol, ok, n):
+    """Each line's volatility group within its week (0 = the calmest … n − 1), −1 where it has no volatility yet."""
+    g = np.full(vol.shape, -1, np.int8)
+    for t in range(vol.shape[1]):
+        c = ok[:, t] & np.isfinite(vol[:, t])
+        k = int(c.sum())
+        if not k:
+            continue
+        r = np.argsort(np.argsort(vol[c, t], kind='stable'), kind='stable')
+        g[c, t] = (r * max(n, 1) // k).astype(np.int8)
+    return g
+
+
 def demean(Y, ok):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', RuntimeWarning)
@@ -253,8 +272,10 @@ def demean(Y, ok):
     return Y - m
 
 
-def walk_forward(days, Fe, h):
-    """Every block and the classic RRG, refitted yearly; then the stacked hybrid and its probabilities and ranges."""
+def walk_forward(days, Fe, h, groups=1):
+    """Every block and the classic RRG, refitted yearly; then the stacked hybrid and its probabilities and ranges (their
+    errors kept apart in `groups` volatility groups)."""
+    groups = max(int(groups or 1), 1)
     Z, ok, rel = Fe['Z'], Fe['ok'], Fe['rel']
     yrs = years_of(days)
     Yraw = fwd_sum(rel, h)
@@ -283,6 +304,8 @@ def walk_forward(days, Fe, h):
     S = np.full((L, W), np.nan, np.float32)
     weights, mu_by, base_by, res_by, z_by = {}, {}, {}, {}, {}
     vol = Fe['raw']['vol26']
+    grp = vol_groups(vol, ok, groups)
+    since = (lambda Y: (yrs >= Y - CAL_YEARS)[None]) if CAL_YEARS else (lambda Y: np.ones((1, W), bool))
     for Y in range(FIRST_OOS, last + 1):
         te = core & (yrs == Y)[None] & np.all([np.isfinite(F[b]) for b in names], 0)
         prev = core & np.isfinite(Ydm) & known_before(days, h, Y)[None] & (yrs >= FIRST_OOS)[None] & np.all([np.isfinite(F[b]) for b in names], 0)
@@ -296,26 +319,39 @@ def walk_forward(days, Fe, h):
             w = np.zeros(len(names))
         weights[Y] = w
         S[te] = np.stack([F[b][te] for b in names], 1) @ w
-        # the level (the panel's average relative return), the base rate, the errors of the published forecast
-        trn = ok & np.isfinite(Yraw) & known_before(days, h, Y)[None] & (yrs >= FIT_FROM)[None]
+        # calibration — the level (the panel's average relative return), the base rate and the errors of the published
+        # forecast — from the last CAL_YEARS years of known outcomes, the errors kept by volatility group
+        known = ok & np.isfinite(Yraw) & known_before(days, h, Y)[None] & (yrs >= FIT_FROM)[None]
+        trn = known & since(Y)
+        if trn.sum() < 2000:
+            trn = known
         if trn.sum() < 2000:
             continue
         mu_by[Y] = float(np.mean(Yraw[trn]))
         base_by[Y] = float(np.mean(Yraw[trn] > 0))
+        pv = prev & since(Y) if enough else None
+        if enough and pv.sum() < 2000:
+            pv = prev
         if enough:
-            Sp = np.stack([F[b][prev] for b in names], 1).astype(float) @ w
-            e = Yraw[prev] - mu_by[Y] - Sp
-            v = vol[prev] * math.sqrt(h)
-            z = e / np.where(v > 1e-6, v, np.nan)
+            Sp = np.stack([F[b][pv] for b in names], 1).astype(float) @ w
+            e = Yraw[pv] - mu_by[Y] - Sp
+            v, g = vol[pv] * math.sqrt(h), grp[pv]
         else:
             e = Yraw[trn] - mu_by[Y]
-            v = vol[trn] * math.sqrt(h)
-            z = e / np.where(v > 1e-6, v, np.nan)
+            v, g = vol[trn] * math.sqrt(h), grp[trn]
+        # (the expected return stays the panel's level plus the hybrid: adding each group's own level as well ranked worse —
+        # companies' 13-week rank correlation 0.051 against 0.065 — so the group's level shows only in its errors)
+        z = e / np.where(v > 1e-6, v, np.nan)
         rng = np.random.default_rng(Y)
-        pick = rng.choice(len(e), min(len(e), 40000), replace=False)
-        res_by[Y] = np.sort(e[pick])
-        zz = z[pick]
-        z_by[Y] = np.quantile(zz[np.isfinite(zz)], [0.1, 0.9]) if np.isfinite(zz).sum() > 100 else np.array([-1.2816, 1.2816])
+        res_by[Y], z_by[Y] = {}, {}
+        for k in [-1] + list(range(groups)):              # −1: every line together (and lines with no volatility yet)
+            idx = np.flatnonzero(g == k) if k >= 0 else np.arange(len(e))
+            if len(idx) < 500:
+                continue
+            pick = rng.choice(idx, min(len(idx), 40000), replace=False)
+            res_by[Y][k] = np.sort(e[pick])
+            zz = z[pick][np.isfinite(z[pick])]
+            z_by[Y][k] = np.quantile(zz, [0.1, 0.9]) if len(zz) > 100 else np.array([-1.2816, 1.2816])
     E = np.full((L, W), np.nan, np.float32)
     P = np.full((L, W), np.nan, np.float32)
     P0 = np.full((L, W), np.nan, np.float32)
@@ -323,16 +359,24 @@ def walk_forward(days, Fe, h):
     HI = np.full((L, W), np.nan, np.float32)
     for Y in res_by:
         te = np.isfinite(S) & (yrs == Y)[None]
-        if not te.any():
+        if not te.any() or -1 not in res_by[Y]:
             continue
         e_s = mu_by[Y] + S[te].astype(float)
         E[te] = e_s
-        r = res_by[Y]
-        P[te] = 1 - np.searchsorted(r, -e_s) / len(r)
         P0[te] = base_by[Y]
         v = vol[te] * math.sqrt(h)
-        LO[te] = e_s + z_by[Y][0] * v
-        HI[te] = e_s + z_by[Y][1] * v
+        g = grp[te]
+        own = np.isin(g, [k for k in res_by[Y] if k >= 0])
+        p, lo_, hi_ = (np.full(len(e_s), np.nan) for _ in range(3))
+        for k in res_by[Y]:
+            sel = (g == k) if k >= 0 else ~own
+            if not sel.any():
+                continue
+            r = res_by[Y][k]
+            p[sel] = 1 - np.searchsorted(r, -e_s[sel]) / len(r)
+            lo_[sel] = e_s[sel] + z_by[Y][k][0] * v[sel]
+            hi_[sel] = e_s[sel] + z_by[Y][k][1] * v[sel]
+        P[te], LO[te], HI[te] = p, lo_, hi_
     return {'F': F, 'S': S, 'E': E, 'P': P, 'P0': P0, 'LO': LO, 'HI': HI, 'Yraw': Yraw, 'Ydm': Ydm, 'core': core,
             'weights': {int(k): [r_(x) for x in v] for k, v in weights.items()}, 'coefs': coefs}
 
@@ -426,7 +470,8 @@ def evaluate(days, Fe, R, h, panel):
     yb = (Yraw[mk] > 0).astype(float)
     b1 = float(((R['P'][mk] - yb) ** 2).mean()) if mk.any() else None
     b0 = float(((R['P0'][mk] - yb) ** 2).mean()) if mk.any() else None
-    out['beat_spy'] = {'brier_skill': r_(1 - b1 / b0) if b0 else None, 'n': int(mk.sum()), 'base_rate': r_(yb.mean(), 3) if mk.any() else None}
+    out['beat_spy'] = {'brier_skill': r_(1 - b1 / b0) if b0 else None, 'n': int(mk.sum()), 'base_rate': r_(yb.mean(), 3) if mk.any() else None,
+                       'bias': r_(float(R['P'][mk].mean() - yb.mean()), 3) if mk.any() else None}   # mean forecast − the share that did
     bins = []
     pv = R['P'][mk]
     for lo_ in np.arange(0, 1, 0.1):
@@ -436,6 +481,9 @@ def evaluate(days, Fe, R, h, panel):
     out['beat_spy']['calibration'] = bins
     mr = ok & np.isfinite(R['LO']) & np.isfinite(Yraw) & (yrs >= TEST_FROM)[None]
     out['range80'] = r_(((Yraw[mr] >= R['LO'][mr]) & (Yraw[mr] <= R['HI'][mr])).mean(), 3) if mr.any() else None
+    fifth = vol_groups(Fe['raw']['vol26'], Fe['ok'], 5)[mr]                # … and by volatility fifth, calmest first
+    held = (Yraw[mr] >= R['LO'][mr]) & (Yraw[mr] <= R['HI'][mr])
+    out['range80_by_vol'] = [r_(held[fifth == k].mean(), 3) if (fifth == k).sum() >= 200 else None for k in range(5)]
     out['weights_by_year'] = {str(k): v for k, v in R['weights'].items() if k >= TEST_FROM - 1}
     return out
 
@@ -623,11 +671,13 @@ def build(public, ledger=None, today=None, verbose=True, force=False):
         with warnings.catch_warnings(), np.errstate(all='ignore'):
             warnings.simplefilter('ignore', RuntimeWarning)
             Fe = features(P['C'], P['V'], spy, P['liq'])
-            Rs = {h: walk_forward(days, Fe, h) for h in HORIZONS}
+            groups = CAL_GROUPS.get(panel, 1)
+            Rs = {h: walk_forward(days, Fe, h, groups) for h in HORIZONS}
             ev = {h: evaluate(days, Fe, Rs[h], h, panel) for h in HORIZONS}
             rows = current_rows(days, P, Fe, Rs, t, spy, panel)
             desc = describe(days, Fe, panel)
         doc['panels'][panel] = {'lines': len(P['ids']), 'now': len(rows), 'scores': {str(h): ev[h] for h in HORIZONS},
+                                'calibration': {'years': CAL_YEARS, 'vol_groups': groups},
                                 'weights_now': {str(h): dict(zip(BLOCKS, Rs[h]['weights'].get(int(str(days[t])[:4])) or [0, 0, 0])) for h in HORIZONS},
                                 'coefs': {str(h): Rs[h]['coefs'] for h in HORIZONS}, 'describe': desc, 'rows': rows,
                                 'spy_drift_week': r_(spy_drift(spy, t), 5)}

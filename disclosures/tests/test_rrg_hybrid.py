@@ -2,6 +2,7 @@
 stacking keeps only blocks that helped, a planted momentum effect is found, and the published files and the ledger."""
 import datetime as dt
 import json
+import math
 import shutil
 import sys
 import tempfile
@@ -19,9 +20,10 @@ START = dt.date(1996, 1, 5)                 # a Friday
 W = 31 * 52
 
 
-def write_public(root, n_cos=90, n_funds=12, seed=11, drift=0.0015):
+def write_public(root, n_cos=90, n_funds=12, seed=11, drift=0.0015, spread=0.0):
     """rrg.json (SPY, funds with volume), t/<T>.json for companies whose relative return carries a persistent drift
-    (so 12-1 momentum predicts it), industries.json empty."""
+    (so 12-1 momentum predicts it), industries.json empty. `spread`: each line's noise scaled by exp(N(0, spread)) —
+    calm and wild lines side by side."""
     rng = np.random.default_rng(seed)
     days = [START + dt.timedelta(days=7 * k) for k in range(W)]
     pub = Path(root)
@@ -38,7 +40,7 @@ def write_public(root, n_cos=90, n_funds=12, seed=11, drift=0.0015):
                 if k % 26 == 0:
                     level = 0.6 * level + rng.normal(0, drift)
                 mu[k] = level
-            r = spy_r + mu + rng.normal(0, scale, W)
+            r = spy_r + mu + rng.normal(0, scale * math.exp(rng.normal(0, spread)) if spread else scale, W)
             c = 30 * np.exp(np.cumsum(r))
             v = np.exp(rng.normal(13, 0.3, W))
             out.append((c, v))
@@ -141,6 +143,31 @@ class TestPieces(unittest.TestCase):
                 np.testing.assert_array_equal(Fe['raw'][name][:, k], Fe2['raw'][name][:, k])
             np.testing.assert_allclose(R['S'][:, k], R2['S'][:, k])
             self.assertFalse(np.allclose(np.nan_to_num(R['S'][:, cut + 300]), np.nan_to_num(R2['S'][:, cut + 300])))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_volatility_groups(self):
+        vol = np.array([[0.01, np.nan], [0.05, 0.02], [0.03, 0.04], [0.02, 0.01], [0.04, 0.03]])
+        ok = np.ones(vol.shape, bool)
+        g = HY.vol_groups(vol, ok, 5)
+        self.assertEqual(g[:, 0].tolist(), [0, 4, 2, 1, 3])                 # ranked within the week, calmest = 0
+        self.assertEqual(g[0, 1], -1)                                      # no volatility yet: no group
+        self.assertEqual(sorted(g[1:, 1].tolist()), [0, 1, 2, 3])
+        self.assertTrue((HY.vol_groups(vol, ok, 1)[np.isfinite(vol)] == 0).all())
+
+    def test_ranges_hold_in_every_volatility_fifth(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            pub, _ = write_public(tmp, n_cos=60, n_funds=6, seed=5, spread=0.4)
+            D = HY.load(pub)
+            P = D['panels']['companies']
+            Fe = HY.features(P['C'], P['V'], D['spy'], P['liq'])
+            R = HY.walk_forward(D['days'], Fe, 13, groups=5)
+            ev = HY.evaluate(D['days'], Fe, R, 13, 'companies')
+            self.assertEqual(len(ev['range80_by_vol']), 5)
+            for v in ev['range80_by_vol']:
+                self.assertTrue(0.7 <= v <= 0.9, ev['range80_by_vol'])
+            self.assertLess(abs(ev['beat_spy']['bias']), 0.06)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
