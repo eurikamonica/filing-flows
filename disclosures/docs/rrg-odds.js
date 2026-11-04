@@ -148,7 +148,7 @@ function rrgoCheck(M){
 
 /* on the chart: the selected line's odds in each quadrant's corner and its three most common paths */
 function rrgOddsLayer(o,f,sx,sy){
- if(!state.rrgp||f!==o.lastK||o.freq!=='w'||o.n!==14)return '';
+ if(!state.rrgp||f!==o.lastK||o.freq!=='w'||o.n!==14||(o.solo&&o.solo!==state.rrgp))return '';   // not for a line hidden by "Show
  const m=rrgoModel();if(!m.data)return '';
  const M=m.data,r=rrgoRows(o,M).find(x=>x.l.e.id===state.rrgp&&x.odds);if(!r)return '';
  const h=rrgoH(),d=r.odds[h],c=r.l.calc,p0=[sx(c.x[r.k]),sy(c.y[r.k])],{x:xd,y:yd}=o.dom,hl=RRGO_H.find(x=>x[0]===h)[1];

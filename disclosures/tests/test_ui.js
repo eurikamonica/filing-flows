@@ -261,6 +261,20 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   html=run(`rrgView()`);
   assert.ok(html.includes('EWJ $')&&html.includes('14-week window')&&html.includes('rrgl-path'),'the countries on the weekly chart');
   assert.ok(!/NaN|undefined|Infinity/.test(html),'the weekly countries show NaN/undefined');
+  // one line alone (state.rrgsolo): the other lines leave the chart; its forecast path has a dot every week and the marks
+  // +1 / +2 / +4 / +8 / +13 weeks with dates and prices; the player: speed, video shape, MP4 export
+  run(`state.rrgsolo='EWJ'`);html=run(`rrgView()`);
+  {const svg=html.slice(html.indexOf('<svg'),html.indexOf('</svg>'));
+   assert.ok(svg.includes('EWJ $')&&!svg.includes('EWZ $'),'one line alone: the other line is still drawn');
+   assert.ok((svg.match(/rrgl-step/g)||[]).length>=5,'the solo line\'s path lacks a dot each week');
+   assert.ok(svg.includes('+13w ')&&['+1w ','+2w ','+4w ','+8w '].some(t=>svg.includes(t)),'the solo line\'s path lacks its dated marks');}
+  assert.ok(html.includes('EWZ only')&&html.includes('· hidden'),'the Show control or the legend');
+  for(const id of ['rspeed','rshape','rmp4'])assert.ok(html.includes(`id="${id}"`),`the player lacks ${id}`);
+  assert.ok(run(`window.FFShare.get('hub-rrg-2d').title`).includes(' · EWJ'),'the share title does not name the line shown alone');
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'one line alone shows NaN/undefined');
+  run(`state.rrgsolo='';state.rspd='2'`);
+  assert.ok(run(`rotMs({ms:110})`)<=56&&run(`rotPlayer(['a','b'],{span:2})`).includes('value="2" selected'),'the speed');
+  run(`state.rspd=''`);
   run(`state.rrgf='d';state.rrgu='site'`);
   assert.ok(run(`rrgView()`).includes('weekly only'),'site sectors on the daily chart: explained');
   // the Rotation research view from a server file (the browser's own research has the server's shape)

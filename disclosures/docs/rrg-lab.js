@@ -21,10 +21,21 @@
   'use strict';
   const isF = (v) => typeof v === 'number' && Number.isFinite(v);
   const PAR = {
-    w: { sh: 4, long: (n) => Math.max(52, 3 * n), minNorm: 26, steps: 13, window: 156, marks: [1, 4, 13], H: [1, 4, 13, 26], one: 'week', many: 'weeks', ab: 'w', lag: 52, hiN: 52, hiMin: 45, vN: 13, vMin: 10 },
-    m: { sh: 2, long: (n) => Math.max(24, 3 * n), minNorm: 26, steps: 6, window: 60, marks: [1, 3, 6], H: [1, 3, 6, 12], one: 'month', many: 'months', ab: 'mo', lag: 12, hiN: 52, hiMin: 45, vN: 13, vMin: 10 },
-    d: { sh: 5, long: (n) => Math.max(252, 3 * n), minNorm: 126, steps: 21, window: 756, marks: [1, 5, 21], H: [1, 5, 21, 63], one: 'trading day', many: 'trading days', ab: 'd', lag: 252, hiN: 252, hiMin: 230, vN: 63, vMin: 55 },
+    w: { sh: 4, long: (n) => Math.max(52, 3 * n), minNorm: 26, steps: 13, window: 156, marks: [1, 2, 4, 8, 13], H: [1, 4, 13, 26], one: 'week', many: 'weeks', ab: 'w', lag: 52, hiN: 52, hiMin: 45, vN: 13, vMin: 10 },
+    m: { sh: 2, long: (n) => Math.max(24, 3 * n), minNorm: 26, steps: 6, window: 60, marks: [1, 2, 3, 6], H: [1, 3, 6, 12], one: 'month', many: 'months', ab: 'mo', lag: 12, hiN: 52, hiMin: 45, vN: 13, vMin: 10 },
+    d: { sh: 5, long: (n) => Math.max(252, 3 * n), minNorm: 126, steps: 21, window: 756, marks: [1, 2, 5, 10, 21], H: [1, 5, 21, 63], one: 'trading day', many: 'trading days', ab: 'd', lag: 252, hiN: 252, hiMin: 230, vN: 63, vMin: 55 },
   };
+  // the path as drawn: the median positions smoothed over three steps (¼ · ½ · ¼, the ends kept), so the line reads as
+  // a path and not as the jitter of medians taken step by step; the tips keep each step's own medians
+  function smoothPath(steps) {
+    const P = steps.map((st) => (isF(st.x50) && isF(st.y50) ? [st.x50, st.y50] : null));
+    return P.map((p, i) => {
+      if (!p) return null;
+      const a = i > 0 ? P[i - 1] : null, b = i < P.length - 1 ? P[i + 1] : null;
+      if (!a || !b) return p;
+      return [0.25 * a[0] + 0.5 * p[0] + 0.25 * b[0], 0.25 * a[1] + 0.5 * p[1] + 0.25 * b[1]];
+    });
+  }
   const NEAR = 1, SPEED = [0.25, 0.5], DEPTH = [1, 2], CAP = 1300;
   const QN = ['leading', 'weakening', 'lagging', 'improving'];
   const QT = ['Leading', 'Weakening', 'Lagging', 'Improving'];
@@ -394,7 +405,7 @@
     });
   }
 
-  const api = { PAR, BOUNDS, QN, QT, NEAR, SPEED, DEPTH, quad, ema, states, thresholds, ladder, stepPaths, forecast, ahead, qtl, decodeMoves, onDays, toWeekly, makeGrid, research, nowOdds, Hist, RHist };
+  const api = { PAR, BOUNDS, QN, QT, NEAR, SPEED, DEPTH, quad, ema, states, thresholds, ladder, stepPaths, forecast, smoothPath, ahead, qtl, decodeMoves, onDays, toWeekly, makeGrid, research, nowOdds, Hist, RHist };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RRGLab = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
@@ -456,32 +467,37 @@ const RRGL_FP=o=>[['','Off'],['all','Every line (median paths)'],...o.lines.map(
 function rrglFpState(o){const ok=RRGL_FP(o).map(x=>x[0]);if(state.rrgfp===undefined)state.rrgfp='all';if(!ok.includes(state.rrgfp))state.rrgfp=ok.includes(String(state.rrgfp))?state.rrgfp:'all';return state.rrgfp}
 // the chart layer: each line's forecast path (median position each period), the marked periods with date and price
 function rrglLayer(o,f,sx,sy){
- const mode=state.rrgfp;if(!mode||!o.lines)return '';
+ // a line shown alone (rrg.js, state.rrgsolo) gets its path with dates, prices and ranges, as if picked here
+ const mode=state.rrgfp&&o.solo?o.solo:state.rrgfp;if(!mode||!o.lines)return '';   // a line shown alone: its path, whatever line was picked
  const P=RRGLab.PAR[o.freq],one=mode!=='all',U=P.ab;
  let s='';const labels=[];
  for(const l of o.lines){
   if(one&&l.e.id!==mode)continue;
+  if(!one&&o.solo&&l.e.id!==o.solo)continue;
   const c=l.calc;if(!c||c.x[f]==null||c.y[f]==null||!c.c)continue;
   const F=rrglFc(o,l,f,typeof ROT!=='undefined'&&ROT.drag);if(!F)continue;
-  const p0=[sx(c.x[f]),sy(c.y[f])],pts=[p0,...F.steps.filter(st=>isFinite(st.x50)&&isFinite(st.y50)).map(st=>[sx(st.x50),sy(st.y50)])];
+  const sm=RRGLab.smoothPath(F.steps),at=j=>sm[j-1]?[sx(sm[j-1][0]),sy(sm[j-1][1])]:null;   // step j on the drawn (smoothed) path
+  const p0=[sx(c.x[f]),sy(c.y[f])],pts=[p0,...sm.filter(Boolean).map(q=>[sx(q[0]),sy(q[1])])];
   if(pts.length<2)continue;
   s+=`<path class="rot-line rrgl-path" d="${curve(pts,true)}" style="stroke:${l.col}"/>`;
   if(one&&f<o.lastK){const ak=[p0];for(let j=1;j<=P.steps&&f+j<=o.lastK;j++)if(c.x[f+j]!=null&&c.y[f+j]!=null)ak.push([sx(c.x[f+j]),sy(c.y[f+j])]);
    if(ak.length>1)s+=`<path class="rot-line rrgl-actual" d="${curve(ak,true)}" style="stroke:${l.col}"/>`}
   const marks=P.marks.filter(j=>F.steps[j-1]);
-  for(const j of marks){const st=F.steps[j-1];if(!isFinite(st.x50)||!isFinite(st.y50))continue;
-   const p=[sx(st.x50),sy(st.y50)],last=j===marks[marks.length-1],act=f+j<=o.lastK&&c.c[f+j]!=null?c.c[f+j]:null;
-   if(one)s+=`<rect class="rrgl-box" x="${Math.min(sx(st.x10),sx(st.x90)).toFixed(1)}" y="${Math.min(sy(st.y10),sy(st.y90)).toFixed(1)}" width="${Math.abs(sx(st.x90)-sx(st.x10)).toFixed(1)}" height="${Math.abs(sy(st.y10)-sy(st.y90)).toFixed(1)}" style="stroke:${l.col}"/>`;
+  for(let j=1;j<=F.steps.length;j++){const q=at(j);if(q&&!marks.includes(j))s+=`<circle class="rrgl-step" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="${one?1.9:1.4}" style="fill:${l.col}"/>`}   // every step, small
+  for(const j of marks){const st=F.steps[j-1],p=at(j);if(!p)continue;
+   const last=j===marks[marks.length-1],act=f+j<=o.lastK&&c.c[f+j]!=null?c.c[f+j]:null;
+   if(one&&(last||j===marks[Math.floor(marks.length/2)]))s+=`<rect class="rrgl-box" x="${Math.min(sx(st.x10),sx(st.x90)).toFixed(1)}" y="${Math.min(sy(st.y10),sy(st.y90)).toFixed(1)}" width="${Math.abs(sx(st.x90)-sx(st.x10)).toFixed(1)}" height="${Math.abs(sy(st.y10)-sy(st.y90)).toFixed(1)}" style="stroke:${l.col}"/>`;
    const rows=[[l.e.name+' · +'+j+' '+(j===1?P.one:P.many)+' → '+rrgDay(st.date),'forecast path from '+rrgDay(o.Q[f])+' ('+fmt(F.n)+' replays of the last '+fmt(F.window)+' '+P.many+')'],
     [rrglMoney(l.e,st.p50)+' ('+rrglPct(st.p50/F.close-1)+')','median replayed close'],[rrglMoney(l.e,st.p25)+' – '+rrglMoney(l.e,st.p75),'50% of replays'],[rrglMoney(l.e,st.p10)+' – '+rrglMoney(l.e,st.p90),'80% of replays'],
     [st.q.map((v,i)=>RRGLab.QT[i][0]+' '+rrglSh(v)).join(' · '),'quadrant shares (L W G I = Leading, Weakening, laGging, Improving)'],[rrglSh(st.left),'have left '+RRGLab.QT[F.q0]+' at some point'],
-    [fmt(st.x50,2)+' / '+fmt(st.y50,2),'median RS-Ratio / RS-Momentum'],
+    [fmt(st.x50,2)+' / '+fmt(st.y50,2),'median RS-Ratio / RS-Momentum (the dot sits on the path smoothed over three steps)'],
     ...(act!=null?[[rrglMoney(l.e,act)+(act>=st.p10&&act<=st.p90?' · inside the 80% range':' · outside the 80% range'),'what happened']]:[])];
-   s+=`<g data-tip="${tip(rows)}" class="mk-hit" tabindex="-1"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="9" fill="transparent"/><circle class="rrgl-mark" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${last?4.2:3.2}" style="fill:${l.col}"/></g>`;
-   if(one||last)labels.push({x:p[0],y:p[1],t:(one?'+'+j+U+' ':'')+rrgDay(st.date).replace(/, \d{4}$/,'')+' · '+rrglMoney(l.e,st.p50)+(one&&last?' (80%: '+rrglMoney(l.e,st.p10)+'–'+rrglMoney(l.e,st.p90)+')':''),col:l.col});
+   s+=`<g data-tip="${tip(rows)}" class="mk-hit" tabindex="-1"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="9" fill="transparent"/><circle class="rrgl-mark" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${last?4.2:2.9}" style="fill:${l.col}"/></g>`;
+   if(one||last)labels.push({x:p[0],y:p[1],pri:last?0:j,t:(one?'+'+j+U+' ':'')+rrgDay(st.date).replace(/, \d{4}$/,'')+' · '+rrglMoney(l.e,st.p50)+(one&&last?' (80%: '+rrglMoney(l.e,st.p10)+'–'+rrglMoney(l.e,st.p90)+')':''),col:l.col});
   }
  }
  const boxes=[];
+ labels.sort((a,b)=>a.pri-b.pri);                                  // the last mark (its price range) placed first, then +1, +2 …
  for(const b of labels){const w=b.t.length*6.2;                  // above right, below right, above left, below left: the first free spot
   const at=[[b.x+7,b.y-7,'start'],[b.x+7,b.y+15,'start'],[b.x-7,b.y-7,'end'],[b.x-7,b.y+15,'end']].map(([x,y,a])=>({x,y,a,r:a==='start'?[x,y-10,x+w,y+3]:[x-w,y-10,x,y+3]}));
   const c=at.find(p=>!boxes.some(q=>p.r[0]<q[2]&&p.r[2]>q[0]&&p.r[1]<q[3]&&p.r[3]>q[1]));if(!c)continue;boxes.push(c.r);
