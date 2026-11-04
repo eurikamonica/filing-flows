@@ -100,7 +100,11 @@ def forecast(co, v, cons):
     up = lambda x: (x / price - 1) * 100 if x and price else None   # noqa: E731
     lead = f"{name} ({t}) trades at {usd(price)}."
     if tg.get('median'):
-        lead += f" {tg.get('n') or 'The'} analysts' median price target is {usd(tg['median'])} ({pc(up(tg['median']))}), from {usd(tg.get('low'))} to {usd(tg.get('high'))}."
+        if tg.get('n') == 1 or (tg.get('low') is not None and usd(tg.get('low')) == usd(tg.get('high'))):    # one target: no median, no range
+            who = "One analyst's" if tg.get('n') == 1 else "The analysts'"
+            lead += f" {who} price target is {usd(tg['median'])} ({pc(up(tg['median']))})."
+        else:
+            lead += f" {tg.get('n') or 'The'} analysts' median price target is {usd(tg['median'])} ({pc(up(tg['median']))}), from {usd(tg.get('low'))} to {usd(tg.get('high'))}."
     if mid is not None:
         lead += f" Across {len(pts)} valuation methods the middle fair value is {usd(mid)} ({pc(up(mid))})" + (f"; the DCF says {usd(dcf)}." if dcf else '.')
     rows = ''.join(f"<tr><td>{e(x.get('method'))}</td><td class='num'>{usd(x.get('low'))}</td><td class='num'>{usd(x.get('point'))}</td><td class='num'>{usd(x.get('high'))}</td>"
@@ -112,7 +116,7 @@ def forecast(co, v, cons):
                    f"{pc(up(tg['median']))} from {usd(price)}; the range is {usd(tg.get('low'))} to {usd(tg.get('high'))}." +
                    (f" The average rating is {rating.replace('_', ' ')}." if rating else '')))
     if mid is not None:
-        qa.append((f"What is {name}'s fair value?", f"The fair-value methods on Filing Flows (DCF, Monte Carlo, peer multiples and others) put it between "
+        qa.append((f"What is {seo.poss(name)} fair value?", f"The fair-value methods on Filing Flows (DCF, Monte Carlo, peer multiples and others) put it between "
                    f"{usd(pts[0])} and {usd(pts[-1])}, with a middle value of {usd(mid)} against a price of {usd(price)}. Each method's assumptions are on the page."))
     if beat is not None:
         qa.append((f"Does {name} usually beat earnings estimates?", f"It beat the consensus EPS estimate in {round(100 * beat)}% of the quarters on record."))
@@ -198,10 +202,19 @@ def gval(v, unit):
     return f"{'−' if v < 0 else ''}{abs(v):g}%"
 
 
+def pword(p):
+    """a guided period as a reader says it: 'Q@2026-12-27' (named by its last day in the release) is "the quarter ending
+    Dec 27, 2026"; 'Q4 2026', 'FY2026' stay"""
+    m = re.fullmatch(r'(Q|FY)@(\d{4}-\d{2}-\d{2})', str(p or ''))
+    if not m:
+        return p or ''
+    return f"the {'quarter' if m.group(1) == 'Q' else 'year'} ending {fdate(m.group(2))}"
+
+
 def grange(i):
     """a guided range, or the one figure when both ends are the same ("EPS $-0.65–-0.65" read wrong)"""
     lo, hi, u = i.get('lo'), i.get('hi'), i.get('unit')
-    if hi is None or hi == lo:
+    if hi is None or gval(hi, u) == gval(lo, u):                 # "$1.9B–$1.9B" too
         return gval(lo, u)
     return f"{gval(lo, u)} to {gval(hi, u)}" if lo < 0 or hi < 0 or u in ('growth', 'bps') else f"{gval(lo, u)}–{gval(hi, u)}"
 
@@ -218,18 +231,18 @@ def guidance(co, h, ol, rec=None):
         word = GUIDE.get(g.get('label'), 'gave')
         its = [i for i in g['items'] if i.get('lo') is not None and not i.get('scope')][:4]
         lead = f"{name} ({t}) {word} its guidance on {fdate(g.get('filed'))}: " + '; '.join(
-            f"{i.get('name') or i.get('metric')} {grange(i)} for {i.get('period')}" for i in its) + '.'
+            f"{i.get('name') or i.get('metric')} {grange(i)} for {pword(i.get('period'))}" for i in its) + '.'
         qa.append((f"Did {name} raise or lower its guidance?", lead))
     if md:
         c = md.get('counts') or {}
-        lead += (f" {name}'s {md.get('form')} filed {fdate(md.get('filed'))} makes {c.get('n', 0)} forward-looking statements"
+        lead += (f" {seo.poss(name)} {md.get('form')} filed {fdate(md.get('filed'))} makes {c.get('n', 0)} forward-looking statements"
                  + (f", {c.get('new', 0)} of them new and {c.get('dropped', 0)} no longer said since the filing before" if md.get('vs') else '') + '.')
         new = [s for s in md.get('statements') or [] if s.get('status') in ('new', 'updated')][:3] or (md.get('statements') or [])[:3]
         if new:
             qa.append((f"What does {name} expect?", ' '.join(s['t'] for s in new)[:600]))
     stm = ''.join(f"<li>{('<b>' + e(s.get('status')) + '</b> · ') if s.get('status') in ('new', 'updated') else ''}{e(s['t'])}</li>"
                   for s in (md or {}).get('statements', [])[:12])
-    items = ''.join(f"<tr><td>{e(i.get('name') or i.get('metric'))}</td><td>{e(i.get('period'))}</td><td class='num'>{e(grange(i))}</td>"
+    items = ''.join(f"<tr><td>{e(i.get('name') or i.get('metric'))}</td><td>{e(pword(i.get('period')))}</td><td class='num'>{e(grange(i))}</td>"
                     f"<td>{e(i.get('change') or '')}</td></tr>" for i in (g.get('items') or [])[:12] if i.get('lo') is not None)
     body = (f"<p class='lead'>{e(lead.strip())}</p>" + SC.guidance_outlook(name, rec, ol, money)
             + (f"<h2>Latest guidance</h2><div class='tbl-wrap'><table><thead><tr><th>Metric</th><th>Period</th><th class='num'>Range</th><th>Change</th></tr></thead><tbody>{items}</tbody></table></div>"
@@ -294,8 +307,11 @@ def risks(co, out):
     if not parts:
         return None
     desc = f"{name} ({t}) beyond its filings: " + '; '.join(parts) + '.'
+    # nothing found ("0 EPA-regulated facilities in violation, $0 in penalties", a count of Federal Register notices): the
+    # page stays for the company page's readers but is no answer a search should land on (noindex, out of the sitemap)
+    found = r.get('n') or cp.get('last_12m') or en.get('in_violation') or (en.get('penalties_5y') or 0) > 0 or tr.get('active')
     return {'title': f"{name} ({t}) recalls, complaints, EPA and regulation", 'h1': f"{name} ({t}): recalls, complaints and regulation",
-            'desc': desc[:300], 'body': f"<p class='lead'>{e(desc)}</p>" + body, 'qa': qa}
+            'desc': desc[:300], 'body': f"<p class='lead'>{e(desc)}</p>" + body, 'qa': qa, 'noindex': not found}
 
 
 # ---------------------------------------------------------------- revenue and earnings date
@@ -409,7 +425,7 @@ def revenue(co, c):
     if len(segs) > 1:
         s0 = segs[0]
         g0 = chg(s0[1][0], s0[1][2])
-        qa.append((f"What is {name}'s biggest business?", f"{s0[0]}: {money(s0[1][0])} in the {words}, {100 * s0[1][0] / tot:.0f}% of revenue"
+        qa.append((f"What is {seo.poss(name)} biggest business?", f"{s0[0]}: {money(s0[1][0])} in the {words}, {100 * s0[1][0] / tot:.0f}% of revenue"
                    + (f", {seo.vs(g0, 'a year earlier')}" if g0 is not None else '') + '.'))
     if seo.ratio(net, tot) is not None:
         qa.append((f"What is {seo.poss(name)} profit margin?", f"Net {'earnings were' if net >= 0 else 'loss was'} {money(abs(net))}, {abs(100 * net / tot):.1f}% of revenue, in the {words}"
@@ -455,15 +471,19 @@ def earnings_date(co, er, c, cons, today=None):
     p = (er.get('model') or {}).get('p')
     mv = (er.get('implied') or {}).get('move')
     revs = money(h.get('revenue'))
+    try:                                                    # the site's latest quarter is the one just reported (it ended < 4 months before)
+        same_q = bool(last and q.get('end') and 0 <= (dt.date.fromisoformat(last['reported']) - dt.date.fromisoformat(q['end'])).days <= 120)
+    except ValueError:
+        same_q = False
     segs = seo.segments(q) if q.get('nodes') else []
     lead = ''
     if just:
         verb = 'beat' if last['act'] > last['est'] else 'missed' if last['act'] < last['est'] else 'matched'
         lead = (f"{name} ({t}) reported on {fdate(last['reported'])} and {verb} the EPS estimate: {seo.usd2(last['act'])} against {seo.usd2(last['est'])}"
                 + (f" ({100 * last['surprise']:+.1f}%)" if last.get('surprise') is not None else '')
-                + (f". Revenue was {revs} for {q.get('label')}" + (f", {pc(h.get('yoy'))} year over year" if h.get('yoy') is not None else '') if h.get('revenue') else '')
+                + (f". Revenue was {revs} for {q.get('label')}" + (f", {pc(h.get('yoy'))} year over year" if h.get('yoy') is not None else '') if h.get('revenue') and same_q else '')
                 + (f". The stock moved {100 * last['move']:+.1f}% on the report" if last.get('move') is not None else '') + '. ')
-        title = f"{name} ({t}) Earnings {verb.capitalize()}: EPS {seo.usd2(last['act'])} vs {seo.usd2(last['est'])}, Revenue {revs}"
+        title = f"{name} ({t}) Earnings {verb.capitalize()}: EPS {seo.usd2(last['act'])} vs {seo.usd2(last['est'])}" + (f", Revenue {revs}" if h.get('revenue') and same_q else '')
         h1 = f"{name} ({t}) earnings: {verb} the estimate"
     if days >= 0:
         lead += (f"{name} ({t}) {'reports next' if just else 'is expected to report earnings'} on {when}" + (', tomorrow' if days == 1 else f", in {days} days" if days else ', today')
@@ -596,11 +616,14 @@ def write(site, base, limit=None):
                     ld['@graph'].append(seo.image_ld(base, pic, alt, cap))
                     pics[url] = pic
                 doc = seo.page(seo.fit(p['title']), p['desc'], url, body, 3, images.get(f"c-{cik}") or base + '/og.png', ld)
+                if p.get('noindex'):
+                    doc = seo.noindex(doc)
                 d = os.path.join(site, 'c', slug, topic)
                 os.makedirs(d, exist_ok=True)
                 with open(os.path.join(d, 'index.html'), 'w', encoding='utf-8') as f:
                     f.write(doc)
-                urls.append((url, mod))
+                if not p.get('noindex'):
+                    urls.append((url, mod))
                 counts[topic] += 1
             main = os.path.join(site, 'c', slug, 'index.html')            # the company page links to its topics
             try:

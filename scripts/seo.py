@@ -260,6 +260,14 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 </body></html>"""
 
 
+_ROBOTS = '<meta name="robots" content="max-image-preview:large, max-snippet:-1, max-video-preview:-1">'
+
+
+def noindex(doc):
+    """a page() kept for readers and its links but out of search results (a page with nothing found on it)"""
+    return doc.replace(_ROBOTS, '<meta name="robots" content="noindex, follow">', 1)
+
+
 CHROME = {   # the header's links and the footer of a translated page (seo_zh.py, seo_intl.py): page() writes them in English
     "zh-Hans": {"nav": ["最新", "公司", "行业", "主题", "模型", "今日", "信号", "8-K 事件", "方法"],
                 "foot": "数据由程序自动读取自 SEC 文件（XBRL 与财报新闻稿），可能存在误差，不构成投资建议。", "about": "关于", "x": "每日图表发布在 X：",

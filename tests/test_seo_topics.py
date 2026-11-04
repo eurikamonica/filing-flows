@@ -51,3 +51,33 @@ def test_pages(tmp_path):
     assert "expected to report earnings on Jan 15, 2099" in ed and "Analysts expect EPS of $1.25 on revenue of $1.1B" in ed
     assert "Sitemap: https://example.com/sitemap-topics.xml" in (s / "robots.txt").read_text()
     assert not (s / "c" / "bbb").exists()                                          # nothing to say: no page
+
+
+def test_topic_wording_and_pages_with_nothing_found():
+    """A period named by its last day, one analyst, a range whose ends print the same, an EPA record with nothing on it
+    (noindex, out of the sitemap), a reported quarter the site has not read yet (no stale revenue beside it)."""
+    assert T.pword("Q@2026-12-27") == "the quarter ending Dec 27, 2026" and T.pword("Q4 2026") == "Q4 2026"
+    assert T.grange({"lo": 1.9e9, "hi": 1.94e9, "unit": "usd"}) == "$1.9B"
+    co = {"who_name": "Gentex", "ticker": "GNTX"}
+    empty = T.risks(co, {"environment": {"facilities": 3, "in_violation": 0, "penalties_5y": 0}, "fedreg": {"count": 2}})
+    found = T.risks(co, {"environment": {"facilities": 3, "in_violation": 1, "penalties_5y": 25000}})
+    assert empty["noindex"] and not found["noindex"]
+    import seo
+    doc = seo.noindex(seo.page("T", "d", "https://x/", "<p>x</p>", 3, "https://x/og.png"))
+    assert '<meta name="robots" content="noindex, follow">' in doc
+
+
+def test_one_analyst_and_a_report_the_site_has_not_read():
+    import datetime as dt
+    p = T.forecast({"who_name": "Intrusion", "ticker": "INTZ"}, {"price": 0.57, "football": []},
+                   {"analysts": {"targets": {"median": 9, "low": 9, "high": 9, "n": 1}}})
+    assert "One analyst's price target is $9.00" in p["desc"] and "median" not in p["desc"] and "from $9.00 to $9.00" not in p["desc"]
+    # reported Oct 28, 2026; the site's latest quarter is Q2 2025: no "Revenue was $15.4M for Q2 2025" beside the result
+    er = {"report_date": "2027-01-27", "history": [{"reported": "2026-10-28", "act": 0.53, "est": 0.50, "surprise": 0.06}]}
+    old = {"quarters": [{"label": "Q2 2025", "end": "2025-06-30", "headline": {"revenue": 15.4e6, "yoy": 22}}]}
+    new = {"quarters": [{"label": "Q3 2026", "end": "2026-09-30", "headline": {"revenue": 16.1e6, "yoy": 9}}]}
+    co = {"who_name": "John Marshall Bancorp", "ticker": "JMSB"}
+    a = T.earnings_date(co, er, old, {}, today=dt.date(2026, 11, 4))
+    b = T.earnings_date(co, er, new, {}, today=dt.date(2026, 11, 4))
+    assert "Revenue was" not in a["desc"] and "Revenue" not in a["title"]
+    assert "Revenue was $16.1M for Q3 2026" in b["desc"] and "Revenue $16.1M" in b["title"]
