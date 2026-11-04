@@ -52,22 +52,24 @@ if [ "$(id -u)" -ne 0 ]; then echo "请用 sudo 运行 / run with sudo" >&2; exi
 command -v apt-get >/dev/null || { echo "needs Ubuntu or Debian (apt-get)" >&2; exit 1; }
 command -v systemctl >/dev/null || { echo "needs systemd" >&2; exit 1; }
 export DEBIAN_FRONTEND=noninteractive
+# a new server is often still running its own first updates: wait for apt's lock (up to 10 minutes) instead of failing
+apt_get() { apt-get -o DPkg::Lock::Timeout=600 "$@"; }
 
 # ---------------------------------------------------------------- 1. packages
 say "1/9 安装软件 / packages"
-apt-get update -q
-apt-get install -y -q ca-certificates curl gnupg rsync python3 ufw unattended-upgrades openssl util-linux \
+apt_get update -q
+apt_get install -y -q ca-certificates curl gnupg rsync python3 ufw unattended-upgrades openssl util-linux \
   openssh-server >/dev/null
-apt-get install -y -q bind9-dnsutils >/dev/null 2>&1 || apt-get install -y -q dnsutils >/dev/null 2>&1 || true
+apt_get install -y -q bind9-dnsutils >/dev/null 2>&1 || apt_get install -y -q dnsutils >/dev/null 2>&1 || true
 if ! command -v caddy >/dev/null; then
   if curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key \
        | gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg \
      && curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt \
        -o /etc/apt/sources.list.d/caddy-stable.list; then
     chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg /etc/apt/sources.list.d/caddy-stable.list
-    apt-get update -q
+    apt_get update -q
   fi
-  apt-get install -y -q caddy >/dev/null
+  apt_get install -y -q caddy >/dev/null
 fi
 ok "Caddy $(caddy version | cut -d' ' -f1), rsync $(rsync --version | head -1 | awk '{print $3}')"
 RRSYNC=$(command -v rrsync || true)
@@ -217,7 +219,7 @@ else
   ok "跳过 swap / no swap (--no-swap)"
 fi
 if [ "$FAIL2BAN" = yes ]; then
-  apt-get install -y -q fail2ban >/dev/null
+  apt_get install -y -q fail2ban >/dev/null
   systemctl enable -q --now fail2ban
   ok "fail2ban（SSH 多次失败的地址会被暂时封禁）"
 fi

@@ -194,8 +194,12 @@ class CaddyLikeGitHubPages(unittest.TestCase):
         st, _, body = self.s("/robots.txt")
         self.assertEqual(st, 200)
         self.assertIn(b"Allow: /", body)                              # the site's own on the real name
-        st, _, _ = self.s("/sitemap-index.xml")
+        st, h, _ = self.s("/sitemap-index.xml")
         self.assertEqual(st, 200)
+        self.assertEqual(h["content-type"], "application/xml; charset=utf-8")    # as GitHub Pages
+        st, h, _ = self.s("/no-such-sitemap.xml")
+        self.assertEqual(st, 404)
+        self.assertIn("text/html", h["content-type"])
 
     def test_preview_by_address_is_never_indexed(self):
         st, h, _ = self.s("/", host="127.0.0.1")
