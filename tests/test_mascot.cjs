@@ -78,7 +78,7 @@ const opt = { spot: 100, max_pain: 98, max_pain_exp: '2026-11-20', path_probs: [
 const ends = ['2025-03-31', '2025-06-30', '2025-09-30', '2025-12-31', '2026-03-31'];
 const co = { quarters: [5, 4, 3, 2, 1].map((k) => ({ label: `Q${k}`, form: '10-Q', filed: ends[k - 1].replace(/-\d\d$/, '-28'), end: ends[k - 1], doc_url: 'https://www.sec.gov/x', headline: { revenue: 100 * (1 + 0.05 * k), oi: 20, ni: 15 } })) };
 const files = { 'data/index.json': ix, 'disclosures/data/research/valuation/c/1045810.json': val, 'disclosures/data/market/options/NVDA.json': opt, 'data/c/1045810.json': co };
-global.fetch = async (u) => (files[u] ? { ok: true, json: async () => files[u] } : { ok: false, status: 404, json: async () => null });
+global.fetch = async (u) => { u = String(u).split('?')[0]; return files[u] ? { ok: true, json: async () => files[u] } : { ok: false, status: 404, json: async () => null }; };
 
 (async () => {
   let a = await M.ask('What is NVDA worth?', ix);
@@ -102,6 +102,7 @@ global.fetch = async (u) => (files[u] ? { ok: true, json: async () => files[u] }
   ok(a.company && a.company.ticker === 'NVDA', 'no company named: the page company is used');
   a = await M.ask('AAPL', ix);
   ok(/not published/.test(a.html), 'a company without files');
+  files['disclosures/data/market/flo-alerts.json'] = { schema: 1, events: [] };   // the feed is read in two-minute buckets
   // Explicit filing requests must not silently turn into valuation or RRG.
   files['data/c/320193.json'] = {quarters:[
     {label:'FY2025 Q4',form:'10-K',filed:'2025-10-31',doc_url:'https://www.sec.gov/Archives/edgar/data/320193/example-10k'},
@@ -113,6 +114,29 @@ global.fetch = async (u) => (files[u] ? { ok: true, json: async () => files[u] }
   ok(a.links.some(([url])=>url.includes('CIK=320193')) && a.links.some(([url])=>url.includes('example-10q')),'links to all-form SEC browse and source 10-Q');
   a = await M.ask('AAPL 最新 SEC 申报', ix);
   ok(a.intents[0] === 'filings' && a.html.includes('财务定期报告'), 'Chinese filing response');
+
+  // a ticker the site has not processed (an 8-K alert for NUCL, read on Apple's page): NUCL, never the page's company
+  files['data/companies.json'] = { companies: [[320193, 'AAPL', 'Apple Inc.'], [2089283, 'NUCL', 'Eagle Nuclear Energy Corp.'], [9999, 'IT', 'Gartner Inc']] };
+  files['disclosures/data/market/flo-alerts.json'].events.push(
+    { id: '8k:0001104659-26-122371', kind: '8k', ticker: 'NUCL', title: 'Eagle Nuclear Energy Signs Binding LOI to Acquire Noble Plains Uranium', event_at: '2026-11-04T12:46:00Z',
+      filed: '2026-11-04', form: '8-K', topics: ['deal'], source_url: 'https://www.sec.gov/Archives/edgar/data/2089283/000110465926122371/' },
+    { id: '8k:x', kind: '8k', ticker: 'AAPL', title: 'Apple 8-K', event_at: '2026-11-03T12:00:00Z', filed: '2026-11-03', form: '8-K', topics: [], source_url: 'https://www.sec.gov/Archives/edgar/data/320193/x/' });
+  const apple = ix.companies[1];
+  a = await M.ask('NUCL latest SEC filings', ix, apple);
+  ok(a.company && a.company.ticker === 'NUCL' && a.company.cik === 2089283, 'NUCL, not the page company: ' + (a.company && a.company.ticker));
+  ok(a.html.includes('Eagle Nuclear Energy Corp.') && a.html.includes('not one of the companies') && a.html.includes('Noble Plains Uranium') && !a.html.includes('AAPL'), 'NUCL: not covered, its 8-K listed: ' + a.html);
+  ok(a.links.some(([u]) => u.includes('CIK=2089283')) && a.links.some(([u]) => u.includes('/2089283/000110465926122371/')) && a.links.some(([u]) => u.endsWith('#c-2089283')), 'NUCL: EDGAR by its CIK, the 8-K, its page to ask for');
+  a = await M.ask('What is NUCL worth?', ix, apple);
+  ok(a.company.ticker === 'NUCL' && /not one of the companies/.test(a.html) && !a.html.includes('Apple'), 'an uncovered company\'s valuation: said so, not Apple\'s');
+  a = await M.ask('$nucl filings', ix, apple);
+  ok(a.company.ticker === 'NUCL', 'a lower-case cashtag');
+  a = await M.ask('what is it worth?', ix, apple);
+  ok(a.company.ticker === 'AAPL', 'no ticker named: still the page company');
+  a = await M.ask('Is the SEC GAAP rule about EBITDA?', ix, apple);
+  ok(!a.company || a.company.ticker !== 'NUCL', 'acronyms are not tickers');
+  // a covered company's filings also list the newer filings the hub has seen
+  a = await M.ask('AAPL latest SEC filings', ix);
+  ok(a.html.includes('Newer filings the Disclosure Hub has seen') && a.html.includes('Apple 8-K'), 'a covered company: the hub\'s newer filings');
 
   console.log(`${checks} mascot checks passed.`);
 })().catch((e) => { console.error(e); process.exitCode = 1; });
