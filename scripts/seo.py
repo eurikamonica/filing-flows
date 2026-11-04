@@ -234,6 +234,8 @@ def _signs(body):
 _NEG0 = re.compile(r"(?<![\w.,])[-−](0(?:[.,]0+)?(?:\s|&nbsp;)?%)")
 
 
+# The fonts load with display=optional: a phone that does not have IBM Plex in time keeps the fallback font instead of
+# reflowing the page when it arrives (c/nvda/ on slow 4G: layout shift 0.14 with swap, 0 with optional).
 def page(title, desc, canonical, body, depth, image, jsonld=None):
     if len(title) > 70 and title.endswith(" | Filing Flows"):      # a long title keeps its own words; search shows the site's name anyway
         title = title[:-len(" | Filing Flows")]
@@ -249,7 +251,7 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 <meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{e(canonical)}"><meta property="og:image" content="{e(image)}">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@{X_HANDLE}"><meta name="twitter:title" content="{e(title)}"><meta name="twitter:description" content="{e(desc)}"><meta name="twitter:image" content="{e(image)}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=optional">
 <link rel="icon" href="{up}favicon.svg" type="image/svg+xml"><link rel="icon" href="{up}favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="{up}apple-touch-icon.png">
 <link rel="stylesheet" href="{up}styles.css"><link rel="stylesheet" href="{up}seo.css">{ld}
 </head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}gamma/">Industries</a><a href="{up}chains/">Themes</a><a href="{up}model/">Model</a><a href="{up}daily/">Today</a><a href="{up}disclosures/">Signals</a><a href="{up}events/">8-K events</a><a href="{up}#method">Method</a></nav></header>
@@ -360,7 +362,7 @@ def embed_page(c, r, url):
     name = display_name((c.get("profile") or {}).get("name") or r.get("name"))
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(name)} Sankey | Filing Flows</title><meta name="robots" content="noindex, follow"><link rel="canonical" href="{e(url)}">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=optional">
 <style>body{{margin:0;background:#fbfaf7;font:13px/1.4 'IBM Plex Sans',system-ui,sans-serif;color:#2b2b2b}}.seo-chart{{margin:0}}.seo-chart svg{{width:100%;height:auto;display:block}}
 .seo-sk-modes{{display:flex;gap:6px;padding:6px}}.seo-sk-modes button{{font:inherit;border:1px solid #d8d4cc;background:#fff;border-radius:99px;padding:3px 10px;cursor:pointer}}
 .seo-sk-modes button[aria-pressed=true]{{background:#17734a;color:#fff;border-color:#17734a}}.seo-sk-notes{{display:none}}.cr{{padding:4px 8px;color:#6b6b6b}}.cr a{{color:#17734a}}</style></head>

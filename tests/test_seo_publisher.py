@@ -86,3 +86,9 @@ def test_guidance_ranges():
     import seo_topics as T
     assert T.grange({"lo": -0.65, "hi": -0.65, "unit": "ps"}) == "−$0.65" and T.grange({"lo": 1.2, "hi": 1.35, "unit": "ps"}) == "$1.20–$1.35"
     assert T.grange({"lo": -2, "hi": 1, "unit": "growth"}) == "−2% to +1%" and T.grange({"lo": 30, "hi": 32, "unit": "pct"}) == "30%–32%"
+
+
+def test_fonts_never_reflow_a_page():
+    """display=optional on every static page: no layout shift when the web font arrives late (Core Web Vitals)."""
+    doc = seo.page("T", "d", "https://x/", "<p>x</p>", 1, "https://x/og.png")
+    assert "display=optional" in doc and "display=swap" not in doc

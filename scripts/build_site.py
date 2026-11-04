@@ -108,6 +108,8 @@ def main():
         home = os.environ.get("SITE_URL") and setting("SITE_URL", url=True)
         if home and 'rel="canonical"' not in html:
             html = html.replace("</title>", f'</title>\n<link rel="canonical" href="{home}/">', 1)
+        if home:                                                   # a link card needs the picture's full address
+            html = html.replace('content="og.png"', f'content="{home}/og.png"')
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
     # test versions of views (web/beta/: Money flow Beta 1.0), served next to the site and linked from nowhere in it
     if not args.inline and os.path.isdir(os.path.join(WEB, "beta")):
