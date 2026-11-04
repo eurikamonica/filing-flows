@@ -36,9 +36,11 @@ month not), Lagging, Improving (the month ahead, the quarter not).
 Scores, out of sample from 2012 (each year predicted only by fits on earlier years): the weekly rank correlation (IC)
 of forecast and outcome with its t over the weeks (overlapping weeks share outcomes: the t uses every h-th week), the
 best-minus-worst fifth on non-overlapping holding periods net of trading costs (one way, by weekly dollar volume: 5 bp
-above $500M a week, 15 bp above $50M, 40 bp above $5M, else 100 bp), deciles, the Brier skill of the chance of beating
-SPY against the base rate, and how often the 80% range held. Also, descriptive: what each classic quadrant and each
-kind of volume week has been followed by.
+above $500M a week, 15 bp above $50M, 40 bp above $5M, else 100 bp; no borrow fee for the sold fifth), deciles, the
+Brier skill of the chance of beating SPY against the base rate, and how often the 80% range held. Baskets and the
+descriptive tables are in simple returns against SPY (what an equal-weighted basket earns): a mean of log returns
+charges volatile lines their volatility as a loss and made the hybrid's spread look several times its real size. Also,
+descriptive: what each classic quadrant and each kind of volume week has been followed by.
 
 Survivorship: today's companies only (delisted names are missing; that flatters past losers and so understates
 momentum and the low-volatility tilt more than it inflates them). History and models, not investment advice.
@@ -62,6 +64,7 @@ HORIZONS = (1, 4, 13)
 FIT_FROM = 1998               # the first year of training data
 FIRST_OOS = 2004              # the first year forecast (out of sample) — the stacking accumulates from here
 TEST_FROM = 2012              # scores are reported from here
+EARLY = (2004, 2011)          # the descriptive tables are also shown for these years, before the ones they were found in
 STACK_YEARS = 3               # years of out-of-sample block forecasts the stacking needs
 RIDGE = 30.0
 WINSOR = (0.005, 0.995)
@@ -70,6 +73,9 @@ COST_TIERS = ((500e6, 5.0), (50e6, 15.0), (5e6, 40.0), (0.0, 100.0))   # weekly 
 SPIKE, QUIET = math.log(2.0), math.log(0.6)
 VOLUME_LAG = 1                # the volume inputs use the last complete week before the one forecast from: a file's
                               # newest weekly bar can hold only its last day's volume (Yahoo's extra bar of the week)
+TARGET = "log"                # what the blocks are fitted to: the h-week log return vs SPY. "simple" (the return itself,
+                              # winsorized) was tried: companies' 13-week rank correlation fell to 0.020 from 0.065 and
+                              # the best − worst basket did no better (+0.69% a quarter before costs against +0.82%)
 CAL_YEARS = 5                 # the level, the base rate and the error distributions come from the last 5 years …
 CAL_GROUPS = {'companies': 5, 'funds': 1}   # … companies' errors kept apart by volatility fifth (within each week).
                               # Chosen on 2007–2011, before the scored years, among since 1998 / 10 / 5 years × pooled /
@@ -279,7 +285,7 @@ def walk_forward(days, Fe, h, groups=1):
     Z, ok, rel = Fe['Z'], Fe['ok'], Fe['rel']
     yrs = years_of(days)
     Yraw = fwd_sum(rel, h)
-    Ydm = demean(Yraw, ok)
+    Ydm = demean(Yraw if TARGET == "log" else np.expm1(Yraw), ok)
     L, W = Yraw.shape
     sets = dict(BLOCKS, classic=CLASSIC)
     Xs = {b: np.stack([Z[k] for k in cols], 2) for b, cols in sets.items()}          # L × W × k (float32)
@@ -421,15 +427,18 @@ def evaluate(days, Fe, R, h, panel):
         if len(a) >= 10:
             by_year[str(Y)] = [r_(a.mean(), 3), r_(b.mean(), 3) if len(b) else None]
     out['ic_by_year'] = by_year
-    # portfolios on non-overlapping origins
-    ls, top, ls_classic, hits, top_hit = [], [], [], [], []
+    # portfolios on non-overlapping origins, in simple returns against SPY — what an equal-weighted basket earns (the
+    # mean log return would charge the wild lines their volatility as if it were a loss: in log terms the best − worst
+    # fifth looked like +4.9% a quarter for companies; in money it was about nothing after costs)
+    ls, ls_gross, top, ls_classic, hits, top_hit, vn = [], [], [], [], [], [], []
     deciles = [[] for _ in range(10)]
     cost = Fe['cost']
+    vg = vol_groups(Fe['raw']['vol26'], Fe['ok'], 5) if panel != 'funds' else None
     for t in every:
         m = ok[:, t] & np.isfinite(S[:, t]) & np.isfinite(Yraw[:, t])
         if m.sum() < (10 if panel == 'funds' else 50):
             continue
-        s, y, c = S[m, t], Yraw[m, t], cost[m, t]
+        s, y, c = S[m, t], np.expm1(Yraw[m, t].astype(float)), cost[m, t]
         if np.ptp(s) == 0:
             continue
         q = np.quantile(s, [FIFTH, 1 - FIFTH])
@@ -438,6 +447,17 @@ def evaluate(days, Fe, R, h, panel):
             continue
         net = (y[hi_].mean() - 2 * c[hi_].mean()) - (y[lo_].mean() + 2 * c[lo_].mean())
         ls.append(net)
+        ls_gross.append(y[hi_].mean() - y[lo_].mean())
+        if vg is not None:                               # the same, within each volatility fifth (volatility-neutral)
+            g, parts = vg[m, t], []
+            for k in range(5):
+                gk = g == k
+                if gk.sum() >= 25 and np.ptp(s[gk]) > 0:
+                    qk = np.quantile(s[gk], [FIFTH, 1 - FIFTH])
+                    a_, b_ = gk & (s >= qk[1]), gk & (s <= qk[0])
+                    parts.append((y[a_].mean() - 2 * c[a_].mean()) - (y[b_].mean() + 2 * c[b_].mean()))
+            if parts:
+                vn.append(float(np.mean(parts)))
         top.append(y[hi_].mean() - 2 * c[hi_].mean())
         top_hit.append(float((y[hi_] > 0).mean()))
         hits.append(net > 0)
@@ -459,6 +479,9 @@ def evaluate(days, Fe, R, h, panel):
         return {'mean': r_(xs.mean()), 't': r_(xs.mean() / (xs.std(ddof=1) / math.sqrt(len(xs))), 2), 'per_year': r_(xs.mean() * per_year),
                 'hit': r_((xs > 0).mean(), 3), 'worst': r_(xs.min()), 'periods': int(len(xs))}
     out['best_minus_worst'] = spread(ls)
+    if out['best_minus_worst'] and ls_gross:
+        out['best_minus_worst']['gross'] = r_(np.mean(ls_gross))           # before trading costs
+    out['best_minus_worst_vol_neutral'] = spread(vn) if vn else None
     out['best_minus_worst_classic'] = spread(ls_classic)
     out['top_fifth_vs_spy'] = spread(top)
     if top_hit:
@@ -509,18 +532,26 @@ def describe(days, Fe, panel):
     out = []
     min_n = 3 if panel == 'funds' else 20
     for h in HORIZONS:
-        Yd = demean(fwd_sum(rel, h), ok)
+        Yd = demean(np.expm1(fwd_sum(rel, h)), ok)              # simple returns, as a basket earns them
         weeks = np.where(yrs >= TEST_FROM)[0][::h]
-        for kind, name, G in groups:
+        early = np.where((yrs >= EARLY[0]) & (yrs <= EARLY[1]))[0][::h]   # the years before, where nobody looked
+
+        def series(G, ws):
             vals = []
-            for t in weeks:
+            for t in ws:
                 m = G[:, t] & np.isfinite(Yd[:, t])
                 if m.sum() >= min_n:
                     vals.append(float(Yd[m, t].mean()))
-            if len(vals) >= 10:
-                v = np.array(vals)
-                out.append({'kind': kind, 'group': name, 'h': h, 'rel': r_(v.mean()), 't': r_(v.mean() / (v.std(ddof=1) / math.sqrt(len(v))), 2),
-                            'beat_share': r_((v > 0).mean(), 3), 'weeks': len(v), 'share_of_weeks': r_(np.mean(G[base]), 4) if base.any() else None})
+            return np.array(vals)
+        for kind, name, G in groups:
+            v = series(G, weeks)
+            if len(v) >= 10:
+                row = {'kind': kind, 'group': name, 'h': h, 'rel': r_(v.mean()), 't': r_(v.mean() / (v.std(ddof=1) / math.sqrt(len(v))), 2),
+                       'beat_share': r_((v > 0).mean(), 3), 'weeks': len(v), 'share_of_weeks': r_(np.mean(G[base]), 4) if base.any() else None}
+                ve = series(G, early)
+                if len(ve) >= 8:
+                    row['early'] = {'rel': r_(ve.mean()), 't': r_(ve.mean() / (ve.std(ddof=1) / math.sqrt(len(ve))), 2), 'weeks': len(ve)}
+                out.append(row)
     return out
 
 
@@ -626,7 +657,7 @@ def ledger_scores(book):
             s, p, y = e['forecast']['s'], e['forecast']['p'], (e['actual'] or {}).get('rel') or []
             v = [(a, b, c) for a, b, c in zip(s, p, y) if fin(a) and fin(c)]
             if len(v) >= 8:
-                a = np.array([x[0] for x in v]); c = np.array([x[2] for x in v])
+                a = np.array([x[0] for x in v]); c = np.expm1(np.array([x[2] for x in v]))   # simple returns vs SPY
                 if np.ptp(a) > 0:
                     ra, rc = np.argsort(np.argsort(a)), np.argsort(np.argsort(c))
                     ics.append(float(np.corrcoef(ra, rc)[0, 1]))

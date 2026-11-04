@@ -67,12 +67,12 @@ const rowHead=()=>['Line','Hybrid','Classic','13 weeks vs SPY','P(beat), 13w','1
 
 function scoreTable(P){
  const S=P.scores||{};
- const rows=Object.values(S).map(s=>{const I=s.ic||{},b=s.best_minus_worst,bc=s.best_minus_worst_classic,t=s.top_fifth_vs_spy;
+ const rows=Object.values(S).map(s=>{const I=s.ic||{},b=s.best_minus_worst,bv=s.best_minus_worst_vol_neutral,bc=s.best_minus_worst_classic,t=s.top_fifth_vs_spy;
   return [s.h+(s.h===1?' week':' weeks'),icTxt(I.hybrid),icTxt(I.classic),icTxt(I.momentum_12_1),icTxt(I.rrg),icTxt(I.momentum),icTxt(I.volume),
-   b?`${spct(b.mean,2)} <span class="muted">(${spct(b.per_year,0)} a year, ${pct(b.hit)} of periods)</span>`:'—',bc?spct(bc.mean,2):'—',
+   b?`${spct(b.mean,2)} <span class="muted">(t ${f_(b.t,1)}; ${pct(b.hit)} of periods)</span>`:'—',bv?`${spct(bv.mean,2)} <span class="muted">(t ${f_(bv.t,1)})</span>`:'—',bc?spct(bc.mean,2):'—',
    t?`${spct(t.mean,2)} <span class="muted">(${pct(t.share_beating)} beat SPY)</span>`:'—',
    s.beat_spy&&s.beat_spy.brier_skill!=null?`${s.beat_spy.brier_skill>=0?'+':'−'}${f_(Math.abs(s.beat_spy.brier_skill*100),2)}%`:'—',pct(s.range80)]});
- return tbl(['Horizon','Rank corr.: hybrid','… classic RRG','… 12-1 momentum alone','… RRG block','… momentum block','… volume block','Best − worst fifth, net','… classic RRG','Top fifth vs SPY, net','P(beat): Brier skill','80% range held'],rows);
+ return tbl(['Horizon','Rank corr.: hybrid','… classic RRG','… 12-1 momentum alone','… RRG block','… momentum block','… volume block','Best − worst fifth, net','… within volatility fifths','… classic RRG','Top fifth vs SPY, net','P(beat): Brier skill','80% range held'],rows);
 }
 function bars(vals,labels,fmtv,title){
  if(!vals.length)return '';
@@ -85,19 +85,32 @@ function bars(vals,labels,fmtv,title){
 function describeTable(P,kind){
  const D=(P.describe||[]).filter(r=>r.kind===kind||(kind==='quadrant'&&r.kind==='quadrant_volume'));
  const names=[...new Set(D.map(r=>r.group))];
- return tbl(['After …','1 week','4 weeks','13 weeks','Share of line-weeks'],names.map(n=>{const g=h=>D.find(r=>r.group===n&&r.h===h);
+ return tbl(['After …','1 week','4 weeks','13 weeks',`13 weeks, ${EARLY_TXT}`,'Share of line-weeks'],names.map(n=>{const g=h=>D.find(r=>r.group===n&&r.h===h);
   const c=h=>{const r=g(h);return r?`<span class="${r.rel>0?'positive':r.rel<0?'negative':''}">${spct(r.rel,2)}</span> <span class="muted">(t ${f_(r.t,1)})</span>`:'—'};
-  const sh=(g(1)||g(4)||g(13)||{}).share_of_weeks;return [e_(n),c(1),c(4),c(13),sh==null?'—':pct(sh,1)]}));
+  const ce=()=>{const r=(g(13)||{}).early;return r?`<span class="${r.rel>0?'positive':r.rel<0?'negative':''}">${spct(r.rel,2)}</span> <span class="muted">(t ${f_(r.t,1)})</span>`:'—'};
+  const sh=(g(1)||g(4)||g(13)||{}).share_of_weeks;return [e_(n),c(1),c(4),c(13),ce(),sh==null?'—':pct(sh,1)]}));
+}
+const EARLY_TXT='2004–2011';
+function earlyLine(C){                                    // did the patterns hold before the years they were found in?
+ const E=(C.describe||[]).filter(r=>r.h===13&&r.early);
+ if(!E.length)return '';
+ const big=E.filter(r=>Math.abs(r.early.t)>=2).length,same=E.filter(r=>Math.sign(r.early.rel)===Math.sign(r.rel)).length;
+ return `The ${EARLY_TXT} column is the years before: ${big?`${big} of the ${E.length} reached a t of 2 there`:'none reached a t of 2 there'}, and ${same} of ${E.length} pointed the same way — read these as what recent years have done more than as a rule.`;
 }
 function ledgerTable(Lg){
  if(!Lg)return note('The ledger starts with the first closed week after this page went live.');
- return tbl(['Panel · horizon','Weeks resolved','Waiting','Rank corr.','Best − worst fifth','P(beat): Brier skill'],Object.entries(Lg).map(([k,s])=>[e_(k.replace(':',' · ')+' weeks'),f_(s.resolved_weeks),f_(s.pending_weeks),s.ic==null?'—':f_(s.ic,3),s.best_minus_worst==null?'—':rel(s.best_minus_worst,2),s.brier_skill==null?'—':f_(s.brier_skill,3)]));
+ return tbl(['Panel · horizon','Weeks resolved','Waiting','Rank corr.','Best − worst fifth','P(beat): Brier skill'],Object.entries(Lg).map(([k,s])=>[e_(k.replace(':',' · ')+' weeks'),f_(s.resolved_weeks),f_(s.pending_weeks),s.ic==null?'—':f_(s.ic,3),s.best_minus_worst==null?'—':spct(s.best_minus_worst,2),s.brier_skill==null?'—':f_(s.brier_skill,3)]));
 }
 
+function moneyLine(C){                                   // a better ranking is not yet money: say what a basket made
+ const s=((C||{}).scores||{})['13']||{},b=s.best_minus_worst,bc=s.best_minus_worst_classic,d1=(s.deciles||[])[0];
+ if(!b)return '';
+ return `Ranking is not the same as money: buying the companies it ranked in the best fifth and selling the worst fifth, 13 weeks at a time, made ${spct(b.mean,2)} a quarter after trading costs${b.gross!=null?` (${spct(b.gross,2)} before)`:''}${bc?`; the classic RRG's own basket made ${spct(bc.mean,2)} (t ${f_(bc.t,1)})${Math.abs(bc.t)<2&&Math.abs(b.t)<2?' — neither is reliable':''}`:''}. The wild names it ranks lowest usually trail, but the few that rebound rebound hard${d1?`: the tenth it ranked lowest trailed SPY by ${f_(Math.abs(d1.rel*100),1)}% a quarter on average and still beat it ${pct(d1.beat)} of the time`:''}. `;
+}
 function html(){
  const d=H.d,F=(d.panels||{}).funds||{},C=(d.panels||{}).companies||{};
  const fs=((F.scores||{})['13']||{}).ic||{},cs=((C.scores||{})['13']||{}).ic||{};
- let out=`<div class="explain">The classic RRG shows where a line stands against SPY and which way it is turning; it was not built to say which lines will beat SPY next — and tested on that since ${d.test_from}, it barely does: ranking companies by it gave a rank correlation with the next 13 weeks of ${f_((cs.classic||{}).ic,3)} (funds ${f_((fs.classic||{}).ic,3)}). The hybrid blends the RRG with momentum, reversal, volatility and volume, each block weighted by how well it ranked the lines in earlier years: ${f_((cs.hybrid||{}).ic,3)} for companies (funds ${f_((fs.hybrid||{}).ic,3)}). Every number below is out of sample, each year predicted by fits on the years before it, after trading costs. History and models, not investment advice.</div>`;
+ let out=`<div class="explain">The classic RRG shows where a line stands against SPY and which way it is turning; it was not built to say which lines will beat SPY next — and tested on that since ${d.test_from}, it barely does: ranking companies by it gave a rank correlation with the next 13 weeks of ${f_((cs.classic||{}).ic,3)} (funds ${f_((fs.classic||{}).ic,3)}). The hybrid blends the RRG with momentum, reversal, volatility and volume, each block weighted by how well it ranked the lines in earlier years: ${f_((cs.hybrid||{}).ic,3)} for companies (funds ${f_((fs.hybrid||{}).ic,3)}). ${moneyLine(C)}Every number below is out of sample, each year predicted by fits on the years before it, after trading costs. History and models, not investment advice.</div>`;
  out+=`<div class="toolbar"><div class="field"><label for="hyb-mode">Chart</label><select id="hyb-mode"><option value="hybrid"${H.mode==='hybrid'?' selected':''}>Hybrid RRG (forecasts)</option><option value="classic"${H.mode==='classic'?' selected':''}>Classic RRG (14 weeks)</option></select></div></div>`;
  out+=sec('Sector and style funds',`week ending ${e_(d.asof)} · tails: 8 weeks · ringed: volume in the ${vweek()} at least twice its 13-week average`);
  out+=chart(F.rows||[],H.mode);
@@ -115,16 +128,16 @@ function html(){
   if(!P.scores)continue;
   out+=`<h4 style="margin:12px 0 4px;font-size:14px">${lab} (${f_(P.lines)} lines)</h4>`+scoreTable(P);
   const s13=(P.scores||{})['13']||{},dec=s13.deciles||[],yr=s13.ic_by_year||{};
-  out+=`<div class="fv-two" style="display:flex;flex-wrap:wrap;gap:16px"><div style="flex:1;min-width:260px"><div class="muted" style="font-size:.8rem">13 weeks: return vs SPY by decile of the hybrid forecast (1 = lowest), average per period</div>${bars(dec.map(x=>x.rel),dec.map(x=>String(x.decile)),v=>rel(v,2),'Deciles')}</div>`;
+  out+=`<div class="fv-two" style="display:flex;flex-wrap:wrap;gap:16px"><div style="flex:1;min-width:260px"><div class="muted" style="font-size:.8rem">13 weeks: return vs SPY by decile of the hybrid forecast (1 = lowest), average per period, simple returns before costs</div>${bars(dec.map(x=>x.rel),dec.map(x=>String(x.decile)),v=>spct(v,2),'Deciles')}</div>`;
   out+=`<div style="flex:1;min-width:260px"><div class="muted" style="font-size:.8rem">Rank correlation with the next 13 weeks, by year: hybrid (bars)${''}</div>${bars(Object.values(yr).map(v=>v[0]),Object.keys(yr).map(y=>y.slice(2)),v=>f_(v,3),'By year')}</div></div>`;
   const bv=s13.range80_by_vol||[],bs=(s13.beat_spy||{}).bias,cal=P.calibration||{};
   if(bv.length)out+=note(`13 weeks: the 80% range held ${bv.map(v=>pct(v)).join(' · ')} of the time from the calmest fifth of ${k==='funds'?'funds':'companies'} by volatility to the wildest${bs!=null?`; P(beat SPY) averaged ${f_(Math.abs(bs*100),1)} points ${bs>=0?'above':'below'} the share that did`:''}. Both are set from the last ${f_(cal.years||5)} years of out-of-sample errors${cal.vol_groups>1?', kept apart by volatility fifth':''}.`);
   const wn=P.weights_now||{};out+=note(`Block weights now (stacked on earlier out-of-sample forecasts; 1 = the block's own forecast taken as it is): `+Object.entries(wn).map(([h,w])=>`${h} weeks — `+Object.entries(w).map(([b,v])=>`${e_(HB[b]||b)} ${f_(v,2)}`).join(', ')).join(' · ')+'.');
  }
- out+=note(`Rank correlation: between the forecast and the next return vs SPY across the panel, every week, averaged (t over non-overlapping weeks). Best − worst fifth: buy the fifth with the highest forecast, sell the lowest fifth, hold for the horizon, on non-overlapping periods; costs one way by weekly dollar volume (${(d.costs_bp||[]).map(c=>`${f_(c[1])} bp above $${f_(c[0]/1e6)}M`).join(', ')}). Today's companies only: delisted names are missing.`);
- out+=sec('What the classic quadrants and volume have been followed by','companies; return vs the average company that week, '+d.test_from+' on');
+ out+=note(`Rank correlation: between the forecast and the next return vs SPY across the panel, every week, averaged (t over non-overlapping weeks). Best − worst fifth: buy the fifth with the highest forecast, sell the lowest fifth, hold for the horizon, on non-overlapping periods ("within volatility fifths": the same inside each fifth of companies by volatility, so calm names are bought against calm ones and wild against wild); costs one way by weekly dollar volume (${(d.costs_bp||[]).map(c=>`${f_(c[1])} bp above $${f_(c[0]/1e6)}M`).join(', ')}). Returns of baskets are simple returns (what an equal-weighted basket earns), not log returns, which would count a volatile line's swings as a loss; no borrow fee is charged for the sold fifth (small, volatile names can cost far more to borrow). Today's companies only: delisted names are missing.`);
+ out+=sec('What the classic quadrants and volume have been followed by','companies; simple return vs the average company that week, '+d.test_from+' on');
  out+=describeTable(C,'quadrant')+describeTable(C,'volume');
- out+=note('An RRG is usually read as: buy Improving, sell Weakening. Measured on the following weeks\' returns, the quadrants say little, and a week of unusually heavy volume — up or down — has been followed by lagging returns (counted from the week after it), more so in the Improving and Leading quadrants; so has an unusually quiet week. Spikes include earnings, mergers (a target\'s price then stops moving), offerings and index changes.');
+ out+=note('An RRG is usually read as: buy Improving, sell Weakening. Since '+d.test_from+' the quadrants have read the other way round over 13 weeks, and a week of unusually heavy volume — up or down — has been followed by lagging returns (counted from the week after it), more so in the Improving and Leading quadrants; so has an unusually quiet week. Spikes include earnings, mergers (a target\'s price then stops moving), offerings and index changes. '+earlyLine(C));
  out+=sec('Frozen record','each closed week\'s forecasts written once, scored when the outcome is known');
  out+=ledgerTable(d.ledger);
  return out;

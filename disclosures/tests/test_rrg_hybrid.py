@@ -98,6 +98,11 @@ class TestBuild(Built):
         self.assertGreater(w['momentum'], 0)
         self.assertTrue(all(v >= 0 for v in w.values()))              # non-negative stacking
         self.assertTrue(0.7 <= s['range80'] <= 0.9)
+        b = s['best_minus_worst']                                     # baskets in simple returns, before and after costs
+        self.assertGreater(b['gross'], b['mean'])
+        self.assertIn('best_minus_worst_vol_neutral', s)                  # None here: under 25 names per volatility fifth
+        early = [r for r in self.doc['panels']['companies']['describe'] if r.get('early')]
+        self.assertTrue(early and all(r['early']['weeks'] >= 8 for r in early))   # the 2004–2011 check is there
 
     def test_ledger_freezes_and_resolves(self):
         book = FB.load(self.ledger)
