@@ -950,7 +950,7 @@ async function rotExport(){
 function rotSay(t){ROT.exportMsg=t;const el=$('rmp4s');if(el)el.textContent=t}
 function bindRotSuns(){document.querySelectorAll('#workspace [data-rsec]').forEach(b=>b.onclick=()=>{rotStop();state.rsec=b.dataset.rsec;state.rview=state.rview==='scan'?'solar':state.rview;render()})}
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgsolo','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgsolo','rrgroll','rrgrollw','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
  {const dd=document.getElementById('rrgl-hist');if(dd)dd.ontoggle=()=>{if(state.rrglopen!==dd.open){state.rrglopen=dd.open;if(dd.open)render()}}}
  if($('rrglcsv'))$('rrglcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.csv)||[];downloadCSV();exported=keep};
  document.querySelectorAll('#workspace a[data-rview]').forEach(a=>a.onclick=e=>{e.preventDefault();rotStop();state.rview=a.dataset.rview;render();scrollTo({top:0,behavior:'smooth'})});
@@ -964,6 +964,7 @@ function bindRotation(){
  if($('rrgfzb'))$('rrgfzb').onclick=e=>{rotStop();const v=e.currentTarget.dataset.fz;
   if(!v)state.rrgfz='';else{const z=v.split('|'),Q=ROT.ctx&&ROT.ctx.Q;if(Q&&Q.length)z[3]=Q[Math.min(state.rf,Q.length-1)];state.rrgfz=z.join('|')}render()};
  if($('rrglfzcsv'))$('rrglfzcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.fzcsv)||[];downloadCSV();exported=keep};
+ if($('rrglrollcsv'))$('rrglrollcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.rollcsv)||[];downloadCSV();exported=keep};
  {const dd=document.getElementById('rrgl-bt');if(dd)dd.ontoggle=()=>{if(state.rrgbtopen!==dd.open){state.rrgbtopen=dd.open;if(dd.open)render()}}}
  if($('rframe')){$('rframe').oninput=e=>{rotStop();state.rf=+e.target.value;ROT.drag=true;try{rotDraw()}finally{ROT.drag=false}};$('rframe').onchange=e=>{state.rf=+e.target.value;render()}}
  document.querySelectorAll('#workspace [data-raxes]').forEach(b=>b.onclick=()=>{const [x,y,z]=b.dataset.raxes.split('|');state.rview='clock';state.rx=x;state.ry=y;state.rz=z||state.rz;render();scrollTo({top:0,behavior:'smooth'})});

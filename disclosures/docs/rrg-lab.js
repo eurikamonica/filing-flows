@@ -484,7 +484,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 /* ---------- the hub: daily files, the chart's layers and panels, the Rotation research view ---------- */
-const RRGL={moves:{},grid:null,fc:new Map(),srv:{},redraw:null,now:new Map(),bt:new Map()};
+const RRGL={moves:{},grid:null,fc:new Map(),srv:{},redraw:null,now:new Map(),bt:new Map(),roll:new Map()};
 function rrglRedraw(){if(RRGL.redraw)return;RRGL.redraw=setTimeout(()=>{RRGL.redraw=null;if(typeof render==='function')render()},40)}
 function rrglMoves(k){                                 // one asset's daily file (move odds), decoded
  const m=RRGL.moves[k]||(RRGL.moves[k]={});
@@ -555,9 +555,11 @@ function rrglFrozen(o){
 // the freeze button (the RRG's toolbar, a line in focus)
 function rrglFreezeField(o){
  const focus=rrglFocus(o);if(!focus||o.mode!=='2d')return '';
+ const roll=field('rrgroll','Rolling freeze (every '+RRGLab.PAR[o.freq].one+')',RRGL_ROLL[o.freq]||[['','Off']],state.rrgroll||'')+(o.roll?field('rrgrollw','Window scored',RRGL_ROLLW[o.freq],state.rrgrollw):'');
+ if(o.roll)return roll;                                  // rolling: a forecast frozen every period, so no single freeze
  const L=o.lines.find(l=>l.e.id===focus),f=Math.min(state.rf,o.lastK);
  const v=o.fz?'':`${o.freq}|${o.n}|${focus}|${o.Q[f]}`;
- return `<div class="field"><label for="rrgfzb">Frozen forecast</label><button class="action${o.fz?' primary':''}" id="rrgfzb" type="button" data-fz="${esc(v)}">${o.fz?'❄ Frozen '+esc(rrgDay(o.Q[o.fz.k0]))+' · unfreeze':'❄ Freeze '+esc(L?L.e.name:focus)+'’s forecast of '+esc(rrgDay(o.Q[f]))}</button></div>`;
+ return `<div class="field"><label for="rrgfzb">Frozen forecast</label><button class="action${o.fz?' primary':''}" id="rrgfzb" type="button" data-fz="${esc(v)}">${o.fz?'❄ Frozen '+esc(rrgDay(o.Q[o.fz.k0]))+' · unfreeze':'❄ Freeze '+esc(L?L.e.name:focus)+'’s forecast of '+esc(rrgDay(o.Q[f]))}</button></div>`+roll;
 }
 // the chart layer of a frozen forecast: the path from the freeze (dashed, dated marks), what happened since up to the frame
 // shown (solid), and, at the frame shown, the gap between the line and where the frozen path had it that period
@@ -593,7 +595,7 @@ function rrglPlace(o,sx,sy,labels){
  let s='';
  labels.sort((a,b)=>a.pri-b.pri);
  for(const b of labels){
-  const forms=b.t2?[[b.t+' ('+b.t2+')'],[b.t,b.t2]]:[[b.t]];
+  const forms=b.t2?[[b.t+(b.t2.startsWith('missed')?' · '+b.t2:' ('+b.t2+')')],[b.t,b.t2]]:[[b.t]];
   let c=null;
   for(const L of forms){const w=Math.max(...L.map(t=>t.length))*6.2,h=13*L.length;
    c=[[b.x+7,b.y-7-13*(L.length-1),'start'],[b.x+7,b.y+15,'start'],[b.x-7,b.y-7-13*(L.length-1),'end'],[b.x-7,b.y+15,'end']]
@@ -679,10 +681,124 @@ function rrglBacktestPanel(o){
  }
  return `<details id="rrgl-bt"${open?' open':''}><summary>Frozen backtest${L?' of '+esc(L.e.name):''} — the forecast frozen at every ${esc(o.freq==='d'?'5th trading day':P.one)} of history and scored as the ${esc(P.many)} passed</summary>${body}</details>`;
 }
+/* ---------- rolling frozen forecasts: one frozen every period, each scored at its horizons ---------- */
+// state.rrgroll: the horizons ('1,2' = +1 and +2 periods); state.rrgrollw: the periods scored, ending at the frame shown
+const RRGL_ROLL={w:[['','Off'],['1,2','+1 · +2 weeks'],['1,4','+1 · +4 weeks'],['1,2,4','+1 · +2 · +4 weeks'],['4,13','+4 · +13 weeks']],
+ d:[['','Off'],['1,2','+1 · +2 days'],['1,5','+1 · +5 days'],['1,5,21','+1 · +5 · +21 days']],
+ m:[['','Off'],['1,2','+1 · +2 months'],['1,3','+1 · +3 months'],['3,6','+3 · +6 months']]};
+const RRGL_ROLLW={w:[['13','13 weeks'],['26','26 weeks'],['52','52 weeks'],['104','104 weeks']],d:[['21','21 days'],['63','63 days'],['126','126 days']],m:[['12','12 months'],['24','24 months'],['60','60 months']]};
+const RRGL_HC=['#e8590c','#7048e8','#0b7285'];         // the horizons' colours (first, second, third)
+const RRGL_HS=['diamond','square','triangle'];
+function rrglRollState(o){
+ const focus=rrglFocus(o),H0=RRGL_ROLL[o.freq],W0=RRGL_ROLLW[o.freq];
+ if(!focus||o.mode!=='2d'||!H0||!H0.some(x=>x[0]===state.rrgroll&&x[0]))return null;
+ if(!W0.some(x=>x[0]===state.rrgrollw))state.rrgrollw=W0[1][0];
+ const l=o.lines.find(x=>x.e.id===focus);if(!l)return null;
+ return {l,H:state.rrgroll.split(',').map(Number),W:+state.rrgrollw};
+}
+// the forecast frozen at period k, scored (its replayed returns dropped once scored): cached per line and period
+function rrglRollRec(o,l,k){
+ if(!(k>=1)||k>o.lastK)return null;
+ const key=l.e.id+'|'+o.freq+'|'+o.n+'|'+k+'|'+l.calc.x.length;
+ if(RRGL.roll.has(key))return RRGL.roll.get(key);
+ if(RRGL.roll.size>4000)RRGL.roll.clear();
+ const F=RRGLab.forecast(l.calc,k,o.freq,{keep:true});
+ const rec=F?{k,close:F.close,q0:F.q0,n:F.n,st:F.steps.map(({cs,...x})=>x),sc:RRGLab.score(l.calc,F).map(r=>r&&r.t<=o.lastK?r:null)}:null;
+ RRGL.roll.set(key,rec);return rec;
+}
+// one row per target period t of the window (and the ones after the frame shown that its own freeze looks at): for each
+// horizon h, the forecast frozen at t − h — its median and ranges for t, and how t's close and position came out
+function rrglRollRows(o,R,f){
+ const {l,H,W}=R,mh=Math.max(...H),rows=[];
+ for(let t=f-W+1;t<=f+mh;t++){if(t<1)continue;
+  const by=H.map(h=>{if(t-h>f)return null;const rec=rrglRollRec(o,l,t-h);if(!rec)return null;const st=rec.st[h-1],sc=t<=o.lastK?rec.sc[h-1]:null;return st?{h,from:t-h,st,sc,close0:rec.close}:null});
+  if(by.some(Boolean))rows.push({t,after:t>f,pending:t>o.lastK,by});
+ }
+ return rows;
+}
+function rrglRollSum(R,rows){
+ const med=a=>{if(!a.length)return NaN;const s=a.slice().sort((u,v)=>u-v),i=(s.length-1)/2;return (s[Math.floor(i)]+s[Math.ceil(i)])/2};
+ return R.H.map((h,i)=>{const sc=rows.filter(r=>!r.after).map(r=>r.by[i]&&r.by[i].sc).filter(Boolean),n=sc.length;
+  return {h,n,in50:n?sc.filter(x=>x.in50).length/n:NaN,in80:n?sc.filter(x=>x.in80).length/n:NaN,mae:med(sc.map(x=>Math.abs(x.err))),mae0:med(sc.map(x=>Math.abs(x.naive))),
+   bias:n?sc.reduce((a,x)=>a+x.err,0)/n:NaN,top:n?sc.filter(x=>x.top).length/n:NaN,stay:n?sc.filter(x=>x.stay).length/n:NaN,dist:n?sc.reduce((a,x)=>a+x.dist,0)/n:NaN}});
+}
+const rrglMarker=(shape,x,y,r,col,cls)=>shape==='square'?`<rect class="${cls}" x="${(x-r).toFixed(1)}" y="${(y-r).toFixed(1)}" width="${(2*r).toFixed(1)}" height="${(2*r).toFixed(1)}" style="stroke:${col}"/>`
+ :shape==='triangle'?`<path class="${cls}" d="M${x.toFixed(1)},${(y-r*1.15).toFixed(1)} L${(x+r).toFixed(1)},${(y+r*.8).toFixed(1)} L${(x-r).toFixed(1)},${(y+r*.8).toFixed(1)} Z" style="stroke:${col}"/>`
+ :`<path class="${cls}" d="M${x.toFixed(1)},${(y-r*1.25).toFixed(1)} L${(x+r).toFixed(1)},${y.toFixed(1)} L${x.toFixed(1)},${(y+r*1.25).toFixed(1)} L${(x-r).toFixed(1)},${y.toFixed(1)} Z" style="stroke:${col}"/>`;
+// the chart: for each horizon h, where the forecast frozen h periods before put the line this period (a hollow marker, a
+// dotted gap to where it is), the same over the tail (its predicted track beside the real one), and this period's own
+// freeze: where it puts the line at +h (small markers ahead, dated and priced)
+function rrglRollLayer(o,f,sx,sy){
+ const R=o.roll;if(!R)return '';
+ const {l,H}=R,c=l.calc,P=RRGLab.PAR[o.freq],U=P.ab;
+ if(c.x[f]==null||c.y[f]==null)return '';
+ let s='';const labels=[],A=[sx(c.x[f]),sy(c.y[f])],miss=[];
+ H.forEach((h,i)=>{const col=RRGL_HC[i%3],sh=RRGL_HS[i%3],trk=[];
+  for(let k=Math.max(1,f-o.tail+1);k<=f;k++){const rec=rrglRollRec(o,l,k-h),st=rec&&rec.st[h-1];if(st&&isFinite(st.x50)&&isFinite(st.y50))trk.push([sx(st.x50),sy(st.y50),k])}
+  if(trk.length>1)s+=`<path class="rot-line rrgl-roll-trk" d="${curve(trk.map(p=>[p[0],p[1]]),true)}" style="stroke:${col}"/>`;
+  trk.forEach(p=>{if(p[2]!==f)s+=rrglMarker(sh,p[0],p[1],2.6,col,'rrgl-roll-old')});
+  const now=trk.find(p=>p[2]===f),rec=rrglRollRec(o,l,f-h),sc=rec&&rec.sc[h-1];
+  if(now){s+=`<line class="rrgl-gap" x1="${now[0].toFixed(1)}" y1="${now[1].toFixed(1)}" x2="${A[0].toFixed(1)}" y2="${A[1].toFixed(1)}" style="stroke:${col}"/>`+rrglMarker(sh,now[0],now[1],5,col,'rrgl-roll-now');
+   if(sc)miss.push('+'+h+U+' '+(sc.err>=0?'+':'−')+fmt(Math.abs(100*sc.err),1)+'%'+(sc.in80?'':' ✕'))}
+  // this period's own freeze, h ahead
+  const nx=rrglRollRec(o,l,f),ns=nx&&nx.st[h-1];
+  if(ns&&isFinite(ns.x50)&&isFinite(ns.y50)){const q=[sx(ns.x50),sy(ns.y50)];
+   s+=`<line class="rrgl-roll-next" x1="${A[0].toFixed(1)}" y1="${A[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" style="stroke:${col}"/>`+rrglMarker(sh,q[0],q[1],3.6,col,'rrgl-roll-ahead');
+   labels.push({x:q[0],y:q[1],pri:i+1,t:'+'+h+U+' '+rrgDay(RRGLab.ahead(o.Q[f],o.freq,h)).replace(/, \d{4}$/,'')+' · '+rrglMoney(l.e,ns.p50),col})}
+ });
+ if(miss.length)labels.push({x:A[0],y:A[1],pri:0,t:l.e.name+' '+rrglMoney(l.e,c.c[f]),t2:'missed by '+miss.join(' · '),col:'var(--ink)'});   // one line, else two
+ return s+rrglPlace(o,sx,sy,labels);
+}
+// the panel: the window's score per horizon, the closes against the frozen medians and 80% ranges, every period's misses
+function rrglRollPanel(o){
+ const R=o.roll;if(!R)return '';
+ const {l,H,W}=R,P=RRGLab.PAR[o.freq],f=Math.min(state.rf,o.lastK),rows=rrglRollRows(o,R,f),S=rrglRollSum(R,rows),U=P.ab,hl=h=>'+'+h+' '+(h===1?P.one:P.many);
+ const pc=v=>isFinite(v)?fmt(Math.round(100*v),0)+'%':'—',ap=v=>isFinite(v)?fmt(100*v,1)+'%':'—',sp=v=>isFinite(v)?(v>=0?'+':'−')+fmt(Math.abs(100*v),1)+'%':'—';
+ const past=rows.filter(r=>!r.after),d0=past.length?rrgDay(o.Q[past[0].t]):'',d1=rrgDay(o.Q[f]);
+ let out=`<div class="panel rrgl-roll"><h3>Rolling frozen forecasts · ${esc(l.e.name)} · ${esc(H.map(hl).join(' and '))}</h3><p class="sub">A forecast frozen every ${esc(P.one)} — each from the ${esc(fmt(P.window))} ${esc(P.many)} before it only — and kept: for each ${esc(P.one)} from ${esc(d0)} to ${esc(d1)} (the window ends at the ${esc(P.one)} shown; drag the slider to move it), where the forecast made ${esc(H.map(h=>h===1?'the '+P.one+' before':h+' '+P.many+' before').join(', and the one made '))} put ${esc(l.e.name)}, against where it was. On the chart: hollow ${H.map((h,i)=>`<span style="color:${RRGL_HC[i%3]}">${RRGL_HS[i%3]}s for ${esc(hl(h))}</span>`).join(', ')}, a dotted line to the actual point; their predicted tracks beside the real tail; ahead, this ${esc(P.one)}’s own freeze.</p>`;
+ const say=S.filter(r=>r.n).map(r=>`the ${hl(r.h)} forecast’s 80% range held ${pc(r.in80)} of ${fmt(r.n)} ${r.n===1?P.one:P.many} and its median missed by ${ap(r.mae)} typically (“no change”: ${ap(r.mae0)}${r.mae<r.mae0?', so it did better':', so it did not do better'})`);
+ if(say.length)out+=`<p>Over the ${esc(fmt(Math.max(...S.map(r=>r.n))))} ${esc(P.many)} to ${esc(d1)}: ${esc(say.join('; '))}.</p>`;
+ out+=table(['Horizon','Inside the 80% range','Inside the 50% range','Typical miss: frozen median · no change','Average miss (bias)','Quadrant: likeliest right · “stays” right','Scored'],S.map((r,i)=>[
+  `<span style="color:${RRGL_HC[i%3]}">■</span> ${esc(hl(r.h))}`,`<b>${pc(r.in80)}</b>`,`<b>${pc(r.in50)}</b>`,`<span class="${r.mae<r.mae0?'positive':''}">${ap(r.mae)}</span> · ${ap(r.mae0)}`,sp(r.bias),`${pc(r.top)} · ${pc(r.stay)}`,fmt(r.n)]));
+ out+=rrglRollChart(o,R,rows);
+ const trs=rows.slice().reverse().map(r=>[`${esc(rrgDay(o.Q[r.t]||RRGLab.ahead(o.Q[f],o.freq,r.t-f)))}${r.after?`<br><span class="muted">${r.pending?'not yet':'after the '+esc(P.one)+' shown'}</span>`:''}`,
+  r.t<=o.lastK&&l.calc.c[r.t]!=null?`<b>${rrglMoney(l.e,l.calc.c[r.t])}</b>`:'—',
+  ...r.by.map((b,i)=>!b?'—':`${rrglMoney(l.e,b.st.p50)} <span class="muted">(80%: ${rrglMoney(l.e,b.st.p10)}–${rrglMoney(l.e,b.st.p90)}; frozen ${esc(rrgDay(o.Q[b.from]).replace(/, \d{4}$/,''))})</span>`+
+   (b.sc?`<br><b class="${Math.abs(b.sc.err)<=Math.abs(b.sc.naive)?'positive':'negative'}">missed by ${sp(b.sc.err)}</b> · ${b.sc.in50?'inside 50%':b.sc.in80?'inside 80%':'<b>outside 80%</b>'}${b.sc.top?'':' · quadrant missed'}`:''))]);
+ const keep=exported;
+ exported=rows.map(r=>Object.assign({week:o.Q[r.t]||RRGLab.ahead(o.Q[f],o.freq,r.t-f),close:r.t<=o.lastK&&l.calc.c[r.t]!=null?+l.calc.c[r.t].toFixed(4):null},...r.by.map((b,i)=>b?{[`h${H[i]}_frozen`]:o.Q[b.from],[`h${H[i]}_median`]:+b.st.p50.toFixed(4),[`h${H[i]}_p10`]:+b.st.p10.toFixed(4),[`h${H[i]}_p90`]:+b.st.p90.toFixed(4),
+  [`h${H[i]}_miss`]:b.sc?+b.sc.err.toFixed(5):null,[`h${H[i]}_inside_80`]:b.sc?b.sc.in80:null,[`h${H[i]}_quadrant_right`]:b.sc?b.sc.top:null}:{})));
+ RRGL.rollcsv=exported;exported=keep;
+ out+=`<div class="section-head"><h3>${esc(l.e.name)}, ${esc(P.one)} by ${esc(P.one)}</h3><button class="action" id="rrglrollcsv">Export CSV ↓</button></div>`+table([P.one[0].toUpperCase()+P.one.slice(1),'Close',...H.map(h=>'Forecast frozen '+(h===1?'1 '+P.one:h+' '+P.many)+' before (+'+h+')')],trs);
+ return out+'</div>';
+}
+// closes against the frozen medians (a line per horizon) and their 80% ranges (bands), over the window
+function rrglRollChart(o,R,rows){
+ const ws=typeof document!=='undefined'&&document.getElementById?document.getElementById('workspace'):null,cw=ws&&ws.clientWidth?ws.clientWidth-60:720;
+ const {l,H}=R,W=Math.round(Math.max(300,Math.min(760,cw))),Hh=W<480?210:230,L=W<480?46:54,Rm=12,T=12,B=26,c=l.calc,ks=rows.map(r=>r.t),fr=Math.min(state.rf,o.lastK);
+ const dayOf=t=>o.Q[t]||RRGLab.ahead(o.Q[fr],o.freq,t-fr);
+ if(ks.length<2)return '';
+ const vals=[];rows.forEach(r=>{if(r.t<=o.lastK&&c.c[r.t]!=null)vals.push(c.c[r.t]);r.by.forEach(b=>{if(b){vals.push(b.st.p10,b.st.p90)}})});
+ const lo=Math.min(...vals.filter(isFinite)),hi=Math.max(...vals.filter(isFinite)),pad=(hi-lo)*.06||1,y0=lo-pad,y1=hi+pad;
+ const sx=t=>L+(t-ks[0])/(ks[ks.length-1]-ks[0])*(W-L-Rm),sy=v=>T+(y1-v)/(y1-y0)*(Hh-T-B);
+ let s=`<svg class="plot rrgl-roll-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Closes against the frozen forecasts">`;
+ niceTicks(y0,y1,5).forEach(v=>{s+=`<line class="mk-grid" x1="${L}" x2="${W-Rm}" y1="${sy(v).toFixed(1)}" y2="${sy(v).toFixed(1)}"/><text class="axis" x="${L-6}" y="${(sy(v)+4).toFixed(1)}" text-anchor="end">${esc(rrglMoney(l.e,v))}</text>`});
+ [rows[0],rows[Math.floor(rows.length/2)],rows[rows.length-1]].forEach((r,i)=>{s+=`<text class="axis" x="${sx(r.t).toFixed(1)}" y="${Hh-8}" text-anchor="${i===0?'start':i===2?'end':'middle'}">${esc(rrgDay(dayOf(r.t)).replace(/, \d{4}$/,''))}</text>`});
+ H.forEach((h,i)=>{const col=RRGL_HC[i%3],pts=rows.map(r=>r.by[i]?[r.t,r.by[i].st]:null).filter(Boolean);
+  if(pts.length<2)return;
+  s+=`<path class="rrgl-roll-band" d="M${pts.map(([t,st])=>sx(t).toFixed(1)+','+sy(st.p90).toFixed(1)).join(' L')} L${pts.slice().reverse().map(([t,st])=>sx(t).toFixed(1)+','+sy(st.p10).toFixed(1)).join(' L')} Z" style="fill:${col}"/>`;
+  s+=`<path class="rrgl-roll-med" d="M${pts.map(([t,st])=>sx(t).toFixed(1)+','+sy(st.p50).toFixed(1)).join(' L')}" style="stroke:${col}"/>`});
+ const act=rows.filter(r=>r.t<=o.lastK&&c.c[r.t]!=null);
+ if(act.length>1)s+=`<path class="rrgl-roll-act" d="M${act.map(r=>sx(r.t).toFixed(1)+','+sy(c.c[r.t]).toFixed(1)).join(' L')}"/>`;
+ act.forEach(r=>{const out=r.by.some(b=>b&&b.sc&&!b.sc.in80);s+=`<circle class="rrgl-roll-dot${out?' out':''}" cx="${sx(r.t).toFixed(1)}" cy="${sy(c.c[r.t]).toFixed(1)}" r="${out?3.4:2.4}"><title>${esc(rrgDay(o.Q[r.t]))}: ${esc(rrglMoney(l.e,c.c[r.t]))}${out?' — outside a frozen 80% range':''}</title></circle>`});
+ const f=Math.min(state.rf,o.lastK);if(ks.includes(f))s+=`<line class="rrgl-roll-cur" x1="${sx(f).toFixed(1)}" x2="${sx(f).toFixed(1)}" y1="${T}" y2="${Hh-B}"/>`;
+ return s+`</svg><p class="sub">Black: the close. Coloured lines and bands: the median and the 80% range of the forecast frozen ${H.map((h,i)=>`<span style="color:${RRGL_HC[i%3]}">${h} ${h===1?RRGLab.PAR[o.freq].one:RRGLab.PAR[o.freq].many} before</span>`).join(' / ')}; a large dot: a close outside one of them; the thin line: the ${esc(RRGLab.PAR[o.freq].one)} shown.</p>`;
+}
 const RRGL_FP=o=>[['','Off'],['all','Every line (median paths)'],...o.lines.map(l=>[l.e.id,l.e.name+' — path, dates, prices, ranges'])];
 function rrglFpState(o){const ok=RRGL_FP(o).map(x=>x[0]);if(state.rrgfp===undefined)state.rrgfp='all';if(!ok.includes(state.rrgfp))state.rrgfp=ok.includes(String(state.rrgfp))?state.rrgfp:'all';return state.rrgfp}
 // the chart layer: each line's forecast path (median position each period), the marked periods with date and price
 function rrglLayer(o,f,sx,sy){
+ if(o.roll)return rrglRollLayer(o,f,sx,sy);            // rolling frozen forecasts replace the moving path
  if(o.fz)return rrglFzLayer(o,f,sx,sy);                // a frozen forecast replaces the moving one
  // a line shown alone (rrg.js, state.rrgsolo) gets its path with dates, prices and ranges, as if picked here
  const mode=state.rrgfp&&o.solo?o.solo:state.rrgfp;if(!mode||!o.lines)return '';   // a line shown alone: its path, whatever line was picked

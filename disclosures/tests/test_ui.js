@@ -294,7 +294,19 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   html=run(`rrgView()`);
   for(const want of ['Inside the 80% range','rrgl-pit','forecasts of EWJ, frozen every week','independent'])assert.ok(html.includes(want),`the backtest lacks “${want}”`);
   assert.ok(!/NaN|undefined|Infinity/.test(html),'the backtest shows NaN/undefined');
-  run(`state.rrgsolo='';state.rrgfz='';state.rrgbtopen=false`);
+  // rolling frozen forecasts: one frozen every week; the window's +1 / +2 scores, the chart's markers, the table and CSV
+  run(`state.rrgsolo='EWJ';state.rrgfz='';state.rrgbtopen=false;state.rrgroll='1,2';state.rrgrollw='26';state.rf=ROT.ctx.Q.length-1`);html=run(`rrgView()`);
+  for(const want of ['Rolling frozen forecasts · EWJ · +1 week and +2 weeks','Inside the 80% range','rrgl-roll-now','rrgl-roll-trk','rrgl-roll-ahead','rrgl-roll-chart','missed by','Forecast frozen 2 weeks before (+2)','rrglrollcsv','Play 26 weeks'])
+   assert.ok(html.includes(want),`rolling freeze lacks “${want}”`);
+  assert.ok(!html.includes('id="rrgfzb"'),'rolling: no single freeze button');
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'rolling freeze shows NaN/undefined');
+  {const csv=run(`RRGL.rollcsv`);assert.ok(csv.length>=26&&csv.some(r=>r.h1_miss!=null&&r.h2_miss!=null&&typeof r.h1_inside_80==='boolean'),'the rolling CSV');}
+  // each week's +1 is the forecast frozen the week before, its +2 the one frozen two weeks before
+  {const day=d=>Date.parse(d+'T00:00:00Z')/864e5,csv=run(`RRGL.rollcsv`).filter(r=>r.h1_frozen&&r.h2_frozen);
+   assert.ok(csv.length>20&&csv.every(r=>day(r.week)-day(r.h1_frozen)===7&&day(r.week)-day(r.h2_frozen)===14),'the rolling rows: frozen one and two weeks before');}
+  run(`state.rrgroll='4,13';state.rrgrollw='13'`);html=run(`rrgView()`);
+  assert.ok(html.includes('+4 weeks and +13 weeks')&&!/NaN|undefined|Infinity/.test(html),'other horizons');
+  run(`state.rrgsolo='';state.rrgfz='';state.rrgbtopen=false;state.rrgroll=''`);
   run(`state.rrgf='d';state.rrgu='site'`);
   assert.ok(run(`rrgView()`).includes('weekly only'),'site sectors on the daily chart: explained');
   // the Rotation research view from a server file (the browser's own research has the server's shape)
