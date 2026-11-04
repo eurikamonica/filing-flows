@@ -5,7 +5,8 @@ against the classic RRG before it is shown, and each closed week's scores frozen
 What the classic RRG does and does not do (measured here; app/transition_rrg.py and app/chaos_forecast.py agree):
   · where a dot moves next is predictable — the EMAs make it so, and the quadrant transition matrices beat staying put;
   · whether the line then beats SPY hardly is: read as a forecast (a ridge on RS-Ratio, RS-Momentum and the last step),
-    the classic RRG ranks the next quarter's relative returns with a rank correlation near 0.015 for companies.
+    the classic RRG ranks the next quarter's relative returns with a rank correlation near 0.03 for companies, and the
+    blend here, though it ranks better, has not turned that into money after costs (see Scores).
 
 Panels: the sector and style funds of rrg.json (SPDR sectors, QQQ, DIA, MDY, IWM, IJR, RSP, …: real funds only — the
 site-sector indices are built from today's companies), and the site's companies while liquid (≥ $3, ≥ $10M a week).
