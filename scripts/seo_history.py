@@ -78,10 +78,12 @@ def margin(n, k, i):
 KEY = [('revenue', 'Revenue'), ('gp', 'Gross profit'), ('oi', 'Operating profit'), ('net', 'Net earnings'), ('ocf', 'Operating cash flow'), ('fcf', 'Free cash flow')]
 
 
-def sankey_figure(cik, label, alt, compare='', up='../../../'):
-    """drawn in the browser from the company's data by seo-quarter.js (one shared script, not one per page)"""
+def sankey_figure(cik, label, alt, compare='', up='../../../', fallback=''):
+    """drawn in the browser from the company's data by seo-quarter.js (one shared script, not one per page); `fallback`
+    is the quarter in words, what the figure holds until the chart is drawn (and all a reader without JavaScript sees)"""
     return (f"<figure class='seo-chart' data-src='{up}data/c/{e(cik)}.json' data-label='{e(label)}' data-compare='{e(compare)}' aria-label='{e(alt)}'>"
-            f"<p class='muted'>Drawing the Sankey…</p></figure><script src='{up}sankey.js' defer></script><script src='{up}seo-quarter.js' defer></script>")
+            f"<p class='muted'>{e(fallback) if fallback else 'Drawing the Sankey…'}</p></figure>"
+            f"<script src='{up}sankey.js' defer></script><script src='{up}seo-quarter.js' defer></script>")
 
 
 def first(s):
