@@ -144,7 +144,7 @@ def pending(catalog, state, shard=None, now_iso=None, cfg=None):
     return fresh + deeper
 
 
-FETCHERS = 4            # filings of one manager fetched at a time (SecGet keeps the pace across them: ~6.7 requests a second)
+FETCHERS = 8            # filings of one manager fetched at a time (SecGet keeps the pace across them: ~6.7 requests a second; four reached 3.5)
 
 
 def process(sec, cik, label, since, as_of=None, strict_from=None, fetchers=FETCHERS):
