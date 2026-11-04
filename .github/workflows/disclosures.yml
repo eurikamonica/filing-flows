@@ -36,11 +36,11 @@ on:
         type: boolean
         default: false
       chain:
-        description: 'Officials back-fill chain (module congress): start the next run while House reports are waiting'
+        description: 'Started by the officials back-fill chain (any finished run starts a congress run while House reports are waiting)'
         type: boolean
         default: false
       hop:
-        description: Chain hop (the chain stops after 200)
+        description: Chain hop (the chain stops after 400)
         type: string
         default: '0'
   schedule:
@@ -215,23 +215,24 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
       - name: Start the next officials run (the back-fill chain)
-        # While House reports are waiting (the index years back to 2012) a congress run started by hand with chain=true,
-        # by the chain itself or by the hourly schedule starts the next one — a relay like holdings-backfill.yml — unless
-        # another run of this workflow is already queued (the 13F schedule keeps its turn), up to 200 hops. A pending
-        # chain run is replaced when a push or schedule queues behind a running one (the concurrency group keeps one
-        # pending run), which ends the chain: the next hourly officials run starts it again.
-        if: success() && (inputs.chain == true || github.event_name == 'schedule') && steps.pick.outputs.module == 'congress' && steps.collect.outputs.ptr_pending != '' && steps.collect.outputs.ptr_pending != '0'
+        # While House reports are waiting (the index years back to 2012: live.json's congress counts.house_ptr, written
+        # by every officials run), the end of any run of this workflow starts a congress run — a relay like
+        # holdings-backfill.yml — unless a run of this workflow is already queued. The concurrency group keeps one
+        # pending run, so a queued chain hop is replaced by a push or scheduled run that comes behind it; the next run to
+        # finish, of any module, starts the chain again, and the scheduled runs keep their turns in between.
+        if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOP: ${{ inputs.hop || '0' }}
-          PENDING: ${{ steps.collect.outputs.ptr_pending }}
         working-directory: .
         run: |
-          if [ "$HOP" -ge 200 ]; then echo "chain cap reached (200 runs); the hourly schedule starts it again"; exit 0; fi
+          pending=$(python3 -c "import json; print(((json.load(open('disclosures/docs/data/live.json'))['modules'].get('congress') or {}).get('counts') or {}).get('house_ptr', {}).get('ptr_pending', 0))" 2>/dev/null || echo 0)
+          if [ "${pending:-0}" -le 0 ]; then echo "no House reports waiting"; exit 0; fi
+          if [ "$HOP" -ge 400 ]; then echo "chain cap reached (400 runs)"; exit 0; fi
           n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow disclosures.yml --status queued --json databaseId --jq length)
-          if [ "${n:-0}" -gt 0 ]; then echo "another run is already waiting"; exit 0; fi
+          if [ "${n:-0}" -gt 0 ]; then echo "another run is already waiting ($pending House reports waiting)"; exit 0; fi
           gh workflow run disclosures.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f module=congress -f chain=true -f hop=$((HOP + 1))
-          echo "officials chain: hop $((HOP + 1)) started ($PENDING House reports waiting)"
+          echo "officials chain: hop $((HOP + 1)) started ($pending House reports waiting)"
       - name: Flag failed collection
         # app/collect.py exits 1 only when a source could not be read at all (an error annotation names it); partial
         # coverage — a batch cut short by a size or time limit, a few unreadable documents — is a warning annotation
