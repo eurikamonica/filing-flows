@@ -270,7 +270,7 @@ def takeover(co, lbo, board_row):
         parts.append(f"Historically {hs['p'] * 100:.1f}% of companies with its figures were bought within a year ({hs.get('lift') or '—'}× the average).")
     if rum:
         parts.append(f"Latest signal ({rum[0].get('date')}): {rum[0].get('text')}.")
-    desc = ' '.join(parts)
+    desc = f"{name} ({t}): " + ' '.join(parts) if parts else lead     # the snippet names the company (it began "A leveraged buyout …")
     rl = ''.join(f"<li>{e(x.get('date'))} · {e(x.get('kind'))} · {e(x.get('text'))}</li>" for x in rum[:10])
     qa = [(f"Is {name} being acquired?", (f"The latest signal on file is from {rum[0].get('date')}: {rum[0].get('text')}. A headline is not a deal; "
                                           "Filing Flows lists the news, 8-K filings and 13D filings about a sale.") if rum else

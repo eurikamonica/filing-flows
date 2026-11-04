@@ -726,6 +726,11 @@ def gamma_charts(d, mdl, nm, sic):
     return out
 
 
+def sic_label(name):
+    """an SEC industry title as a reader says it: "Wood Household Furniture, (No Upholstered)" → "… (except Upholstered)"."""
+    return re.sub(r",?\s*\(No\s+", " (except ", str(name or ""))
+
+
 def gamma_pages(data_dir, out_dir, base, slugs, images=None):
     """gamma/<sic>/: one page per SEC industry (SIC) - its growth distribution, companies, the customers and suppliers
     its companies name, and the growth model's forecast; gamma/: every industry by sector."""
@@ -738,7 +743,7 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
         d = _load(os.path.join(data_dir, "gamma", f"{r['sic']}.json"))
         if not d or not d.get("companies"):
             continue
-        sic, nm = d["sic"], d["name"]
+        sic, nm = d["sic"], sic_label(d["name"])
         url = f"{base}/gamma/{sic}/"
         sm = (d.get("summary") or {}).get("yoy") or {}
         mdl = _load(os.path.join(data_dir, "model", "i", f"{sic}.json")) or {}
