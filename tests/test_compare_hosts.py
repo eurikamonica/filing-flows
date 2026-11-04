@@ -69,3 +69,10 @@ def test_differences_are_reported():
     md = C.report_md(r)
     assert "**1** with a different status" in md and "← fix these" in md
     assert "`/p8.html`" in md
+
+
+def test_types_that_change_nothing():
+    s = lambda st, t: {"status": st, "type": t}
+    assert not C.type_matters(s(301, "text/html"), s(301, None))                     # a redirect's own type
+    assert not C.type_matters(s(200, "application/octet-stream"), s(200, None))      # CNAME, .nojekyll
+    assert C.type_matters(s(200, "application/xml"), s(200, "text/xml"))

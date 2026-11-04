@@ -101,6 +101,9 @@ EOF
 	header @ff_hashed Cache-Control "public, max-age=31536000, immutable"
 	header @ff_short Cache-Control "public, max-age=300"
 	header @ff_other Cache-Control "public, max-age=600"
+	# sitemaps as GitHub Pages sends them (Caddy's own type for .xml is text/xml)
+	@ff_xml path *.xml
+	header @ff_xml Content-Type "application/xml; charset=utf-8"
 
 	route {
 		# a directory without its slash: 301 to the slash, query kept (GitHub Pages does the same)
@@ -127,6 +130,7 @@ EOF
 		handle @ff_404 {
 			@ff_page404 file /404.html
 			handle @ff_page404 {
+				header Content-Type "text/html; charset=utf-8"
 				rewrite * /404.html
 				file_server {
 					status 404

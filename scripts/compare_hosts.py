@@ -101,10 +101,18 @@ def summary(st, h, body, side_host, site_host):
             "error": h.get("error")}
 
 
+def type_matters(a, b):
+    """A content type that differs only on a redirect, or between none and application/octet-stream (a file with no
+    extension, such as CNAME), changes nothing for a browser or a search engine."""
+    if a["type"] == b["type"] or (300 <= (a["status"] or 0) < 400 and 300 <= (b["status"] or 0) < 400):
+        return False
+    return {a["type"], b["type"]} not in ({None, "application/octet-stream"},)
+
+
 def compare_one(old, new, path, site_host, host=None):
     a = summary(*old.get(path, host=host), host or old.host, site_host)
     b = summary(*new.get(path, host=host), host or new.host, site_host)
-    diffs = [k for k in ("status", "location", "type") if a[k] != b[k]]
+    diffs = [k for k in ("status", "location") if a[k] != b[k]] + (["type"] if type_matters(a, b) else [])
     if not diffs and a["sha256"] != b["sha256"]:
         diffs = ["body"]
     return {"path": path, "host": host or site_host, "old": a, "new": b, "diff": diffs}
