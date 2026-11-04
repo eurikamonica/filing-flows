@@ -40,7 +40,7 @@ on:
         type: boolean
         default: false
       hop:
-        description: Chain hop (the chain stops after 40)
+        description: Chain hop (the chain stops after 200)
         type: string
         default: '0'
   schedule:
@@ -215,17 +215,19 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
       - name: Start the next officials run (the back-fill chain)
-        # workflow_dispatch with chain=true, module congress: while House reports are waiting (the index years back to
-        # 2012), the next run starts itself — a relay like holdings-backfill.yml — unless another run of this workflow is
-        # already queued (the 13F schedule keeps its turn), up to 40 hops; the hourly schedule carries on after that.
-        if: success() && inputs.chain == true && steps.pick.outputs.module == 'congress' && steps.collect.outputs.ptr_pending != '' && steps.collect.outputs.ptr_pending != '0'
+        # While House reports are waiting (the index years back to 2012) a congress run started by hand with chain=true,
+        # by the chain itself or by the hourly schedule starts the next one — a relay like holdings-backfill.yml — unless
+        # another run of this workflow is already queued (the 13F schedule keeps its turn), up to 200 hops. A pending
+        # chain run is replaced when a push or schedule queues behind a running one (the concurrency group keeps one
+        # pending run), which ends the chain: the next hourly officials run starts it again.
+        if: success() && (inputs.chain == true || github.event_name == 'schedule') && steps.pick.outputs.module == 'congress' && steps.collect.outputs.ptr_pending != '' && steps.collect.outputs.ptr_pending != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOP: ${{ inputs.hop || '0' }}
           PENDING: ${{ steps.collect.outputs.ptr_pending }}
         working-directory: .
         run: |
-          if [ "$HOP" -ge 40 ]; then echo "chain cap reached (40 runs); the hourly schedule carries on"; exit 0; fi
+          if [ "$HOP" -ge 200 ]; then echo "chain cap reached (200 runs); the hourly schedule starts it again"; exit 0; fi
           n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow disclosures.yml --status queued --json databaseId --jq length)
           if [ "${n:-0}" -gt 0 ]; then echo "another run is already waiting"; exit 0; fi
           gh workflow run disclosures.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f module=congress -f chain=true -f hop=$((HOP + 1))

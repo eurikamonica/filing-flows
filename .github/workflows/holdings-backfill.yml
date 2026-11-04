@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
       hop:
-        description: 'Relay hop (the chain stops after 60)'
+        description: 'Relay hop (the chain stops after 400)'
         default: '0'
       minutes:
         description: 'Minutes of work in this run'
@@ -75,7 +75,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOP: ${{ inputs.hop || '0' }}
         run: |
-          if [ "$HOP" -ge 60 ]; then echo "relay cap reached (60 runs); the schedule picks it up again"; exit 0; fi
+          if [ "$HOP" -ge 400 ]; then echo "relay cap reached (400 runs); the schedule picks it up again"; exit 0; fi
           n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow holdings-backfill.yml --status queued --json databaseId --jq length)
           if [ "${n:-0}" -gt 0 ]; then echo "another back-fill run is already waiting"; exit 0; fi
           gh workflow run holdings-backfill.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chained=true -f hop=$((HOP + 1)) -f minutes="${{ inputs.minutes || '33' }}"

@@ -25,7 +25,9 @@ import gzip
 import json
 import os
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -50,8 +52,9 @@ class Blocked(RuntimeError):
 
 
 class SecGet:
-    """SEC fetches at a fixed pace (one request every `interval` seconds across all hosts), with retries and back-off.
-    Nothing is stored on disk (the collector's Client keeps every raw response; a back-fill would fill the runner)."""
+    """SEC fetches at a fixed pace (one request every `interval` seconds across all hosts and threads: a manager's
+    filings are fetched a few at a time, FETCHERS of process), with retries and back-off. Nothing is stored on disk
+    (the collector's Client keeps every raw response; a back-fill would fill the runner)."""
 
     def __init__(self, interval=0.15, max_mb=160, timeout=60):
         ua = (os.environ.get('SEC_USER_AGENT') or '').strip()
@@ -59,21 +62,27 @@ class SecGet:
             raise SystemExit('Set SEC_USER_AGENT to the project name + a real contact e-mail (SEC requires it)')
         self.ua, self.interval, self.max_bytes, self.timeout = ua, interval, max_mb << 20, timeout
         self.last, self.calls, self.bytes = 0.0, 0, 0
+        self.lock = threading.Lock()
 
-    def get(self, url, immutable=False):
-        err = 'request failed'
-        for attempt in range(4):
+    def _pace(self):
+        with self.lock:                                  # the next start, `interval` after the last one, whichever thread
             wait = self.interval - (time.monotonic() - self.last)
             if wait > 0:
                 time.sleep(wait)
             self.last = time.monotonic()
+
+    def get(self, url, immutable=False):
+        err = 'request failed'
+        for attempt in range(4):
+            self._pace()
             try:
                 with urlopen(Request(url, headers={'User-Agent': self.ua, 'Accept': '*/*', 'Accept-Encoding': 'identity'}), timeout=self.timeout) as r:
                     body = r.read(self.max_bytes + 1)
                 if len(body) > self.max_bytes:
                     raise ValueError(f'response over {self.max_bytes >> 20} MB')
-                self.calls += 1
-                self.bytes += len(body)
+                with self.lock:
+                    self.calls += 1
+                    self.bytes += len(body)
                 return body
             except HTTPError as exc:
                 err = f'HTTP {exc.code}'
@@ -135,24 +144,46 @@ def pending(catalog, state, shard=None, now_iso=None, cfg=None):
     return fresh + deeper
 
 
-def process(sec, cik, label, since, as_of=None, strict_from=None):
+FETCHERS = 4            # filings of one manager fetched at a time (SecGet keeps the pace across them: ~6.7 requests a second)
+
+
+def process(sec, cik, label, since, as_of=None, strict_from=None, fetchers=FETCHERS):
     """One manager, exactly as holdings.collect_holdings builds it. strict_from (the universe's `since`): a filing from
     before it that cannot be read — an old cover page whose totals do not match its table — is a gap in the history
-    ('unreadable'), not a failed manager; a filing from strict_from on still fails the manager, as it always has."""
+    ('unreadable'), not a failed manager; a filing from strict_from on still fails the manager, as it always has.
+    The filings are fetched `fetchers` at a time (a history of fifty quarters is a hundred requests: one at a time,
+    SEC's latency left the pace at a third of the limit)."""
     name, metas = filing_list(sec, cik, since)
-    filings, notices, unreadable = [], [], []
+    filings, notices, unreadable, todo = [], [], [], []
     for meta in metas:
         if as_of and meta['filed'] > as_of:
             continue
         if meta['form'].startswith('13F-NT'):
             notices.append(meta)
             continue
+        todo.append(meta)
+
+    def fetch(meta):
         try:
-            filings.append(load_filing(sec, meta))
+            return load_filing(sec, meta)
         except (ValueError, KeyError, TypeError) as exc:
-            if not strict_from or meta['filed'] >= strict_from:
+            return exc
+        except RuntimeError as exc:                      # a document SEC no longer serves (HTTP 404) can be a gap too;
+            if isinstance(exc, Blocked) or not str(exc).startswith('HTTP 4'):   # SEC's block and network trouble stop the manager
                 raise
-            unreadable.append({k: meta.get(k) for k in ('accession', 'form', 'filed')} | {'error': str(exc)[:200]})
+            return exc
+    if fetchers > 1 and len(todo) > 1:
+        with ThreadPoolExecutor(max_workers=fetchers) as pool:
+            got = list(pool.map(fetch, todo))        # in the filings' order; Blocked and network errors propagate
+    else:
+        got = [fetch(m) for m in todo]
+    for meta, f in zip(todo, got):
+        if isinstance(f, Exception):
+            if not strict_from or meta['filed'] >= strict_from:
+                raise f
+            unreadable.append({k: meta.get(k) for k in ('accession', 'form', 'filed')} | {'error': str(f)[:200]})
+        else:
+            filings.append(f)
     snapshots = resolve(filings, as_of)
     for i, s in enumerate(snapshots):
         s['changes'] = compare(snapshots[i - 1], s) if i else []
