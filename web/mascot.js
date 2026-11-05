@@ -85,7 +85,7 @@
     + 'under same also just only still very really good great bad big small open close closed live real true data compare versus life care health energy power gold silver '
     + 'water bank banks home land city star sun sky blue green red black white best leading lagging improving weakening reading since sectors companies '
     + 'company stocks largest smallest anything everything something someone buying selling momentum happens happen usually typically item items '
-    + 'quality score scores lowest highest runway screen screener find show cluster predict pattern patterns').split(' '));
+    + 'quality score scores lowest highest runway screen screener find show cluster predict pattern patterns trap traps trust check verify misleading').split(' '));
   function findCompany(q, ix) {
     const list = (ix && ix.companies) || [];
     if (!list.length) return null;

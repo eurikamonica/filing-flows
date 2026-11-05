@@ -53,7 +53,7 @@ def block(site, today=None):
     explore = [('c/', 'Every company A–Z'), ('daily/', 'Today in the filings'), ('events/', 'Material 8-K events'), ('disclosures/signals/', 'Stock signals'),
                ('disclosures/smart-money/', '13F smart money'), ('disclosures/insider-trades/', 'Insider trading'), ('disclosures/congress-trades/', 'Congress stock trades'),
                ('disclosures/activist-stakes/', 'Activist 13D stakes'), ('disclosures/guidance-track-record/', 'Guidance track record'),
-               ('disclosures/short-interest/', 'Short interest'), ('disclosures/insider-signals/', 'Do insider trades predict the stock?'), ('events/impact/', 'Which 8-K items move stocks'), ('disclosures/earnings-quality/', 'Earnings quality scores'), ('disclosures/cash-runway/', 'Cash runway'), ('disclosures/screener/', 'Stock screener'), ('disclosures/sector-rotation/', 'Sector rotation'), ('gamma/', 'Industries'),
+               ('disclosures/short-interest/', 'Short interest'), ('disclosures/insider-signals/', 'Do insider trades predict the stock?'), ('events/impact/', 'Which 8-K items move stocks'), ('disclosures/earnings-quality/', 'Earnings quality scores'), ('disclosures/cash-runway/', 'Cash runway'), ('disclosures/screener/', 'Stock screener'), ('disclosures/analysis-traps/', 'Analysis traps: where figures mislead'), ('disclosures/sector-rotation/', 'Sector rotation'), ('gamma/', 'Industries'),
                ('chains/', 'Supply chains & themes'), ('m/', '13F managers'), ('o/', 'Officials’ trades'), ('compare/', 'Compare companies'), ('zh/', '中文')]
     out.append("<h2>Explore</h2><ul>" + ''.join(f"<li><a href='{u}'>{e(l)}</a></li>" for u, l in explore if has(*u.strip('/').split('/'))) + '</ul></section>')
     return ''.join(out)
@@ -91,7 +91,7 @@ def llms(site, base, today=None):
                   + (f", {seo.pct(r.get('yoy'))} Y/Y" if r.get('yoy') is not None else '') for r in fresh[:30]]
     hubs = [('c/', 'Every company, A to Z'), ('daily/', 'Today in the filings: insider buying and selling, Congress trades, guidance changes, takeover rumors, the earnings calendar'),
             ('events/', 'Material 8-K events'), ('events/impact/', 'Which 8-K items move stocks, scored'), ('m/', '13F managers: portfolios and a copy-the-13F backtest'),
-            ('o/', 'Officials\' stock trades'), ('compare/', 'Two companies compared'), ('disclosures/screener/', 'Stock screener'),
+            ('o/', 'Officials\' stock trades'), ('compare/', 'Two companies compared'), ('disclosures/screener/', 'Stock screener'), ('disclosures/analysis-traps/', 'Analysis traps: where a company\'s figures could mislead, checked on every filing'),
             ('disclosures/earnings-quality/', 'Earnings quality scores'), ('disclosures/cash-runway/', 'Cash runway'), ('disclosures/insider-signals/', 'Do insider trades predict the stock?'),
             ('gamma/', 'Industries by SIC code'), ('chains/', 'Supply chains and themes'), ('zh/', 'In Chinese'), ('about/', 'About the site and how the figures are made')]
     lines += ["", "## Sections", ""] + [f"- [{d}]({base}/{u})" for u, d in hubs if has(*u.strip('/').split('/'))]

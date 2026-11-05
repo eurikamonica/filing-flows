@@ -419,6 +419,12 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/screener.py --site _site
+      - name: Analysis traps (data/traps/, c/<slug>/analysis-traps/, disclosures/analysis-traps/; pipeline/traps.py)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          TRAPS: ${{ vars.TRAPS }}                      # off: skipped (a feature flag; the module changes nothing else)
+        run: python scripts/seo_traps.py --site _site
       - name: Stock timelines with every disclosure marked (c/<slug>/timeline/, disclosures/insider-signals/)
         continue-on-error: true
         env:

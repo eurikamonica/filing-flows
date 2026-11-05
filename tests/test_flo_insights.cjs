@@ -83,6 +83,8 @@ ok(M.classify('Do insider trades predict the stock?').join() === 'insiderSignal'
 ok(has('If I had bought NVDA in January 2024', 'backtest') && has('What would $5,000 in AAPL 3 years ago be worth now', 'backtest') && has('如果2020年买了特斯拉现在值多少', 'backtest'), 'backtest');
 ok(has('哪些公司快没现金了？', 'runway') && M.classify('Show me momentum stocks').join() === 'screen' && I.marketWords('Lowest earnings quality scores'), 'runway in Chinese; a screen and "lowest" are market questions');
 ok(['momentum', 'happens', 'quality', 'item'].every((w) => !I.fuzzyCompany(w + ' stocks', { companies: [{ ticker: 'MNTS', name: 'Momentus Inc', cik: 1 }, { ticker: 'HAPN', name: 'Happen Corp', cik: 2 }, { ticker: 'QIND', name: 'Quality Industrial Corp', cik: 3 }] }, M.WORDS || new Set(['momentum', 'happens', 'quality', 'item', 'stocks']))), 'question words are not misspelt company names');
+ok(has('What should I check before trusting NVDA\'s figures?', 'traps') && has('Is AAPL\'s free cash flow too good to be true?', 'traps') && has('英伟达的数字有什么坑', 'traps') && !has('NVDA analysis traps', 'quality')
+  && M.classify('Which companies trigger the most analysis traps?').join() === 'traps', 'analysis traps: a company\'s, and the market\'s, and it replaces quality');
 ok(I.MARKET_ASK.some(([k]) => k === 'screen') && I.followUps(['quality'], { ticker: 'NVDA' }, 'en').some((a) => /cash/i.test(a.label)), 'market asks and follow-ups cover the new models');
 
 (async () => {
