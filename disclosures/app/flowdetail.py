@@ -297,7 +297,9 @@ class Tree:
 
 def _nest(m, total, tol_r=0.0015):
     """Members (name → value) → (top level, {group: parts}) whose top level adds up to total; a member equal to the sum of
-    two or more others is their group (Data Center = Compute + Networking). None when nothing adds up."""
+    two or more others is their group (Data Center = Compute + Networking). None when nothing adds up (or no total)."""
+    if total is None or not m:
+        return None
     tol = max(abs(total) * tol_r, 1.0)
     items = sorted(m.items(), key=lambda x: -abs(x[1]))
     if len(items) > 18:
@@ -410,7 +412,7 @@ def _build(T0, isr, cfr, ultra=False):
     cor = next((k for j in T.J.values() for k, _ in j['kids'] if main_of(k) == 'cor'), None)
     if axis and cor and cor not in T.J:
         m = T.members(parse_key(cor)[0], cur, axis)
-        if m and len(m) <= 12:
+        if m and len(m) <= 12 and T.v(cor, cur) is not None:   # a cost reported by member only has no total to add up to
             got = _nest({k: v for k, v in m.items() if v}, T.v(cor, cur))
             if got and not got[1]:
                 T.add(cor, [(key_of(parse_key(cor)[0], ((axis, x),)), 1.0) for x in got[0]], 'dims:' + axis)
