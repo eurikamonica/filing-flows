@@ -174,6 +174,16 @@ class Build(unittest.TestCase):
         self.assertEqual(set(blocks), {a['key'] for a in assets})
         self.assertIn('own', blocks['C3'])
         self.assertIsNotNone(blocks['C0']['state']['pe'])        # P/E from the EPS store
+        # the spread of what followed (app/regime_odds.py): fixed bands for the similar days and for every high day, the fan
+        E = back['params']['edges']
+        for k in ('fwd21', 'fwd63', 'fwd252', 'mdd63', 'gain_left'):
+            self.assertEqual(len(full['dist'][k]), len(E[k]) + 1)
+            self.assertEqual(len(G['dist'][k]), len(E[k]) + 1)
+        self.assertEqual(sum(full['dist']['fwd21']), full['fwd21']['n'])
+        self.assertEqual(len(full['fan']['p50']), len(back['params']['fan_grid']))
+        self.assertEqual(full['fan']['p50'][0], 0.0)
+        self.assertNotIn('dist', a)                              # not in the list either
+        self.assertEqual(G['buckets']['pe']['edges'], H.BUCKETS['pe'][1])
         json.dumps(back, allow_nan=False)
 
 
