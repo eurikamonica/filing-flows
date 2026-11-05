@@ -53,6 +53,7 @@ from pathlib import Path
 import numpy as np
 
 HORIZONS = {'1w': 1, '1m': 4, '3m': 13}
+OOS_KEEP = '3m'                # the horizon whose walk-forward forecasts are kept for app/opportunity_scan.py (--oos)
 SIG_WEEKS, SIG_FLOOR = 26, 0.01
 RIDGE = 10.0
 BORROW = 0.005                 # a year
@@ -489,6 +490,7 @@ def run(P, macro, today=None, verbose=False):
 
         oos = {k: [] for k in ('p', 'y', 'base', 'ev')}
         ics, by_year = [], {}
+        zmat = np.full(C.shape, np.nan, np.float32) if hk == OOS_KEEP else None   # the walk-forward z-hat, kept for the scan
         for Y in range(first_year, int(years[cur_t]) + 1):
             t_end = int(np.searchsorted(years, Y)) - h - 1        # the last week whose outcome is known before Y starts
             if t_end < 52:
@@ -504,6 +506,8 @@ def run(P, macro, today=None, verbose=False):
                 if m.sum() < 20:
                     continue
                 D = design(X, mk, t)[m]
+                if zmat is not None:
+                    zmat[np.where(m)[0], t] = D @ M['b']
                 dvt = np.nan_to_num(dv[m, t], nan=0.0)
                 cst = 2 * cost_one_way(dvt)
                 s_ = sig[m, t] * math.sqrt(h)
@@ -574,6 +578,9 @@ def run(P, macro, today=None, verbose=False):
         qs = {q: quantile_of(M['ec'], q) for q in (0.1, 0.5, 0.9)}
         card.update({'coef': {f: float(v) for f, v in zip(FEATS, M['b'])}, 'base_up': M['base'][0], 'base_buy': M['base'][1],
                      'base_short': M['base'][2], 'platt': M['platt'], 'residual_quantiles': {str(q): v for q, v in qs.items()}})
+        if zmat is not None:                                   # this week too, from the model of today (weeks known by now)
+            zmat[names_now, cur_t] = zhat[names_now]
+            out['oos'] = {'horizon': hk, 'weeks': h, 'z': zmat}
         out['horizons'][hk] = {'weeks': h, 'card': card, 'p_up': p_up, 'p_buy': p_buy, 'p_short': p_short, 'p0': p0, 'zhat': zhat, 's': s_now,
                                'q': {q: np.expm1(s_now * (zhat + v)) for q, v in qs.items()}, 'cost': cost_now, 'b': M['b']}
         if verbose:
@@ -866,6 +873,7 @@ def main():
     ap.add_argument('--ledger', default=None, help='the frozen-forecast ledger file (kept on the data branch)')
     ap.add_argument('--sha', default=None)
     ap.add_argument('--limit', type=int, default=None)
+    ap.add_argument('--oos', default=None, help='a folder: keep the 3-month walk-forward forecasts there (hist/cache/oos)')
     a = ap.parse_args()
     warnings.filterwarnings('ignore', category=RuntimeWarning)
     if a.kind == 'etfs':
@@ -878,6 +886,11 @@ def main():
         macro = macro_weekly(a.public, P['dates'])
     print(len(P['tickers']), a.kind, 'on file', flush=True)
     R = run(P, macro, verbose=True)
+    if a.oos and a.kind == 'stocks' and R.get('oos'):
+        import oos_store
+        oos_store.save(Path(a.oos) / f"opportunity-{R['oos']['horizon']}.npz", P['tickers'], P['dates'], R['oos']['z'],
+                       {'model': 'opportunity', 'horizon_weeks': R['oos']['weeks'], 'what': 'z-hat: the predicted 13-week return over the volatility',
+                        'ic_mean': (R['horizons'][R['oos']['horizon']]['card'] or {}).get('ic_mean')})
     summ = publish(out_dir, P, R, a.kind)
     if a.ledger:
         summ['ledger'] = ledger_update(a.ledger, out_dir, P, R, rows_now(P, R), a.kind, a.sha)

@@ -5,9 +5,12 @@
    Data: data/market/history/opportunity-stocks.json and opportunity-ledger-stocks.json (rotation-history),
    data/etf/opportunity-etfs.json and opportunity-ledger-etfs.json (etf-history); app/opportunity.py. One name is drawn by
    opportunity-view.js (shared with the company pages). Deep links: #opportunity/NVDA, #opportunity/etfs~QQQ,
-   #opportunity/etfs, #opportunity/model, #opportunity/ledger. */
+   #opportunity/etfs, #opportunity/model, #opportunity/ledger.
+   Scan (the default view): every stock's read from every model on the site in one row, filters, the scoreboard and a
+   four-part post draft — opportunity-scan.js on data/market/history/opportunity-scan.json (app/opportunity_scan.py).
+   Deep links: #opportunity/scan, #opportunity/scan~sp500 (an index), #opportunity/draft~NVDA (one stock's draft). */
 const opStore={};
-const OP_PATH={stocks:(globalThis.FF_HUB_ROOT||'')+'data/market/history/opportunity-stocks.json',etfs:(globalThis.FF_HUB_ROOT||'')+'data/etf/opportunity-etfs.json',
+const OP_PATH={scan:(globalThis.FF_HUB_ROOT||'')+'data/market/history/opportunity-scan.json',stocks:(globalThis.FF_HUB_ROOT||'')+'data/market/history/opportunity-stocks.json',etfs:(globalThis.FF_HUB_ROOT||'')+'data/etf/opportunity-etfs.json',
  'ledger-stocks':(globalThis.FF_HUB_ROOT||'')+'data/market/history/opportunity-ledger-stocks.json','ledger-etfs':(globalThis.FF_HUB_ROOT||'')+'data/etf/opportunity-ledger-etfs.json'};
 function opData(name){
  const m=opStore[name]||(opStore[name]={});
@@ -15,7 +18,7 @@ function opData(name){
  m.loading=fetch(OP_PATH[name],{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
-const OP_VIEWS=[['all','Every name'],['one','One name'],['model','Model card'],['ledger','Track record']];
+const OP_VIEWS=[['scan','Scan'],['all','Every name'],['one','One name'],['model','Model card'],['ledger','Track record']];
 const OP_KIND=[['stocks','Stocks'],['etfs','ETFs']];
 const OP_H=[['1w','1 week'],['1m','1 month'],['3m','3 months']];
 const OP_HN={'1w':'1 week','1m':'1 month','3m':'3 months'};
@@ -29,10 +32,12 @@ function opFlag(s,h){return s==='buy'?`<span class="tag" style="color:var(--mk-p
 function opCostMax(liq){return liq==='5e8'?0.0011:liq==='5e7'?0.0031:liq==='5e6'?0.0081:9}
 function opKind(){return state.opk==='etfs'?'etfs':'stocks'}
 function opportunityView(){
- state.opv=OP_VIEWS.some(v=>v[0]===state.opv)?state.opv:'all';
+ if(!OP_VIEWS.some(v=>v[0]===state.opv)){state.opv='scan';state.opvAuto=true}
+ if(state.opv==='scan'&&state.opvAuto&&opStore.scan&&opStore.scan.err)state.opv='all';   // no scan published yet: open on every name
  const kind=opKind();
- let out=head('Opportunity','For every stock and ETF: the chance the price is higher in a week, a month and three months, that buying makes money after trading costs and that shorting does after costs and the borrow fee — with the likely range, the signals behind it and a flag only where flags have made money out of sample. Odds that lean, not predictions; history and models, not investment advice.','WEEKLY · WALK-FORWARD · COSTS INCLUDED');
+ let out=head('Opportunity','For every stock and ETF: the chance the price is higher in a week, a month and three months, that buying makes money after trading costs and that shorting does after costs and the borrow fee — with the likely range, the signals behind it and a flag only where flags have made money out of sample. The scan sets every model on the site side by side for each stock (moves, odds, highs and lows, moving averages, the RRG), filters them and drafts a post. Odds that lean, not predictions; history and models, not investment advice.','WEEKLY · WALK-FORWARD · COSTS INCLUDED');
  out+=`<div class="toolbar">${field('opv','View',OP_VIEWS,state.opv)}`;
+ if(state.opv==='scan')return out+opScan();
  if(state.opv!=='one')out+=field('opk','Universe',OP_KIND,kind);
  if(state.opv==='all'){
   out+=field('oph','Horizon',OP_H,state.oph||'1m')+field('ops','Sort',OP_SORT,state.ops||'score')+field('opf','Flags',OP_SIDE,state.opf||'');
@@ -78,6 +83,44 @@ function opportunityView(){
    dr?`<span style="white-space:normal;display:inline-block;min-width:150px"><span class="${dr[1]>=0?'positive':'negative'}">${dr[1]>=0?'↑':'↓'}</span> ${esc(L[dr[0]]||dr[0])}</span>`:'—']}))
   +`<div class="explain">Higher: the chance the total return over the horizon is above zero. Buy / short makes money: after the round-trip cost (0.1% for names trading $500M+ a week, 0.3% for $50M+, 0.8% for $5M+, else 2%) and, for a short, a 0.5% a year borrow fee. Edge: how much the timing signals raise the better of the two, against the same name with its own volatility, cost and liquidity and no signal. A flag also needs the trade itself to be more likely than not to make money. Score: where that edge ranks among every name this week, at the best horizon whose flags have worked (— when none has). HTB: likely hard to borrow, never flagged short. ${kind==='stocks'?'Today\'s companies only: names delisted in the past are missing from what the model learned (survivorship).':'Cash-like funds (under 3% a year of volatility) are left out.'}</div>`;
 }
+function opScan(){                        // the toolbar is still open: the scan's own fields close it
+ const S=window.OpportunityScan,g=opData('scan');
+ if(!S)return '</div>'+empty('The scan could not start: opportunity-scan.js did not load.');
+ const d=g.data,chips=String(state.opch||'').split(',').filter(Boolean);
+ let out=field('opix','Index',[['','All stocks'],...S.INDEXES.filter(([k])=>!d||((d.counts||{})[k]||0)>0).map(([k,l])=>[k,l])],state.opix||'')
+  +field('opsx','Sector',[['','All'],...(d?S.sectors(d):[]).map(s=>[s,s])],state.opsx||'')+field('opp','Probability',S.PROBS,state.opp||'up3m')
+  +field('opm','At least',S.MINS,state.opm||'')+field('opo','Sort',S.SORTS,state.opo||'score')
+  +`<div class="field"><label for="opsq">Search</label><input id="opsq" value="${esc(state.opsq||'')}" placeholder="ticker or name"></div></div>`+S.chipsHtml(chips);
+ if(g.err)return out+empty(`The scan could not load (${g.err}). It is rebuilt by .github/workflows/rotation-history.yml after the other models (app/opportunity_scan.py).`);
+ if(!d)return out+empty('Loading the scan…');
+ const q={ix:state.opix||'',sec:state.opsx||'',chips,prob:state.opp||'up3m',min:state.opm||'',search:state.opsq||'',sort:state.opo||'score'};
+ const R=S.select(d,q);
+ out+=`<div class="metrics">${S.kpis(d).map(k=>kpi(k[0],k[1],k[2])).join('')}</div><div class="explain">${S.summaryText(d)}</div>`;
+ const one=state.opd&&d._by[state.opd],po={lang:state.opdl||'en',len:state.opdm||'short',tag:state.opdh!=='0'};
+ if(state.opd==='*'&&R.length)out+=S.listHtml(d,q,po);else if(one)out+=S.detailHtml(one,d,po);
+ exported=R.map(S.exportRow);
+ const ixl=(S.INDEXES.find(x=>x[0]===q.ix)||[])[1];
+ out+=`<div class="section-head"><h3>${esc(fmt(R.length))} stocks${ixl?' · '+esc(ixl):''}${chips.length?' · '+esc(chips.length)+' signal'+(chips.length>1?'s':''):''}</h3><span>${R.length>1?'<button class="action" data-opd="*">✎ Post this list</button> ':''}<button class="action" id="csv">Export CSV ↓</button></span></div>`;
+ out+=`<div class="ops-table">${table(S.HEADERS,R.map(r=>S.cells(r,d,q)))}</div><div class="explain">${S.columnsText(d)}</div>`;
+ out+=`<div class="section-head"><h3>Scoreboard: how each model has done out of sample</h3></div>${S.scoreboardHtml(d)}`;
+ return out+`<details class="ops-more"><summary>The combined score: how it is made and tested</summary>${S.compositeHtml(d)}</details>`;
+}
+function bindScan(){
+ const S=window.OpportunityScan;if(!S)return;
+ for(const k of ['opix','opsx','opp','opm','opo'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ if($('opsq')){$('opsq').onchange=e=>{state.opsq=e.target.value;state.page=0;render()};$('opsq').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
+ document.querySelectorAll('#workspace [data-opchip]').forEach(b=>b.onclick=()=>{const on=String(state.opch||'').split(',').filter(Boolean),i=on.indexOf(b.dataset.opchip);if(i<0)on.push(b.dataset.opchip);else on.splice(i,1);state.opch=on.join(',');state.page=0;render()});
+ if($('opch-clear'))$('opch-clear').onclick=()=>{state.opch='';state.page=0;render()};
+ document.querySelectorAll('#workspace [data-opd]').forEach(b=>b.onclick=()=>{state.opd=b.dataset.opd;render();const el=$('ops-detail');if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'})});
+ if($('opd-close'))$('opd-close').onclick=()=>{state.opd='';render()};
+ for(const k of ['opdl','opdm','opdh'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;render()};
+ const ta=$('opd-text');if(!ta)return;
+ const short=()=>(state.opdm||'short')==='short';
+ ta.oninput=()=>{const n=S.xlen(ta.value),c=$('opd-count'),x=$('opd-x');if(c){c.textContent=`${fmt(n)} / ${short()?S.LIMIT:'25,000'}`;c.classList.toggle('over',short()&&n>S.LIMIT)}if(x)x.href=S.intentUrl(ta.value)};
+ const said=ok=>{const m=$('opd-msg');if(m)m.textContent=ok?'Copied':'Select the text and copy it'};
+ const old=()=>{ta.focus();ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}said(ok)};
+ if($('opd-copy'))$('opd-copy').onclick=()=>{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value).then(()=>said(true),old);else old()};
+}
 function opModel(kind){
  const g=opData(kind);if(g.err)return empty(`The model card could not load (${g.err}).`);if(!g.data)return empty('Loading the model card…');
  const d=g.data,hk=state.oph||'1m',c=(d.cards||{})[hk];if(!c)return empty('No model at this horizon.');
@@ -111,7 +154,8 @@ function opLedger(kind){
 }
 function bindOpportunity(){
  if(state.tab!=='opportunity')return;
- for(const k of ['opv','opk','oph','ops','opf','opsec','opl'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;if(k==='opk')state.opsec='';render()};
+ if(state.opv==='scan')bindScan();
+ for(const k of ['opv','opk','oph','ops','opf','opsec','opl'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;if(k==='opk')state.opsec='';if(k==='opv')state.opvAuto=false;render()};
  for(const k of ['opq','opt'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-opt]').forEach(b=>b.onclick=()=>{state.opv='one';state.opt=b.dataset.opt;render();scrollTo({top:0,behavior:'smooth'})});
  const one=$('op-one');
@@ -119,12 +163,22 @@ function bindOpportunity(){
 }
 function opportunityDeepLink(arg){
  const v=decodeURIComponent(arg||'').trim();if(!v)return;
+ state.opvAuto=false;                       // a view asked for by a link is kept, even when it cannot load
+ const sc=/^(scan|draft)~(.+)$/i.exec(v);
+ if(sc){state.opv='scan';if(sc[1].toLowerCase()==='draft')state.opd=sc[2].toUpperCase().replace(/\./g,'-');else{state.opix=sc[2].toLowerCase();state.page=0}return}
  if(v==='etfs'||v==='stocks'){state.opv='all';state.opk=v;return}
  if(OP_VIEWS.some(x=>x[0]===v)){state.opv=v;return}
  const [a,b]=v.split('~');
  if(b){state.opk=a==='etfs'?'etfs':'stocks';state.opv='one';state.opt=b.toUpperCase()}else{state.opv='one';state.opt=a.toUpperCase()}
 }
 function opportunityNotice(){
+ if(!state.opv||(state.opv==='scan'&&!(state.opvAuto&&opStore.scan&&opStore.scan.err))){
+  const s=opData('scan'),d=s.data;
+  if(s.err)return {stale:true,text:'Official derived view · Opportunity scan unavailable · '+s.err};
+  if(!d)return {stale:false,text:'Official derived view · Opportunity scan loading…'};
+  const age=(Date.now()-Date.parse(d.generated_at))/3600000;
+  return {stale:!(age<=30),text:`Official derived view · Opportunity scan built ${d.generated_at} · ${fmt((d.rows||[]).length)} stocks · weekly models of ${d.asof} · daily moves of ${(d.sources||{}).moves||'—'} · rebuilt with the weekly closes every three hours`+(age>30?' · stale':'')};
+ }
  const s=opData(opKind()),d=s.data;
  if(s.err)return {stale:true,text:'Official derived view · Opportunity unavailable · '+s.err};
  if(!d)return {stale:false,text:'Official derived view · Opportunity loading…'};

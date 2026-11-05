@@ -683,13 +683,13 @@ def fresh(public, asof, max_days=3):
     return d.get('version') == VERSION and d.get('asof') == asof and (dt.datetime.now(dt.timezone.utc) - made).days < max_days
 
 
-def build(public, ledger=None, today=None, verbose=True, force=False):
+def build(public, ledger=None, today=None, verbose=True, force=False, oos=None):
     t0 = dt.datetime.now()
     log = (lambda *a: print(*a, flush=True)) if verbose else (lambda *a: None)
     D = load(public)
     days, spy = D['days'], D['spy']
     t = closed_week(days, today or dt.date.today())
-    if not force and fresh(public, str(days[t])):
+    if not force and fresh(public, str(days[t])) and not (oos and not (Path(oos) / 'rrg-13.npz').exists()):   # no forecast history yet: build
         log(f'rrg hybrid: week ending {days[t]} already built — kept')
         return None
     doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'version': VERSION, 'asof': str(days[t]),
@@ -714,6 +714,11 @@ def build(public, ledger=None, today=None, verbose=True, force=False):
                                 'coefs': {str(h): Rs[h]['coefs'] for h in HORIZONS}, 'describe': desc, 'rows': rows,
                                 'spy_drift_week': r_(spy_drift(spy, t), 5)}
         kept[panel] = (P, Fe, Rs)
+        if oos and panel == 'companies' and Rs.get(13) is not None and Rs[13].get('S') is not None:
+            import oos_store                                     # the 13-week stacked forecasts, for app/opportunity_scan.py
+            oos_store.save(Path(oos) / 'rrg-13.npz', P['ids'], days, Rs[13]['S'],
+                           {'model': 'rrg_hybrid', 'horizon_weeks': 13, 'what': 'the hybrid RRG\'s stacked 13-week forecast against SPY',
+                            'ic_mean': ((ev[13].get('ic') or {}).get('hybrid') or {}).get('ic')})
         log(f"rrg hybrid {panel}: {len(rows)} lines now; IC 13w hybrid {(ev[13]['ic']['hybrid'] or {}).get('ic')} classic {(ev[13]['ic']['classic'] or {}).get('ic')}")
     co = doc['panels'].get('companies')
     if co:
@@ -753,8 +758,9 @@ def main():
     ap.add_argument('--public', required=True)
     ap.add_argument('--ledger', default=None)
     ap.add_argument('--force', action='store_true', help='rebuild even when this closed week is already published')
+    ap.add_argument('--oos', default=None, help='a folder: keep the 13-week walk-forward forecasts there (hist/cache/oos)')
     a = ap.parse_args()
-    build(a.public, a.ledger, force=a.force)
+    build(a.public, a.ledger, force=a.force, oos=a.oos)
 
 
 if __name__ == '__main__':
