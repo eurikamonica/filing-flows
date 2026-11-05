@@ -1531,8 +1531,11 @@ def build_company(cik, ua, root, ticker=None, info=None, sic=None):
 
 
 def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, recheck_days=5):
-    """The site's companies, largest first: a company is (re)built when never built, read with another version, when the
-    site shows a filing newer than the newest on file, or every few days. public/c/<TICKER>.json; state.json."""
+    """The site's companies, largest first: a company is (re)built when the site shows a filing newer than the newest on
+    file, when never built or read with another version, or every few days — in that order. A new filing comes first: the
+    company page draws the detailed flow of the period it shows, so a quarter not read yet has none, and with ~1,100 small
+    companies never built ahead of them Apple's 10-K and JPMorgan's 10-Q (Nov 3, 2026) waited for days.
+    public/c/<TICKER>.json; state.json."""
     import signal
     root = Path(root)
     t0 = time.time()
@@ -1551,10 +1554,10 @@ def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, rechec
             return -1
         if s_.get('retry_after') and s_['retry_after'] > now.isoformat():
             return None
+        if s_.get('filed') and c.get('filed') and c['filed'] > s_['filed']:
+            return 0                                     # a newer filing than the one on file: the page's period
         if not s_.get('filed') or s_.get('v') != VERSION:
-            return 0                                     # never built, or by an older reader: by size, largest first
-        if c.get('filed') and c['filed'] > s_['filed']:
-            return 2
+            return 1                                     # never built, or by an older reader: by size, largest first
         if not s_.get('checked') or (now - dt.datetime.fromisoformat(s_['checked'])).days >= recheck_days:
             return 3
         return None
@@ -1596,6 +1599,8 @@ def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, rechec
             done += 1
         except Exception as e:                              # one company's failure never stops the batch
             errs += 1
+            import traceback                                 # where it failed, in the run's log (the state keeps the message)
+            print(''.join(traceback.format_exception(type(e), e, e.__traceback__, limit=-4)), file=sys.stderr)
             s_.update(error=f'{type(e).__name__}: {str(e)[:200]}', checked=now.isoformat(timespec='seconds'),
                       retry_after=(now + dt.timedelta(days=2)).isoformat(timespec='seconds'))
             print(f'{t}: {type(e).__name__}: {e}', file=sys.stderr)

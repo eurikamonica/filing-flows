@@ -207,3 +207,29 @@ class Helpers(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class CollectOrder(unittest.TestCase):
+    def test_a_new_filing_comes_before_the_companies_never_built(self):
+        """Apple's 10-K and JPMorgan's 10-Q of Nov 3, 2026 waited behind ~1,100 small companies never built, and the company
+        page, which draws the detailed flow of the period it shows, had none for their newest quarter."""
+        import json, tempfile, datetime as dt
+        root = Path(tempfile.mkdtemp())
+        site = root / 'index.json'
+        site.write_text(json.dumps({'companies': [
+            {'ticker': 'BIG', 'cik': 1, 'revenue': 9e10, 'filed': '2026-11-03'},          # built, a newer filing since
+            {'ticker': 'NEW', 'cik': 2, 'revenue': 5e10, 'filed': '2026-11-01'},          # never built
+            {'ticker': 'OK', 'cik': 3, 'revenue': 7e10, 'filed': '2026-10-01'}]}))        # up to date, checked today
+        now = dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
+        (root / 'state.json').write_text(json.dumps({
+            'BIG': {'v': D.VERSION, 'accession': 'a1', 'filed': '2026-08-01', 'checked': now},
+            'OK': {'v': D.VERSION, 'accession': 'a3', 'filed': '2026-10-01', 'checked': now}}))
+        order = []
+        saved = D.filings_of, D.build_company
+        try:
+            D.filings_of = lambda cik, ua: (order.append(cik) or {'name': 'X', 'tickers': [], 'filings': [{'accession': f'n{cik}', 'filed': '2026-11-03'}]})
+            D.build_company = lambda cik, ua, root_, t, info, sic=None: {'v': D.VERSION, 'name': t, 'quarters': [], 'years': []}
+            D.collect(root, site, 'ua', minutes=5)
+        finally:
+            D.filings_of, D.build_company = saved
+        self.assertEqual(order, [1, 2])                  # the newer filing first, then the one never built; OK not read
