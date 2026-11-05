@@ -86,7 +86,8 @@ function mvCss(){
  if(typeof document==='undefined'||document.getElementById('mvh-css'))return;
  const s=document.createElement('style');s.id='mvh-css';
  s.textContent=`.mvh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin:8px 0 14px}
-.mvh-card{font:inherit;text-align:left;border:1px solid var(--line,#ddd);border-radius:12px;padding:9px 11px;background:var(--surface,#fff);color:var(--ink,#222);cursor:pointer;min-width:0}
+.mvh-card{font:inherit;text-align:left;border:1px solid var(--line,#ddd);border-radius:12px;padding:9px 11px;background:var(--surface,#fff);color:var(--ink,#222);cursor:pointer;min-width:0;display:flex;flex-direction:column;justify-content:flex-start}
+.mvh-live,.mvh-base{display:block}.mvh-card .mvh-last{display:none}.mvh-card.iv-on .mvh-base{display:none}.mvh-card.iv-on .mvh-last{display:block;margin-top:5px;padding-top:4px;border-top:1px dashed var(--line,#ddd)}
 .mvh-card.on{border-color:var(--ink,#222);box-shadow:inset 0 0 0 1px var(--ink,#222)}.mvh-card small{display:block;font-size:11.5px;color:var(--muted,#777);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mvh-card b{display:block;font-size:20px;font-variant-numeric:tabular-nums;margin:2px 0}.mvh-card i{display:block;font-style:normal;font-size:12px;color:var(--muted,#777)}
 .mvh-meter{height:6px;border-radius:3px;background:var(--line,#e5e5e5);position:relative;margin:6px 0 2px;overflow:hidden}.mvh-meter span{position:absolute;top:0;bottom:0;border-radius:3px}
@@ -100,16 +101,19 @@ function mvMeter(p,vol){
  const lo=Math.min(p,50),hi=Math.max(p,50),col=vol?(p>=50?'var(--q-warm,#d9822b)':'#5b7fa6'):p>=50?'var(--mk-profit,#17734a)':'var(--mk-cost,#c0392b)';
  return `<div class="mvh-meter" title="percentile ${p.toFixed(1)}"><span style="left:${lo}%;width:${Math.max(hi-lo,1)}%;background:${col}"></span><span style="left:calc(50% - 1px);width:2px;background:var(--muted,#999)"></span></div>`;
 }
-function mvCard(r,on){
+function mvCard(r,on,live){                 // live: the page's last close (as_of) when intraday-view.js may lead the card with today's move so far
  if(r.past)return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small><b class="${mvTone(r.move)}">${mvPct(r.move)}</b>${mvMeter(r.pct)}<i>${mvRank(r.pct)} day up to then</i><i>then: ${mvNext(r)}</i></button>`;
- return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small><b class="${mvTone(r.move)}">${mvPct(r.move)}</b>${mvMeter(r.pct)}<i>${mvRank(r.pct)} day · ${esc(mvEvery(r.every))} days</i><i>after days like it, next month: <span class="${mvTone(r.sim21&&r.sim21[1])}">${r.sim21?mvPct(r.sim21[1]):'—'}</span>${r.sim21?` · ${Math.round(100*r.sim21[2])}% rose`:''}</i></button>`;
+ const base=`<b class="${mvTone(r.move)}">${mvPct(r.move)}</b>${mvMeter(r.pct)}<i>${mvRank(r.pct)} day · ${esc(mvEvery(r.every))} days</i><i>after days like it, next month: <span class="${mvTone(r.sim21&&r.sim21[1])}">${r.sim21?mvPct(r.sim21[1]):'—'}</span>${r.sim21?` · ${Math.round(100*r.sim21[2])}% rose`:''}</i>`;
+ if(!live)return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small>${base}</button>`;
+ const day=r.as_of||(typeof live==='string'?live:'');
+ return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small><span class="mvh-live" data-ivc="${esc(r.key)}" data-asof="${esc(day)}"></span><span class="mvh-base">${base}</span><i class="mvh-last">${day?esc(mvDay(day).replace(/, \d{4}$/,''))+': ':'last close: '}<span class="${mvTone(r.move)}">${mvPct(r.move)}</span> · ${mvRank(r.pct)} day</i></button>`;
 }
 function mvVolCard(r,on){
  if(r.past)return mvCard(r,on);                                    // a past day: that day's move and what followed
  const lv=r.level,lvl=lv==null?'—':lv<10?lv.toFixed(2):lv.toFixed(1);
  return `<button type="button" class="mvh-card${on?' on':''}" data-mvk="${esc(r.key)}"><small>${esc(r.name)}</small><b>${lvl}</b>${mvMeter(r.lpct,true)}<i>${r.lpct==null?'':mvRank(r.lpct)+' level since '+esc(String(r.d0||'').slice(0,4))} · today ${mvPct(r.move)}</i><i>S&amp;P 500 the month after levels like this: <span class="${mvTone(r.out21&&r.out21[1])}">${r.out21?mvPct(r.out21[1]):'—'}</span>${r.out21?` · ${Math.round(100*r.out21[2])}% rose`:''}</i></button>`;
 }
-function mvAnalysis(key){return key?`<div id="mv-one" data-k="${esc(key)}" data-d="${esc(state.mvd||'')}" style="margin-top:10px"></div>`:''}
+function mvAnalysis(key,asof){return key?`${state.mvd?'':`<div data-ivd="${esc(key)}" data-asof="${esc(asof||'')}"></div>`}<div id="mv-one" data-k="${esc(key)}" data-d="${esc(state.mvd||'')}" style="margin-top:10px"></div>`:''}
 // a plain table (no pager: a group is short, and several share the view)
 const mvTable=(h,rows)=>`<div class="tablebox"><table><thead><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(c=>`<tr>${c.map((v,i)=>`<td class="${i?'num':''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 function mvAll(rows,d){
@@ -135,22 +139,23 @@ function mvAll(rows,d){
    `<span class="${mvTone(r.move)}">${mvPct(r.move)}</span>`,mvRank(r.pct),esc(mvEvery(r.every)),r.rv21==null?'—':`${Math.round(100*r.rv21)}% · ${mvRank(r.rvpct)}`,
    r.sim21?`<span class="${mvTone(r.sim21[1])}">${mvPct(r.sim21[1])}</span>`:'—',r.sim21?Math.round(100*r.sim21[2])+'%':'—',esc(String(r.d0||'').slice(0,4))]));
  }
- return out+mvAnalysis(pick);
+ return out+mvAnalysis(pick,d.as_of);
 }
 function mvMarket(rows,d){
  const pick=state.mvk&&rows.some(r=>r.key===state.mvk&&['market','index','sector','style','volatility'].includes(r.kind))?state.mvk:'SPY';
+ const live=!d.past&&(d.as_of||true);                              // intraday-view.js leads the cards with today's move while the session is on
  const grp=(kind)=>rows.filter(r=>r.kind===kind);
  const mk=rows.filter(r=>MV_CORE.includes(r.key)).sort((a,b)=>MV_CORE.indexOf(a.key)-MV_CORE.indexOf(b.key));   // the rest: Indices & ETFs
  const sec=grp('sector').sort((a,b)=>(a.pct??50)-(b.pct??50));
  const sty=grp('style');
  const b=d.breadth||{};
- let out=`<h3 class="mvh-h">The market</h3><div class="mvh-grid">${mk.map(r=>mvCard(r,r.key===pick)).join('')}</div>`;
+ let out=`${live?`<p class="iv-banner" data-ivb data-asof="${esc(d.as_of||'')}" hidden></p>`:''}<h3 class="mvh-h">The market</h3><div class="mvh-grid">${mk.map(r=>mvCard(r,r.key===pick,live)).join('')}</div>`;
  if(b.stocks)out+=`<p class="mvh-note">${esc(mvDay(d.as_of))}: of ${fmt(b.stocks)} valued companies with a close that day, <b class="mv-down">${(100*b.down5).toFixed(0)}%</b> had a bottom-5% day of their own history${d.past?' (up to then)':''} and <b class="mv-up">${(100*b.up5).toFixed(0)}%</b> a top-5% day (about 5% each on an ordinary day).</p>`;
- if(sec.length)out+=`<h3 class="mvh-h">Sectors — weakest to strongest</h3><div class="mvh-grid">${sec.map(r=>mvCard(r,r.key===pick)).join('')}</div>`;
+ if(sec.length)out+=`<h3 class="mvh-h">Sectors — weakest to strongest</h3><div class="mvh-grid">${sec.map(r=>mvCard(r,r.key===pick,live)).join('')}</div>`;
  const vol=grp('volatility').sort((a,b)=>['IDX-VIX','VIX-TERM','IDX-VIX9D','IDX-VIX3M','IDX-VVIX','IDX-VXN','IDX-SKEW','IDX-OVX','IDX-GVZ'].indexOf(a.key)-['IDX-VIX','VIX-TERM','IDX-VIX9D','IDX-VIX3M','IDX-VVIX','IDX-VXN','IDX-SKEW','IDX-OVX','IDX-GVZ'].indexOf(b.key));
  if(vol.length)out+=`<h3 class="mvh-h">Volatility — what options expect</h3><div class="mvh-grid">${vol.map(r=>mvVolCard(r,r.key===pick)).join('')}</div>`;
- if(sty.length)out+=`<h3 class="mvh-h">Styles, rates, gold and oil</h3><div class="mvh-grid">${sty.map(r=>mvCard(r,r.key===pick)).join('')}</div>`;
- return out+mvAnalysis(pick);
+ if(sty.length)out+=`<h3 class="mvh-h">Styles, rates, gold and oil</h3><div class="mvh-grid">${sty.map(r=>mvCard(r,r.key===pick,live)).join('')}</div>`;
+ return out+mvAnalysis(pick,d.as_of);
 }
 function mvIndustries(rows,d){
  const ind=rows.filter(r=>r.kind==='industry').sort((a,b)=>Math.abs((b.pct??50)-50)-Math.abs((a.pct??50)-50));
@@ -220,8 +225,9 @@ function bindMoves(){
  if($('mvt')){$('mvt').onchange=e=>{state.mvt=e.target.value;render()};$('mvt').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-mvk]').forEach(b=>b.onclick=()=>{
   if(b.dataset.mvone){state.mvv='one';state.mvt=b.dataset.mvk}else state.mvk=b.dataset.mvk;
-  render();const el=$('mv-one');if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'});
+  render();const el=document.querySelector('[data-ivd]:not(:empty)')||$('mv-one');if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'});
  });
+ if(window.IntradayView)window.IntradayView.start($('workspace'));   // today's moves so far, filled in place every minute
  const one=$('mv-one');
  const id=one?one.dataset.k+'@'+(one.dataset.d||''):'';
  if(one&&window.MovesView&&one.dataset.drawn!==id){one.dataset.drawn=id;MovesView.render(one,{key:one.dataset.k,hub:(globalThis.FF_HUB_ROOT||''),state:one.dataset.d?{mode:'date',date:one.dataset.d,before:true}:undefined})}

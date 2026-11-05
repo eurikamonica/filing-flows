@@ -1,0 +1,86 @@
+# Move odds, intraday (the hub's Move odds → Market & sectors, live): every five minutes through the US session, each
+# asset's move so far today against its own history at the same time of day, and what followed — to the close and over
+# the next days (app/intraday.py). A relay: one run scans for about 50 minutes, then starts the next while the session
+# is open (GitHub's clock starts few of the schedules: the cron below only restarts the chain). The output — live.json
+# and the hourly history cache/h60/ — is force-pushed to the branch intraday-live as one commit each scan; the hub reads
+# it from raw.githubusercontent.com. Repository variable INTRADAY_RELAY=off stops it.
+name: Intraday move odds (relay)
+on:
+  schedule:
+    - cron: '7,27,47 13-21 * * 1-5'   # 8:07–16:47 New York in winter, 9:07–17:47 in summer (off the top of the hour, when GitHub's clock lags): a restart for the relay
+  workflow_dispatch:
+    inputs:
+      hop:
+        description: "Relay hop (stops after 12)"
+        required: false
+        default: '0'
+permissions:
+  contents: write      # push the branch intraday-live
+  actions: write       # start the next hop
+concurrency:
+  group: intraday-relay
+  cancel-in-progress: false
+jobs:
+  scan:
+    if: vars.INTRADAY_RELAY != 'off'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Is the session open?
+        id: open
+        run: |
+          python -m pip install --quiet numpy
+          if python disclosures/app/intraday.py --session; then echo "open=1" >> "$GITHUB_OUTPUT"; else echo "open=0" >> "$GITHUB_OUTPUT"; echo "the US session is closed: nothing to scan"; fi
+      - name: The branch intraday-live (its history cache)
+        if: steps.open.outputs.open == '1'
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" intraday-live >/dev/null; then
+            git clone --quiet --depth 1 --branch intraday-live "$url" live
+          else
+            mkdir live && git -C live init --quiet -b intraday-live && git -C live remote add origin "$url"
+          fi
+      - name: Scan every five minutes for about 50 minutes
+        if: steps.open.outputs.open == '1'
+        timeout-minutes: 56
+        run: |
+          publish() {
+            cd live
+            printf '%s\n' '# intraday-live (data only)' '' 'live.json and the hourly history (cache/h60/) of the hub'\''s intraday move odds,' \
+              'force-pushed as one commit every scan by .github/workflows/intraday.yml (app/intraday.py).' > README.md
+            git add -A
+            git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "intraday $(date -u +%H:%MZ)" || true
+            git checkout -q --orphan fresh
+            git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "intraday $(date -u +%Y-%m-%dT%H:%MZ)"
+            git branch -q -M fresh intraday-live
+            for i in 1 2 3; do git push -q --force origin intraday-live && break; sleep $((i * 5)); done
+            cd ..
+          }
+          end=$((SECONDS + 50 * 60))
+          while [ "$SECONDS" -lt "$end" ]; do
+            t0=$SECONDS
+            python disclosures/app/intraday.py --out live || echo "::warning::scan failed (the next one tries again)"
+            [ -f live/live.json ] && publish
+            python disclosures/app/intraday.py --session || { echo "the session has closed: the last scan is published"; break; }
+            wait=$((300 - (SECONDS - t0))); [ "$wait" -gt 0 ] && sleep "$wait"
+          done
+      - name: The next hop (a relay)
+        if: steps.open.outputs.open == '1' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOP: ${{ github.event.inputs.hop || '0' }}
+        run: |
+          if [ "$HOP" -ge 12 ]; then echo "relay cap (12 hops) reached; the schedule restarts it"; exit 0; fi
+          if ! python disclosures/app/intraday.py --session; then echo "the session is over: no next hop"; exit 0; fi
+          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow intraday.yml --limit 20 --json status --jq '[.[] | select(.status == "queued" or .status == "pending" or .status == "waiting")] | length')
+          if [ "${n:-0}" -gt 0 ]; then echo "a run is already waiting: it carries on"; exit 0; fi
+          gh workflow run intraday.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f hop=$((HOP + 1)) && echo "hop $((HOP + 1)) started"
