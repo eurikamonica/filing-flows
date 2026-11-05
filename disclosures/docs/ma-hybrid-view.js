@@ -21,7 +21,7 @@
   const store = {};
   const get = (u) => store[u] || (store[u] = fetch(u, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .catch((e) => { delete store[u]; throw e; }));
-  const COL = { p: 'var(--ink, #222)', m10: 'var(--rot-1, #2a78d6)', m40: 'var(--slate, #5b7fa6)', el: 'var(--q-warm, #d9822b)', h: 'var(--accent, #17734a)',
+  const COL = { ink: 'var(--ink, #222)', p: 'var(--ink, #222)', m10: 'var(--rot-1, #2a78d6)', m40: 'var(--slate, #5b7fa6)', el: 'var(--q-warm, #d9822b)', h: 'var(--accent, #17734a)',
     up: 'var(--mk-profit, #17734a)', down: 'var(--mk-cost, #c0392b)', mute: 'var(--muted, #888)', line: 'var(--line, #e3e3e3)' };
   const WS = [0, 0.25, 0.5, 0.75, 1], GS = [0, 0.05, 0.1];
   const MODEL_ORDER = ['ma', 'ma_fund', 'hybrid'];
@@ -63,9 +63,10 @@
     const d = new Date(s.start + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 7 * k); return d.toISOString().slice(0, 10);
   }
   function chart(s, w, g, width) {
-    const Wd = Math.max(340, Math.min(860, width || 760)), Ht = Wd < 500 ? 300 : 340, L = 52, R = 10, T = 12, B = 26;
+    const V = ((s.now || {}).val) || {}, dcf = fin(V.dcf_value) && V.dcf_value > 0 ? V.dcf_value : null;
+    const Wd = Math.max(340, Math.min(860, width || 760)), Ht = Wd < 500 ? 300 : 340, L = 52, R = dcf ? 46 : 10, T = 12, B = 26;
     const H = hybrid(s, w, g), n = s.p.length;
-    const series = [['p', s.p], ['m10', s.ma10], ['m40', s.ma40], ['el', s.el], ['h', H]];
+    const series = [['p', s.p], ['m10', s.ma10], ['m40', s.ma40], ['el', s.el], ['h', H], ['dcf', dcf ? [dcf] : []]];
     const vals = series.flatMap(([, a]) => a.filter((v) => fin(v) && v > 0));
     if (!vals.length || n < 2) return '<p class="muted">Not enough weekly history to draw.</p>';
     let lo = Math.min(...vals), hi = Math.max(...vals);
@@ -97,6 +98,11 @@
       out += shape ? `<path d="${shape}" style="fill:${col}"><title>${esc(d)}: guidance ${esc(GLAB[lab] || lab)}</title></path>`
         : `<circle cx="${f(x)}" cy="${f(y - 9)}" r="3.5" style="fill:${col}"><title>${esc(d)}: guidance ${esc(GLAB[lab] || lab)}</title></circle>`;
     });
+    if (dcf) {                                                                       // the Fair value page's DCF, this week only
+      const x = Wd - R + 14, lo_ = fin(V.mc_p10) && V.mc_p10 > 0 ? V.mc_p10 : null, hi_ = fin(V.mc_p90) && V.mc_p90 > 0 ? V.mc_p90 : null;
+      if (lo_ && hi_) out += `<line x1="${f(x)}" x2="${f(x)}" y1="${f(sy(hi_))}" y2="${f(sy(lo_))}" style="stroke:${COL.mute};stroke-width:6;opacity:.35"><title>DCF Monte Carlo, 10%–90%: ${esc(usd(lo_))}–${esc(usd(hi_))}</title></line>`;
+      out += `<path d="M${f(x - 7)},${f(sy(dcf))}h14" style="stroke:${COL.ink || '#222'};stroke-width:2.5"><title>DCF value this week: ${esc(usd(dcf))}</title></path><text class="mh-t" x="${f(x)}" y="${f(Math.min(Ht - B - 2, sy(dcf) + 14))}" text-anchor="middle">DCF</text>`;
+    }
     return out + '</svg>';
   }
   const legend = (w, g) => `<div class="mh-legend"><span><b style="background:${COL.p}"></b>weekly close</span><span><b style="background:${COL.m10}"></b>10-week average (≈ 50-day)</span>
@@ -135,9 +141,17 @@
       ['Guidance', gl ? esc(GLAB[gl[1]] || gl[1]) : '—', gl ? `latest release ${esc(gl[0])}` : 'none in the hub\'s record'],
     ];
     if (row && fin(row.pct_hybrid)) cards.push(['Models\' rank, 26 weeks', pct(row.pct_hybrid), `moving averages + fundamentals + guidance · alone: ${pct(row.pct_ma)}`]);
+    const V = (row && row.val) || null, MD = (row && row.mdna) || null;            // recorded each week, not in the line
+    if (V) {
+      const dcf = fin(V.dcf_value) && V.dcf_value > 0 ? V.dcf_value : null;
+      cards.push(['vs DCF value (Fair value page)', dcf ? gap(lg(P, dcf)) : '—', dcf ? `${usd(dcf)}${fin(V.mc_p10) ? ` · Monte Carlo 10–90%: ${usd(V.mc_p10)}–${usd(V.mc_p90)}` : ''}` : `no DCF for this kind of company${V.kind ? ' (' + esc(V.kind) + ')' : ''}`]);
+      if (fin(V.mc_p_above) || fin(V.p_implied)) cards.push(['Odds', fin(V.mc_p_above) ? pct(V.mc_p_above) : pct(V.p_implied), fin(V.mc_p_above) ? `the DCF's chance that value exceeds the price${fin(V.p_implied) ? ` · the growth the price implies has been reached ${pct(V.p_implied)} of the time` : ''}` : 'how often companies reached the growth the price implies']);
+    }
+    if (MD) cards.push(['MD&A tone', `${MD.tone > 0 ? '+' : MD.tone < 0 ? '−' : ''}${num(Math.abs(MD.tone), 2)}`, `${num(MD.n)} forward-looking statements, ${num(MD.positive)} positive, ${num(MD.negative)} negative · ${esc(MD.form || '')} ${esc(MD.filed)}`]);
     let out = `<div class="mh-cards">${cards.map(([a, b, c]) => `<div class="mh-card"><span>${a}</span><b>${b}</b><i>${c}</i></div>`).join('')}</div>`;
     out += controls(id, w, g) + `<div class="mh-chart" data-mh-chart>${chart(s, w, g, width)}</div>` + legend(w, g);
     out += `<h4>What these weights have been worth</h4>` + weightScores(d, w, g);
+    if (V || MD) out += `<p class="mh-note">The DCF value, its odds and the MD&A tone are this week's numbers from the Fair value page and the company's latest 10-Q / 10-K; their history is too short to test them as part of the line (the Fair value page's own walk-forward starts in 2022, the MD&A record in 2024), so they are shown and frozen every week, and scored as the record grows.</p>`;
     return out;
   }
   function lead(d) {
@@ -202,6 +216,22 @@
     const cf = (((S.coefs || {})['26'] || {}).hybrid || {}), yrs = Object.keys(cf).sort(), last = yrs[yrs.length - 1];
     if (last) out.push(`<h4>The 26-week model's weights now (fitted on the years to ${esc(last - 1)})</h4>` + tbl(['Input', 'Return against the average company, 26 weeks'], Object.entries(cf[last]).map(([k, v]) => [esc((d.features || {})[k] || k), sgn(v, spct(v, 2))]), [0, 1]) +
       '<p class="mh-note">Per standard deviation of each input across the companies that week (log returns, before costs); guidance per raise (a cut counts −1), so its weight comes only from the years the guidance record covers (from 2023, thin before 2024).</p>');
+    const me = S.mdna_events, vm = d._valuationModels;
+    if ((me && me['13'] && Object.keys(me['13']).length) || vm) {
+      let part = `<h4>Valuation, odds and MD&A — recorded each week, not yet in the line</h4>`;
+      if (vm) {
+        const fi = (h) => ((((vm.combined || {}).horizons || {})[h] || {}).feature_ic) || {};
+        const names = { dcf_gap: 'DCF value vs price', pe_gap: 'Peer-median P/E × EPS vs price', p_implied: 'Chance of the growth the price implies', target_gap: 'Analysts\' target vs price' };
+        const ks = Object.keys(names).filter((k) => fi('3m')[k] || fi('12m')[k]);
+        if (ks.length) part += tbl(['The Fair value page\'s own walk-forward', 'Rank corr., 3 months', '12 months', 'Quarters'], ks.map((k) => [esc(names[k]), fin((fi('3m')[k] || {}).ic_mean) ? num(fi('3m')[k].ic_mean, 3) : '—', fin((fi('12m')[k] || {}).ic_mean) ? num(fi('12m')[k].ic_mean, 3) : '—', num((fi('3m')[k] || {}).origins)]), [0, 1, 1, 1]);
+      }
+      if (me && me['13']) {
+        const labs = Object.keys(me['13']);
+        part += tbl([`After an MD&A, by its tone (${esc((me.years || []).join('–'))}, ${num(me.filings)} filings)`, 'Filings with 13 weeks since', '4 weeks vs the average company', '13 weeks'],
+          labs.map((l) => [esc(l), num(me['13'][l].n), st((me['4'] || {})[l]), st(me['13'][l])]), [0, 1, 1, 1]);
+      }
+      out.push(part + '<p class="mh-note">Tone: positive − negative over the forward-looking statements read from the MD&A (pipeline/outlook.py, no language model). Too few seasons to lean on; the frozen record scores the DCF gap, the odds and the tone week by week from here.</p>');
+    }
     const Lg = d.ledger;
     out.push('<h4>Frozen record</h4>' + (Lg ? tbl(['Horizon', 'Weeks scored', 'Waiting', 'Rank corr.', 'Best − worst fifth', 'Above − below the 40-week'],
       Object.entries(Lg).map(([k, s]) => [esc(k.replace('ma:', '') + ' weeks'), num(s.resolved_weeks), num(s.pending_weeks), fin(s.ic) ? num(s.ic, 3) : '—', fin(s.best_minus_worst) ? spct(s.best_minus_worst, 2) : '—', fin(s.above_minus_below40) ? spct(s.above_minus_below40, 2) : '—']), [0, 1, 1, 1, 1, 1])
@@ -221,7 +251,8 @@
     const hub = (ctx && ctx.hub != null ? ctx.hub : ''), base = hub + 'data/market/history/';
     el.innerHTML = '<p class="muted">Loading Moving averages+…</p>';
     let d, rows;
-    try { [d, rows] = await Promise.all([get(base + 'ma-hybrid.json'), get(base + 'ma-hybrid-rows.json').catch(() => null)]); } catch (e) {
+    try { [d, rows] = await Promise.all([get(base + 'ma-hybrid.json'), get(base + 'ma-hybrid-rows.json').catch(() => null)]);
+      d._valuationModels = await get(hub + 'data/research/valuation/models.json').catch(() => null); } catch (e) {
       el.innerHTML = `<p class="muted">Moving averages+ has not been published yet (${esc(e.message)}).</p>`; return;
     }
     const st_ = { t: (ctx && ctx.ticker) || '' };

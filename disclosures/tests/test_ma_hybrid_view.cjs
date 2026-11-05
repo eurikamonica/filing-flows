@@ -54,6 +54,16 @@ ok(/What followed each kind of guidance release \(2023–2026\)/.test(H) && /\+2
 ok(/Frozen record/.test(H) && !bad(H), 'the ledger, no undefined / NaN');
 const L = V._list([{ id: 'AAA', name: 'A', close: 10, ma40: 8, el: 9, gap40: 0.22, gap_hybrid: 0.3, pct_hybrid: 0.9 }, { id: 'BBB', name: 'B', close: 10, ma40: 12, gap40: -0.18, gap_hybrid: -0.2, guid_last: ['2026-10-01', 'lowered'], pct_hybrid: 0.1 }], 0.5, 0.05);
 ok(L.indexOf('AAA') < L.indexOf('Furthest below') && L.lastIndexOf('BBB') > L.indexOf('Furthest below') && /lowered/.test(L), 'the lists, furthest above first');
+// the valuation, odds and MD&A numbers: shown, marked on the chart, the record's tests in the hub
+const sv = Object.assign({}, s, { now: Object.assign({}, s.now, { val: { dcf_value: 150, mc_p10: 110, mc_p90: 190, mc_p_above: 0.58, p_implied: 0.31, kind: 'operating' },
+  mdna: { filed: '2026-08-05', form: '10-Q', tone: 0.333, n: 9, positive: 4, negative: 1, hedged: 2 } }) });
+const cv = V._company(sv, d, sv.now, 0.5, 0.05, 760, 'mh-v');
+ok(/vs DCF value/.test(cv) && /\$150\.00/.test(cv) && /58%/.test(cv) && /MD&amp;A tone|MD&A tone/.test(cv) && /\+0\.33/.test(cv) && /too short to test them/.test(cv) && !bad(cv), 'the DCF, its odds and the MD&A tone on the cards');
+ok(/DCF value this week: \$150\.00/.test(V._chart(sv, 0.5, 0.05, 760)), 'the DCF value marked on the chart');
+const dv = Object.assign({}, d, { _valuationModels: { combined: { horizons: { '3m': { feature_ic: { dcf_gap: { ic_mean: 0.0023, origins: 15 }, pe_gap: { ic_mean: 0.0256, origins: 15 } } }, '12m': { feature_ic: { dcf_gap: { ic_mean: -0.0249, origins: 9 } } } } } },
+  scores: Object.assign({}, d.scores, { mdna_events: { 4: { 'positive (above 0.2)': { n: 144, mean: 0.0118, t: 1.74 } }, 13: { 'positive (above 0.2)': { n: 98, mean: 0.0259, t: 1.75 } }, years: ['2024', '2026'], filings: 1006 } }) });
+const Hv = V._hub(dv);
+ok(/recorded each week, not yet in the line/.test(Hv) && /0\.002/.test(Hv) && /−0\.025|-0\.025/.test(Hv) && /\+2\.59%/.test(Hv) && /1,006 filings/.test(Hv), 'the record\'s own tests of valuation and MD&A in the hub');
 const ld = V._lead(d);
 ok(/\+3\.5% over 26 weeks/.test(ld) && /\+2\.3% \(t 3\.6, 856 releases\)/.test(ld), 'the lead says what the tests found');
 console.log(`ma-hybrid view: ${n} checks passed`);

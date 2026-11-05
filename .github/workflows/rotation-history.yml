@@ -138,7 +138,8 @@ jobs:
       - name: Moving averages+ (the 10- and 40-week averages with earnings and guidance mixed in; public/ma-hybrid*.json, public/ma/)
         # Every weight of the earnings line and of the guidance tested walk-forward from 2016 against the averages alone;
         # each closed week's inputs and scores frozen in hist/ledger/ma-hybrid.json (app/ma_hybrid.py, about a minute).
-        # The first-filed quarters (branch data, eps-fundamental/) are fetched only when a closed week is still to be built.
+        # The first-filed quarters and MD&A statements (branch data: eps-fundamental/, outlook/) and this week's Fair value
+        # index (research-valuation) are fetched only when a closed week is still to be built.
         timeout-minutes: 12
         continue-on-error: true
         run: |
@@ -146,9 +147,15 @@ jobs:
           if python disclosures/app/ma_hybrid.py --public hist/public --needed; then
             url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
             git clone --quiet --depth 1 --filter=blob:none --sparse --branch data "$url" _fund
-            git -C _fund sparse-checkout set eps-fundamental
+            git -C _fund sparse-checkout set eps-fundamental outlook
+            # this week's Fair value numbers (DCF value, its odds), recorded beside the line, not yet in it
+            if git ls-remote --exit-code --heads "$url" research-valuation >/dev/null; then
+              git clone --quiet --depth 1 --filter=blob:none --sparse --branch research-valuation "$url" _val
+              git -C _val sparse-checkout set --no-cone /public/index.json
+            fi
             python disclosures/app/ma_hybrid.py --public hist/public --fundamentals _fund/eps-fundamental \
-              --guidance disclosures/docs/data/cache/guidance --ledger hist/ledger/ma-hybrid.json
+              --guidance disclosures/docs/data/cache/guidance --valuation _val/public/index.json --outlook _fund/outlook \
+              --ledger hist/ledger/ma-hybrid.json
           else
             echo "Moving averages+: this closed week is already published"
           fi

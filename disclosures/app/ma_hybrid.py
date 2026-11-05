@@ -31,8 +31,14 @@ counts weeks ÷ h as independent), the best − worst fifth and the above − be
 borrow fee), each period's own rows. The classic rules — above the 40-week average, the 10-week above the 40-week — are
 scored the same way.
 
-Also, descriptive: what followed each kind of guidance release (raised, kept, lowered …) over 4 and 13 weeks, against the
-average company that week.
+Also, descriptive: what followed each kind of guidance release (raised, kept, lowered …) and each MD&A by its tone of
+voice over 4 and 13 weeks, against the average company that week.
+
+Recorded, not yet in the line (their history is too short to test it): the Fair value page's DCF value and its Monte
+Carlo range, the chance it puts the value above the price, the base-rate chance of the growth the price implies
+(research-valuation index.json, this week only — its own walk-forward since 2022 is on the Fair value page), and the
+latest MD&A's tone. Each company's card shows them; the ledger freezes them every week, so their worth can be scored as
+the record grows.
 
 Each closed week the inputs and the models' scores for the 800 most-traded companies are frozen (ledger/ma-hybrid.json)
 and scored when 13 and 26 weeks have passed. Today's companies only (delisted names are missing). History and models, not
@@ -78,6 +84,10 @@ SERIES_WEEKS = 260            # weeks of each company's lines in its own file
 LEDGER_MAX_LINES = 800
 LAB = {'raised': 1, 'lowered': -1, 'withdrawn': -1, 'reaffirmed': 0, 'updated': 0, 'initiated': 0, 'narrowed': 0, 'mixed': 0,
        'widened': 0}
+VAL_FIELDS = ('dcf_value', 'mc_p10', 'mc_p90', 'mc_p_above', 'p_implied', 'implied_growth', 'peer_pe_mid', 'target_mean', 'comb_ret',
+              'graham_value', 'kind')      # the Fair value page's numbers (research-valuation index.json), this week only
+MDNA_MIN = 3                  # an MD&A counts when at least 3 forward-looking statements were read from it
+TONE_BINS = ((-1.01, 0.0, 'negative (below 0)'), (0.0, 0.2, 'neutral (0 to 0.2)'), (0.2, 1.01, 'positive (above 0.2)'))
 MODELS = {'ma': ['tr40', 'tr10_40', 'rev4'],
           'ma_fund': ['tr40', 'tr10_40', 'rev4', 'sue', 'srg', 'val', 'ey'],
           'hybrid': ['tr40', 'tr10_40', 'rev4', 'sue', 'srg', 'val', 'ey', 'guid']}
@@ -240,6 +250,68 @@ def load(public, fundamentals, guidance=None):
             rows[k].append(a.astype(np.float32))
     A = {k: (np.array(v, dtype=np.float64) if v else np.zeros((0, W))) for k, v in rows.items()}
     return {'days': days, 'spy': spy, 'ids': ids, 'meta': meta, 'events': events, **A}
+
+
+def load_extras(A, valuation=None, outlook=None):
+    """This week's Fair value numbers per company (no history: the valuation page keeps monthly snapshots only since
+    October 2026, its own walk-forward since 2022), and every MD&A's tone of voice as of its filing (pipeline/outlook.py:
+    the forward-looking statements read from Item 2 / Item 7, positive − negative over all, on file mostly from 2026)."""
+    val, mdna_now, events = {}, {}, []
+    if valuation and Path(valuation).exists():
+        try:
+            d = json.loads(Path(valuation).read_text(encoding='utf-8'))
+            F = d.get('fields') or []
+            ix = {f: k for k, f in enumerate(F)}
+            if 'ticker' in ix:
+                for r in d.get('rows') or []:
+                    val[r[ix['ticker']]] = {k: r[ix[k]] for k in VAL_FIELDS if k in ix}
+        except (OSError, ValueError, TypeError, IndexError):
+            val = {}
+    if outlook and Path(outlook).exists():
+        dnum = A['days'].astype('datetime64[D]').astype(np.int64)
+        by_cik = {A['meta'][t]['cik']: (i, t) for i, t in enumerate(A['ids']) if A['meta'][t].get('cik')}
+        for f in Path(outlook).glob('*.json'):
+            try:
+                x = json.loads(f.read_text(encoding='utf-8'))
+                cik = int(x.get('cik') or f.stem)
+            except (OSError, ValueError, TypeError):
+                continue
+            if cik not in by_cik:
+                continue
+            i, t = by_cik[cik]
+            docs = sorted([d for d in x.get('docs') or [] if d.get('kind') == 'mdna' and d.get('filed') and fin((d.get('counts') or {}).get('tone'))
+                           and (d.get('counts') or {}).get('n', 0) >= MDNA_MIN], key=lambda d: d['filed'])
+            for d in docs:
+                events.append((i, int(np.searchsorted(dnum, day(d['filed']), side='right')), float(d['counts']['tone'])))
+            if docs:
+                c = docs[-1]['counts']
+                mdna_now[t] = {'filed': docs[-1]['filed'][:10], 'form': docs[-1].get('form'), 'tone': r_(c.get('tone'), 3), 'n': c.get('n'),
+                               'positive': c.get('positive'), 'negative': c.get('negative'), 'hedged': c.get('hedged')}
+    return val, mdna_now, events
+
+
+def mdna_events(days, A, ok, events):
+    """What followed an MD&A by its tone (descriptive, the few seasons on file): the simple return against SPY over 4
+    and 13 weeks from the first weekly close after the filing, less the average company's that week."""
+    rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
+    out = {}
+    for h in (4, 13):
+        Ys = np.expm1(HY.fwd_sum(rel, h))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            avg = np.nanmean(np.where(ok, Ys, np.nan), 0)
+        out[str(h)] = {}
+        for lo, hi, lab in TONE_BINS:
+            v = [Ys[i, k0] - avg[k0] for i, k0, tone in events
+                 if lo <= tone < hi and 0 <= k0 < Ys.shape[1] and ok[i, k0] and fin(Ys[i, k0]) and fin(avg[k0])]
+            if len(v) >= 10:
+                a = np.array(v)
+                out[str(h)][lab] = {'n': int(len(a)), 'mean': r_(a.mean()), 't': r_(a.mean() / (a.std(ddof=1) / math.sqrt(len(a))), 2),
+                                    'beat': r_((a > 0).mean(), 3)}
+    ks = sorted({min(k0, len(days) - 1) for _, k0, _ in events})
+    out['years'] = [str(days[ks[0]])[:4], str(days[ks[-1]])[:4]] if ks else None
+    out['filings'] = len(events)
+    return out
 
 
 def guidance_events(days, A, ok):
@@ -479,7 +551,15 @@ def pct_rank(v, ok):
     return out
 
 
-def current_rows(days, A, lns, raw, ok, F_now, t):
+def snapshot(val, mdna, tk, P):
+    """A company's Fair value numbers and latest MD&A tone, with the price's distance to the DCF value (log)."""
+    v = dict(val.get(tk) or {})
+    if fin(v.get('dcf_value')) and v['dcf_value'] > 0 and fin(P) and P > 0:
+        v['dcf_gap_now'] = r_(math.log(P / v['dcf_value']), 4)
+    return (v or None), (mdna.get(tk) if mdna else None)
+
+
+def current_rows(days, A, lns, raw, ok, F_now, t, val=None, mdna=None):
     rows = []
     s_ma, s_hy = F_now[(26, 'ma')][:, t], F_now[(26, 'hybrid')][:, t]
     p_ma, p_hy = pct_rank(s_ma, ok[:, t]), pct_rank(s_hy, ok[:, t])
@@ -498,6 +578,7 @@ def current_rows(days, A, lns, raw, ok, F_now, t):
                      'gap40': r_(raw['tr40'][i, t], 4), 'gap_hybrid': r_(math.log(P) - lHd[i], 4) if fin(lHd[i]) and fin(P) else None,
                      's_ma': r_(s_ma[i], 5), 's_hybrid': r_(s_hy[i], 5), 'pct_ma': r_(p_ma[i], 3), 'pct_hybrid': r_(p_hy[i], 3),
                      'sue': r_(raw['sue'][i, t], 2), 'srg': r_(raw['srg'][i, t], 4)})
+        rows[-1]['val'], rows[-1]['mdna'] = snapshot(val or {}, mdna or {}, tk, P)
     return rows
 
 
@@ -506,14 +587,14 @@ def series_file(days, A, lns, i, t, row=None):
     week's numbers from its row (P/E, its own median, the models' percentiles)."""
     lo = max(0, t - SERIES_WEEKS + 1)
     pick = lambda a: [sig(v) for v in a[i, lo:t + 1]]
-    now = {k: row.get(k) for k in ('pe', 'pe_med', 'pct_ma', 'pct_hybrid', 's_ma', 's_hybrid', 'sue', 'srg')} if row else None
+    now = {k: row.get(k) for k in ('pe', 'pe_med', 'pct_ma', 'pct_hybrid', 's_ma', 's_hybrid', 'sue', 'srg', 'val', 'mdna')} if row else None
     return {'id': A['ids'][i], 'name': A['meta'][A['ids'][i]]['name'], 'start': str(days[lo]), 'p': pick(A['P']), 'ma10': pick(lns['ma10']),
             'ma40': pick(lns['ma40']), 'el': pick(lns['el']), 'g': [None if not fin(v) else int(v) for v in A['G'][i, lo:t + 1]],
             'guidance': A['meta'][A['ids'][i]]['guidance'], 'now': now}
 
 
 # ------------------------------------------------------------------ ledger
-def ledger_update(book, days, t, A, lns, raw, ok, F_now):
+def ledger_update(book, days, t, A, lns, raw, ok, F_now, val=None, mdna=None):
     asof = str(days[t])
     rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
     m = ok[:, t] & np.isfinite(F_now[(26, 'hybrid')][:, t])
@@ -531,7 +612,12 @@ def ledger_update(book, days, t, A, lns, raw, ok, F_now):
                                                    's_hybrid': [r_(v, 5) for v in F_now[(h, 'hybrid')][idx, t]],
                                                    'gap40': [r_(v, 4) for v in raw['tr40'][idx, t]],
                                                    'gap_el': [r_(v, 4) for v in gap_el[idx]],
-                                                   'guid': [int(v) for v in raw['guid'][idx, t]]},
+                                                   'guid': [int(v) for v in raw['guid'][idx, t]],
+                                                   'dcf_gap': [snapshot(val or {}, {}, A['ids'][i], A['P'][i, t])[0].get('dcf_gap_now')
+                                                               if (val or {}).get(A['ids'][i]) else None for i in idx],
+                                                   'p_above': [((val or {}).get(A['ids'][i]) or {}).get('mc_p_above') for i in idx],
+                                                   'p_implied': [((val or {}).get(A['ids'][i]) or {}).get('p_implied') for i in idx],
+                                                   'mdna_tone': [((mdna or {}).get(A['ids'][i]) or {}).get('tone') for i in idx]},
                       meta={'model': f'ma_hybrid v{VERSION}'})
         ix = {k: i for i, k in enumerate(A['ids'])}
         for key, e in FB.entries(book, f'ma:{h}', resolved=False):
@@ -550,9 +636,15 @@ def ledger_scores(book):
     out = {}
     for fam in sorted(book.get('families') or {}):
         ents = FB.entries(book, fam, resolved=True)
-        ics, ls, ab = [], [], []
+        ics, ls, ab, extra = [], [], [], {k: [] for k in ('dcf_gap', 'p_above', 'mdna_tone')}
         for _, e in ents:
             f, y = e['forecast'], (e['actual'] or {}).get('rel') or []
+            for k in extra:                                       # the recorded valuation, odds and MD&A tone, ranked
+                w = [(a, c) for a, c in zip(f.get(k) or [], y) if fin(a) and fin(c)]
+                if len(w) >= 20 and np.ptp([a for a, _ in w]) > 0:
+                    a_, c_ = np.array([q[0] for q in w]), np.array([q[1] for q in w])
+                    sign = -1 if k == 'dcf_gap' else 1                 # dcf_gap is log(price ÷ value): cheap is negative
+                    extra[k].append(float(np.corrcoef(np.argsort(np.argsort(sign * a_)), np.argsort(np.argsort(c_)))[0, 1]))
             v = [(a, g, c) for a, g, c in zip(f.get('s_hybrid') or [], f.get('gap40') or [], y) if fin(a) and fin(c)]
             if len(v) < 8:
                 continue
@@ -565,7 +657,8 @@ def ledger_scores(book):
                 ab.append(float(np.expm1(c[g > 0]).mean() - np.expm1(c[g < 0]).mean()))
         out[fam] = {'resolved_weeks': len(ics), 'pending_weeks': len(FB.entries(book, fam, resolved=False)),
                     'ic': r_(np.mean(ics)) if ics else None, 'best_minus_worst': r_(np.mean(ls)) if ls else None,
-                    'above_minus_below40': r_(np.mean(ab)) if ab else None}
+                    'above_minus_below40': r_(np.mean(ab)) if ab else None,
+                    'ic_recorded': {k: ({'ic': r_(np.mean(v)), 'weeks': len(v)} if v else None) for k, v in extra.items()}}
     return out
 
 
@@ -601,7 +694,7 @@ def clean(x):
     return x
 
 
-def build(public, fundamentals, guidance=None, ledger=None, today=None, verbose=True, force=False):
+def build(public, fundamentals, guidance=None, ledger=None, today=None, verbose=True, force=False, valuation=None, outlook=None):
     t0 = dt.datetime.now()
     log = (lambda *a: print(*a, flush=True)) if verbose else (lambda *a: None)
     days0, t_ = closed_week(public, today)
@@ -619,7 +712,9 @@ def build(public, fundamentals, guidance=None, ledger=None, today=None, verbose=
         cost = costs(A['C'], A['V'])
         ev, F_now = evaluate(days, A, lns, raw, Z, ok, cost, log)
         ev['guidance_events'] = guidance_events(days, A, ok)
-        rows = current_rows(days, A, lns, raw, ok, F_now, t)
+        val, mdna, mev = load_extras(A, valuation, outlook)
+        ev['mdna_events'] = mdna_events(days, A, ok, mev) if mev else None
+        rows = current_rows(days, A, lns, raw, ok, F_now, t, val, mdna)
     pub = Path(public)
     (pub / 'ma').mkdir(parents=True, exist_ok=True)
     keep, by_id = set(), {r['id']: r for r in rows}
@@ -636,10 +731,11 @@ def build(public, fundamentals, guidance=None, ledger=None, today=None, verbose=
            'models': {k: {'name': MODEL_NAMES[k], 'inputs': [FEATURE_NAMES[c] for c in v]} for k, v in MODELS.items()},
            'features': FEATURE_NAMES, 'costs_bp': [[lim, bp] for lim, bp in HY.COST_TIERS], 'scores': ev, 'companies': len(A['ids']),
            'now': len(rows), 'with_earnings_line': sum(1 for r in rows if r['el']), 'with_guidance': sum(1 for r in rows if r['guid'] is not None),
+           'with_valuation': sum(1 for r in rows if r.get('val') and fin(r['val'].get('dcf_value'))), 'with_mdna': sum(1 for r in rows if r.get('mdna')),
            'rows_file': 'ma-hybrid-rows.json', 'note': __doc__.split('\n\n')[0]}
     if ledger:
         book = FB.load(ledger)
-        ledger_update(book, days, t, A, lns, raw, ok, F_now)
+        ledger_update(book, days, t, A, lns, raw, ok, F_now, val, mdna)
         FB.save(ledger, book)
         doc['ledger'] = ledger_scores(book)
     doc['seconds'] = round((dt.datetime.now() - t0).total_seconds(), 1)
@@ -654,6 +750,8 @@ def main():
     ap.add_argument('--public', required=True)
     ap.add_argument('--fundamentals', help='eps-fundamental/ (data branch): first-filed quarters per company')
     ap.add_argument('--guidance', help='cache/guidance/ (the hub): guidance releases per company')
+    ap.add_argument('--valuation', help="research-valuation's public/index.json: this week's Fair value numbers")
+    ap.add_argument('--outlook', help='outlook/ (data branch): the MD&A statements read per company')
     ap.add_argument('--ledger')
     ap.add_argument('--force', action='store_true')
     ap.add_argument('--needed', action='store_true', help='exit 0 when this closed week still has to be built, 1 when it is done')
@@ -663,7 +761,7 @@ def main():
         sys.exit(1 if fresh(a.public, str(days[t])) else 0)
     if not a.fundamentals:
         ap.error('--fundamentals is required to build')
-    build(a.public, a.fundamentals, a.guidance, a.ledger, force=a.force)
+    build(a.public, a.fundamentals, a.guidance, a.ledger, force=a.force, valuation=a.valuation, outlook=a.outlook)
 
 
 if __name__ == '__main__':

@@ -182,7 +182,51 @@ class TestInputs(World):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+def write_extras(root, n=90):
+    """A Fair value index (research-valuation public/index.json) for the even companies, and MD&A tone records
+    (data branch outlook/<cik>.json) for every third company, filed through 2024–2026."""
+    root = Path(root)
+    F = ['cik', 'ticker', 'kind', 'price', 'dcf_value', 'mc_p10', 'mc_p90', 'mc_p_above', 'p_implied']
+    rows = [[1000 + i, f'C{i:03d}', 'operating', 50.0, 60.0 + i, 40.0, 90.0, 0.6, 0.35] for i in range(0, n, 2)]
+    (root / 'valindex.json').write_text(json.dumps({'fields': F, 'rows': rows}))
+    (root / 'outlook').mkdir()
+    for i in range(0, n, 3):
+        docs = [{'kind': 'mdna', 'form': '10-Q', 'filed': (dt.date(2024, 5, 1) + dt.timedelta(days=91 * j)).isoformat(),
+                 'counts': {'n': 6, 'positive': 3, 'negative': j % 3, 'hedged': 1, 'tone': round((3 - j % 3) / 6 - 0.2 * (i % 2), 3)}} for j in range(9)]
+        docs.append({'kind': 'release', 'form': '8-K', 'filed': '2026-10-01', 'counts': {'n': 4, 'tone': 1.0}})   # not an MD&A
+        (root / 'outlook' / f'{1000 + i}.json').write_text(json.dumps({'cik': 1000 + i, 'docs': docs}))
+    return root / 'valindex.json', root / 'outlook'
+
+
 class TestBuild(World):
+    def test_valuation_odds_and_mdna_are_shown_and_frozen(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            vi, ol = write_extras(tmp)
+            led = Path(tmp) / 'l.json'
+            pub = Path(tmp) / 'pub'
+            shutil.copytree(self.pub, pub)
+            doc = MA.build(pub, self.fund, self.gd, led, today=self.today, verbose=False, force=True, valuation=vi, outlook=ol)
+            rows = {r['id']: r for r in json.loads((pub / 'ma-hybrid-rows.json').read_text())['rows']}
+            r0 = rows.get('C000') or next(v for k, v in rows.items() if int(k[1:]) % 2 == 0)
+            self.assertAlmostEqual(r0['val']['dcf_value'], 60.0 + int(r0['id'][1:]))
+            self.assertAlmostEqual(r0['val']['dcf_gap_now'], math.log(r0['close'] / r0['val']['dcf_value']), places=3)
+            odd = next(v for k, v in rows.items() if int(k[1:]) % 2 == 1)
+            self.assertIsNone(odd['val'])                                    # not in the index: nothing made up
+            m = next(v for k, v in rows.items() if int(k[1:]) % 3 == 0)
+            self.assertEqual(m['mdna']['filed'], (dt.date(2024, 5, 1) + dt.timedelta(days=91 * 8)).isoformat())   # the latest MD&A
+            s = json.loads((pub / 'ma' / f"{r0['id']}.json").read_text())
+            self.assertEqual(s['now']['val']['dcf_value'], r0['val']['dcf_value'])
+            e = list(FB.load(led)['families']['ma:26'].values())[0]['forecast']
+            for k in ('dcf_gap', 'p_above', 'p_implied', 'mdna_tone'):
+                self.assertEqual(len(e[k]), len(e['ids']))
+            self.assertTrue(any(v is not None for v in e['dcf_gap']) and any(v is None for v in e['dcf_gap']))
+            ev = doc['scores']['mdna_events']
+            self.assertEqual(ev['filings'], len(range(0, 90, 3)) * 9)       # the 8-K release is not counted
+            self.assertTrue(ev['13'])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_files(self):
         d = json.loads((self.pub / 'ma-hybrid.json').read_text())
         self.assertEqual(d['asof'], END.isoformat())
