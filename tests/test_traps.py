@@ -101,6 +101,14 @@ def test_pages(tmp_path):
     page = (s / "c" / "aaa" / "analysis-traps" / "index.html").read_text()
     assert "Alpha (AAA): analysis traps" in page and "What would explain it innocently" in page and "Triggered" in page and "noindex" not in page
     assert "Data: Q3 2025" in page and "Not investment advice" in page and "insufficient" in page.lower()
+    # no cash-flow or earnings-quality page was written for AAA: the traps page does not link to them
+    assert "../cash-flow/" not in page and "../earnings-quality/" not in page
+    for sub in ("cash-flow", "earnings-quality"):
+        (s / "c" / "aaa" / sub).mkdir()
+        (s / "c" / "aaa" / sub / "index.html").write_text("<html></html>")
+    S.write(str(s), "https://x.test", TODAY)
+    linked = (s / "c" / "aaa" / "analysis-traps" / "index.html").read_text()
+    assert "href='../cash-flow/'" in linked and "href='../earnings-quality/'" in linked
     main = (s / "c" / "aaa" / "index.html").read_text()
     assert 'href="analysis-traps/"' in main and "Before you read the chart" in main
     hub = (s / "disclosures" / "analysis-traps" / "index.html").read_text()
