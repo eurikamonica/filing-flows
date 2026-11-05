@@ -107,6 +107,11 @@ class Nasdaq100(unittest.TestCase):
         self.assertEqual(IM.ndx_members('<h2>Historical components</h2><ul><li>Old Co (OLD)</li></ul><h2>Components</h2>' + links + nested), sorted(syms))
         lines = '<ul>' + ''.join(f'<li><a href="/wiki/{x}">{x} Corp</a> ({x})</li>' for x in syms) + '</ul>'
         self.assertEqual(IM.ndx_members(lines), sorted(syms))
+        spaced = '<h2>Components</h2><ul>' + ''.join(f'<li><a href="/wiki/{x}">{x}, Inc.</a> ( <a href="/q/{x}">{x}</a> )</li>' for x in syms) + '</ul>'
+        self.assertEqual(IM.ndx_members(spaced), sorted(syms))                      # 2006–07: “Activision, Inc. ( ATVI )”
+        cols = '<h2>Components</h2><p>Current as of 2016.</p><style>.div-col{x}</style><div class="div-col"><p>' + \
+               '<br />'.join(f'<a href="/wiki/{x}">{x} Corp</a> (<a href="https://nasdaq.com/{x}">{x}</a>)' for x in syms) + '</p></div><h2>Historical components</h2>'
+        self.assertEqual(IM.ndx_members(cols), sorted(syms))                        # 2016–18: lines broken in columns
         self.assertEqual(IM.ndx_members(ndx_table(syms[:40])), [])                  # not a whole list: none
         changes = '<h2>Changes</h2><table class="wikitable"><tr><th>Date</th><th>Added ticker</th><th>Removed ticker</th></tr>' + \
                   ''.join(f'<tr><td>2020-01-01</td><td>X{x}</td><td>{x}</td></tr>' for x in syms[:95]) + '</table>'
@@ -123,6 +128,13 @@ class Nasdaq100(unittest.TestCase):
         self.assertEqual(iv['ORCL'], [[None, '2010-07-01']])
         self.assertEqual(iv['WMT'], [['2025-04-01', None]])                            # not a member before it joined
         self.assertEqual(iv['META'], [[None, None]])                                   # FB, under today's ticker
+        # a quarter whose article sends readers to the list page: that page's list
+        cache['ndx']['rev']['2025-07-01'] = 6
+        cache['ndx']['snaps']['6'] = []
+        cache['ndx']['list_page'] = {'rev': {'2025-07-01': 61}, 'snaps': {'61': L('MSFT', 'WMT')}}
+        iv, first, last = IM.ndx_history(cache, lambda x: IM.NDX_ALIASES.get(x, x))
+        self.assertEqual(last, '2025-07-01')
+        self.assertEqual(iv['META'], [[None, '2025-07-01']])
 
     def test_revisions_never_date_past_a_listing_cut_short(self):
         calls = []

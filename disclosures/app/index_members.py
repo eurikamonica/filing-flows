@@ -35,10 +35,11 @@ SP500_PAGE = 'List_of_S&P_500_companies'
 DOW_PAGE = 'Historical_components_of_the_Dow_Jones_Industrial_Average'
 SNAP_FROM = dt.date(2024, 1, 1)                      # monthly revisions of the S&P 500 list from here (the change table ends)
 NDX_PAGE = 'Nasdaq-100'
+NDX_LIST_PAGE = 'List of NASDAQ-100 companies'       # where the article sent its readers in 2005 and from Q3 2026
 NDX_FROM = dt.date(2003, 1, 1)                       # the article's member list at each quarter's start from here
 NDX_PER_RUN = 100                                    # revisions read a run (2.5 s each): a first run reads the rest the next times
 NDX_PARSER_ALL = 2                                   # a new ndx_members: every list is read again (2: the Components section)
-NDX_PARSER = 3                                       # a better one: the revisions read as none are read again
+NDX_PARSER = 4                                       # a better one: the revisions read as none are read again (4: “( ATVI )”, <br> lines)
 # Nasdaq-100 symbols of the past → the site's ticker of the same company (a share class it keeps one of, a rename the
 # S&P lists' CIKs do not reach)
 NDX_ALIASES = {'FB': 'META', 'PCLN': 'BKNG', 'GOOG': 'GOOGL', 'FISV': 'FI', 'SYMC': 'GEN', 'NLOK': 'GEN', 'CMCSK': 'CMCSA',
@@ -277,11 +278,13 @@ def ndx_members(page_html):
                         got.add(v)
             if ok(got):
                 return ok(got)
-        lines = [html.unescape(re.sub(r'<[^>]+>', ' ', li)) for li in re.findall(r'<li[^>]*>(.*?)</li>', part, re.S)]
+        # the lines of a list — or, without one, of the paragraphs and columns split at their breaks (2016–18)
+        raw = re.findall(r'<li[^>]*>(.*?)</li>', part, re.S) or re.split(r'<br\s*/?>|</p>|</div>|\n', re.sub(r'<style[^>]*>.*?</style>', '', part, flags=re.S))
+        lines = [re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', x))).strip() for x in raw]
         got = {m.group(1) for t in lines for m in [re.search(r'NASDAQ\s*:\s*([A-Z]{1,5})\b', t)] if m}
         if ok(got):
             return ok(got)
-        got = {m.group(1) for t in lines for m in [re.search(r'\(([A-Z]{1,5})\)\s*$', re.sub(r'\s+', ' ', t).strip())] if m}
+        got = {m.group(1) for t in lines for m in [re.search(r'\(\s*([A-Z]{1,5})\s*\)$', t)] if m}     # “Activision, Inc. ( ATVI )”
         return ok(got)
 
     sec = components(page_html)
@@ -293,8 +296,13 @@ def ndx_history(cache, T):
     quarter's start: joins and departures dated to the quarter they show, the first list's members since before it. A
     symbol missing from a single list between two that have it (an edit in progress) stays a member."""
     nd = cache.get('ndx') or {}
-    snaps = nd.get('snaps') or {}
-    seq = [(k, {T(x) for x in snaps[str(r)]} - {None, ''}) for k, r in sorted((nd.get('rev') or {}).items()) if snaps.get(str(r))]
+    snaps, lp = nd.get('snaps') or {}, nd.get('list_page') or {}
+    lsn, lrev = lp.get('snaps') or {}, lp.get('rev') or {}
+    seq = []
+    for k, r in sorted((nd.get('rev') or {}).items()):
+        lst = snaps.get(str(r)) or lsn.get(str(lrev.get(k)))      # the article's list, else the list page's
+        if lst:
+            seq.append((k, {T(x) for x in lst} - {None, ''}))
     if not seq:
         return {}, None, None
     for i in range(1, len(seq) - 1):
@@ -394,6 +402,16 @@ def collect(root, today=None):
                 lis = [re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', x))).strip()[:80] for x in re.findall(r'<li[^>]*>(.*?)</li>', sec or h, re.S)[:3]]
                 text = re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', sec or '')))[:300]
                 whyv[rid] = [NDX_PARSER, {'section': bool(sec), 'tables': len(tables(sec or h)), 'li': (sec or h).count('<li'), 'heads': heads[:14], 'lines': lis, 'text': text}]
+        # a quarter whose article holds no list: the list page's revision in force then
+        empty = [dt.date.fromisoformat(k) for k, r in sorted(nrev.items()) if str(r) in nsn and not nsn[str(r)]]
+        left = max(0, NDX_PER_RUN - len(todo))
+        if empty and left:
+            lp = nd.setdefault('list_page', {})
+            lrev = revisions(NDX_LIST_PAGE, empty, lp)
+            lsn = lp.setdefault('snaps', {})
+            for rid in list(dict.fromkeys(str(r) for _, r in sorted(lrev.items()) if str(r) not in lsn))[:left]:
+                lsn[rid] = ndx_members(revision_html(rid))
+            print('members: nasdaq-100 list page', ' '.join(f'{k}:{len(lsn.get(str(r)) or [])}' for k, r in sorted(lrev.items())), flush=True)
         if todo:
             print(f'members: nasdaq-100 lists {min(len(todo), NDX_PER_RUN)} read, {max(0, len(todo) - NDX_PER_RUN)} left;',
                   ' '.join(f'{k}:{len(nsn.get(str(r)) or [])}' for k, r in sorted(nrev.items()) if str(r) in todo[:NDX_PER_RUN]), flush=True)
