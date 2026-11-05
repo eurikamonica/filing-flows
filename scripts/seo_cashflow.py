@@ -380,7 +380,7 @@ def industry_page(sic, ind, fl, g, capex, base):
         body += ("<h2>Customers and suppliers named in annual reports</h2>" + seo_table(['Supplier', 'Customer', 'Share of supplier revenue', 'Evidence', 'Source'], [
             [e(x.get('supplier')), e(x.get('customer')), f"{x['share'] * 100:.0f}%" if x.get('share') else '—', e(x.get('evidence_level') or ''),
              f"<a href='{e(x['source_url'])}' rel='nofollow'>filing</a>" if x.get('source_url') else ''] for x in rel[:40]]))
-    body += (f"<p><a class='seo-cta' href='../../../#gamma-{e(sic)}'>The interactive money flow: switch views, follow each dollar →</a></p>"
+    body += (f"<p><a class='seo-cta' href='../../../#i-{e(sic)}'>The interactive money flow: switch views, follow each dollar →</a></p>"
              "<p class='muted'>Evidence grades: A filed figure · B computed from filed figures · C industry average (BEA input-output and fixed-asset tables) applied to filed "
              "figures. Estimates are not the companies’ own records. Not investment advice.</p>")
     url = f"{base}/gamma/{sic}/supply-chain/"

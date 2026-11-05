@@ -4363,7 +4363,9 @@
   async function group(level, id, cal) {
     const here = live();
     setNav('sectors');
-    const [ix, g] = await Promise.all([getJSON('index.json'), getJSON(`${level}/${id}.json`)]);
+    const [ix, g] = await Promise.all([getJSON('index.json'), getJSON(`${level}/${id}.json`)
+      .catch((e) => (level === 'i' && window.FFGamma ? null : Promise.reject(e)))]);
+    if (!g) return window.FFGamma.industry(app, id, chainCtx());   // no combined chart: its growth, money flow, named links
     const q = (cal && g.quarters.find((x) => x.cal === cal)) || g.quarters[0];
     const sectors = ix.sector_names || {};
     const byCik = new Map(ix.companies.map((c) => [String(c.cik), c]));
@@ -4417,28 +4419,57 @@
       }).join('')}</tbody></table></div>`;
     body.appendChild(tbl);
     bindRows(tbl);
+    if (level === 'i' && window.FFGamma) {                 // the industry's growth, lifecycle, money flow, named customers (web/gamma.js)
+      const more = document.createElement('div');
+      more.id = 'gamma-sections';
+      body.appendChild(more);
+      await window.FFGamma.sections(more, id, chainCtx());
+    }
   }
 
+  // Sectors and industries: every sector (its combined chart, #s-<id>) and every SEC SIC industry (#i-<sic>: the combined
+  // chart where the site has one, and Gamma's growth, lifecycle, money flow and named customers and suppliers)
   async function sectorsPage() {
     const here = live();
     setNav('sectors');
-    const ix = await getJSON('index.json');
-    const names = ix.sector_names || {};
+    const [ix, gx] = await Promise.all([getJSON('index.json'), getJSON('gamma/index.json').catch(() => null)]);
+    const names = Object.assign({}, (gx && gx.sector_names) || {}, ix.sector_names || {});
     const counts = {};
     ix.companies.forEach((c) => { counts[c.sector] = (counts[c.sector] || 0) + 1; });
     const have = new Map(ix.sectors.map((s) => [s.id, s]));
+    const site = new Map(ix.industries.map((x) => [String(x.id), x]));
+    const gam = new Map(((gx && gx.industries) || []).map((x) => [String(x.sic), x]));
+    const all = [...new Set([...site.keys(), ...gam.keys()])].map((id) => {
+      const a = site.get(id) || {}, b = gam.get(id) || {};
+      return { id, name: S.dec(a.name || b.name || 'SIC ' + id), sector: a.sector || b.sector || '', count: Math.max(a.count || 0, b.count || 0),
+        cal: a.cal || '', yoy: b.median_yoy, observed: b.observed || 0, chart: !!a.id };
+    }).sort((x, y) => x.name.localeCompare(y.name));
     if (!here()) return;
     app.innerHTML = `
-      <div class="page-head"><div class="eyebrow">Sectors and industries</div><h1>Combined Sankeys by sector and industry</h1>
-        <p class="muted" style="max-width:72ch">Companies are grouped by the SIC code on their EDGAR profile. A group chart adds up every company whose fiscal quarter ends in the same calendar quarter; the ten largest appear by name.</p></div>
-      ${Object.entries(names).map(([id, name]) => {
-        const s = have.get(id), inds = ix.industries.filter((x) => x.sector === id);
-        if (!counts[id] && !s) return '';
+      <div class="page-head"><div class="eyebrow">Sectors and industries</div><h1>Every sector and industry</h1>
+        <p class="muted" style="max-width:76ch">Companies are grouped by the SIC code on their EDGAR profile. A sector or industry page adds up every company whose fiscal quarter ends in the same calendar quarter (the combined Sankey; the ten largest appear by name), with the industry’s growth distribution, lifecycle, estimated money flow (BEA input-output) and the customers and suppliers named in filings.</p>
+        <div class="meta"><span>${Object.keys(names).length} sectors</span><span>${all.length} SIC industries</span>${gx && gx.universe ? `<span>${Number(gx.universe).toLocaleString('en-US')} companies with quarterly revenue</span>` : ''}</div>
+        <p class="muted"><a href="supplier-revenue/">Supplier revenue forecast →</a> · <a href="integration-health/">Collection and publication health →</a></p></div>
+      <div class="gamma-toolbar"><input id="ind-q" type="search" placeholder="Find an industry, SIC code or sector" aria-label="Filter industries">
+        <select id="ind-sec" aria-label="Sector"><option value="">All sectors</option>${Object.entries(names).map(([k, v]) => `<option value="${t(k)}">${t(v)}</option>`).join('')}</select></div>
+      <div id="ind-list"></div>`;
+    const draw = () => {
+      const q = $('#ind-q').value.trim().toLowerCase(), sec = $('#ind-sec').value;
+      const html = Object.entries(names).map(([id, name]) => {
+        if (sec && sec !== id) return '';
+        const s = have.get(id), inds = all.filter((x) => x.sector === id && (!q || `${x.id} ${x.name} ${name}`.toLowerCase().includes(q)));
+        if ((q && !inds.length) || (!counts[id] && !s && !inds.length)) return '';
         return `<section class="section"><div class="section-head"><h2>${s ? `<a href="#s-${id}">${t(name)}</a>` : t(name)}</h2>
           <span class="muted">${counts[id] || 0} companies with filings on record${s ? ` · combined chart for ${calLabel(s.cal)}` : ''}</span></div>
-          ${inds.length ? `<div class="cards">${inds.map((x) => `<a class="card" href="#i-${x.id}"><div class="t"><span>${t(x.name)}</span></div>
-          <div class="n">SIC ${t(x.id)} · ${x.count} companies · ${calLabel(x.cal)}</div></a>`).join('')}</div>` : ''}</section>`;
-      }).join('')}`;
+          ${inds.length ? `<div class="gamma-list">${inds.map((x) => `<a class="gamma-industry" href="#i-${t(x.id)}"><div class="gamma-name"><b>${t(x.name)}</b><span>SIC ${t(x.id)}${x.observed ? ` · ${x.observed} comparable` : ''}${x.chart ? ` · chart ${calLabel(x.cal)}` : ''}</span></div>
+            <div class="gamma-meta"><b>${x.yoy == null ? '—' : pct(100 * x.yoy, 1)}</b><span>median Y/Y</span></div>
+            <div class="gamma-meta"><b>${x.count}</b><span>companies</span></div></a>`).join('')}</div>` : ''}</section>`;
+      }).join('');
+      $('#ind-list').innerHTML = html || '<p class="muted">No sector or industry matches this filter.</p>';
+    };
+    $('#ind-q').addEventListener('input', draw);
+    $('#ind-sec').addEventListener('change', draw);
+    draw();
   }
 
   async function methodPage() {
@@ -5624,6 +5655,8 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
+      // Gamma's industries are the site's: #gamma → the sectors and industries page, #gamma-<sic> → the industry's page
+      if ((m = /^gamma(?:-(\d{4}))?$/.exec(h))) { location.replace(m[1] ? '#i-' + m[1] : '#sectors'); return; }
       if ((m = /^c-(\d+)-(cash|dollar|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|invest|shock|holders|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
@@ -5639,8 +5672,6 @@
       else if ((m = /^investee-(.+)$/.exec(h)) && window.FFInvestors) await window.FFInvestors.investee(app, m[1], { getJSON, setNav, here });
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
       else if (h === 'model' && window.FFModel) await window.FFModel.overview(app, chainCtx());
-      else if (h === 'gamma' && window.FFGamma) await window.FFGamma.index(app, chainCtx());
-      else if ((m = /^gamma-(\d{4})$/.exec(h)) && window.FFGamma) await window.FFGamma.industry(app, m[1], chainCtx());
       else if ((m = /^chain-([a-z0-9-]+)$/.exec(h)) && window.FFChains) await window.FFChains.page(app, m[1], chainCtx());
       else if (h === 'method') await methodPage();
       else if (h === 'account') await accountPage();

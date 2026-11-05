@@ -22,8 +22,7 @@
       ['az', 'c/', 'All companies A–Z', 'Every company with an earnings Sankey'],
     ] },
     { id: 'industries', label: 'Industries & themes', items: [
-      ['sectors', '#sectors', 'Sectors', 'Sector and industry totals, quarter by quarter'],
-      ['gamma', '#gamma', 'Industries (SIC)', 'Growth distributions and who sells to whom'],
+      ['sectors', '#sectors', 'Sectors & industries', 'Every sector and SIC industry: combined charts, growth, who sells to whom'],
       ['chains', '#chains', 'Supply chains & themes', 'Where the money flows: AI capex, power, GLP-1…'],
       ['model', '#model', 'Growth model', 'Company, industry, sector and theme forecasts'],
       ['rotation', '#rotation', 'Rotation (RRG)', 'Which sectors and themes lead, week by week'],

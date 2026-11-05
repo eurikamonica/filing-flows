@@ -1,5 +1,6 @@
-/* Gamma — every SEC SIC industry, descriptive growth conditions and evidenced
- * counterparties. Existing site data, no API key, no simulated consensus.
+/* Gamma — every SEC SIC industry, descriptive growth conditions and evidenced counterparties, on the site's industry
+ * page (#i-<sic>, app.js group(): below its combined Sankey) and the sectors and industries page (#sectors, the list).
+ * Existing site data, no API key, no simulated consensus.
  */
 (function (global) {
   'use strict';
@@ -214,39 +215,6 @@
     select(edges.length?'network':'industry');
   }
 
-  async function index(app,ctx) {
-    var here=ctx.live();
-    ctx.setNav('gamma');
-    app.innerHTML='<div class="loading">Loading SEC SIC industries…</div>';
-    var d=await ctx.getJSON('gamma/index.json');
-    if (!here()) return;
-    var industries=d.industries||[], names=d.sector_names||{};
-    app.innerHTML='<div class="page-head"><div class="eyebrow">Gamma / All industries</div>'+
-      '<h1>Industry growth & supply–demand intelligence</h1>'+
-      '<p class="intro">Browse every SIC sub-industry represented in Filing Flows SEC records. Company lifecycle is a transparent heuristic; industry distributions are historical descriptions, not analyst forecasts.</p>'+
-      '<p class="muted">Each industry page has an <b>estimated money flow</b> (BEA input-output): where the industry\u2019s money comes from, what it buys, from which industries and listed companies.</p>'+
-      '<p class="muted"><a href="supplier-revenue/">Supplier Revenue Forecast &rarr;</a> &nbsp;&middot;&nbsp; <a href="integration-health/">Collection and publication health &rarr;</a></p>'+
-      '<div class="meta"><span>'+industries.length+' SIC industries</span><span>'+d.universe+' companies with quarterly revenue</span><span>Data: '+esc((d.generated||'').slice(0,10))+'</span></div></div>'+
-      '<div class="gamma-toolbar"><input id="gamma-query" type="search" placeholder="Find SIC, industry or company sector" aria-label="Filter industries">'+
-      '<select id="gamma-sector" aria-label="Filter sector"><option value="">All sectors</option>'+
-      Object.keys(names).map(function(k){return '<option value="'+esc(k)+'">'+esc(names[k])+'</option>';}).join('')+'</select></div>'+
-      '<div id="gamma-list" class="gamma-list"></div>';
-    function draw() {
-      var q=document.getElementById('gamma-query').value.trim().toLowerCase();
-      var sec=document.getElementById('gamma-sector').value;
-      var rows=industries.filter(function(r){return (!sec||r.sector===sec) && (!q || (r.sic+' '+r.name+' '+(names[r.sector]||'')).toLowerCase().includes(q));});
-      document.getElementById('gamma-list').innerHTML=rows.length ? rows.map(function(r){
-        return '<a class="gamma-industry" href="#gamma-'+esc(r.sic)+'"><div class="gamma-name"><b>'+esc(r.name)+'</b>'+
-          '<span>SIC '+esc(r.sic)+' · '+esc(names[r.sector]||r.sector)+'</span></div>'+
-          '<div class="gamma-meta"><b>'+num(r.median_yoy)+'</b><span>Industry median YoY</span></div>'+
-          '<div class="gamma-meta"><b>'+r.count+'</b><span>Companies · '+(r.observed||0)+' comparable</span></div></a>';
-      }).join('') : '<p class="muted">No represented SIC industries match this filter.</p>';
-    }
-    document.getElementById('gamma-query').addEventListener('input',draw);
-    document.getElementById('gamma-sector').addEventListener('change',draw);
-    draw();
-  }
-
   // Move odds of the industry (the Disclosure Hub's moves-view.js on its equal-weighted SIC composite; the SIC major group
   // when fewer than five of its companies have daily prices on file)
   var loaded={};
@@ -270,19 +238,16 @@
       }catch(e){/* no move odds for this industry */}
     }
   }
-  async function industry(app,sic,ctx) {
+  // One industry, the site's page #i-<sic>: below its combined Sankey (app.js group()) these sections — the growth
+  // distribution, lifecycle, the growth model, move odds, the estimated money flow and the customers and suppliers named
+  // in filings; an industry without a combined chart gets the whole page here (industry()). d: gamma/<sic>.json if read.
+  async function sections(el,sic,ctx,d) {
     var here=ctx.live();
-    ctx.setNav('gamma');
-    app.innerHTML='<div class="loading">Reading SIC '+esc(sic)+' growth distribution…</div>';
-    var d=await ctx.getJSON('gamma/'+sic+'.json');
-    if (!here()) return;
+    if (!d) { try { d=await ctx.getJSON('gamma/'+sic+'.json'); } catch (e) { d=null; } }
+    if (!here()) return null;
+    if (!d) { el.hidden=true; return null; }
     var members=d.companies||[], stages=Object.keys(STAGES);
-    app.innerHTML='<div class="page-head"><div class="crumbs"><a href="#gamma">Gamma</a><span>›</span>'+
-      '<span>'+esc(d.sector)+'</span></div><div class="eyebrow">SEC SIC '+esc(d.sic)+'</div><h1>'+esc(d.name)+'</h1>'+
-      '<div class="meta"><span>'+members.length+' companies</span><span>Comparable quarter: '+esc(d.period||'not available')+
-      '</span><span>Growth based on filed quarterly revenue</span></div>'+
-      '<div class="fresh">Latest comparable quarter: <b>'+esc(d.period||'not available')+'</b> · industry data rebuilt '+esc((d.generated||'').slice(0,10))+(d.generated&&d.generated.length>15?', '+esc(d.generated.slice(11,16))+' UTC':'')+'</div></div>'+
-      '<section class="section"><div class="section-head"><h2>Conditional growth distribution</h2>'+
+    el.innerHTML='<section class="section"><div class="section-head"><h2>Conditional growth distribution</h2>'+
       '<span class="muted">Cross-sectional peers, not a fitted probability forecast</span></div>'+
       '<div class="gamma-toolbar"><label>Metric <select id="gmetric"><option value="yoy">Revenue YoY</option><option value="qoq">Revenue QoQ</option></select></label>'+
       '<label>Lifecycle <select id="gstage"><option value="">All stages</option>'+
@@ -362,6 +327,22 @@
     relationshipExplorer(get('gamma-relations'),d.relationships||[],members,d.sic);
     ioFlow(get('gamma-io'),ctx,here,d.sic,d.sector);
     if(global.FFFlowLab)global.FFFlowLab.industry(get('gamma-lab'),{sic:d.sic,sector:d.sector,here:here});
+    return d;
+  }
+  async function industry(app,sic,ctx) {
+    var here=ctx.live();
+    ctx.setNav('sectors');
+    app.innerHTML='<div class="loading">Reading SIC '+esc(sic)+' growth distribution…</div>';
+    var r=await Promise.all([ctx.getJSON('gamma/'+sic+'.json'),ctx.getJSON('gamma/index.json').catch(function(){return null;})]), d=r[0];
+    if (!here()) return;
+    var names=((r[1]&&r[1].sector_names)||{})[d.sector]||d.sector||'';
+    app.innerHTML='<div class="page-head"><div class="crumbs"><a href="#home">Latest</a><span>/</span><a href="#sectors">Sectors</a>'+
+      (names?'<span>/</span><a href="#s-'+esc(d.sector)+'">'+esc(names)+'</a>':'')+'</div><h1>'+esc(d.name)+'</h1>'+
+      '<div class="meta"><span class="tag">Industry · SIC '+esc(d.sic)+'</span><span>'+(d.companies||[]).length+' companies</span><span>Comparable quarter: '+esc(d.period||'not available')+
+      '</span><span>Growth based on filed quarterly revenue</span></div>'+
+      '<div class="fresh">Latest comparable quarter: <b>'+esc(d.period||'not available')+'</b> · industry data rebuilt '+esc((d.generated||'').slice(0,10))+(d.generated&&d.generated.length>15?', '+esc(d.generated.slice(11,16))+' UTC':'')+
+      ' · no combined chart: fewer than two of its companies have an earnings chart for the same calendar quarter</div></div><div id="gamma-sections"></div>';
+    await sections(document.getElementById('gamma-sections'),sic,ctx,d);
   }
 
   // Estimated money flow: where the industry's money comes from, what it spends it on, which industries supply it and
@@ -434,5 +415,5 @@
     btns.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.io);});});
     show(levels[0][2]);
   }
-  global.FFGamma={index:index,industry:industry};
+  global.FFGamma={industry:industry,sections:sections};   // the site's industry page #i-<sic> (app.js group()); #gamma → #sectors
 })(window);
