@@ -14,7 +14,7 @@ const ROT_SERIES=['var(--rot-1)','var(--rot-2)','var(--rot-3)'];
 const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['12','12 quarters'],['16','16 quarters'],['24','24 quarters'],['40','40 quarters']];
 const ROT_TRAIL_M=[['6','6 months'],['12','12 months'],['24','24 months'],['48','48 months'],['60','60 months'],['120','120 months']];
 const ROT_HIST=[['recent','Recent: 16 quarters · 48 months'],['long','Long: since 2010 · months since 2008']];
-const ROT_VIEWS=[['clock','Momentum clock'],['rrg','RRG — relative rotation (2-D, 3-D, 4-D)'],['ind','Industry RRG — every industry: Markov odds, replayed paths, the move into each quadrant'],['hybrid','Hybrid RRG — the RRG blended with momentum, volatility and volume: forecasts vs SPY, tested and frozen'],['research','Rotation research — quadrant crossings, resistance, lagging rebounds (sectors, indices, stocks; weekly and daily)'],['3d','3-D / 4-D momentum clock (drag to turn, play for time)'],['solar','Solar system'],['solar3d','Solar system 3-D / 4-D (drag to turn)'],['galaxy','Galaxy — sectors as galaxies, companies as stars (weekly)'],['track','Forecast track record — every published forecast vs what happened'],['macro','Macro clock — growth × inflation (economic data since 2010)'],['mcal','Macro release calendar — release days, first prints, market moves'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
+const ROT_VIEWS=[['clock','Momentum clock'],['rrg','RRG — relative rotation (2-D, 3-D, 4-D)'],['ind','Industry RRG — every industry: Markov odds, replayed paths, the move into each quadrant'],['hybrid','Hybrid RRG — the RRG blended with momentum, volatility and volume: forecasts vs SPY, tested and frozen'],['mahybrid','Moving averages+ — the 10- and 40-week averages with earnings and guidance mixed in: every weight tested, frozen'],['research','Rotation research — quadrant crossings, resistance, lagging rebounds (sectors, indices, stocks; weekly and daily)'],['3d','3-D / 4-D momentum clock (drag to turn, play for time)'],['solar','Solar system'],['solar3d','Solar system 3-D / 4-D (drag to turn)'],['galaxy','Galaxy — sectors as galaxies, companies as stars (weekly)'],['track','Forecast track record — every published forecast vs what happened'],['macro','Macro clock — growth × inflation (economic data since 2010)'],['mcal','Macro release calendar — release days, first prints, market moves'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
 const ROT_SIMPLE=new Set(['rs','scan','map','heat','breadth','corr']);     // views without the x / y / z, scale and smoothing controls
 const ROT_SCALES=[['raw','As reported'],['log','Signed log (tames outliers)'],['rank','Rank within the period (0–100)'],['z','Standard score within the period']];
 const ROT_SMOOTH=[['none','None'],['ewma','Exponential (recent weighs more)'],['ma','Moving average'],['holt','Holt (level + trend)'],['kalman','Kalman (noise-filtered level)'],['median','Rolling median (ignores spikes)']];
@@ -230,6 +230,7 @@ function rotationView(){
  if(state.rview==='rrg')return out+rrgView();
  if(state.rview==='ind')return out+`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}</div><div id="rrg-ind"></div>`;
  if(state.rview==='hybrid')return out+`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}</div><div id="rrg-hybrid"></div>`;
+ if(state.rview==='mahybrid')return out+`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}</div><div id="ma-hybrid"></div>`;
  if(state.rview==='research')return out+(typeof rrgResearchView==='function'?rrgResearchView():'');
  if(state.rview==='galaxy')return out+galaxyView();
  if(state.rview==='track')return out+ledgerView();
@@ -958,6 +959,14 @@ function rotHybrid(el){                                  // rrg-hybrid.js loads 
  s.onerror=()=>{const e=$('rrg-hybrid');if(e)e.innerHTML=empty('The Hybrid RRG script did not load.')};
  document.head.appendChild(s);el.innerHTML=empty('Loading the Hybrid RRG…');
 }
+function rotMAHybrid(el){                                 // ma-hybrid-view.js loads only when Moving averages+ is opened
+ if(window.MAHybridView){MAHybridView.renderHub(el,{hub:''});return}
+ if(document.querySelector('script[data-ma-hybrid]')){el.innerHTML=empty('Loading Moving averages+…');return}
+ const s=document.createElement('script');s.src='ma-hybrid-view.js';s.dataset.maHybrid='1';
+ s.onload=()=>{const e=$('ma-hybrid');if(e&&window.MAHybridView)MAHybridView.renderHub(e,{hub:''})};
+ s.onerror=()=>{const e=$('ma-hybrid');if(e)e.innerHTML=empty('The Moving averages+ script did not load.')};
+ document.head.appendChild(s);el.innerHTML=empty('Loading Moving averages+…');
+}
 function bindRotation(){
  for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgsolo','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
  {const dd=document.getElementById('rrgl-hist');if(dd)dd.ontoggle=()=>{if(state.rrglopen!==dd.open){state.rrglopen=dd.open;if(dd.open)render()}}}
@@ -981,5 +990,6 @@ function bindRotation(){
  if(state.tab==='rotation'&&state.rview==='galaxy'&&typeof bindGalaxy==='function')bindGalaxy();
  if(state.tab==='rotation'&&state.rview==='track'&&typeof bindLedger==='function')bindLedger();
  if(state.tab==='rotation'&&state.rview==='hybrid'&&$('rrg-hybrid'))rotHybrid($('rrg-hybrid'));
+ if(state.tab==='rotation'&&state.rview==='mahybrid'&&$('ma-hybrid'))rotMAHybrid($('ma-hybrid'));
  if(state.tab==='rotation'&&state.rview==='ind'&&$('rrg-ind')){if(window.RRGCompanyView)RRGCompanyView.renderIndustries($('rrg-ind'),{hub:'',id:/:/.test(state.rrgu||'')?state.rrgu:''});else $('rrg-ind').innerHTML=empty('The industry RRG script did not load.')}
 }

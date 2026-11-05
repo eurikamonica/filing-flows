@@ -53,6 +53,7 @@ jobs:
             disclosures/docs/data/market/options13f.json
             disclosures/docs/data/market/by-ticker-quarters.json
             disclosures/docs/data/cache/options/history.json
+            disclosures/docs/data/cache/guidance
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
@@ -134,6 +135,23 @@ jobs:
         run: |
           python -m pip install --quiet numpy
           python disclosures/app/rrg_hybrid.py --public hist/public --ledger hist/ledger/rrg-hybrid.json
+      - name: Moving averages+ (the 10- and 40-week averages with earnings and guidance mixed in; public/ma-hybrid*.json, public/ma/)
+        # Every weight of the earnings line and of the guidance tested walk-forward from 2016 against the averages alone;
+        # each closed week's inputs and scores frozen in hist/ledger/ma-hybrid.json (app/ma_hybrid.py, about a minute).
+        # The first-filed quarters (branch data, eps-fundamental/) are fetched only when a closed week is still to be built.
+        timeout-minutes: 12
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet numpy
+          if python disclosures/app/ma_hybrid.py --public hist/public --needed; then
+            url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch data "$url" _fund
+            git -C _fund sparse-checkout set eps-fundamental
+            python disclosures/app/ma_hybrid.py --public hist/public --fundamentals _fund/eps-fundamental \
+              --guidance disclosures/docs/data/cache/guidance --ledger hist/ledger/ma-hybrid.json
+          else
+            echo "Moving averages+: this closed week is already published"
+          fi
       - name: Opportunity (direction, buy and short odds; public/opportunity-stocks*.json, ledger/opportunity-stocks.json)
         # For every stock: P(higher in 1 week / 1 month / 3 months), P(a buy makes money after costs), P(a short does, after
         # costs and the borrow fee), the return range, the edge over no signal and the signals behind it — one walk-forward
