@@ -86,5 +86,11 @@ assert.equal(A.snapshots(history,file,'2016-01-01','2016-12-31').length,0);
   await A.build({aw:'index',at:'ndx',style:'stack',an:'5',from:'1999-12-31',to:'',recon:'0'}, off, rapi);
   assert.equal(off.grid.length,2);
   assert.equal(calls.length,3);   // the reconstruction is asked only for an index with an earlier start
+  // a 13F manager typed by name finds its CIK among the managers the Hub follows
+  const mapi = {hub:'disclosures/data/', json:async(url)=>url.endsWith('research/people/managers.json')?{fields:['cik','name'],rows:[['1067983','Berkshire Hathaway Inc'],['1350694','Bridgewater Associates, LP']]}:null};
+  assert.equal(await A.managerCik('berkshire', mapi), '1067983');
+  assert.equal(await A.managerCik('Bridgewater Associates, LP', mapi), '1350694');
+  assert.equal(await A.managerCik('0001649339', mapi), '1649339');
+  assert.equal(await A.managerCik('nobody', mapi), null);
   console.log('Actual ETF/index weights offline tests passed');
 })().catch(e=>{console.error(e); process.exitCode=1;});

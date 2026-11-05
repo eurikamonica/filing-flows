@@ -28,15 +28,30 @@
     }
     const hist = (c.quality || {}).hist;
     if (hist && hist.periods && hist.v && (!foreign || rate.size)) {
-      const last = Math.max(...rate.values(), 0) || 1;
+      const years = {};
       for (const [k, rows] of Object.entries(hist.v)) {
         const lab = (HEAD.find((h) => h[0] === k) || [])[1];
         if (!lab) continue;
         for (const [pi, vals] of rows || []) {
           const p = hist.periods[pi];
-          if (!(p && p[2] === 'q' && vals && vals[0])) continue;
+          if (!(p && vals && vals[0]) || (p[2] !== 'q' && p[2] !== 'fy')) continue;
           const f = foreign ? (rate.get(p[1]) || (k === 'om' ? 1 : null)) : 1;   // a quarter before the dollar versions: skipped
-          if (f != null) put('h:' + k, lab, p[1], k === 'om' ? vals[0][0] : vals[0][0] * f);
+          if (f == null) continue;
+          if (p[2] === 'q') put('h:' + k, lab, p[1], k === 'om' ? vals[0][0] : vals[0][0] * f);
+          else if (k !== 'om' && fin(vals[0][0])) (years[k] = years[k] || []).push([p[1], vals[0][0] * f]);
+        }
+      }
+      // a 10-K reports the year, not its fourth quarter: the year less its first three quarters (as the video studio does)
+      for (const [k, list] of Object.entries(years)) {
+        const m = S['h:' + k];
+        if (!m) continue;
+        for (const [end, v] of list) {
+          if (m.has(end)) continue;
+          const e = Date.parse(end + 'T00:00:00Z'), three = [...m.entries()].filter(([q]) => { const d = (e - Date.parse(q + 'T00:00:00Z')) / 864e5; return d > 45 && d < 300; });
+          if (three.length !== 3) continue;
+          const q4 = v - three.reduce((a, x) => a + x[1], 0);
+          if (k === 'revenue' && !(q4 > 0)) continue;
+          m.set(end, q4);
         }
       }
     }
@@ -51,6 +66,9 @@
         }
       }
     }
+    // the operating margin of every quarter of the history, not only the quarters on the page
+    const R = S['h:revenue'], O = S['h:oi'];
+    if (R && O) for (const [e, r] of R) if (r > 0 && O.has(e) && !(S['h:om'] && S['h:om'].has(e))) put('h:om', 'Operating margin (%)', e, 100 * O.get(e) / r);
     return { S, label };
   }
 
@@ -105,8 +123,15 @@
       if (A['$'] && A['%']) { const v2 = A['%'].lo + (A['%'].hi - A['%'].lo) * i / 4; g += `<text class="fx-ax" x="${W - R + 6}" y="${(A['%'].y(v2) + 4).toFixed(1)}">${esc(A['%'].f(v2))}</text>`; }
     }
     if (main.lo < 0) g += `<line class="fx-zero" x1="${L}" x2="${W - R}" y1="${main.y(0).toFixed(1)}" y2="${main.y(0).toFixed(1)}"/>`;
-    const step = Math.max(1, Math.ceil(ends.length / 8));
-    ends.forEach((e, i) => { if (i % step === 0 || i === ends.length - 1) g += `<text class="fx-ax" x="${xOf(e).toFixed(1)}" y="${H - B + 18}" text-anchor="middle">${esc(e.slice(0, 7))}</text>`; });
+    // dates under the axis: about eight, the last always, none crowding another (the last and the one before it collided)
+    const step = Math.max(1, Math.ceil(ends.length / 8)), lastX = xOf(ends[ends.length - 1]);
+    let prevX = -Infinity;
+    ends.forEach((e, i) => {
+      const x = xOf(e), last = i === ends.length - 1;
+      if (!last && (i % step || x - prevX < 64 || lastX - x < 64)) return;
+      g += `<text class="fx-ax" x="${x.toFixed(1)}" y="${H - B + 18}" text-anchor="middle">${esc(e.slice(0, 7))}</text>`;
+      prevX = x;
+    });
     const bw = type === 'bar' ? Math.max(2, (W - L - R) / ends.length * 0.8 / series.length) : 0;
     series.forEach((s, k) => {
       const ax = A[s.unit], col = U.PALETTE[k % U.PALETTE.length];

@@ -59,6 +59,7 @@
     ['moves', /how (rare|unusual)|unusual moves?|biggest movers?|top movers?|movers|moves? today|today'?s (move|drop|fall|gain|jump)|why (is|did|was) .{0,25}(down|up|drop|fall|fell|jump|rise|rose|move|moving)|move odds|(dropped|fell|jumped|soared|plunged|crashed) (today|yesterday)|今天(为什么)?(涨|跌|大涨|大跌)|为什么(涨|跌)|跌了多少|涨了多少|异动|罕见|暴跌|暴涨/i],
     ['guidanceRecord', /guidance (track record|record|history|reliab|accura|changes?|raises?|cuts?)|(raised|lowered|raises|lowers|cut|cuts|withdrew|withdrawn|reaffirmed) (its |their )?guidance|上调(了)?指引|下调(了)?指引|指引(上调|下调|变化)|(meet|meets|met|hit|hits|beat|beats|miss|misses) (its |their )?(own )?guidance|sandbag|guidance credib|指引(兑现|可信|记录|历史|准确)|兑现率|说到做到/i],
     ['investments', /\binvestments\b(?! (bank|banking|grade|advis))|investment gains?|investment portfolio|gains? on (its )?investments?|stakes? in (other )?companies|equity investments?|venture (bets|stakes)|what (did|does) .{0,20}invest in|投资收益|投资了哪些|持有哪些公司|股权投资|投了谁/i],
+    ['traps', /\b(trap|traps|misle(ad|d)|misread|look(s)? too good|too good to be true|what (should|do) i (check|verify|watch)|before i trust|catch(es)?|gotcha|caveat|sanity.?check|what('s| is) wrong with (its|the) (numbers|figures))\b|分析陷阱|陷阱|误导|误读|要注意什么|有什么坑|靠谱吗|可信吗|水分|真的吗|要核实/i],
     ['quality', /earnings quality|quality (score|grade|of (its |the )?(earnings|profits?))|accruals?|beneish|dechow|piotroski|manipulat|cook(ing|ed) the books|aggressive accounting|red flags? in (its |the )?(accounting|earnings)|盈余质量|财报质量|利润质量|盈利质量|做假账|操纵利润|会计(质量|风险)|财务造假/i],
     ['runway', /cash runway|\brunway\b|how long (can|will|does) .{0,25}(last|survive|fund)|months of cash|run(s|ning)? out of (cash|money)|going concern|现金(能|还能)?撑|还能撑|现金跑道|现金够(用|不够)|会不会(破产|没钱)|能撑多久|(快|将|要)?没(有)?(现金|钱)了?|现金(不足|告急|紧张)|缺钱/i],
     ['screen', /\bscreen(er|s)?\b|which (stocks|companies) (have|are|with|show)|find (me )?(stocks|companies|names)|(stocks|companies) (with|that have|where|whose)|momentum stocks|short squeeze|fallen (leaders|angels)|cash machines|distress(ed)? (watch|stocks|companies)|筛选|选股|找(一些|几个|出)?(股票|公司)|哪些公司.{0,8}(有|在|是|正在)|有哪些.{0,6}(股票|公司)/i],
@@ -81,12 +82,12 @@
     if (out.includes('brief') && (out.length > 1 || /income statement|statement|earnings|results|quarter|revenue|cash ?flow|balance sheet|财报|利润表|季度|营收/i.test(s)))
       out.splice(out.indexOf('brief'), 1);                         // "income statement summary", "overview of its cash flow": that, not a briefing
     // the newer models answer the whole question: a screen is not the insider list, "after an 8-K" is not the latest 8-K
-    const ONLY = { screen: ['insiders', 'shorts', 'events', 'multiples', 'owners', 'nextEarnings', 'cashflow', 'quality'], afterEvent: ['events', 'multiples', 'moves'], insiderSignal: ['insiders'], backtest: ['multiples', 'trend', 'moves'], runway: ['cashflow', 'debtLoad'] };
+    const ONLY = { traps: ['quality', 'cashflow', 'debtLoad', 'why', 'brief'], screen: ['insiders', 'shorts', 'events', 'multiples', 'owners', 'nextEarnings', 'cashflow', 'quality'], afterEvent: ['events', 'multiples', 'moves'], insiderSignal: ['insiders'], backtest: ['multiples', 'trend', 'moves'], runway: ['cashflow', 'debtLoad'] };
     for (const k of Object.keys(ONLY)) if (out.includes(k)) for (const r of ONLY[k]) if (out.includes(r)) out.splice(out.indexOf(r), 1);
     return out;
   }
   // the model intents (mascot.js) a more specific one here replaces: "earnings date" is not the last quarter's earnings
-  const REPLACES = { quality: ['earnings', 'credit'], runway: ['cashflow', 'debtLoad', 'credit'], screen: ['help', 'rotation', 'opportunity', 'industry'], afterEvent: ['events', 'moves'], insiderSignal: ['insiders'], backtest: ['moves', 'earnings', 'valuation'], profile: ['segments', 'valuation', 'help'], multiples: ['analysts', 'industry'], debtLoad: ['cashflow'], brief: ['earnings', 'valuation', 'rotation'], why: ['earnings', 'moves', 'calls'], trend: ['earnings'], nextEarnings: ['earnings', 'calls'], cashflow: ['earnings'], segments: ['earnings'], guidanceRecord: ['calls'], shorts: ['opportunity'],
+  const REPLACES = { traps: ['quality', 'earnings', 'credit', 'help'], quality: ['earnings', 'credit'], runway: ['cashflow', 'debtLoad', 'credit'], screen: ['help', 'rotation', 'opportunity', 'industry'], afterEvent: ['events', 'moves'], insiderSignal: ['insiders'], backtest: ['moves', 'earnings', 'valuation'], profile: ['segments', 'valuation', 'help'], multiples: ['analysts', 'industry'], debtLoad: ['cashflow'], brief: ['earnings', 'valuation', 'rotation'], why: ['earnings', 'moves', 'calls'], trend: ['earnings'], nextEarnings: ['earnings', 'calls'], cashflow: ['earnings'], segments: ['earnings'], guidanceRecord: ['calls'], shorts: ['opportunity'],
     moves: ['rotation'], investments: ['valuation'], ties: ['industry'], insiders: ['earnings'] };
   function merge(base, mine) {
     const drop = new Set(mine.flatMap((k) => REPLACES[k] || []));
@@ -659,6 +660,53 @@
     const slugOf = (c) => { const t = String(c.ticker || '').toLowerCase().replace(/\./g, '-'); return /^[a-z0-9-]{1,12}$/.test(t) ? t : 'cik-' + c.cik; };
     const qrows = async () => { const d = await json(DATA + 'quality-score.json'); if (!d || !d.fields) return null; const F = d.fields; return { n: d.n, rows: (d.rows || []).map((r) => Object.fromEntries(F.map((k, i) => [k, r[i]]))) }; };
     const GRADE_ZH = { A: '优', B: '良', C: '中', D: '差', E: '很差' };
+    const TRAP_ZH = { A01: '自由现金流增长 = 经营改善', A07: '股权激励加回 = 没有经济成本', B02: '应收增长 = 未来现金确定', B08: '调整后利润 = 经济利润', C02: '净债务低 = 没有再融资风险', D03: 'EPS 增长 = 利润增长', E02: '周期顶部的低市盈率 = 便宜', E07: 'DCF 的点值 = 价值', J06: '银行的创纪录利润 = 正常年份', J08: 'REIT 的分红 = 由利润覆盖' };
+    const CHANGE_ZH = { new: ['newly triggered', '新触发'], released: ['no longer triggered', '不再触发'], severity: ['severity changed', '严重性变化'], review: ['now to review', '转为待复核'], lapsed: ['no longer checkable', '不再可检查'] };
+    const ST_ZH = { triggered: '触发', clear: '未触发', insufficient_data: '数据不足', not_applicable: '不适用', review: '待复核', expired: '已过期' };
+    async function traps(c, lg) {
+      const d = await json(DATA + 'traps/' + c.cik + '.json');
+      if (!d || !d.findings) return null;
+      const F = Object.fromEntries(d.findings.map((f) => [f.rule_id, f]));
+      const pri = (d.priority || []).map((k) => F[k]).filter(Boolean);
+      const s = d.summary || {};
+      const line = (f) => L(lg, `<b>${esc(f.name)}</b> (${esc(f.status === 'review' ? 'to review' : 'triggered')}, severity ${esc(f.severity || '—')}): ${esc(f.explanation)}${(f.alternative_explanations || [])[0] ? ` <i>Innocent reading: ${esc(f.alternative_explanations[0])}.</i>` : ''}`,
+        `<b>${esc(TRAP_ZH[f.rule_id] || f.name)}</b>（${ST_ZH[f.status]}${f.severity ? '，严重性 ' + esc(f.severity) : ''}）：${esc(f.explanation)}${(f.alternative_explanations || [])[0] ? ` <i>正常解释：${esc(f.alternative_explanations[0])}。</i>` : ''}`);
+      const ch = ((await json(DATA + 'traps/changes.json')) || {}).changes || [];
+      const mine = ch.filter((x) => String(x.cik) === String(c.cik)).slice(0, 4);
+      const changed = mine.length ? ' ' + L(lg, `The latest filing (to ${esc(mine[0].as_of)}) changed: ${mine.map((x) => `${esc(x.rule)} ${esc(x.rule_name)} ${esc(CHANGE_ZH[x.kind][0])}${x.kind === 'severity' ? ` (${esc(x.from_severity)} → ${esc(x.severity)})` : ''}`).join('; ')}.`,
+        `最新一期财报（截至 ${esc(mine[0].as_of)}）带来的变化：${mine.map((x) => `${esc(x.rule)} ${esc(TRAP_ZH[x.rule] || x.rule_name)} ${esc(CHANGE_ZH[x.kind][1])}${x.kind === 'severity' ? `（${esc(x.from_severity)} → ${esc(x.severity)}）` : ''}`).join('；')}。`) : '';
+      const html = (pri.length
+        ? L(lg, `Before taking <b>${esc(c.ticker)}</b>'s figures at face value, ${num(s.triggered || 0)} of ${num(d.findings.length)} analysis-trap rules are triggered on the filings to ${esc(d.as_of || '')}:`, `读 <b>${esc(c.ticker)}</b> 的数字之前：截至 ${esc(d.as_of || '')} 的财报触发了 ${num(d.findings.length)} 条分析陷阱规则中的 ${num(s.triggered || 0)} 条：`) + ol(pri.map(line))
+        : L(lg, `None of the ${num(d.findings.length)} analysis-trap rules is triggered on <b>${esc(c.ticker)}</b>'s filings to ${esc(d.as_of || '')}`, `截至 ${esc(d.as_of || '')} 的财报，<b>${esc(c.ticker)}</b> 没有触发 ${num(d.findings.length)} 条分析陷阱规则中的任何一条`)
+          + (s.insufficient_data ? L(lg, ` (${num(s.insufficient_data)} could not be checked for lack of data)`, `（${num(s.insufficient_data)} 条因数据不足无法检查）`) : '') + '.')
+        + L(lg, ' A triggered rule is a question to verify against the filing, not a verdict.', ' 触发只是需要核实的问题，不是结论。') + changed;
+      return { html, facts: d.findings.filter((f) => f.status === 'triggered').map((f) => `trap ${f.rule_id} ${f.name}: ${f.explanation}`).concat([`traps summary ${JSON.stringify(s)}`], mine.map((x) => `trap change ${x.rule} ${x.kind} on ${x.as_of}`)),
+        mood: pri.some((f) => f.severity === 'high') ? 'worried' : 'talk',
+        links: [lk(`${BASE}c/${slugOf(c)}/analysis-traps/`, L(lg, 'Every rule, the figures and the innocent explanations', '全部规则、数字与正常解释')), lk(`${BASE}#c-${c.cik}-x-traps`, L(lg, 'Analysis traps view', '分析陷阱视图'))] };
+    }
+    MK.traps = async (lg, ix, q) => {
+      const d = await json(DATA + 'traps/index.json');
+      if (!d || !d.fields) return null;
+      const rows = (d.rows || []).map((r) => Object.fromEntries(d.fields.map((k, i) => [k, r[i]])));
+      if (/\b(new|newly|recent|latest|chang|this week|appear|disappear|released|since)\b|最近|最新|新触发|变化|新增|解除/i.test(String(q || ''))) {
+        const ch = (((await json(DATA + 'traps/changes.json')) || {}).changes || []).slice(0, 12);
+        if (!ch.length) return { html: L(lg, 'No evidence change on file yet: each company\'s findings are compared with those of its previous filing from the next scans on.', '还没有记录到证据变化：从下次扫描起，每家公司的结果会与其上一期财报的结果比较。'), facts: [], mood: 'talk', links: [lk(`${BASE}disclosures/#traps`, L(lg, 'Analysis traps', '分析陷阱'))] };
+        return { html: L(lg, `Traps a newer filing changed, newest first (${num(ch.length)} shown):`, `最近因新财报而变化的分析陷阱（最新在前，共 ${num(ch.length)} 条）：`)
+          + ol(ch.map((x) => `${esc(x.date)} ${coLink(x.ticker, x.cik)} ${esc(x.rule)} ${esc(lg === 'zh' ? (TRAP_ZH[x.rule] || x.rule_name) : x.rule_name)}: <b>${esc(CHANGE_ZH[x.kind][lg === 'zh' ? 1 : 0])}</b>${x.kind === 'severity' ? ` (${esc(x.from_severity)} → ${esc(x.severity)})` : x.kind === 'new' && x.severity ? ` · ${esc(x.severity)}` : ''} ${L(lg, `on the filing to ${esc(x.as_of)}`, `（截至 ${esc(x.as_of)} 的财报）`)}`))
+          + L(lg, ' A change to a rule on this site is not listed, only a newer filing re-read by the same rule.', ' 只列出同一规则在更新财报上的重算结果，不含规则本身的修改。'),
+          facts: ch.map((x) => `trap change ${x.ticker} ${x.rule} ${x.kind} ${x.as_of}`), mood: ch.some((x) => x.kind === 'new' && x.severity === 'high') ? 'worried' : 'talk', links: [lk(`${BASE}disclosures/analysis-traps/#changes`, L(lg, 'Every change of the last six months', '最近六个月的全部变化'))] };
+      }
+      const m = String(q || '').match(/\b([A-J]0\d)\b/i);
+      const rule = m ? m[1].toUpperCase() : null;
+      const rev = Object.fromEntries(((ix && ix.companies) || []).filter((x) => x.ticker).map((x) => [fileT(x.ticker), x.revenue || 0]));
+      const hit = rows.filter((r) => (rule ? (r.triggered || []).includes(rule) : (r.triggered || []).length)).sort((a, b) => (rule ? 0 : (b.triggered || []).length - (a.triggered || []).length) || (rev[fileT(b.ticker)] || 0) - (rev[fileT(a.ticker)] || 0)).slice(0, 10);
+      const counts = Object.keys(d.rules).map((k) => `${k} ${(d.rules[k] || {}).name}: ${rows.filter((r) => (r.triggered || []).includes(k)).length}`);
+      return { html: L(lg, `${rule ? `Companies triggering ${rule} (${esc((d.rules[rule] || {}).name || '')})` : 'Companies with the most analysis-trap rules triggered'}, largest first (${num(rows.length)} evaluated):`,
+        `${rule ? `触发 ${rule}（${esc(TRAP_ZH[rule] || '')}）的公司` : '触发分析陷阱规则最多的公司'}，按规模排序（共评估 ${num(rows.length)} 家）：`)
+        + ol(hit.map((r) => `${coLink(r.ticker, r.cik)} ${(r.triggered || []).join(', ')}${r.top_severity ? ` · ${esc(r.top_severity)}` : ''}`))
+        + L(lg, ` By rule: ${counts.map(esc).join('; ')}.`, ` 各规则触发数：${counts.map(esc).join('；')}。`),
+        facts: counts, mood: 'talk', links: [lk(`${BASE}disclosures/analysis-traps/`, L(lg, 'Every rule and the companies it triggers on', '全部规则及触发公司')), lk(`${BASE}disclosures/analysis-traps/practice/`, L(lg, 'Practice on real filings', '用真实财报练习'))] };
+    };
     async function quality(c, lg) {
       const d = await qrows();
       if (!d) return null;
@@ -820,7 +868,7 @@
         facts: rows.map((r) => `${r[1]} relative strength ${r[2][ix.rs]}`), mood: 'talk', links: [lk(`${BASE}disclosures/sector-rotation/`, L(lg, 'Sector rotation', '板块轮动'))] };
     };
 
-    return { owners, insiders, congress, events, cashflow, segments, nextEarnings, ties, shorts, moves, guidanceRecord, investments, brief, why, trend, profile, multiples, debtLoad, quality, runway, backtest, MK, STAKES };
+    return { owners, insiders, congress, events, cashflow, segments, nextEarnings, ties, shorts, moves, guidanceRecord, investments, brief, why, trend, profile, multiples, debtLoad, quality, runway, traps, backtest, MK, STAKES };
   }
 
   /* ---------- the next questions under an answer ---------- */
@@ -828,8 +876,8 @@
     owners: ['insiders', 'congress', 'shorts'], insiders: ['owners', 'events'], congress: ['owners', 'insiders'], events: ['moves', 'earnings'], nextEarnings: ['guidanceRecord', 'options', 'segments'],
     ties: ['segments', 'industry'], shorts: ['options', 'moves', 'owners'], moves: ['events', 'opportunity'], rotation: ['industry', 'moves'], options: ['moves', 'nextEarnings'],
     credit: ['cashflow', 'valuation'], analysts: ['valuation', 'nextEarnings'], opportunity: ['rotation', 'moves'], guidanceRecord: ['nextEarnings', 'calls'], investments: ['owners', 'cashflow'],
-    filings: ['events', 'earnings'], industry: ['rotation', 'ties'], calls: ['guidanceRecord', 'nextEarnings'], quality: ['cashflow', 'why', 'runway'], runway: ['debtLoad', 'cashflow', 'quality'], backtest: ['moves', 'insiders', 'nextEarnings'] };
-  const ASK = { profile: ['What does {t} do?', '{t} 是做什么的？'], multiples: ['{t} P/E and market cap', '{t} 市盈率和市值'], debtLoad: ['How much debt does {t} have?', '{t} 有多少负债？'], brief: ['Brief me on {t}', '{t} 速览'], why: ['Why did {t}\'s results change?', '{t} 业绩为什么变化？'], trend: ['{t} revenue trend', '{t} 营收趋势'], segments: ['How does {t} make money?', '{t} 怎么赚钱？'], cashflow: ['{t} free cash flow', '{t} 自由现金流'], nextEarnings: ['When does {t} report next?', '{t} 下次财报什么时候？'],
+    filings: ['events', 'earnings'], industry: ['rotation', 'ties'], calls: ['guidanceRecord', 'nextEarnings'], quality: ['cashflow', 'why', 'runway', 'traps'], traps: ['quality', 'cashflow', 'debtLoad'], runway: ['debtLoad', 'cashflow', 'quality'], backtest: ['moves', 'insiders', 'nextEarnings'] };
+  const ASK = { traps: ['What should I check before trusting {t}\'s figures?', '{t} 的数字有什么要注意的？'], profile: ['What does {t} do?', '{t} 是做什么的？'], multiples: ['{t} P/E and market cap', '{t} 市盈率和市值'], debtLoad: ['How much debt does {t} have?', '{t} 有多少负债？'], brief: ['Brief me on {t}', '{t} 速览'], why: ['Why did {t}\'s results change?', '{t} 业绩为什么变化？'], trend: ['{t} revenue trend', '{t} 营收趋势'], segments: ['How does {t} make money?', '{t} 怎么赚钱？'], cashflow: ['{t} free cash flow', '{t} 自由现金流'], nextEarnings: ['When does {t} report next?', '{t} 下次财报什么时候？'],
     owners: ['Who owns {t}?', '谁持有 {t}？'], insiders: ['Are {t} insiders buying?', '{t} 内部人在买还是卖？'], congress: ['Congress trades in {t}', '国会议员交易 {t}'],
     events: ['{t} latest 8-K', '{t} 最新 8-K'], ties: ['{t} customers and suppliers', '{t} 的客户和供应商'], shorts: ['{t} short interest', '{t} 空头仓位'],
     moves: ['How rare is {t}\'s latest move?', '{t} 最近的涨跌有多罕见？'], guidanceRecord: ['Does {t} meet its guidance?', '{t} 的指引兑现率'], investments: ['{t} investment gains', '{t} 投资收益'],
@@ -848,7 +896,7 @@
     ['congress', 'What is Congress trading?', '国会议员最近在交易什么？'], ['owners', 'What did funds buy most last quarter?', '上季度机构买得最多的股票'],
     ['moves', 'Most unusual moves today', '今天最罕见的涨跌'], ['events', 'Latest deals and material 8-Ks', '最新的并购和重大 8-K'], ['shorts', 'Most shorted stocks', '空头最多的股票'],
     ['guidanceRecord', 'Who raised guidance lately?', '最近谁上调了指引？'], ['sectors', 'Which sectors are leading?', '哪些板块最强？'],
-    ['quality', 'Lowest earnings quality scores', '盈余质量最差的公司'], ['screen', 'Find stocks with insiders buying', '找内部人在买的股票'], ['afterEvent', 'Which 8-K items move stocks?', '哪类公告最能推动股价？'], ['insiderSignal', 'Do insider trades predict the stock?', '跟着内部人买靠谱吗？'], ['runway', 'Who is running out of cash?', '哪些公司快没现金了？']];
+    ['quality', 'Lowest earnings quality scores', '盈余质量最差的公司'], ['traps', 'Which companies trigger the most analysis traps?', '哪些公司触发的分析陷阱最多？'], ['traps', 'Which analysis traps changed with the latest filings?', '最近财报让哪些分析陷阱变了？'], ['screen', 'Find stocks with insiders buying', '找内部人在买的股票'], ['afterEvent', 'Which 8-K items move stocks?', '哪类公告最能推动股价？'], ['insiderSignal', 'Do insider trades predict the stock?', '跟着内部人买靠谱吗？'], ['runway', 'Who is running out of cash?', '哪些公司快没现金了？']];
 
   const marketWords = (q) => MARKET.test(String(q || ''));
   const API = { glossary, GLOSSARY, QLABEL, classify, merge, isMarket, marketWords, isFollow, fuzzyCompany, make, followUps, MARKET_ASK, INTENTS, lev };

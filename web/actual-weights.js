@@ -111,10 +111,21 @@
     const cfg = await Promise.resolve(api.json(api.hub + 'remote.json')).catch(() => null);
     return cfg && typeof cfg.base === 'string' && /^https:\/\//.test(cfg.base) && (cfg.prefixes || []).some((x) => 'shards/holdings/'.startsWith(x)) ? cfg.base : api.hub;
   }
+  // a 13F manager typed by name: the CIK of the one the Hub follows (research/people/managers.json) that it names
+  async function managerCik(q, api) {
+    const s = String(q || '').trim().toLowerCase();
+    if (!s) return null;
+    if (/^\d{1,10}$/.test(s)) return s.replace(/^0+/, '');
+    const doc = await Promise.resolve(api.json(api.hub + 'research/people/managers.json')).catch(() => null);
+    const F = (doc && doc.fields) || [], rows = ((doc && doc.rows) || []).map((r) => (Array.isArray(r) ? Object.fromEntries(F.map((k, i) => [k, r[i]])) : r));
+    const hit = rows.find((r) => String(r.name || '').toLowerCase() === s) || rows.find((r) => String(r.name || '').toLowerCase().startsWith(s))
+      || rows.find((r) => String(r.name || '').toLowerCase().includes(s));
+    return hit && hit.cik ? String(hit.cik).replace(/^0+/, '') : null;
+  }
   async function disclosedSource(st, api) {
     if (st.aw === '13f') {
-      const cik = String(st.ac || '1067983').replace(/^0+/, '');
-      if (!/^\d{1,10}$/.test(cik)) throw new Error('Enter a valid manager CIK');
+      const cik = (await managerCik(st.ac || '1067983', api)) || '';
+      if (!/^\d{1,10}$/.test(cik)) throw new Error(`No 13F manager the Hub follows is called “${String(st.ac || '').trim()}”: type its CIK`);
       const base = await shardBase(api);
       // a report not yet enriched with tickers is named through the Hub's CUSIP map (market.py → market/cusip-tickers.json)
       const [doc, cmap] = await Promise.all([api.json(base + 'shards/holdings/' + cik + '.json'),
@@ -217,7 +228,7 @@
       if (R.history && R.size) out.notes.add(`Members on file: ${lo.on_file} of the ${ref[0]}'s ${R.size} (${lo.date})${hi !== lo ? ' to ' + hi.on_file + ' (' + hi.date + ')' : ''}. Companies delisted, merged or bankrupt since are not on the site: the members on file share the whole index between them.`);
       if (R.thin) out.notes.add(`Up to ${R.thin}: too few of the members have prices on the site (from mid-1993) — left out.`);
       if (!R.history) out.notes.add(`${ref[0]}: membership history only from ${R.since || 'when the site began keeping it'} — before that, today's members are used: former members are left out and today's are counted in years before they joined (survivorship).`);
-      if (R.how !== 'price') out.notes.add('Market values: each month-end close × the latest shares outstanding, put on today\'s basis with the split history — a company that has since bought back or issued many shares is smaller or larger here than it was. A company counts once, all its share classes together; the reports list each class (GOOGL and GOOG).');
+      if (R.how !== 'price') out.notes.add('Market values: each month-end close × the shares outstanding then (the cover page of each 10-Q and 10-K, from 1993; a company\'s former registrants\' before its own — Exxon Mobil before ExxonMobil Holdings, Google before Alphabet). A company counts once, all its share classes together; the reports list each class (GOOGL and GOOG).');
       if (st.style === 'changes') out.notes.add('The change at ' + (reported0 || 'the switch') + ' compares a reconstruction with the fund\'s report: it shows the two methods as much as the portfolio.');
     }
     out.notes.add((recon.length ? 'Reported source dates: ' + (reported0 ? reported0 + ' to ' + to + '; before them, reconstructed quarter-ends (above).' : 'none in this range: every snapshot is reconstructed.')
@@ -306,6 +317,6 @@
       : from === to ? 'Single reported holdings snapshot — not a history' : 'Reported holdings dates only; transitions illustrative';
     return out;
   }
-  root.FFActual = { TRACKERS, build, snapshots, normalizeSnapshot, snapshotFromDetail, sortedPositions, toSector, disclosedSource, quarterlySnapshots, sectorWeights };
+  root.FFActual = { TRACKERS, build, snapshots, normalizeSnapshot, snapshotFromDetail, sortedPositions, toSector, disclosedSource, quarterlySnapshots, sectorWeights, managerCik };
   if (typeof module !== 'undefined') module.exports = root.FFActual;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

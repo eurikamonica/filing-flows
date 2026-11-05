@@ -375,6 +375,67 @@ def _is_nongaap(table):
 DISC_TABLE = re.compile(r"(for|of) discontinued operations")      # Sonoco: a statement of the business it sold
 
 
+# ---------------------------------------------------------------- the non-GAAP reconciliation (docs/TRAP_RULEBOOK.md B08)
+RECON_START = re.compile(r"^(gaap(\s+net\s+(income|earnings|loss)(\s*\(loss\))?)?|net\s+(income|earnings)(\s*\(loss\))?(\s+attributable\s+to\s+[a-z .,]+)?|net\s+\(loss\)\s*income|as\s+reported(\s*\(gaap\))?)$")
+RECON_END = re.compile(r"^((non-?gaap|adjusted|core|underlying|normalized|operating)(\s+net\s+(income|earnings|loss)(\s*\(loss\))?(\s+attributable\s+to\s+[a-z .,]+)?)?"
+                       r"|(adjusted\s+)?ebitda(re)?|(nareit\s+|adjusted\s+|core\s+)?(ffo|affo|funds from operations))$")
+SUPER = re.compile(r"[\u2070\u00b9\u00b2\u00b3\u2074-\u207e]+")
+RECON_SKIP = re.compile(r"per (diluted |basic |common )?share|per share|diluted|weighted|shares|margin|^total adjustments|^adjustments?$", re.I)
+
+
+def reconciliation(tables, scale=None, ni=None):
+    """The release's reconciliation of a GAAP figure to its adjusted one: {"measure", "from", "gaap", "adjusted", "items":
+    [[label, amount], ...], "balanced": True}. The items are the rows between the GAAP row and the adjusted row, read in
+    the column where GAAP + the items = adjusted (that check picks the right column whether the table runs down, as
+    most do, or across like Visa's, and refuses a table it cannot add up). Preferred: GAAP net income to adjusted net
+    income; then EBITDA to adjusted EBITDA, FFO to AFFO; last net income to EBITDA (a definition, not adjustments).
+    Amounts are signed as they enter the adjusted figure, in dollars when the units are known. None when no such table."""
+    best = None
+    for t in tables:
+        if not _is_nongaap(t):
+            continue
+        rows = [dict(r, key=SUPER.sub("", r["key"]).strip()) for r in t["rows"] if r["label"]]
+        for i, r0 in enumerate(rows):
+            if not (RECON_START.match(r0["key"]) or re.match(r"^(ebitda(re)?|(nareit\s+)?ffo|funds from operations)$", r0["key"])) or not r0["vals"]:
+                continue
+            j = next((k for k in range(i + 1, min(i + 25, len(rows))) if RECON_END.match(rows[k]["key"]) and rows[k]["vals"] and rows[k]["key"] != r0["key"]), None)
+            if j is None:
+                continue
+            items = [r for r in rows[i + 1:j] if r["vals"] and not r["pct"] and not RECON_SKIP.search(r["label"])]
+            if not items:
+                continue
+            sc = scale or _units(t) or 1.0
+            found = None
+            for c in range(min(len(r0["vals"]), len(rows[j]["vals"]))):
+                g, a = r0["vals"][c], rows[j]["vals"][c]
+                if not a or (ni and RECON_START.match(r0["key"]) and abs(g * sc - ni) > 0.02 * abs(ni)):
+                    continue
+                for k in (c, c - 1, c - 2):              # the items' column: the same, or one or two left when a column is blank for them (Visa's tax rate)
+                    if k < 0 or any(k >= len(r["vals"]) for r in items):
+                        continue
+                    if abs(g + sum(r["vals"][k] for r in items) - a) <= max(0.015 * abs(a), 1.0):
+                        found = (c, k)
+                        break
+                if found:
+                    break
+            if not found:
+                continue
+            c, k = found
+            out = [[SUPER.sub("", _clean_label(r["label"])).strip(), r["vals"][k] * sc] for r in items if r["vals"][k]]
+            if not out:
+                continue
+            end_key, start_key = rows[j]["key"], r0["key"]
+            rank = 0 if re.search(r"net (income|earnings|loss)|^non-?gaap$|^adjusted$|^core$|^underlying$", end_key) and RECON_START.match(start_key) else \
+                1 if re.search(r"ebitda|ffo|funds", end_key) and re.search(r"ebitda|ffo|funds", start_key) else 2
+            cand = {"measure": SUPER.sub("", rows[j]["label"]).strip()[:80], "from": SUPER.sub("", r0["label"]).strip()[:80], "gaap": r0["vals"][c] * sc,
+                    "adjusted": rows[j]["vals"][c] * sc, "items": out, "balanced": True, "rank": rank}
+            if best is None or rank < best["rank"]:
+                best = cand
+            if rank == 0:
+                return best
+    return best
+
+
 def pick_tables(tables):
     weights = {"revenue": 3, "pretax": 2, "tax": 2, "pl": 2, "ni": 2, "oi": 1, "gp": 1, "cor": 1}
     best_is = best_cf = fallback = None
@@ -510,6 +571,10 @@ def parse(html, filed, last_end=None, prior_revenue=None):
            "labels": {k: x[1] for k, x in full.items()},
            "cols": {k: [v * scale for v in x[2]] for k, x in full.items()},       # every column, for sign checks
            "tables": tables}
+    try:                                                   # the non-GAAP reconciliation, when the release prints one
+        out["nongaap"] = reconciliation(tables, scale, (out["is"] or {}).get("ni"))
+    except Exception:  # noqa: BLE001
+        out["nongaap"] = None
     if best_cf:
         _, t_cf, m_cf = best_cf
         u_is, u_cf = _units(t_is), _units(t_cf)

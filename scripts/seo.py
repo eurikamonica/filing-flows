@@ -281,7 +281,7 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=optional">
 <link rel="icon" href="{up}favicon.svg" type="image/svg+xml"><link rel="icon" href="{up}favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="{up}apple-touch-icon.png">
 <link rel="stylesheet" href="{up}styles.css"><link rel="stylesheet" href="{up}seo.css">{ld}
-</head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}gamma/">Industries</a><a href="{up}chains/">Themes</a><a href="{up}model/">Model</a><a href="{up}daily/">Today</a><a href="{up}disclosures/">Signals</a><a href="{up}events/">8-K events</a><a href="{up}#method">Method</a></nav></header>
+</head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}gamma/">Industries</a><a href="{up}chains/">Themes</a><a href="{up}model/">Model</a><a href="{up}#studio">Videos</a><a href="{up}daily/">Today</a><a href="{up}disclosures/">Signals</a><a href="{up}events/">8-K events</a><a href="{up}#method">Method</a></nav></header>
 <main class="seo">{body}{follow_box(title, canonical)}</main>
 <footer class="seo-foot">Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice. <a href="{up}">filing-flows.com</a> · <a href="{up}about/">About</a> · <a href="{X_URL}" rel="me noopener">Charts posted daily on X: @{X_HANDLE}</a></footer>
 </body></html>"""
@@ -296,19 +296,19 @@ def noindex(doc):
 
 
 CHROME = {   # the header's links and the footer of a translated page (seo_zh.py, seo_intl.py): page() writes them in English
-    "zh-Hans": {"nav": ["最新", "公司", "行业", "主题", "模型", "今日", "信号", "8-K 事件", "方法"],
+    "zh-Hans": {"nav": ["最新", "公司", "行业", "主题", "模型", "视频", "今日", "信号", "8-K 事件", "方法"],
                 "foot": "数据由程序自动读取自 SEC 文件（XBRL 与财报新闻稿），可能存在误差，不构成投资建议。", "about": "关于", "x": "每日图表发布在 X：",
                 "drawing": "正在绘制 Sankey 图…", "follow": "每天在 X 上发布新的财报 Sankey 图：", "follow_btn": "关注", "cite": "引用本页："},
-    "es": {"nav": ["Últimos", "Empresas", "Industrias", "Temas", "Modelo", "Hoy", "Señales", "Eventos 8-K", "Método"],
+    "es": {"nav": ["Últimos", "Empresas", "Industrias", "Temas", "Modelo", "Vídeos", "Hoy", "Señales", "Eventos 8-K", "Método"],
            "foot": "Cifras leídas automáticamente de los informes presentados ante la SEC (XBRL y comunicados de resultados); puede haber errores. No es asesoramiento de inversión.",
            "about": "Acerca de", "x": "Gráficos diarios en X:", "drawing": "Dibujando el diagrama de Sankey…",
            "follow": "Nuevos diagramas de Sankey de resultados cada día en X:", "follow_btn": "Seguir a", "cite": "Cita esta página: "},
-    "fr": {"nav": ["Récents", "Entreprises", "Secteurs", "Thèmes", "Modèle", "Aujourd’hui", "Signaux", "Événements 8-K", "Méthode"],
+    "fr": {"nav": ["Récents", "Entreprises", "Secteurs", "Thèmes", "Modèle", "Vidéos", "Aujourd’hui", "Signaux", "Événements 8-K", "Méthode"],
            "foot": "Chiffres lus automatiquement dans les documents déposés auprès de la SEC (XBRL et communiqués de résultats) ; des erreurs sont possibles. Ce n’est pas un conseil en investissement.",
            "about": "À propos", "x": "Graphiques publiés chaque jour sur X :", "drawing": "Tracé du diagramme de Sankey…",
            "follow": "De nouveaux diagrammes de Sankey de résultats chaque jour sur X :", "follow_btn": "Suivre", "cite": "Citer cette page : "},
 }
-_NAV_EN = ["Latest", "Companies", "Industries", "Themes", "Model", "Today", "Signals", "8-K events", "Method"]
+_NAV_EN = ["Latest", "Companies", "Industries", "Themes", "Model", "Videos", "Today", "Signals", "8-K events", "Method"]
 
 
 def localize(doc, lang):

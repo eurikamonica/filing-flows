@@ -445,8 +445,9 @@ def build(out_dir, companies, docs, frames_root=None, today=None, names=None, na
             'stats': stats,
             'note': ("Today's companies on the site only (survivorship: names delisted, merged or bankrupt are missing). Weekly closes "
                      'from Yahoo Finance; figures from SEC XBRL frames (calendar quarters, 2009 on); market value = the month-end close '
-                     "as traded × the latest cover-page shares outstanding (diluted weighted average where a company has several "
-                     "share classes), put on today's basis with the split history.")}
+                     "as traded × the shares outstanding then (the cover page of each 10-Q and 10-K, from 1993; the diluted weighted "
+                     "average where a company has several share classes; a company's former registrants' before its own), put on "
+                     "today's basis with the split history.")}
     stats['check']['off'] = sorted(stats['check']['off'], key=lambda x: -abs(math.log(max(x[1], 1e-9))))[:40]
     stats['check']['rescaled'] = stats['check'].get('rescaled', [])[:60]
     (out_dir / 'meta.json').write_text(json.dumps(meta, separators=(',', ':')), encoding='utf-8')

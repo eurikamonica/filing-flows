@@ -11,6 +11,7 @@
   const TYPES = [['filing', 'Earnings filings'], ['8k', '8-Ks'], ['insider', 'Insider trades'], ['official', "Officials' trades"], ['13f', '13F'],
     ['stake', '13D / 13G'], ['f144', 'Form 144'], ['news', 'News'], ['market', 'Polymarket'], ['extreme', '52-week highs / lows']];
   const MAX_TICKERS = 40;
+  const TRY = [['The Magnificent Seven', 'AAPL,MSFT,GOOGL,AMZN,META,NVDA,TSLA'], ['Banks', 'JPM,BAC,WFC,GS,MS,C'], ['NVDA', 'NVDA'], ['AAPL', 'AAPL'], ['TSLA', 'TSLA']];
 
   const norm = (x) => String(x || '').toUpperCase().replace(/[./\s]+/g, '-').replace(/[^A-Z0-9-]/g, '');
   const amount = (lo, hi) => (lo == null && hi == null ? 'amount not disclosed' : hi == null ? `over ${usd(lo - 1, 0)}` : `${usd(lo, 0)}–${usd(hi, 0)}`);
@@ -29,7 +30,12 @@
     for (const f of H.form144 || []) add(f.filed, 'f144', `Form 144: ${f.seller_name || f.seller || 'an insider'} plans to sell ${num(f.shares)} shares`, [fin(f.value) ? `≈ ${money(f.value)}` : '', f.relationship || ''].filter(Boolean).join(' · '), f.url);
     for (const n of H.news || []) add(n.published, 'news', n.title || 'News', n.source || '', n.url);
     if (H.flows && (H.institutional || []).length) {
-      const filed = (H.institutional || []).map((x) => x.filed || '').sort().pop();
+      // the quarter's 13F picture is known at its filing deadline (45 days after the quarter), not when the last late or
+      // amended report came in (Q2's would otherwise head the feed in November)
+      const qe = (/quarter ended (\d{4}-\d{2}-\d{2})/.exec(H.flows.label || '') || [])[1];
+      const due = qe ? new Date(Date.parse(qe + 'T00:00:00Z') + 45 * 864e5).toISOString().slice(0, 10) : '';
+      const last = (H.institutional || []).map((x) => x.filed || '').sort().pop();
+      const filed = due && last > due ? due : last;
       const f = H.flows;
       add(filed, '13f', `13F: ${num(f.buyers)} managers bought, ${num(f.sellers)} sold (${f.label || 'latest quarter'})`, [fin(f.new) ? `${num(f.new)} new positions` : '', fin(f.exits) ? `${num(f.exits)} exits` : '', fin(f.usd_net) ? `net ${f.usd_net >= 0 ? '+' : '−'}${money(Math.abs(f.usd_net))}` : ''].filter(Boolean).join(' · '), 'disclosures/#flows');
     }
@@ -106,8 +112,16 @@
       const label = Object.fromEntries(TYPES);
       ul.innerHTML = show.length ? show.map((e) => `<li class="fx-ev fx-${e.type}"><time>${day(e.date)}</time><span class="tag mono">${esc(e.ticker)}</span><span class="fx-ty">${esc(label[e.type] || e.type)}</span>
           <a href="${esc(e.href)}"${/^https?:/.test(e.href) ? ' target="_blank" rel="noopener"' : ''}>${t(e.title)}</a>${e.detail ? `<small class="muted">${t(String(e.detail).slice(0, 220))}</small>` : ''}</li>`).join('')
-        : `<li class="muted">${tickers.length ? 'Nothing disclosed for these tickers in the files on hand.' : 'Follow or add tickers to fill the feed.'}</li>`;
+        : tickers.length ? '<li class="muted">Nothing disclosed for these tickers in the files on hand.</li>'
+          : `<li class="muted">Follow or add tickers to fill the feed — or start with a few: ${TRY.map(([lab, list]) => `<button type="button" class="pill" data-try="${list}">${esc(lab)}</button>`).join(' ')}</li>`;
     };
+    // an empty feed offers a start (a first visit has nothing followed): one click fills it
+    ul.addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-try]'); if (!b) return;
+      tickers = [...new Set(tickers.concat(b.dataset.try.split(',')))].slice(0, MAX_TICKERS);
+      U.store.set('feed:tickers', tickers);
+      drawWho(); refresh();
+    });
     const refresh = async () => {
       ul.innerHTML = '<li class="muted">Loading…</li>';
       list = tickers.length ? await gather(tickers) : [];

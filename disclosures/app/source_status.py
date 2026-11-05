@@ -3,13 +3,19 @@ from pathlib import Path
 from core import now, read_json, write_json
 
 
+def _plausible(day):
+    """A filing date that can be one: not after tomorrow (a report typed 3013-06-14 would head every later status)."""
+    import datetime as dt
+    return bool(day) and day <= (dt.date.today() + dt.timedelta(days=1)).isoformat()
+
+
 def latest_filing(result):
     dates = []
     def visit(value):
         if isinstance(value, dict):
             for key, val in value.items():
                 if key in ('filed', 'filed_date', 'filing_date', 'latest_filing', 'newest_ptr_filed', 'latest_filing_date') and isinstance(val, str):
-                    if len(val) >= 10 and val[4:5] == '-': dates.append(val[:10])
+                    if len(val) >= 10 and val[4:5] == '-' and _plausible(val[:10]): dates.append(val[:10])
                 elif key in ('managers', 'reports', 'records', 'filings', 'directory', 'rows'):
                     visit(val)
         elif isinstance(value, list):
@@ -25,7 +31,10 @@ def record(root, key, result, attempted=None):
     errors = result.get('errors')
     if status == 'ok' and errors:
         status = 'partial'
-    skipped = bool(result.get('skipped'))
+    # a poll skipped says why (a string: 'searched recently', 'access cooldown') or status 'skipped'; a count of the items a
+    # run left out (news: {'law firm': 6, 'not English': 12}) is no skipped poll — it kept the news source stale for days
+    sk = result.get('skipped')
+    skipped = status == 'skipped' or sk is True or (isinstance(sk, str) and bool(sk))
     completed = result.get('updated_at') or now()
     out = {k: v for k, v in result.items() if k in (
         'status', 'error', 'errors', 'error_samples', 'read', 'found', 'waiting', 'failed_queue',
@@ -35,7 +44,7 @@ def record(root, key, result, attempted=None):
                last_success=previous.get('last_success'),
                last_partial_success=previous.get('last_partial_success'),
                updated_at=previous.get('updated_at'),
-               latest_filing_date=max(latest_filing(result) or '', previous.get('latest_filing_date') or '') or None)
+               latest_filing_date=max(latest_filing(result) or '', previous.get('latest_filing_date') if _plausible(previous.get('latest_filing_date')) else '') or None)
     if not skipped and status == 'ok':
         out.update(last_success=completed, updated_at=completed)
     elif not skipped and status == 'partial':

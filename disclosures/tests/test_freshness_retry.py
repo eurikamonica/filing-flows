@@ -28,6 +28,17 @@ class FreshnessRegression(unittest.TestCase):
         self.assertEqual(skipped['status'], 'error')
         self.assertEqual(skipped['last_success'], first['last_success'])
 
+    def test_item_counts_are_no_skipped_poll_and_no_filing_is_dated_ahead(self):
+        # news counts the items it left out under 'skipped': a successful run all the same
+        r = record(self.root, 'news', {'status': 'ok', 'skipped': {'law firm': 6}, 'updated_at': '2026-11-05T04:00:00Z'})
+        self.assertEqual((r['status'], r['last_success']), ('ok', '2026-11-05T04:00:00Z'))
+        p = record(self.root, 'news', {'status': 'partial', 'skipped': {'not English': 2}, 'updated_at': '2026-11-05T05:00:00Z'})
+        self.assertEqual(p['last_partial_success'], '2026-11-05T05:00:00Z')
+        # a report typed 3013-06-14 is no latest filing, and one kept from before is dropped
+        write_json(self.root / 'congress-status.json', {'latest_filing_date': '3013-06-14'})
+        c = record(self.root, 'congress', {'status': 'ok', 'reports': [{'filed': '3013-06-14'}, {'filed': '2026-11-04'}]})
+        self.assertEqual(c['latest_filing_date'], '2026-11-04')
+
     def test_live_merge_keeps_other_runs_newer_holdings(self):
         old={'last_attempt':'2026-10-18','managers':['old']}
         new={'last_attempt':'2026-10-25','managers':['new']}
