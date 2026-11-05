@@ -108,7 +108,8 @@ def finding_html(f, name, doc=None):
                  + "</details>")
     c = chart_contract(f, doc) if doc else None
     if c:
-        body += f"<script type='application/json' class='trap-chart'>{json.dumps(c, separators=(',', ':')).replace('</', '<\\/')}</script>"
+        blob = json.dumps(c, separators=(',', ':')).replace('</', '<\\/')   # outside the f-string: Python 3.11 (the deploy's) allows no backslash in one
+        body += f"<script type='application/json' class='trap-chart'>{blob}</script>"
     if st in ("triggered", "review"):
         if f.get("alternative_explanations"):
             body += "<p><b>What would explain it innocently</b></p><ul class='seo-list'>" + "".join(f"<li>{e(x)}</li>" for x in f["alternative_explanations"]) + "</ul>"
