@@ -187,5 +187,35 @@ class PriceTests(unittest.TestCase):
         self.assertEqual(status['counts']['positions_priced'], 1); self.assertEqual(status['status'], 'ok')
 
 
+    def test_apply_prices_streams_cached_managers_and_keeps_them_lazy(self):
+        # The prices run used to hydrate every cached manager at once and ran the runner out of memory; cached managers
+        # are now read one at a time, written back when their annotations change, and stay lazy rows in live data.
+        import os, tempfile
+        from shards import load_manager, publish_manager
+        c = FakeClient({'stooq.com': '<html>Exceeded the daily hits limit</html>', 'yahoo.com': json.dumps({'chart': {'result': [{'timestamp': [1774915200, 1775001600, 1775088000, 1778889600, 1782777600], 'indicators': {'quote': [{'close': [100.0, 102.0, 104.0, 110.0, 120.0]}]}}]}})})
+        with tempfile.TemporaryDirectory() as tmp:
+            rows = []
+            for cik, put_call in (('1', 'NONE'), ('2', 'CALL')):   # options get no price estimate: manager 2 stays as it was
+                rows.append(publish_manager(tmp, {'cik': cik, 'name': 'M' + cik, 'snapshots': [{'period': '2026-06-30', 'total_usd': 1200, 'positions': [
+                    {'cusip': '037833100', 'put_call': put_call, 'share_type': 'SH', 'shares': 10, 'value_usd': 1200}]}]}))
+            self.assertTrue(all('snapshots' not in r and r['cache'] for r in rows))
+            untouched = Path(tmp) / rows[1]['cache']
+            os.utime(untouched, (1, 1))
+            data = {'modules': {'holdings': {'managers': rows}, 'congress': {'records': []}}}
+            status = prices.apply_prices(data, c, {'ticker_batch': 5, 'cusip_batch': 10}, tmp)
+            managers = data['modules']['holdings']['managers']
+            self.assertTrue(all('snapshots' not in m for m in managers))       # nothing left hydrated in memory
+            self.assertEqual(status['counts']['positions_priced'], 1); self.assertEqual(status['counts']['positions_total'], 2)
+            first = load_manager(tmp, managers[0])['snapshots'][0]['positions'][0]
+            self.assertEqual(first['ticker'], 'AAPL'); self.assertAlmostEqual(first['price_avg_q'], 109.0)
+            shard = json.loads((Path(tmp) / 'shards/holdings/1-2026-06-30.json').read_text())
+            self.assertEqual(shard[0]['ticker'], 'AAPL')
+            self.assertEqual(untouched.stat().st_mtime, 1)                       # unchanged manager not rewritten
+            # past the time budget the remaining cached managers keep what was published and are counted
+            late = prices.apply_prices({'modules': {'holdings': {'managers': [dict(r) for r in rows]}}}, c, {'ticker_batch': 5, 'cusip_batch': 10, 'time_budget_minutes': 0}, tmp)
+            self.assertEqual(late['counts']['managers_deferred'], 2); self.assertEqual(late['counts']['positions_total'], 0)
+            self.assertIn('time budget', late['errors'][0])
+
+
 if __name__ == '__main__':
     unittest.main()
