@@ -36,8 +36,9 @@ DOW_PAGE = 'Historical_components_of_the_Dow_Jones_Industrial_Average'
 SNAP_FROM = dt.date(2024, 1, 1)                      # monthly revisions of the S&P 500 list from here (the change table ends)
 NDX_PAGE = 'Nasdaq-100'
 NDX_FROM = dt.date(2003, 1, 1)                       # the article's member list at each quarter's start from here
-NDX_PER_RUN = 90                                     # revisions read a run: a first run reads the rest the next times
-NDX_PARSER = 2                                       # a new ndx_members: the lists are read again (2: the Components section)
+NDX_PER_RUN = 100                                    # revisions read a run (2.5 s each): a first run reads the rest the next times
+NDX_PARSER_ALL = 2                                   # a new ndx_members: every list is read again (2: the Components section)
+NDX_PARSER = 3                                       # a better one: the revisions read as none are read again
 # Nasdaq-100 symbols of the past → the site's ticker of the same company (a share class it keeps one of, a rename the
 # S&P lists' CIKs do not reach)
 NDX_ALIASES = {'FB': 'META', 'PCLN': 'BKNG', 'GOOG': 'GOOGL', 'FISV': 'FI', 'SYMC': 'GEN', 'NLOK': 'GEN', 'CMCSK': 'CMCSA',
@@ -376,21 +377,29 @@ def collect(root, today=None):
         print('members: wikipedia', str(exc)[:200])
     try:                                                   # the Nasdaq-100's member list at each quarter's start
         nd = cache.setdefault('ndx', {})
-        if nd.get('parser', 1) != NDX_PARSER:
-            nd['snaps'], nd['parser'] = {}, NDX_PARSER
+        if nd.get('parser', 1) != NDX_PARSER_ALL:
+            nd['snaps'], nd['parser'], nd['why'] = {}, NDX_PARSER_ALL, {}
         nrev = revisions(NDX_PAGE, quarters(NDX_FROM, today), nd)
-        nsn = nd.setdefault('snaps', {})
-        todo = list(dict.fromkeys(str(r) for _, r in sorted(nrev.items()) if str(r) not in nsn))
-        why = {}
+        nsn, whyv = nd.setdefault('snaps', {}), nd.setdefault('why', {})
+        todo = list(dict.fromkeys(str(r) for _, r in sorted(nrev.items())
+                                  if str(r) not in nsn or (not nsn[str(r)] and (whyv.get(str(r)) or [0])[0] != NDX_PARSER)))
         for rid in todo[:NDX_PER_RUN]:
             h = revision_html(rid)
             nsn[rid] = ndx_members(h)
-            if not nsn[rid]:                               # what the page held instead, for the log
+            if nsn[rid]:
+                whyv.pop(rid, None)
+            else:                                          # what the page held instead, for the log
                 sec = components(h)
-                why[rid] = f"[{'section' if sec else 'no section'} tables={len(tables(sec or h))} li={(sec or h).count('<li')} nasdaq={(sec or h).count('NASDAQ')}]"
+                heads = [re.sub(r'<[^>]+>|\s+', ' ', x).strip()[:40] for x in re.findall(r'<h[23][^>]*>(.*?)</h[23]>', h, re.S)]
+                lis = [re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', x))).strip()[:80] for x in re.findall(r'<li[^>]*>(.*?)</li>', sec or h, re.S)[:3]]
+                text = re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', sec or '')))[:300]
+                whyv[rid] = [NDX_PARSER, {'section': bool(sec), 'tables': len(tables(sec or h)), 'li': (sec or h).count('<li'), 'heads': heads[:14], 'lines': lis, 'text': text}]
         if todo:
             print(f'members: nasdaq-100 lists {min(len(todo), NDX_PER_RUN)} read, {max(0, len(todo) - NDX_PER_RUN)} left;',
-                  ' '.join(f'{k}:{len(nsn.get(str(r)) or [])}{why.get(str(r), "")}' for k, r in sorted(nrev.items()) if str(r) in todo[:NDX_PER_RUN]), flush=True)
+                  ' '.join(f'{k}:{len(nsn.get(str(r)) or [])}' for k, r in sorted(nrev.items()) if str(r) in todo[:NDX_PER_RUN]), flush=True)
+            for k, r in sorted(nrev.items()):
+                if str(r) in todo[:NDX_PER_RUN] and str(r) in whyv:
+                    print('members: nasdaq-100 none in', k, json.dumps(whyv[str(r)][1], ensure_ascii=False)[:900], flush=True)
     except Exception as exc:                               # noqa: BLE001
         print('members: wikipedia nasdaq-100', str(exc)[:200])
     cache['fetched'] = stamp
