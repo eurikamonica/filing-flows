@@ -1,7 +1,7 @@
 {
   "status": "partial",
-  "failed_queue": 4,
-  "next_retry_at": "2026-11-05T12:55:46.160582+00:00",
+  "failed_queue": 5,
+  "next_retry_at": "2026-11-05T01:38:19.817712+00:00",
   "error_samples": [
     {
       "key": "0001660280-26-000046",
@@ -30,6 +30,13 @@
       "last_attempt": "2026-11-04T21:38:18+00:00",
       "error": "Response exceeds configured size; not marked complete",
       "next_retry_at": "2026-11-05T13:38:18.981931+00:00"
+    },
+    {
+      "key": "index:20261104",
+      "attempts": 1,
+      "last_attempt": "2026-11-05T00:38:19+00:00",
+      "error": "HTTP 403 from www.sec.gov",
+      "next_retry_at": "2026-11-05T01:38:19.817712+00:00"
     }
   ],
   "read": 0,
@@ -38,7 +45,7 @@
   "guidance_history": {
     "status": "ok",
     "companies": 1339,
-    "new_from_8k": 19,
+    "new_from_8k": 20,
     "read": 60,
     "errors": 0,
     "backfilled": 0,
@@ -47,19 +54,19 @@
     "re_read_done": 20,
     "discover_read": 0,
     "discovered": 0,
-    "written": 49,
-    "updated_at": "2026-11-04T23:42:22+00:00"
+    "written": 50,
+    "updated_at": "2026-11-05T00:39:08+00:00"
   },
-  "errors": 0,
+  "errors": 1,
   "on_file": 8252,
-  "index_days": 28,
+  "index_days": 27,
   "published": {
     "rows": 2862,
     "with_ticker": 2790
   },
-  "last_attempt": "2026-11-04T23:41:35+00:00",
+  "last_attempt": "2026-11-05T00:38:17+00:00",
   "last_success": null,
-  "last_partial_success": "2026-11-04T23:42:22+00:00",
-  "updated_at": "2026-11-04T23:42:22+00:00",
+  "last_partial_success": "2026-11-05T00:39:08+00:00",
+  "updated_at": "2026-11-05T00:39:08+00:00",
   "latest_filing_date": "2026-11-04"
 }
