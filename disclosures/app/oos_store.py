@@ -17,15 +17,21 @@ import numpy as np
 
 
 def save(path, tickers, dates, X, meta=None):
+    """Write the history, unless the file on disk already holds the same forecasts (then it is left as it is: the
+    history branch is pushed every few hours and the forecasts change once a week)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    X = np.asarray(X, dtype=np.float32)
+    tickers = [str(t) for t in tickers]
     days = np.asarray(dates).astype('datetime64[D]').astype(np.int64)
+    X16 = np.clip(np.asarray(X, dtype=np.float32), -6e4, 6e4).astype(np.float16)
+    old = load(path)
+    if old and old['tickers'] == tickers and np.array_equal(old['dates'].astype(np.int64), days) \
+            and np.array_equal(old['X'].astype(np.float16), X16, equal_nan=True):
+        return path
     m = dict(meta or {})
     m.setdefault('saved_at', dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'))
     tmp = path.with_name(path.stem + '.tmp.npz')
-    np.savez_compressed(tmp, tickers=np.array([str(t) for t in tickers]), days=days, X=np.clip(X, -6e4, 6e4).astype(np.float16),
-                        meta=np.array(json.dumps(m)))
+    np.savez_compressed(tmp, tickers=np.array(tickers), days=days, X=X16, meta=np.array(json.dumps(m)))
     tmp.replace(path)
     return path
 

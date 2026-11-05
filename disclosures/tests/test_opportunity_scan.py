@@ -37,6 +37,13 @@ class Store(unittest.TestCase):
             self.assertEqual(float(z['X'][1, 0]), 6e4, "clipped into float16's range")
             self.assertEqual(z['meta']['model'], 'm')
             self.assertIn('saved_at', z['meta'])
+            before = p.stat().st_mtime_ns, z['meta']['saved_at']
+            oos_store.save(p, ['A', 'B'], weeks(3), X, {'model': 'm', 'saved_at': 'later'})
+            self.assertEqual((p.stat().st_mtime_ns, oos_store.load(p)['meta']['saved_at']), before, 'the same forecasts: the file is left as it is')
+            X2 = X.copy()
+            X2[1, 1] = 0.2
+            oos_store.save(p, ['A', 'B'], weeks(3), X2, {'model': 'm', 'saved_at': 'later'})
+            self.assertEqual(oos_store.load(p)['meta']['saved_at'], 'later', 'a changed forecast is written')
             self.assertIsNone(oos_store.load(Path(d) / 'missing.npz'))
             (Path(d) / 'bad.npz').write_bytes(b'PK\x03\x04 torn')
             self.assertIsNone(oos_store.load(Path(d) / 'bad.npz'))
