@@ -14,7 +14,8 @@
                                       charts compute the RRG (RS-Ratio, RS-Momentum) from these in the browser
              t/<TICKER>.json          one company's weekly closes and volume, loaded when a chart traces it; once fetched
                                       with events also p (the close as traded, split-adjusted), d ([[week, dividend per
-                                      share]], weeks counted from start) and sp ([[week, split ratio]])
+                                      share]], weeks counted from start) and sp ([[week, split ratio]]); asof: when the
+                                      history was fetched (a week ending after it holds only the days traded by then)
              rotation-long.json       the momentum clock's variables (app/rotation.py) for 70 quarters (since 2009Q2, so
                                       the arrows and charts start in 2010)
              rotation-long-monthly.json  … and month by month since 2008, from the weekly closes
@@ -63,8 +64,11 @@ IDX_STOOQ = {k: q for k, _, q, _ in INDEXES}
 # explicit dates: with range=max Yahoo quietly answers with quarterly bars, whatever the interval asked for
 YAHOO = ('https://query1.finance.yahoo.com/v8/finance/chart/{s}?period1={p1}&period2={p2}&interval=1wk&events=div%2Csplit'
          '&includeAdjustedClose=true')
-FORMAT = 3                                        # state.json format: 1 held quarterly bars from range=max; 2 had no
-                                                  # dividends, splits or closes as traded — each fetched again in full
+FORMAT = 4                                        # state.json format: 1 held quarterly bars from range=max; 2 had no
+                                                  # dividends, splits or closes as traded — each fetched again in full;
+                                                  # 3 dated Yahoo's bars with New York's UTC offset on the day of the
+                                                  # fetch, so a fetch in winter put every summer week a week early — the
+                                                  # tickers fetched while New York kept standard time, fetched again
 STOOQ = 'https://stooq.com/q/d/l/?s={s}&i=d'
 REFRESH_DAYS = 6
 
@@ -88,7 +92,8 @@ def sig(x, n=6):
 def weekly_rows(days, add_volume=True):
     """[(date, close, volume or None[, close as traded])] in any order → [[friday, the week's last close, its volume[,
     its last close as traded]]] by week. Daily rows add up their volume; weekly bars (add_volume=False) already hold the
-    week's, and a second bar for the same week (Yahoo's latest day of an unfinished week) replaces it."""
+    week's, and a second bar for the same week (Yahoo's latest day, which it adds to the weekly answer even after the
+    week has closed) gives the latest close but not the volume: that is the one day's, the week's bar has them all."""
     weeks = {}
     for row in sorted(days, key=lambda r: r[0]):
         d, c, v = row[:3]
@@ -97,9 +102,27 @@ def weekly_rows(days, add_volume=True):
             continue
         k = friday(d).isoformat()
         w = weeks.get(k)
-        weeks[k] = [k, c, ((w[2] if w else 0) + (v or 0)) if add_volume else (v or (w[2] if w else 0)),
+        weeks[k] = [k, c, ((w[2] if w else 0) + (v or 0)) if add_volume else max(v or 0, w[2] if w else 0),
                     p if p is not None and math.isfinite(p) and p > 0 else None]
     return [[k, sig(c), int(v)] + ([sig(p)] if p is not None else []) for k, c, v, p in (weeks[k] for k in sorted(weeks))]
+
+
+def _zone(name):
+    try:
+        from zoneinfo import ZoneInfo
+        return ZoneInfo(name) if name else None
+    except Exception:                               # no time-zone database: the offset of the answer, with a margin
+        return None
+
+
+def bar_day(ts, zone=None, off=0):
+    """The exchange's calendar day of a bar's timestamp. Yahoo stamps each weekly bar at midnight of its Monday, New York
+    time — 04:00 UTC in summer, 05:00 in winter — and gives one UTC offset, today's: read with it, a winter fetch put every
+    summer bar on the Sunday before (a week early) and a summer fetch was right. The exchange's own zone dates each bar
+    by its own date's offset; without the zone database, today's offset and six hours keep the Monday a Monday."""
+    if zone is not None:
+        return dt.datetime.fromtimestamp(ts, zone).date()
+    return dt.datetime.fromtimestamp(ts + off + 6 * 3600, dt.timezone.utc).date()
 
 
 def parse_yahoo(payload):
@@ -113,13 +136,14 @@ def parse_yahoo(payload):
     adj = ((ind.get('adjclose') or [{}])[0] or {}).get('adjclose')
     closes, vols = adj or q.get('close') or [], q.get('volume') or []
     traded = (q.get('close') or []) if adj else []          # split-adjusted, not for dividends (market value, the price line)
-    off = ((r.get('meta') or {}).get('gmtoffset') or 0)
+    meta = r.get('meta') or {}
+    off, zone = meta.get('gmtoffset') or 0, _zone(meta.get('exchangeTimezoneName'))
     days = []
     for i, ts in enumerate(stamps):
         c = closes[i] if i < len(closes) else None
         if c is None:
             continue
-        d = dt.datetime.fromtimestamp(ts + off, dt.timezone.utc).date()
+        d = bar_day(ts, zone, off)
         p = traded[i] if i < len(traded) and traded[i] is not None else None
         days.append((d, float(c), vols[i] if i < len(vols) and vols[i] is not None else None) + ((float(p),) if p is not None else ()))
     rows = weekly_rows(days, add_volume=False)
@@ -133,8 +157,9 @@ def yahoo_events(payload):
     """{'div': [[ex-date, amount per share]], 'split': [[date, new shares per old share]]} from a chart answer
     (amounts adjusted for later splits, like the closes)."""
     r = (((payload or {}).get('chart') or {}).get('result') or [{}])[0] or {}
-    ev, off = r.get('events') or {}, ((r.get('meta') or {}).get('gmtoffset') or 0)
-    day = lambda e, k: dt.datetime.fromtimestamp(int(e.get('date') or k) + off, dt.timezone.utc).date().isoformat()
+    ev, meta = r.get('events') or {}, r.get('meta') or {}
+    off, zone = meta.get('gmtoffset') or 0, _zone(meta.get('exchangeTimezoneName'))
+    day = lambda e, k: bar_day(int(e.get('date') or k), zone, off).isoformat()      # in the exchange's time, as the bars
     div, split = {}, {}
     for k, e in (ev.get('dividends') or {}).items():
         a = e.get('amount')
@@ -285,15 +310,34 @@ def universe(site_index, extra=()):
     return list(dict.fromkeys(out))
 
 
+def standard_time(when):
+    """Whether New York kept standard time (UTC−5, early November to mid March) at an ISO time."""
+    t = dt.datetime.fromisoformat(str(when).replace('Z', '+00:00'))
+    t = t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
+    zone = _zone('America/New_York')
+    if zone is not None:
+        return t.astimezone(zone).utcoffset() == dt.timedelta(hours=-5)
+    y = t.year                                       # since 2007: the second Sunday of March to the first of November, 2:00
+    mar = dt.date(y, 3, 8) + dt.timedelta(days=(6 - dt.date(y, 3, 8).weekday()) % 7)
+    nov = dt.date(y, 11, 1) + dt.timedelta(days=(6 - dt.date(y, 11, 1).weekday()) % 7)
+    on = dt.datetime.combine(mar, dt.time(7), dt.timezone.utc)
+    off = dt.datetime.combine(nov, dt.time(6), dt.timezone.utc)
+    return not (on <= t.astimezone(dt.timezone.utc) < off)
+
+
 def collect(client, root, tickers, batch=300, refresh=400, minutes=25.0, refresh_days=REFRESH_DAYS, first=()):
     """Fetch up to `batch` tickers never fetched and refresh up to `refresh` stale ones (oldest first), within `minutes`.
     `first` (owner's request) is fetched in full again even when on file."""
     root = Path(root)
     state = read_json(root / 'state.json', {})
-    if state.get('format', 1) < FORMAT:               # an older format: every ticker is fetched again
+    if state.get('format', 1) < 3:                    # an older format: every ticker is fetched again
         for info in (state.get('tickers') or {}).values():
             info.pop('fetched_at', None)
-        state['format'] = FORMAT
+    elif state.get('format', 1) < FORMAT:             # format 3: those fetched in winter (summer weeks a week early)
+        for info in (state.get('tickers') or {}).values():
+            if info.get('fetched_at') and standard_time(info['fetched_at']):
+                info.pop('fetched_at', None)
+    state['format'] = FORMAT
     tk = state.setdefault('tickers', {})
     t0, today = time.monotonic(), dt.datetime.now(dt.timezone.utc)
     stale_before = (today - dt.timedelta(days=refresh_days)).isoformat()
@@ -568,7 +612,7 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
         names = json.loads((Path(site_data) / 'index.json').read_text(encoding='utf-8')).get('sector_names') or {}
     except (OSError, ValueError, TypeError):
         pass
-    series, written, extra, docs = {}, 0, {}, {}
+    series, written, extra, docs, fetched = {}, 0, {}, {}, {}
     meta = {c['t']: c for c in companies}
     idx_meta = {k: {'t': k, 'n': name, 's': 'index'} for k, _, _, name in INDEXES}   # their t files only (not in rrg.json)
     wk = {w: i for i, w in enumerate(weeks)}
@@ -583,6 +627,7 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
         c = [sig(x, 5) for x in c]                     # five significant digits and volume in thousands keep the files small
         v = [None if x is None else int(sig(x / 1000, 3)) for x in v]
         series[t] = (f, c, v)
+        fetched[t] = doc.get('fetched_at')
         if t in meta:
             docs[t] = doc
         ev = doc.get('ev')
@@ -612,6 +657,8 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
     for t, (f, c, v) in series.items():
         m = meta.get(t) or idx_meta.get(t) or {}
         doc = {'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v, **extra.get(t, {})}
+        if fetched.get(t):                          # the last week on file holds only the days traded by then
+            doc['asof'] = fetched[t]
         b = bench_of.get(t)
         if b:                                       # the benchmarks on the company's own weeks (same start)
             doc.update(bl=b['label'], blevel=b['level'], bcode=b['code'], bid=f"{b['level']}:{b['code']}", bn=b['members'], bx=b['ex'][f:f + len(c)], bi=b['all'][f:f + len(c)])

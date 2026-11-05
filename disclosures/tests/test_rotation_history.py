@@ -52,7 +52,8 @@ class Weeks(unittest.TestCase):
         self.assertEqual(len(rows), 10)
         self.assertEqual(rows[0][0], '2010-01-08')
         self.assertAlmostEqual(rows[0][1], 50 * 0.98, places=3)
-        self.assertEqual(rows[-1][2], 5)                  # the unfinished week's latest bar replaces it, volume not added
+        self.assertAlmostEqual(rows[-1][1], 50 * 0.98 * math.exp(0.002 * 9 + 0.08 * math.sin(2 * math.pi * 9 / 40)) * 1.01, places=3)
+        self.assertEqual(rows[-1][2], 1_009_000)          # the latest day's bar gives the close; the volume stays the week's
         with self.assertRaises(ValueError):
             RH.parse_yahoo({'chart': {'result': None, 'error': {'description': 'No data found'}}})
         quarterly = yahoo_payload(40, extra_day=False)
@@ -60,6 +61,43 @@ class Weeks(unittest.TestCase):
         r['timestamp'] = [t + 13 * 7 * 86400 * i - 7 * 86400 * i for i, t in enumerate(r['timestamp'])]   # bars 13 weeks apart
         with self.assertRaises(ValueError):                                   # what range=max answered: refused
             RH.parse_yahoo(quarterly)
+
+    def test_bars_dated_in_new_york_time_whatever_the_season_of_the_fetch(self):
+        """Yahoo stamps a weekly bar at midnight of its Monday, New York time (04:00 UTC in summer, 05:00 in winter) and
+        gives one offset, today's: a fetch in November read with it put every summer week a week early (seen on the
+        site: FITB's, MTB's and ZION's weekly returns a week ahead of their peers' in every summer since 1990)."""
+        mondays = [dt.date(2026, 3, 2) + dt.timedelta(days=7 * i) for i in range(40)]       # across March 8 and November 1
+        def payload(gmtoffset, zone=True):
+            ts = []
+            for d in mondays:
+                summer = dt.date(2026, 3, 8) <= d < dt.date(2026, 11, 1)
+                ts.append(int(dt.datetime.combine(d, dt.time(4 if summer else 5), dt.timezone.utc).timestamp()))
+            n = len(ts)
+            meta = {'gmtoffset': gmtoffset, **({'exchangeTimezoneName': 'America/New_York'} if zone else {})}
+            return {'chart': {'result': [{'meta': meta, 'timestamp': ts, 'indicators': {'quote': [{'close': [10.0 + i for i in range(n)], 'volume': [100] * n}]}}]}}
+        want = [RH.friday(d).isoformat() for d in mondays]
+        for off in (-18000, -14400):                       # fetched in winter, fetched in summer
+            for zone in (True, False):                     # the exchange's zone, or its offset with a margin
+                rows = RH.parse_yahoo(payload(off, zone))
+                self.assertEqual([r[0] for r in rows], want, (off, zone))
+                self.assertEqual([r[1] for r in rows], [10.0 + i for i in range(len(mondays))])
+        self.assertEqual(RH.bar_day(int(dt.datetime(2026, 11, 4, 21, tzinfo=dt.timezone.utc).timestamp()), None, -18000).isoformat(), '2026-11-04')
+
+    def test_standard_time(self):
+        for zone in (True, False):
+            saved = RH._zone
+            if not zone:
+                RH._zone = lambda name: None                 # no time-zone database: the US rule since 2007
+            try:
+                self.assertTrue(RH.standard_time('2026-11-04T01:39:03+00:00'))
+                self.assertFalse(RH.standard_time('2026-10-31T04:22:51+00:00'))
+                self.assertFalse(RH.standard_time('2026-11-01T05:59:00+00:00'))
+                self.assertTrue(RH.standard_time('2026-11-01T06:00:00+00:00'))
+                self.assertTrue(RH.standard_time('2026-03-08T06:59:00+00:00'))
+                self.assertFalse(RH.standard_time('2026-03-08T07:00:00+00:00'))
+                self.assertTrue(RH.standard_time('2026-01-15T12:00:00Z'))
+            finally:
+                RH._zone = saved
 
     def test_align_on_the_grid(self):
         weeks = ['2026-09-25', '2026-10-02', '2026-10-09', '2026-10-16']
@@ -85,6 +123,19 @@ class CollectAndBuild(unittest.TestCase):
         RH.collect(c, root, ['SPY'], batch=5, refresh=0)
         self.assertEqual(len(c.calls), 1)
         self.assertEqual(json.loads((root / 'state.json').read_text())['format'], RH.FORMAT)
+
+    def test_format_3_fetches_again_what_was_fetched_in_winter(self):
+        root = self.dir / 'hist'
+        root.mkdir()
+        (root / 'state.json').write_text(json.dumps({'format': 3, 'tickers': {
+            'SPY': {'fetched_at': '2026-10-31T04:22:16+00:00'}, 'FITB': {'fetched_at': '2026-11-04T01:39:03+00:00'}}}))
+        c = FakeClient()
+        RH.collect(c, root, ['SPY', 'FITB'], batch=5, refresh=0)
+        self.assertEqual(len(c.calls), 1)
+        self.assertIn('/FITB?', c.calls[0])
+        self.assertIn('period1=%d' % int(RH.HISTORY_FROM.timestamp()), c.calls[0])   # in full
+        st = json.loads((root / 'state.json').read_text())
+        self.assertEqual((st['format'], st['tickers']['SPY']['fetched_at']), (RH.FORMAT, '2026-10-31T04:22:16+00:00'))
 
     def test_collect_resumes_backs_off_and_refreshes(self):
         root = self.dir / 'hist'
@@ -147,6 +198,7 @@ class CollectAndBuild(unittest.TestCase):
         self.assertEqual(aaa['d'], [])                                        # fetched with events: no dividends paid
         self.assertEqual(len(aaa['p']), len(aaa['c']))                        # the close as traded, week by week
         self.assertGreater(aaa['p'][5], aaa['c'][5])                          # (the fake's adjusted close is 2% lower)
+        self.assertRegex(aaa['asof'], r'^20\d\d-\d\d-\d\dT')                      # when it was fetched: the last week's volume so far
         self.assertEqual(out['rank']['companies'], 5)                         # the studio's leaderboards
         self.assertTrue((pub / 'rank' / 'meta.json').exists() and (pub / 'rank' / 'q-rev.json').exists())
         self.assertTrue((pub / 't' / 'BRK-B.json').exists())
