@@ -597,7 +597,8 @@
   const mIndex = (ms, m0) => { const d = new Date(ms); return (d.getUTCFullYear() - m0.y) * 12 + d.getUTCMonth() - m0.m; };
   const mEnd = (i, m0) => Date.UTC(m0.y, m0.m + i + 1, 0);
   // index membership (disclosures/app/index_members.py): now from the tracking ETFs' holdings, before from Wikipedia's
-  // S&P 500 changes and the Dow's history; the other indices only from when the site began keeping them
+  // S&P 500 changes, the Dow's history and the Nasdaq-100's member list each quarter; the other indices only from when
+  // the site began keeping them (members.json history names what it has)
   const IDX = { sp500: 'S&P 500', ndx: 'Nasdaq-100', dji: 'Dow 30', sp400: 'S&P MidCap 400', sp600: 'S&P SmallCap 600', r1000: 'Russell 1000', r2000: 'Russell 2000' };
   const members = () => json(HUB + 'etf/members.json');
   function isMember(MB, ticker, key, day, now) {
@@ -661,7 +662,7 @@
     for (const f of files) if (!Array.isArray(F[f])) throw new Error('A leaderboard file is missing (' + f + ')');
     const MB = st.idx ? await members() : null;
     if (st.idx && !MB) out.notes.add('Index membership is not published yet: every company is ranked');
-    if (MB && st.idx && st.idxw !== 'now' && !['sp500', 'dji'].includes(st.idx)) out.notes.add(`${IDX[st.idx]}: membership history only from ${((MB.history || {}).others || 'now').replace(/^from /, '')} — before that, today's members`);
+    if (MB && st.idx && st.idxw !== 'now' && !(MB.history || {})[st.idx]) out.notes.add(`${IDX[st.idx]}: membership history only from ${((MB.history || {}).others || 'now').replace(/^from /, '')} — before that, today's members`);
     const N = clamp(Math.round(+st.top || 10), 3, 25), desc = st.ord !== 'asc', fundamental = need.some((f) => f.startsWith('q-'));
     const step = st.step === 'w' && !fundamental ? 'w' : st.step === 'q' ? 'q' : 'm';
     if (st.step === 'w' && fundamental) out.notes.add('Company figures change once a quarter, so the steps are monthly');
@@ -1000,10 +1001,10 @@
       return { date: day, date_basis: 'reconstructed', source: 'Reconstructed from the index members and their market values', positions, sector_weights: sw, on_file: list.length, members: membersThen };
     }).filter(Boolean);
     // the first quarters of the site's prices (mid-1993 on) price only a few members: from the first with a quarter of them
-    const history = ['sp500', 'dji'].includes(idx), size = IDX_N[idx] || 0, since = ((MB.history || {}).others || '').replace(/^from /, '');
+    const histNote = (MB.history || {})[idx] || '', history = !!histNote, size = IDX_N[idx] || 0, since = ((MB.history || {}).others || '').replace(/^from /, '');
     const need = o.need || Math.max(5, Math.ceil(0.25 * (history ? size : Math.max(...snaps.map((x) => x.members), 0) || size)));
     const k0 = snaps.findIndex((x) => x.on_file >= need), cut = k0 < 0 ? snaps.length : k0;
-    return { snaps: snaps.slice(cut), how, history, since, size, thin: cut ? snaps[cut - 1].date : null };
+    return { snaps: snaps.slice(cut), how, history, histNote, since, size, thin: cut ? snaps[cut - 1].date : null };
   }
   async function buildSectors(st, out) {
     const meta = await rankMeta(), m0 = meta._m0;
@@ -3361,7 +3362,7 @@
       h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
       h += `<label for="st-capby">Measured</label>${sel('st-capby', [['then', 'At each step (from 2009)'], ['now', 'Today']], st.capby)}`;
-      h += `<div class="st-help">Every US-listed company the site draws, ranked again at each step. Today's companies only: those delisted, merged or bankrupt are missing from earlier years. “At each step” uses the S&P 500's and the Dow's membership history; the other indices keep theirs from when the site began.</div>`;
+      h += `<div class="st-help">Every US-listed company the site draws, ranked again at each step. Today's companies only: those delisted, merged or bankrupt are missing from earlier years. “At each step” uses the membership history the site has (the S&P 500's and the Dow's, the Nasdaq-100's from Wikipedia's lists each quarter); the other indices keep theirs from when the site began.</div>`;
       return h;
     }
     function actualSide() {
@@ -3661,11 +3662,11 @@
           const maxTxt = `${fmtD(start)} → today. SEC’s data sets of fund portfolios begin ${fmtD(NPORT0)}${inc ? (inc > NPORT0 ? `; ${esc(sym)} launched ${fmtD(inc)}` : `; ${esc(sym)} launched ${fmtD(inc)}, so its earlier years are not in them`) : ''}. Each quarter-end turns up about 60 days after it; some funds’ first reports come later.`;
           if (st.aw === 'index' && IDX[st.at]) {
             // before the tracking fund's first report: the index rebuilt from its members, as the Sector weights video does
-            const hist = ['sp500', 'dji'].includes(st.at), ix = IDX[st.at], first = lo || NPORT0;
+            const MB = await members(), hist = !!((MB && MB.history) || {})[st.at], ix = IDX[st.at], first = lo || NPORT0;
             const wt = { dji: 'weighted by their share prices, as the Dow is', ndx: 'weighted by their market values, capped as the Nasdaq-100 caps them' }[st.at] || 'weighted by their market values';
             const back = [['1999-12-31', 'From 1999'], ['2008-12-31', 'From 2008'], ['2012-01-31', 'From 2012']].filter(([d]) => d < first)
               .map(([d, t]) => `<button type="button" class="pill" data-range-from="${d}"${st.from === d ? ' aria-pressed="true"' : ''}>${t}</button>`).join(' ');
-            set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Before ${fmtD(first)}:</b> start earlier and the ${esc(ix)} is reconstructed quarter by quarter — its members${hist ? ' at the time' : ' (today’s: the site keeps its membership only from Oct 2026)'} ${wt}, as the Sector weights video does; marked “reconstructed” on the video. Prices on the site begin in 1993. ${back}`, '1993-06-30', hi);
+            set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Before ${fmtD(first)}:</b> start earlier and the ${esc(ix)} is reconstructed quarter by quarter — its members${hist ? ' at the time' : ' (today’s: the site keeps this index’s membership only from Oct 2026)'} ${wt}, as the Sector weights video does; marked “reconstructed” on the video. Prices on the site begin in 1993. ${back}`, '1993-06-30', hi);
             return;
           }
           set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Max:</b> ${maxTxt}`, lo, hi);

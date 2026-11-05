@@ -211,6 +211,7 @@
       out.actual.reconTo = reported0 ? day(reported0) : Infinity; out.actual.recon = recon.length; out.actual.reconLast = day(r1); out.actual.reconHow = R.how;
       out.notes.add(`${r0} to ${r1}: RECONSTRUCTED, not the fund's holdings — the ${ref[0]}'s members at each quarter-end weighted by their ${how}, as the Sector weights video computes them.` + (reported0 ? ` From ${reported0}: ${ticker}'s reported holdings (SEC N-PORT and the sponsor's files).` : ''));
       const lo = recon.reduce((a, x) => (x.on_file < a.on_file ? x : a), recon[0]), hi = recon.reduce((a, x) => (x.on_file > a.on_file ? x : a), recon[0]);
+      if (R.history && R.histNote) out.notes.add(`${ref[0]} membership: ${R.histNote}.`);
       if (R.history && R.size) out.notes.add(`Members on file: ${lo.on_file} of the ${ref[0]}'s ${R.size} (${lo.date})${hi !== lo ? ' to ' + hi.on_file + ' (' + hi.date + ')' : ''}. Companies delisted, merged or bankrupt since are not on the site: the members on file share the whole index between them.`);
       if (R.thin) out.notes.add(`Up to ${R.thin}: too few of the members have prices on the site (from mid-1993) — left out.`);
       if (!R.history) out.notes.add(`${ref[0]}: membership history only from ${R.since || 'when the site began keeping it'} — before that, today's members are used: former members are left out and today's are counted in years before they joined (survivorship).`);

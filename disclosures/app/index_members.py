@@ -8,8 +8,10 @@ pages show the tags, the video studio's leaderboards filter by them).
   before   S&P 500: Wikipedia's dated table of additions and removals — the last revision of “List of S&P 500
            companies” that carried it — then the member list month by month in the page's later revisions (a removal
            dated to the month it left the list). Dow: “Historical components of the Dow Jones Industrial Average”, one
-           table per change, matched to the site's companies by name. The other indices from this module's first build
-           on (each build's members kept in cache/members/seen.json), so their “former” members grow from now.
+           table per change, matched to the site's companies by name. Nasdaq-100: the member list of the article
+           “Nasdaq-100” in the revision in force at each quarter's start since 2003 (joins and departures dated to the
+           quarter they show; the first list's members since before it). The other indices from this module's first
+           build on (each build's members kept in cache/members/seen.json), so their “former” members grow from now.
 Tickers of the past are mapped to today's through the CIK in Wikipedia's member lists where they carry one (FB → META);
 companies delisted or gone are not on the site and are left out.
 """
@@ -32,6 +34,13 @@ WIKI = 'https://en.wikipedia.org/w/api.php'
 SP500_PAGE = 'List_of_S&P_500_companies'
 DOW_PAGE = 'Historical_components_of_the_Dow_Jones_Industrial_Average'
 SNAP_FROM = dt.date(2024, 1, 1)                      # monthly revisions of the S&P 500 list from here (the change table ends)
+NDX_PAGE = 'Nasdaq-100'
+NDX_FROM = dt.date(2003, 1, 1)                       # the article's member list at each quarter's start from here
+NDX_PER_RUN = 45                                     # revisions read a run: a first run reads the rest the next times
+# Nasdaq-100 symbols of the past → the site's ticker of the same company (a share class it keeps one of, a rename the
+# S&P lists' CIKs do not reach)
+NDX_ALIASES = {'FB': 'META', 'PCLN': 'BKNG', 'GOOG': 'GOOGL', 'FISV': 'FI', 'SYMC': 'GEN', 'NLOK': 'GEN', 'CMCSK': 'CMCSA',
+               'FOX': 'FOXA', 'NWS': 'NWSA', 'LBTYK': 'LBTYA', 'LBTYB': 'LBTYA', 'DISCA': 'WBD', 'DISCK': 'WBD', 'LILAK': 'LILA'}
 
 
 def get(url, timeout=40, tries=4):
@@ -180,16 +189,17 @@ def sp500_changes(tabs):
     return out
 
 
-def revisions(title, starts, cache):
+def revisions(title, starts, cache, pages=20):
     """{month start: revision id} — the revision in force at each date (one request lists every revision since the first
-    month; a past month's revision never changes, so it is kept)."""
+    month; a past month's revision never changes, so it is kept). A title moved since is followed; when the listing
+    stops short (pages × 500 revisions), only the dates it reaches past are given a revision, the rest the next time."""
     have = cache.get('rev', {})
     need = [d for d in starts if d.isoformat() not in have]
     if need:
-        q = urllib.parse.urlencode({'action': 'query', 'prop': 'revisions', 'titles': title, 'rvlimit': 'max', 'rvdir': 'newer',
+        q = urllib.parse.urlencode({'action': 'query', 'prop': 'revisions', 'titles': title, 'rvlimit': 'max', 'rvdir': 'newer', 'redirects': 1,
                                     'rvstart': (min(need) - dt.timedelta(days=120)).isoformat() + 'T00:00:00Z', 'rvprop': 'ids|timestamp', 'format': 'json'})
         revs, cont = [], {}
-        for _ in range(20):
+        for _ in range(pages):
             body = json.loads(get(WIKI + '?' + q + ('&' + urllib.parse.urlencode(cont) if cont else '')))
             page = next(iter(body['query']['pages'].values()))
             revs += [(r['timestamp'][:10], r['revid']) for r in page.get('revisions') or []]
@@ -197,9 +207,10 @@ def revisions(title, starts, cache):
             if not cont:
                 break
         revs.sort()
+        reach = '9999' if not cont else (revs[-1][0] if revs else '')
         for d in need:
             before = [rid for day, rid in revs if day < d.isoformat()]
-            if before:
+            if before and d.isoformat() <= reach:
                 have[d.isoformat()] = before[-1]
     cache['rev'] = have
     return have
@@ -216,6 +227,67 @@ def months(start, today):
         out.append(d)
         d = (d.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
     return out
+
+
+def quarters(start, today):
+    return [d for d in months(start, today) if d.month in (1, 4, 7, 10)]
+
+
+# ------------------------------------------------------------------ Wikipedia: the Nasdaq-100's member lists
+TICK = re.compile(r'[A-Z]{1,5}')
+
+
+def ndx_members(page_html):
+    """The member list of a revision of “Nasdaq-100” → sorted symbols, [] when nothing reads as one (80–115 symbols):
+    a table with a Ticker / Symbol column, else the “NASDAQ: XXXX” links of a list, else lines ending “(XXXX)”."""
+    ok = lambda got: sorted(got) if 80 <= len(got) <= 115 else None
+    for t in tables(page_html):
+        rows = t['rows']
+        hi = next((i for i, r in enumerate(rows[:3]) if any(re.search(r'\b(ticker|symbol)\b', c, re.I) for c in r['cells'])), None)
+        if hi is None:
+            continue
+        col = next(i for i, c in enumerate(rows[hi]['cells']) if re.search(r'\b(ticker|symbol)\b', c, re.I))
+        got = set()
+        for r in rows[hi + 1:]:
+            c = r['cells']
+            if col < len(c):
+                v = sym(re.sub(r'^\s*(nasdaq|nyse)\s*:\s*', '', c[col], flags=re.I))
+                if TICK.fullmatch(v):
+                    got.add(v)
+        if ok(got):
+            return ok(got)
+    text = html.unescape(re.sub(r'<[^>]+>', ' ', page_html))
+    got = set(re.findall(r'NASDAQ\s*:\s*([A-Z]{1,5})\b', text))
+    if ok(got):
+        return ok(got)
+    got = set()
+    for li in re.findall(r'<li[^>]*>(.*?)</li>', page_html, re.S):
+        m = re.search(r'\(([A-Z]{1,5})\)\s*$', html.unescape(re.sub(r'<[^>]+>', '', li)).strip())
+        if m:
+            got.add(m.group(1))
+    return ok(got) or []
+
+
+def ndx_history(cache, T):
+    """({ticker: [[from, to or None], …]}, first list's date, last list's date) from the article's member list at each
+    quarter's start: joins and departures dated to the quarter they show, the first list's members since before it. A
+    symbol missing from a single list between two that have it (an edit in progress) stays a member."""
+    nd = cache.get('ndx') or {}
+    snaps = nd.get('snaps') or {}
+    seq = [(k, {T(x) for x in snaps[str(r)]} - {None, ''}) for k, r in sorted((nd.get('rev') or {}).items()) if snaps.get(str(r))]
+    if not seq:
+        return {}, None, None
+    for i in range(1, len(seq) - 1):
+        seq[i][1].update((seq[i - 1][1] & seq[i + 1][1]) - seq[i][1])
+    iv = {t: [[None, None]] for t in seq[0][1]}
+    for (_, a), (k2, b) in zip(seq, seq[1:]):
+        for t in b - a:
+            iv.setdefault(t, []).append([k2, None])
+        for t in a - b:
+            open_ = [x for x in iv.get(t, []) if x[1] is None]
+            if open_:
+                open_[-1][1] = k2
+    return iv, seq[0][0], seq[-1][0]
 
 
 # ------------------------------------------------------------------ Wikipedia: the Dow's compositions
@@ -283,6 +355,18 @@ def collect(root, today=None):
             snaps[str(rid)] = {'members': [[m['symbol'], m['cik']] for m in sp500_members(tabs)], 'changes': sp500_changes(tabs)}
     except Exception as exc:                               # noqa: BLE001 — what was fetched is kept
         print('members: wikipedia', str(exc)[:200])
+    try:                                                   # the Nasdaq-100's member list at each quarter's start
+        nd = cache.setdefault('ndx', {})
+        nrev = revisions(NDX_PAGE, quarters(NDX_FROM, today), nd)
+        nsn = nd.setdefault('snaps', {})
+        todo = list(dict.fromkeys(str(r) for _, r in sorted(nrev.items()) if str(r) not in nsn))
+        for rid in todo[:NDX_PER_RUN]:
+            nsn[rid] = ndx_members(revision_html(rid))
+        if todo:
+            print(f'members: nasdaq-100 lists {min(len(todo), NDX_PER_RUN)} read, {max(0, len(todo) - NDX_PER_RUN)} left;',
+                  ' '.join(f'{k}:{len(nsn.get(str(r)) or [])}' for k, r in sorted(nrev.items()) if str(r) in todo[:NDX_PER_RUN]), flush=True)
+    except Exception as exc:                               # noqa: BLE001
+        print('members: wikipedia nasdaq-100', str(exc)[:200])
     cache['fetched'] = stamp
     cpath.write_text(json.dumps(cache, separators=(',', ':')), encoding='utf-8')
     return cache
@@ -295,6 +379,21 @@ def same_company(a, b):
     """Two names of one company (a ticker is reused: CCI was Countrywide Credit in 1997, Crown Castle now)."""
     na, nb = norm_name(a).split(), norm_name(b).split()
     return not na or not nb or na[0] == nb[0] or na[0].startswith(nb[0]) or nb[0].startswith(na[0])
+
+
+def symbol_map(cache, cik_ticker, revs=None, snaps=None):
+    """Wikipedia symbol → today's ticker, through the CIK of the S&P 500 member lists where known (FB → META)."""
+    snaps = snaps if snaps is not None else dict(cache.get('snaps') or {})
+    revs = revs if revs is not None else sorted((k, str(v)) for k, v in (cache.get('rev') or {}).items())
+    tick_of = {}
+    for _, r in revs:
+        for s, cik in (snaps.get(r) or {}).get('members', []):
+            if cik and cik in cik_ticker:
+                tick_of.setdefault(s, cik_ticker[cik])
+    for m in cache.get('sp500_now') or []:
+        if m.get('cik') and m['cik'] in cik_ticker:
+            tick_of[m['symbol']] = cik_ticker[m['cik']]
+    return tick_of
 
 
 def sp500_history(cache, cik_ticker, ticker_name=None):
@@ -310,14 +409,7 @@ def sp500_history(cache, cik_ticker, ticker_name=None):
         pass
     ticker_name = ticker_name or {}
     with_changes = [(k, r) for k, r in revs if r in snaps and snaps[r].get('changes')]
-    tick_of = {}                                           # Wikipedia symbol → today's ticker, through the CIK where known
-    for _, r in revs:
-        for s, cik in (snaps.get(r) or {}).get('members', []):
-            if cik and cik in cik_ticker:
-                tick_of.setdefault(s, cik_ticker[cik])
-    for m in cache.get('sp500_now') or []:
-        if m.get('cik') and m['cik'] in cik_ticker:
-            tick_of[m['symbol']] = cik_ticker[m['cik']]
+    tick_of = symbol_map(cache, cik_ticker, revs, snaps)
     T = lambda s: tick_of.get(s, s)
     iv = {}
     if with_changes:
@@ -419,6 +511,19 @@ def build(root, by, pub, site_companies=None, today=None, fetch=True):
         if c.get('ticker') and c.get('name'):
             ticker_name.setdefault(sym(c['ticker']), c['name'])
     hist = {'sp500': sp500_history(cache, cik_ticker, ticker_name), 'dji': dow_history(cache, name_ticker)}
+    tick_of = symbol_map(cache, cik_ticker)
+    nd_iv, nd_first, nd_last = ndx_history(cache, lambda x: NDX_ALIASES.get(x) or tick_of.get(x, x))
+    if nd_iv and nd_last and nd_last >= (today - dt.timedelta(days=200)).isoformat() and now.get('ndx'):
+        for t, lst in nd_iv.items():                       # today's tracker closes it: gone from QQQ after the last list
+            if t not in now['ndx']:
+                for x in lst:
+                    if x[1] is None:
+                        x[1] = nd_last
+        for t in now['ndx']:                               # in QQQ but in no list of the article: from the last list
+            lst = nd_iv.setdefault(t, [])
+            if not any(x[1] is None for x in lst):
+                lst.append([nd_last, None])
+        hist['ndx'] = nd_iv
     # this module's own record: when each ticker was first and last seen in each index's tracker
     spath = root / 'cache' / 'members' / 'seen.json'
     try:
@@ -474,11 +579,14 @@ def build(root, by, pub, site_companies=None, today=None, fetch=True):
     doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
            'indexes': {k: {'name': n, 'source': src.get(k), 'n': len(now.get(k, ()))} for k, n, _, _ in INDEXES},
            'history': {'sp500': 'Wikipedia: the dated change table and the member list month by month since 2024',
-                       'dji': 'Wikipedia: the historical components, one table per change', 'others': 'from ' + min((v[0] for s in seen.values() for v in s.values()), default=day)},
+                       'dji': 'Wikipedia: the historical components, one table per change',
+                       **({'ndx': f"Wikipedia: the Nasdaq-100 article's member list at each quarter's start since {nd_first}; before it, that first list"} if 'ndx' in hist else {}),
+                       'others': 'from ' + min((v[0] for s in seen.values() for v in s.values()), default=day)},
            'rows': rows,
            'note': ("Now: the full holdings of the ETFs that track each index. Before: Wikipedia's S&P 500 change table and member lists, "
-                    "and the Dow's historical components; the other indices from this page's first build on. Tickers of the past are mapped "
-                    "to today's through the CIK where Wikipedia gives one.")}
+                    "and the Dow's historical components" + (", the Nasdaq-100 article's member list each quarter" if 'ndx' in hist else '') +
+                    "; the other indices from this page's first build on. Tickers of the past are mapped to today's through the CIK where Wikipedia gives one.")}
     pub.mkdir(parents=True, exist_ok=True)
     (pub / 'members.json').write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')
-    return {k: v['n'] for k, v in doc['indexes'].items()} | {'rows': len(rows), 'sp500_hist': len(hist['sp500']), 'dji_hist': len(hist['dji'])}
+    return {k: v['n'] for k, v in doc['indexes'].items()} | {'rows': len(rows), 'sp500_hist': len(hist['sp500']), 'dji_hist': len(hist['dji']),
+                                                            'ndx_hist': len(hist.get('ndx') or {}), 'ndx_lists': sum(1 for v in ((cache.get('ndx') or {}).get('snaps') or {}).values() if v)}
