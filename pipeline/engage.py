@@ -2289,7 +2289,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
                 continue
         e0, cj0, q0 = p["items"][0] if p["items"] else (None, None, None)
         reply = ("Charts: " + "; ".join(f"${e['ticker']} {q['label']} ({q.get('form')} filed {q.get('filed')})" for e, _, q in p["items"])
-                 + f". Read automatically from the filings; not investment advice. {site_url}/#c-{e0['cik']}") if e0 else ""
+                 + f". Read automatically from the filings; not investment advice. {social.page_url(site_url, e0['cik'], e0.get('ticker'))}") if e0 else ""
         if reply and social.xlen(reply) > 280:
             reply = reply.replace(" Read automatically from the filings; not investment advice.", " Not investment advice.")
         filing = (p.get("source_reply") or (f"The Form 4: {p['insider_url']}" if p.get("insider_url")

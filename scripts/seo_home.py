@@ -59,6 +59,49 @@ def block(site, today=None):
     return ''.join(out)
 
 
+def llms(site, base, today=None):
+    """/llms.txt: the site in a few lines for an AI assistant or agent that reads one (llmstxt.org): what it is, how to cite
+    it, where each kind of page lives, this week's reports. Google says its AI features need nothing beyond ordinary
+    search; others may read this, and it costs one small file."""
+    today = today or dt.date.today()
+    ix = read(os.path.join(site, 'data', 'index.json')) or {}
+    rows = (ix.get('companies') if isinstance(ix, dict) else ix) or []
+    has = lambda *p: os.path.exists(os.path.join(site, *p, 'index.html'))
+    week = (today - dt.timedelta(days=7)).isoformat()
+    fresh = sorted([r for r in rows if (r.get('filed') or '') >= week and r.get('ticker') and has('c', seo.slug_for(r))], key=lambda r: -(r.get('revenue') or 0))
+    ex = next((r for r in rows if r.get('ticker') == 'NVDA'), None) or (fresh[0] if fresh else None)
+    exs = seo.slug_for(ex) if ex else 'nvda'
+    kinds = [('', 'Earnings and revenue breakdown: the latest quarter as a Sankey, Y/Y and Q/Q, quarterly history, the filing it was read from'),
+             ('revenue/', 'How the company makes money: revenue by segment'), ('cash-flow/', 'Cash flow, capital spending, cash runway and the debt wall'),
+             ('earnings-date/', 'Next earnings date, analysts\' estimates, the result once reported'), ('report-card/', 'Every report against the estimate and the guidance'),
+             ('stock-forecast/', 'Analysts\' price targets and fair value by several methods'), ('who-owns/', 'Largest 13F holders, fund buying and selling, Congress trades'),
+             ('guidance/', 'Guidance and outlook from the earnings releases'), ('earnings-quality/', 'Earnings quality score 0-100 with the reasons'),
+             ('timeline/', 'A year of the stock with every insider trade, earnings report and 8-K marked')]
+    lines = [f"# {seo.SITE_NAME}", "",
+             f"> Every US-listed company's latest 10-Q, 10-K and earnings release on SEC EDGAR drawn as an income-statement Sankey "
+             f"(revenue → costs → profit → cash), with 13F fund holdings, insider and Congress trades, 8-K events, guidance, earnings "
+             f"quality and cash runway. {seo.n_of(len(rows), 'company', 'companies')}, checked every 15 minutes. Figures are read from the SEC's XBRL data "
+             f"and the filings by fixed rules; no language model writes them. Not investment advice.", "",
+             f"Cite a figure as: Filing Flows ({base}/c/<ticker>/), from the company's 10-Q / 10-K / 8-K filed on <date>.",
+             f"New charts every day on X: {seo.X_URL} (@{seo.X_HANDLE}).", "", "## Company pages", ""]
+    lines += [f"- [{base}/c/{exs}/{k}]({base}/c/{exs}/{k}): {d} (every company: {base}/c/<ticker>/{k})" for k, d in kinds]
+    if fresh:
+        lines += ["", f"## Reported in the last seven days (to {fdate(today)})", ""]
+        lines += [f"- [{display_name(r.get('name'))} ({r['ticker']}) {r.get('label')} earnings]({base}/c/{seo.slug_for(r)}/): revenue {r.get('rev') or '—'}"
+                  + (f", {seo.pct(r.get('yoy'))} Y/Y" if r.get('yoy') is not None else '') for r in fresh[:30]]
+    hubs = [('c/', 'Every company, A to Z'), ('daily/', 'Today in the filings: insider buying and selling, Congress trades, guidance changes, takeover rumors, the earnings calendar'),
+            ('events/', 'Material 8-K events'), ('events/impact/', 'Which 8-K items move stocks, scored'), ('m/', '13F managers: portfolios and a copy-the-13F backtest'),
+            ('o/', 'Officials\' stock trades'), ('compare/', 'Two companies compared'), ('disclosures/screener/', 'Stock screener'),
+            ('disclosures/earnings-quality/', 'Earnings quality scores'), ('disclosures/cash-runway/', 'Cash runway'), ('disclosures/insider-signals/', 'Do insider trades predict the stock?'),
+            ('gamma/', 'Industries by SIC code'), ('chains/', 'Supply chains and themes'), ('zh/', 'In Chinese'), ('about/', 'About the site and how the figures are made')]
+    lines += ["", "## Sections", ""] + [f"- [{d}]({base}/{u})" for u, d in hubs if has(*u.strip('/').split('/'))]
+    lines += ["", "## Data", "", f"- [{base}/data/index.json]({base}/data/index.json): every company's latest quarter (JSON)",
+              f"- [{base}/sitemap-index.xml]({base}/sitemap-index.xml): every page", ""]
+    with open(os.path.join(site, 'llms.txt'), 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    return len(lines)
+
+
 def write(site, today=None):
     p = os.path.join(site, 'index.html')
     t = open(p, encoding='utf-8').read()
@@ -73,3 +116,5 @@ if __name__ == '__main__':
     ap.add_argument('--site', default='_site')
     a = ap.parse_args()
     print('home page links:', 'written' if write(a.site) else 'no placeholder found')
+    base = (os.environ.get('SITE_URL') or 'https://filing-flows.com').rstrip('/')
+    print('llms.txt:', llms(a.site, base), 'lines')

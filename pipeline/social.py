@@ -57,6 +57,18 @@ KEEP_UPPER = {"PLC", "LLC", "LP", "AG", "SA", "NV", "SE", "ETF", "REIT", "II", "
 URL = re.compile(r"(?:https?://|www\.)[^\s)\]>]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|io|org|net|gov|app|dev|co|ai)/[^\s)\]>]*", re.I)
 
 
+def page_url(site, cik, ticker="", sub=""):
+    """A company's own page on the site (c/<ticker>/, as scripts/seo.py slug_for names it), for a link in a post: its link
+    card shows that company's Sankey (the app's #c-<cik> address shows the site's generic card), and it is the address
+    Google and the AI answers cite. A company without a ticker: c/cik-<cik>/."""
+    site = (site or "").rstrip("/")
+    if not site:
+        return ""
+    t = (ticker or "").lower().replace(".", "-")
+    slug = t if re.fullmatch(r"[a-z0-9-]{1,12}", t) else f"cik-{int(cik)}"
+    return f"{site}/c/{slug}/" + (f"{sub.strip('/')}/" if sub else "")
+
+
 def no_links(text):
     """The text without web addresses. A short label that only introduced an address goes with it ("Every holder:
     <url>", "The 13F: <url>"); the rest of a sentence stays ("... not investment advice. <url>" keeps the sentence)."""
@@ -397,7 +409,7 @@ def compose_parts(c, q, cfg):
     tail = " " + SOURCE_DISCLAIMER                 # always kept: the source sentence is shortened first
     link = cfg.get("site_url", "").rstrip("/")
     if cfg.get("include_link") and link and not links_off(cfg):
-        tail += f" {link}/#c-{p['cik']}"
+        tail += " " + page_url(link, p['cik'], (p.get("tickers") or [""])[0])
     parts.append(("source", src + tail if xlen(src + tail) <= room else fit("", src, tail, limit=room)))
 
     # the general hashtags: on the last post, or (when it is full) on the reply with the most room; never in the headline

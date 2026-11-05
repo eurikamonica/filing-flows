@@ -142,5 +142,44 @@ class Build(unittest.TestCase):
         self.assertEqual(eq[0][1], 2000)
 
 
+class Predecessors(unittest.TestCase):
+    def test_a_new_registrant_carries_the_old_ones_counts(self):
+        dei = {'2': [('2015-10-25', 690e6), ('2016-01-25', 688e6)],                    # the new holding company
+               '1': [('2009-04-25', 300e6), ('2015-07-25', 680e6)],                    # the registrant before it
+               '9': [('2009-04-25', 30e9)]}                                            # not the same company's count
+        wavg = {'2': [('2015-12-31', 691e6)], '1': [('2015-06-30', 685e6)]}
+        d, w, e, used = R.carried('2', ['1'], dei, wavg, {})
+        self.assertEqual([x[0] for x in d], ['2009-04-25', '2015-07-25', '2015-10-25', '2016-01-25'])
+        self.assertEqual([x[0] for x in w], ['2015-06-30', '2015-12-31'])
+        self.assertEqual(used, [['1', 1.01]])
+        d, w, e, used = R.carried('2', ['9'], dei, wavg, {})
+        self.assertEqual(([x[0] for x in d], used), (['2015-10-25', '2016-01-25'], [['9', None]]))
+        d, w, e, used = R.carried('2', ['5', '1'], dei, wavg, {})                     # one with no counts ends the chain
+        self.assertEqual([x[0] for x in d][:1], ['2009-04-25'])
+        self.assertEqual(used, [['1', 1.01], ['5', None]])
+        dei['3'] = [('2005-03-01', 250e6), ('2008-12-01', 280e6)]
+        d, w, e, used = R.carried('2', ['3', '1'], dei, wavg, {})                     # oldest first, each meeting the next
+        self.assertEqual([x[0] for x in d][:3], ['2005-03-01', '2008-12-01', '2009-04-25'])
+        self.assertEqual(R.PREDECESSORS['GOOGL'], [1288776])
+
+    def test_the_nearest_counts_on_todays_basis(self):
+        # Alphabet: weighted averages only from 2023 (after a 20-for-1 split), net income ÷ EPS from 2014; Google Inc's to 2014
+        sp = [['2022-07-18', 20.0]]
+        wavg = {'new': [('2023-06-30', 12.76e9)], 'old': [('2014-03-31', 684e6), ('2014-06-30', 686e6)]}
+        eps = {'new': [('2014-09-30', 690e6)]}
+        d, w, e, used = R.carried('new', ['old'], {}, wavg, eps, splits=sp)
+        self.assertEqual(used, [['old', 1.01]])
+        self.assertEqual([x[0] for x in w], ['2014-03-31', '2014-06-30', '2023-06-30'])
+        eps = {'new': [('2014-09-30', 13.8e9)]}                                       # a figure restated for the later split
+        self.assertEqual(R.carried('new', ['old'], {}, wavg, eps, splits=sp)[3], [['old', 1.01]])
+        self.assertEqual(R.carried('new', ['old'], {}, wavg, {'new': [('2016-09-30', 690e6)]}, splits=sp)[3], [['old', None]])   # years apart
+        # ICE 2013: the new holding company's single share before the merger is no count; the next nearest pair is met
+        dei = {'new': [('2013-08-05', 1), ('2013-11-01', 1), ('2014-02-12', 115e6)], 'old': [('2013-05-01', 72.8e6), ('2013-11-01', 72.9e6)]}
+        wv = {'new': [('2013-03-31', 73e6), ('2013-09-30', 74e6)], 'old': [('2012-12-31', 73.1e6), ('2013-09-30', 73.5e6)]}
+        d, w, e, used = R.carried('new', ['old'], dei, wv, {}, splits=[['2016-11-04', 5.0]])
+        self.assertEqual(used, [['old', 1.0]])
+        self.assertNotIn(1, [x[1] for x in d])
+
+
 if __name__ == '__main__':
     unittest.main()

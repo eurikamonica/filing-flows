@@ -37,3 +37,19 @@ def test_ties_and_embed():
     assert "Buys from" in seo.ties_section(ties, 2, {1: "aaa"})
     b = seo.embed_box("https://x.com/c/aaa/", "https://img/a.jpg", "Alpha Sankey", "Alpha Q3")
     assert "&lt;a href=&quot;https://x.com/c/aaa/&quot;&gt;&lt;img" in b and "c/aaa/embed/" in b
+
+
+def test_llms_txt_and_the_follow_box(tmp_path):
+    """/llms.txt for AI assistants: what the site is, how to cite it, the X account, this week's reports; every static page
+    ends with the X account and a citation line (in the page's language on the translated pages)."""
+    s = tmp_path
+    w(s / "data" / "index.json", {"companies": [{"cik": 1045810, "ticker": "NVDA", "name": "NVIDIA CORP", "label": "Q3 FY27", "filed": "2026-11-01", "rev": "$100B", "yoy": 50.0}]})
+    for p in ("c/nvda", "c", "about"):
+        w(s / p / "index.html", "x")
+    assert H.llms(str(s), "https://filing-flows.com", dt.date(2026, 11, 4)) > 10
+    t = (s / "llms.txt").read_text()
+    assert t.startswith("# Filing Flows") and "https://x.com/FilingFlows" in t and "Cite a figure as: Filing Flows (https://filing-flows.com/c/<ticker>/)" in t
+    assert "[NVIDIA (NVDA) Q3 FY27 earnings](https://filing-flows.com/c/nvda/)" in t and "https://filing-flows.com/about/" in t and "/zh/" not in t
+    doc = seo.page("NVIDIA (NVDA) Earnings | Filing Flows", "d", "https://filing-flows.com/c/nvda/", "<p>x</p>", 2, "https://x/og.png")
+    assert "Follow @FilingFlows" in doc and "Cite this page: Filing Flows, “NVIDIA (NVDA) Earnings”, <a href=\"https://filing-flows.com/c/nvda/\">" in doc
+    assert "关注 @FilingFlows" in seo.localize(doc, "zh-Hans") and "Cite this page" not in seo.localize(doc, "fr")

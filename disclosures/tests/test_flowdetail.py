@@ -13,7 +13,7 @@ CTX = {'Q': ('2026-01-01', '2026-03-31'), 'PQ': ('2025-01-01', '2025-03-31')}
 AX = 'srt:ProductOrServiceAxis'
 
 
-def filing(q, pq, members=None, nonop_note=True, segs=None):
+def filing(q, pq, members=None, nonop_note=True, segs=None, cost_members=None):
     """q, pq: {local concept: value} of the quarter and the same quarter a year earlier (a first quarter: the year to date)."""
     contexts = {k: {'s': s, 'e': e, 'dims': {}} for k, (s, e) in CTX.items()}
     facts = [{'c': 'dei:DocumentPeriodEndDate', 'v': '2026-03-31', 'ctx': 'Q', 'u': None, 'd': None, 'id': None},
@@ -27,6 +27,9 @@ def filing(q, pq, members=None, nonop_note=True, segs=None):
             k = f'{cid}_{m}'
             contexts[k] = {'s': CTX[cid][0], 'e': CTX[cid][1], 'dims': {AX: 'x:' + m}}
             facts.append({'c': G + 'Revenues', 'v': float(v), 'ctx': k, 'u': 'USD', 'd': '-6', 'id': None})
+    for cid, ms in (cost_members or {}).items():       # the cost of revenue of the same members
+        for m, v in ms.items():
+            facts.append({'c': G + 'CostOfRevenue', 'v': float(v), 'ctx': f'{cid}_{m}', 'u': 'USD', 'd': '-6', 'id': None})
     for m, vals in (segs or {}).items():               # a segment's own lines (ASU 2023-07), with the consolidation member
         k = f'S_{m}'
         contexts[k] = {'s': CTX['Q'][0], 'e': CTX['Q'][1], 'dims': {D.SEG_AXIS: 'x:' + m, D.CONS_AXIS: 'srt:OperatingSegmentsMember'}}
@@ -141,6 +144,14 @@ class Structure(unittest.TestCase):
         self.assertAlmostEqual(L[('oi', 'opex')], 20)                       # the operating loss pays the rest of the costs
         self.assertNotIn(('gp', 'oi'), L)
 
+    def test_a_cost_reported_by_member_only(self):
+        # the cost of revenue only by product, no total (AT&T, Disney, RTX…): revenue is still split, nothing breaks
+        q = {k: v for k, v in scaled(PROFIT).items() if k != 'CostOfRevenue'}
+        mem = {'Q': {'AMember': 70 * SCALE, 'BMember': 30 * SCALE}, 'PQ': {'AMember': 50 * SCALE, 'BMember': 30 * SCALE}}
+        F = D.read_filing(filing(q, scaled(PROFIT, 0.8 * SCALE), mem, cost_members={'Q': {'AMember': 25 * SCALE, 'BMember': 15 * SCALE}}))
+        self.assertTrue(any('AMember' in k for k, _ in F['J'][G + 'Revenues']))
+        self.assertIsNone(D._nest({'A': 10, 'B': 20}, None))
+
     def test_a_split_that_does_not_add_up_is_left_whole(self):
         # the note's parts leave 3 of other income's 2.5 unexplained: other income stays one line
         FL = filing(dict(scaled(PROFIT), InterestExpenseNonoperating=4 * SCALE), scaled(PROFIT, 0.8 * SCALE))
@@ -207,3 +218,29 @@ class Helpers(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class CollectOrder(unittest.TestCase):
+    def test_a_new_filing_comes_before_the_companies_never_built(self):
+        """Apple's 10-K and JPMorgan's 10-Q of Nov 3, 2026 waited behind ~1,100 small companies never built, and the company
+        page, which draws the detailed flow of the period it shows, had none for their newest quarter."""
+        import json, tempfile, datetime as dt
+        root = Path(tempfile.mkdtemp())
+        site = root / 'index.json'
+        site.write_text(json.dumps({'companies': [
+            {'ticker': 'BIG', 'cik': 1, 'revenue': 9e10, 'filed': '2026-11-03'},          # built, a newer filing since
+            {'ticker': 'NEW', 'cik': 2, 'revenue': 5e10, 'filed': '2026-11-01'},          # never built
+            {'ticker': 'OK', 'cik': 3, 'revenue': 7e10, 'filed': '2026-10-01'}]}))        # up to date, checked today
+        now = dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
+        (root / 'state.json').write_text(json.dumps({
+            'BIG': {'v': D.VERSION, 'accession': 'a1', 'filed': '2026-08-01', 'checked': now},
+            'OK': {'v': D.VERSION, 'accession': 'a3', 'filed': '2026-10-01', 'checked': now}}))
+        order = []
+        saved = D.filings_of, D.build_company
+        try:
+            D.filings_of = lambda cik, ua: (order.append(cik) or {'name': 'X', 'tickers': [], 'filings': [{'accession': f'n{cik}', 'filed': '2026-11-03'}]})
+            D.build_company = lambda cik, ua, root_, t, info, sic=None: {'v': D.VERSION, 'name': t, 'quarters': [], 'years': []}
+            D.collect(root, site, 'ua', minutes=5)
+        finally:
+            D.filings_of, D.build_company = saved
+        self.assertEqual(order, [1, 2])                  # the newer filing first, then the one never built; OK not read

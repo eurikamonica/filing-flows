@@ -2723,7 +2723,9 @@ def test_holders_post_names_who_how_much_and_when():
     assert th["replies"][0].startswith("Bought or added, quarter ended Jun 30:") and "filed Oct 15" in th["replies"][0]
     assert th["replies"][1].startswith("Sold or cut:") and "sold out, filed Aug 14" in th["replies"][1]
     assert th["replies"][-1].startswith("Source: 13F-HR filings")
-    assert "https://filing-flows.com/#c-1602409" in th["replies"][-1]
+    assert "https://filing-flows.com/c/fngr/who-owns/" in th["replies"][-1]         # the page whose link card shows its holders
+    assert social.page_url("https://filing-flows.com/", 1067983, "BRK.B") == "https://filing-flows.com/c/brk-b/"
+    assert social.page_url("https://filing-flows.com", 81061, "") == "https://filing-flows.com/c/cik-81061/" and social.page_url("", 1, "A") == ""
 
 
 def test_holder_posts_keep_to_one_quarter_and_give_three_examples(tmp_path):

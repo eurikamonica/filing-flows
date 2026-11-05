@@ -19,6 +19,7 @@ odds its record implies.
 import argparse
 import datetime as dt
 import json
+import math
 import os
 import re
 import sys
@@ -27,6 +28,7 @@ from xml.sax.saxutils import escape as xesc
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
 import seo_svg as SV  # noqa: E402
+import event_stats as ES  # noqa: E402
 
 e, fdate, display_name = seo.e, seo.fdate, seo.display_name
 
@@ -99,6 +101,32 @@ def credibility(rec):
     return out or None
 
 
+def day_move(px, spy, report):
+    """the report's move from the site's own daily prices (research/paths moves, what the timeline draws), the same window
+    as the earnings research's: the close before the report day to the close of the first session after it, so a
+    report before the open and one after the close are both inside. (move, excess over SPY), or (None, None)."""
+    if not px or not report:
+        return None, None
+    days, cum = px
+    i0 = ES.bisect_day(days, report) - 1
+    i1 = i0 + 1 + (1 if i0 + 1 < len(days) and days[i0 + 1] == report else 0)
+    if i0 < 0 or i1 >= len(days) or i1 >= len(cum):
+        return None, None
+    try:
+        if (dt.date.fromisoformat(days[i1]) - dt.date.fromisoformat(report)).days > 6 or (dt.date.fromisoformat(report) - dt.date.fromisoformat(days[i0])).days > 6:
+            return None, None
+    except ValueError:
+        return None, None
+    mv = math.expm1(cum[i1] - cum[i0])
+    ex = None
+    if spy:
+        sd, sc = spy
+        a, b = ES.bisect_day(sd, days[i0]), ES.bisect_day(sd, days[i1])
+        if b < len(sd) and b < len(sc) and sd[a] == days[i0] and sd[b] == days[i1]:
+            ex = mv - math.expm1(sc[b] - sc[a])
+    return mv, ex
+
+
 def move_model(hist, implied, avg_move):
     """The earnings-day move: what the options price in against what the stock has done, and how often the implied
     range held. Returns a dict or None."""
@@ -119,9 +147,12 @@ def move_model(hist, implied, avg_move):
             'ratio': (med / imp) if imp else None}
 
 
-def page_for(co, er, rec, base, slug, c=None):
+def page_for(co, er, rec, base, slug, c=None, px=None, spy=None):
     name, t = display_name(co.get('name')), co.get('ticker') or ''
-    hist = [h for h in (er or {}).get('history') or [] if h.get('est') is not None and h.get('act') is not None]
+    hist = [dict(h) for h in (er or {}).get('history') or [] if h.get('est') is not None and h.get('act') is not None]
+    for h in hist:                                  # a report-day move the earnings research has not got: from the site's prices
+        if h.get('move') is None and h.get('reported'):
+            h['move'], h['excess'] = day_move(px, spy, h['reported'])
     if len(hist) < 3:
         return None
     hist.sort(key=lambda h: h.get('reported') or '')
@@ -138,6 +169,7 @@ def page_for(co, er, rec, base, slug, c=None):
     for h in hist:
         if h.get('quarter') and h['quarter'] not in labels and near(h['quarter']):
             labels[h['quarter']] = near(h['quarter'])
+    own_rev = {q['label']: (q.get('headline') or {}).get('revenue') for q in (c or {}).get('quarters') or [] if q.get('label')}
     gaap = {p['quarter']: p for p in ((er.get('nongaap') or {}).get('points') or [])}
     rev_rows = {}
     rm = next((m for m in (rec or {}).get('metrics') or [] if m.get('metric') == 'revenue'), None)
@@ -171,21 +203,37 @@ def page_for(co, er, rec, base, slug, c=None):
              ('Median move on the day', f"±{100 * mm['median_abs']:.1f}%" if mm else None), ('Rose on the day', f"{100 * mm['up_share']:.0f}%" if mm else None),
              ('Options imply next', f"±{100 * mm['implied']:.1f}%" if mm and mm.get('implied') else None), ('Next report', fdate(nxt) if nxt and nxt >= today else None)]
     # ---- the table
-    rows = []
+    # every column a row can fill; a column no report of this company fills (it never guides revenue, its GAAP EPS is not
+    # read) is left out rather than shown as a column of dashes
+    cols = [('Quarter', ''), ('Reported', ''), ('EPS est.', 'num'), ('EPS reported', 'num'), ('Surprise', 'num'), ('GAAP EPS', 'num'),
+            ('Revenue guided', 'num'), ('Revenue reported', 'num'), ('Stock, the day', 'num'), ('vs market', 'num')]
+    cells = []
     for h in reversed(hist):
         q = h.get('quarter')
         g = gaap.get(q) or {}
         rv = rev_rows.get(q) or {}
         gl = (rv.get('guides') or [{}])[-1] if rv else {}
-        guided = f"{money(gl['lo'])}–{money(gl['hi'])}" if gl.get('lo') is not None and gl.get('hi') is not None else '—'
-        rows.append(f"<tr><td>{e(quarter_label(q, labels))}</td><td>{e(fdate(h.get('reported')))}</td><td class='num'>{usd2(h.get('est'))}</td><td class='num'><b>{usd2(h.get('act'))}</b></td>"
-                    f"<td class='num {'up' if (h.get('surprise') or 0) > 0 else 'down' if (h.get('surprise') or 0) < 0 else ''}'>{pc(h.get('surprise')) if abs(h.get('est') or 0) >= 0.05 else 'n/m'}</td>"
-                    f"<td class='num'>{usd2(g.get('gaap')) if g else '—'}</td><td class='num'>{guided}</td><td class='num'>{money(rv.get('actual')) if rv.get('actual') is not None else '—'}"
-                    f"{' <span class=muted>(' + e(rv.get('outcome')) + ')</span>' if rv.get('outcome') else ''}</td>"
-                    f"<td class='num {'up' if (h.get('move') or 0) > 0 else 'down' if (h.get('move') or 0) < 0 else ''}'>{pc(h.get('move'))}</td><td class='num'>{pc(h.get('excess'))}</td></tr>")
-    table = ("<div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th>Reported</th><th class='num'>EPS est.</th><th class='num'>EPS reported</th><th class='num'>Surprise</th>"
-             "<th class='num'>GAAP EPS</th><th class='num'>Revenue guided</th><th class='num'>Revenue reported</th><th class='num'>Stock, the day</th><th class='num'>vs market</th></tr></thead>"
-             f"<tbody>{''.join(rows)}</tbody></table></div>")
+        guided = f"{money(gl['lo'])}–{money(gl['hi'])}" if gl.get('lo') is not None and gl.get('hi') is not None else None
+        lab_q = quarter_label(q, labels)
+        rev_act = rv.get('actual') if rv.get('actual') is not None else own_rev.get(lab_q)      # the filing's revenue when none was guided
+        sc = 'up' if (h.get('surprise') or 0) > 0 else 'down' if (h.get('surprise') or 0) < 0 else ''
+        mc = 'up' if (h.get('move') or 0) > 0 else 'down' if (h.get('move') or 0) < 0 else ''
+        cells.append([e(lab_q), e(fdate(h.get('reported'))), usd2(h.get('est')), f"<b>{usd2(h.get('act'))}</b>",
+                      (f"<span class='{sc}'>{pc(h.get('surprise'))}</span>" if abs(h.get('est') or 0) >= 0.05 else 'n/m'),
+                      usd2(g.get('gaap')) if g.get('gaap') is not None else None, guided,
+                      (money(rev_act) + (f" <span class=muted>({e(rv.get('outcome'))})</span>" if rv.get('outcome') else '')) if rev_act is not None else None,
+                      f"<span class='{mc}'>{pc(h.get('move'))}</span>" if h.get('move') is not None else None, pc(h.get('excess')) if h.get('excess') is not None else None])
+    keep = [j for j in range(len(cols)) if j < 5 or any(r[j] is not None for r in cells)]
+    table = ("<div class='tbl-wrap'><table><thead><tr>" + ''.join(f"<th{' class=num' if cols[j][1] else ''}>{cols[j][0]}</th>" for j in keep) + "</tr></thead><tbody>"
+             + ''.join("<tr>" + ''.join(f"<td{' class=num' if cols[j][1] else ''}>{r[j] if r[j] is not None else '—'}</td>" for j in keep) + "</tr>" for r in cells)
+             + "</tbody></table></div>")
+    shown = {cols[j][0] for j in keep}
+    note = ' '.join(filter(None, [
+        "Estimates and reported EPS are the Street's adjusted figures" + ("; GAAP EPS is from the filing (SEC XBRL)." if 'GAAP EPS' in shown else '.'),
+        "Revenue guided is the last range the company gave before the report." if 'Revenue guided' in shown else None,
+        "Revenue reported is from the company's filing." if 'Revenue reported' in shown else None,
+        ("The stock's move is close to close around the report date (the close before it to the close of the session after), "
+         "against SPY for the market column." if 'Stock, the day' in shown else "No daily prices are on file for these report days, so the stock's moves are not shown.")]))
     # ---- charts
     lab = lambda h: quarter_label(h.get('quarter'), labels)
     charts = SV.duo([(lab(h), h['est'], h['act']) for h in hist[-8:]], ('Estimate', 'Reported'), seo.usd2, f"{name}: EPS reported against the estimate")
@@ -229,8 +277,7 @@ def page_for(co, er, rec, base, slug, c=None):
             f"<p class='seo-hl {'up' if beats / n >= 0.7 else 'down' if beats / n < 0.5 else ''}'><span>Beat rate</span><b>{beats} of {n}</b> reports beat the EPS estimate</p>"
             "<nav class='seo-toc'><a href='#card'>Report card</a><a href='#charts'>Charts</a><a href='#move'>The move</a>" + ("<a href='#guidance'>Guidance</a>" if cred else '') + "</nav>"
             f"<p class='lead'>{e(lead)}</p><div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in tiles if v) + "</div>"
-            f"<h2 id='card'>Report by report</h2>{table}<p class='muted'>Estimates and reported EPS are the Street's adjusted figures; GAAP EPS is from the filing (SEC XBRL). "
-            "Revenue guided is the last range given before the report; the stock's move is close to close around the report date, against SPY for the market column.</p>"
+            f"<h2 id='card'>Report by report</h2>{table}<p class='muted'>{e(note)}</p>"
             f"<h2 id='charts'>Charts</h2><div class='seo-grid'>{charts}</div>{model}{credh}"
             f"<p><a class='seo-cta' href='../earnings-date/'>The next report: what to expect →</a> <a href='../'>{e(name)}: every quarter →</a></p>"
             "<p class='muted'>Read automatically from SEC filings, earnings releases and public estimates; errors are possible. Not investment advice.</p>")
@@ -306,6 +353,9 @@ def write(site, base):
     rows = ix.get('companies') if isinstance(ix, dict) else ix
     hub = os.path.join(site, 'disclosures', 'data')
     urls, cards = [], []
+    moves = os.path.join(hub, 'research', 'paths', 'moves', 'a')
+    spy_doc = read(os.path.join(moves, 'SPY.json'))
+    spy = ES.decode(spy_doc) if spy_doc else None
     for r in rows or []:
         t = r.get('ticker')
         slug = seo.slug_for(r)
@@ -316,7 +366,9 @@ def write(site, base):
             continue
         rec = read(os.path.join(site, 'data', 'guidance-record', f"{r['cik']}.json"))
         try:
-            out = page_for(r, er, rec, base, slug, read(os.path.join(site, 'data', 'c', f"{r['cik']}.json")))
+            ad = read(os.path.join(moves, re.sub(r'[^A-Za-z0-9-]', '_', str(t).upper()) + '.json'))
+            out = page_for(r, er, rec, base, slug, read(os.path.join(site, 'data', 'c', f"{r['cik']}.json")),
+                           ES.decode(ad) if ad else None, spy)
         except Exception as err:  # noqa: BLE001
             print(f"report card skipped ({t}): {err}")
             continue

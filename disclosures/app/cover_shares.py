@@ -30,6 +30,12 @@ import urllib.request
 from pathlib import Path
 
 UA_DEFAULT = 'Filing Flows research filingflows@gmail.com'
+# a company whose SEC registrant changed — a new holding company, a redomicile, a merger into a new issuer — and the
+# registrants before it, oldest first, whose share counts carry its market value back (rank_panel.carried checks that
+# each count meets the next registrant's within 2.5× and 400 days before using it)
+PREDECESSORS = {'XOM': [34088], 'GOOGL': [1288776], 'ORCL': [777676], 'DIS': [29082, 1001039], 'AVGO': [1441634, 1649338],
+                'LIN': [884905], 'MDT': [64670], 'ETN': [31277], 'CI': [701221], 'CMCSA': [22301], 'MRVL': [1058057],
+                'ICE': [1174746], 'DUK': [30371], 'NOC': [72945], 'COP': [78214], 'BLK': [1364742]}
 SINCE = '1993-01-01'
 UNTIL = '2011-12-31'                             # never after the company's first XBRL filing either
 PASSES = [('annual', ('10-K', '10-K405', '10-KSB', '10-KT', '10-K40', '10-KSB40')), ('quarterly', ('10-Q', '10-QSB', '10-QT'))]
@@ -242,6 +248,9 @@ def collect(root, site_index, ua, minutes=38.0, limit=None, tickers=None):
     state = json.loads(st_p.read_text()) if st_p.exists() else {}
     cos = [c for c in json.loads(Path(site_index).read_text()).get('companies') or [] if c.get('cik') and c.get('ticker')]
     cos.sort(key=lambda c: -(c.get('revenue') or 0))
+    # the registrants before a company's (PREDECESSORS), first: a few, and the largest companies' decades
+    have = {str(int(c['cik'])) for c in cos}
+    cos = [{'cik': p, 'ticker': f"{t}~{p}"} for t, ps in PREDECESSORS.items() for p in ps if str(p) not in have] + cos
     if tickers:
         want = [t.strip().upper() for t in tickers.split(',') if t.strip()]
         cos = [c for c in cos if c['ticker'].upper() in want] + [c for c in cos if c['ticker'].upper() not in want]

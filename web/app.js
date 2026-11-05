@@ -249,9 +249,20 @@
         if (!sec.isConnected) return;
         const list = d && (o.fy ? d.years : d.quarters);
         const dp = (list || []).find((x) => near(x.end, o.q.end));
-        if (!dp || !dp.nodes || !dp.nodes.length) { sec.remove(); return; }
         const siteOf = (end, yr) => ((yr ? o.ys : o.qs) || []).find((x) => near(x.end, end));
         const labelOf = (end, yr) => { const x = siteOf(end, yr); return x ? x.label : end; };
+        if (!dp || !dp.nodes || !dp.nodes.length) {
+          // not built for this period yet (each company's 10-Q / 10-K is read in turn after it is filed): say so, with the
+          // newest period that is, instead of the section going away without a word
+          const have = (list || []).filter((x) => x.nodes && x.nodes.length), newest = have[0], body = $('.df-body', sec);
+          if (d && newest && Date.parse(newest.end) < Date.parse(o.q.end)) {
+            const at = siteOf(newest.end, o.fy), href = `#c-${o.p.cik}-${o.fy ? 'fy-' : ''}${(at && at.end) || newest.end}`;
+            body.innerHTML = `<p class="muted">The detailed flow of ${t(S.dec(o.q.label))} is not built yet: it is read from the ${o.q.form === '8-K' ? '10-Q or 10-K that follows the earnings release' : t(o.q.form || 'filing')}, company by company, within a few hours of the filing. The newest on file: <a href="${href}">${t(labelOf(newest.end, o.fy))} →</a></p>`;
+          } else if (!d && !o.fy && o.q === (o.qs || [])[0]) {
+            body.innerHTML = `<p class="muted">The detailed flow of ${t(S.dec(o.p.name))} is not built yet: companies are read in turn, the largest first.</p>`;
+          } else sec.remove();                           // an earlier period than the reader keeps
+          return;
+        }
         const yAgo = new Date(Date.parse(dp.end) - 364 * 864e5).toISOString().slice(0, 10);
         const yl = siteOf(yAgo, o.fy) ? siteOf(yAgo, o.fy).label : (o.q.compare_y && o.q.compare_y.vs) || 'a year earlier';
         const ql = dp.q_end ? labelOf(dp.q_end, false) : null;

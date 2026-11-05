@@ -234,11 +234,38 @@ def _signs(body):
 _NEG0 = re.compile(r"(?<![\w.,])[-−](0(?:[.,]0+)?(?:\s|&nbsp;)?%)")
 
 
+def follow_box(title, canonical):
+    """the end of every page: where the next chart appears (the X account) and how to cite this one. An AI answer or a
+    writer quoting the page has the name and the address in one line; a reader who arrived from one has the account."""
+    t = re.sub(r"\s*\|\s*Filing Flows$", "", title)
+    return (f'<aside class="seo-follow"><p><b>New earnings Sankeys every day on X:</b> <a href="{X_URL}" rel="me noopener">Follow @{X_HANDLE}</a></p>'
+            f'<p class="seo-cite">Cite this page: Filing Flows, “{e(t)}”, <a href="{e(canonical)}">{e(canonical.replace("https://", ""))}</a>, from SEC filings.</p></aside>')
+
+
 # The fonts load with display=optional: a phone that does not have IBM Plex in time keeps the fallback font instead of
 # reflowing the page when it arrives (c/nvda/ on slow 4G: layout shift 0.14 with swap, 0 with optional).
+_SENT_END = re.compile(r"(?<=[.!?…)])\s+(?=[A-Z0-9“\"'(])|(?<=[。！？])")      # English, and Chinese (no space after 。)
+
+
+def snippet(desc, n=300):
+    """the meta description in whole sentences: the generators hand over their lead cut at n characters ("… 22¢ was left
+    as operating profit, 1"), which a search result shows as is; such a cut ends at the last whole sentence (or the last
+    whole word and an ellipsis when the first sentence alone runs past n)"""
+    d = re.sub(r"\s+", " ", desc or "").strip()
+    if len(d) > n:
+        d = d[:n]
+    elif len(d) < n - 25 or re.search(r"[.!?…)\]”\"'。！？）]$", d):
+        return d                                                     # short, or ends where a sentence does: left alone
+    cuts = [m.start() for m in _SENT_END.finditer(d) if m.start() < len(d)]
+    if cuts and cuts[-1] >= 80:
+        return d[:cuts[-1]].rstrip()
+    return d.rsplit(" ", 1)[0].rstrip(",;:—–- ") + "…"
+
+
 def page(title, desc, canonical, body, depth, image, jsonld=None):
     if len(title) > 70 and title.endswith(" | Filing Flows"):      # a long title keeps its own words; search shows the site's name anyway
         title = title[:-len(" | Filing Flows")]
+    desc = snippet(desc)
     body, desc = _NEG0.sub(r"\1", body), _NEG0.sub(r"\1", desc)
     body = _signs(body)
     up = "../" * depth
@@ -255,7 +282,7 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 <link rel="icon" href="{up}favicon.svg" type="image/svg+xml"><link rel="icon" href="{up}favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="{up}apple-touch-icon.png">
 <link rel="stylesheet" href="{up}styles.css"><link rel="stylesheet" href="{up}seo.css">{ld}
 </head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}gamma/">Industries</a><a href="{up}chains/">Themes</a><a href="{up}model/">Model</a><a href="{up}daily/">Today</a><a href="{up}disclosures/">Signals</a><a href="{up}events/">8-K events</a><a href="{up}#method">Method</a></nav></header>
-<main class="seo">{body}</main>
+<main class="seo">{body}{follow_box(title, canonical)}</main>
 <footer class="seo-foot">Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice. <a href="{up}">filing-flows.com</a> · <a href="{up}about/">About</a> · <a href="{X_URL}" rel="me noopener">Charts posted daily on X: @{X_HANDLE}</a></footer>
 </body></html>"""
 
@@ -271,13 +298,15 @@ def noindex(doc):
 CHROME = {   # the header's links and the footer of a translated page (seo_zh.py, seo_intl.py): page() writes them in English
     "zh-Hans": {"nav": ["最新", "公司", "行业", "主题", "模型", "今日", "信号", "8-K 事件", "方法"],
                 "foot": "数据由程序自动读取自 SEC 文件（XBRL 与财报新闻稿），可能存在误差，不构成投资建议。", "about": "关于", "x": "每日图表发布在 X：",
-                "drawing": "正在绘制 Sankey 图…"},
+                "drawing": "正在绘制 Sankey 图…", "follow": "每天在 X 上发布新的财报 Sankey 图：", "follow_btn": "关注", "cite": "引用本页："},
     "es": {"nav": ["Últimos", "Empresas", "Industrias", "Temas", "Modelo", "Hoy", "Señales", "Eventos 8-K", "Método"],
            "foot": "Cifras leídas automáticamente de los informes presentados ante la SEC (XBRL y comunicados de resultados); puede haber errores. No es asesoramiento de inversión.",
-           "about": "Acerca de", "x": "Gráficos diarios en X:", "drawing": "Dibujando el diagrama de Sankey…"},
+           "about": "Acerca de", "x": "Gráficos diarios en X:", "drawing": "Dibujando el diagrama de Sankey…",
+           "follow": "Nuevos diagramas de Sankey de resultados cada día en X:", "follow_btn": "Seguir a", "cite": "Cita esta página: "},
     "fr": {"nav": ["Récents", "Entreprises", "Secteurs", "Thèmes", "Modèle", "Aujourd’hui", "Signaux", "Événements 8-K", "Méthode"],
            "foot": "Chiffres lus automatiquement dans les documents déposés auprès de la SEC (XBRL et communiqués de résultats) ; des erreurs sont possibles. Ce n’est pas un conseil en investissement.",
-           "about": "À propos", "x": "Graphiques publiés chaque jour sur X :", "drawing": "Tracé du diagramme de Sankey…"},
+           "about": "À propos", "x": "Graphiques publiés chaque jour sur X :", "drawing": "Tracé du diagramme de Sankey…",
+           "follow": "De nouveaux diagrammes de Sankey de résultats chaque jour sur X :", "follow_btn": "Suivre", "cite": "Citer cette page : "},
 }
 _NAV_EN = ["Latest", "Companies", "Industries", "Themes", "Model", "Today", "Signals", "8-K events", "Method"]
 
@@ -294,6 +323,8 @@ def localize(doc, lang):
     doc = head + sep + rest
     doc = doc.replace("Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice.", t["foot"], 1)
     doc = doc.replace('/">About</a>', f'/">{t["about"]}</a>', 1).replace("Charts posted daily on X: ", t["x"] + ("" if lang == "zh-Hans" else " "), 1)
+    doc = (doc.replace("<b>New earnings Sankeys every day on X:</b>", f"<b>{t['follow']}</b>", 1).replace(">Follow @", f">{t['follow_btn']} @", 1)
+           .replace("Cite this page: Filing Flows", f"{t['cite']}Filing Flows", 1).replace(", from SEC filings.</p></aside>", ", SEC.</p></aside>", 1))
     return doc.replace("Drawing the Sankey…", t["drawing"])                  # the chart's placeholder until sankey.js draws it
 
 
@@ -538,7 +569,7 @@ def index_charts(latest, names):
 def sector_charts(items, sname):
     """A sector page's charts: the largest companies, growth against margin, and the largest one's Sankey."""
     import seo_svg as SV
-    from seo_history import sankey_figure
+    from seo_history import sankey_figure, figure_words
     out = SV.hbars([(x.get("ticker") or display_name(x.get("name")), x.get("revenue")) for x in items], money, f"{sname}: the largest companies by quarterly revenue", n=15)
     pts = [(x.get("ticker") or display_name(x.get("name")), max(-100, min(300, x["yoy"])), max(-100, min(100, x["om"])), x.get("revenue"))
            for x in items[:150] if x.get("yoy") is not None and x.get("om") is not None]
@@ -547,7 +578,8 @@ def sector_charts(items, sname):
     if items:
         top = items[0]
         out += (f"<h2>The largest: {e(display_name(top.get('name')))}</h2>"
-                + sankey_figure(top["cik"], top.get("label"), f"{display_name(top.get('name'))} {top.get('label')} Sankey", up="../../"))
+                + sankey_figure(top["cik"], top.get("label"), f"{display_name(top.get('name'))} {top.get('label')} Sankey", up="../../",
+                                fallback=figure_words(display_name(top.get('name')), top.get('label'), top.get('revenue'), top.get('yoy'), om=top.get('om'))))
     return out
 
 
@@ -721,7 +753,10 @@ def gamma_charts(d, mdl, nm, sic):
         out += SV.ranges([(qname(q), lo, hi, rv) for q, g, rv, lo, hi, *_ in fc], money, f"{nm}: the growth model's forecast of industry revenue",
                          legend=("80% range", "model's central forecast"))
     out += (f"<section class='seo-live' data-kind='industry' data-sic='{e(sic)}' data-sector='{e(d.get('sector') or '')}'><h2>Money flow: where the industry's revenue goes</h2>"
-            f"<p class='muted'>Loading the interactive chart…</p></section><script>window.FF_BASE='../../';</script><script src='../../sankey.js' defer></script>"
+            f"<p class='muted'>Drawn in the browser: an estimate of where the industry's revenue goes — what it buys from other industries, "
+            f"the pay that reaches households, taxes and profit — beside its filed cash flow, two tiers of suppliers and its capital spending "
+            f"by kind of asset.</p>"
+            f"</section><script>window.FF_BASE='../../';</script><script src='../../sankey.js' defer></script>"
             f"<script src='../../chains.js' defer></script><script src='../../flowlab.js' defer></script><script src='../../seo-embed.js' defer></script>")
     return out
 

@@ -35,6 +35,10 @@ the studio). stats.check in meta.json reports how many agreed within 10% before 
 A month's value is left out when it cannot be right (see plausible: a missing reverse split blows a micro cap up to
 hundreds of billions, but not its trading); stats.implausible counts them.
 
+A company whose SEC registrant changed (a new holding company: ExxonMobil 2025, Alphabet 2015, Disney 2019; a redomicile:
+Medtronic, Eaton, Linde; a merger into a new issuer: Oracle 2006, Comcast 2002) carries the counts of the registrants
+before it (cover_shares.PREDECESSORS), each where its last count meets the next one's within 2.5× (stats.predecessors).
+
 Survivorship: today's companies only — names that were delisted, merged or went bankrupt are missing from earlier
 leaderboards; the studio says so on the video.
 """
@@ -43,6 +47,11 @@ import json
 import math
 import urllib.request
 from pathlib import Path
+
+try:
+    from cover_shares import PREDECESSORS          # the registrants before a company's (a new holding company …)
+except ImportError:                                 # noqa: E722 — run from elsewhere: no chains
+    PREDECESSORS = {}
 
 NASDAQ = 'https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true'
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
@@ -223,6 +232,45 @@ def with_cover(dei, root, cik):
     return sorted([(d, v) for d, v in old if d < cut] + dei)
 
 
+def carried(cik, chain, dei, wavg, eps_sh, root=None, splits=None):
+    """A company's share counts and, before them, those of the registrants it succeeded (chain, oldest first:
+    cover_shares.PREDECESSORS — a new holding company, a redomicile, a merger into a new issuer), each registrant's only
+    where its last count meets the next one's first within 400 days and 2.5× on today's split basis (a later filing's
+    figure may already be on a later split's basis). Of the counts of each kind — the cover page's, the weighted
+    average (or net income ÷ EPS) — the two nearest in time are compared.
+    → (cover counts, weighted averages, net income ÷ EPS, [[cik, ratio or None], …])"""
+    day = dt.date.fromisoformat
+    real = lambda pts: sorted(x for x in pts or [] if x[1] and x[1] >= 1e4)     # not a shell's single share
+    d = real(with_cover(dei.get(cik), root, cik))
+    w, e = real(wavg.get(cik)), real(eps_sh.get(cik))
+    used = []
+    for p in reversed(chain):
+        dp = real(with_cover(dei.get(p), root, p))
+        wp = real((wavg.get(p) or []) + (eps_sh.get(p) or []))
+        first = min([x[0] for x in d[:1] + w[:1] + e[:1]], default=None)
+        if not first:
+            break
+        a_c = [x for lst in ([x for x in dp if x[0] < first], [x for x in wp if x[0] < first]) for x in lst[-2:]]
+        b_c = [x for lst in (d, sorted(w + e)) for x in lst[:2]]
+        ratio = None
+        for gap, a, b in sorted(((day(b[0]) - day(a[0])).days, a, b) for a in a_c for b in b_c):
+            if gap > 400:
+                break
+            at = a[1] * split_factor(splits, a[0])
+            fits = [x / at for x in (b[1] * split_factor(splits, b[0]) / k for k in restated_bases(splits, b[0], within=40000)) if at and 0.4 <= x / at <= 2.5]
+            if fits:
+                ratio = fits[0]
+                break
+        if ratio is None:
+            used.append([p, None])                     # not the same company's count (or none near): the chain stops
+            break
+        d = [x for x in dp if x[0] < first] + d
+        w = [x for x in real(wavg.get(p)) if x[0] < first] + w
+        e = [x for x in real(eps_sh.get(p)) if x[0] < first] + e
+        used.append([p, round(ratio, 2)])
+    return d, w, e, used
+
+
 def asof(points, day, stale=400):
     """The last (date, value) on or before `day` — None when older than `stale` days."""
     best = None
@@ -343,7 +391,11 @@ def build(out_dir, companies, docs, frames_root=None, today=None, names=None, na
         cap = [None] * len(grid)
         ev = doc.get('ev')
         n_now = caps[t][0] / caps[t][1] if t in caps else None
-        sh = share_history(with_cover(dei.get(cik), frames_root, cik), wavg.get(cik), (ev or {}).get('split'), eps_sh.get(cik), now=n_now) if cik else []
+        chain = [str(int(p)) for p in PREDECESSORS.get(t, ()) if str(int(p)) != cik]
+        d_, w_, e_, used = carried(cik, chain, dei, wavg, eps_sh, frames_root, (ev or {}).get('split')) if cik else ([], [], [], [])
+        if used:
+            stats.setdefault('predecessors', []).append([t] + used)
+        sh = share_history(d_, w_, (ev or {}).get('split'), e_, now=n_now) if cik else []
         if ev is None:
             stats['splits_unknown'] += 1
         else:

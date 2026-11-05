@@ -83,5 +83,106 @@ class History(unittest.TestCase):
         self.assertEqual(doc['rows']['T3']['was']['ndx'], [['2026-10-25', '2026-10-25']])  # gone from QQQ: a former member
 
 
+FILL = [f'Q{chr(65 + i // 26)}{chr(65 + i % 26)}' for i in range(97)]            # 97 other members
+
+
+def ndx_table(syms):
+    rows = ''.join(f'<tr><td>{x} Inc.</td><td>{x}</td><td>Information Technology</td></tr>' for x in syms)
+    return f'<h2>Components</h2><table class="wikitable sortable" id="constituents"><tr><th>Company</th><th>Ticker</th><th>GICS Sector</th></tr>{rows}</table>'
+
+
+class Nasdaq100(unittest.TestCase):
+    def test_member_lists_of_each_era(self):
+        syms = ['AAPL', 'MSFT', 'ORCL'] + FILL
+        self.assertEqual(IM.ndx_members(ndx_table(syms)), sorted(syms))
+        links = '<ul>' + ''.join(f'<li><a href="/wiki/{x}">{x} Corp</a> (<a href="https://www.nasdaq.com/x">NASDAQ</a>: <a href="/q/{x}">{x}</a>)</li>' for x in syms) + '</ul>'
+        self.assertEqual(IM.ndx_members('<p>The index (NASDAQ: NDX) …</p>' + links), sorted(syms))   # a list's lines, not the prose
+        # the yearly changes name the members that left (NASDAQ: DELL): only the section “Components” is the list
+        gone = '<h2><span class="mw-headline" id="Yearly_changes">Yearly changes</span></h2><h3>Changes in 2013</h3><ul>' + \
+               ''.join(f'<li>On May 1, X replaced <a href="/wiki/{x}">{x} Corp</a> (NASDAQ: OLD{i % 10})</li>' for i, x in enumerate('ABCDEFGHIJKLMNOP')) + '</ul>'
+        page = '<h2><span class="mw-headline" id="Components">Components</span></h2>' + links + gone
+        self.assertEqual(IM.ndx_members(page), sorted(syms))
+        self.assertEqual(IM.ndx_members('<div class="mw-heading mw-heading2"><h2 id="Components">Components</h2></div>' + ndx_table(syms)[len('<h2>Components</h2>'):] + gone), sorted(syms))
+        nested = gone.replace('<h2><span class="mw-headline" id="Yearly_changes">Yearly changes</span></h2>', '')     # changes as a subsection
+        self.assertEqual(IM.ndx_members('<h2>Historical components</h2><ul><li>Old Co (OLD)</li></ul><h2>Components</h2>' + links + nested), sorted(syms))
+        lines = '<ul>' + ''.join(f'<li><a href="/wiki/{x}">{x} Corp</a> ({x})</li>' for x in syms) + '</ul>'
+        self.assertEqual(IM.ndx_members(lines), sorted(syms))
+        spaced = '<h2>Components</h2><ul>' + ''.join(f'<li><a href="/wiki/{x}">{x}, Inc.</a> ( <a href="/q/{x}">{x}</a> )</li>' for x in syms) + '</ul>'
+        self.assertEqual(IM.ndx_members(spaced), sorted(syms))                      # 2006–07: “Activision, Inc. ( ATVI )”
+        cols = '<h2>Components</h2><p>Current as of 2016.</p><style>.div-col{x}</style><div class="div-col"><p>' + \
+               '<br />'.join(f'<a href="/wiki/{x}">{x} Corp</a> (<a href="https://nasdaq.com/{x}">{x}</a>)' for x in syms) + '</p></div><h2>Historical components</h2>'
+        self.assertEqual(IM.ndx_members(cols), sorted(syms))                        # 2016–18: lines broken in columns
+        self.assertEqual(IM.ndx_members(ndx_table(syms[:40])), [])                  # not a whole list: none
+        changes = '<h2>Changes</h2><table class="wikitable"><tr><th>Date</th><th>Added ticker</th><th>Removed ticker</th></tr>' + \
+                  ''.join(f'<tr><td>2020-01-01</td><td>X{x}</td><td>{x}</td></tr>' for x in syms[:95]) + '</table>'
+        self.assertEqual(IM.ndx_members(changes + ndx_table(syms)), sorted(syms))   # a change table is not the list
+        self.assertEqual(IM.ndx_members('<p>no list</p>'), [])
+
+    def test_a_list_the_rendering_lost_is_read_from_the_source(self):
+        syms = ['AAPL', 'MSFT', 'ORCL'] + FILL
+        src = "== History ==\nIn 2013 [[Dell]] (DELL) left.\n== Components ==\n''This list is current as of 2016.''\n{{div col|3}}\n" + \
+              '\n'.join(f'* [[{x} Inc.]] ({x})<ref>x</ref>' if i % 3 == 0 else f'* [[{x} Corp]] ({{{{NASDAQ|{x}}}}})' if i % 3 == 1 else f'* [[{x}]] ([https://www.nasdaq.com/symbol/{x.lower()} {x}])'
+                        for i, x in enumerate(syms)) + "\n{{div col end}}\n=== Historical components ===\n* [[Old]] (OLD)\n== Yearly changes ==\n* X (NEWX)\n"
+        self.assertEqual(IM.ndx_wikitext(src), sorted(syms))
+        self.assertEqual(IM.ndx_wikitext('== Components ==\nSee the list.\n'), [])
+
+    def test_history_joins_departures_and_a_gap(self):
+        L = lambda *x: list(x) + FILL
+        cache = {'ndx': {'rev': {'2003-01-01': 1, '2003-04-01': 1, '2010-01-01': 2, '2010-04-01': 3, '2010-07-01': 4, '2025-04-01': 5},
+                         'snaps': {'1': L('MSFT', 'ORCL', 'FB'), '2': L('MSFT', 'ORCL', 'FB'), '3': L('ORCL', 'FB'), '4': L('MSFT', 'FB'), '5': L('MSFT', 'FB', 'WMT')}}}
+        iv, first, last = IM.ndx_history(cache, lambda x: IM.NDX_ALIASES.get(x, x))
+        self.assertEqual((first, last), ('2003-01-01', '2025-04-01'))
+        self.assertEqual(iv['MSFT'], [[None, None]])                                   # missing from one list only: still a member
+        self.assertEqual(iv['ORCL'], [[None, '2010-07-01']])
+        self.assertEqual(iv['WMT'], [['2025-04-01', None]])                            # not a member before it joined
+        self.assertEqual(iv['META'], [[None, None]])                                   # FB, under today's ticker
+        # a quarter whose article sends readers to the list page: that page's list
+        cache['ndx']['rev']['2025-07-01'] = 6
+        cache['ndx']['snaps']['6'] = []
+        cache['ndx']['list_page'] = {'rev': {'2025-07-01': 61}, 'snaps': {'61': L('MSFT', 'WMT')}}
+        iv, first, last = IM.ndx_history(cache, lambda x: IM.NDX_ALIASES.get(x, x))
+        self.assertEqual(last, '2025-07-01')
+        self.assertEqual(iv['META'], [[None, '2025-07-01']])
+
+    def test_revisions_never_date_past_a_listing_cut_short(self):
+        calls = []
+        def fake(url, **k):
+            calls.append(url)
+            return json.dumps({'query': {'pages': {'1': {'revisions': [{'timestamp': '2003-02-01T00:00:00Z', 'revid': 11}, {'timestamp': '2004-05-01T00:00:00Z', 'revid': 12}]}}},
+                               'continue': {'rvcontinue': 'x'}})
+        old, IM.get = IM.get, fake
+        try:
+            have = IM.revisions('Nasdaq-100', IM.quarters(dt.date(2003, 1, 1), dt.date(2006, 1, 1)), {}, pages=1)
+        finally:
+            IM.get = old
+        self.assertIn('redirects=1', calls[0])
+        self.assertEqual(have, {'2003-04-01': 11, '2003-07-01': 11, '2003-10-01': 11, '2004-01-01': 11, '2004-04-01': 11})   # not 2004-07 on
+
+    def test_build_dates_the_nasdaq100_members(self):
+        root = Path(tempfile.mkdtemp())
+        (root / 'cache' / 'members').mkdir(parents=True)
+        cache = {'ndx': {'rev': {'2003-01-01': 1, '2026-10-01': 2}, 'snaps': {'1': ['MSFT', 'ORCL'] + FILL, '2': ['MSFT', 'WMT'] + FILL}}}
+        (root / 'cache' / 'members' / 'wiki.json').write_text(json.dumps(cache))
+        by = {t: [['QQQ', 0.01, 1e9]] for t in ['MSFT', 'WMT', 'NEW'] + FILL}
+        cos = [{'ticker': 'ORCL', 'cik': 1341439, 'name': 'Oracle'}, {'ticker': 'WMT', 'cik': 104169, 'name': 'Walmart'}]
+        out = IM.build(root, by, root / 'pub', cos, today=dt.date(2026, 11, 5), fetch=False)
+        doc = json.loads((root / 'pub' / 'members.json').read_text())
+        self.assertEqual(doc['rows']['WMT']['was']['ndx'], [['2026-10-01', None]])
+        self.assertEqual(doc['rows']['ORCL']['was']['ndx'], [[None, '2026-10-01']])
+        self.assertEqual(doc['rows']['MSFT']['was']['ndx'], [[None, None]])
+        self.assertEqual(doc['rows']['NEW']['was']['ndx'], [['2026-10-01', None]])    # in QQQ, in no list yet: from the last list
+        self.assertIn('ndx', doc['history'])
+        self.assertEqual(out['ndx_lists'], 2)
+        later = IM.build(root, by, root / 'pub', cos, today=dt.date(2027, 12, 1), fetch=False)   # the lists reach the tracker's record
+        doc = json.loads((root / 'pub' / 'members.json').read_text())
+        self.assertIn('ndx', doc['history'])
+        cache['ndx']['rev'] = {'2003-01-01': 1, '2010-01-01': 2}                    # lists that stop years before it: none
+        (root / 'cache' / 'members' / 'wiki.json').write_text(json.dumps(cache))
+        IM.build(root, by, root / 'pub', cos, today=dt.date(2027, 12, 1), fetch=False)
+        doc = json.loads((root / 'pub' / 'members.json').read_text())
+        self.assertNotIn('ndx', doc['history'])
+        self.assertNotIn('ndx', (doc['rows'].get('WMT') or {}).get('was', {}))
+
+
 if __name__ == '__main__':
     unittest.main()
