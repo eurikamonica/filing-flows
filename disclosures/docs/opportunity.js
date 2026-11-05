@@ -32,7 +32,8 @@ function opFlag(s,h){return s==='buy'?`<span class="tag" style="color:var(--mk-p
 function opCostMax(liq){return liq==='5e8'?0.0011:liq==='5e7'?0.0031:liq==='5e6'?0.0081:9}
 function opKind(){return state.opk==='etfs'?'etfs':'stocks'}
 function opportunityView(){
- state.opv=OP_VIEWS.some(v=>v[0]===state.opv)?state.opv:'scan';
+ if(!OP_VIEWS.some(v=>v[0]===state.opv)){state.opv='scan';state.opvAuto=true}
+ if(state.opv==='scan'&&state.opvAuto&&opStore.scan&&opStore.scan.err)state.opv='all';   // no scan published yet: open on every name
  const kind=opKind();
  let out=head('Opportunity','For every stock and ETF: the chance the price is higher in a week, a month and three months, that buying makes money after trading costs and that shorting does after costs and the borrow fee — with the likely range, the signals behind it and a flag only where flags have made money out of sample. The scan sets every model on the site side by side for each stock (moves, odds, highs and lows, moving averages, the RRG), filters them and drafts a post. Odds that lean, not predictions; history and models, not investment advice.','WEEKLY · WALK-FORWARD · COSTS INCLUDED');
  out+=`<div class="toolbar">${field('opv','View',OP_VIEWS,state.opv)}`;
@@ -154,7 +155,7 @@ function opLedger(kind){
 function bindOpportunity(){
  if(state.tab!=='opportunity')return;
  if(state.opv==='scan')bindScan();
- for(const k of ['opv','opk','oph','ops','opf','opsec','opl'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;if(k==='opk')state.opsec='';render()};
+ for(const k of ['opv','opk','oph','ops','opf','opsec','opl'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;if(k==='opk')state.opsec='';if(k==='opv')state.opvAuto=false;render()};
  for(const k of ['opq','opt'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-opt]').forEach(b=>b.onclick=()=>{state.opv='one';state.opt=b.dataset.opt;render();scrollTo({top:0,behavior:'smooth'})});
  const one=$('op-one');
@@ -162,6 +163,7 @@ function bindOpportunity(){
 }
 function opportunityDeepLink(arg){
  const v=decodeURIComponent(arg||'').trim();if(!v)return;
+ state.opvAuto=false;                       // a view asked for by a link is kept, even when it cannot load
  const sc=/^(scan|draft)~(.+)$/i.exec(v);
  if(sc){state.opv='scan';if(sc[1].toLowerCase()==='draft')state.opd=sc[2].toUpperCase().replace(/\./g,'-');else{state.opix=sc[2].toLowerCase();state.page=0}return}
  if(v==='etfs'||v==='stocks'){state.opv='all';state.opk=v;return}
@@ -170,7 +172,7 @@ function opportunityDeepLink(arg){
  if(b){state.opk=a==='etfs'?'etfs':'stocks';state.opv='one';state.opt=b.toUpperCase()}else{state.opv='one';state.opt=a.toUpperCase()}
 }
 function opportunityNotice(){
- if(!state.opv||state.opv==='scan'){
+ if(!state.opv||(state.opv==='scan'&&!(state.opvAuto&&opStore.scan&&opStore.scan.err))){
   const s=opData('scan'),d=s.data;
   if(s.err)return {stale:true,text:'Official derived view · Opportunity scan unavailable · '+s.err};
   if(!d)return {stale:false,text:'Official derived view · Opportunity scan loading…'};
