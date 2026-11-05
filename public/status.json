@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-11-05T16:42:18+00:00",
-  "last_attempt": "2026-11-05T16:40:53+00:00",
-  "last_discovery_completed": "2026-11-05T16:41:26+00:00",
+  "generated_at": "2026-11-05T22:18:56+00:00",
+  "last_attempt": "2026-11-05T22:17:16+00:00",
+  "last_discovery_completed": "2026-11-05T22:18:02+00:00",
   "feed_last_success": "2026-11-05T08:30:26+00:00",
   "feed_state": "partial_or_failed",
   "coverage_start": "2024-01-01",
   "quarters_total": 12,
   "quarters_completed": 12,
   "backfill_pending": [],
-  "issuer_count": 5769,
-  "filing_count": 60883,
+  "issuer_count": 5773,
+  "filing_count": 60942,
   "states": {
     "document_only": 542,
     "download_failed": 333,
-    "needs_review": 2026,
+    "needs_review": 2030,
     "parsed": 41,
-    "queued": 57941
+    "queued": 57996
   },
   "target_interval_seconds": 300,
   "sources": [
@@ -273,18 +273,18 @@
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B1&company=&dateb=&owner=include&start=0&count=100&output=atom",
       "kind": "feed",
       "period": "424B1",
-      "last_attempt": "2026-11-05T16:40:58+00:00",
-      "last_success": "2026-11-05T16:40:58+00:00",
+      "last_attempt": "2026-11-05T22:17:18+00:00",
+      "last_success": "2026-11-05T22:17:18+00:00",
       "state": "ok",
-      "count": 0,
+      "count": 2,
       "error": null
     },
     {
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B3&company=&dateb=&owner=include&start=0&count=100&output=atom",
       "kind": "feed",
       "period": "424B3",
-      "last_attempt": "2026-11-05T16:40:58+00:00",
-      "last_success": "2026-11-05T16:40:58+00:00",
+      "last_attempt": "2026-11-05T22:17:18+00:00",
+      "last_success": "2026-11-05T22:17:18+00:00",
       "state": "ok",
       "count": 100,
       "error": null
@@ -293,8 +293,8 @@
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B3&company=&dateb=&owner=include&start=100&count=100&output=atom",
       "kind": "feed",
       "period": "424B3",
-      "last_attempt": "2026-11-05T16:40:59+00:00",
-      "last_success": "2026-11-05T16:40:59+00:00",
+      "last_attempt": "2026-11-05T22:17:19+00:00",
+      "last_success": "2026-11-05T22:17:19+00:00",
       "state": "ok",
       "count": 100,
       "error": null
@@ -303,58 +303,58 @@
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B3&company=&dateb=&owner=include&start=200&count=100&output=atom",
       "kind": "feed",
       "period": "424B3",
-      "last_attempt": "2026-11-05T16:41:00+00:00",
+      "last_attempt": "2026-11-05T22:17:39+00:00",
       "last_success": "2026-11-05T16:41:00+00:00",
-      "state": "ok",
-      "count": 69,
-      "error": null
+      "state": "failed",
+      "count": 0,
+      "error": "HTTPSConnectionPool(host='www.sec.gov', port=443): Read timed out. (read timeout=20)"
     },
     {
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B4&company=&dateb=&owner=include&start=0&count=100&output=atom",
       "kind": "feed",
       "period": "424B4",
-      "last_attempt": "2026-11-05T16:41:01+00:00",
-      "last_success": "2026-11-05T16:41:01+00:00",
+      "last_attempt": "2026-11-05T22:17:39+00:00",
+      "last_success": "2026-11-05T22:17:39+00:00",
       "state": "ok",
-      "count": 3,
+      "count": 4,
       "error": null
     },
     {
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B5&company=&dateb=&owner=include&start=0&count=100&output=atom",
       "kind": "feed",
       "period": "424B5",
-      "last_attempt": "2026-11-05T16:41:03+00:00",
-      "last_success": "2026-11-05T16:41:03+00:00",
+      "last_attempt": "2026-11-05T22:17:40+00:00",
+      "last_success": "2026-11-05T22:17:40+00:00",
       "state": "ok",
-      "count": 49,
+      "count": 59,
       "error": null
     },
     {
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=DRS&company=&dateb=&owner=include&start=0&count=100&output=atom",
       "kind": "feed",
       "period": "DRS",
-      "last_attempt": "2026-11-05T16:41:05+00:00",
+      "last_attempt": "2026-11-05T22:18:00+00:00",
       "last_success": "2026-11-05T16:41:05+00:00",
-      "state": "ok",
-      "count": 0,
-      "error": null
-    },
-    {
-      "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=EFFECT&company=&dateb=&owner=include&start=0&count=100&output=atom",
-      "kind": "feed",
-      "period": "EFFECT",
-      "last_attempt": "2026-11-05T16:41:25+00:00",
-      "last_success": "2026-11-05T08:30:25+00:00",
       "state": "failed",
       "count": 0,
       "error": "HTTPSConnectionPool(host='www.sec.gov', port=443): Read timed out. (read timeout=20)"
     },
     {
+      "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=EFFECT&company=&dateb=&owner=include&start=0&count=100&output=atom",
+      "kind": "feed",
+      "period": "EFFECT",
+      "last_attempt": "2026-11-05T22:18:01+00:00",
+      "last_success": "2026-11-05T22:18:01+00:00",
+      "state": "ok",
+      "count": 100,
+      "error": null
+    },
+    {
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=EFFECT&company=&dateb=&owner=include&start=100&count=100&output=atom",
       "kind": "feed",
       "period": "EFFECT",
-      "last_attempt": "2026-11-05T08:30:25+00:00",
-      "last_success": "2026-11-05T08:30:25+00:00",
+      "last_attempt": "2026-11-05T22:18:02+00:00",
+      "last_success": "2026-11-05T22:18:02+00:00",
       "state": "ok",
       "count": 100,
       "error": null
@@ -373,10 +373,10 @@
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=F-1&company=&dateb=&owner=include&start=0&count=100&output=atom",
       "kind": "feed",
       "period": "F-1",
-      "last_attempt": "2026-11-05T16:40:57+00:00",
-      "last_success": "2026-11-05T16:40:57+00:00",
+      "last_attempt": "2026-11-05T22:17:17+00:00",
+      "last_success": "2026-11-05T22:17:17+00:00",
       "state": "ok",
-      "count": 4,
+      "count": 6,
       "error": null
     },
     {
@@ -393,23 +393,23 @@
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=S-1&company=&dateb=&owner=include&start=0&count=100&output=atom",
       "kind": "feed",
       "period": "S-1",
-      "last_attempt": "2026-11-05T16:40:54+00:00",
-      "last_success": "2026-11-05T16:40:54+00:00",
+      "last_attempt": "2026-11-05T22:17:16+00:00",
+      "last_success": "2026-11-05T22:17:16+00:00",
       "state": "ok",
-      "count": 7,
+      "count": 11,
       "error": null
     },
     {
       "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=S-11&company=&dateb=&owner=include&start=0&count=100&output=atom",
       "kind": "feed",
       "period": "S-11",
-      "last_attempt": "2026-11-05T16:40:57+00:00",
-      "last_success": "2026-11-05T16:40:57+00:00",
+      "last_attempt": "2026-11-05T22:17:17+00:00",
+      "last_success": "2026-11-05T22:17:17+00:00",
       "state": "ok",
       "count": 1,
       "error": null
     }
   ],
   "scope": "US SEC public registration/prospectus market; registration forms are not all IPOs. Confidential drafts unavailable.",
-  "generation": "d1a3e7958c2d30a061ac"
+  "generation": "2261858b1526cf55caa7"
 }
