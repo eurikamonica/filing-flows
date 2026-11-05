@@ -1072,7 +1072,7 @@ def hybrid_log(lns, w, g, G):
     return base + np.log1p(g * np.where(np.isfinite(G), G, 0.0))
 
 
-def evaluate(days, A, lns, raw, Z, ok, cost, verbose=lambda *a: None, t_keep=None):
+def evaluate(days, A, lns, raw, Z, ok, cost, verbose=lambda *a: None, t_keep=None, full=None):
     yrs = years_of(days)
     rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
     out = {'models': {}, 'rules': {}, 'lines': {}, 'picks': {}, 'coefs': {}, 'ic_by_year': {}, 'net_by_year': {}}
@@ -1095,6 +1095,8 @@ def evaluate(days, A, lns, raw, Z, ok, cost, verbose=lambda *a: None, t_keep=Non
             out['net_by_year'][str(h)][name] = {str(Yr): r_(np.nanmean(net[yrs == Yr]), 4) for Yr in range(TEST_FROM, int(yrs[-1]) + 1)
                                                if np.isfinite(net[yrs == Yr]).sum() >= 10}
             F_now[(h, name)] = F[:, t_keep].copy() if t_keep is not None else F   # only this week's are used later
+            if full is not None and (h, name) in full:           # the whole walk-forward history, for app/opportunity_scan.py
+                full[(h, name)] = F
             s0 = out['models'][str(h)][name][list(periods(days))[0]]
             verbose(f"ma hybrid {h}w {name}: IC {(s0['ic'] or {}).get('mean')}, best − worst fifth after costs {(s0['net'] or {}).get('mean')}")
         out['rules'][str(h)] = {}
@@ -1505,11 +1507,11 @@ def daily_needed(public, bars_sha):
 
 
 def build(public, fundamentals, guidance=None, ledger=None, today=None, verbose=True, force=False, valuation=None, outlook=None,
-          bars=None, bars_sha=None):
+          bars=None, bars_sha=None, oos=None):
     t0 = dt.datetime.now()
     log = (lambda *a: print(*a, flush=True)) if verbose else (lambda *a: None)
     days0, t_ = closed_week(public, today)
-    if not force and fresh(public, str(days0[t_])):
+    if not force and fresh(public, str(days0[t_])) and not (oos and not (Path(oos) / 'ma-13.npz').exists()):   # no forecast history yet: build
         log(f'ma hybrid: week ending {days0[t_]} already built — kept')
         return None
     with warnings.catch_warnings(), np.errstate(all='ignore'):
@@ -1537,7 +1539,14 @@ def build(public, fundamentals, guidance=None, ledger=None, today=None, verbose=
         extra = {'seas13': seasonal(rel, 13), 'seas26': seasonal(rel, 26), 'hd_pct': pc0 - 0.5, 'hd_ext': (2 * pc0 - 1) ** 3}
         raw, Z, ok = inputs(A, lns, mz, extra)
         cost = costs(A['C'], A['V'])
-        ev, F_now = evaluate(days, A, lns, raw, Z, ok, cost, log, t_keep=t)
+        full = {(13, 'ma'): None} if oos else None
+        ev, F_now = evaluate(days, A, lns, raw, Z, ok, cost, log, t_keep=t, full=full)
+        if oos and full.get((13, 'ma')) is not None:
+            import oos_store
+            oos_store.save(Path(oos) / 'ma-13.npz', A['ids'], days, full[(13, 'ma')],
+                           {'model': 'ma_hybrid', 'horizon_weeks': 13, 'what': "the moving averages' 13-week return forecast against SPY",
+                            'ic_mean': ((ev['models'].get('13', {}).get('ma', {}).get(list(periods(days))[0], {}) or {}).get('ic') or {}).get('mean')})
+            del full
         del Z                                                # the ranked inputs are not needed past the models
         ev['guidance_events'] = guidance_events(days, A, ok)
         val, mdna, mev = load_extras(A, valuation, outlook)
@@ -1639,10 +1648,11 @@ def main():
     ap.add_argument('--needed', action='store_true', help='exit 0 when this closed week still has to be built, 1 when it is done')
     ap.add_argument('--daily', action='store_true', help='only refresh the daily files and the daily numbers (needs --bars)')
     ap.add_argument('--daily-needed', action='store_true', help='exit 0 when the daily files are from another research-paths commit')
+    ap.add_argument('--oos', help='a folder: keep the 13-week walk-forward forecasts there (hist/cache/oos)')
     a = ap.parse_args()
     if a.needed:
         days, t = closed_week(a.public)
-        sys.exit(1 if fresh(a.public, str(days[t])) else 0)
+        sys.exit(1 if fresh(a.public, str(days[t])) and not (a.oos and not (Path(a.oos) / 'ma-13.npz').exists()) else 0)   # no forecast history yet: build
     if a.daily_needed:
         sys.exit(0 if daily_needed(a.public, a.bars_sha) else 1)
     if a.daily:
@@ -1653,7 +1663,7 @@ def main():
     if not a.fundamentals:
         ap.error('--fundamentals is required to build')
     build(a.public, a.fundamentals, a.guidance, a.ledger, force=a.force, valuation=a.valuation, outlook=a.outlook, bars=a.bars,
-          bars_sha=a.bars_sha)
+          bars_sha=a.bars_sha, oos=a.oos)
 
 
 if __name__ == '__main__':

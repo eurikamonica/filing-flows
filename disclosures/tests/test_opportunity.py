@@ -94,6 +94,17 @@ class Model(unittest.TestCase):
         self.assertEqual(len(c['buy']['edge_deciles']), 10)
         self.assertIn('flag_ok', c['buy'])
 
+    def test_out_of_sample_history_is_kept(self):
+        # the 3-month z-hat of every week, each predicted only from the years before it (the combined score's input)
+        o = self.R['oos']
+        self.assertEqual(o['horizon'], O.OOS_KEEP)
+        Z, years = o['z'], np.array([int(str(d)[:4]) for d in self.P['dates']])
+        self.assertEqual(Z.shape, self.P['C'].shape)
+        first = 2000 + O.FIRST_TEST_YEARS
+        self.assertFalse(np.isfinite(Z[:, years < first]).any(), 'nothing before the first out-of-sample year')
+        self.assertGreater(np.isfinite(Z[:, years >= first]).mean(), 0.5)
+        self.assertTrue(np.isfinite(Z[:, -1]).any(), "this week's forecasts are in the last column")
+
     def test_rows(self):
         rows = O.rows_now(self.P, self.R)
         self.assertEqual(len(rows), 150)

@@ -564,3 +564,28 @@ details.field summary { cursor: pointer; font-size: 12.5px; font-weight: 500; co
 .sc-th input { width: 100%; box-sizing: border-box; }
 .sc-col { font-size: 12.5px; display: flex; gap: 6px; align-items: center; }
 .sc-sort { font-weight: inherit; white-space: nowrap; }
+/* Opportunity → Scan (opportunity-scan.js): the four-part read of one stock and its post composer */
+.ops-detail { margin: 14px 0; }
+.ops-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.ops-head h3 { margin: 0; }
+.ops-head .text-button:first-of-type { margin-left: auto; }
+.ops-four { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 14px 24px; margin: 12px 0 6px; }
+.ops-four h4 { margin: 0 0 6px; font-size: 13.5px; }
+.ops-four ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.ops-four p { margin: 0 0 4px; font-size: 13px; }
+.ops-compose textarea { display: block; width: 100%; box-sizing: border-box; min-height: 120px; margin-top: 4px; font: inherit; font-size: 14px; line-height: 1.5;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); resize: vertical; }
+.ops-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 8px; }
+.ops-bar a.action { text-decoration: none; display: inline-block; }
+.ops-count { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 13px; }
+.ops-count.over { color: var(--neg); font-weight: 600; }
+.ops-flags { white-space: normal; display: inline-block; min-width: 130px; max-width: 220px; font-size: 12px; line-height: 1.5; }
+.ops-ix { font-size: 11.5px; }
+.ops-table td, .ops-table th { padding: 8px 10px; }
+.ops-table .th-sort { padding-left: 10px; padding-right: 10px; }
+.ops-txt { white-space: normal; display: inline-block; min-width: 120px; max-width: 300px; font-family: var(--sans, inherit); font-size: 12.5px; line-height: 1.5; }
+.ops-flags { font-family: var(--sans, inherit); }
+.ops-draft { font-size: 12px; padding: 0 2px; }
+.ops-more { margin: 14px 0; }
+.ops-more > summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

@@ -134,7 +134,7 @@ jobs:
         continue-on-error: true
         run: |
           python -m pip install --quiet numpy
-          python disclosures/app/rrg_hybrid.py --public hist/public --ledger hist/ledger/rrg-hybrid.json
+          python disclosures/app/rrg_hybrid.py --public hist/public --ledger hist/ledger/rrg-hybrid.json --oos hist/cache/oos
       - name: Moving averages+ (daily and weekly averages with earnings, guidance and the macro; public/ma-hybrid*.json, public/ma/, public/ma-daily/)
         # Every weight of the earnings line and of the guidance tested walk-forward from 2016 against the averages alone; every
         # N-day average and cross on daily closes; the index funds' 40-week rule with a macro filter and the trend by macro
@@ -155,7 +155,7 @@ jobs:
                 && git -C _paths sparse-checkout set --no-cone /cache/ohlc/ || echo "::warning::research-paths: no daily bars this run"
             fi
           }
-          if python disclosures/app/ma_hybrid.py --public hist/public --needed; then
+          if python disclosures/app/ma_hybrid.py --public hist/public --needed --oos hist/cache/oos; then
             git clone --quiet --depth 1 --filter=blob:none --sparse --branch data "$url" _fund
             git -C _fund sparse-checkout set eps-fundamental outlook
             # this week's Fair value numbers (DCF value, its odds), recorded beside the line, not yet in it
@@ -166,7 +166,7 @@ jobs:
             bars
             python disclosures/app/ma_hybrid.py --public hist/public --fundamentals _fund/eps-fundamental \
               --guidance disclosures/docs/data/cache/guidance --valuation _val/public/index.json --outlook _fund/outlook \
-              --bars _paths/cache/ohlc --bars-sha "$paths_sha" --ledger hist/ledger/ma-hybrid.json
+              --bars _paths/cache/ohlc --bars-sha "$paths_sha" --ledger hist/ledger/ma-hybrid.json --oos hist/cache/oos
           elif [ -n "$paths_sha" ] && python disclosures/app/ma_hybrid.py --public hist/public --daily-needed --bars-sha "$paths_sha"; then
             bars
             python disclosures/app/ma_hybrid.py --public hist/public --bars _paths/cache/ohlc --bars-sha "$paths_sha" --daily
@@ -182,7 +182,7 @@ jobs:
         continue-on-error: true
         run: |
           python -m pip install --quiet numpy
-          python disclosures/app/opportunity.py --public hist/public --ledger hist/ledger/opportunity-stocks.json --sha "$GITHUB_SHA"
+          python disclosures/app/opportunity.py --public hist/public --ledger hist/ledger/opportunity-stocks.json --sha "$GITHUB_SHA" --oos hist/cache/oos
       - name: Strategies (published rules with costs, overfitting tests, live ledger; public/strategies*.json, ledger/strategies.json)
         # Trend, momentum, mean reversion, seasonality, factors from the site's SEC and 13F data, pairs, sector rotation,
         # volatility targeting, risk parity and their ensemble, each as its paper published it, on the weekly closes since
@@ -219,6 +219,28 @@ jobs:
           members=""; [ -f site/members.json ] && members="--members site/members.json"
           python disclosures/app/market_models.py --public hist/public --macro hist/cache/macro \
             --ledger hist/ledger/market-models.json $members
+      - name: Opportunity scan (every model side by side for each stock, a combined score, the scoreboard; public/opportunity-scan.json)
+        # Each stock's read from every model above in one row (Opportunity, Odds, Moving averages+, the hybrid RRG) with
+        # research-paths' move odds and highs / lows / ranges (public/moves/) and its index memberships (site/members.json,
+        # fetched by Odds); a combined score of the models' walk-forward forecast histories (hist/cache/oos/, kept by
+        # Opportunity, Moving averages+ and the hybrid RRG; until each has one, the scan runs without it) tested and
+        # calibrated walk-forward from 2016, and each closed week's scores frozen in hist/ledger/opportunity-scan.json and
+        # scored 13 weeks later (app/opportunity_scan.py, under a minute).
+        timeout-minutes: 8
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet numpy
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          moves=""
+          if git clone --quiet --depth 1 --filter=blob:none --sparse --branch research-paths "$url" _rp \
+            && git -C _rp sparse-checkout set --no-cone /public/moves/index.json /public/moves/highs.json /public/moves/lows.json /public/moves/ranges.json; then
+            moves="--moves _rp/public/moves"
+          else
+            echo "::warning::research-paths: no move odds or highs / lows this run"
+          fi
+          members=""; [ -f site/members.json ] && members="--members site/members.json"
+          python disclosures/app/opportunity_scan.py --public hist/public --oos hist/cache/oos $moves $members \
+            --ledger hist/ledger/opportunity-scan.json
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hist
