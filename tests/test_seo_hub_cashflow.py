@@ -32,7 +32,7 @@ def test_hub_views_and_events(tmp_path):
     pages, n = HB.write(str(s), "https://example.com", str(store), dt.date(2026, 10, 30))
     assert pages == ["insider-trades", "8-k-events"] and n == 1
     ins = (s / "disclosures" / "insider-trades" / "index.html").read_text()
-    assert "href='../../c/aaa/'" in ins and "href='../#insiders'" in ins and "<link rel=\"canonical\" href=\"https://example.com/disclosures/insider-trades/\">" in ins
+    assert "href='../../c/aaa/'" in ins and "href='../../#insiders'" in ins and "<link rel=\"canonical\" href=\"https://example.com/disclosures/insider-trades/\">" in ins
     page = next((s / "events").glob("aaa-deal-2026-10-29-*/index.html")).read_text()
     assert "Entry into a material definitive agreement" in page and "The Company entered into an agreement." in page and "NewsArticle" in page
     assert 'href="insider-trades/"' in (s / "disclosures" / "index.html").read_text()            # the hub links to its snapshots

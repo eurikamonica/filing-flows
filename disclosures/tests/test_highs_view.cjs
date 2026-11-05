@@ -133,5 +133,40 @@ const clean = (h, m) => ok(!/NaN|undefined|Infinity|\[object/.test(h), m + ' sho
   await HV.render(el, { ticker: 'AAPL', hub: 'h/', regime: 'atl' });
   ok(el.innerHTML.includes('At the highs —') && !el.innerHTML.includes('data-hvr'), 'a regime it is not in: its highs, no chips');
   ok(HV.pickRegime({ highs: { state: { high: true } }, lows: { '3m': {} } }) === 'highs' && HV.pickRegime({ highs: { state: {} }, ranges: { wide: {} } }) === 'wide', 'the regime shown first');
+  // the spread of what followed, the odds given each condition alone and together, the walk-forward test (app/regime_odds.py)
+  const E = { fwd21: [-0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2], fwd63: [-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4], fwd252: [-0.5, -0.3, -0.15, 0, 0.15, 0.3, 0.5, 1.0],
+    fall63: [-0.5, -0.4, -0.3, -0.2, -0.15, -0.1, -0.05, -0.02], bounce: [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 1.0] };
+  const cnt = (k, a) => [...E[k].map((_, i) => a + i), 4];
+  const fan = { n: GRID.map(() => 250), p10: GRID.map((d) => -0.001 * d), p25: GRID.map((d) => -0.0004 * d), p50: GRID.map((d) => 0.0002 * d), p75: GRID.map((d) => 0.0008 * d), p90: GRID.map((d) => 0.0015 * d) };
+  const dist = (a) => Object.fromEntries(Object.keys(E).map((k) => [k, cnt(k, a)]));
+  const A2 = { ...lowA, fwd63: qs(0.03), dist: dist(10), fan };
+  const cal = Array.from({ length: 10 }, (_, i) => [0.4 + 0.02 * i, 0.42 + 0.015 * i, 300]);
+  const by = Array.from({ length: 30 }, (_, i) => [1995 + i, 150, (i % 3 - 1) * 0.01, 0.55]);
+  const bt = { days: 4500, years: [1995, 2024], per_year: 150, pool_max: 40000, k: 250, spread: { years: 30, top: 0.031, bottom: 0.012, all: 0.02, diff: 0.019, t: 2.4, pos: 0.7 },
+    outcomes: { up63: { n: 4500, rate: 0.56, skill: -0.012, auc: 0.53, verdict: 'none', calibration: cal, by_year: by }, low63: { n: 4400, rate: 0.62, skill: 0.041, auc: 0.66, verdict: 'useful', calibration: cal, by_year: by } } };
+  const G2 = { base: { ...lowBase, fwd63: qs(0.02), r10: km(18, 25) }, dist: dist(20), fan: { ...fan, p50: GRID.map((d) => 0.0001 * d) }, backtest: bt,
+    buckets: { pe_pct: { title: 'Trailing P/E, percentile of its own history', edges: [0, 1, 5, 20, 50, 80, 101], rows: [lowBucket('under 1 (lowest)', 9000, 20), lowBucket('1–5', 8000, 22), lowBucket('5–20', 30000, 19),
+      { ...lowBucket('20–50', 60000, 18), fwd63_up: 0.62, fwd252_up: 0.64, next_low_p63: 0.5, r10_p63: 0.7 }, lowBucket('50–80', 50000, 18), lowBucket('80 or more', 20000, 17)] },
+      dd_ath: { title: 'Under its all-time high', edges: [-1.01, -0.8, -0.6, -0.4, -0.2, 0.001], rows: [{ ...lowBucket('80% or more', 40000, 25), fwd63_up: 0.5 }, { ...lowBucket('60–80%', 30000, 22), fwd63_up: 0.4 }, lowBucket('40–60%', 20000, 21), lowBucket('20–40%', 20000, 20), lowBucket('under 20%', 90000, 19)] },
+      volu: { title: 'Volume', rows: [] } } };
+  const lb2 = HV.lowBlock({ state: lowS, analogues: A2 }, 'NKE (NIKE, Inc.)', 'stock', G2.base, 'companies', '52w', { params: { grid: GRID, edges: E, fan_grid: GRID }, group: G2 });
+  clean(lb2, 'the low block with the new sections');
+  ok(lb2.includes('The spread of what followed') && (lb2.match(/class="hv-chart hv-hist"/g) || []).length >= 5 + 2, 'the fan, five histograms and two calibration charts');
+  ok(lb2.includes('dashed: the median of every day at a 52-week low') && lb2.includes('the middle half (25–75%)'), 'the fan with every day beside it');
+  ok(lb2.includes('3 months on') && lb2.includes('median <span class="hv-up">+3%</span>, 70% up') && lb2.includes('under −40%: ') && lb2.includes('40% or more: '), 'a histogram titled with its median and share up, its open-ended bands');
+  ok(lb2.includes('The odds given its conditions') && lb2.includes('All its conditions together') && lb2.includes('Every day at a 52-week low'), 'the conditional table: every day, all together, one at a time');
+  ok(lb2.includes('Trailing P/E, percentile of its own history: <b>5–20</b>') && lb2.includes('(it: the 16th percentile)'), 'its own band of each condition (P/E at the 16th percentile)');
+  ok(lb2.includes('Under its all-time high: <b>60–80%</b>') && lb2.includes('(it: −76%)'), 'a distance band: −76% falls in 60–80%');
+  ok(!lb2.includes('Volume:'), 'a condition without bands is left out');
+  ok(lb2.indexOf('Under its all-time high: <b>') < lb2.indexOf('Trailing P/E, percentile of its own history: <b>'), 'sorted by how much the condition moves the 3-month odds');
+  ok(/\+\d+ pts<\/span>|−\d+ pts<\/span>/.test(lb2), 'the points against every day');
+  ok(lb2.includes('Has it worked?') && lb2.includes('known before that year began') && lb2.includes('4,500 days in all') && lb2.includes('none: no better than the base rate') && lb2.includes('>useful<'), 'the walk-forward test, verdicts');
+  ok(lb2.includes('−1.2%') && lb2.includes('+4.1%') && lb2.includes('t 2.4 over 30 years') && lb2.includes('before trading costs'), 'skills and the spread');
+  ok(lb2.includes('Brier skill of the 3-month odds, year by year'), 'the skill by year');
+  const gh = HV.groupOdds(G2, { grid: GRID, edges: E, fan_grid: GRID }, 'lows', 'day at a 52-week low', 'companies', ['fall63', 'bounce']);
+  ok(gh.includes('The spread of what followed') && gh.includes('Has it worked?') && !gh.includes('dark ticks'), 'the hub: every day, no comparison');
+  clean(gh, 'the hub odds');
+  ok(HV.lowBlock({ state: lowS, analogues: lowA }, 'X', 'stock', lowBase, 'companies', '52w', { params: { grid: GRID } }).indexOf('Has it worked?') < 0, 'an older file: no new sections, no errors');
+  ok(HV.histChart([1, 2], [0], null, 'x') .includes('<rect') && HV.histChart([0, 0], [0], null, 'x') === '' && HV.histChart([1, 2, 3], [0], null, 'x') === '', 'a histogram needs counts for every band');
   console.log(`Highs view: ${n} checks passed`);
 })().catch((e) => { console.error(e); process.exit(1); });

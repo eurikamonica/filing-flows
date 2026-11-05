@@ -733,9 +733,10 @@ def write(site, base, store=None, today=None):
     for slug, tab, title, h1, lead, body in made:
         url = f'{base}/disclosures/{slug}/'
         nav = "<nav class='seo-toc'>" + ''.join(f"<a href='../{s}/'{' aria-current=page' if s == slug else ''}>{e(h.split(':')[0])}</a>" for s, _, _, h, *_ in made) + '</nav>'
-        html = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › {e(h1.split(':')[0])}</p><h1>{e(h1)}</h1>"
-                f"<p class='muted'>Snapshot of {e(fdate(today))} · <a href='../#{e(tab)}'>open the live, interactive view →</a></p>{nav}"
-                f"<p class='lead'>{lead}</p>{seo._signs(body)}<p><a class='seo-cta' href='../#{e(tab)}'>Filter, sort and chart it live in Disclosures →</a></p>{DISCLAIMER}")
+        # the live section is a page of the site: /#<tab> (the old /disclosures/#<tab> forwards there too)
+        html = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../../#signals'>Disclosures</a> › {e(h1.split(':')[0])}</p><h1>{e(h1)}</h1>"
+                f"<p class='muted'>Snapshot of {e(fdate(today))} · <a href='../../#{e(tab)}'>open the live, interactive view →</a></p>{nav}"
+                f"<p class='lead'>{lead}</p>{seo._signs(body)}<p><a class='seo-cta' href='../../#{e(tab)}'>Filter, sort and chart it live →</a></p>{DISCLAIMER}")
         ld = {'@context': 'https://schema.org', '@graph': [
             {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
                                                              {'@type': 'ListItem', 'position': 2, 'name': 'Disclosures', 'item': base + '/disclosures/'},

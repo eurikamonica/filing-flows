@@ -21,7 +21,11 @@ In a range (sideways over the last 63 trading days: the net move under a quarter
                 range within a month (a false breakout), the returns and the largest rise and fall over 3 months.
 Each day in a regime is an event (they overlap, so episodes and assets are counted beside the days); analogues for an
 asset in a regime now: the 250 nearest days of the same kind of asset on the state both have, at most one per asset
-and 21 days, none of its own from the last year. Descriptive history, not a forecast.
+and 21 days, none of its own from the last year. Beside each summary (app/regime_odds.py): the distributions of the
+returns 1, 3 and 12 months on and of the further fall and the rebound (lows) or the largest rise and fall (ranges), the
+fan of the return from the day over the next year; for each kind of asset, the walk-forward test of the similar-days
+odds (a 3-month rise, a 12-month rise, a new low / a 10% rebound within 3 months; a breakout within 3 months, up
+first). Descriptive history, not a forecast.
 """
 from __future__ import annotations
 
@@ -33,6 +37,7 @@ from pathlib import Path
 import numpy as np
 
 import highs as HI
+import regime_odds as RO
 
 NEAR, RECENT, H = 0.15, 63, 252
 CAP_ROWS = 500                 # days kept per asset and regime (evenly spaced; the last always): they overlap anyway
@@ -77,6 +82,29 @@ NOTE = ('History, not a forecast. Days in a regime overlap, so episodes and asse
         'today’s (survivors), which flatters what came after their lows; adjusted closes (dividends reinvested). P/E: price ÷ the '
         'last four first-filed quarterly diluted EPS (SEC), positive only.')
 _r = HI._r
+LOW_EXTRA = (('fall63', 'drop'), ('bounce', 'rise'))
+RANGE_EXTRA = (('fall63', 'drop'), ('rise63', 'rise'))
+FAN_BASE = 5000                # days of each kind drawn for the fan of every day in the regime
+
+
+def low_outcomes(R):
+    """Per low day, 1 / 0 / NaN (not yet known): a 3- and a 12-month rise, a new low within 3 months, a 10% rebound
+    within 3 months (the Kaplan–Meier rules of summarize_low: a later event or the end of the data decides)."""
+    n, H_ = R['n_left'], np.minimum(R['n_left'] - 1, H)
+    up = lambda x: np.where(np.isfinite(x), (x > 0).astype(float), np.nan)                       # noqa: E731
+    nl, r10 = R['next_low'], R['r10']
+    return {'up63': up(R['fwd63']), 'up252': up(R['fwd252']),
+            'low63': np.where((nl <= 63) & (nl < n), 1.0, np.where(n > 63, 0.0, np.nan)),
+            'r10_63': np.where((r10 <= 63) & (r10 < H_), 1.0, np.where(H_ > 63, 0.0, np.nan))}
+
+
+def range_outcomes(R):
+    """Per day in a range: a 3- and a 12-month rise, a breakout within 3 months, up first (among breakouts)."""
+    up = lambda x: np.where(np.isfinite(x), (x > 0).astype(float), np.nan)                       # noqa: E731
+    res, b, n = R['resolved'], R['brk'], R['n_left']
+    return {'up63': up(R['fwd63']), 'up252': up(R['fwd252']),
+            'brk63': np.where(res & (b <= 63), 1.0, np.where(n - 1 >= 63, 0.0, np.nan)),
+            'upfirst': np.where(res, (R['up'] == 1).astype(float), np.nan)}
 
 
 # ------------------------------------------------------------------ one asset
@@ -383,6 +411,26 @@ def _lite(block, keep):
     return out
 
 
+def test_params():
+    return {'k': RO.K, 'per_year': RO.PER_YEAR, 'pool_max': RO.POOL_MAX, 'lag': RO.LAG, 'min_years': RO.MIN_YEARS}
+
+
+def odds_of_group(G, R, gsel, feats, outcomes, extra, closes, dlist, label=None):
+    """A kind of asset's every day in the regime: the distributions, the fan (a seeded sample), the walk-forward test."""
+    G['dist'] = RO.dists(R, gsel, extra)
+    s = RO.sample(gsel, FAN_BASE)
+    G['fan'] = RO.fan(closes, R['asset'][s], R['t'][s])
+    t0 = dt.datetime.now()
+    bt = RO.walk_forward(R, gsel, list(feats), _z, outcomes, R['fwd63'], RO.day_index(dlist, R['asset'], R['t']),
+                         RO.day_index(dlist, R['asset'], R['t'], lag=RO.LAG))
+    if bt:
+        G['backtest'] = bt
+    if label:
+        o = (bt or {}).get('outcomes') or {}
+        print(f'{label}: test {(bt or {}).get("days")} days in {round((dt.datetime.now() - t0).total_seconds(), 1)}s',
+              {k: v.get('skill') for k, v in o.items()}, flush=True)
+
+
 # ------------------------------------------------------------------ the build
 def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=True, now_max=300):
     """lows.json and ranges.json from the move odds' daily closes (the inputs of highs.build). Returns (lows doc, ranges
@@ -391,7 +439,7 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=
     gi = {g: i for i, (g, _) in enumerate(HI.GROUPS)}
     lowR = {k: {} for k, _, _ in LOWS}
     rngR = {k: {} for k, _ in RANGES}
-    meta, moms = [], {}
+    meta, moms, closes = [], {}, []
     for a in assets:
         key, g = a['key'], HI.KIND_GROUP.get(a.get('kind'))
         if g is None or key not in data or str(key).startswith('VIX'):
@@ -445,6 +493,7 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=
         if g == 'companies':
             moms[ai] = C['mom'].astype(np.float32)
         meta.append(m)
+        closes.append(c.astype(np.float32))
     if not meta:
         return None, None, {}
 
@@ -485,10 +534,13 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=
                 m['common']['mom_xs'] = _r(v, 2) if np.isfinite(v) else None
         del S
     now_t = dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
-    lows = {'schema': 'lows.v1', 'generated_at': now_t, 'params': {'near': NEAR, 'recent': RECENT, 'horizon': H, 'grid': GRID, 'horizons': list(HZ)},
+    lows = {'schema': 'lows.v1', 'generated_at': now_t, 'params': {'near': NEAR, 'recent': RECENT, 'horizon': H, 'grid': GRID, 'horizons': list(HZ),
+                                                                     'edges': RO.edges_of(LOW_EXTRA), 'fan_grid': RO.GRID, 'test': test_params()},
             'regimes': {}, 'now': {}, 'note': NOTE}
-    ranges = {'schema': 'ranges.v1', 'generated_at': now_t, 'params': {'window': RW, 'narrow_pct': NARROW, 'wide_pct': WIDE, 'trend': TREND, 'grid': GRID, 'horizons': list(HZ)},
+    ranges = {'schema': 'ranges.v1', 'generated_at': now_t, 'params': {'window': RW, 'narrow_pct': NARROW, 'wide_pct': WIDE, 'trend': TREND, 'grid': GRID, 'horizons': list(HZ),
+                                                                         'edges': RO.edges_of(RANGE_EXTRA), 'fan_grid': RO.GRID, 'test': test_params()},
               'regimes': {}, 'now': {}, 'note': NOTE.replace('after their lows', 'after these days')}
+    dlist = [m['days'] for m in meta]
     blocks = {}
     for k, label, _ in LOWS:
         R = LR.get(k)
@@ -504,8 +556,9 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=
                 v = R.get(f)
                 if v is None or not np.isfinite(v[gsel]).any():
                     continue
-                G['buckets'][f] = {'title': title, 'rows': [{'label': lab, **short_low(summarize_low(R, gsel & np.isfinite(v) & (v >= lo) & (v < hi)))}
-                                                            for lo, hi, lab in zip(edges[:-1], edges[1:], labels)]}
+                G['buckets'][f] = {'title': title, 'edges': edges, 'rows': [{'label': lab, **short_low(summarize_low(R, gsel & np.isfinite(v) & (v >= lo) & (v < hi)))}
+                                                                            for lo, hi, lab in zip(edges[:-1], edges[1:], labels)]}
+            odds_of_group(G, R, gsel, LOW_FEATURES, low_outcomes(R), LOW_EXTRA, closes, dlist, verbose and f'lows {k} {g}')
             REG['groups'][g] = G
         lows['regimes'][k] = REG
         lst = []
@@ -517,7 +570,8 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=
             sel, feats, keep = analogues(R, R['group'] == gi[m['group']], now, LOW_FEATURES, ai, m['t'])
             b = {'state': {**m['common'], **x['state'], 'date': m['days'][m['t']], 'close': _r(m['close'])}}
             if sel is not None:
-                b['analogues'] = {'features': feats, **summarize_low(R, sel, curves=True),
+                b['analogues'] = {'features': feats, **summarize_low(R, sel, curves=True), 'dist': RO.dists(R, sel, LOW_EXTRA),
+                                  'fan': RO.fan(closes, R['asset'][keep], R['t'][keep]),
                                   'nearest': [{'key': meta[int(R['asset'][j])]['key'], 'date': meta[int(R['asset'][j])]['days'][int(R['t'][j])], 'age': _r(R['age'][j], 0),
                                                'dd_ath': _r(R['dd_ath'][j]), 'r10': _r(R['r10'][j], 0) if R['ended'][j] else None, 'fall': _r(R['fall'][j]),
                                                'bounce': _r(R['bounce'][j]), 'fwd252': _r(R['fwd252'][j]), 'seen': int(min(R['n_left'][j] - 1, H))} for j in keep[:12]]}
@@ -539,8 +593,9 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=
                 v = R.get(f)
                 if v is None or not np.isfinite(v[gsel]).any():
                     continue
-                G['buckets'][f] = {'title': title, 'rows': [{'label': lab, **short_range(summarize_range(R, gsel & np.isfinite(v) & (v >= lo) & (v < hi)))}
-                                                            for lo, hi, lab in zip(edges[:-1], edges[1:], labels)]}
+                G['buckets'][f] = {'title': title, 'edges': edges, 'rows': [{'label': lab, **short_range(summarize_range(R, gsel & np.isfinite(v) & (v >= lo) & (v < hi)))}
+                                                                            for lo, hi, lab in zip(edges[:-1], edges[1:], labels)]}
+            odds_of_group(G, R, gsel, RANGE_FEATURES, range_outcomes(R), RANGE_EXTRA, closes, dlist, verbose and f'ranges {k} {g}')
             REG['groups'][g] = G
         ranges['regimes'][k] = REG
         lst = []
@@ -552,7 +607,8 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=
             sel, feats, keep = analogues(R, R['group'] == gi[m['group']], now, RANGE_FEATURES, ai, m['t'])
             b = {'state': {**m['common'], **x['state'], 'date': m['days'][m['t']], 'close': _r(m['close'])}}
             if sel is not None:
-                b['analogues'] = {'features': feats, **summarize_range(R, sel, curves=True),
+                b['analogues'] = {'features': feats, **summarize_range(R, sel, curves=True), 'dist': RO.dists(R, sel, RANGE_EXTRA),
+                                  'fan': RO.fan(closes, R['asset'][keep], R['t'][keep]),
                                   'nearest': [{'key': meta[int(R['asset'][j])]['key'], 'date': meta[int(R['asset'][j])]['days'][int(R['t'][j])], 'width': _r(R['width'][j]),
                                                'age': _r(R['age'][j], 0), 'brk': _r(R['brk'][j], 0) if R['resolved'][j] else None,
                                                'up': None if not R['resolved'][j] else bool(R['up'][j]), 'after63': _r(R['after63'][j]), 'fwd252': _r(R['fwd252'][j]), 'seen': int(min(R['n_left'][j] - 1, 252))} for j in keep[:12]]}

@@ -23,7 +23,10 @@ State at an event (each a percentile in the asset's own history up to that day w
   percentile), pe (price ÷ the sum of the last four first-filed quarterly EPS, positive only; own percentile from three
   years of it), volu (average volume in the last 3 months ÷ the last 12).
 Analogues for an asset at its highs now: the 250 high days of the same kind (companies; funds; indices) nearest on the
-state variables both have, at most one per asset and 21-day block, and what followed them.
+state variables both have, at most one per asset and 21-day block, and what followed them — with the distributions of
+the returns 1, 3 and 12 months on, the largest fall within 3 months and the gain left in the run, and the fan of the
+return from the day over the next year (app/regime_odds.py). For each kind of asset, the walk-forward test of the
+similar-days odds (a 3- and a 12-month rise, a 10% pullback within 3 months).
 """
 from __future__ import annotations
 
@@ -34,6 +37,8 @@ import math
 from pathlib import Path
 
 import numpy as np
+
+import regime_odds as RO
 
 NEAR, RECENT, RUN_DD = 0.05, 21, 0.10
 PULLS = (0.05, 0.10, 0.20)
@@ -413,6 +418,15 @@ def analogues(R, gsel, now, asset, t_abs, k=K_ANALOG):
 
 # ------------------------------------------------------------------ the build
 KIND_GROUP = {'stock': 'companies', 'sector': 'funds', 'style': 'funds', 'market': 'funds', 'etf': 'funds', 'index': 'indices'}
+EXTRA = (('mdd63', 'drop'), ('gain_left', 'rise'))
+FAN_BASE = 5000
+
+
+def outcomes_of(R):
+    """Per high day, 1 / 0 / NaN (not yet known): a 3- and a 12-month rise, a 10% pullback within 3 months."""
+    up = lambda x: np.where(np.isfinite(x), (x > 0).astype(float), np.nan)                       # noqa: E731
+    n, t10 = R['n_left'], R['t10']
+    return {'up63': up(R['fwd63']), 'up252': up(R['fwd252']), 'pull63': np.where((t10 <= 63) & (t10 < n), 1.0, np.where(n > 63, 0.0, np.nan))}
 
 
 def _state(F, days, closes, last):
@@ -436,7 +450,7 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_path=None, verbose
     keep_cols = list(FEATURES) + ['ext200', 'mom', 'vol', 'pe', 't5', 't10', 't20', 'run_left', 'ended', 'highs_left', 'gain_left', 'pull_depth',
                                   'pull_closed', 'pull_days'] + [f'fwd{h}' for h in HZ] + ['mdd63', 'mdd252']
     rows = {k: [] for k in ['asset', 'run', 't', 'n_left', 'group'] + keep_cols}
-    meta, moms, gi = [], {}, {g: i for i, (g, _) in enumerate(GROUPS)}
+    meta, moms, gi, closes_of = [], {}, {g: i for i, (g, _) in enumerate(GROUPS)}, []
     for a in assets:
         key, g = a['key'], KIND_GROUP.get(a.get('kind'))
         if g is None or key not in data or str(key).startswith('VIX'):
@@ -466,6 +480,7 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_path=None, verbose
         m = {'key': key, 'group': g, 'days': days, 'a': a, 'runs': own_runs(F), 'state': _state(F, days, closes, data[key][2]),
              'now': {f: float(F[f][t]) for f in FEATURES} if F['high'][t] else None, 't': t}
         meta.append(m)
+        closes_of.append(closes.astype(np.float32))
         if g == 'companies':
             moms[ai] = F['mom'].astype(np.float32)
         hs = np.nonzero(F['high'])[0]
@@ -513,7 +528,11 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_path=None, verbose
         return _r(100.0 * np.searchsorted(cols_sorted[:k, c], v, side='right') / k, 2) if k >= 50 else None
     doc = {'schema': 'highs.v1', 'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
            'params': {'near': NEAR, 'recent': RECENT, 'run_drawdown': RUN_DD, 'pullbacks': list(PULLS), 'horizons': list(HZ), 'grid': GRID,
-                      'min_history': MIN_HIST, 'analogues': K_ANALOG}, 'groups': {}, 'now': [], 'note': NOTE}
+                      'min_history': MIN_HIST, 'analogues': K_ANALOG, 'edges': RO.edges_of(EXTRA), 'fan_grid': RO.GRID,
+                      'test': {'k': RO.K, 'per_year': RO.PER_YEAR, 'pool_max': RO.POOL_MAX, 'lag': RO.LAG, 'min_years': RO.MIN_YEARS}},
+           'groups': {}, 'now': [], 'note': NOTE}
+    dlist = [m['days'] for m in meta]
+    outs = outcomes_of(R)
     for g, label in GROUPS:
         gsel = R['group'] == gi[g]
         if not gsel.any():
@@ -524,8 +543,19 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_path=None, verbose
             v = R[f]
             if not np.isfinite(v[gsel]).any():
                 continue
-            G['buckets'][f] = {'title': title, 'rows': [{'label': lab, **short(summarize(R, gsel & np.isfinite(v) & (v >= lo) & (v < hi_)))}
-                                                        for lo, hi_, lab in zip(edges[:-1], edges[1:], labels)]}
+            G['buckets'][f] = {'title': title, 'edges': edges, 'rows': [{'label': lab, **short(summarize(R, gsel & np.isfinite(v) & (v >= lo) & (v < hi_)))}
+                                                                        for lo, hi_, lab in zip(edges[:-1], edges[1:], labels)]}
+        G['dist'] = RO.dists(R, gsel, EXTRA)
+        smp = RO.sample(gsel, FAN_BASE)
+        G['fan'] = RO.fan(closes_of, R['asset'][smp], R['t'][smp])
+        t0 = dt.datetime.now()
+        bt = RO.walk_forward(R, gsel, list(FEATURES), _z, outs, R['fwd63'], RO.day_index(dlist, R['asset'], R['t']),
+                             RO.day_index(dlist, R['asset'], R['t'], lag=RO.LAG))
+        if bt:
+            G['backtest'] = bt
+        if verbose:
+            print(f'highs {g}: test {(bt or {}).get("days")} days in {round((dt.datetime.now() - t0).total_seconds(), 1)}s',
+                  {k: v.get('skill') for k, v in ((bt or {}).get('outcomes') or {}).items()}, flush=True)
         doc['groups'][g] = G
     # every asset: its last day and its own past runs; at its highs, its analogues
     blocks = {}
@@ -542,7 +572,8 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_path=None, verbose
         if m['now'] is not None:
             sel, feats, keep = analogues(R, R['group'] == gi[m['group']], m['now'], ai, m['t'])
             if sel is not None:
-                block['analogues'] = {'features': feats, **summarize(R, sel, curves=True),
+                block['analogues'] = {'features': feats, **summarize(R, sel, curves=True), 'dist': RO.dists(R, sel, EXTRA),
+                                      'fan': RO.fan(closes_of, R['asset'][keep], R['t'][keep]),
                                       'nearest': [{'key': meta[int(R['asset'][j])]['key'], 'date': meta[int(R['asset'][j])]['days'][int(R['t'][j])],
                                                    'age': _r(R['age'][j], 0), 'highs63': _r(R['highs63'][j], 0), 'run_left': _r(R['run_left'][j], 0) if R['ended'][j] else None,
                                                    't10': _r(R['t10'][j], 0) if R['t10'][j] < R['n_left'][j] else None, 'pullback': _r(R['pull_depth'][j]),
@@ -550,7 +581,7 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_path=None, verbose
             lite = dict(block)                                      # the list: no curves or nearest days (they are in the asset's file)
             if 'analogues' in lite:
                 lite['analogues'] = {k: ({kk: vv for kk, vv in v.items() if kk != 'curve'} if isinstance(v, dict) else v)
-                                     for k, v in lite['analogues'].items() if k != 'nearest'}
+                                     for k, v in lite['analogues'].items() if k not in ('nearest', 'dist', 'fan')}
             lite.pop('own', None)
             doc['now'].append({'key': key, 'name': a.get('name'), 'kind': a.get('kind'), 'group': m['group'], 'sector': a.get('sector'), **lite})
         blocks[key] = block
