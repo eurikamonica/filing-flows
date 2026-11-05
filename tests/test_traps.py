@@ -269,3 +269,12 @@ def test_eps_bridge_order_and_chart_contracts(tmp_path):
     assert S.chart_contract(by_id(doc)["D03"], doc) is None
     html = S.finding_html(by_id(doc)["A01"], "Alpha", doc)
     assert "class='trap-chart'" in html and '"chart_id":"fcf_bridge"' in html
+
+
+def test_eps_figures_put_the_minus_before_the_dollar_sign():
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    import seo_traps as S
+    assert S.fmt_obs("eps_from_profit", -0.06) == "-$0.06"
+    assert S.fmt_obs("eps_from_share_count", -0.001) == "$0.00"
+    assert S.fmt_obs("eps_from_profit", 0.25) == "$0.25"
+    assert "$-" not in S.fmt_obs("eps_diluted", -1.5)
