@@ -1895,7 +1895,7 @@
     if (V.kind === 'rank') rankRace(ctx, V, f, box, S, th, F);
     else if (V.kind === 'bubble') bubbleChart(ctx, V, f, { x: box.x, y: box.y, w: box.w + 30 * S, h: box.h - 40 * S }, S, th, F);
     else if (V.kind === 'treemap') treemapChart(ctx, V, f, box, S, th, F);
-    else if (V.kind === 'sectors') stackChart(ctx, V, f, { x: box.x, y: box.y, w: box.w - 150 * S, h: box.h - 40 * S }, S, th, F);
+    else if (V.kind === 'sectors') stackChart(ctx, V, f, { x: box.x, y: box.y, w: box.w - 150 * S, h: box.h - 40 * S, r: box.x + box.w }, S, th, F);
     else if (V.kind === 'sankey') sankeyChart(ctx, V, f, box, S, th, F);
     else if (V.kind === 'cash' && style !== 'columns') cashFlowChart(ctx, V, f, box, S, th, F);
     else if (V.kind === 'cash') {                             // period by period: operating and free cash flow, capital spending, shareholder returns
@@ -2451,8 +2451,11 @@
     const lh = 30 * S, sorted = heads.filter((h) => fin(h.v) && h.v > (share ? 0.004 : 0)).sort((a, c) => a.y - c.y);
     sorted.forEach((h, i) => { h.ly = Math.max(h.y, i ? sorted[i - 1].ly + lh : b.y + lh / 2); });
     for (let i = sorted.length - 1; i >= 0; i--) { const lim = i === sorted.length - 1 ? b.y + b.h - lh / 2 : sorted[i + 1].ly - lh; if (sorted[i].ly > lim) sorted[i].ly = lim; }
-    const lx = Math.min(X(tCur) + 16 * S, b.x + b.w + 14 * S);
-    sorted.forEach((h) => { ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = F(700, 21); ctx.fillStyle = h.col; ctx.fillText(`${h.s.label}  ${V.fmt(h.v)}`, lx, h.ly); });
+    // the labels beside the heads: smaller (then narrower) when the longest would run past the picture's edge
+    const lx = Math.min(X(tCur) + 16 * S, b.x + b.w + 14 * S), right = (b.r || b.x + b.w + 150 * S) - 4 * S;
+    ctx.font = F(700, 21);
+    const wmax = Math.max(1, ...sorted.map((h) => ctx.measureText(`${h.s.label}  ${V.fmt(h.v)}`).width)), fs = lx + wmax > right ? Math.max(15, Math.floor(21 * (right - lx) / wmax)) : 21;
+    sorted.forEach((h) => { ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = F(700, fs); ctx.fillStyle = h.col; ctx.fillText(`${h.s.label}  ${V.fmt(h.v)}`, lx, h.ly, Math.max(40 * S, right - lx)); });
   }
   // the earnings flow: the site's Sankey (its colours: grey revenue, green profit, red costs, slate non-cash) laid out
   // the same way every quarter on one scale, so it grows and shrinks; nodes and bands move from quarter to quarter
