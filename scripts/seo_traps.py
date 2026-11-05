@@ -215,6 +215,10 @@ RULE_BLURB = {
     "B08": "Adjusted EPS at least 10% above GAAP quarter after quarter: the excluded costs are a recurring cost of the business.",
     "C02": "Debt due within a year exceeds cash and investments plus the last twelve months' free cash flow: a low net debt says nothing about when it falls due.",
     "D03": "EPS rose while net income was flat or down and the share count fell: the growth is the smaller denominator.",
+    "E02": "A low P/E on this year's profit when that profit is at a high against the last eight years: the multiple on mid-cycle profit is what matters.",
+    "E07": "A DCF's point value against the terminal value's weight and the swing from each input: a range, not a number (always 'to review').",
+    "J06": "A bank at a low P/E on its best year of the last eight: provisions, deposit costs and capital turn the cycle, not the multiple.",
+    "J08": "A REIT paying more in dividends than its net income is normal; paying more than its operating cash flow is the question.",
 }
 
 
@@ -236,8 +240,9 @@ def write(site, base, today=None):
             continue
         t = r.get("ticker") or ""
         er = read(os.path.join(site, "disclosures", "data", "research", "earnings", "c", f"{t.replace('.', '-')}.json")) if t else None
+        val = read(os.path.join(site, "disclosures", "data", "research", "valuation", "c", f"{cik}.json"))
         try:
-            doc = T.evaluate(c, er, today)
+            doc = T.evaluate(c, er, today, val)
         except Exception as err:  # noqa: BLE001
             print(f"traps skipped ({t or cik}): {err}")
             continue

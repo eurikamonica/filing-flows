@@ -40,6 +40,7 @@ def test_every_rule_triggers_on_the_demo_company_and_the_priority_keeps_one_per_
     d = T.evaluate(company(), er, TODAY)
     f = by_id(d)
     assert all(f[k]["status"] == "triggered" for k in ("A01", "A07", "B02", "B08", "C02", "D03")), {k: v["status"] for k, v in f.items()}
+    assert f["E02"]["status"] == "insufficient_data" and f["E07"]["status"] == "insufficient_data" and f["J06"]["status"] == "not_applicable" and f["J08"]["status"] == "not_applicable"
     a = f["A01"]
     assert a["observed"]["fcf_prior"] == 40e6 and a["observed"]["fcf_current"] == 110e6 and a["observed"]["capex_reduction"] == 40e6 and a["observed"]["wc_release"] == 30e6
     # the rulebook's worked example (§3.1): 40 → 110, +30 working capital, +40 capex, nothing else — the whole increase is temporary
@@ -69,7 +70,7 @@ def test_clear_insufficient_not_applicable_and_expired():
     assert fb["A01"]["status"] == "not_applicable" and fb["B02"]["status"] == "not_applicable" and "financial" in fb["A01"]["reason"]
     old = company(); old["quarters"][0]["filed"] = "2024-01-15"
     fo = T.evaluate(old, None, TODAY)
-    assert all(x["status"] == "expired" for x in fo["findings"] if x["rule_id"] != "B08") and fo["summary"]["expired"] == 5
+    assert all(x["status"] == "expired" for x in fo["findings"] if x["rule_id"] in ("A01", "A07", "B02", "C02", "D03")) and fo["summary"]["expired"] == 5
     assert fo["findings"][0]["status_before_expiry"] == "triggered"
     # a loss: EPS growth has no meaning; no debt figure read: not "no debt"
     loss = company(); loss["quality"]["drivers"]["q"][0]["cur"]["ni"] = -5e6
@@ -105,3 +106,26 @@ def test_pages(tmp_path):
     hub = (s / "disclosures" / "analysis-traps" / "index.html").read_text()
     assert "FCF growth = the business improved" in hub and "1 of 1" in hub
     assert "sitemap-traps.xml" in (s / "robots.txt").read_text() and "https://x.test/c/aaa/analysis-traps/" in (s / "sitemap-traps.xml").read_text()
+
+
+def test_phase_two_rules():
+    """E02 mid-cycle P/E, J06 a bank's cycle, E07 the DCF's range, J08 a REIT's payout"""
+    def hist(vals):
+        return {"periods": [[f"{2017 + i}-01-01", f"{2017 + i}-12-31", "fy", f"FY{2017 + i}"] for i in range(len(vals))], "v": {"ni": [[i, [[v, [0, "fy", [i]]]]] for i, v in enumerate(vals)]}}
+    c = company(); c["quality"]["hist"] = hist([5e8, 4e8, -1e8, 6e8, 5e8, 5.5e8, 1.5e9, 1.6e9])     # the last two years are the peak
+    val = {"inputs": {"mcap": 16e9, "ni": 1.6e9}, "price": 100, "generated_at": "2026-11-05", "dcf": {"value": 164.4, "tv_share": 0.72},
+           "sensitivity": {"tornado": [{"input": "Revenue growth (each year)", "how": "±5 pts", "low": 134.4, "high": 200.0}, {"input": "WACC", "how": "±1 pt", "low": 143.9, "high": 191.5}]}, "range": [42.5, 444.4]}
+    f = by_id(T.evaluate(c, None, TODAY, val))
+    assert f["E02"]["status"] == "triggered" and f["E02"]["observed"]["pe_ttm"] == 10.0 and f["E02"]["observed"]["pe_mid_cycle"] == 29.1 and f["E02"]["severity"] == "high"
+    assert f["E07"]["status"] == "review" and f["E07"]["watch"] == "high" and "72% of it is the terminal value" in f["E07"]["explanation"] and "134.40 to 200.00" in f["E07"]["explanation"]
+    val["inputs"]["mcap"] = 40e9
+    assert by_id(T.evaluate(c, None, TODAY, val))["E02"]["status"] == "review"
+    bank = company(); bank["profile"]["sic"] = "6022"; bank["quality"]["hist"] = hist([5e8, 5e8, 6e8, 4e8, 5e8, 6e8, 9e8, 1e9])
+    fb = by_id(T.evaluate(bank, None, TODAY, {"inputs": {"mcap": 9e9, "ni": 1e9}}))
+    assert fb["J06"]["status"] == "triggered" and fb["J06"]["confidence"] == "low" and fb["E02"]["status"] == "not_applicable" and "credit losses" in fb["J06"]["missing_evidence"][0].lower()
+    reit = company(); reit["profile"]["sic"] = "6798"
+    reit["quality"]["fy"][1].update({"ni": 30e6}); reit["quality"]["cap"]["fy"][1]["items"].update({"div": -80e6, "capex": -20e6})
+    fr = by_id(T.evaluate(reit, None, TODAY))
+    assert fr["J08"]["status"] == "clear" and "as a REIT's usually is" in fr["J08"]["explanation"] and fr["J08"]["observed"]["payout_of_ocf"] == 0.62
+    reit["quality"]["cap"]["fy"][1]["items"]["div"] = -150e6
+    assert by_id(T.evaluate(reit, None, TODAY))["J08"]["status"] == "triggered"

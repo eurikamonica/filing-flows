@@ -27,13 +27,14 @@ rulebook; they are deliberately coarse, and every finding carries the figures so
 """
 import datetime as dt
 
-RULE_VERSION = "1.0"
+RULE_VERSION = "1.1"
 STATUSES = ("triggered", "clear", "insufficient_data", "not_applicable", "review", "expired")
 EXPIRED_DAYS = 455                                   # about 15 months without a new filing: findings are stale, not clear
 
 # overlap groups: findings in one group share a root cause; a page shows one per group so a company is not scored three
 # times for the same thing (cash conversion: A01 and B02; the share count: A07 and D03)
-GROUPS = {"A01": "cash_conversion", "B02": "cash_conversion", "A07": "share_count", "D03": "share_count", "B08": "earnings_definition", "C02": "liquidity"}
+GROUPS = {"A01": "cash_conversion", "B02": "cash_conversion", "A07": "share_count", "D03": "share_count", "B08": "earnings_definition", "C02": "liquidity",
+          "E02": "cycle", "J06": "cycle", "E07": "valuation_precision", "J08": "payout"}
 
 NAMES = {
     "A01": ("FCF growth = the business improved", "cash flow"),
@@ -42,7 +43,13 @@ NAMES = {
     "B08": ("Adjusted profit = economic profit", "earnings definition"),
     "C02": ("Low net debt = no refinancing risk", "liquidity"),
     "D03": ("EPS growth = profit growth", "share count"),
+    "E02": ("Low P/E at a cyclical peak = undervalued", "valuation"),
+    "E07": ("A precise DCF value = the true value", "valuation"),
+    "J06": ("A bank's low P/E and high profit = safe", "banks"),
+    "J08": ("A REIT's low net income = the dividend is unsafe", "REITs"),
 }
+# phase P2 (docs/TRAP_RULEBOOK.md): mid-cycle earnings and the P/E (E02), the DCF's range and terminal weight (E07), banks
+# and REITs with rules of their own (J06, J08) instead of an industrial company's FCF rules
 
 
 def fin(v):
@@ -78,6 +85,11 @@ def inputs(c):
     shares = _by_end(cap.get("shares"))
     quarters = (c or {}).get("quarters") or []
     latest = quarters[0] if quarters else {}
+    latest_end = (quarters[0].get("end") if quarters else None) or ""
+    if latest_end:                                      # years read long ago (Boston Properties: FY2010-2014 beside a 2026 quarter) are not the company now
+        cutoff = f"{int(latest_end[:4]) - 2}-01-01"
+        fys = [f for f in fys if f["end"] >= cutoff]
+        shares = [x for x in shares if x["end"] >= cutoff]
     return {"fy": fys, "q": qs, "cap_fy": cap_fy, "shares": shares, "val": Q.get("val") or {}, "mat": cap.get("maturities") or {},
             "ttm": cap.get("ttm") or {}, "drivers": Q.get("drivers") or {}, "latest": latest,
             "sic": str(((c or {}).get("profile") or {}).get("sic") or ""), "name": ((c or {}).get("profile") or {}).get("name") or ""}
@@ -362,6 +374,165 @@ def rule_d03(I, docs):
                                f"the share count {'fell' if g_sh < 0 else 'rose'} {100 * abs(g_sh):.1f}%: EPS growth follows profit growth.", how=how, evidence=ev)
 
 
+# ---------------------------------------------------------------- E02 / J06: the cycle
+def fy_net_income(c):
+    """[(label, net income)] by fiscal year, oldest first, from the company file's history (quality.hist)"""
+    h = ((c or {}).get("quality") or {}).get("hist") or {}
+    per, v = h.get("periods") or [], (h.get("v") or {}).get("ni") or []
+    out = []
+    for i, vals in v:
+        if i < len(per) and per[i][2] == "fy" and vals and fin(vals[0][0]):
+            out.append((per[i][3], vals[0][0]))
+    return out
+
+
+def is_bank(sic):
+    try:
+        s = int(sic[:4])
+    except ValueError:
+        return False
+    return 6020 <= s <= 6036 or s in (6099, 6111, 6141, 6153, 6159, 6162, 6163, 6172, 6189, 6199)
+
+
+def is_reit(sic):
+    return sic[:4] == "6798"
+
+
+def rule_e02(c, I, val, docs):
+    """Low P/E at a cyclical peak = undervalued: the P/E on this year's profit against the P/E on mid-cycle profit (E02)"""
+    if is_financial(I["sic"]):
+        return finding("E02", "not_applicable", reason="a financial company: J06 reads its cycle instead")
+    inp = (val or {}).get("inputs") or {}
+    mcap, ni = inp.get("mcap"), inp.get("ni")
+    fys = fy_net_income(c)
+    if not fin(mcap) or not fin(ni) or not mcap:
+        return finding("E02", "insufficient_data", reason="no market value or trailing net income in the valuation research")
+    if len(fys) < 5:
+        return finding("E02", "insufficient_data", reason=f"{len(fys)} fiscal years of net income on file; a cycle needs five")
+    hist = [v for _, v in fys[-8:]]
+    med = sorted(hist)[len(hist) // 2]
+    peak = max(hist)
+    obs = {"market_value": mcap, "net_income_ttm": ni, "pe_ttm": _r(mcap / ni, 1) if ni > 0 else None, "net_income_median_fy": med, "pe_mid_cycle": _r(mcap / med, 1) if med > 0 else None,
+           "net_income_peak_fy": peak, "years": [[l, _r(v / 1e6, 0)] for l, v in fys[-8:]]}
+    how = "P/E on the trailing twelve months' net income against the P/E on the median net income of the last eight fiscal years (a mid-cycle stand-in); 'at a peak' = this year's profit at or above 90% of the best year and at least 1.3× the median"
+    ev = [cite(I["latest"].get("label"), docs.get(I["latest"].get("end")), "net income, trailing twelve months")]
+    if ni <= 0 or med <= 0:
+        return finding("E02", "not_applicable", obs, reason="a loss on a trailing or mid-cycle basis: the P/E has no meaning", how=how, evidence=ev)
+    pe, pe_mid = mcap / ni, mcap / med
+    ups = sum(1 for a, b in zip(hist, hist[1:]) if b > a)
+    cyclical = len(hist) - 1 - ups >= 2                 # at least two down years in the window: a cycle, not a steady climb
+    obs["down_years_in_window"] = len(hist) - 1 - ups
+    at_peak = ni >= 0.9 * peak and ni >= 1.3 * med
+    if at_peak and not cyclical:
+        return finding("E02", "clear", obs, confidence="medium", explanation=f"Net income of {_money(ni)} is a high, but the last eight years rose almost every year (median {_money(med)}): a steady climb, not a cycle's top, so the P/E of {pe:.1f}× is not on peak profit in that sense.", how=how, evidence=ev)
+    if at_peak and pe <= 12:
+        return finding("E02", "triggered", obs, "high" if pe_mid >= 2.5 * pe else "medium", "medium",
+                       explanation=f"The shares trade at {pe:.1f}× this year's net income of {_money(ni)}, but that profit is at a high: the median of the last eight fiscal years is {_money(med)}, "
+                                   f"on which the same market value is {pe_mid:.1f}×. A low multiple of peak profit is not a low multiple of normal profit.",
+                       alternatives=["The business has changed for good (a merger, a new line, a pricing regime) and the old years are not its normal", "The market is right that profit will fall, and the price already says so",
+                                     "Capacity has left the industry, so the cycle's trough is higher than before"],
+                       missing=["Where the industry's prices and volumes stand against their own history", "Capacity on order across the industry", "Management's view of the cycle in the MD&A"],
+                       evidence=ev, how=how)
+    if at_peak:
+        return finding("E02", "review", obs, confidence="medium",
+                       explanation=f"Net income of {_money(ni)} is at a high against a median of {_money(med)} over eight years; at {pe:.1f}× the market is not pricing it as cheap, but a multiple on this year's profit still understates the mid-cycle one ({pe_mid:.1f}×).", how=how, evidence=ev)
+    return finding("E02", "clear", obs, confidence="medium", explanation=f"Net income of {_money(ni)} is not at a cyclical high against the last eight years (median {_money(med)}, best {_money(peak)}): the P/E of {pe:.1f}× is on a normal year.", how=how, evidence=ev)
+
+
+def rule_j06(c, I, val, docs):
+    """A bank's low P/E and high profit = safe: profit at a cycle high priced as permanent (J06)"""
+    if not is_bank(I["sic"]):
+        return finding("J06", "not_applicable", reason="not a bank")
+    inp = (val or {}).get("inputs") or {}
+    mcap, ni = inp.get("mcap"), inp.get("ni")
+    fys = fy_net_income(c)
+    if not fin(mcap) or not fin(ni) or not mcap:
+        return finding("J06", "insufficient_data", reason="no market value or trailing net income in the valuation research")
+    if len(fys) < 5:
+        return finding("J06", "insufficient_data", reason=f"{len(fys)} fiscal years of net income on file; a credit cycle needs five")
+    hist = [v for _, v in fys[-8:]]
+    med, peak = sorted(hist)[len(hist) // 2], max(hist)
+    obs = {"market_value": mcap, "net_income_ttm": ni, "pe_ttm": _r(mcap / ni, 1) if ni > 0 else None, "net_income_median_fy": med, "pe_mid_cycle": _r(mcap / med, 1) if med > 0 else None,
+           "years": [[l, _r(v / 1e6, 0)] for l, v in fys[-8:]]}
+    how = "a bank's P/E on trailing net income against the P/E on its median net income of the last eight years; credit losses, deposit costs and capital are what turn the cycle, none of which the P/E shows"
+    ev = [cite(I["latest"].get("label"), docs.get(I["latest"].get("end")), "net income")]
+    if ni <= 0 or med <= 0:
+        return finding("J06", "not_applicable", obs, reason="a loss: the P/E has no meaning", how=how, evidence=ev)
+    pe = mcap / ni
+    ups = sum(1 for a, b in zip(hist, hist[1:]) if b > a)
+    obs["down_years_in_window"] = len(hist) - 1 - ups
+    if ni >= 0.9 * peak and ni >= 1.25 * med and pe <= 11 and len(hist) - 1 - ups >= 1:
+        return finding("J06", "triggered", obs, "medium", "low",
+                       explanation=f"The bank trades at {pe:.1f}× net income of {_money(ni)}, its best or near-best year of the last eight (median {_money(med)}). Bank profit at the top of a credit cycle carries low provisions and cheap deposits; "
+                                   f"the P/E says nothing about the loan book, the deposit costs or the capital that decide the next part of the cycle.",
+                       alternatives=["Higher rates lifted net interest income for good, not for a cycle", "The bank's mix (fees, wealth management) is less cyclical than a lender's", "Provisions are already at a normal level and reserves are full"],
+                       missing=["The allowance for credit losses against loans and its trend", "Deposit costs and the share of uninsured deposits", "CET1 and the loan book's concentration (CRE, construction, consumer)"],
+                       evidence=ev, how=how)
+    return finding("J06", "clear", obs, confidence="low", explanation=f"At {pe:.1f}× net income of {_money(ni)} (median {_money(med)} over eight years) the profit is not at a cycle high priced as cheap; the credit cycle is still the thing to read.", how=how, evidence=ev)
+
+
+# ---------------------------------------------------------------- E07: the DCF's precision
+def rule_e07(val, docs, I):
+    """A precise DCF value = the true value: the terminal value's weight and the range across the inputs (E07)"""
+    dcf, sens = (val or {}).get("dcf") or {}, (val or {}).get("sensitivity") or {}
+    v, price = dcf.get("value"), (val or {}).get("price")
+    if not fin(v):
+        return finding("E07", "insufficient_data", reason="no DCF in the valuation research for this company")
+    tor = [t for t in sens.get("tornado") or [] if fin(t.get("low")) and fin(t.get("high"))]
+    rng = (val or {}).get("range")
+    obs = {"dcf_value": _r(v, 2), "price": price, "terminal_value_share": _r(dcf.get("tv_share"), 3),
+           "swing_by_input": [[t.get("input"), t.get("how"), _r(t["low"], 2), _r(t["high"], 2)] for t in tor[:4]],
+           "range_all_methods": [_r(rng[0], 2), _r(rng[1], 2)] if isinstance(rng, list) and len(rng) == 2 else None}
+    how = "the DCF's point value against the share of it that is the terminal value and the value at each input moved by one step (growth ±5 pts, WACC ±1 pt, margin ±3 pts …); the range across every method the research ran"
+    ev = [cite(str((val or {}).get("generated_at") or "")[:10], None, "valuation research")]
+    if not tor:
+        return finding("E07", "review", obs, confidence="medium", explanation=f"The DCF says {v:,.2f} a share" + (f", {100 * dcf['tv_share']:.0f}% of it the terminal value" if fin(dcf.get("tv_share")) else "") + "; no sensitivity run is on file, so read it as a range, not a point.", how=how, evidence=ev)
+    top = max(tor, key=lambda t: abs(t["high"] - t["low"]))
+    spread = (top["high"] - top["low"]) / v if v else None
+    tv = dcf.get("tv_share")
+    always = (f"The DCF's point value is {v:,.2f} a share" + (f" (price {price:,.2f})" if fin(price) else "") + (f"; {100 * tv:.0f}% of it is the terminal value, a number about years no one has seen" if fin(tv) else "")
+              + f". Moving {top['input'].lower()} by {top['how']} alone takes it from {top['low']:,.2f} to {top['high']:,.2f}"
+              + (f"; across every method the research ran the range is {rng[0]:,.0f} to {rng[1]:,.0f}" if obs["range_all_methods"] else "") + ". The value is a range; the decimals are not information.")
+    sev = "high" if (fin(tv) and tv >= 0.7) or (spread and spread >= 0.4) else "medium"    # most of the value in the terminal, or one input swings it 40%
+    return finding("E07", "review", obs, severity=None, confidence="high", explanation=always,
+                   alternatives=["A stable, mature business with a narrow range of outcomes, where the point value is a fair summary", "The inputs that matter most are themselves well known (a regulated return, a long contract)"],
+                   missing=["Which input you believe differs from the research's and why", "What the price implies for growth (the reverse DCF on the fair-value page)"],
+                   evidence=ev, how=how) | {"watch": sev}
+
+
+# ---------------------------------------------------------------- J08: a REIT's payout
+def rule_j08(I, docs):
+    """A REIT's low net income = the dividend is unsafe: the dividend against operating cash flow after maintenance capex (J08)"""
+    if not is_reit(I["sic"]):
+        return finding("J08", "not_applicable", reason="not a REIT")
+    fys = [f for f in I["fy"] if fin(f.get("ocf")) and fin(f.get("ni"))]
+    if not fys:
+        return finding("J08", "insufficient_data", reason="no fiscal year with net income and operating cash flow on file")
+    f1 = fys[-1]
+    items = (I["cap_fy"].get(f1["end"]) or {}).get("items") or {}
+    div, capex = items.get("div"), items.get("capex")
+    if div is None:
+        return finding("J08", "insufficient_data", reason="no dividends paid in the cash flow statement for the latest fiscal year")
+    div, capex = abs(div), abs(capex or 0)
+    ni, ocf = f1["ni"], f1["ocf"]
+    obs = {"fy": f1.get("label"), "net_income": ni, "operating_cash_flow": ocf, "dividends_paid": div, "capex": capex, "payout_of_net_income": _r(div / ni, 2) if ni > 0 else None,
+           "payout_of_ocf": _r(div / ocf, 2) if ocf > 0 else None, "payout_of_ocf_after_capex": _r(div / (ocf - capex), 2) if ocf - capex > 0 else None}
+    how = "a REIT's net income is after depreciation of buildings that usually hold their value, so FFO / AFFO is the payout measure; here operating cash flow and operating cash flow after capex stand in for it (capex includes acquisitions of property where the filing lumps them)"
+    ev = [cite(f1.get("label"), docs.get(f1["end"]), "net income, operating cash flow, dividends and capex, fiscal year")]
+    if ocf <= 0:
+        return finding("J08", "triggered", obs, "high", "medium", explanation=f"Dividends of {_money(div)} were paid in {f1.get('label')} while operating cash flow was {_money(ocf)}: the payout is funded by borrowing or asset sales, whatever net income says.",
+                       alternatives=["A one-off working-capital swing in the year", "A development programme nearing completion"], missing=["FFO and AFFO as the REIT reports them", "The development pipeline and its funding"], evidence=ev, how=how)
+    if div > ocf:
+        return finding("J08", "triggered", obs, "medium", "medium",
+                       explanation=f"Dividends of {_money(div)} exceeded operating cash flow of {_money(ocf)} in {f1.get('label')} ({100 * div / ocf:.0f}%): the low net income ({_money(ni)}) is not the reason to worry, the cash is.",
+                       alternatives=["Capital returned after a disposal, as a one-off", "Timing of rent collections at year end"], missing=["FFO and AFFO as the REIT reports them", "The maintenance capex the REIT discloses", "Debt maturities and undrawn facilities"], evidence=ev, how=how)
+    if ni < div:
+        return finding("J08", "clear", obs, confidence="medium",
+                       explanation=f"Net income of {_money(ni)} is below the {_money(div)} of dividends, as a REIT's usually is: depreciation of buildings is not cash. Operating cash flow of {_money(ocf)} covers the dividend {ocf / div:.1f}×"
+                                   + (f" ({(ocf - capex) / div:.1f}× after capex of {_money(capex)})" if ocf - capex > 0 else f"; capex of {_money(capex)} is larger than what is left, which is a funding question, not a payout one") + ".", how=how, evidence=ev)
+    return finding("J08", "clear", obs, confidence="medium", explanation=f"Dividends of {_money(div)} are covered by net income ({_money(ni)}) and by operating cash flow ({_money(ocf)}).", how=how, evidence=ev)
+
+
 # ---------------------------------------------------------------- the run
 def _money(v):
     if not fin(v):
@@ -382,8 +553,9 @@ SEV = {"high": 3, "medium": 2, "low": 1, None: 0}
 CONF = {"high": 3, "medium": 2, "low": 1, None: 0}
 
 
-def evaluate(c, er=None, today=None):
-    """Every rule on one company: {cik, name, as_of, filed, generated_at, rule_version, findings, summary, priority}."""
+def evaluate(c, er=None, today=None, val=None):
+    """Every rule on one company: {cik, name, as_of, filed, generated_at, rule_version, findings, summary, priority}.
+    er: the earnings research file; val: the valuation research file (both optional: their rules read insufficient)."""
     today = today or dt.date.today()
     I = inputs(c)
     docs = {}
@@ -392,7 +564,8 @@ def evaluate(c, er=None, today=None):
             docs.setdefault(q["end"], q["doc_url"])
     latest = I["latest"]
     as_of, filed = latest.get("end"), latest.get("filed")
-    out = [rule_a01(I, docs), rule_a07(I, docs), rule_b02(I, docs), rule_b08(I, docs, er), rule_c02(I, docs), rule_d03(I, docs)]
+    out = [rule_a01(I, docs), rule_a07(I, docs), rule_b02(I, docs), rule_b08(I, docs, er), rule_c02(I, docs), rule_d03(I, docs),
+           rule_e02(c, I, val, docs), rule_e07(val, docs, I), rule_j06(c, I, val, docs), rule_j08(I, docs)]
     expired = False
     if filed:
         try:
