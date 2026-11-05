@@ -64,11 +64,11 @@ MKEEP = 100                     # a manager's largest positions kept per quarter
 MIN_BOOK, MIN_BOOK_USD = 200, 1e9   # a filer's quarter kept in cache/managers: this many lines, or this much in all
 GIANT = 500                     # managers published in public/m: more lines than this in some quarter (the site's own
                                 # 13F files read the others back to 2013 or 2021, holdings13f/ranges.py tiers)
-MANAGERS_VERSION = 2            # cache/managers' layout: a new one reads every data set again (sets.json "mversion")
-                                # (2: the 100 largest positions, not 40)
+MANAGERS_VERSION = 3            # cache/managers' layout: a new one reads every data set again (sets.json "mversion")
+                                # (2: the 100 largest positions, not 40; 3: ETFs a sector of their own)
 WUNIT = 1e-5                    # public/m weights: hundred-thousandths of the long equity book
 SECTORS = ('technology', 'communication', 'consumer-disc', 'consumer-staples', 'health', 'financials', 'real-estate',
-           'energy', 'materials', 'industrials', 'utilities')
+           'energy', 'materials', 'industrials', 'utilities', 'etf')   # etf: an ETF's line (not looked through)
 MANAGER_FIELDS = ['usd', 'lines', 'put', 'call', 'top', 'sectors']   # top: [[cusip, shares, usd]]; sectors: {key: usd}
 csv.field_size_limit(1 << 30)
 
@@ -546,9 +546,10 @@ def read_gz(path, default=None):
 
 def ticker_sectors(paths):
     """Ticker → the site's sector from its files: the rank panel's meta ({cos: [[ticker, name, sector]]}), the ETF build's
-    sectors ({sectors: {ticker: sector}}) and the site's index ({companies: [{ticker, sector}]}); the first file that
-    names a ticker wins."""
-    out = {}
+    sectors of the companies ETFs hold ({sectors: {ticker: sector}}) and the site's index ({companies: [{ticker, sector}]});
+    the first file that names a ticker wins. The ETF build's index ({fields: [..., 'symbol', ...], rows}) names the ETFs
+    themselves: 'etf', after every company's sector."""
+    out, funds = {}, []
     norm = lambda t: str(t or '').strip().upper().replace('.', '-').replace('/', '-')
     for path in paths or ():
         try:
@@ -562,9 +563,15 @@ def ticker_sectors(paths):
             pairs = list(d['sectors'].items())
         elif isinstance(d, dict) and isinstance(d.get('companies'), list):
             pairs = [(c.get('ticker'), c.get('sector')) for c in d['companies'] if isinstance(c, dict)]
+        elif isinstance(d, dict) and isinstance(d.get('fields'), list) and 'symbol' in d['fields'] and isinstance(d.get('rows'), list):
+            i = d['fields'].index('symbol')
+            funds += [r[i] for r in d['rows'] if isinstance(r, list) and len(r) > i]
         for t, sec in pairs:
             if norm(t) and sec in SECTORS:
                 out.setdefault(norm(t), sec)
+    for t in funds:
+        if norm(t):
+            out.setdefault(norm(t), 'etf')
     return out
 
 
@@ -916,7 +923,7 @@ def build_managers(root, pub, cmap, names, giant=None):
     return {'managers': len(index), 'quarters': len(P), 'first': P[0] if P else None, 'last': P[-1] if P else None}
 
 
-def build(root, hub, top=TOP, min_usd=20_000_000):
+def build(root, hub, top=TOP, min_usd=20_000_000, sectors=()):
     root, pub = Path(root), Path(root) / 'public'
     files = sorted((root / 'cache' / 'periods').glob('*.json.gz'))
     periods = [(f.name[:10], read_gz(f, {'rows': {}, 'issuers': {}, 'names': {}, 'filers': 0})) for f in files]
@@ -1013,8 +1020,11 @@ def build(root, hub, top=TOP, min_usd=20_000_000):
     index.sort(key=lambda r: -(r[5] or 0))
     (pub / 'index.json').write_text(json.dumps({'generated_at': stamp, 'periods': P, 'fields': ['ticker', 'name', 'first', 'last', 'holders', 'usd'],
                                                 'rows': index}, separators=(',', ':')), encoding='utf-8')
-    # CUSIP → ticker as named here (the managers' books and the 13F weights video read it: web/actual-weights.js)
-    (pub / 'cusips.json').write_text(json.dumps({'generated_at': stamp, 'cusips': dict(sorted(cmap.items()))}, separators=(',', ':')), encoding='utf-8')
+    # CUSIP → ticker as named here, and the tickers that are ETFs (the managers' books and the 13F weights video read
+    # it: web/actual-weights.js — the Hub's quarters by sector with the ETFs a band of their own, as the data sets' are)
+    etfs = sorted(t for t, sec in ticker_sectors(sectors).items() if sec == 'etf')
+    (pub / 'cusips.json').write_text(json.dumps({'generated_at': stamp, 'cusips': dict(sorted(cmap.items())), 'etfs': etfs},
+                                                separators=(',', ':')), encoding='utf-8')
     managers = build_managers(root, pub, cmap, names)
     state = json.loads((root / 'cache' / 'sets.json').read_text()) if (root / 'cache' / 'sets.json').exists() else {}
     status = {'built_at': stamp, 'tickers': len(index), 'quarters': len(P), 'first': P[0], 'last': P[-1], 'managers': managers,
@@ -1035,6 +1045,7 @@ def main():
     b = sp.add_parser('build')
     b.add_argument('--root', required=True)
     b.add_argument('--hub', required=True)
+    b.add_argument('--sectors', nargs='*', default=[], help="the same files: the ETFs among them are named in cusips.json")
     a = ap.parse_args()
     if a.cmd == 'collect':
         r = collect(a.root, a.minutes, hub=a.hub, sectors=a.sectors)
@@ -1044,7 +1055,7 @@ def main():
             with open(gh, 'a') as f:
                 f.write(f"left={r['left']}\nread={len(r['read'])}\n")
     else:
-        print(json.dumps(build(a.root, a.hub)))
+        print(json.dumps(build(a.root, a.hub, sectors=a.sectors)))
 
 
 if __name__ == '__main__':

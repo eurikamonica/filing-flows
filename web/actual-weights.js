@@ -21,7 +21,7 @@
     technology: 'Technology', communication: 'Communication', 'consumer-disc': 'Consumer discretionary',
     'consumer-staples': 'Consumer staples', health: 'Health care', financials: 'Financials',
     'real-estate': 'Real estate', energy: 'Energy', materials: 'Materials', industrials: 'Industrials',
-    utilities: 'Utilities', other: 'Other / unclassified'
+    utilities: 'Utilities', etf: 'ETFs', other: 'Other / unclassified'
   };
   const GICS = {
     'information technology': 'technology', technology: 'technology',
@@ -182,7 +182,7 @@
         return {date:s.period, date_basis:'reported', source:'SEC 13F', positions:[...by].map(([k, v]) => [k, v / eq]), filed:s.filed, sources:s.sources,
           lines:p.filter((r) => equity(r) && r.value_usd > 0).length};
       }));
-      // the quarters before the Hub's first: the data sets' books (the 40 largest positions; the sectors over every line)
+      // the quarters before the Hub's first: the data sets' books (the 100 largest positions; the sectors over every line)
       const first = snaps.length ? snaps[0].date : null;
       const older = [];
       if (hist && Array.isArray(hist.periods)) {
@@ -202,9 +202,16 @@
       if (!all.some(x => x.positions.length)) throw new Error(((doc && (doc.label || doc.name)) || (hist && hist.name) || cik) + ': none of the reported positions could be matched to a ticker');
       const name = (doc && (doc.label || doc.name)) || (hist && (hist.filer || hist.name)) || cik;
       const notes = ['Quarter-end long holdings as reported (shares and ETFs), not current positions or total AUM. The weights are shares of the long equity book: options (puts and calls, reported at the value of the shares under them) and principal amounts are left out of it. A line no ticker names is shown under its issuer. Weight changes include price movement, not just trading. Latest amended reports may restate history; this is not a point-in-time backtest.'];
-      if (older.length) notes.push(`${older[0].date} to ${older[older.length - 1].date} (${older.length} quarters): SEC's Form 13F data sets — each quarter's 100 largest positions and the book by sector over every line${snaps.length ? `; from ${first}: each 13F as filed, every line` : ''}.`);
+      // a quarter of the data sets keeps its 100 largest: a holding below the 100th is not on file there — drawn as 0
+      const cut = older.filter((q) => q.positions.length >= 100).map((q) => Math.min(...q.positions.map((x) => x[1])));
+      const lo = cut.length ? percent(Math.min(...cut)) : '', hi = cut.length ? percent(Math.max(...cut)) : '';
+      const floor = cut.length ? ` (a holding below a quarter's 100th — under ${lo}${hi !== lo ? ' to ' + hi : ''} of its book — is drawn as 0 there)` : '';
+      if (older.length) notes.push(`${older[0].date} to ${older[older.length - 1].date} (${older.length} quarters): SEC's Form 13F data sets — each quarter's 100 largest positions${floor} and the book by sector over every line${snaps.length ? `; from ${first}: each 13F as filed, every line` : ''}.`);
       if (opt && opt.total > 0 && (opt.put + opt.call) / opt.total >= 0.05) notes.push(`Options in its ${opt.period} 13F: puts ${usdShort(opt.put)} and calls ${usdShort(opt.call)} (the value of the shares under them), ${Math.round(100 * (opt.put + opt.call) / opt.total)}% of the reported ${usdShort(opt.total)} — not in the weights.`);
-      return {name, id:cik, snapshots:all, labels, basis:'Share of the long equity book (13F)', note:notes.join(' '), evidence:rows};
+      // the tickers that are ETFs (holders_history.py names them in cusips.json): the Hub's quarters by sector with the ETFs
+      // a band of their own, as the data sets' quarters are
+      const etfs = new Set(((named && named.etfs) || []).map(symbol));
+      return {name, id:cik, snapshots:all, labels, etfs, basis:'Share of the long equity book (13F)', note:notes.join(' '), evidence:rows};
     }
     if (st.aw === 'official') {
       const person = String(st.ap || '').trim();
@@ -305,11 +312,14 @@
     if (all.length > 1) out.notes.add('Frames interpolate VISUALLY between actual snapshots; no holdings are asserted for interim dates.');
     if (all.some((s) => s.partial)) out.notes.add('Quarter-end snapshots come from the fund\'s public N-PORT reports (SEC data sets since 2019): the largest names, the same in every quarter, and sector weights over every long equity line.');
     // a reported sector first (a sponsor's file; '-' and blanks are no sector), then the site's companies, then the ETF build's map
+    const etfs = (external && external.etfs) || null;     // a 13F manager's ETF lines: a band of their own
     const secFor = (s, ticker) => {
       const reported = toSector((s.sectors || {})[ticker]);
       if (reported !== 'other') return reported;
       const known = toSector((co.get(ticker) || {}).sec);
-      return known !== 'other' ? known : toSector(xsec[ticker]);
+      if (known !== 'other') return known;
+      const held = toSector(xsec[ticker]);
+      return held !== 'other' || !etfs || !etfs.has(ticker) ? held : 'etf';
     };
     const sector = st.style === 'stack' || (st.style === 'changes' && st.ag === 'sector');
     const area = st.style === 'stack' || st.style === 'companies';
@@ -327,6 +337,7 @@
       return m;
     });
     if (over) out.notes.add('Some reports\' equity lines add up to more than their net assets (up to ' + (100 * over).toFixed(2) + '%): scaled to 100% for the area chart.');
+    if (sector && tables.some((m) => m.get('etf') > 0)) out.notes.add('ETFs: a band of their own — an ETF line is not looked through to the companies it holds.');
     const n = Math.max(3, Math.min(20, +st.an || 12));
     let keys = [...new Set(tables.flatMap(m=>[...m.keys()]))];
     // Fixed membership across the entire animation prevents disappearing bands.

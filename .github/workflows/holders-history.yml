@@ -58,7 +58,7 @@ jobs:
         # what the site publishes; a file that does not come leaves its tickers unclassified, never stops the run
         run: |
           mkdir -p sectors
-          for u in disclosures/data/market/history/rank/meta.json disclosures/data/etf/sectors.json data/index.json; do
+          for u in disclosures/data/market/history/rank/meta.json disclosures/data/etf/sectors.json data/index.json disclosures/data/etf/index.json; do
             curl -sfL --retry 3 --max-time 120 -o "sectors/$(echo "$u" | tr '/' '_')" "${{ vars.SITE_URL || 'https://filing-flows.com' }}/$u" \
               || echo "::warning::$u not read: its tickers stay unclassified"
           done
@@ -71,7 +71,7 @@ jobs:
             --hub disclosures/docs/data --sectors sectors/*.json
       - name: One file per ticker
         timeout-minutes: 12
-        run: python disclosures/app/holders_history.py build --root hh --hub disclosures/docs/data
+        run: python disclosures/app/holders_history.py build --root hh --hub disclosures/docs/data --sectors sectors/*.json
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hh

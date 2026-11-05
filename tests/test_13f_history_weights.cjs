@@ -8,7 +8,7 @@ const HUB = 'disclosures/data/', RAW = 'https://raw.example/x/', HH = 'https://r
 const files = {
   [HUB + 'remote.json']: { base: RAW, prefixes: ['shards/holdings/'], holders: HH },
   [HUB + 'market/cusip-tickers.json']: { '037833100': 'AAPL' },
-  [HH + 'cusips.json']: { cusips: { G5960L103: 'MDT' } },
+  [HH + 'cusips.json']: { cusips: { G5960L103: 'MDT', '78462F103': 'SPY' }, etfs: ['SPY'] },
   [RAW + 'shards/holdings/1423053.json']: { name: 'CITADEL ADVISORS LLC', snapshots: [
     { period: '2024-12-31', filed: '2025-02-14', complete: true, total_usd: 1000, positions_shard: 'shards/holdings/1423053-2024-12-31.json' },
     { period: '2025-03-31', filed: '2025-05-15', complete: true, total_usd: 1000, positions_shard: 'shards/holdings/1423053-2025-03-31.json' }] },
@@ -22,10 +22,11 @@ const files = {
   [RAW + 'shards/holdings/1423053-2025-03-31.json']: [
     { cusip: '037833100', issuer: 'APPLE INC', value_usd: 120, put_call: 'NONE', share_type: 'SH' },
     { cusip: '42809H107', issuer: 'HESS CORP', value_usd: 80, put_call: 'NONE', share_type: 'SH' },
+    { cusip: '78462F103', issuer: 'SPDR S&P 500 ETF TR', value_usd: 50, put_call: 'NONE', share_type: 'SH' },
     { cusip: '037833100', issuer: 'APPLE INC', value_usd: 800, put_call: 'CALL', share_type: 'SH' }],
   [HH + 'm/1423053.json']: { cik: 1423053, name: 'Citadel Advisors', filer: 'CITADEL ADVISORS LLC', periods: ['2024-06-30', '2024-09-30', '2024-12-31'],
     usd: [400, 500, 999], lines: [3000, 3100, 3200], options: [[1, 2], [3, 4], [5, 6]],
-    sectors: [{ technology: 200, health: 80 }, { technology: 250, health: 100 }, { technology: 1 }],
+    sectors: [{ technology: 200, health: 80, etf: 40 }, { technology: 250, health: 100 }, { technology: 1 }],
     unit: 1e-5, top: [[['AAPL', 50000], ['~G5960L', 20000]], [['AAPL', 50000], ['GOOG', 10000], ['~G5960L', 20000]], [['AAPL', 100000]]],
     names: { AAPL: 'Apple Inc.', '~G5960L': 'Medtronic' } },
 };
@@ -68,6 +69,13 @@ const out = () => ({ notes: new Set(), series: [] });
   assert.equal(health.v[0], 0.2);
   assert.equal(health.v[2], 0.25, 'the Hub\'s quarter: Medtronic\'s line');
   assert.equal(sec.series.find((s) => s.key === 'other').v[2], 0.25, 'Hess: no sector');
+  // ETFs: a band of their own, in the data sets' quarters (their sectors) and the Hub's (cusips.json names the ETFs)
+  const etf = sec.series.find((s) => s.key === 'etf');
+  assert.ok(etf && etf.label === 'ETFs', 'the ETFs a band of their own');
+  assert.equal(etf.v[0], 0.1, "the data sets' quarter: its ETF lines");
+  assert.equal(etf.v[3], 0.2, "the Hub's quarter: SPY's line");
+  assert.ok(Math.abs(sec.series.find((s) => s.key === 'other').v[3] - 0.32) < 1e-9, 'Hess alone unclassified');
+  assert.match([...sec.notes].join(' '), /ETFs: a band of their own/);
 
   // a range on the Hub's quarters alone; a manager the Hub does not follow: the data sets alone
   const recent = await A.disclosedSource({ aw: '13f', ac: '1423053', from: '2025-01-01' }, api);
@@ -93,6 +101,11 @@ const out = () => ({ notes: new Set(), series: [] });
   assert.ok(!z.series.some((x) => x.key === 'other'), 'the rest not drawn');
   assert.ok(Math.abs(z.stack.total[0] - 0.24) < 1e-9 && Math.abs(z.stack.total[1] - 0.25) < 1e-9, 'the 12 largest: ' + z.stack.total);
   assert.match([...z.notes].join(' '), /The 12 largest on average are 25\.00% of the long equity book at 2020-06-30[^:]*: drawn on their own scale[^;]*; the other 4,088 holdings \(75\.00%\) are left out/);
+  // a quarter of the data sets keeps its 100 largest: below the 100th, a holding is drawn as 0 — the notes say how small
+  files[HH + 'm/777.json'] = { cik: 777, name: 'Many Lines', filer: 'MANY LINES LP', periods: ['2021-03-31', '2021-06-30'], usd: [100, 100], lines: [3000, 3000],
+    options: [[0, 0], [0, 0]], sectors: [{}, {}], unit: 1e-5, names: {},
+    top: [0, 100].map((d) => Array.from({ length: 100 }, (_, j) => ['T' + j, 300 + d - j])) };
+  assert.match((await A.disclosedSource({ aw: '13f', ac: '777' }, api)).note, /100 largest positions \(a holding below a quarter's 100th — under 0\.20% to 0\.30% of its book — is drawn as 0 there\)/);
   const full = out();
   await A.build({ aw: '13f', ac: '888', style: 'companies', an: '12', az: 'full' }, full, api);
   assert.equal(full.stack.share, true, 'az=full: the whole book');

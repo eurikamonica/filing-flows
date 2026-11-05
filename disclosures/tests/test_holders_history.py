@@ -353,8 +353,28 @@ class Managers(unittest.TestCase):
     def test_ticker_sectors_from_the_sites_files(self):
         idx = self.tmp / 'index.json'
         idx.write_text(json.dumps({'companies': [{'ticker': 'BRK.B', 'sector': 'financials'}, {'ticker': 'X', 'sector': 'nope'}]}))
-        t = HH.ticker_sectors([self.sec, self.etf, idx, self.tmp / 'missing.json'])
-        self.assertEqual(t, {'AAPL': 'technology', 'MSFT': 'technology', 'MDT': 'health', 'BRK-B': 'financials'})
+        funds = self.tmp / 'etf-index.json'                # the ETF build's index: the ETFs themselves, after every company
+        funds.write_text(json.dumps({'fields': ['symbol', 'name'], 'rows': [['SPY', 'SPDR S&P 500'], ['AAPL', 'a company first'], []]}))
+        t = HH.ticker_sectors([funds, self.sec, self.etf, idx, self.tmp / 'missing.json'])
+        self.assertEqual(t, {'AAPL': 'technology', 'MSFT': 'technology', 'MDT': 'health', 'BRK-B': 'financials', 'SPY': 'etf'})
+
+    def test_an_etfs_line_is_a_band_of_its_own(self):
+        funds = self.tmp / 'etf-index.json'
+        funds.write_text(json.dumps({'fields': ['symbol', 'name'], 'rows': [['MDT', 'a fund here'], ['AAPL', 'a company first']]}))
+        sectors = [self.sec, funds]
+        read = lambda: HH.collect(self.tmp / 'hh', 60, page_html=PAGE_HTML, fetch=self.fetch, early=False, hub=self.hub, sectors=sectors)
+        read()
+        HH.build(self.tmp / 'hh', self.hub, min_usd=1, sectors=sectors)              # names its CUSIP; the ETFs listed
+        cus = json.loads((self.tmp / 'hh' / 'public' / 'cusips.json').read_text())
+        self.assertEqual(cus['cusips'][MDT], 'MDT')
+        self.assertEqual(cus['etfs'], ['MDT'], 'the ETFs, not a company the meta names')
+        st = json.loads((self.tmp / 'hh' / 'cache' / 'sets.json').read_text())
+        st['mversion'] = 0
+        (self.tmp / 'hh' / 'cache' / 'sets.json').write_text(json.dumps(st))
+        read()
+        q1 = HH.read_gz(self.tmp / 'hh' / 'cache' / 'managers' / '2024-03-31.json.gz')
+        self.assertEqual(q1['rows']['444'][5], {'etf': 8_700_000})
+        self.assertEqual(q1['rows']['555'][5], {'technology': 171_000_000})
 
 
 if __name__ == '__main__':

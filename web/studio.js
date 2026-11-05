@@ -588,7 +588,7 @@
     pb: ['Price / book', 'x', ['m-cap', 'q-eq']], ps: ['Price / sales', 'x', ['m-cap', 'q-rev']], dv: ['Dollar volume traded', '$', ['m-dv']], ret: ['Total return', '%', ['m-px']],
   };
   const SECTORS = { technology: 'Technology', communication: 'Communication', 'consumer-disc': 'Consumer discretionary', 'consumer-staples': 'Consumer staples',
-    health: 'Health care', financials: 'Financials', 'real-estate': 'Real estate', energy: 'Energy', materials: 'Materials', industrials: 'Industrials', utilities: 'Utilities', other: 'Other' };
+    health: 'Health care', financials: 'Financials', 'real-estate': 'Real estate', energy: 'Energy', materials: 'Materials', industrials: 'Industrials', utilities: 'Utilities', etf: 'ETFs', other: 'Other' };
   // the theme's colours in order; past the tenth, the same again lighter (on a light theme darker), so the eleventh
   // series is not the first one's twin
   const palAt = (th, i) => {
@@ -597,7 +597,8 @@
     const n = parseInt(c.slice(1), 16), to = th.text === '#1d1d1b' ? 0 : 255, t = Math.min(0.6, 0.34 * k);
     return '#' + [n >> 16 & 255, n >> 8 & 255, n & 255].map((v) => Math.round(v + (to - v) * t).toString(16).padStart(2, '0')).join('');
   };
-  const secCol = (th, sec) => { const i = Object.keys(SECTORS).indexOf(sec); return i < 0 || sec === 'other' ? (th.text === '#1d1d1b' ? '#8d8a84' : '#a9b3c1') : i === 10 ? (th.text === '#1d1d1b' ? '#8a6a3a' : '#e3c79f') : th.pal[i % th.pal.length]; };
+  // utilities and ETFs (a 13F manager's ETF lines) past the theme's ten colours: their own, not a sector's twin
+  const secCol = (th, sec) => { const i = Object.keys(SECTORS).indexOf(sec), light = th.text === '#1d1d1b'; return i < 0 || sec === 'other' ? (light ? '#8d8a84' : '#a9b3c1') : sec === 'utilities' ? (light ? '#8a6a3a' : '#e3c79f') : sec === 'etf' ? (light ? '#4f6672' : '#e6e1d3') : th.pal[i % th.pal.length]; };
   const PANEL = new Map();
   const panel = (name) => { if (!PANEL.has(name)) PANEL.set(name, json(RANKP + name + '.json').then((d) => (d && Array.isArray(d.rows) ? d.rows : d))); return PANEL.get(name); };
   const at = (row, i) => (row && row.length > 1 && i >= row[0] && i < row[0] + row.length - 1 ? row[1 + i - row[0]] : null);
@@ -3392,7 +3393,7 @@
         if (st.rm === 'ret') h += `<label for="st-win">Return over</label>${sel('st-win', [['1', '1 month'], ['3', '3 months'], ['6', '6 months'], ['12', '12 months'], ['36', '3 years'], ['ytd', 'Year to date']], st.win)}`;
         if (['om', 'nm', 'growth'].includes(st.rm)) h += `<label for="st-minrev">Minimum revenue a year ($B)</label><input class="input" id="st-minrev" inputmode="decimal" value="${esc(st.minrev)}">`;
       }
-      h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
+      h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS).filter(([k]) => k !== 'etf')), st.sec)}`;
       h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
       h += `<label for="st-capby">Measured</label>${sel('st-capby', [['then', 'At each step'], ['now', 'Today']], st.capby)}`;
@@ -3453,7 +3454,7 @@
           + `<div class="st-help">The fund's latest reported holdings and their weights; earlier months move each holding with its own price, as if the fund had kept the same shares — not what it held then. <button type="button" class="pill" data-to-reports="1">What it reported, quarter by quarter</button></div>`;
         h += `<label for="st-sa">Show</label>${sel('st-sa', [['share', 'Each sector\'s share (100%)'], ['abs', 'Market value in dollars']], st.sa)}`;
       }
-      if (k !== 'sectors') h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
+      if (k !== 'sectors') h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS).filter(([k]) => k !== 'etf')), st.sec)}`;
       h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
       return h + `<div class="st-help">From the site's month-by-month data on every company it draws. Market values come from each 10-K and 10-Q cover page since 1993 (a company's former registrants' too: Exxon Mobil before ExxonMobil Holdings), so most large companies reach back to the mid-1990s; company figures (revenue, profit) start in 2009. Today's companies only: those delisted, merged or bankrupt are missing from earlier years.</div>`;
