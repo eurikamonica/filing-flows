@@ -318,7 +318,8 @@
         const capx = (fin(it.capex) ? +it.capex : 0) + (fin(it.realestate) ? +it.realestate : 0), put = (k, v) => { (out.q[k] = out.q[k] || new Map()).set(r.end, v); };
         put('capex', -capx); put('fcf', +it.ocf + capx); put('ret', -((fin(it.buyback) ? +it.buyback : 0) + (fin(it.div) ? +it.div : 0)));
       }
-      for (const r of (((c.quality || {}).cap || {}).fy || [])) {    // and its last five years, as filed
+      const CP = (c.quality || {}).cap || {};
+      for (const r of (CP.fy_old || []).concat(CP.fy || [])) {       // and its last ten years, as filed (the five before the tab's: fy_old)
         const it = r.items || {}; if (!r.end || !fin(it.ocf)) continue;
         const capx = (fin(it.capex) ? +it.capex : 0) + (fin(it.realestate) ? +it.realestate : 0), put = (k, v) => { (out.fy[k] = out.fy[k] || new Map()).set(r.end, v); };
         put('capex', -capx); put('fcf', +it.ocf + capx); put('ret', -((fin(it.buyback) ? +it.buyback : 0) + (fin(it.div) ? +it.div : 0)));
@@ -1169,7 +1170,9 @@
     const c = await companyRaw(sym); if (!c) throw new Error('No company figures on file for ' + sym);
     const cap = (c.quality || {}).cap || {}, per = st.cper === 'q' ? 'q' : 'fy';
     const from = st.from ? Date.parse(st.from + 'T00:00:00Z') : -Infinity, to = st.to ? Date.parse(st.to + 'T00:00:00Z') : Infinity;
-    const rows = (cap[per] || []).filter((r) => r && r.end && r.items && fin(r.items.ocf)).map((r) => [Date.parse(r.end + 'T00:00:00Z'), r]).filter(([e]) => e >= from && e <= to).sort((a, b) => a[0] - b[0]);
+    // fiscal years: the five the company tab shows, and the five before them (figures only: pipeline/capital.py fy_old)
+    const seen = new Set(), all = (per === 'fy' ? (cap.fy_old || []).concat(cap.fy || []) : cap.q || []).filter((r) => r && r.end && !seen.has(r.end) && seen.add(r.end));
+    const rows = all.filter((r) => r.items && fin(r.items.ocf)).map((r) => [Date.parse(r.end + 'T00:00:00Z'), r]).filter(([e]) => e >= from && e <= to).sort((a, b) => a[0] - b[0]);
     if (rows.length < 2) throw new Error(`Fewer than two ${per === 'q' ? 'quarters' : 'fiscal years'} of cash flows on file for ${sym}` + (per === 'fy' && (cap.q || []).length > 1 ? ' — try quarters' : ''));
     const name = ((c.profile && c.profile.name) || sym).replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '').replace(/\.$/, '');
     const C = await company(sym), revQ = (C && C.q.revenue) || new Map();
@@ -3485,7 +3488,7 @@
         const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', cash: 'Company (ticker)', spend: 'Stocks to buy instead (tickers, the first is the maker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
         const ph = { fund: 'NVDA, AMD', sankey: 'NVDA', cash: 'AAPL', spend: 'AAPL, SPY', calendar: 'NVDA', timing: 'SPY', snowball: 'SCHD, KO' }[k] || 'QQQ, SPY, SCHD';
         h += `<label for="st-t">${lbl}</label><input class="input" id="st-t" value="${esc(one ? tickers(st)[0] || '' : st.t)}" placeholder="${ph}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
-        if (k === 'cash') h += `<label for="st-cper">Periods</label>${sel('st-cper', [['fy', 'Fiscal years (up to five)'], ['q', 'Quarters (the last eight)']], st.cper)}<div class="st-help">From each company's cash flow statements: operating cash flow, then capital spending, acquisitions, buybacks, dividends, investments and borrowing, down to what was added to cash or drawn from it.</div>`;
+        if (k === 'cash') h += `<label for="st-cper">Periods</label>${sel('st-cper', [['fy', 'Fiscal years (up to ten)'], ['q', 'Quarters (the last eight)']], st.cper)}<div class="st-help">From each company's cash flow statements: operating cash flow, then capital spending, acquisitions, buybacks, dividends, investments and borrowing, down to what was added to cash or drawn from it.</div>`;
         if (k === 'sankey') h += `<label for="st-sm">Quarters</label>${sel('st-sm', [['detail', 'The detailed flow (the latest quarters on file)'], ['long', 'Ten years: revenue → profit → earnings']], st.sm)}`;
         if (k === 'timing') h += `<label for="st-yb">Money each year ($)</label><input class="input" id="st-yb" inputmode="numeric" value="${esc(st.yb)}"><div class="st-help">Each year's money goes in at that year's highest close (bought at the top), its lowest (perfect timing), its first week, or spread over its months — with hindsight, to show what timing is worth.</div>`;
         if (k === 'snowball') {

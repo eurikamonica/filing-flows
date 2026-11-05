@@ -91,3 +91,26 @@ def test_two_8ks_of_a_day_with_the_same_headline_get_titles_of_their_own(tmp_pat
         if d.is_dir() and p.exists():
             titles.append(_re.search(r"<title>(.*?)</title>", p.read_text(encoding="utf-8"), _re.S).group(1))
     assert len(titles) == 2 and len(set(titles)) == 2, titles
+
+
+def test_two_8ks_of_a_day_whose_titles_fall_back_to_the_same_item_get_titles_of_their_own(tmp_path):
+    """The real Carlyle Credit Solutions pair of Nov 4, 2026: one 8-K about the shareholder vote (topic "vote", item 2.01
+    as its main item), the other with no topic (item 2.01). Both titles read "completion of an acquisition or disposition
+    of assets", but the same-day count was kept per topic ("vote" vs "2.01"), so neither was told apart."""
+    import re as _re
+    import seo_hub as H
+
+    class L:
+        def row(self, ticker, cik):
+            return {"cik": cik, "ticker": "CGBD", "name": "Carlyle Credit Solutions", "revenue": 1e8}
+    base = {"cik": 1544206, "ticker": "CGBD", "company": "Carlyle Credit Solutions", "filed": "2026-11-04", "code": "2.01",
+            "headline": "", "quote": "The merger was completed.", "url": "https://www.sec.gov/x"}
+    evs = [dict(base, items=["2.01", "3.03", "5.07", "9.01"], topics=["vote"], accession="0001193125-26-447310"),
+           dict(base, items=["1.01", "2.01", "5.03", "9.01"], topics=[], accession="0001193125-26-447280")]
+    H.event_pages(str(tmp_path), "https://filing-flows.com", L(), evs)
+    titles = []
+    for d in (tmp_path / "events").iterdir():
+        p = d / "index.html"
+        if d.is_dir() and p.exists():
+            titles.append(_re.search(r"<title>(.*?)</title>", p.read_text(encoding="utf-8"), _re.S).group(1))
+    assert len(titles) == 2 and len(set(titles)) == 2, titles

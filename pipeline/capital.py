@@ -12,7 +12,7 @@ against the reported change in cash is shown as unreconciled (usually cash flows
 spread over the other lines. Debt is shown net (issued − repaid): companies that roll commercial paper report gross
 figures many times their actual borrowing; the gross figures are kept for the evidence drawer.
 
-Periods: the last five fiscal years, the last eight quarters (a three-month figure, or year to date minus the year to
+Periods: the last five fiscal years (and the five before them, figures only: "fy_old"), the last eight quarters (a three-month figure, or year to date minus the year to
 date a quarter earlier; the fourth quarter = the fiscal year − nine months), and the trailing twelve months when a 10-Q
 came after the last 10-K (last fiscal year + this year to date − the same period a year earlier). Besides these, every
 quarter of the last ten years with only the figures the video studio charts by quarter (operating cash flow, capital
@@ -22,6 +22,7 @@ from . import facts as F
 from . import fsa as W
 
 KEEP_FY = 5
+KEEP_FY_OLD = 5          # the five fiscal years before those, figures only (no evidence): the video studio's cash waterfall
 KEEP_Q = 8
 KEEP_HQ_YEARS = 10       # quarters of the compact history (hq)
 HQ_KEYS = ["ocf", "capex", "buyback", "div"]
@@ -415,6 +416,11 @@ def compute(fx, ev, qe, ye, fye="1231"):
         p = period(fx, ev, {"kind": "fy", "end": e}, F.fiscal_year_label(e, fye)[0])
         if p:
             fy.append(p)
+    old = []                                         # ten years in all for the video; the tab keeps showing five
+    for e in (ye[-(KEEP_FY + KEEP_FY_OLD):-KEEP_FY] if len(ye) > KEEP_FY else []):
+        p = period(fx, ev, {"kind": "fy", "end": e}, F.fiscal_year_label(e, fye)[0])
+        if p:
+            old.append({k: p[k] for k in ("end", "kind", "label", "items", "inv", "fin", "dcash") if k in p})
     qs = []
     for e in (qe or [])[-KEEP_Q:]:
         p = period(fx, ev, {"kind": "q", "end": e}, F.fiscal_label(e, fye)[0])
@@ -429,4 +435,4 @@ def compute(fx, ev, qe, ye, fye="1231"):
     hq = history_q(fx, qe)
     if not (fy or qs or ttm or sh or mat or hq):
         return None
-    return {"fy": fy, "q": qs, "ttm": ttm, "shares": sh, "maturities": mat, "hq": hq}
+    return {"fy": fy, "fy_old": old, "q": qs, "ttm": ttm, "shares": sh, "maturities": mat, "hq": hq}

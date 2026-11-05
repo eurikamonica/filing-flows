@@ -2219,6 +2219,21 @@ def test_capital_allocation_sources_uses_and_reconciliation():
     assert p["flags"] == []                                              # 2 of 102 moved: under the 5% flag
 
 
+def test_capital_keeps_ten_fiscal_years_for_the_video():
+    """The tab shows the last five fiscal years with their evidence; the five before them are kept with their figures only
+    (fy_old), so the video studio's cash waterfall reaches ten years."""
+    from pipeline import facts as F, quality as Q
+    yrs = range(2018, 2026)
+    fx = F.index_facts(_cf({"NetIncomeLoss": [(f"{y}-01-01", f"{y}-12-31", 50 + y - 2018) for y in yrs],
+                           "NetCashProvidedByUsedInOperatingActivities": [(f"{y}-01-01", f"{y}-12-31", 100 + y - 2018) for y in yrs],
+                           "PaymentsToAcquirePropertyPlantAndEquipment": [(f"{y}-01-01", f"{y}-12-31", 30) for y in yrs]}))
+    cap = Q.compute(fx)["cap"]
+    assert [p["end"][:4] for p in cap["fy"]] == ["2021", "2022", "2023", "2024", "2025"]
+    assert [p["end"][:4] for p in cap["fy_old"]] == ["2018", "2019", "2020"]
+    assert cap["fy_old"][0]["items"]["ocf"] == 100 and cap["fy_old"][0]["items"]["capex"] == -30
+    assert "ev" not in cap["fy_old"][0] and "ev" in cap["fy"][0]
+
+
 def test_capital_debt_fit_and_withholding_inside_buybacks():
     """Apple tags its commercial paper twice (the statement's net line and its split by maturity from the notes);
     Microsoft's buyback line already contains the taxes paid on employee shares. The combination that adds up to the
