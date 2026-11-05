@@ -1,0 +1,82 @@
+# Who held each stock and ETF, quarter by quarter, since 2013 (the video studio's "Major holders" video):
+# SEC's Form 13F data sets (one zip of every 13F filed in a quarter or three-month window) read into each CUSIP's
+# 13F holders, shares and value per quarter-end, the largest holders and fund families together, then one file per
+# ticker (disclosures/app/holders_history.py). The site's own 13F files keep the index giants only from Q4 2024.
+# First runs read the sets oldest first, ~40 minutes each, and start the next run themselves until all are read;
+# after that each run reads only a newly published set (and the sets of the quarters still open), then rebuilds.
+# Kept on the branch "holders-history" (one commit, force-pushed); the studio reads public/ from the repository's
+# raw files (stage-public.py writes the address into the Hub's data/remote.json as "holders").
+name: Holders history
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes of reading SEC data sets in this run'
+        default: '40'
+      hop:
+        description: 'Relay hop (the chain stops after 12)'
+        default: '0'
+  schedule:
+    - cron: '37 9 * * *'          # daily: a newly published data set is read the day it appears
+permissions:
+  contents: write                 # force-pushes the branch holders-history
+  actions: write                  # starts the next run of the relay
+concurrency:
+  group: holders-history
+  cancel-in-progress: false
+jobs:
+  holders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/docs/data/market/cusip-tickers.json
+            /disclosures/docs/data/cache/prices/sec-tickers.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: numpy and the data branch
+        run: |
+          python -m pip install --quiet numpy
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" holders-history >/dev/null; then
+            git clone --quiet --depth 1 --branch holders-history "$url" hh
+          else
+            mkdir hh && git -C hh init --quiet -b holders-history && git -C hh remote add origin "$url"
+          fi
+          du -sh hh; ls hh/cache 2>/dev/null | head
+      - name: Read the 13F data sets
+        id: collect
+        timeout-minutes: 60
+        run: python disclosures/app/holders_history.py collect --root hh --minutes "${{ inputs.minutes || '40' }}"
+      - name: One file per ticker
+        timeout-minutes: 12
+        run: python disclosures/app/holders_history.py build --root hh --hub disclosures/docs/data
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd hh
+          printf '%s\n' '# holders-history (data only)' '' 'Each quarter of SEC Form 13F data sets read into holders per CUSIP (cache/periods), the data sets read (cache/sets.json)' \
+            'and the files the video studio reads (public/: c/<TICKER>.json, index.json, status.json), kept by .github/workflows/holders-history.yml on main.' \
+            'Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "holders $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "holders $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:holders-history && break; sleep $((i * 10)); done
+          cat public/status.json
+      - name: Start the next run of the relay
+        if: success() && steps.collect.outputs.left != '0' && steps.collect.outputs.left != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOP: ${{ inputs.hop || '0' }}
+        run: |
+          if [ "$HOP" -ge 12 ]; then echo "relay cap reached; the daily schedule goes on"; exit 0; fi
+          gh workflow run holders-history.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f hop=$((HOP + 1)) -f minutes="${{ inputs.minutes || '40' }}"
+          echo "relay: hop $((HOP + 1)) started (${{ steps.collect.outputs.left }} data sets left)"

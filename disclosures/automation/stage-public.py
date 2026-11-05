@@ -257,7 +257,9 @@ def write_remote(out):
     cfg = {'base': f'https://raw.githubusercontent.com/{repo}/{sha}/disclosures/docs/data/',
            'prefixes': [f'shards/{n}/' for n in REMOTE_SHARDS],
            # closing-price ladders change every hour (ladders.yml): read from their branch, not from the last site build
-           'ladders': f'https://raw.githubusercontent.com/{repo}/ladder-history/public/'}
+           'ladders': f'https://raw.githubusercontent.com/{repo}/ladder-history/public/',
+           # who held each stock and ETF, quarter by quarter (holders-history.yml): ~10,000 files, read from their branch
+           'holders': f'https://raw.githubusercontent.com/{repo}/holders-history/public/'}
     (out / 'data').mkdir(parents=True, exist_ok=True)
     (out / 'data' / 'remote.json').write_text(json.dumps(cfg), encoding='utf-8')
     print(f"::notice::hub records read from the repository instead of Pages: {', '.join(cfg['prefixes'])}")
