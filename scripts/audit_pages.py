@@ -33,6 +33,13 @@ NONREV = re.compile(
     r"^costs? of|\bexpenses$|^occupancy and|^professional fees$|^depreciation|^net (income|earnings|loss)\b|"
     r"income tax|stands for|element represents|\[(member|domain)\]|exchange (gain|loss)|^total assets|"
     r"except per|average (effective|daily|price|rate)", re.I)
+# a line that says what kind of revenue it is ("debt placement fees", "minimum volume commitments", "reimbursed
+# expenses", "sales of uranium inventory") is revenue, unless it is a cost or a caption whatever else it says
+REVLIKE = re.compile(r"\b(revenues?|sales|fees?|commissions?|royalt(y|ies)|reimburs(ed|able|ements?)|minimum volume|"
+                     r"volume[- ](based|related)|rentals?|subscriptions?|services?|products?)\b", re.I)
+HARD = re.compile(r"^costs? of|research and development expenses?|stands for|element represents|\[(member|domain)\]|"
+                  r"per (common |diluted |basic )?(share|unit)|weighted average|three months|six months|nine months|"
+                  r"years? ended|\(in (millions|thousands)|^net (income|earnings|loss)\b|income tax|ebitda|non-gaap", re.I)
 GEO = re.compile(r"\b(americas?|north america|latin america|south america|europe|emea|apac|asia|pacific|china|japan|"
                  r"india|germany|france|united kingdom|united states|u\.s\.|canada|mexico|brazil|korea|taiwan|"
                  r"australia|middle east|africa|international|domestic|rest of (the )?world|other countries)\b", re.I)
@@ -61,14 +68,15 @@ def check_period(q):
     groups = [n for n in nodes if n["id"].startswith("G:")]
     if not leaves or not R:
         return out
-    bad = [name(n) for n in leaves + groups if NONREV.search(name(n))]
+    bad = [name(n) for n in leaves + groups if NONREV.search(name(n)) and (HARD.search(name(n)) or not REVLIKE.search(name(n)))]
     if bad:
         out.append(("label", "; ".join(bad)[:200]))
     codes = {c.get("code") for c in q.get("checks") or []}
     s = sum(n.get("v") or 0 for n in leaves)
     if abs(s - R) > 0.01 * abs(R) and "revenue_recon" not in codes:
         out.append(("sum", f"lines {s / 1e6:,.1f}M vs revenue {R / 1e6:,.1f}M ({(s - R) / R:+.1%})"))
-    big = [name(n) for n in leaves if (n.get("v") or 0) > 1.02 * R]
+    C = (byid.get("contract") or {}).get("v") if "revenue_recon" in codes else None   # lines into contract revenue
+    big = [name(n) for n in leaves if (n.get("v") or 0) > 1.02 * max(R, C or 0)]      # (Continental: hedging losses)
     if big:
         out.append(("leaf", ", ".join(big)[:200]))
     if q.get("form") == "8-K":
@@ -113,16 +121,29 @@ def audit(site, today=None):
                               "detail": f"no static page c/{seo.slug_for(r)}/"})
             else:
                 head = open(page, encoding="utf-8", errors="replace").read(6000)
-                m = re.search(r"\d[\d,]*(\.\d+)?[KMBT]?", (q0.get("headline") or {}).get("rev_fmt") or "")
-                rev = m.group(0) if m else ""             # the figure only: "C$619.0M" and "$C619.0M" are one
-                if rev and rev not in head:
+                rev_fmt = (q0.get("headline") or {}).get("rev_fmt") or ""
+                want = list(figures(rev_fmt))
+                # the page rounds to three digits ($627M for the data's $627.0M): the same figure within either's rounding
+                if want and not any(abs(v - w) <= h + hw + 1e-9 for w, hw in want[:1] for v, h in figures(head)):
                     items.append({"ticker": tk, "cik": cik, "period": r.get("label"), "latest": True, "check": "page",
-                                  "detail": f"static page does not show this quarter's revenue ({rev})"})
+                                  "detail": f"static page does not show this quarter's revenue ({rev_fmt})"})
     items.sort(key=lambda x: (not x["latest"], ORDER.index(x["check"]), x["ticker"]))
     counts = {k: {"periods": sum(1 for x in items if x["check"] == k),
                   "latest": sum(1 for x in items if x["check"] == k and x["latest"])} for k in ORDER}
     return {"generated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "companies": len(ix.get("companies") or []),
             "counts": counts, "items": items}
+
+
+SCALE = {"": 1.0, "K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12}
+MONEY = re.compile(r"(?<![\w.])(?:[A-Z]{1,3})?[$€£¥₹]\s?(\d[\d,]*(?:\.\d+)?)\s?([KMBT])?(?![\w])")
+
+
+def figures(text):
+    """Every money figure in a text: (value, half its last digit) — "$627M" is 627e6 give or take 0.5e6."""
+    for m in MONEY.finditer(text or ""):
+        num, unit = m.group(1).replace(",", ""), m.group(2) or ""
+        dec = len(num.split(".")[1]) if "." in num else 0
+        yield float(num) * SCALE[unit], 0.5 * 10 ** -dec * SCALE[unit]
 
 
 def main(argv=None):

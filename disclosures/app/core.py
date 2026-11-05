@@ -520,11 +520,45 @@ def refresh_module(old, runner, client, cfg, revalidate=False):
         return {**old, 'status':'error','last_attempt':attempted,'error':str(exc),
                 'updated_at':old.get('updated_at')}
 
+# The page's copy of the data (live.js, loaded by every visit to the hub) leaves out the long lists only their own tabs
+# show — every officials' report (24,000 summaries, 17 MB) and every N-PX filing (5 MB) — and the collectors' attempt
+# logs no page shows: 36 MB parsed on each visit, 120 MB of memory on a phone. A tab that needs a list loads it the
+# first time it is opened (data/lazy/<module>-<field>.json; app.js ensureLazy). live.json keeps everything.
+PAGE_LAZY = {'congress': ('reports',), 'npx': ('filings',)}
+PAGE_DROP = {'holdings': ('attempts',), 'banks': ('attempts',), 'cot': ('attempts',)}
+
+
+def page_copy(path, data):
+    """live.js's data: the lazy lists written to data/lazy/ and named in the module's _lazy, the attempt logs dropped."""
+    page = {**data, 'modules': {k: (dict(v) if isinstance(v, dict) else v) for k, v in (data.get('modules') or {}).items()}}
+    for key, fields in PAGE_LAZY.items():
+        m = page['modules'].get(key)
+        if not isinstance(m, dict):
+            continue
+        for f in fields:
+            if isinstance(m.get(f), list):
+                rel = f'lazy/{key}-{f}.json'
+                target = Path(path)/rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                tmp = target.with_suffix('.tmp')
+                tmp.write_text(json.dumps(m[f], ensure_ascii=False, separators=(',', ':'), allow_nan=False), encoding='utf-8')
+                tmp.replace(target)
+                m['_lazy'] = {**(m.get('_lazy') or {}), f: rel}
+                m[f + '_count'] = len(m[f])
+                m[f] = []
+    for key, fields in PAGE_DROP.items():
+        m = page['modules'].get(key)
+        if isinstance(m, dict):
+            for f in fields:
+                m.pop(f, None)
+    return page
+
+
 def publish(path, data):
     path = Path(path)
     write_json(path/'live.json',data)
     # External JS data allows offline double-click without browser file:// fetch restrictions.
-    payload = json.dumps(data,ensure_ascii=False,allow_nan=False).replace('\u2028','\\u2028').replace('\u2029','\\u2029')
+    payload = json.dumps(page_copy(path, data),ensure_ascii=False,allow_nan=False).replace('\u2028','\\u2028').replace('\u2029','\\u2029')
     tmp = path/'live.js.tmp'
     tmp.write_text('window.DISCLOSURE_LIVE = '+payload+';\n',encoding='utf-8')
     tmp.replace(path/'live.js')

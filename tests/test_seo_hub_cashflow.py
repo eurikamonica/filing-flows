@@ -70,3 +70,24 @@ def test_cash_flow_and_supply_chain(tmp_path):
     assert "spent $480M on capital projects" in sc and "Machinery makers" in sc and "href='../../../c/bbb/cash-flow/'" in sc
     assert "href='supply-chain/'" in (s / "gamma" / "3674" / "index.html").read_text()
     assert (s / "sitemap-cashflow.xml").read_text().count("<url>") == 3
+
+
+def test_two_8ks_of_a_day_with_the_same_headline_get_titles_of_their_own(tmp_path):
+    """Carlyle Credit Solutions filed two 8-Ks on Nov 4, 2026 for the same acquisition, with the same headline: the link
+    audit found two pages with one title. The second part of the title is then the filing's items and accession."""
+    import re as _re
+    import seo_hub as H
+
+    class L:
+        def row(self, ticker, cik):
+            return {"cik": cik, "ticker": "CGBD", "name": "Carlyle Credit Solutions", "revenue": 1e8}
+    evs = [{"cik": 1544206, "ticker": "CGBD", "company": "Carlyle Credit Solutions", "filed": "2026-11-04", "code": "2.01",
+            "items": ["2.01", "9.01"], "topics": ["acquisition"], "headline": "Completion of the merger with the fund",
+            "accession": acc, "url": "https://www.sec.gov/x"} for acc in ("0001193125-26-111111", "0001193125-26-222222")]
+    H.event_pages(str(tmp_path), "https://filing-flows.com", L(), evs)
+    titles = []
+    for d in (tmp_path / "events").iterdir():
+        p = d / "index.html"
+        if d.is_dir() and p.exists():
+            titles.append(_re.search(r"<title>(.*?)</title>", p.read_text(encoding="utf-8"), _re.S).group(1))
+    assert len(titles) == 2 and len(set(titles)) == 2, titles

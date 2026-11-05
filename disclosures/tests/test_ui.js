@@ -25,7 +25,7 @@ context.window.DISCLOSURE_LIVE=live;
 // the page's own scripts, in its order (docs/index.html), so a new view is tested as soon as the page loads it
 const PAGE_SCRIPTS=[...fs.readFileSync(path.join(root,'docs','index.html'),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]).filter(f=>f!=='data/live.js'&&!f.startsWith('../'));   // ../nav.js: the site's shared menu, not part of the hub
 for(const f of PAGE_SCRIPTS)vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
-let checks=0;
+let checks=0,lazyChecks=Promise.resolve();
 const derivedFresh=vm.runInContext("derivedMarketNotice('signals',{holdings:{updated_at:'2026-10-18T21:32:54Z'},congress:{updated_at:'2026-10-20T01:00:00Z'}},{signals:{data:{generated_at:'2026-10-21T04:15:47Z'}}},Date.parse('2026-10-21T04:41:00Z'))",context);
 assert.equal(derivedFresh.stale,false);
 assert.ok(derivedFresh.text.includes('Generated 2026-10-21T04:15:47Z'));
@@ -45,6 +45,27 @@ for(const mode of ['official','demo'])for(const tab of ['holdings','congress','r
 for(const mode of ['official','demo'])for(const kind of ['holdings','congress','cot','banks','npx']){
  vm.runInContext(`state.mode='${mode}';state.tab='directory';state.dtype='${kind}';state.dq='';state.dstatus='';render()`,context);
  assert.ok(elements.get('workspace').innerHTML.includes('Search results'));checks++;
+}
+// live.js leaves the officials' reports to their tab (app/core.py page_copy): the tab shows that it is loading, fetches
+// data/lazy/congress-reports.json once, and is drawn again with them
+{
+ const C=context.window.DISCLOSURE_LIVE.modules.congress;
+ if(C){
+  const saved=C.reports,savedFetch=context.fetch,asked=[];
+  C.reports=[];C._lazy={reports:'lazy/congress-reports.json'};
+  context.fetch=(u)=>{asked.push(u);return Promise.resolve({ok:true,json:async()=>saved})};
+  vm.runInContext(`state.mode='official';state.tab='congress';state.page=0;render()`,context);
+  assert.ok(elements.get('workspace').innerHTML.includes("Loading the officials"),'the congress tab says it is loading: '+elements.get('workspace').innerHTML.slice(0,200));checks++;
+  lazyChecks=(async()=>{
+   for(let i=0;i<5&&C._lazy&&C._lazy.reports;i++)await new Promise(r=>setTimeout(r,0));
+   assert.deepEqual(asked,['data/lazy/congress-reports.json']);
+   assert.equal(C.reports,saved);assert.ok(!C._lazy.reports,'loaded once');
+   await new Promise(r=>setTimeout(r,0));
+   assert.ok(!elements.get('workspace').innerHTML.includes("Loading the officials"),'drawn again with the reports');
+   vm.runInContext(`render()`,context);assert.equal(asked.length,1,'not fetched again');
+   context.fetch=savedFetch;checks+=4;
+  })();
+ }
 }
 assert.equal(vm.runInContext(`esc('<img src=x onerror="bad">')`,context),'&lt;img src=x onerror=&quot;bad&quot;&gt;');checks++;
 assert.equal(vm.runInContext(`csvCell('=HYPERLINK("bad")')`,context),'"\'=HYPERLINK(""bad"")"');checks++;

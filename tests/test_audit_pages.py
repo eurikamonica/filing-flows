@@ -22,7 +22,8 @@ def test_audit_finds_what_was_wrong_in_november(tmp_path):
     rows = [{"cik": 829224, "ticker": "SBUX", "name": "Starbucks Corp", "label": "Q4 FY26"},
             {"cik": 320193, "ticker": "AAPL", "name": "Apple Inc.", "label": "Q4 FY26"},
             {"cik": 1442145, "ticker": "VRSK", "name": "Verisk Analytics", "label": "Q2 2026"},
-            {"cik": 1, "ticker": "GONE", "name": "Gone Inc", "label": "Q3 2026"}]
+            {"cik": 1, "ticker": "GONE", "name": "Gone Inc", "label": "Q3 2026"},
+            {"cik": 824142, "ticker": "AAON", "name": "Aaon", "label": "Q2 2026"}]
     json.dump({"companies": rows}, open(site / "data" / "index.json", "w"))
     sbux = {"quarters": [_q("Q4 FY26", "8-K", 9141.2e6, [("Company-operated coffeehouses", 7429.6e6), ("Licensed coffeehouses", 1196.1e6),
                                                          ("Other", 515.5e6), ("Net earnings per common share - diluted", 0.39e6)])]}
@@ -30,9 +31,11 @@ def test_audit_finds_what_was_wrong_in_november(tmp_path):
                                                           ("iPad", 6229e6), ("Services", 31573e6), ("Japan", 6540e6),
                                                           ("Rest of Asia Pacific", 9710e6)], rev_fmt="$114.5B")]}
     vrsk = {"quarters": [_q("Q2 2026", "8-K", 806.3e6, [("Underwriting", 569e6), ("Claims", 237e6)], filed="2026-07-29", rev_fmt="$806.3M")]}
-    for cik, c in ((829224, sbux), (320193, aapl), (1442145, vrsk)):
+    aaon = {"quarters": [_q("Q2 2026", "10-Q", 627.0e6, [("AAON Oklahoma", 262e6), ("BasX", 218e6), ("AAON Coil Products", 147e6)], filed="2026-08-10", rev_fmt="$627.0M")]}
+    for cik, c in ((829224, sbux), (320193, aapl), (1442145, vrsk), (824142, aaon)):
         json.dump(c, open(site / "data" / "c" / f"{cik}.json", "w"))
-    for r, text in ((rows[0], "Starbucks made $9.1B"), (rows[1], "Apple made $114.5B"), (rows[2], "Verisk made $790.0M")):
+    for r, text in ((rows[0], "Starbucks made $9.1B"), (rows[1], "Apple made $114.5B"), (rows[2], "Verisk made $790.0M"),
+                    (rows[4], "Aaon (AAON) Earnings &amp; Revenue Breakdown: $627M (+101%)")):
         d = site / "c" / seo.slug_for(r)
         d.mkdir(parents=True)
         (d / "index.html").write_text(f"<html><title>{text}</title></html>")
@@ -41,5 +44,6 @@ def test_audit_finds_what_was_wrong_in_november(tmp_path):
     assert ("SBUX", "label") in got and ("AAPL", "mixed") in got          # off by 0.075%: the sum check does not see it
     assert ("VRSK", "old8k") in got and ("VRSK", "page") in got and ("GONE", "data") in got
     assert ("SBUX", "page") not in got and ("AAPL", "page") not in got
+    assert ("AAON", "page") not in got                                     # $627M on the page is the data's $627.0M, rounded
     audit_pages.main(["--site", str(site)])
-    assert json.load(open(site / "data" / "page-audit.json"))["companies"] == 4
+    assert json.load(open(site / "data" / "page-audit.json"))["companies"] == 5

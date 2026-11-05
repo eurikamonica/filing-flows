@@ -395,11 +395,12 @@ DA_VERSION = 6           # bump when the way figures are read changes: stored fi
 #    (facts.version: Pixelworks' Q2 2025 revenue $8.3M, not the $0.2M a year later without the Shanghai business)
 REFRESH_FLAGS = ("rev_bank", "rev_tagged", "q4_fixed")    # what facts.extract adds beside the figures
 DA_PER_RUN = 120            # one SEC request each and a fraction of a second's reading: the budget (time_up) is the limit
-LINE_LABEL_VERSION = 1        # bump when revenue-line names are chosen differently (dims.parse_labels): names read again
+LINE_LABEL_VERSION = 2        # bump when revenue-line names are chosen differently (dims.parse_labels): names read again
+                              # 2: a line named for its cost ("Cost of software and rentals") or a raw tag ("Clr_oilsales")
 LABELS_PER_RUN = 60      # two SEC requests each (the filing's index and its label file)
 # a stored line name that may be a cost table's label, a documentation sentence or XBRL furniture (page audit, Nov 2026)
 LABEL_SUSPECT = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization)\b|"
-                           r"stands for|element represents|\[(member|domain)\]|(?<=[a-z]{3})\.$", re.I)
+                           r"stands for|element represents|\[(member|domain)\]|(?<=[a-z]{3})\.$|^[A-Za-z]{2,6}_", re.I)
 
 
 def refresh_labels(store, limit=LABELS_PER_RUN):
@@ -442,7 +443,11 @@ def refresh_labels(store, limit=LABELS_PER_RUN):
         for q in rows:
             ls = q["lines_struct"]
             for x in ls.get("leaves", []) + ls.get("groups", []):
-                new = labels.get(str(x.get("id", "")).replace(":", "_"))
+                mid, old = str(x.get("id", "")), x.get("label") or ""
+                new = labels.get(mid.replace(":", "_"))
+                if not new and "_" in old and ":" in mid:    # a tag name stored as the name ("Clr_oilsales")
+                    new = dims.humanize(mid)
+                new = dims.revenue_name(new or old)          # "Cost of software and rentals" → "Software and rentals"
                 if new and new != x.get("label"):
                     notes = q.get("notes") or {}
                     if x.get("label") in notes and new not in notes:
@@ -2228,15 +2233,18 @@ def company_list(out):
     except Exception as e:
         print(f"::warning::SEC company list not fetched ({e}); the search shows only companies on the site")
         return
-    seen, rows = set(), []
+    seen, rows, alias = set(), [], {}
     for v in data.values():                               # SEC lists the largest companies first: kept, for the search
         cik = int(v["cik_str"])
-        if cik in seen:                                   # one row per company: its first (main) ticker
+        tk = str(v.get("ticker") or "").upper()
+        if cik in seen:                                   # one row per company: its first (main) ticker; the others
+            if tk:                                        # (GOOG beside GOOGL, BRK-A beside BRK-B) lead to it too
+                alias.setdefault(tk, cik)
             continue
         seen.add(cik)
-        rows.append([cik, str(v.get("ticker") or "").upper(), str(v.get("title") or "")])
+        rows.append([cik, tk, str(v.get("title") or "")])
     with open(os.path.join(out, "companies.json"), "w") as f:
-        json.dump({"generated": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z", "companies": rows}, f,
+        json.dump({"generated": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z", "companies": rows, "alias": alias}, f,
                   separators=(",", ":"))
     print(f"company list: {len(rows)} SEC companies")
 
@@ -2819,6 +2827,7 @@ def render(store, out, stars=frozenset()):
                       **({"after_release": latest["release_check"]["filed"], "release_ok": latest["release_check"]["ok"]}
                          if latest.get("release_check") else {})})
     FX._cur[0] = "USD"
+    unique_tickers(index)
     try:
         FX.save_cache(store.root, fx_cache)
     except OSError as e:
@@ -2922,6 +2931,25 @@ def render(store, out, stars=frozenset()):
     print(f"rendered {len(index)} companies, {len(agg_index['sector'])} sectors, {len(agg_index['industry'])} industries; "
           f"{len(undrawn)} with their newest quarter not drawn")
     store.commit()                                           # the undrawn list, for the next run's re-reading
+
+
+def unique_tickers(index):
+    """A ticker on two companies names the one that files now. After a holding-company reorganization the old company
+    keeps the ticker in its profile (Navient Corp, whose last report was the 2024 10-K, beside Navient Holdings: NAVI
+    twice), so the search showed two NAVI, a ticker link could open the old one and both static pages wanted c/navi/.
+    The others keep their name, without a ticker (their pages are c/cik-<cik>/), the ticker noted as former_ticker."""
+    by = {}
+    for x in index:
+        t = str(x.get("ticker") or "").upper()
+        if t:
+            by.setdefault(t, []).append(x)
+    for t, rows in by.items():
+        if len(rows) > 1:
+            rows.sort(key=lambda x: (x.get("filed") or "", x.get("end") or ""), reverse=True)
+            for x in rows[1:]:
+                x["former_ticker"], x["ticker"] = x["ticker"], ""
+                print(f"  ticker {t}: on {rows[0]['name']} (filed {rows[0].get('filed')}), not on {x['name']} (filed {x.get('filed')})")
+    return index
 
 
 def cal_label(cal):

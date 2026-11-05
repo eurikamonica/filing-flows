@@ -110,8 +110,8 @@
   const ACRONYMS = new Set(['SEC', 'FCF', 'ROE', 'ROA', 'ROIC', 'GAAP', 'EBIT', 'EBITDA', 'USD', 'AI', 'IPO', 'CPI', 'FOMC', 'GDP', 'FED', 'LBO', 'CAPEX', 'OPEX', 'SBC',
     'YTD', 'TTM', 'FY', 'QOQ', 'MOM', 'ATH', 'ATL', 'OTC', 'NYSE', 'NASDAQ', 'ADR', 'REIT', 'MLP', 'SPAC', 'ESG', 'API', 'FAQ', 'PDF', 'CSV', 'URL', 'UTC', 'EST', 'PST', 'USA', 'US',
     'UK', 'EU', 'CN', 'HK', 'JP', 'KPI', 'NAV', 'AUM', 'PTR', 'NT', 'LOI', 'MOU', 'IR', 'PR', 'CFTC', 'FINRA', 'FDIC', 'IRS', 'DOJ', 'FTC', 'FDA', 'EPA', 'NPX', 'XBRL']);
-  let SECL = null;
-  const secList = () => SECL || (SECL = json(DATA + 'companies.json').then((d) => (d && Array.isArray(d.companies) ? d.companies : [])));
+  let SECL = null, SECA = {};
+  const secList = () => SECL || (SECL = json(DATA + 'companies.json').then((d) => { SECA = (d && d.alias) || {}; return d && Array.isArray(d.companies) ? d.companies : []; }));
   async function findOther(q, ix) {
     const s = String(q || '').replace(/\b(?:P\/[EBS]|EV\/(?:EBITDA|S(?:ales)?)|S&P(?: 500)?|Q&A)\b/gi, ' ');
     const cash = (s.match(/\$([A-Za-z][A-Za-z.\-]{0,6})\b/g) || []).map((x) => x.slice(1).toUpperCase());
@@ -123,7 +123,12 @@
     const all = await secList();
     for (const w of want) {
       if (known.has(norm(w))) continue;
-      const hit = all.find((x) => norm(x[1]) === norm(w));
+      let hit = all.find((x) => norm(x[1]) === norm(w));
+      if (!hit && SECA[norm(w)]) {                       // another share class (GOOG, BRK-A): the company itself
+        const cik = +SECA[norm(w)], on = ((ix && ix.companies) || []).find((c) => +c.cik === cik);
+        if (on) return on;
+        hit = all.find((x) => +x[0] === cik);
+      }
       if (hit) return { cik: +hit[0], ticker: String(hit[1]), name: String(hit[2] || hit[1]), uncovered: true };
     }
     return null;
