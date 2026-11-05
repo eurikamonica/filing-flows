@@ -2986,6 +2986,13 @@
 
   // ---------- who bought it: a donut of the 13F managers who bought in the latest quarter on file (by dollars bought), and
   // how every filer moved (new · added · unchanged · cut · sold out). From holders/<TICKER>.json (stage-public.py).
+  // a quarter still being filed (13F reports are due 45 days after it): how much of the holders on file it covers so far
+  function early13(P, filers, inst) {
+    const due = Date.parse(P + 'T00:00:00Z') + 45 * 864e5;
+    if (!(Date.now() < due + 3 * 864e5)) return '';
+    const all = new Set(inst.map((x) => x.cik)).size;
+    return ` <b>Still being filed:</b> this quarter's 13F reports are due by ${date(new Date(due).toISOString().slice(0, 10))} — ${whole(filers)} of the ${whole(all)} managers on file have reported it so far, so the picture can still change (the quarter before: “13F report quarter” above).`;
+  }
   function buyersPie(inst, exits, sym, av, selectedPeriod) {
     const per = {};
     inst.filter((x) => x.status !== 'BASE').forEach((x) => { per[x.period] = (per[x.period] || 0) + 1; });
@@ -3021,7 +3028,7 @@
     const bar = seg.filter(([k]) => n[k]).map(([k, l, c]) => `<i class="${c}" style="flex:${n[k]}" title="${n[k]} ${l} (${(n[k] / filers * 100).toFixed(0)}% of ${filers} filers)"></i>`).join('');
     const bought = n.NEW + n.INCREASE;
     return `<div class="pie13"><h3>Who bought it (13F, quarter ended ${date(P)})</h3>
-      <p class="muted">Of the ${filers} processed 13F filers with ${t(sym)} in this quarter's report or the one before, ${bought} bought (${(bought / filers * 100).toFixed(0)}%; ${n.NEW} new positions), ${n.DECREASE} cut, ${n.EXIT} sold out and ${n.UNCHANGED} held still. Dollars bought ≈ shares added × the quarter-end price each filer reported; the slices are the largest buyers.</p>
+      <p class="muted">Of the ${filers} processed 13F filers with ${t(sym)} in this quarter's report or the one before, ${bought} bought (${(bought / filers * 100).toFixed(0)}%; ${n.NEW} new positions), ${n.DECREASE} cut, ${n.EXIT} sold out and ${n.UNCHANGED} held still. Dollars bought ≈ shares added × the quarter-end price each filer reported; the slices are the largest buyers.${early13(P, filers, inst)}</p>
       <div class="pie13-row">${svg}<ol class="pie13-legend">${legend}</ol></div>
       <div class="pie13-bar" role="img" aria-label="${seg.filter(([k]) => n[k]).map(([k, l]) => `${n[k]} ${l}`).join(', ')}">${bar}</div>
       <div class="pie13-key">${seg.map(([k, l, c]) => `<span><i class="${c}"></i>${l} <b>${n[k]}</b></span>`).join('')}</div></div>`;
@@ -4297,9 +4304,12 @@
         <h2>No charts for this company yet</h2>
         <p>Companies are drawn when they file a 10-Q, 10-K or earnings release during the regular scan (every 15 minutes).
           <span id="build-how">Ask for it and the next scan reads its last five 10-Qs and two 10-Ks from SEC; this page fills in by itself (usually 10–30 minutes).</span></p>
+        <p class="muted">Most foreign companies (TSMC, ASML, Novo Nordisk, Shopify…) report on Forms 20-F, 40-F and 6-K instead, which the site does not draw yet — their holders, ETFs and short interest are below.</p>
         <div class="row"><button class="btn primary" id="build-go" type="button" hidden>Build its charts</button>
           <span class="muted" id="build-msg" role="status"></span></div>
-      </section>`;
+      </section><div id="build-holders"></div>`;
+    // without charts the page still has what the Disclosure Hub knows of the ticker: 13F holders, ETFs, insiders, 8-Ks …
+    if (ticker) holdersSection($('#build-holders'), ticker, here);
     const box = $('#build-box'), btn = $('#build-go'), msg = (x) => { $('#build-msg').textContent = x || ''; };
     const cl = await sb();
     if (!cl) {
