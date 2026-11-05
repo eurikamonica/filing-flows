@@ -20,7 +20,9 @@
       ['model', '#model', 'Growth model', 'Company, industry, sector and theme forecasts'],
     ] },
     { id: 'signals', label: 'Market signals', items: [
-      ['feed', '#feed', 'Feed', 'What changed today, across the site'],
+      ['feed', '#feed', 'Your feed', 'What the companies you follow disclosed, newest first'],
+      ['daily', 'daily/', 'Today in the filings', 'Insider buying, Congress trades, guidance, new 13D stakes: the whole market, each day'],
+      ['events', 'events/', 'Material 8-K events', 'Deals, new debt, impairments, restatements, leadership changes'],
       ['etfs', 'disclosures/#etf', 'ETF scanner', 'Every US-listed ETF: prices, distributions, prospectus, holdings'],
       ['disclosures', 'disclosures/', 'Disclosures', '13F flows, insiders, officials, short interest…'],
       ['cross', 'disclosures/#cross', 'Cross-holdings', 'Who holds whom: US government, the President, Congress, Nvidia, Alphabet…'],
