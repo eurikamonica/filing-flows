@@ -74,6 +74,9 @@
   const json = (url) => (U.json ? U.json(url) : fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null));
   const HUB = (root.FF_HUB || 'disclosures/data/'), SITE = (root.FF_DATA || 'data/');   // the Hub's player (disclosures/hub-video.js) sets both
   const norm = (s) => String(s || '').trim().toUpperCase().replace(/\./g, '-');
+  const tickList = (s) => String(s || '').split(/[\s,;]+/).map(norm).filter(Boolean);
+  // funds, not companies: what the company kinds cannot draw (a kind switched to keeps no ETF tickers it has no figures for)
+  const FUNDS = new Set('QQQ QQQM SPY VOO IVV VTI DIA IWM IWB IWV IJH IJR MDY RSP SCHD VYM VIG DGRO JEPI JEPQ XLK XLF XLE XLV XLY XLP XLI XLU XLB XLRE XLC SMH SOXX ARKK TQQQ SQQQ GLD SLV TLT IEF SHY BND AGG HYG LQD EEM EFA VEA VWO IEMG IWF IWD VUG VTV VGT VNQ ITB CARZ'.split(' '));
   const friday = (ms) => ms + ((5 - new Date(ms).getUTCDay() + 7) % 7) * DAY;   // the Friday that ends a date's week
 
   /* ---------- number formats ---------- */
@@ -759,7 +762,7 @@
     if (capLike || (capF && st.capby !== 'now')) {
       const ap = new Set(meta.approx_cap || []), shown = out.series.filter((x) => ap.has(x.key)).map((x) => x.key);
       if (shown.length) out.notes.add(`${shown.join(', ')}: no SEC share count, so market value uses today's count held back up to five years (approximate).`);
-      out.notes.add('Market value = the month-end price × the shares outstanding then (10-Q / 10-K cover pages), from 2009 on.');
+      out.notes.add('Market value = the month-end price × the shares outstanding then (each 10-Q and 10-K cover page, from 1993; a company\'s former registrants\' before its own).');
     }
     out.series = out.series.filter((x) => x.v.some(fin));
     return out;
@@ -3375,7 +3378,7 @@
       h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
       h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
-      h += `<label for="st-capby">Measured</label>${sel('st-capby', [['then', 'At each step (from 2009)'], ['now', 'Today']], st.capby)}`;
+      h += `<label for="st-capby">Measured</label>${sel('st-capby', [['then', 'At each step'], ['now', 'Today']], st.capby)}`;
       h += `<div class="st-help">Every US-listed company the site draws, ranked again at each step. Today's companies only: those delisted, merged or bankrupt are missing from earlier years. “At each step” uses the membership history the site has (the S&P 500's and the Dow's, the Nasdaq-100's from Wikipedia's lists each quarter); the other indices keep theirs from when the site began.</div>`;
       return h;
     }
@@ -3384,8 +3387,8 @@
       // a ticker typed, not picked from a list (a phone's list of 5,000 ETFs covers the page); under it, the dates on file
       // and the most the sources could ever give (rangeInfo)
       if (st.aw === 'etf') h += `<label for="st-ah">ETF ticker</label><input class="input" id="st-ah" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Type a ticker: SPY, QQQ, XLK, SCHD" value="${esc(st.ah)}">`;
-      else if (st.aw === '13f') h += `<label for="st-ac">Manager CIK</label><input class="input" id="st-ac" inputmode="numeric" autocomplete="off" value="${esc(st.ac)}"><div class="st-help">Berkshire: 1067983 · Bridgewater: 1350694 · Scion: 1649339</div>`;
-      else if (st.aw === 'official') h += `<label for="st-ap">Official name (as disclosed)</label><input class="input" id="st-ap" autocomplete="off" value="${esc(st.ap)}"><label for="st-ao">Transactions</label>${sel('st-ao', [['all','All gross activity'],['buy','Purchases'],['sell','Sales']], st.ao)}`;
+      else if (st.aw === '13f') h += `<label for="st-ac">13F manager (name or CIK)</label><input class="input" id="st-ac" list="st-alist" autocomplete="off" spellcheck="false" placeholder="Berkshire, Bridgewater or a CIK" value="${esc(st.ac)}"><datalist id="st-alist"></datalist><div class="st-help">Berkshire: 1067983 · Bridgewater: 1350694 · Scion: 1649339 · any manager's CIK. <button type="button" class="pill" data-to-holdings="1">The latest report only</button></div>`;
+      else if (st.aw === 'official') h += `<label for="st-ap">Official name (as disclosed)</label><input class="input" id="st-ap" list="st-alist" autocomplete="off" spellcheck="false" value="${esc(st.ap)}"><datalist id="st-alist"></datalist><label for="st-ao">Transactions</label>${sel('st-ao', [['all','All gross activity'],['buy','Purchases'],['sell','Sales']], st.ao)}<div class="st-help"><button type="button" class="pill" data-to-holdings="1">The latest trades only</button></div>`;
       else h += `<label for="st-at">Index</label>${sel('st-at', Object.entries(root.FFActual.TRACKERS).map(([k, v]) => [k, v[0] + ' · ' + v[1]]), st.at)}`;
       h += `<div class="st-help st-range" id="st-range" aria-live="polite"></div>`;
       if (st.style === 'changes') h += `<label for="st-ag">Group changes</label>${sel('st-ag', [['company','Company'],['sector','Sector']], st.ag)}`;
@@ -3406,7 +3409,8 @@
       h += '<div class="st-help">' + (st.hsrc === '13f' ?
         'SEC 13F: actual reported position values divided by the ENTIRE disclosed 13F total, never rescaled to top holdings. Missing holdings remain uncovered; reports lag quarter end.' :
         'Officials: PTR trades are ranges, not a current portfolio. Finite range midpoints give an ESTIMATED transaction mix, not actual portfolio weights.') +
-        ' One reported date only: no invented price, history or share counts.</div>';
+        ' One reported date only: no invented price, history or share counts. <button type="button" class="pill" data-to-actual="1">' +
+        (st.hsrc === 'officials' ? 'Month by month: the trades over time' : 'Quarter by quarter: the reports over time') + '</button></div>';
       return h;
     }
     function moreSide(k) {
@@ -3420,15 +3424,15 @@
       }
       if (k === 'treemap') h += `<div class="st-row"><div><label for="st-tn">How many</label>${sel('st-tn', [['25', '25'], ['50', '50'], ['100', '100']], st.tn)}</div><div><label for="st-tc">Colour</label>${sel('st-tc', [['ret', '12-month return'], ['sector', 'Sector']], st.tc)}</div></div>`;
       if (k === 'sectors') {
-        h += `<label for="st-sw">Weights</label>${sel('st-sw', [['index', 'As the index weights them (Dow: by share price)'], ['cap', 'By market value'], ['fund', 'A fund\'s actual holdings']], st.sw)}`;
+        h += `<label for="st-sw">Weights</label>${sel('st-sw', [['index', 'As the index weights them (Dow: by share price)'], ['cap', 'By market value'], ['fund', 'A fund\'s holdings today, moved back with prices']], st.sw)}`;
         if (st.sw === 'fund') return h + `<label for="st-sf">Fund (ETF ticker)</label><input class="input" id="st-sf" value="${esc(st.sf)}" placeholder="DIA, QQQ, XLK, SCHD">`
-          + `<div class="st-help">The fund's latest reported holdings and their weights; earlier months move each holding with its own price, as if the fund had kept the same shares.</div>`;
+          + `<div class="st-help">The fund's latest reported holdings and their weights; earlier months move each holding with its own price, as if the fund had kept the same shares — not what it held then. <button type="button" class="pill" data-to-reports="1">What it reported, quarter by quarter</button></div>`;
         h += `<label for="st-sa">Show</label>${sel('st-sa', [['share', 'Each sector\'s share (100%)'], ['abs', 'Market value in dollars']], st.sa)}`;
       }
       if (k !== 'sectors') h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
       h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
-      return h + `<div class="st-help">From the site's month-by-month data on every company it draws. Market values start with each company's first XBRL filing (2009–2011: every filer from mid-2011), so a market-value video is best started in 2012. Today's companies only: those delisted, merged or bankrupt are missing from earlier years.</div>`;
+      return h + `<div class="st-help">From the site's month-by-month data on every company it draws. Market values come from each 10-K and 10-Q cover page since 1993 (a company's former registrants' too: Exxon Mobil before ExxonMobil Holdings), so most large companies reach back to the mid-1990s; company figures (revenue, profit) start in 2009. Today's companies only: those delisted, merged or bankrupt are missing from earlier years.</div>`;
     }
     function spendSide() {
       const habit = st.sphab === '1', num = (id, v, ph, lab) => `<input class="input" id="st-${id}" inputmode="decimal" value="${esc(v)}" placeholder="${esc(ph || '')}"${lab ? ` aria-label="${esc(lab)}"` : ''}>`;
@@ -3503,7 +3507,7 @@
       else h += `<label for="st-expr">Formulas — one per line, “Label: expression”</label><textarea id="st-expr" spellcheck="false">${esc(st.expr)}</textarea><div class="st-help">Operators <code>+ − × ÷ ^</code> and <code>( )</code>; functions <code>log exp sqrt abs rebase(x) ma(x,n) ema(x,n) pct(x,n) chg(x,n) lag(x,n) min(a,b) max(a,b)</code>. Series: a ticker (<code>QQQ</code> = total return) or <code>QQQ.price</code>, <code>.div</code>, <code>.yield</code>, company figures <code>NVDA.revenue</code>, <code>.ni_ttm</code>, <code>.margin</code>… Example: <code>rebase(QQQ/SPY)</code>, <code>SCHD.yield*100</code>, <code>NVDA.ni_ttm/NVDA.revenue_ttm</code>.</div>`
         + `<label for="st-fi">Money in each line (a DCA calculator)</label>${sel('st-fi', [['0', 'None: draw the lines as they are'], ['1', 'A sum at the start and/or the same amount on a schedule']], st.fi)}`;
       if (k !== 'holdings') h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
-      h += `<div class="st-row" style="margin-top:6px;align-items:center"><div class="st-pills" style="flex:2">${[['1y', 1], ['3y', 3], ['5y', 5], ['10y', 10], ['Max', 30]].map(([l, y]) => `<button type="button" class="pill" data-yrs="${y}">${l}</button>`).join('')}</div>`
+      if (k !== 'holdings') h += `<div class="st-row" style="margin-top:6px;align-items:center"><div class="st-pills" style="flex:2">${[['1y', 1], ['3y', 3], ['5y', 5], ['10y', 10], ['Max', 30]].map(([l, y]) => `<button type="button" class="pill" data-yrs="${y}">${l}</button>`).join('')}</div>`
         + `<div><input class="input" id="st-yrs" inputmode="decimal" placeholder="or N years" value="${+st.yrs > 0 ? esc(st.yrs) : ''}" aria-label="The last N years (any number, e.g. 7 or 2.5)"></div></div>`;
       if (k === 'snowball') {
         const reverse = +st.sgoal > 0, solveLump = st.ssolve !== 'rec';
@@ -3688,8 +3692,9 @@
           const viaIdx = ixOf ? `<br>Its index before ${fmtD(lo || NPORT0)}: <button type="button" class="pill" data-recon-index="${ixOf[0]}">${esc(IDX[ixOf[0]])} from 1999, reconstructed</button>` : '';
           set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Max:</b> ${maxTxt}${viaIdx}`, lo, hi);
         } else if (st.aw === '13f') {
-          const cik = String(st.ac || '').replace(/\D/g, '').replace(/^0+/, '');
-          if (!cik) { set('Type a manager’s CIK to see the quarters on file.'); return; }
+          let cik = /^\s*\d+\s*$/.test(String(st.ac || '')) ? String(st.ac).trim().replace(/^0+/, '') : '';
+          if (!cik && String(st.ac || '').trim()) cik = (await root.FFActual.managerCik(st.ac, { json, hub: HUB })) || '';
+          if (!cik) { set(String(st.ac || '').trim() ? `No 13F manager the Hub follows is called “${esc(st.ac)}” — type its CIK (EDGAR's company search shows it).` : 'Type a manager’s name or CIK to see the quarters on file.'); return; }
           set(`Looking up CIK ${esc(cik)}…`);
           const cfg = await json(HUB + 'remote.json'), base = cfg && /^https:\/\//.test(cfg.base || '') && (cfg.prefixes || []).some((x) => 'shards/holdings/'.startsWith(x)) ? cfg.base : HUB;
           const doc = await json(base + 'shards/holdings/' + cik + '.json');
@@ -3724,6 +3729,14 @@
       list.innerHTML = rows.slice(0, 150).map(r =>
         '<option value="' + esc(st.hsrc === 'officials' ? r.slug : r.cik) + '">' + esc(r.name) + '</option>').join('');
     }
+    // the managers and officials the Hub follows, offered while typing (a 13F manager by name: its CIK goes in)
+    async function suggestActual() {
+      const list = $('#st-alist'); if (!list) return;
+      const off = st.aw === 'official', doc = await json(HUB + 'research/people/' + (off ? 'officials' : 'managers') + '.json');
+      if (!list.isConnected || !doc || !Array.isArray(doc.rows)) return;
+      const rows = off ? root.FFHoldingsVideo.popularOfficials(doc) : root.FFHoldingsVideo.popularManagers(doc);
+      list.innerHTML = rows.slice(0, 200).map((r) => (off ? `<option value="${esc(r.name)}"></option>` : `<option value="${esc(r.cik)}">${esc(r.name)}</option>`)).join('');
+    }
     const box = app.querySelector('.st-wrap');
     let tmr = 0;
     const later = (f) => { clearTimeout(tmr); tmr = setTimeout(f, 450); };
@@ -3732,7 +3745,14 @@
       if (kb) {
         st.k = kb.dataset.kind; st.style = STYLES[st.k][0][0]; st.title = ''; st.sub = '';
         if ((st.k === 'fund' || st.k === 'calendar' || st.k === 'sankey' || st.k === 'cash') && !/^[A-Z]/.test(st.t)) st.t = 'NVDA';
-        if (st.k === 'cash') { if (st.t === DEF.t) st.t = 'AAPL'; st.theme = 'clean'; }
+        // tickers that fit the kind picked: companies for the company figures, a field of funds for the RRG and the
+        // momentum race (the growth race's QQQ,SPY would give an error or one lonely series)
+        const T0 = tickList(st.t), onlyFunds = !T0.length || T0.every((x) => FUNDS.has(x)), rivals = T0.filter((x) => x !== norm(st.bench)).length;
+        if (st.k === 'fund' && onlyFunds) st.t = 'AAPL,MSFT,GOOGL,AMZN,META,NVDA';
+        if (st.k === 'sankey' && (!T0.length || FUNDS.has(T0[0]))) st.t = 'NVDA';
+        if (st.k === 'rrg' && rivals < 3) { st.t = 'XLK,XLF,XLE,XLV,XLY,XLP,XLI,XLU'; st.bench = st.bench || 'SPY'; }
+        if (st.k === 'momentum' && rivals < 3) { st.t = 'QQQ,IWM,DIA,SMH,XLE,GLD,TLT,EEM'; st.bench = st.bench || 'SPY'; }
+        if (st.k === 'cash') { if (st.t === DEF.t || !T0.length || FUNDS.has(T0[0])) st.t = 'AAPL'; st.theme = 'clean'; }
         if (st.k === 'spend') Object.assign(st, (SPEND[st.sp] || SPEND.phone).s);
         if (st.k === 'snowball' && st.t === DEF.t) st.t = 'SCHD';
         if (st.k === 'timing' && st.t === DEF.t) st.t = 'SPY';
@@ -3743,6 +3763,21 @@
       if (e.target.closest('[data-range-all]')) { st.from = ''; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
       const rf = e.target.closest('[data-range-from]');
       if (rf) { st.from = rf.dataset.rangeFrom; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
+      if (e.target.closest('[data-to-actual]')) {              // the latest report → its history
+        const off = st.hsrc === 'officials';
+        Object.assign(st, { k: 'actual', aw: off ? 'official' : '13f', style: off ? 'stack' : 'companies', from: '', to: '', yrs: '', title: '', sub: '' });
+        if (st.hid) { if (off) st.ap = st.hid.replace(/-/g, ' '); else st.ac = st.hid; }
+        side(); rebuild(); return;
+      }
+      if (e.target.closest('[data-to-holdings]')) {            // the history → the latest report alone
+        const off = st.aw === 'official';
+        Object.assign(st, { k: 'holdings', hsrc: off ? 'officials' : '13f', hid: off ? st.ap : st.ac, style: 'bars', title: '', sub: '' });
+        side(); rebuild(); return;
+      }
+      if (e.target.closest('[data-to-reports]')) {             // a fund held back → what it reported
+        Object.assign(st, { k: 'actual', aw: 'etf', ah: st.sf || 'SPY', style: 'stack', from: '', to: '', yrs: '', title: '', sub: '' });
+        side(); rebuild(); return;
+      }
       const ri = e.target.closest('[data-recon-index]');
       if (ri) { st.aw = 'index'; st.at = ri.dataset.reconIndex; st.from = '1999-12-31'; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
       const yb = e.target.closest('[data-yrs]');
@@ -3750,7 +3785,7 @@
       const sb = e.target.closest('[data-speed]');
       if (sb) { st.dur = String(clamp(Math.round((+st.dur || 20) / +sb.dataset.speed), 4, 300)); const d = $('#st-dur'); if (d) d.value = st.dur; if (V) { paint(); save(); status(); } }
     });
-    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t') suggest(); if (e.target.id === 'st-hid') suggestHoldings(); });
+    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t') suggest(); if (e.target.id === 'st-hid') suggestHoldings(); if (e.target.id === 'st-ac' || e.target.id === 'st-ap') suggestActual(); });
     box.addEventListener('input', (e) => {
       const id = e.target.id; if (!id || !id.startsWith('st-') || e.target.tagName === 'SELECT') return;
       const key = id.slice(3); if (!(key in DEF)) return;
