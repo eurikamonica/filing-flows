@@ -66,6 +66,10 @@ at(LIVE, () => {
   const x = V.cardHtml(doc.assets.XLE, doc);
   ok(x.includes('−2.11%') && !x.includes('to 4 pm') && !x.includes('mvh-meter'), 'no history: the move and the time alone');
   ok(!V.cardHtml(doc.assets.SPY, shortDoc).includes('to 4 pm'), 'an early close: no odds to 4 pm');
+  const low = { ...doc.assets.SPY, odds: { ...odds, pct: 0.0, every: 997 }, vwap_odds: { ...vwapOdds, pct: 0.0 } };
+  ok(V.cardHtml(low, doc).includes('<i>the lowest of 498 days by then</i>'), 'beyond every day on file: said, not "bottom 0.0%"');
+  const ld = V.detailHtml(low, doc);
+  ok(ld.includes('<b>the lowest</b> of its 498 days since Nov 6, 2024 at that time of day — further than any day on file') && ld.includes('<b>the furthest below</b> of its 498 days by 11:30 am'), 'and in the panel');
 });
 at(STALE, () => { const c = V.cardHtml(doc.assets.SPY, doc); ok(c.includes('11:25 (delayed)') && !c.includes('iv-dot'), 'behind: the time said, no live dot'); });
 at(AFTER, () => {

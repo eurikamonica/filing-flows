@@ -164,7 +164,8 @@ class Scan(unittest.TestCase):
         fake = FakeYahoo(res, today_chart(day, '11:28', last_close, last_close * 0.99))
         now = dt.datetime.combine(day, dt.time(11, 29), ET).astimezone(dt.timezone.utc)
         orig = I.assets
-        I.assets = lambda: [('SPY', 'SPY', 'S&P 500 (SPY)', 'market'), ('XLK', 'XLK', 'Technology sector (XLK)', 'sector')]
+        I.assets = lambda: [('SPY', 'SPY', 'S&P 500 (SPY)', 'market'), ('XLK', 'XLK', 'Technology sector (XLK)', 'sector'),
+                            ('IDX-GSPC', '^GSPC', 'S&P 500 index', 'index')]
         try:
             with tempfile.TemporaryDirectory() as d:
                 doc = I.scan(fake, Path(d) / 'h60', now=now, log=lambda *a: None)
@@ -198,6 +199,8 @@ class Scan(unittest.TestCase):
         self.assertEqual(sum(S['rest_dist']), S['n'], 'the similar days to the close, in ten bands')
         self.assertEqual(sum(o['base']['rest_dist']), o['days'])
         self.assertLess(a['vs_vwap'], 0, 'a falling day trades below its VWAP')
+        self.assertNotIn('vwap', doc['assets']['IDX-GSPC'], "an index's volume is no trade's: no VWAP")
+        self.assertIn('odds', doc['assets']['IDX-GSPC'])
         self.assertEqual(len(a['vwap_path']), len(a['path']))
         V = a['vwap_odds']
         self.assertEqual((V['mark'], V['j']), ('11:30', 2))
