@@ -307,12 +307,14 @@ class Managers(unittest.TestCase):
         doc = json.loads((self.tmp / 'hh' / 'public' / 'm' / '102909.json').read_text())
         self.assertEqual(doc['periods'], ['2024-03-31', '2024-06-30', '2024-09-30'])
         self.assertEqual(doc['usd'], [2_052_000_000, 2_100_000_000, 3_495_000_000])
-        self.assertEqual(doc['top'][0], [['AAPL', 12_000_000, 2_052_000_000]])
+        self.assertEqual(doc['top'][0], [['AAPL', 100_000]])                         # the whole book, in hundred-thousandths
+        self.assertEqual(doc['unit'], 1e-5)
         self.assertEqual(doc['names']['AAPL'], 'Apple Inc.')
         self.assertEqual(doc['open'], ['2024-09-30'])
         self.assertEqual(doc['name'], 'Vanguard Group')
         small = json.loads((self.tmp / 'hh' / 'public' / 'm' / '999.json').read_text())
-        keys = {k for k, _, _ in small['top'][0]}
+        keys = {k for k, _ in small['top'][0]}
+        self.assertEqual(sum(w for _, w in small['top'][0]), 100_000)
         self.assertEqual(keys, {'AAPL', 'MSFT'})
         mdt = json.loads((self.tmp / 'hh' / 'public' / 'm' / '444.json').read_text())
         self.assertEqual(mdt['top'][0][0][0], 'MDT')                                   # named by the issuer's SEC listing name
@@ -335,7 +337,7 @@ class Managers(unittest.TestCase):
         HH.write_gz(p, d)
         HH.build(root, self.hub, min_usd=1)
         doc = json.loads((root / 'public' / 'm' / '444.json').read_text())
-        self.assertEqual(doc['top'][0], [['~999999', 10, 5_000_000]])
+        self.assertEqual(doc['top'][0], [['~999999', round(5_000_000 / doc['usd'][0] / 1e-5)]])
         self.assertEqual(doc['names']['~999999'], 'Hess')
         state = json.loads((root / 'cache' / 'sets.json').read_text())
         self.assertEqual(state['mversion'], HH.MANAGERS_VERSION)

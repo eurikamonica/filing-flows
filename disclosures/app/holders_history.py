@@ -59,11 +59,14 @@ CLOSE_DAYS = 140                # a quarter is final once a data set starting th
 KEEP = 30                       # largest holders kept per CUSIP and quarter (a family's smaller filers fall inside it)
 TOP = 20                        # largest holders published per ticker and quarter
 MIN_USD = 1_000_000             # a CUSIP's quarter below this in all is left out of the cache
-MKEEP = 40                      # a manager's largest positions kept per quarter (the video draws at most 20)
+MKEEP = 100                     # a manager's largest positions kept per quarter: the video's bands are the 12–20 largest on
+                                # average, which a book of thousands of lines can hold below its 40th position some quarters
 MIN_BOOK, MIN_BOOK_USD = 200, 1e9   # a filer's quarter kept in cache/managers: this many lines, or this much in all
 GIANT = 500                     # managers published in public/m: more lines than this in some quarter (the site's own
                                 # 13F files read the others back to 2013 or 2021, holdings13f/ranges.py tiers)
-MANAGERS_VERSION = 1            # cache/managers' layout: a new one reads every data set again (sets.json "mversion")
+MANAGERS_VERSION = 2            # cache/managers' layout: a new one reads every data set again (sets.json "mversion")
+                                # (2: the 100 largest positions, not 40)
+WUNIT = 1e-5                    # public/m weights: hundred-thousandths of the long equity book
 SECTORS = ('technology', 'communication', 'consumer-disc', 'consumer-staples', 'health', 'financials', 'real-estate',
            'energy', 'materials', 'industrials', 'utilities')
 MANAGER_FIELDS = ['usd', 'lines', 'put', 'call', 'top', 'sectors']   # top: [[cusip, shares, usd]]; sectors: {key: usd}
@@ -850,7 +853,7 @@ def build_managers(root, pub, cmap, names, giant=None):
     """public/m/<CIK>.json for every manager of more than `giant` positions in some quarter: its books quarter by
     quarter — the long equity book in dollars, its lines, puts and calls, its book by sector, its largest positions by
     ticker (a company's share classes together; a CUSIP no ticker names, by its issuer: '~' and the CUSIP's first six
-    characters) with the names; public/m/index.json lists them."""
+    characters) as weights of the book in hundred-thousandths (unit), with the names; public/m/index.json lists them."""
     root, out_dir = Path(root), Path(pub) / 'm'
     giant = GIANT if giant is None else giant
     files = sorted((root / 'cache' / 'managers').glob('*.json.gz'))
@@ -895,13 +898,14 @@ def build_managers(root, pub, cmap, names, giant=None):
                 key = t or '~' + cusip[:6]
                 if key not in labels:
                     labels[key] = names.get(t) or t if t else pretty((iss.get(cusip) or [cusip])[0])[0]
-                a = agg.get(key)
-                agg[key] = [a[0] + sh, a[1] + v] if a else [sh, v]
-            tops.append([[k, int(sh), int(v)] for k, (sh, v) in sorted(agg.items(), key=lambda kv: -kv[1][1])])
+                agg[key] = agg.get(key, 0) + v
+            # each as its weight in the book, in hundred-thousandths (the file stays small: ~14 bytes a position)
+            row = [[k, int(round(v / u / WUNIT))] for k, v in sorted(agg.items(), key=lambda kv: -kv[1]) if u > 0]
+            tops.append([x for x in row if x[1] > 0])
         name = pretty(filer.get(cik) or '', int(cik))[0] or cik
         doc = {'cik': int(cik), 'name': name, 'filer': filer.get(cik) or '', 'source': 'SEC Form 13F data sets',
                'periods': P[first:last + 1], 'open': [P[i] for i in range(first, last + 1) if P[i] in opn],
-               'fields': {'top': ['key', 'shares', 'usd'], 'options': ['put', 'call']},
+               'fields': {'top': ['key', 'weight'], 'options': ['put', 'call']}, 'unit': WUNIT,
                'usd': usd, 'lines': lines, 'options': opts, 'sectors': secs, 'top': tops, 'names': labels}
         (out_dir / f'{int(cik)}.json').write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')
         index.append([int(cik), name, P[first], P[last], next((x for x in reversed(lines) if x is not None), None),

@@ -2441,7 +2441,7 @@
     const hiAbs = share ? 1 : Math.max(...V.stack.total.slice(0, Math.min(n, i0 + 2)).filter(fin)) * 1.08 || 1;
     const Y = (v) => b.y + b.h - v / hiAbs * b.h;
     ctx.lineWidth = 1.2 * S; ctx.font = F(500, 21); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    for (const v of share ? [0, 0.25, 0.5, 0.75, 1] : niceTicks(0, hiAbs, 5)) { const y = Y(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(share ? (100 * v).toFixed(0) + '%' : money(v), b.x - 12 * S, y); }
+    for (const v of share ? [0, 0.25, 0.5, 0.75, 1] : niceTicks(0, hiAbs, 5)) { const y = Y(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(share ? (100 * v).toFixed(0) + '%' : V.stack.pct ? (100 * v).toFixed(v < 0.1 ? 1 : 0) + '%' : money(v), b.x - 12 * S, y); }
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     for (let y = new Date(G[0]).getUTCFullYear() + 1; y <= new Date(G[n - 1]).getUTCFullYear(); y += Math.max(1, Math.ceil((new Date(G[n - 1]).getUTCFullYear() - new Date(G[0]).getUTCFullYear()) / 9))) { const x = X(Date.UTC(y, 0, 1)); ctx.fillStyle = th.axis; ctx.fillText(String(y), x, b.y + b.h + 10 * S); }
     const base = G.map(() => 0), heads = [];
@@ -3742,7 +3742,7 @@
           const older = ((hist && hist.periods) || []).filter((p, i) => (hist.usd || [])[i] > 0 && (!own.length || p < own[0]));
           const ps = older.concat(own), lo = ps[0] || '', hi = ps[ps.length - 1] || '';
           const since = older.length ? older[0] : String(doc.since || ''), deep = since && since <= F13_0;
-          set(`<b>${esc(doc.label || doc.name || 'CIK ' + cik)}</b><br><b>On file:</b> ${ps.length ? `${ps.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}` : 'no complete quarter yet'}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter: 13F holdings are machine-readable from Q2 2013, and each quarter is filed within 45 days. ${older.length ? `${fmtD(older[0])} → ${fmtD(older[older.length - 1])}: SEC's 13F data sets (the 40 largest positions a quarter, the sectors over every line)${own.length ? `; from ${fmtD(own[0])}: each 13F as filed` : ''}.` : deep ? 'This manager is read from then.' : `This manager is read from ${fmtD(since)} so far; the history back-fill deepens it.`}`, lo, hi);
+          set(`<b>${esc(doc.label || doc.name || 'CIK ' + cik)}</b><br><b>On file:</b> ${ps.length ? `${ps.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}` : 'no complete quarter yet'}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter: 13F holdings are machine-readable from Q2 2013, and each quarter is filed within 45 days. ${older.length ? `${fmtD(older[0])} → ${fmtD(older[older.length - 1])}: SEC's 13F data sets (the 100 largest positions a quarter, the sectors over every line)${own.length ? `; from ${fmtD(own[0])}: each 13F as filed` : ''}.` : deep ? 'This manager is read from then.' : `This manager is read from ${fmtD(since)} so far; the history back-fill deepens it.`}`, lo, hi);
         } else if (st.aw === 'official') {
           const name = String(st.ap || '').trim(), slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
           if (!slug) { set('Type an official’s name to see the trades on file.'); return; }

@@ -26,7 +26,7 @@ const files = {
   [HH + 'm/1423053.json']: { cik: 1423053, name: 'Citadel Advisors', filer: 'CITADEL ADVISORS LLC', periods: ['2024-06-30', '2024-09-30', '2024-12-31'],
     usd: [400, 500, 999], lines: [3000, 3100, 3200], options: [[1, 2], [3, 4], [5, 6]],
     sectors: [{ technology: 200, health: 80 }, { technology: 250, health: 100 }, { technology: 1 }],
-    top: [[['AAPL', 10, 200], ['~G5960L', 5, 80]], [['AAPL', 11, 250], ['GOOG', 2, 50], ['~G5960L', 5, 100]], [['AAPL', 1, 999]]],
+    unit: 1e-5, top: [[['AAPL', 50000], ['~G5960L', 20000]], [['AAPL', 50000], ['GOOG', 10000], ['~G5960L', 20000]], [['AAPL', 100000]]],
     names: { AAPL: 'Apple Inc.', '~G5960L': 'Medtronic' } },
 };
 const api = { hub: HUB, json: async (u) => (u in files ? JSON.parse(JSON.stringify(files[u])) : null),
@@ -46,7 +46,7 @@ const out = () => ({ notes: new Set(), series: [] });
   assert.equal(h2.AAPL, 0.5);
   assert.equal(h2.GOOGL, 0.1, 'a class of share as its company (GOOG as GOOGL)');
   assert.equal(src.snapshots[1].sector_weights.health, 0.2);
-  assert.match(src.note, /2024-06-30 to 2024-09-30 \(2 quarters\): SEC's Form 13F data sets[^;]*; from 2024-12-31: each 13F as filed/);
+  assert.match(src.note, /2024-06-30 to 2024-09-30 \(2 quarters\): SEC's Form 13F data sets — each quarter's 100 largest[^;]*; from 2024-12-31: each 13F as filed/);
   assert.match(src.note, /Options in its 2025-03-31 13F: puts \$0M and calls \$0M[^.]*80% of the reported/);
   assert.equal(src.basis, 'Share of the long equity book (13F)');
 
@@ -73,10 +73,28 @@ const out = () => ({ notes: new Set(), series: [] });
   const recent = await A.disclosedSource({ aw: '13f', ac: '1423053', from: '2025-01-01' }, api);
   assert.deepEqual(recent.snapshots.map((s) => s.date), ['2025-03-31']);
   assert.ok(!/data sets/.test(recent.note));
-  files[HH + 'm/999.json'] = Object.assign({}, files[HH + 'm/1423053.json'], { cik: 999 });
+  // an older layout ([key, shares, usd]) still reads
+  files[HH + 'm/999.json'] = Object.assign({}, files[HH + 'm/1423053.json'], { cik: 999, unit: undefined,
+    top: [[['AAPL', 10, 200], ['~G5960L', 5, 80]], [['AAPL', 11, 250], ['GOOG', 2, 50], ['~G5960L', 5, 100]], [['AAPL', 1, 999]]] });
   const only = await A.disclosedSource({ aw: '13f', ac: '999' }, api);
   assert.deepEqual(only.snapshots.map((s) => s.date), ['2024-06-30', '2024-09-30', '2024-12-31']);
+  assert.equal(Object.fromEntries(only.snapshots[0].positions).AAPL, 0.5);
   assert.equal(only.name, 'CITADEL ADVISORS LLC');
   await assert.rejects(A.disclosedSource({ aw: '13f', ac: '12345' }, api), /not published yet/);
+  // a book of thousands of lines: its 12 largest (here 24%) drawn on their own scale, still as shares of the book
+  const thin = (i) => Array.from({ length: 30 }, (_, j) => ['T' + String.fromCharCode(65 + (j % 26)) + (j >= 26 ? 'X' : ''), 1, 2 + (j === 0 ? i : 0)]);
+  files[HH + 'm/888.json'] = { cik: 888, name: 'Market Maker', filer: 'MARKET MAKER LLC', periods: ['2020-03-31', '2020-06-30'], usd: [100, 100], lines: [4000, 4100],
+    options: [[0, 0], [0, 0]], sectors: [{}, {}], unit: 0.01, top: [thin(0), thin(1)].map((q) => q.map(([k, , v]) => [k, v])), names: {} };
+  const z = out();
+  await A.build({ aw: '13f', ac: '888', style: 'companies', an: '12' }, z, api);
+  assert.equal(z.kind, 'sectors');
+  assert.equal(z.stack.share, false, 'its own scale');
+  assert.equal(z.stack.pct, true, 'its axis in percent of the book');
+  assert.ok(!z.series.some((x) => x.key === 'other'), 'the rest not drawn');
+  assert.ok(Math.abs(z.stack.total[0] - 0.24) < 1e-9 && Math.abs(z.stack.total[1] - 0.25) < 1e-9, 'the 12 largest: ' + z.stack.total);
+  assert.match([...z.notes].join(' '), /The 12 largest on average are 25\.00% of the long equity book at 2020-06-30[^:]*: drawn on their own scale[^;]*; the other 4,088 holdings \(75\.00%\) are left out/);
+  const full = out();
+  await A.build({ aw: '13f', ac: '888', style: 'companies', an: '12', az: 'full' }, full, api);
+  assert.equal(full.stack.share, true, 'az=full: the whole book');
   console.log('13F weights with the data sets\' history: long equity book, names, quarters before the Hub\'s passed');
 })().catch((e) => { console.error(e); process.exit(1); });

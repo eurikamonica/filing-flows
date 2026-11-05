@@ -72,6 +72,7 @@
       equity_weight_covered: Number.isFinite(cov) && cov > 0 ? cov : positions.reduce((n, p) => n + p[1], 0) };
     if (sw) out.sector_weights = sw;
     if (s.partial) out.partial = true;
+    if (Number(s.lines) > 0) out.lines = Number(s.lines);    // a 13F book's lines (its positions here may be the largest only)
     return out;
   }
   // the quarterly block of etf/weights/<SYM>.json (app/actual_weights.py quarterly_block): the fund's public N-PORT
@@ -178,7 +179,8 @@
         }
         const by = new Map();
         p.forEach((r) => { if (!equity(r) || !(r.value_usd > 0)) return; const k = keyOf(r); if (k) by.set(k, (by.get(k) || 0) + r.value_usd); });
-        return {date:s.period, date_basis:'reported', source:'SEC 13F', positions:[...by].map(([k, v]) => [k, v / eq]), filed:s.filed, sources:s.sources};
+        return {date:s.period, date_basis:'reported', source:'SEC 13F', positions:[...by].map(([k, v]) => [k, v / eq]), filed:s.filed, sources:s.sources,
+          lines:p.filter((r) => equity(r) && r.value_usd > 0).length};
       }));
       // the quarters before the Hub's first: the data sets' books (the 40 largest positions; the sectors over every line)
       const first = snaps.length ? snaps[0].date : null;
@@ -191,14 +193,16 @@
           const sw = {};
           Object.entries((hist.sectors || [])[i] || {}).forEach(([k, v]) => { if (v > 0) sw[k] = v / usd; });
           older.push({ date: p, date_basis: 'reported', source: 'SEC 13F data sets', history: true, lines: (hist.lines || [])[i],
-            positions: ((hist.top || [])[i] || []).filter((x) => x[2] > 0).map(([k, , v]) => [CLASS_OF[k] || k, v / usd]), sector_weights: sw });
+            // [key, weight in hist.unit] (or an older layout's [key, shares, usd])
+            positions: ((hist.top || [])[i] || []).map((x) => [CLASS_OF[x[0]] || x[0], hist.unit > 0 && x.length === 2 ? x[1] * hist.unit : (x[2] || 0) / usd])
+              .filter((x) => x[1] > 0), sector_weights: sw });
         });
       }
       const all = older.concat(snaps);
       if (!all.some(x => x.positions.length)) throw new Error(((doc && (doc.label || doc.name)) || (hist && hist.name) || cik) + ': none of the reported positions could be matched to a ticker');
       const name = (doc && (doc.label || doc.name)) || (hist && (hist.filer || hist.name)) || cik;
       const notes = ['Quarter-end long holdings as reported (shares and ETFs), not current positions or total AUM. The weights are shares of the long equity book: options (puts and calls, reported at the value of the shares under them) and principal amounts are left out of it. A line no ticker names is shown under its issuer. Weight changes include price movement, not just trading. Latest amended reports may restate history; this is not a point-in-time backtest.'];
-      if (older.length) notes.push(`${older[0].date} to ${older[older.length - 1].date} (${older.length} quarters): SEC's Form 13F data sets — each quarter's 40 largest positions and the book by sector over every line${snaps.length ? `; from ${first}: each 13F as filed, every line` : ''}.`);
+      if (older.length) notes.push(`${older[0].date} to ${older[older.length - 1].date} (${older.length} quarters): SEC's Form 13F data sets — each quarter's 100 largest positions and the book by sector over every line${snaps.length ? `; from ${first}: each 13F as filed, every line` : ''}.`);
       if (opt && opt.total > 0 && (opt.put + opt.call) / opt.total >= 0.05) notes.push(`Options in its ${opt.period} 13F: puts ${usdShort(opt.put)} and calls ${usdShort(opt.call)} (the value of the shares under them), ${Math.round(100 * (opt.put + opt.call) / opt.total)}% of the reported ${usdShort(opt.total)} — not in the weights.`);
       return {name, id:cik, snapshots:all, labels, basis:'Share of the long equity book (13F)', note:notes.join(' '), evidence:rows};
     }
@@ -326,8 +330,14 @@
     const n = Math.max(3, Math.min(20, +st.an || 12));
     let keys = [...new Set(tables.flatMap(m=>[...m.keys()]))];
     // Fixed membership across the entire animation prevents disappearing bands.
+    let zoom = false;
     if (area && !sector) {
-      keys = keys.filter(k=>k!=='other').sort((a,b)=>Math.max(...tables.map(m=>m.get(b)||0))-Math.max(...tables.map(m=>m.get(a)||0))).slice(0,n);
+      const cand = keys.filter(k=>k!=='other'), peak = (k) => Math.max(...tables.map(m=>m.get(k)||0)), mean = (k) => tables.reduce((a,m)=>a+(m.get(k)||0),0) / tables.length;
+      keys = cand.slice().sort((a,b)=>peak(b)-peak(a)).slice(0,n);
+      // a book of thousands of lines (a market maker's 13F): its largest are a sliver of the whole — drawn on their own
+      // scale below, and chosen by their average weight (the steady holdings), not one quarter's spike
+      zoom = st.az !== 'full' && all.length >= 2 && Math.max(...tables.map(m=>keys.reduce((a,k)=>a+(m.get(k)||0),0))) < 0.5;
+      if (zoom) keys = cand.slice().sort((a,b)=>mean(b)-mean(a)).slice(0,n);
       tables.forEach(m=>{const rest=[...m].filter(([k])=>!keys.includes(k)).reduce((s,[,v])=>s+v,0); m.set('other',rest);});
       keys.push('other');
     }
@@ -339,7 +349,15 @@
     if (area && all.length >= 2) {
       out.kind='sectors'; out.stack={share:true,total:all.map(()=>1)};
       out.series.sort((a,b)=>b.v[b.v.length-1]-a.v[a.v.length-1]);
-      out.notes.add('Other preserves the denominator: remaining companies, unmatched securities and unreported assets. Company bands are ticker/security level; share classes are not consolidated. Sector classifications may use current metadata.');
+      // a book of thousands of lines (a market maker's 13F): its largest are a sliver of 100% — drawn on their own scale,
+      // still as shares of the whole book, the rest named in the notes instead of filling the picture
+      const tops = tables.map((m) => keys.filter((k) => k !== 'other').reduce((a, k) => a + (m.get(k) || 0), 0));
+      if (zoom) {
+        out.series = out.series.filter((x) => x.key !== 'other');
+        out.stack = { share: false, pct: true, total: tops };
+        const last = tops.length - 1, drawn = keys.length - 1, lines = all[last].lines || all[last].positions.length;
+        out.notes.add(`The ${drawn} largest on average are ${percent(tops[last])} of the long equity book at ${to} (${percent(Math.max(...tops))} at most): drawn on their own scale, each still a share of the whole book; the other ${lines > drawn ? (lines - drawn).toLocaleString('en-US') + ' ' : ''}holdings (${percent(1 - tops[last])}) are left out of the picture. The bar race shows each quarter's own largest.`);
+      } else out.notes.add('Other preserves the denominator: remaining companies, unmatched securities and unreported assets. Company bands are ticker/security level; share classes are not consolidated. Sector classifications may use current metadata.');
     } else {
       out.kind='rank'; out.rankN=n; out.order='desc';
       if (area) out.notes.add('Only one real portfolio snapshot is available: showing a dated static card, not an invented history.');
