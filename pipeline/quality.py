@@ -30,7 +30,8 @@ from . import history as H
 from . import investments as IV
 from . import reform as RF
 
-VERSION = 10              # 10: ten years of quarterly cash figures for the video studio (capital.py "hq")
+VERSION = 11              # 11: ten fiscal years of cash flows for the video studio (capital.py "fy_old")
+                          # 10: ten years of quarterly cash figures for the video studio (capital.py "hq")
                           # 9: the EPS bridge (diluted shares) in drivers.py
                           # 8: evidence-backed company quality measures (company_quality.py)
                           # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
