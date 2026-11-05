@@ -72,8 +72,9 @@
     ] },
     { id: 'method', label: 'Method', items: [
       ['method', '#method', 'Method', 'How every figure is read and drawn'],
+      ['data', '#data', 'Data catalog', 'Every kind of data: its source, its one home, how fresh'],
       ['status', '#status', 'Data health', 'Every source: when it was last read'],
-      ['directory', '#directory', 'Explore the data', 'Every file the site publishes'],
+      ['directory', '#directory', 'Directory', 'Every manager, official and filer collected'],
       ['npx', '#npx', 'Proxy votes (N-PX)', 'How funds voted'],
       ['banks', '#banks', 'Banks (FDIC)', 'Bank financials'],
       ['congress', '#congress', 'Officials’ reports', 'The disclosure records as filed'],

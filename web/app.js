@@ -5684,6 +5684,7 @@
       else if (h === 'model' && window.FFModel) await window.FFModel.overview(app, chainCtx());
       else if ((m = /^chain-([a-z0-9-]+)$/.exec(h)) && window.FFChains) await window.FFChains.page(app, m[1], chainCtx());
       else if (h === 'method') await methodPage();
+      else if (h === 'data' && window.FFCatalog) await window.FFCatalog.render(app, { getJSON, setNav, here });   // web/catalog.js
       else if (h === 'account') await accountPage();
       else if (h === 'owner') await ownerPage();
       else if (h === 'owner-xreport') { await ownerPage(); const x = $('#xreport'); if (x) x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }

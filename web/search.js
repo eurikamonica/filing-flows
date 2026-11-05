@@ -7,7 +7,7 @@
   'use strict';
   const U = root.FFUx;
   let IX = null, loading = null;
-  const PAGES = [['Latest filings', '#home'], ['Sectors & industries (SIC)', '#sectors'], ['Follow feed', '#feed'], ['Custom charts', '#chart'], ['Alerts & account', '#account'],
+  const PAGES = [['Latest filings', '#home'], ['Sectors & industries (SIC)', '#sectors'], ['Data catalog: every kind of data, its source and home', '#data'], ['Follow feed', '#feed'], ['Custom charts', '#chart'], ['Alerts & account', '#account'],
     ['Videos: animated charts to post', '#studio'], ['IPO & prospectuses', '#ipo'], ['Supply chains & themes', '#chains'],
     ['Growth model: forecasts', '#model'], ['Corporate investors', '#investors'], ['Today in the filings', 'daily/'], ['Material 8-K events', 'events/'],
     ['13F managers A–Z', 'm/'], ["Officials' stock trades A–Z", 'o/'], ['Method', '#method'],

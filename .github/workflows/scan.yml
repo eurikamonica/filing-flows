@@ -35,6 +35,7 @@ on:
       - 'scripts/build_flo_alerts.py'
       - 'web/studio.js'
       - 'scripts/build_site.py'
+      - 'config/data-catalog.json'     # the data catalog (#data): live on merge
       - 'scripts/seo*.py'             # the static search pages and their stylesheet and scripts: live on merge
       - 'web/seo.css'
       - 'web/seo-*.js'
@@ -566,6 +567,16 @@ jobs:
           git clone --quiet --depth 1 --branch fastlane "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" lane 2>/dev/null \
             || { echo "no fast-lane branch yet"; exit 0; }
           python -m pipeline.fastlane apply --data _site/data --lane lane --pages "${SITE_URL:-https://filing-flows.com}"
+
+      - name: The data catalog (data/catalog.json, the page #data; scripts/data_catalog.py, config/data-catalog.json)
+        # every kind of data measured in the built site — its files, size and when it was made; data no kind describes
+        # and identical files published twice show as warnings. It never stops the publish.
+        continue-on-error: true
+        timeout-minutes: 6
+        run: |
+          git ls-remote --heads "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            | sed 's#.*refs/heads/##' > _branches.txt || true
+          python scripts/data_catalog.py --site _site --branches _branches.txt
 
       - uses: actions/upload-pages-artifact@v3
         with:
