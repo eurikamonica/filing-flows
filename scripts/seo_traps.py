@@ -25,6 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import seo  # noqa: E402
 from pipeline import traps as T  # noqa: E402
+from pipeline import trap_cases as TC  # noqa: E402
+fin = T.fin
 
 e, display_name, fdate = seo.e, seo.display_name, seo.fdate
 STATUS_WORD = {"triggered": "Triggered", "clear": "Not triggered", "insufficient_data": "Insufficient data", "not_applicable": "Not applicable", "review": "To review", "expired": "Out of date"}
@@ -90,7 +92,7 @@ def lower(name):
     return (w[0] if w[0].isupper() else w[0].lower()) + (" " + w[1] if len(w) > 1 else "")
 
 
-def finding_html(f, name):
+def finding_html(f, name, doc=None):
     st = f["status"]
     head = (f"<h3 id='{e(f['rule_id'])}'><span class='trap-id'>{e(f['rule_id'])}</span> {e(f['name'])} <span class='trap-st {STATUS_CLASS[st]}'>{STATUS_WORD[st]}</span>"
             + (f" <span class='muted'>severity {e(f['severity'])} · confidence {e(f['confidence'])}</span>" if st == "triggered" else f" <span class='muted'>confidence {e(f['confidence'])}</span>" if f.get("confidence") else "")
@@ -104,6 +106,9 @@ def finding_html(f, name):
                  + f"</tbody></table></div><p class='muted'>{e(f['how'])}</p>"
                  + ("<p class='muted'>Source: " + " · ".join((f"<a href='{e(x['url'])}' rel='nofollow'>{e(x['period'])}</a>" if x.get("url") else e(str(x['period']))) + (f" ({e(x['what'])})" if x.get("what") else "") for x in f["evidence"]) + "</p>" if f.get("evidence") else "")
                  + "</details>")
+    c = chart_contract(f, doc) if doc else None
+    if c:
+        body += f"<script type='application/json' class='trap-chart'>{json.dumps(c, separators=(',', ':')).replace('</', '<\\/')}</script>"
     if st in ("triggered", "review"):
         if f.get("alternative_explanations"):
             body += "<p><b>What would explain it innocently</b></p><ul class='seo-list'>" + "".join(f"<li>{e(x)}</li>" for x in f["alternative_explanations"]) + "</ul>"
@@ -132,7 +137,7 @@ def page_for(doc, r, slug, base, has_cf=True, has_eq=True):
         + (f" · severity {e(f['severity'])}" if f.get("severity") else "") + f" · confidence {e(f['confidence'])}</p><p>{e(f['explanation'])}</p>"
         + (f"<p class='muted'>Innocent reading: {e(f['alternative_explanations'][0])}.</p>" if f.get("alternative_explanations") else "") + "</div>" for f in pri)
            if pri else "<h2 id='first'>Check these first</h2><p>No rule is triggered on the latest filings" + (", and none is marked to review" if not s["review"] else "") + ".</p>")
-    every = "<h2 id='all'>Every rule</h2>" + "".join(finding_html(f, name) for f in doc["findings"])
+    every = "<h2 id='all'>Every rule</h2>" + "".join(finding_html(f, name, doc) for f in doc["findings"])
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../../'>Companies</a> › <a href='../'>{e(name)}</a> › Analysis traps</p>"
             f"<h1>{e(name)} ({e(t)}): analysis traps</h1><p class='muted'>Where its figures could mislead a reader, and what to check before taking them at face value · "
             f"Data: {e(r.get('label') or 'latest quarter')}, to {e(fdate(doc['as_of']))}, filed {e(fdate(doc['filed']))}; rules v{e(doc['rule_version'])}</p>"
@@ -141,10 +146,11 @@ def page_for(doc, r, slug, base, has_cf=True, has_eq=True):
             "<b>To review</b>: one quarter or a weak signal; a reader's judgement, not a pattern. <b>Not triggered</b>: the pattern is absent on these figures. <b>Insufficient data</b>: the filings read so far do not hold what the rule needs; "
             "this is not a clean bill. <b>Not applicable</b>: the rule is not meant for this kind of company (a bank's working capital, a loss-making quarter's EPS growth). <b>Out of date</b>: the latest filing is more than fifteen months old.</p>"
             "<p>Severity is what the pattern could mean for cash, value or solvency; confidence is how reliable the inputs and the reading are. The two are kept apart.</p></div>"
+            f"<h2 id='note'>Record a view</h2><div id='trap-note' data-key='{e(str(doc.get('cik')))}'><p class='muted'>A reader's judgement, grounds, what would change it and the next review; kept in the browser (needs JavaScript).</p></div>"
             f"<p><a class='seo-cta' href='../../../disclosures/analysis-traps/'>Every rule and the companies it triggers on →</a>"
             + (f" <a href='../cash-flow/'>{e(name)}: cash flow →</a>" if has_cf else "")   # only to sibling pages that were written
             + (" <a href='../earnings-quality/'>Earnings quality score →</a>" if has_eq else "") + "</p>"
-            + DISCLAIMER)
+            + DISCLAIMER + "<script src='../../../trap-charts.js' defer></script>")
     title = f"{name} ({t}) Analysis Traps: {seo.n_of(n_tr, 'rule')} triggered on its filings" if n_tr else f"{name} ({t}) Analysis Traps: what to check before reading the figures"
     qa = [(f"What should I check before trusting {seo.poss(name)} figures?", lead)] + [(f"Is {seo.poss(name)} {f['name'].split(' = ')[0].lower()} what it looks like?", f["explanation"]) for f in pri[:2]]
     ld = {"@context": "https://schema.org", "@graph": [
@@ -193,8 +199,10 @@ def hub_page(site, base, docs, rows, slugs):
     for k, (nm, area) in T.NAMES.items():
         hits = sorted(by_rule[k], key=lambda x: -rev.get(x[0], 0))
         L = lambda cik: (f"<a href='../../c/{slugs[cik]}/analysis-traps/#{k}'><b>{e(name_of[cik][1])}</b></a>" if cik in slugs else f"<b>{e(name_of[cik][1])}</b>") + f" {e(name_of[cik][0])}"
+        lib = TC.by_rule().get(k) or {"cases": [], "papers": []}
         secs += (f"<h2 id='{k}'>{e(k)} · {e(nm)} <span class='muted'>{len(hits)} of {n}</span></h2>"
-                 + (f"<p>{e(RULE_BLURB[k])}</p>")
+                 + (f"<p>{e(RULE_BLURB[k])}" + (f" <span class='muted'>Cases: {', '.join(f'<a href=cases/#{e(c)}>{e(c)}</a>' for c in lib['cases'])}" if lib["cases"] else "")
+                    + (f"{' ·' if lib['cases'] else ' <span class=muted>'}Papers: {', '.join(f'<a href=cases/#papers>{e(p)}</a>' for p in lib['papers'])}" if lib["papers"] else "") + ("</span>" if lib["cases"] or lib["papers"] else "") + "</p>")
                  + (f"<ul class='seo-list'>" + "".join(f"<li>{L(cik)} <span class='muted'>{e(f['severity'])} · {e(f['explanation'].split('. ')[0])}.</span></li>" for cik, f in hits[:40]) + "</ul>" if hits else "<p class='muted'>No company triggers it on the latest filings.</p>"))
     ch = (read(os.path.join(site, "data", "traps", "changes.json")) or {}).get("changes") or []
     if ch:
@@ -202,6 +210,7 @@ def hub_page(site, base, docs, rows, slugs):
                  "<p>Each rule is re-run when a company files; a trap that appears, goes, or changes severity between two filings is listed here (a rule changed on this site is not).</p><ul class='seo-list'>"
                  + "".join(f"<li>{e(c['date'])} · <a href='{e(c['url'])}'><b>{e(c['ticker'])}</b></a> {e(c['rule'])} {e(lower(c['rule_name']))}: <b>{e(CHANGE_WORD[c['kind']])}</b>"
                            + (f" ({e(c.get('from_severity') or '')} → {e(c.get('severity') or '')})" if c["kind"] == "severity" else "") + f" on the filing to {e(c.get('as_of') or '')} (was {e(c.get('prev_as_of') or '')})"
+                           + (f" <span class='trap-st rev'>rules changed too: v{e(c.get('prev_rule_version') or '?')} → v{e(c.get('rule_version') or '')}</span>" if c.get("method_changed") else "")
                            + (f" <span class='muted'>{e(c['explanation'].split('. ')[0])}.</span>" if c.get("explanation") else "") + "</li>" for c in ch[:40]) + "</ul>")
     counts = {k: len(by_rule[k]) for k in T.NAMES}
     lead = (f"{seo.n_of(len(T.NAMES), 'rule')} on {seo.n_of(n, 'company', 'companies')}' filings, each a common misreading of a figure: "
@@ -209,6 +218,7 @@ def hub_page(site, base, docs, rows, slugs):
     url = f"{base}/disclosures/analysis-traps/"
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Analysis traps</p><h1>Analysis traps: where the figures could mislead you</h1>"
             f"<p class='lead'>{e(lead)}</p><nav class='seo-toc'>" + "".join(f"<a href='#{k}'>{k}</a>" for k in T.NAMES) + ("<a href='#changes'>Changes</a>" if ch else "") + "</nav>" + secs
+            + "<h2 id='cases'>Cases and papers</h2><p><a href='cases/'>The public cases and the papers behind the rules →</a> the mechanism, the misreading, what to check and the normal explanation, as the cited material states them.</p>"
             + "<h2 id='practice'>Practice</h2><p><a href='practice/'>Practice on real filings →</a> the figures first, then a reader's conclusion, then your call; the answer comes with the innocent explanations and what would show the trap does not apply.</p>"
             + "<h2 id='method'>Method</h2><div class='seo-note'><p>Ten rules of a hundred-item catalogue (docs/TRAP_RULEBOOK.md in the repository), chosen because the site already holds every figure they need: "
               "the cash bridge, capex, stock compensation and share counts, receivables, debt maturities, adjusted against GAAP EPS. Each reads the company's own filings by a fixed formula with coarse, "
@@ -221,6 +231,34 @@ def hub_page(site, base, docs, rows, slugs):
     return url
 
 
+# ---------------------------------------------------------------- chart data contracts (docs/TRAP_RESEARCH_VOL2.md §37)
+NOT_SUPPORTED = ["that the business improved or worsened", "manipulation or fraud", "the direction of the stock"]
+
+
+def chart_contract(f, doc):
+    """the data behind a finding's chart: G01 for A01 (the FCF bridge), G04 for C02 (the cash margin); None otherwise.
+    Every value is observed from the filings (data_kind observed); the page's script turns the reader's inputs into a
+    scenario and labels it so. Missing parts are declared in `coverage`, never drawn as zero."""
+    o = f.get("observed") or {}
+    src = [{"period": x.get("period"), "url": x.get("url"), "what": x.get("what")} for x in (f.get("evidence") or [])]
+    base = {"chart_version": "1.0", "rule_id": f["rule_id"], "entity_id": str(doc.get("cik") or ""), "data_kind": "observed", "unit": "USD", "currency": "USD",
+            "entity_scope": "consolidated", "source_snapshot": doc.get("filed"), "evidence_cutoff": doc.get("filed"), "sources": src, "rule_version": doc.get("rule_version"),
+            "not_supported_claims": NOT_SUPPORTED}
+    if f["rule_id"] == "A01" and fin(o.get("fcf_prior")) and fin(o.get("fcf_current")):
+        vals = [{"name": "prior_fcf", "value": o["fcf_prior"]}, {"name": "current_fcf", "value": o["fcf_current"]}, {"name": "capex_reduction", "value": -(o.get("delta_capex") or 0)}]
+        if fin(o.get("delta_wc_cash")):
+            vals.append({"name": "wc_cash_change", "value": o["delta_wc_cash"]})
+        return dict(base, chart_id="fcf_bridge", question="Where did the free cash flow increase come from?", period_basis=f"fiscal years {o.get('fy_prior')} to {o.get('fy_current')}",
+                    coverage="complete" if fin(o.get("delta_wc_cash")) else "partial: working capital not in the data", values=vals,
+                    assumptions=["FCF = operating cash flow − cash capex; the parts are the change in capex and the change in the cash-bridge working-capital items; the rest is 'other', not an improvement"])
+    if f["rule_id"] == "C02" and fin(o.get("cash")) and fin(o.get("due_12m")):
+        return dict(base, chart_id="liquidity_matrix", question="Can the cash reach the debt due within a year?", period_basis=f"as of {o.get('as_of') or doc.get('as_of')}; FCF over the last twelve months",
+                    coverage="partial: no credit facility and no due dates inside the year in the data" + ("; FCF not in the data" if not fin(o.get("fcf_ttm")) else ""),
+                    values=[{"name": "cash", "value": o["cash"]}, {"name": "due_12m", "value": o["due_12m"]}, {"name": "fcf_ttm", "value": o.get("fcf_ttm")}, {"name": "debt", "value": o.get("debt")}],
+                    assumptions=["A facility counts only when the reader marks it drawable", "Negative FCF counts as zero inflow", "The minimum operating cash is the reader's input (0 by default)"])
+    return None
+
+
 # ---------------------------------------------------------------- evidence changes: a new filing makes a trap appear or go
 CHANGE_WORD = {"new": "newly triggered", "released": "no longer triggered", "severity": "severity changed", "review": "now to review", "lapsed": "no longer checkable"}
 KEEP_DAYS, FEED_MAX = 180, 20
@@ -230,7 +268,7 @@ def state_of(doc):
     return {"as_of": doc.get("as_of"), "filed": doc.get("filed"), "f": {f["rule_id"]: [f["status"], f.get("severity")] for f in doc["findings"]}}
 
 
-def diff(prev, doc, today):
+def diff(prev, doc, today, prev_version=None):
     """the changes between a company's previous findings and today's, only when a newer filing is behind them (a rule
     upgrade that flips a status without a new filing is not an evidence change)"""
     out = []
@@ -259,7 +297,8 @@ def diff(prev, doc, today):
         ev = next((x.get("url") for x in (f.get("evidence") or []) if x.get("url")), None) or doc.get("doc_url")
         out.append({"date": today.isoformat(), "cik": doc["cik"], "ticker": doc.get("ticker") or "", "name": doc.get("name") or "", "rule": f["rule_id"], "rule_name": f["name"],
                     "kind": kind, "from": st0, "to": st1, "severity": sv1, "from_severity": sv0, "as_of": doc.get("as_of"), "prev_as_of": prev.get("as_of"), "filed": doc["filed"],
-                    "explanation": (f.get("explanation") or f.get("reason") or "")[:240], "doc_url": ev})
+                    "explanation": (f.get("explanation") or f.get("reason") or "")[:240], "doc_url": ev,
+                    "method_changed": bool(prev_version and prev_version != T.RULE_VERSION), "rule_version": T.RULE_VERSION, "prev_rule_version": prev_version})
     return out
 
 
@@ -273,7 +312,7 @@ def track_changes(site, store, docs, slugs, base, today):
     seen = {(c["cik"], c["rule"], c.get("as_of"), c["kind"]) for c in changes}
     fresh = []
     for cik, doc in docs.items():
-        for c in diff(prev.get(str(cik)), doc, today):
+        for c in diff(prev.get(str(cik)), doc, today, (state or {}).get("rule_version")):
             if (c["cik"], c["rule"], c.get("as_of"), c["kind"]) in seen:
                 continue
             c["url"] = f"{base}/c/{slugs[cik]}/analysis-traps/#{c['rule']}" if cik in slugs else f"{base}/#traps/{c['ticker']}"
@@ -316,6 +355,36 @@ def flo_feed(site, fresh, today):
     with open(p, "w", encoding="utf-8") as f:
         json.dump(feed, f, separators=(",", ":"))
     return len(pick)
+
+
+# ---------------------------------------------------------------- the teaching library: papers and public cases by rule
+def cases_page(site, base):
+    """disclosures/analysis-traps/cases/: the public cases and the papers behind the rules, as the cited material states them"""
+    url = f"{base}/disclosures/analysis-traps/cases/"
+    link_rules = lambda rs: ", ".join(f"<a href='../#{e(r)}'>{e(r)} {e(lower(T.NAMES[r][0]))}</a>" for r in rs if r in T.NAMES) or "<span class='muted'>method, not one rule</span>"
+    cards = "".join(
+        f"<div class='trap-card' id='{e(c[0])}'><h3>{e(c[0])} · {e(c[1])} <span class='muted'>{e(c[2])}</span></h3>"
+        f"<p><b>What the material describes</b>: {e(c[4])} <a href='{e(c[3])}' rel='nofollow'>Primary source →</a></p>"
+        f"<p><b>The misreading it illustrates</b>: {e(c[5])}</p><p><b>What to check</b>: {e(c[6])}</p>"
+        + (f"<p><b>The normal explanation</b>: {e(c[7])}</p>" if c[7] and c[7] != "—" else "")
+        + f"<p class='muted'>Rules: {link_rules(c[8])}</p></div>" for c in TC.CASES)
+    papers = "<div class='tbl-wrap'><table><thead><tr><th>Paper</th><th>Finding</th><th>Limit for this site</th><th>Rules</th></tr></thead><tbody>" + "".join(
+        f"<tr><td><b>{e(p[0])}</b> {e(p[1])}<br><a href='{e(p[3])}' rel='nofollow'>{e(p[2])}</a></td><td>{e(p[4])}</td><td>{e(p[5])}</td><td>{link_rules(p[6])}</td></tr>" for p in TC.PAPERS) + "</tbody></table></div>"
+    lead = (f"{len(TC.CASES)} public cases (SEC complaints and orders, FINMA, FCA, FRC, Federal Reserve and Bank of England reviews, one 10-K contrast) and {len(TC.PAPERS)} papers, "
+            "each tied to the rules it illustrates: the mechanism, the misreading, what to check and the normal explanation. The facts are stated as the cited material states them at its date; "
+            "an allegation stays an allegation, a settlement a settlement. No case is a verdict on any company the rules run on today.")
+    body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../../'>Disclosures</a> › <a href='../'>Analysis traps</a> › Cases and papers</p>"
+            f"<h1>Analysis traps: the cases and the papers behind the rules</h1><p class='lead'>{e(lead)}</p><p class='muted'>{e(TC.RULE_NOTE)}</p>"
+            "<nav class='seo-toc'><a href='#cases'>Cases</a><a href='#papers'>Papers</a><a href='#limits'>Limits</a></nav>"
+            f"<h2 id='cases'>Cases</h2>{cards}<h2 id='papers'>Papers</h2>{papers}"
+            "<h2 id='limits'>Three limits on reading the cases</h2><div class='seo-note'><p>This is a library of mechanisms: a company that resembles a historical case is not thereby the next one, and the site never says so. "
+            "The internal evidence in enforcement cases (emails, customer records, bank statements) was usually not public at the time; what was visible beforehand and what came out afterwards are kept apart, or the library would fake foresight. "
+            "Enforcement samples are the cases that were found, investigated and within a jurisdiction; a company with no case is not a clean negative.</p></div>" + DISCLAIMER)
+    d = os.path.join(site, "disclosures", "analysis-traps", "cases")
+    os.makedirs(d, exist_ok=True)
+    ld = {"@context": "https://schema.org", "@graph": [{"@type": "WebPage", "name": "Analysis traps: the cases and the papers behind the rules", "url": url, "description": lead[:300]}]}
+    open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(seo.page("Analysis Traps: 34 Public Cases and 27 Papers Behind the Rules", lead[:300], url, body, 3, base + "/og.png", ld))
+    return url
 
 
 # ---------------------------------------------------------------- practice mode: the figures first, the reading second
@@ -437,6 +506,10 @@ def write(site, base, today=None, store=None):
             latest[int(r["cik"])] = r
     out_dir = os.path.join(site, "data", "traps")
     os.makedirs(out_dir, exist_ok=True)
+    js = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web", "trap-charts.js")
+    if os.path.exists(js):
+        import shutil
+        shutil.copy(js, os.path.join(site, "trap-charts.js"))
     docs, slugs, urls, index_rows = {}, {}, [], []
     for cik, r in latest.items():
         c = read(os.path.join(site, "data", "c", f"{cik}.json"))
@@ -481,6 +554,7 @@ def write(site, base, today=None, store=None):
         with open(os.path.join(out_dir, "practice.json"), "w", encoding="utf-8") as f:
             json.dump({"generated_at": today.isoformat(), "rule_version": T.RULE_VERSION, "rules": {k: v[0] for k, v in T.NAMES.items()}, "items": items}, f, separators=(",", ":"))
         urls.insert(0, (practice_page(site, base, items), today.isoformat()))
+        urls.insert(0, (cases_page(site, base), today.isoformat()))
         urls.insert(0, (hub_page(site, base, docs, rows, slugs), today.isoformat()))
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     sm += [f"<url><loc>{xesc(u)}</loc>" + (f"<lastmod>{xesc(str(m)[:10])}</lastmod>" if m else "") + "</url>" for u, m in urls]

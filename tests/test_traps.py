@@ -119,6 +119,10 @@ def test_pages(tmp_path):
     assert trap_item["falsified_if"] and trap_item["url"] == f"https://x.test/c/aaa/analysis-traps/#{trap_item['rule']}"
     assert "What would show the trap does not apply" in page and "practice/" in hub
     pp = (s / "disclosures" / "analysis-traps" / "practice" / "index.html").read_text()
+    cp = (s / "disclosures" / "analysis-traps" / "cases" / "index.html").read_text()
+    assert "C32" in cp and "Comscore" in cp and "P19" in cp and "alleged" in cp and "cases/#C01" in hub and "<a href='../#A01'>" in cp
+    from pipeline import trap_cases as TC
+    assert len(TC.CASES) == 34 and len(TC.PAPERS) == 27 and all(c[3].startswith("https://") for c in TC.CASES) and all(r in T.NAMES for c in TC.CASES for r in c[8])
     assert "Does it follow?" in pp and "data/traps/practice.json" in pp and "https://x.test/disclosures/analysis-traps/practice/" in (s / "sitemap-traps.xml").read_text()
     assert "sitemap-traps.xml" in (s / "robots.txt").read_text() and "https://x.test/c/aaa/analysis-traps/" in (s / "sitemap-traps.xml").read_text()
 
@@ -241,3 +245,27 @@ def test_evidence_changes(tmp_path):
     hub = (s / "disclosures" / "analysis-traps" / "index.html").read_text()
     assert "What a newer filing changed" in hub and "no longer triggered" in hub and "(was 2025-09-30)" in hub
     assert json.loads((store / "traps-changes.json").read_text())["changes"] == ch["changes"]
+
+
+def test_eps_bridge_order_and_chart_contracts(tmp_path):
+    """R02: NI 100 → 100, shares 100 → 80: EPS 1.00 → 1.25, profit part 0, share part 0.25. §37 contracts for A01 (G01)
+    and C02 (G04): the values add up, missing working capital is declared in coverage, not drawn as zero"""
+    c = company(); c["quality"]["drivers"]["q"][0].update({"eps": {"eps0": 1.0, "eps1": 1.25}, "dil0": 100, "dil1": 80, "cur": {"ni": 100}, "pri": {"ni": 100}})
+    f = by_id(T.evaluate(c, None, TODAY))["D03"]
+    assert f["observed"]["eps_from_profit"] == 0 and f["observed"]["eps_from_share_count"] == 0.25 and f["status"] == "triggered"
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    import seo_traps as S
+    doc = T.evaluate(company(), None, TODAY)
+    a = S.chart_contract(by_id(doc)["A01"], doc)
+    v = {x["name"]: x["value"] for x in a["values"]}
+    assert a["chart_id"] == "fcf_bridge" and a["data_kind"] == "observed" and a["coverage"] == "complete" and v["prior_fcf"] == 40e6 and v["current_fcf"] == 110e6 and v["capex_reduction"] == 40e6
+    assert abs(v["current_fcf"] - v["prior_fcf"] - v["capex_reduction"] - v["wc_cash_change"]) <= abs(v["current_fcf"] - v["prior_fcf"]) and a["sources"][0]["url"] and a["evidence_cutoff"] == doc["filed"]
+    c2 = company(); [fy.pop("bridge") for fy in c2["quality"]["fy"]]
+    d2 = T.evaluate(c2, None, TODAY)
+    a2 = S.chart_contract(by_id(d2)["A01"], d2)
+    assert a2 is None or (a2["coverage"].startswith("partial") and not any(x["name"] == "wc_cash_change" for x in a2["values"]))
+    l = S.chart_contract(by_id(doc)["C02"], doc)
+    assert l and l["chart_id"] == "liquidity_matrix" and {x["name"] for x in l["values"]} == {"cash", "due_12m", "fcf_ttm", "debt"} and "no credit facility" in l["coverage"]
+    assert S.chart_contract(by_id(doc)["D03"], doc) is None
+    html = S.finding_html(by_id(doc)["A01"], "Alpha", doc)
+    assert "class='trap-chart'" in html and '"chart_id":"fcf_bridge"' in html

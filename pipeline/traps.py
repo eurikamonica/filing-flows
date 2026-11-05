@@ -444,6 +444,9 @@ def rule_d03(I, docs):
     if ni0 <= 0 or ni1 <= 0 or e0 <= 0:
         return finding("D03", "not_applicable", obs, reason="a loss in one of the quarters: EPS growth has no meaning")
     g_eps, g_ni, g_sh = e1 / e0 - 1, ni1 / ni0 - 1, d["dil1"] / d["dil0"] - 1
+    if d["dil0"] and d["dil1"]:                     # R02: profit first, then the share count; the two add to the EPS change at the filing's rounding
+        obs["eps_from_profit"] = _r((ni1 - ni0) / d["dil0"], 4)
+        obs["eps_from_share_count"] = _r(ni1 / d["dil1"] - ni1 / d["dil0"], 4)
     if g_eps >= 0.05 and g_ni <= 0.02 and g_sh <= -0.01:
         from_shares = (e1 - ni1 / d["dil0"]) / e0 if d["dil0"] else None       # EPS at the old share count, then the share count's part
         obs["eps_growth_from_share_count"] = _r(from_shares, 4)

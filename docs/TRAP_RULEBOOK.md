@@ -39,6 +39,26 @@ would show the trap does not apply" on the pages and views. `disclosures/analysi
 `data/traps/practice.json` holds real findings (the figures, the naive claim, the answer, the explanations); the page
 shows one at a time and scores the reader's call, with the score kept only in the reader's browser.
 
+**Research volume 2 (docs/TRAP_RESEARCH_VOL2.md, v4.0) — what is live from it:**
+- §37 chart data contracts: `scripts/seo_traps.chart_contract` embeds, on each company's analysis-traps page, the G01 FCF
+  bridge (rule A01) and the G04 cash-margin matrix (rule C02) as JSON (chart_id, data_kind observed, unit, period,
+  coverage, sources, evidence_cutoff, not_supported_claims); `web/trap-charts.js` draws them with a table beside, turns
+  the reader's inputs into a labelled scenario (Reset restores the filing), declares a missing working-capital part in
+  `coverage` rather than drawing zero, and offers G07's three readings (expansion completed / maintenance deferred /
+  not known) that leave the figures unchanged. Tests: Q01 conservation, Q02 missing part, Q03 readings, Q04 matrix
+  (tests/test_trap_charts.cjs, tests/test_traps.py).
+- R02: D03 now carries the EPS bridge in the fixed order (profit first: (NI1−NI0)/S0; then the share count:
+  NI1/S1−NI1/S0) as `eps_from_profit` / `eps_from_share_count`; acceptance example NI 100→100, S 100→80 → 0 / 0.25.
+- R06 / G08: an evidence change logged while the rule version also changed carries `method_changed` and is shown with
+  "rules changed in between: verify"; a flip without a newer filing is never logged; insufficient data is "no longer
+  checkable", never released.
+- §40 step 5 / UX12: "Record a view" on each company's analysis-traps page (judgement, grounds, what would change it,
+  next review), kept in the reader's browser only.
+- UX10: `disclosures/analysis-traps/cases/` — the 34 cases and 27 papers (pipeline/trap_cases.py) tied to the rules,
+  stated as the cited material states them; each rule's hub section links its cases and papers.
+- Not implemented (needs data the site does not hold): R04 day-level cash calendars, R05 KPI-definition diffs, R07–R10,
+  the industry templates of §14, the synthetic scenario sets of §4, the case ladder beyond L1.
+
 **Review log**
 - 2026-11-05 v1.1: E02, E07, J06, J08 added (E02 first flagged steady growers such as NVDA and META → ≥ 2 down years
   required; fiscal years older than the latest quarter's year − 2 are dropped from every rule's inputs, after Boston
