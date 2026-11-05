@@ -96,7 +96,15 @@ class Nasdaq100(unittest.TestCase):
         syms = ['AAPL', 'MSFT', 'ORCL'] + FILL
         self.assertEqual(IM.ndx_members(ndx_table(syms)), sorted(syms))
         links = '<ul>' + ''.join(f'<li><a href="/wiki/{x}">{x} Corp</a> (<a href="https://www.nasdaq.com/x">NASDAQ</a>: <a href="/q/{x}">{x}</a>)</li>' for x in syms) + '</ul>'
-        self.assertEqual(IM.ndx_members('<p>The index (NASDAQ: NDX) …</p>' + links), sorted(syms + ['NDX']))
+        self.assertEqual(IM.ndx_members('<p>The index (NASDAQ: NDX) …</p>' + links), sorted(syms))   # a list's lines, not the prose
+        # the yearly changes name the members that left (NASDAQ: DELL): only the section “Components” is the list
+        gone = '<h2><span class="mw-headline" id="Yearly_changes">Yearly changes</span></h2><h3>Changes in 2013</h3><ul>' + \
+               ''.join(f'<li>On May 1, X replaced <a href="/wiki/{x}">{x} Corp</a> (NASDAQ: OLD{i % 10})</li>' for i, x in enumerate('ABCDEFGHIJKLMNOP')) + '</ul>'
+        page = '<h2><span class="mw-headline" id="Components">Components</span></h2>' + links + gone
+        self.assertEqual(IM.ndx_members(page), sorted(syms))
+        self.assertEqual(IM.ndx_members('<div class="mw-heading mw-heading2"><h2 id="Components">Components</h2></div>' + ndx_table(syms)[len('<h2>Components</h2>'):] + gone), sorted(syms))
+        nested = gone.replace('<h2><span class="mw-headline" id="Yearly_changes">Yearly changes</span></h2>', '')     # changes as a subsection
+        self.assertEqual(IM.ndx_members('<h2>Historical components</h2><ul><li>Old Co (OLD)</li></ul><h2>Components</h2>' + links + nested), sorted(syms))
         lines = '<ul>' + ''.join(f'<li><a href="/wiki/{x}">{x} Corp</a> ({x})</li>' for x in syms) + '</ul>'
         self.assertEqual(IM.ndx_members(lines), sorted(syms))
         self.assertEqual(IM.ndx_members(ndx_table(syms[:40])), [])                  # not a whole list: none

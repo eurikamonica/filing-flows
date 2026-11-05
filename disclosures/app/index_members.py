@@ -37,7 +37,7 @@ SNAP_FROM = dt.date(2024, 1, 1)                      # monthly revisions of the 
 NDX_PAGE = 'Nasdaq-100'
 NDX_FROM = dt.date(2003, 1, 1)                       # the article's member list at each quarter's start from here
 NDX_PER_RUN = 90                                     # revisions read a run: a first run reads the rest the next times
-NDX_PARSER = 1                                       # a new ndx_members: the lists are read again
+NDX_PARSER = 2                                       # a new ndx_members: the lists are read again (2: the Components section)
 # Nasdaq-100 symbols of the past → the site's ticker of the same company (a share class it keeps one of, a rename the
 # S&P lists' CIKs do not reach)
 NDX_ALIASES = {'FB': 'META', 'PCLN': 'BKNG', 'GOOG': 'GOOGL', 'FISV': 'FI', 'SYMC': 'GEN', 'NLOK': 'GEN', 'CMCSK': 'CMCSA',
@@ -238,37 +238,53 @@ def quarters(start, today):
 TICK = re.compile(r'[A-Z]{1,5}')
 
 
+def components(page_html):
+    """The HTML of the section headed “Components” (or “Constituents”; not “Historical components”) up to the next
+    section of its level or above, without a subsection of changes or a year's; None when the page has none."""
+    for m in re.finditer(r'<h([23])[^>]*>((?:(?!</h\1>).)*?)</h\1>', page_html, re.I | re.S):
+        title = re.sub(r'<[^>]+>', '', m.group(2))
+        if not re.search(r'component|constituent', title, re.I) or re.search(r'histor|former|past|change', title, re.I):
+            continue
+        nxt = re.search(r'<h[2-%s][\s>]' % m.group(1), page_html[m.end():], re.I)
+        sec = page_html[m.start(): m.end() + (nxt.start() if nxt else len(page_html) - m.end())]
+        cut = re.search(r'<h[3-6][^>]*>(?:(?!</h[3-6]>).)*?(?:change|histor|\b(?:19|20)\d\d\b)', sec[m.end() - m.start():], re.I | re.S)
+        return sec[: m.end() - m.start() + cut.start()] if cut else sec
+    return None
+
+
 def ndx_members(page_html):
     """The member list of a revision of “Nasdaq-100” → sorted symbols, [] when nothing reads as one (80–115 symbols):
-    a table with a Ticker / Symbol column, else the “NASDAQ: XXXX” links of a list, else lines ending “(XXXX)”."""
+    a table with a Ticker / Symbol column, else the “NASDAQ: XXXX” of the list's lines, else lines ending “(XXXX)” —
+    in the section “Components” first (the yearly changes name tickers too: former members), then the page."""
     ok = lambda got: sorted(got) if 80 <= len(got) <= 115 else None
-    tabs = tables(page_html)                               # the member table first (a change table lists tickers too)
-    tabs.sort(key=lambda t: 0 if t['id'] == 'constituents' or re.search(r'component|constituent', t['head'] or '', re.I) else 1)
-    for t in tabs:
-        rows = t['rows']
-        hi = next((i for i, r in enumerate(rows[:3]) if any(re.search(r'\b(ticker|symbol)\b', c, re.I) for c in r['cells'])), None)
-        if hi is None or any(re.search(r'\b(added|removed|replaced|date)\b', c, re.I) for r in rows[:hi + 1] for c in r['cells']):
-            continue
-        col = next(i for i, c in enumerate(rows[hi]['cells']) if re.search(r'\b(ticker|symbol)\b', c, re.I))
-        got = set()
-        for r in rows[hi + 1:]:
-            c = r['cells']
-            if col < len(c):
-                v = sym(re.sub(r'^\s*(nasdaq|nyse)\s*:\s*', '', c[col], flags=re.I))
-                if TICK.fullmatch(v):
-                    got.add(v)
+
+    def read(part):
+        tabs = tables(part)                                # the member table first (a change table lists tickers too)
+        tabs.sort(key=lambda t: 0 if t['id'] == 'constituents' or re.search(r'component|constituent', t['head'] or '', re.I) else 1)
+        for t in tabs:
+            rows = t['rows']
+            hi = next((i for i, r in enumerate(rows[:3]) if any(re.search(r'\b(ticker|symbol)\b', c, re.I) for c in r['cells'])), None)
+            if hi is None or any(re.search(r'\b(added|removed|replaced|date)\b', c, re.I) for r in rows[:hi + 1] for c in r['cells']):
+                continue
+            col = next(i for i, c in enumerate(rows[hi]['cells']) if re.search(r'\b(ticker|symbol)\b', c, re.I))
+            got = set()
+            for r in rows[hi + 1:]:
+                c = r['cells']
+                if col < len(c):
+                    v = sym(re.sub(r'^\s*(nasdaq|nyse)\s*:\s*', '', c[col], flags=re.I))
+                    if TICK.fullmatch(v):
+                        got.add(v)
+            if ok(got):
+                return ok(got)
+        lines = [html.unescape(re.sub(r'<[^>]+>', ' ', li)) for li in re.findall(r'<li[^>]*>(.*?)</li>', part, re.S)]
+        got = {m.group(1) for t in lines for m in [re.search(r'NASDAQ\s*:\s*([A-Z]{1,5})\b', t)] if m}
         if ok(got):
             return ok(got)
-    text = html.unescape(re.sub(r'<[^>]+>', ' ', page_html))
-    got = set(re.findall(r'NASDAQ\s*:\s*([A-Z]{1,5})\b', text))
-    if ok(got):
+        got = {m.group(1) for t in lines for m in [re.search(r'\(([A-Z]{1,5})\)\s*$', re.sub(r'\s+', ' ', t).strip())] if m}
         return ok(got)
-    got = set()
-    for li in re.findall(r'<li[^>]*>(.*?)</li>', page_html, re.S):
-        m = re.search(r'\(([A-Z]{1,5})\)\s*$', html.unescape(re.sub(r'<[^>]+>', '', li)).strip())
-        if m:
-            got.add(m.group(1))
-    return ok(got) or []
+
+    sec = components(page_html)
+    return (read(sec) if sec else None) or read(page_html) or []
 
 
 def ndx_history(cache, T):
@@ -365,11 +381,16 @@ def collect(root, today=None):
         nrev = revisions(NDX_PAGE, quarters(NDX_FROM, today), nd)
         nsn = nd.setdefault('snaps', {})
         todo = list(dict.fromkeys(str(r) for _, r in sorted(nrev.items()) if str(r) not in nsn))
+        why = {}
         for rid in todo[:NDX_PER_RUN]:
-            nsn[rid] = ndx_members(revision_html(rid))
+            h = revision_html(rid)
+            nsn[rid] = ndx_members(h)
+            if not nsn[rid]:                               # what the page held instead, for the log
+                sec = components(h)
+                why[rid] = f"[{'section' if sec else 'no section'} tables={len(tables(sec or h))} li={(sec or h).count('<li')} nasdaq={(sec or h).count('NASDAQ')}]"
         if todo:
             print(f'members: nasdaq-100 lists {min(len(todo), NDX_PER_RUN)} read, {max(0, len(todo) - NDX_PER_RUN)} left;',
-                  ' '.join(f'{k}:{len(nsn.get(str(r)) or [])}' for k, r in sorted(nrev.items()) if str(r) in todo[:NDX_PER_RUN]), flush=True)
+                  ' '.join(f'{k}:{len(nsn.get(str(r)) or [])}{why.get(str(r), "")}' for k, r in sorted(nrev.items()) if str(r) in todo[:NDX_PER_RUN]), flush=True)
     except Exception as exc:                               # noqa: BLE001
         print('members: wikipedia nasdaq-100', str(exc)[:200])
     cache['fetched'] = stamp
