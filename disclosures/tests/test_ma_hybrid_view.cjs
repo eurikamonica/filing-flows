@@ -130,4 +130,34 @@ const Lx = V._list([{ id: 'AAA', name: 'A', close: 10, ma40: 8, gap_hybrid: 0.1,
 ok(/Golden crosses/.test(Lx) && /2026-11-03/.test(Lx) && !/2026-10-01/.test(Lx) && /Death crosses[^<]*\(0\)/.test(Lx), 'the latest crosses, only the recent ones');
 const l2 = V._lead(dz);
 ok(/Daily averages, on daily closes 2017–2026/.test(l2) && /holding made 10\.2% a year/.test(l2) && /nearly all of it in 2020/.test(l2), 'the lead sums up the daily lengths and the macro');
+
+// ------------------------------------------------------------------ the distance to the line and the calendar
+let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+const gauss = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+const NW = 260, x = [0]; for (let k = 1; k < NW; k += 1) x.push(0.9 * x[k - 1] + 0.03 * gauss());      // a distance that halves in ~6.6 weeks
+const s3 = { id: 'DST', name: 'Dist Co', start: '2021-11-05', p: x.map((v) => 100 * Math.exp(v)), ma10: x.map(() => 100), ma40: x.map(() => 100), el: x.map(() => null), g: x.map(() => null),
+  guidance: [], now: { seas13: 0.021 }, season: { m: [0.03, -0.01, 0.0, 0.01, -0.02, 0.005, 0.01, -0.004, -0.03, 0.02, 0.012, 0.018], up: Array(12).fill(0.6), n: Array(12).fill(20), from: '2000' } };
+const bk = (a) => Array.from({ length: 10 }, (_, j) => a(j));
+const byH = { n: bk(() => 50000), d: bk((j) => -0.25 + 0.05 * j), back: bk((j) => (j < 2 || j > 7 ? 0.55 : 0.4)), q10: bk((j) => -0.3 + 0.04 * j), q50: bk((j) => -0.1 + 0.02 * j), q90: bk((j) => 0.1 + 0.04 * j),
+  ret: bk((j) => 0.004 - 0.001 * j), ret_t: bk(() => -1.2), spread: S_(-0.006, -0.8) };
+const dd3 = Object.assign({}, dz, { scores: Object.assign({}, dz.scores, {
+  distance: { buckets: 10, window: 259, min_weeks: 104, period: '2016–2026', by: { '0|0': { 13: byH, 26: byH }, '0.5|0.05': { 13: byH, 26: byH } },
+    regression: { '0.5|0.05': { 13: { dist_slope: 0.52, ret_slope: S_(-0.021, -1.4) }, 26: { dist_slope: 0.31, ret_slope: S_(-0.035, -1.1) } }, '0|0': { 13: { dist_slope: 0.58, random_walk_slope: 0.6, ret_slope: S_(-0.01, -0.5) } } } },
+  calendar: { spy: { periods: ['1993–2026', '1993–2015', '2016–2026'], months: Object.fromEntries(['1993–2026', '1993–2015', '2016–2026'].map((p) => [p, Object.fromEntries(Array.from({ length: 12 }, (_, j) => [String(j + 1), { mean: 0.01 - 0.002 * (j % 4), up: 0.62, t: 1.4, n: 33 }]))])) },
+    sell_in_may: { rule: { '1993–2026': { hold: { cagr: 0.102, maxdd: -0.52 }, nov_apr: { cagr: 0.071, maxdd: -0.31 } }, '2003–2026': { hold: { cagr: 0.108, maxdd: -0.52 }, nov_apr: { cagr: 0.069, maxdd: -0.29 } } },
+      halves: { nov_apr: { mean: 0.061, up: 0.74, t: 3.1, n: 33 }, may_oct: { mean: 0.035, up: 0.66, t: 1.9, n: 33 } }, paper: 2002, cash: true },
+    signals: { periods: ['2000–2026', '2016–2026'], by_month: { above40: Object.fromEntries(['2000–2026', '2016–2026'].map((p) => [p, Object.fromEntries(Array.from({ length: 12 }, (_, j) => [String(j + 1), S_(j === 0 ? -0.012 : 0.002, j === 0 ? -1.9 : 0.4)]))])),
+      dip4: Object.fromEntries(['2000–2026', '2016–2026'].map((p) => [p, Object.fromEntries(Array.from({ length: 12 }, (_, j) => [String(j + 1), S_(0.003, 0.6)]))])) } } },
+  seasonal: { 13: per(0.0042, 0.001, 0.006), 26: per(0.006, 0.002, 0.008) },
+  models: Object.assign({}, dz.scores.models, { 26: Object.assign({}, dz.scores.models['26'], { ma_time: per(0.031, 0.002, 0.045) }) }) }) });
+const cdx = V._company(s3, dd3, s3.now, 0, 0, 760, 'mh-x', null);
+const hl = Number((cdx.match(/<span>Half-life<\/span><b>([\d.]+) weeks/) || [])[1]);
+ok(hl > 4.5 && hl < 9.5, `the half-life from the weekly changes (ρ = 0.9: 6.6 weeks; got ${hl})`);
+ok(/percentile<\/b>/.test(cdx) && /(\d+)(st|nd|rd|th) percentile/.test(cdx) && /10–90%: /.test(cdx) && /weeks? (above|below)/.test(cdx) && /its longest stretch \d+ weeks above, \d+ below/.test(cdx), 'the own percentile, range and stretches');
+ok(/weeks at each distance, 259 weeks/.test(cdx) && (cdx.match(/<svg/g) || []).length >= 4, 'the distance chart and its histogram');
+ok(/From its own \d+–\d+% band/.test(cdx) && /13 weeks later/.test(cdx) && /26 weeks later/.test(cdx) && /random walk/.test(cdx), 'what followed from the same band, and the random walk beside it');
+ok(/Own season, next 13 weeks/.test(cdx) && /\+2\.1%/.test(cdx) && /This company against SPY by month, since 2000/.test(cdx) && /SPY by month, 1993–2026/.test(cdx) && !bad(cdx), 'the calendar section');
+const Hd = V._hub(dd3);
+ok(/Distance to the hybrid line/.test(Hd) && /90–100%/.test(Hd) && /… 26 weeks later/.test(Hd) && /The top band against the bottom one/.test(Hd), 'the hub\'s distance bands');
+ok(/SPY in each month of the year/.test(Hd) && /Sell in May/.test(Hd) && /2003–2026/.test(Hd) && /by the month it is read in: the next 4 weeks/.test(Hd) && /a dip/.test(Hd) && /Heston & Sadka/.test(Hd) && !bad(Hd), 'the hub\'s calendar tables');
 console.log(`ma-hybrid view: ${n} checks passed`);

@@ -250,6 +250,111 @@
       <p class="mh-note">${num(R.tests)} comparisons across the readings: by chance alone a few would show |t| above 2, so read a single cell as a hint, not a rule. The hub has all twelve readings and the 13-week view.</p></details>`;
   }
 
+  // ------------------------------------------------------------------ the distance to the line
+  const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+  function quant(a, q) { const b = a.filter(fin).slice().sort((x, y) => x - y); if (!b.length) return null; const p = q * (b.length - 1), lo = Math.floor(p); return b[lo] + (p - lo) * (b[Math.min(lo + 1, b.length - 1)] - b[lo]); }
+  const ord = (n) => { const v = Math.round(n), t = v % 100; return v + (t >= 11 && t <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[v % 10] || 'th')); };
+  function distOf(s, w, g) { const H = hybrid(s, w, g); return s.p.map((p, k) => (fin(p) && fin(H[k]) && p > 0 && H[k] > 0 ? Math.log(p / H[k]) : null)); }
+  function distStats(D) {                                                         // the company's own distribution and pace
+    const n = D.length, now = D[n - 1], past = D.slice(0, n - 1).filter(fin);
+    if (!fin(now) || past.length < 104) return null;
+    const pc = (past.filter((v) => v < now).length + 0.5 * past.filter((v) => v === now).length) / past.length;
+    const xs = [], ys = [];
+    for (let k = 1; k < n; k += 1) if (fin(D[k]) && fin(D[k - 1])) { xs.push(D[k - 1]); ys.push(D[k]); }
+    const mx = mean(xs), my = mean(ys); let sxy = 0, sxx = 0;
+    xs.forEach((x, i) => { sxy += (x - mx) * (ys[i] - my); sxx += (x - mx) * (x - mx); });
+    const rho = sxx > 0 ? sxy / sxx : null, half = fin(rho) && rho > 0 && rho < 1 ? Math.log(0.5) / Math.log(rho) : null;
+    let side = 0, len = 0, longUp = 0, longDown = 0, nUp = 0, nAll = 0;             // stretches on one side of the line
+    D.forEach((v) => { if (!fin(v) || v === 0) return; const sg = v > 0 ? 1 : -1; nAll += 1; if (sg > 0) nUp += 1;
+      len = sg === side ? len + 1 : 1; side = sg; if (sg > 0) longUp = Math.max(longUp, len); else longDown = Math.max(longDown, len); });
+    return { now, pct: pc, decile: Math.min(9, Math.floor(pc * 10)), q10: quant(past, 0.1), q50: quant(past, 0.5), q90: quant(past, 0.9), rho, half,
+      shareUp: nAll ? nUp / nAll : null, longUp, longDown, side, len, past };
+  }
+  function distChart(s, D, S, width) {
+    const Wd = Math.max(300, Math.min(520, width)), Ht = 210, L = 40, R = 86, T = 10, B = 24, n = D.length;
+    const v = D.filter(fin); let lo = Math.min(0, ...v), hi = Math.max(0, ...v); const pad = 0.06 * (hi - lo || 0.1); lo -= pad; hi += pad;
+    const sx = (k) => L + (Wd - L - R) * k / Math.max(1, n - 1), sy = (x) => T + (Ht - T - B) * (1 - (x - lo) / (hi - lo)), f = (x) => x.toFixed(1);
+    let out = `<svg viewBox="0 0 ${Wd} ${Ht}" role="img" aria-label="${esc(s.id)}: distance to the hybrid line, weekly">`;
+    for (let k = 0; k < n; k += 1) { const dd = weekDate(s, k); if (dd.slice(5, 7) === '01' && Number(dd.slice(8, 10)) <= 7) out += `<line class="mh-grid" x1="${f(sx(k))}" x2="${f(sx(k))}" y1="${T}" y2="${Ht - B}"/><text class="mh-t" x="${f(sx(k))}" y="${Ht - 7}" text-anchor="middle">${dd.slice(0, 4)}</text>`; }
+    out += `<line x1="${L}" x2="${Wd - R}" y1="${f(sy(0))}" y2="${f(sy(0))}" style="stroke:${COL.h};stroke-width:1.6"/><text class="mh-t" x="${L - 4}" y="${f(sy(0) + 4)}" text-anchor="end" style="fill:${COL.h}">line</text>`;
+    [[S.q10, '10%'], [S.q50, 'median'], [S.q90, '90%']].forEach(([q, lab]) => { if (!fin(q)) return;
+      out += `<line x1="${L}" x2="${Wd - R}" y1="${f(sy(q))}" y2="${f(sy(q))}" style="stroke:${COL.mute};stroke-dasharray:4 3"/><text class="mh-t" x="${Wd - R + 3}" y="${f(sy(q) + 4)}">${esc(lab)} ${esc(gap(q))}</text>`; });
+    let d = '', pen = false;
+    D.forEach((x, k) => { if (fin(x)) { d += (pen ? 'L' : 'M') + f(sx(k)) + ',' + f(sy(x)); pen = true; } else pen = false; });
+    out += `<path d="${d}" style="fill:none;stroke:${COL.ink};stroke-width:1.3"/><circle cx="${f(sx(n - 1))}" cy="${f(sy(D[n - 1]))}" r="3.5" style="fill:${S.now >= 0 ? COL.up : COL.down}"><title>now ${esc(gap(S.now))}</title></circle>`;
+    return out + '</svg>';
+  }
+  function distHist(S, width) {
+    const Wd = Math.max(260, Math.min(320, width)), Ht = 210, L = 10, R = 10, T = 20, B = 34, nb = 24, a = S.past;
+    const lo = Math.min(...a, S.now), hi = Math.max(...a, S.now), bw = (hi - lo) / nb || 1;
+    const cnt = new Array(nb).fill(0); a.forEach((x) => { cnt[Math.min(nb - 1, Math.floor((x - lo) / bw))] += 1; });
+    const mxc = Math.max(...cnt), colW = (Wd - L - R) / nb, f = (x) => x.toFixed(1), sx = (x) => L + (Wd - L - R) * (x - lo) / (hi - lo || 1);
+    let out = `<svg viewBox="0 0 ${Wd} ${Ht}" role="img" aria-label="how often each distance occurred, the last five years">`;
+    cnt.forEach((c, j) => { const h = (Ht - T - B) * c / (mxc || 1), mid = lo + (j + 0.5) * bw;
+      out += `<rect x="${f(L + j * colW + 0.5)}" y="${f(Ht - B - h)}" width="${f(Math.max(1, colW - 1))}" height="${f(h)}" style="fill:${mid >= 0 ? COL.up : COL.down};opacity:.55"><title>${esc(gap(lo + j * bw))} to ${esc(gap(lo + (j + 1) * bw))}: ${c} weeks</title></rect>`; });
+    out += `<line x1="${f(sx(S.now))}" x2="${f(sx(S.now))}" y1="${T - 4}" y2="${Ht - B}" style="stroke:${COL.ink};stroke-width:2"/><text class="mh-t" x="${f(Math.min(Wd - 30, Math.max(30, sx(S.now))))}" y="${T - 8}" text-anchor="middle">now ${esc(gap(S.now))}</text>`;
+    if (lo < 0 && hi > 0) out += `<line x1="${f(sx(0))}" x2="${f(sx(0))}" y1="${T}" y2="${Ht - B}" style="stroke:${COL.h};stroke-dasharray:3 2"/>`;
+    out += `<text class="mh-t" x="${L}" y="${Ht - B + 14}">${esc(gap(lo))}</text><text class="mh-t" x="${Wd - R}" y="${Ht - B + 14}" text-anchor="end">${esc(gap(hi))}</text><text class="mh-t" x="${Wd / 2}" y="${Ht - 4}" text-anchor="middle">weeks at each distance, ${a.length} weeks</text>`;
+    return out + '</svg>';
+  }
+  function followed(d, w, g, j) {                                                // the panel: what followed from decile j
+    const DE = (d.scores || {}).distance || {}, by = (DE.by || {})[key(w, g)] || {};
+    return ['13', '26'].map((h) => { const r = by[h] || {}; return { h, n: (r.n || [])[j], back: (r.back || [])[j], q10: (r.q10 || [])[j], q50: (r.q50 || [])[j], q90: (r.q90 || [])[j], ret: (r.ret || [])[j], t: (r.ret_t || [])[j] }; });
+  }
+  function regressionNote(d) {
+    const R = ((d.scores || {}).distance || {}).regression || {}, dk = key((d.weights || {}).default ? d.weights.default[0] : 0.5, (d.weights || {}).default ? d.weights.default[1] : 0.05);
+    const a = (R[dk] || {})['13'] || {}, z = (R['0|0'] || {})['13'] || {}, a26 = (R[dk] || {})['26'] || {};
+    if (!fin(a.dist_slope)) return '';
+    const per10 = (s) => (s && fin(s.mean) ? `${spct(0.1 * s.mean, 2)} <span class="muted">(t ${tn(s.t)})</span>` : '—');
+    const pace = fin(z.dist_slope) && fin(z.random_walk_slope) ? (z.dist_slope > z.random_walk_slope ? ' — more slowly than chance: prices kept going rather than snapping back' : ' — faster than chance: some of it was the price coming back') : '';
+    const way = (s) => (s && fin(s.mean) ? (s.mean > 0 ? 'the price kept going (a trend), not back' : 'the price came back (a reversion)') : '');
+    return `A moving average catches up with the price by itself, so part of any distance always closes: on the 40-week average alone, the distance 13 weeks on kept ${num(z.dist_slope, 2)} of itself on the companies' real weekly moves, and ${num(z.random_walk_slope, 2)} with those moves shuffled into a random walk (no reversal in it at all)${pace}. On the hybrid line it kept ${num(a.dist_slope, 2)}. What a holder feels is the price's own move: per 10% of distance above the line, the return against the average company over the next 13 weeks was ${per10(a.ret_slope)}, over 26 weeks ${per10(a26.ret_slope)} — ${way(a26.ret_slope)} (each week's companies against each other, 2016 on).`;
+  }
+  function distanceSection(s, d, w, g, width) {
+    const D = distOf(s, w, g), S = distStats(D);
+    if (!S) return '<p class="muted">Under two years of distance to the line on file: no distribution yet.</p>';
+    const F = followed(d, w, g, S.decile), half = (width || 760) >= 760;
+    const cards = [['Distance now', gap(S.now), `price against the hybrid line (${pct(w)} / ${pct(g)})`],
+      ['In its own last five years', `${ord(100 * S.pct)} percentile`, `10–90%: ${gap(S.q10)} to ${gap(S.q90)} · median ${gap(S.q50)}`],
+      ['Half-life', fin(S.half) ? `${num(S.half, S.half < 10 ? 1 : 0)} weeks` : '—', 'how long the distance takes to halve, from its week-to-week changes'],
+      ['On this side', `${num(S.len)} week${S.len === 1 ? '' : 's'} ${S.side > 0 ? 'above' : 'below'}`, `above the line ${pct(S.shareUp)} of the five years; its longest stretch ${num(S.longUp)} weeks above, ${num(S.longDown)} below`]];
+    let out = `<div class="mh-cards">${cards.map(([a, b, c]) => `<div class="mh-card"><span>${a}</span><b>${b}</b><i>${c}</i></div>`).join('')}</div>`;
+    out += `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start"><div style="flex:1 1 ${half ? 480 : 300}px;min-width:280px">${distChart(s, D, S, half ? 520 : width)}</div><div style="flex:0 1 320px;min-width:250px">${distHist(S, 320)}</div></div>`;
+    const lab = `${S.decile * 10}–${S.decile * 10 + 10}%`;
+    out += tbl([`From its own ${esc(lab)} band`, 'Cases', 'Back across the line', 'Distance then: 10 / 50 / 90%', 'Return vs the average company'],
+      F.map((r) => [`${r.h} weeks later`, num(r.n), pct(r.back), `${gap(r.q10)} / ${gap(r.q50)} / ${gap(r.q90)}`, fin(r.ret) ? `${sgn(r.ret, spct(r.ret, 2))} <span class="muted">(t ${tn(r.t)})</span>` : '—']), [0, 1, 1, 1, 1]);
+    out += `<p class="mh-note">Every liquid company each week from ${esc(((d.scores || {}).distance || {}).period || '')}, placed in the same band of its own previous ${num(((d.scores || {}).distance || {}).window || 259)} weeks, with the weights picked here. ${regressionNote(d)}</p>`;
+    return out;
+  }
+
+  // ------------------------------------------------------------------ the calendar
+  function monthBars(vals, cur, width, title) {
+    const Wd = Math.max(280, Math.min(420, width)), Ht = 170, L = 44, R = 6, T = 20, B = 20, f = (x) => x.toFixed(1);
+    const fv = vals.filter(fin); if (!fv.length) return `<p class="muted">${esc(title)}: too few years.</p>`;
+    const mx = Math.max(...fv.map(Math.abs), 1e-6), bw = (Wd - L - R) / 12, y0 = T + (Ht - T - B) / 2, sc = (Ht - T - B) / 2 / mx;
+    let out = `<svg viewBox="0 0 ${Wd} ${Ht}" role="img" aria-label="${esc(title)}"><text class="mh-t" x="${L}" y="12" style="font-weight:600">${esc(title)}</text>`;
+    out += `<line x1="${L}" x2="${Wd - R}" y1="${f(y0)}" y2="${f(y0)}" style="stroke:${COL.mute}"/><text class="mh-t" x="${L - 4}" y="${f(T + 4)}" text-anchor="end">${esc(spct(mx, 1))}</text><text class="mh-t" x="${L - 4}" y="${f(Ht - B)}" text-anchor="end">${esc(spct(-mx, 1))}</text>`;
+    vals.forEach((v, j) => { const x = L + j * bw + 2, wdt = Math.max(2, bw - 4);
+      if (fin(v)) { const h = Math.abs(v) * sc; out += `<rect x="${f(x)}" y="${f(v >= 0 ? y0 - h : y0)}" width="${f(wdt)}" height="${f(Math.max(h, 0.5))}" style="fill:${v >= 0 ? COL.up : COL.down};${j + 1 === cur ? 'stroke:' + COL.ink + ';stroke-width:1.5' : 'opacity:.7'}"><title>${MON[j]}: ${esc(spct(v, 2))}</title></rect>`; }
+      out += `<text class="mh-t" x="${f(x + wdt / 2)}" y="${Ht - 5}" text-anchor="middle" style="${j + 1 === cur ? 'font-weight:700' : ''}">${MON[j].slice(0, 1)}</text>`; });
+    return out + '</svg>';
+  }
+  function calendarSection(s, d, width) {
+    const C = (d.scores || {}).calendar; if (!C) return '';
+    const sp = C.spy || {}, P = sp.periods || [], M = (sp.months || {})[P[0]] || {}, se = s.season || {}, nw = s.now || {};
+    const cur = Number(weekDate(s, s.p.length).slice(5, 7)), mm = M[String(cur)] || {}, P0 = periodsOf(d)[0], seas = ((((d.scores || {}).seasonal || {})['13'] || {})[P0] || {}).net;   // the month ahead: next week's
+    const T26 = ((((d.scores || {}).models || {})['26'] || {}).ma_time || {})[P0] || {}, A26 = ((((d.scores || {}).models || {})['26'] || {}).ma || {})[P0] || {};
+    const cards = [['Own season, next 13 weeks', gap(nw.seas13), 'its return against SPY over the same 13 weeks, averaged over up to 10 past years'],
+      [`${MON[cur - 1]}, the month ahead, for SPY`, spct(mm.mean, 1), fin(mm.up) ? `average since ${esc(String(P[0] || '').slice(0, 4))}, up ${pct(mm.up)} of the years (t ${tn(mm.t)})` : ''],
+      [`${MON[cur - 1]} for this company`, spct((se.m || [])[cur - 1], 1), fin((se.up || [])[cur - 1]) ? `against SPY, beat it in ${pct(se.up[cur - 1])} of ${num(se.n[cur - 1])} years` : 'too few years']];
+    const half = Math.max(280, Math.min(420, ((width || 760) - 20) / 2));
+    let out = `<div class="mh-cards">${cards.map(([a, b, c]) => `<div class="mh-card"><span>${a}</span><b>${b}</b><i>${c}</i></div>`).join('')}</div>`;
+    const box = (h) => `<div style="flex:1 1 280px;max-width:430px">${h}</div>`;
+    out += `<div style="display:flex;flex-wrap:wrap;gap:10px">${box(monthBars(se.m || [], cur, half, `This company against SPY by month, since ${se.from || '—'}`))}${box(monthBars(Array.from({ length: 12 }, (_, j) => (M[String(j + 1)] || {}).mean), cur, half, `SPY by month, ${P[0] || ''}`))}</div>`;
+    out += `<p class="mh-note">A company's own months are few years each and wander: tested on every company, ranking them by their own same weeks of past years made ${st(seas)} over 13 weeks (best − worst fifth after costs, from ${esc(d.test_from)}); with the year's cycle added to the moving averages, the 26-week model made ${st(T26.net)} against ${st(A26.net)} for the averages alone. The hub has every month for SPY, the "sell in May" rule and each signal by month.</p>`;
+    return out;
+  }
+
   // ------------------------------------------------------------------ one company
   function periodsOf(d) { const m = (((d.scores || {}).models || {})['26'] || {}).ma || {}; return Object.keys(m); }
   function controls(id, w, g) {
@@ -305,6 +410,8 @@
     out += `<h4>Weekly — the hybrid line</h4><div class="mh-chart" data-mh-chart>${chart(s, w, g, width)}</div>` + legend(w, g);
     out += `<h4>What these weights have been worth</h4>` + weightScores(d, w, g);
     if (V || MD) out += `<p class="mh-note">The DCF value, its odds and the MD&A tone are this week's numbers from the Fair value page and the company's latest 10-Q / 10-K; their history is too short to test them as part of the line (the Fair value page's own walk-forward starts in 2022, the MD&A record in 2024), so they are shown and frozen every week, and scored as the record grows.</p>`;
+    out += `<h4>Distance to the line — how far, how usual, what followed</h4>` + distanceSection(s, d, w, g, width);
+    if ((d.scores || {}).calendar) out += `<h4>The calendar — its own months and the market's</h4>` + calendarSection(s, d, width);
     out += macroSection(d);
     return out;
   }
@@ -325,7 +432,25 @@
       (a.net ? `Ranked by the moving averages alone, the best fifth of companies beat the worst by ${spct(a.net.mean, 1)} over 26 weeks after trading costs (t ${num(a.net.t, 1)}) — ${ae.net ? spct(ae.net.mean, 1) : '—'} in ${esc(P[1])}, ${al.net ? spct(al.net.mean, 1) : '—'} from ${esc(late.slice(0, 4))}. ` : '') +
       (h.net ? `With fundamentals and guidance added the rank correlation hardly moved (${num((h.ic || {}).mean, 3)} against ${num((a.ic || {}).mean, 3)}) and the basket did worse: ${spct(h.net.mean, 1)}. ` : '') +
       (gr ? `Guidance itself, ${esc(((d.scores || {}).guidance_events || {}).years ? d.scores.guidance_events.years.join('–') : '')} only: in the 13 weeks after a raise the company beat the average company by ${spct(gr.mean, 1)} (t ${num(gr.t, 1)}, ${num(gr.n)} releases). ` : '') +
-      'Simple returns against SPY; history and models, not investment advice.</p>' + lead2(d);
+      'Simple returns against SPY; history and models, not investment advice.</p>' + lead2(d) + lead3(d);
+  }
+  function lead3(d) {                                                              // the distance to the line and the calendar
+    const S = d.scores || {}, DE = S.distance || {}, dw = (d.weights || {}).default || [0.5, 0.05], by = (DE.by || {})[key(dw[0], dw[1])] || {};
+    const b13 = by['13'] || {}, b26 = by['26'] || {}, R = ((DE.regression || {})['0|0'] || {})['13'] || {}, parts = [];
+    if ((b13.back || []).length === 10 && fin(b13.back[9])) {
+      const top = (b26.ret || [])[9], tt = (b26.ret_t || [])[9];
+      parts.push(`Distance to the line: from the farthest tenth above it in its own history, the price was back across the line within 13 weeks ${pct(b13.back[9])} of the time (${pct(b13.back[0])} from the farthest below, ${pct(Math.max(...b13.back.slice(3, 7).filter(fin)))} from near it), and ${fin(top) && top >= 0 ? 'it did not fall back against the average company' : 'it fell back against the average company'} (${spct(top, 1)} over 26 weeks, t ${tn(tt)}); the distance closes mostly because the line catches up — on the 40-week average it kept ${num(R.dist_slope, 2)} of itself after 13 weeks, against ${num(R.random_walk_slope, 2)} for a random walk.`);
+    }
+    const C = S.calendar || {}, sp = C.spy || {}, P = sp.periods || [], M = (sp.months || {})[P[0]] || {};
+    const ms = Object.entries(M).filter(([, v]) => v && fin(v.mean)).sort((x, y) => y[1].mean - x[1].mean);
+    if (ms.length === 12) {
+      const best = ms[0], worst = ms[11], R2 = (C.sell_in_may || {}).rule || {}, rk = Object.keys(R2), a = R2[rk[0]] || {}, b = R2[rk[1]] || {};
+      const se = (((S.seasonal || {})['13'] || {})[periodsOf(d)[0]] || {});
+      parts.push(`The calendar: SPY's best month since ${esc(String(P[0]).slice(0, 4))} is ${MON[best[0] - 1]} (${spct(best[1].mean, 1)}, t ${tn(best[1].t)}) and its worst ${MON[worst[0] - 1]} (${spct(worst[1].mean, 1)})` +
+        (a.hold ? `; "sell in May" made ${pct((a.nov_apr || {}).cagr, 1)} a year against ${pct(a.hold.cagr, 1)} for holding${b.hold ? ` (since its ${esc((C.sell_in_may || {}).paper)} paper ${pct((b.nov_apr || {}).cagr, 1)} against ${pct(b.hold.cagr, 1)})` : ''}, with a smaller worst fall` : '') +
+        (se.ic ? `; a company's own season ranks a little (rank correlation ${num(se.ic.mean, 3)}, t ${tn(se.ic.t)}, 13 weeks) but its best − worst fifth made ${spct((se.net || {}).mean, 1)} after costs` : '') + '.');
+    }
+    return parts.length ? `<p class="mh-sub">${parts.join(' ')}</p>` : '';
   }
   function lead2(d) {                                                              // the daily averages and the macro, in one paragraph
     const S = d.scores || {}, nd = S.ndays || {}, Dy = nd.daily || {}, p0 = (Dy.periods || [])[0], cell = (h, k) => (((((Dy[h] || {})[k] || {}).periods || {})[p0] || {}).net);
@@ -378,7 +503,7 @@
     if (((S.models || {})['26'] || {}).ma_macro && nby.ma_macro && nby.ma) {
       out.push(`<p class="mh-note">Moving averages × macro: the moving-average inputs, plus the 40-week and the 10-week trend each multiplied by five macro readings (VIX, the credit spread and its 13-week change, jobless claims year on year, the yield curve), each scaled on its own history since 1995 as known each week — so the trend can count more, less or the other way round as the macro moves. Its lead over the averages alone is mostly 2020: ${spct(nby.ma_macro['2020'], 1)} against ${spct(nby.ma['2020'], 1)} over 26 weeks (rank correlation ${num(iby.ma_macro['2020'], 3)} against ${num(iby.ma['2020'], 3)}), when it turned to the panic's losers, which rebounded — the trend's well-known crash after a market fall. Scaled on 2009 on only (the last row) the same model did no better than the averages alone. So it is recorded and frozen every week as a model of its own, and the line has no macro in it.</p>`);
     }
-    out.push(ndayTables(d));
+    out.push(ndayTables(d), distanceTables(d), calendarTables(d));
     const rules = (h) => [['above40', 'Price above its 40-week average'], ['cross', '10-week average above the 40-week']].map(([k, n]) => {
       const r = ((S.rules || {})[h] || {})[k] || {}; return [esc(n) + `, ${h} weeks`, ...P.map((p) => st((r[p] || {}).net))]; });
     out.push('<h4>The classic rules</h4>' + tbl(['Above − below, after costs', ...P.map(esc)], rules('13').concat(rules('26')), [0, 1, 1, 1]));
@@ -468,6 +593,44 @@
         fs.map((f) => { const F = I.funds[f]; return [`${esc(f)} <span class="muted">from ${esc(String(((F.rules.hold || {})[p] || {}).from || F.start).slice(0, 4))}</span>`, ...rules.map((r) => { const a = (F.rules[r] || {})[p]; return a ? `${pct(a.cagr, 1)} <span class="muted">(${spct(a.maxdd, 0)})</span>` : '—'; })]; }), [0, 1, 1, 1, 1]);
     }
     return out + `<p class="mh-note">Decided at each Friday's close on the fund's total-return close and the macro as known that day (each figure from its publication day; the unemployment rate is revised little), held the next week; out of the fund means cash at the fed funds rate, ${num(I.switch_bp)} bp a switch. "+ unemployment": out only when below the 40-week average and the unemployment rate is above its own 12-month average (the growth-trend rule, Philosophical Economics, 2016). "+ Sahm rule": out only when below it and the 3-month average unemployment rate is ${num(I.sahm_on, 1)} points or more above its low of the last 12 months (Sahm, 2019). Both rules were published after most of this history, so ${esc(P[2] || '')} is their fair test.</p>`;
+  }
+  function distanceTables(d) {
+    const DE = (d.scores || {}).distance; if (!DE || !DE.by) return '';
+    const dw = (d.weights || {}).default || [0.5, 0.05], w = ui.w != null ? ui.w : dw[0], g = ui.g != null ? ui.g : dw[1];
+    const by = DE.by[key(w, g)] || DE.by[key(dw[0], dw[1])] || {};
+    let out = `<h4>Distance to the hybrid line (${pct(w)} / ${pct(g)}), by where it stood in the company's own last ${num(DE.window)} weeks</h4>`;
+    for (const h of ['13', '26']) {
+      const r = by[h] || {};
+      const rows = Array.from({ length: DE.buckets || 10 }, (_, j) => [`${j * 10}–${j * 10 + 10}%`, gap((r.d || [])[j]), pct((r.back || [])[j]),
+        `${gap((r.q10 || [])[j])} / ${gap((r.q50 || [])[j])} / ${gap((r.q90 || [])[j])}`, fin((r.ret || [])[j]) ? `${sgn(r.ret[j], spct(r.ret[j], 2))} <span class="muted">(t ${tn(r.ret_t[j])})</span>` : '—', num((r.n || [])[j])]);
+      out += `<h4>… ${h} weeks later</h4>` + tbl(['Own band', 'Median distance', 'Back across the line', 'Distance then: 10 / 50 / 90%', 'Return vs the average company', 'Cases'], rows, [0, 1, 1, 1, 1, 1]) +
+        `<p class="mh-note">The top band against the bottom one, after costs both ways: ${st(r.spread)}.</p>`;
+    }
+    return out + `<p class="mh-note">Each week every liquid company from ${esc(DE.period)}, placed by where its distance to the line stood among its own previous ${num(DE.window)} weeks (at least ${num(DE.min_weeks)} of them): the bands are its own, not the market's. "Back across the line": the price on the other side of the line ${'13 or 26'} weeks later. ${regressionNote(d)}</p>`;
+  }
+  function calendarTables(d) {
+    const C = (d.scores || {}).calendar; if (!C) return '';
+    const sp = C.spy || {}, P = sp.periods || [], M = sp.months || {}, out = [];
+    out.push(`<h4>The calendar: SPY in each month of the year</h4>` + tbl(['Month', `Average, ${esc(P[0] || '')}`, 'Up', `${esc(P[1] || '')}`, `${esc(P[2] || '')}`],
+      Array.from({ length: 12 }, (_, j) => { const k = String(j + 1), a = (M[P[0]] || {})[k] || {}, b = (M[P[1]] || {})[k] || {}, c = (M[P[2]] || {})[k] || {};
+        return [MON[j], st(a, 1), pct(a.up), st(b, 1), st(c, 1)]; }), [0, 1, 1, 1, 1]));
+    const R = (C.sell_in_may || {}).rule || {}, Hh = (C.sell_in_may || {}).halves || {};
+    const rr = Object.entries(R).map(([p, v]) => [esc(p), `${pct((v.hold || {}).cagr, 1)} <span class="muted">(${spct((v.hold || {}).maxdd, 0)})</span>`, `${pct((v.nov_apr || {}).cagr, 1)} <span class="muted">(${spct((v.nov_apr || {}).maxdd, 0)})</span>`]);
+    if (rr.length) out.push(`<h4>"Sell in May": SPY from November to April, cash from May to October</h4>` + tbl(['From', 'Hold: a year (worst fall)', 'November–April only'], rr, [0, 1, 1]) +
+      `<p class="mh-note">The two halves of each year: November–April ${st(Hh.nov_apr, 1)}, up ${pct((Hh.nov_apr || {}).up)} of the years; May–October ${st(Hh.may_oct, 1)}, up ${pct((Hh.may_oct || {}).up)} (t over the years). Cash at the fed funds rate as known each month${(C.sell_in_may || {}).cash ? '' : ' (no rate on file: none)'}; the rule was published in ${esc((C.sell_in_may || {}).paper)} (Bouman & Jacobsen), so the later row is its fair test.</p>`);
+    const S = (C.signals || {}).by_month || {}, SP = (C.signals || {}).periods || [];
+    const G = (C.signals || {}).gross_by_month || {};
+    for (const [k, name] of [['above40', 'Price above its 40-week average'], ['dip4', 'Price below its 4-week average (a dip)']]) {
+      if (!S[k]) continue;
+      out.push(`<h4>${name}, by the month it is read in: the next 4 weeks, above − below</h4>` + tbl(['Month', `After costs, ${esc(SP[0] || '')}`, 'Before costs', `After costs, ${esc(SP[1] || '')}`],
+        Array.from({ length: 12 }, (_, j) => { const m = String(j + 1); return [MON[j], st(((S[k] || {})[SP[0]] || {})[m]), st(((G[k] || {})[SP[0]] || {})[m]), st(((S[k] || {})[SP[1]] || {})[m])]; }), [0, 1, 1, 1]));
+    }
+    if (S.above40) out.push('<p class="mh-note">Every liquid company each week, by the month the week falls in. Over 4 weeks both sides pay to get in and out every time, so the costs weigh far more than at 13 or 26 weeks; the column before costs shows how much. Each month has only one value a year, so a single month is a weak read.</p>');
+    const Se = (d.scores || {}).seasonal || {}, Pm = periodsOf(d);
+    if (Se['13']) out.push(`<h4>Each company's own season, alone: ranked by its return against SPY over the same weeks of up to 10 past years</h4>` +
+      tbl(['Horizon', `Rank corr. ${esc(Pm[0] || '')}`, ...Pm.map((p) => 'Best − worst fifth, net, ' + esc(p))], ['13', '26'].map((h) => [`${h} weeks`, icTxt(((Se[h] || {})[Pm[0]] || {}).ic), ...Pm.map((p) => st(((Se[h] || {})[p] || {}).net))]), [0, 1, 1, 1, 1]) +
+      '<p class="mh-note">Heston & Sadka (2008) found that a stock\'s return in a calendar month echoes its returns in the same month of earlier years. Here the same weeks of up to 10 past years (at least 3), point in time. The model "+ the calendar" adds this and the year\'s cycle (the trend and the dip × the sine and cosine of the day of the year) to the moving averages.</p>');
+    return out.join('');
   }
   function regimeTables(d) {
     const R = ((d.scores || {}).macro || {}).regimes; if (!R) return '';

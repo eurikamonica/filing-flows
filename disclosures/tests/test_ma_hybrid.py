@@ -562,5 +562,99 @@ class TestMacro(DailyMacroWorld):
         self.assertTrue(any(r['pct_macro'] is not None for r in rows))
 
 
+class TestCalendarAndDistance(DailyMacroWorld):
+    def test_own_season_uses_past_years_only(self):
+        rng = np.random.default_rng(2)
+        rel = rng.normal(0, 0.02, (3, 700))
+        S = MA.seasonal(rel, 13)
+        Y = MA.HY.fwd_sum(rel, 13)
+        t = 600
+        want = np.mean([Y[1, t - 52 * k] for k in range(1, 11)])            # the same 13 weeks of the last 10 years
+        self.assertAlmostEqual(S[1, t], want, places=12)
+        self.assertTrue(np.isnan(S[0, 52 * 3 - 1]) and np.isfinite(S[0, 52 * 3]))   # at least three years of it
+        rel2 = rel.copy()
+        rel2[:, t + 1:] += 1.0                                                # everything after t changed
+        np.testing.assert_array_equal(MA.seasonal(rel2, 13)[:, :t + 1], S[:, :t + 1])
+
+    def test_own_percentile(self):
+        X = np.random.default_rng(3).normal(0, 1, (4, 400))
+        X[2, :150] = np.nan
+        pc = MA.own_pct(X, 0, win=259, need=104)
+        for i, t in ((0, 300), (1, 120), (2, 380)):
+            past = X[i, max(0, t - 259):t]
+            past = past[np.isfinite(past)]
+            self.assertAlmostEqual(pc[i, t], ((past < X[i, t]).sum() + 0.5 * (past == X[i, t]).sum()) / len(past))
+        self.assertTrue(np.isnan(pc[0, 103]) and np.isfinite(pc[0, 104]))   # 104 earlier weeks at least
+        self.assertTrue(np.isnan(pc[2, 200]))                                # only 50 known weeks behind it
+
+    def test_year_angle_and_months(self):
+        days = np.array(['2024-01-05', '2024-07-05', '2024-12-27'], dtype='datetime64[D]')
+        a = MA.year_angle(days)
+        self.assertAlmostEqual(a[0], 2 * np.pi * 4 / 365.25)
+        self.assertAlmostEqual(a[1] / (2 * np.pi), 186 / 365.25)
+        g = np.datetime64('2010-01-01') + 7 * np.arange(200)                 # Fridays
+        c = np.ones(200)
+        jan = (g.astype('datetime64[M]').astype(int) % 12) == 0
+        steps = np.where(jan, 1.01, 1.0)                                      # every January week +1%, the rest flat
+        c = np.cumprod(steps)
+        r = MA.month_returns(c, g)
+        self.assertAlmostEqual(r['2011-01'], 1.01 ** int(((g.astype('datetime64[M]') == np.datetime64('2011-01')) & jan).sum()) - 1, places=10)
+        self.assertAlmostEqual(r['2011-02'], 0.0, places=12)
+        m = MA.by_month(r)
+        self.assertGreater(m['1']['mean'], 0.03)
+        self.assertAlmostEqual(m['6']['mean'], 0.0, places=8)
+
+    def test_sell_in_may_arithmetic(self):
+        S = self.doc['scores']['calendar']
+        rule = S['sell_in_may']['rule']
+        self.assertTrue(rule)
+        A = MA.load(self.pub, self.fund, self.gd)
+        res = MA.month_returns(A['spy'], A['days'])
+        first = next(iter(rule))
+        keys = [k for k in sorted(res) if int(k[:4]) >= int(first[:4])]
+        mac = MA.macro_load(self.pub, A['days'])
+        cash = {}
+        mo = A['days'].astype('datetime64[M]')
+        for t in range(len(A['days'])):
+            if str(mo[t]) not in cash and np.isfinite(mac['x']['ff'][t]):
+                cash[str(mo[t])] = mac['x']['ff'][t] / 100 / 12
+        eq = np.prod([1 + (res[k] if int(k[5:7]) in (11, 12, 1, 2, 3, 4) else cash.get(k, 0.0)) for k in keys])
+        self.assertAlmostEqual(rule[first]['nov_apr']['cagr'], eq ** (12 / len(keys)) - 1, places=4)
+        self.assertEqual(set(S['spy']['months'][S['spy']['periods'][0]]), {str(m) for m in range(1, 13)})
+        self.assertEqual(len(S['signals']['by_month']['above40'][S['signals']['periods'][0]]), 12)
+
+    def test_distance_tables(self):
+        D = self.doc['scores']['distance']
+        self.assertEqual(len(D['by']), len(MA.WS) * len(MA.GS))
+        r = D['by']['0.5|0.05']['13']
+        self.assertEqual(len(r['n']), MA.DIST_BUCKETS)
+        for j in range(MA.DIST_BUCKETS):
+            if r['back'][j] is not None:
+                self.assertTrue(0 <= r['back'][j] <= 1)
+                self.assertTrue(r['q10'][j] <= r['q50'][j] <= r['q90'][j])
+        ds = [v for v in r['d'] if v is not None]
+        self.assertEqual(ds, sorted(ds))                                      # the bands run from below the line to above it
+        R = D['regression']
+        self.assertTrue(0 < R['0|0']['13']['random_walk_slope'] < 1)          # a random walk's distance shrinks by itself
+        self.assertIsNotNone(R['0.5|0.05']['26']['ret_slope'])
+
+    def test_company_season_and_new_fields(self):
+        rows = json.loads((self.pub / 'ma-hybrid-rows.json').read_text())['rows']
+        r = next(x for x in rows if x['hd_pct'] is not None and x['seas13'] is not None)
+        self.assertTrue(0 <= r['hd_pct'] <= 1)
+        f = json.loads((self.pub / 'ma' / f"{r['id']}.json").read_text())
+        self.assertEqual(len(f['season']['m']), 12)
+        A = MA.load(self.pub, self.fund, self.gd)
+        i = A['ids'].index(r['id'])
+        want = MA.company_season(A['C'][i], A['spy'], A['days'])
+        np.testing.assert_allclose([v for v in f['season']['m'] if v is not None], [v for v in want['m'] if v is not None], rtol=1e-6)
+        for m in ('ma_time', 'ma_dist'):
+            self.assertIn(m, self.doc['scores']['models']['26'])
+        e = list(FB.load(self.ledger)['families']['ma:13'].values())[0]['forecast']
+        for k in ('s_time', 's_dist', 'hd_pct', 'seas'):
+            self.assertEqual(len(e[k]), len(e['ids']), k)
+        self.assertIn('13', self.doc['scores']['seasonal'])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -53,6 +53,18 @@ month-end values before it):
                           reading's z-score on its own past since 1995), against the averages alone — and, as a check on
                           how much that rests on what counts as normal, the same with the readings scaled on 2009 on only.
                           Recorded and frozen as models of their own; the line itself has no macro in it.
+The calendar: SPY's return in each month of the year since its first full month (1993); the "sell in May" rule (Nov–Apr
+in SPY, May–Oct in cash; Bouman & Jacobsen 2002, so the later years are its fair test); what the 40-week trend and the
+4-week dip paid over the next 4 weeks by the month each was read in (every liquid company from 2000). As model inputs
+('ma_time'): each company's own season — its return against SPY over the same weeks of up to 10 past years (Heston &
+Sadka, 2008) — and the trend and the dip × the year's cycle (the sine and cosine of the day of the year). Each company's
+file carries its own months against SPY since 2000.
+The distance to the line, log(price ÷ H), for every weight on the grid: where it stands within the company's own previous
+259 weeks; from each tenth of that own history, over 13 and 26 weeks from 2016, how often the price was back across the
+line, the distance then and the return against the average company; the slope of the later distance on today's against
+the same on each company's weekly returns shuffled (a random walk: a moving average's own catching up, apart from any
+reversal); the slope of the later return on the distance (Fama–MacBeth). The own percentile and its extremes as model
+inputs ('ma_dist'). Both models are recorded and frozen beside the others; neither changes the line.
 
 Recorded, not yet in the line (their history is too short to test it): the Fair value page's DCF value and its Monte
 Carlo range, the chance it puts the value above the price, the base-rate chance of the growth the price implies
@@ -127,14 +139,24 @@ SWITCH_BP = HY.COST_TIERS[0][1]                    # a switch in an index fund: 
 INDEX_RULES = {'hold': 'Hold the fund', 'above40': 'Hold it while above its 40-week average, else cash',
                'trend_unemployment': '40-week average, out only if unemployment is also above its 12-month average',
                'trend_sahm': '40-week average, out only if the Sahm rule is also on'}
+SEAS_YEARS, SEAS_MIN = 10, 3   # a company's own season: the same weeks of the last 10 years, at least 3 of them
+CYCLE = ('tr40_sin', 'tr40_cos', 'rev4_sin', 'rev4_cos')   # the trend and the reversal × the year's cycle (sine, cosine)
+DIST_WINDOW, DIST_MIN = SERIES_WEEKS - 1, 104   # the distance to the line against the company's own previous 259 weeks
+DIST_BUCKETS = 10
+CAL_FROM = 2000                # the calendar tables: the companies from 2000; SPY from its first full month (1993)
+SELL_IN_MAY_PAPER = 2002       # Bouman & Jacobsen, "The Halloween Indicator" (AER 2002): later years are its fair test
 MODELS = {'ma': ['tr40', 'tr10_40', 'rev4'],
           'ma_fund': ['tr40', 'tr10_40', 'rev4', 'sue', 'srg', 'val', 'ey'],
           'hybrid': ['tr40', 'tr10_40', 'rev4', 'sue', 'srg', 'val', 'ey', 'guid'],
           'ma_macro': ['tr40', 'tr10_40', 'rev4'] + [f'tr40x{k}' for k in MACRO_MODEL] + [f'tr10x{k}' for k in MACRO_MODEL],
-          'ma_macro_09': ['tr40', 'tr10_40', 'rev4'] + [f'tr40x{k}_09' for k in MACRO_MODEL] + [f'tr10x{k}_09' for k in MACRO_MODEL]}
+          'ma_macro_09': ['tr40', 'tr10_40', 'rev4'] + [f'tr40x{k}_09' for k in MACRO_MODEL] + [f'tr10x{k}_09' for k in MACRO_MODEL],
+          'ma_time': ['tr40', 'tr10_40', 'rev4', 'seas{h}'] + list(CYCLE),
+          'ma_dist': ['tr40', 'tr10_40', 'rev4', 'hd_pct', 'hd_ext']}
 MODEL_NAMES = {'ma': 'Moving averages alone', 'ma_fund': 'Moving averages + fundamentals',
                'hybrid': 'Moving averages + fundamentals + guidance', 'ma_macro': 'Moving averages × macro',
-               'ma_macro_09': 'Moving averages × macro, the readings scaled on 2009 on only (a check)'}
+               'ma_macro_09': 'Moving averages × macro, the readings scaled on 2009 on only (a check)',
+               'ma_time': 'Moving averages + the calendar (own season, the year\'s cycle)',
+               'ma_dist': 'Moving averages + distance to the line against its own history'}
 FEATURE_NAMES = {'tr40': 'Price vs its 40-week average', 'tr10_40': '10-week average vs the 40-week', 'rev4': 'Price vs its 4-week average',
                  'sue': 'Earnings surprise (latest quarter)', 'srg': 'Sales growth (latest quarter, y/y)',
                  'val': 'P/E vs its own 5-year median', 'ey': 'Earnings yield', 'guid': 'Guidance raised / lowered'}
@@ -143,6 +165,11 @@ MACRO_SHORT = {'vix': 'VIX', 'credit': 'Credit spread', 'dcredit': 'Credit sprea
 FEATURE_NAMES.update({f'tr40x{k}': f'Price vs its 40-week average × {v}' for k, v in MACRO_SHORT.items()})
 FEATURE_NAMES.update({f'tr10x{k}': f'10-week vs 40-week average × {v}' for k, v in MACRO_SHORT.items()})
 FEATURE_NAMES.update({f'{a}x{k}_09': f'{FEATURE_NAMES[f"{a}x{k}"]} (scaled on 2009 on)' for a in ('tr40', 'tr10') for k in MACRO_SHORT})
+FEATURE_NAMES.update({'seas13': 'Own season: the same 13 weeks of past years', 'seas26': 'Own season: the same 26 weeks of past years',
+                      'seas{h}': 'Own season: the same weeks of past years (as many as the horizon)',
+                      'tr40_sin': 'Price vs 40-week average × the year\'s cycle (sine)', 'tr40_cos': 'Price vs 40-week average × the year\'s cycle (cosine)',
+                      'rev4_sin': 'Price vs 4-week average × the year\'s cycle (sine)', 'rev4_cos': 'Price vs 4-week average × the year\'s cycle (cosine)',
+                      'hd_pct': 'Distance to the line, own percentile', 'hd_ext': 'Distance to the line, own percentile (extremes)'})
 fin, r_, years_of = HY.fin, HY.r_, HY.years_of
 
 
@@ -444,8 +471,8 @@ def daily_on_grid(daily, ids, days):
     N-day averages ('above:N', log distance) and each cross ('cross:a/b', log of the a-day average over the b-day)."""
     dnum = days.astype('datetime64[D]').astype(np.int64)
     L, W = len(ids), len(days)
-    out = {f'above:{n}': np.full((L, W), np.nan) for n in NDAYS}
-    out.update({f'cross:{a}/{b}': np.full((L, W), np.nan) for a, b in CROSSES})
+    out = {f'above:{n}': np.full((L, W), np.nan, np.float32) for n in NDAYS}
+    out.update({f'cross:{a}/{b}': np.full((L, W), np.nan, np.float32) for a, b in CROSSES})
     lens = sorted(set(NDAYS) | {a for a, _ in CROSSES} | {b for _, b in CROSSES})
     for i, t in enumerate(ids):
         if t not in daily:
@@ -603,14 +630,291 @@ def macro_flags(mac):
             'known': np.isfinite(un12) & np.isfinite(sahm)}
 
 
+# ------------------------------------------------------------------ the calendar and the distance to the line
+def seasonal(rel, h, years=SEAS_YEARS, need=SEAS_MIN):
+    """Each company's own season (Heston & Sadka, 2008): the mean of its h-week log return against SPY over the same weeks
+    of each of the last `years` years (lags of 52 weeks), when at least `need` of them are known. Point in time: the latest
+    of those windows ended h weeks after it began, a year ago."""
+    Y = HY.fwd_sum(rel, h)
+    L, W = Y.shape
+    s, n = np.zeros((L, W)), np.zeros((L, W))
+    for k in range(1, years + 1):
+        lag = 52 * k
+        if lag >= W:
+            break
+        y = Y[:, :W - lag]
+        m = np.isfinite(y)
+        s[:, lag:] += np.where(m, y, 0.0)
+        n[:, lag:] += m
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(n >= need, s / np.maximum(n, 1), np.nan)
+
+
+def year_angle(days):
+    """Where each Friday falls in the year, as an angle (0 on 1 January, 2π a year later)."""
+    d = days.astype('datetime64[D]')
+    doy = (d - d.astype('datetime64[Y]').astype('datetime64[D]')).astype(int)
+    return 2 * np.pi * doy / 365.25
+
+
+def own_pct(X, t_from, win=DIST_WINDOW, need=DIST_MIN):
+    """Each week from t_from: where X stands among the same row's previous `win` weeks (the share below it, ties half),
+    when at least `need` of them are known — the company's own history only."""
+    L, W = X.shape
+    out = np.full((L, W), np.nan)
+    for t in range(max(t_from, 1), W):
+        a = X[:, max(0, t - win):t]
+        x = X[:, t:t + 1]
+        n = np.isfinite(a).sum(1)
+        below = (a < x).sum(1) + 0.5 * (a == x).sum(1)
+        m = (n >= need) & np.isfinite(X[:, t])
+        out[m, t] = below[m] / n[m]
+    return out
+
+
+def shift_back(X, h):
+    """X h weeks later, at each week (NaN past the end)."""
+    out = np.full(X.shape, np.nan)
+    if h < X.shape[1]:
+        out[:, :-h] = X[:, h:]
+    return out
+
+
+def pooled_slope(x, y):
+    """The least-squares slope of y on x (with an intercept) over the finite pairs."""
+    m = np.isfinite(x) & np.isfinite(y)
+    if m.sum() < 100:
+        return None
+    xx, yy = x[m] - x[m].mean(), y[m] - y[m].mean()
+    v = float((xx * xx).sum())
+    return r_(float((xx * yy).sum()) / v, 4) if v > 0 else None
+
+
+def fm_slope(x, y, ok, h, sel):
+    """Fama–MacBeth: each week's cross-sectional slope of y on x, averaged over the weeks in sel (t: weeks ÷ h independent)."""
+    out = np.full(x.shape[1], np.nan)
+    for t in np.where(sel)[0]:
+        m = ok[:, t] & np.isfinite(x[:, t]) & np.isfinite(y[:, t])
+        if m.sum() < MIN_NAMES:
+            continue
+        a, b = x[m, t] - x[m, t].mean(), y[m, t] - y[m, t].mean()
+        v = (a * a).sum()
+        if v > 0:
+            out[t] = (a * b).sum() / v
+    return week_stats(out[sel], h)
+
+
+def distance_eval(days, A, lns, ok, cost, verbose=lambda *a: None, pre=None):
+    """The price's distance to the hybrid line, log(price ÷ H), for every weight on the grid: where it stands within the
+    company's own previous 259 weeks (deciles of that own percentile), and over the next 13 and 26 weeks, from 2016 —
+    how often the price was back on the other side of the line, the distance then (10 / 50 / 90%), the simple return
+    against SPY less the average company's that week, and the top − bottom decile after costs. For the default weights
+    and the 40-week average alone, the regression itself: the slope of the later distance on today's (pooled; against
+    the same on each company's weekly returns shuffled — a random walk, whose distance shrinks too, as the average
+    catches up), and the slope of the later return on today's distance (Fama–MacBeth)."""
+    yrs = years_of(days)
+    W = len(days)
+    sel = yrs >= TEST_FROM
+    t15 = int(np.searchsorted(yrs, TEST_FROM - 1))
+    rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
+    lP = np.log(A['P'])
+    out = {'buckets': DIST_BUCKETS, 'window': DIST_WINDOW, 'min_weeks': DIST_MIN, 'period': f'{TEST_FROM}–{int(yrs[-1])}', 'by': {}, 'regression': {}}
+    Ys, dm = {}, {}
+    for h in HORIZONS:
+        Y = HY.fwd_sum(rel, h)
+        Ys[h] = np.expm1(Y)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            avg = np.nanmean(np.where(ok & np.isfinite(Y), Ys[h], np.nan), 0)
+        dm[h] = Ys[h] - avg[None]
+    for w in WS:
+        for g in GS:
+            key = f'{w:g}|{g:g}'
+            hd = lP - hybrid_log(lns, w, g, A['G'])
+            pc = (pre or {}).get(key)
+            if pc is None:
+                pc = own_pct(hd, t15)
+            b = np.where(np.isfinite(pc), np.minimum((np.nan_to_num(pc) * DIST_BUCKETS).astype(np.int8), DIST_BUCKETS - 1), -1).astype(np.int8)
+            out['by'][key] = {}
+            for h in HORIZONS:
+                fut = shift_back(hd, h)
+                base = ok & (b >= 0) & np.isfinite(hd) & np.isfinite(fut) & np.isfinite(Ys[h]) & sel[None]
+                rec = {k: [] for k in ('n', 'd', 'back', 'q10', 'q50', 'q90', 'ret', 'ret_t')}
+                for j in range(DIST_BUCKETS):
+                    m = base & (b == j)
+                    nn = int(m.sum())
+                    rec['n'].append(nn)
+                    if nn < 200:
+                        for k in ('d', 'back', 'q10', 'q50', 'q90', 'ret', 'ret_t'):
+                            rec[k].append(None)
+                        continue
+                    d0, d1 = hd[m], fut[m]
+                    rec['d'].append(r_(float(np.median(d0)), 4))
+                    nz = d0 != 0
+                    rec['back'].append(r_(float((np.sign(d1[nz]) != np.sign(d0[nz])).mean()), 3))
+                    for q, k in ((0.1, 'q10'), (0.5, 'q50'), (0.9, 'q90')):
+                        rec[k].append(r_(float(np.quantile(d1, q)), 4))
+                    cnt = m.sum(0)
+                    wk = np.where(cnt >= 5, np.where(m, dm[h], 0.0).sum(0) / np.maximum(cnt, 1), np.nan)
+                    s_ = week_stats(wk[sel], h)
+                    rec['ret'].append(s_['mean'] if s_ else None)
+                    rec['ret_t'].append(s_['t'] if s_ else None)
+                hi, lo = base & (b == DIST_BUCKETS - 1), base & (b == 0)
+                nh, nl = hi.sum(0), lo.sum(0)
+                with np.errstate(invalid='ignore', divide='ignore'):
+                    sp = (np.where(hi, Ys[h], 0).sum(0) / nh - np.where(lo, Ys[h], 0).sum(0) / nl
+                          - 2 * np.where(hi, cost, 0).sum(0) / nh - 2 * np.where(lo, cost, 0).sum(0) / nl)
+                rec['spread'] = week_stats(np.where((nh >= MIN_SIDE) & (nl >= MIN_SIDE), sp, np.nan)[sel], h)
+                out['by'][key][str(h)] = rec
+                if (w, g) in (DEFAULT, (0.0, 0.0)):
+                    out['regression'].setdefault(key, {})[str(h)] = {
+                        'dist_slope': pooled_slope(np.where(base, hd, np.nan), np.where(base, fut, np.nan)),
+                        'ret_slope': fm_slope(hd, dm[h], base, h, sel)}
+            verbose(f'ma hybrid distance {key}: done')
+    # the random walk: each company's weekly log returns shuffled (its own, so its volatility stays), the 40-week average
+    rng = np.random.default_rng(20261104)
+    lr = np.diff(lP, axis=1)
+    lP_rw = np.full(lP.shape, np.nan)
+    for i in range(lP.shape[0]):
+        f = np.where(np.isfinite(lr[i]))[0]
+        if len(f) < MA_LONG + 13:
+            continue
+        k0 = f[0]
+        steps = lr[i, f].copy()
+        rng.shuffle(steps)
+        lP_rw[i, k0] = lP[i, k0]
+        lP_rw[i, f + 1] = lP[i, k0] + np.cumsum(steps)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        hd_rw = lP_rw - np.log(moving(np.exp(lP_rw), MA_LONG))
+    for h in HORIZONS:
+        fut = shift_back(hd_rw, h)
+        m = ok & np.isfinite(hd_rw) & np.isfinite(fut) & sel[None]
+        out['regression'].setdefault('0|0', {}).setdefault(str(h), {})['random_walk_slope'] = pooled_slope(np.where(m, hd_rw, np.nan), np.where(m, fut, np.nan))
+    return out
+
+
+def month_closes(c, days):
+    """Each calendar month's last weekly close → (months as 'YYYY-MM', closes), months with a close only."""
+    mo = days.astype('datetime64[M]')
+    out = {}
+    for t in range(len(c)):
+        if np.isfinite(c[t]):
+            out[str(mo[t])] = c[t]
+    ks = sorted(out)
+    return ks, np.array([out[k] for k in ks])
+
+
+def month_returns(c, days):
+    """{'YYYY-MM': simple return} from one month's last weekly close to the next month's (consecutive months only)."""
+    ks, v = month_closes(c, days)
+    res = {}
+    for j in range(1, len(ks)):
+        a, b = np.datetime64(ks[j - 1]), np.datetime64(ks[j])
+        if (b - a).astype(int) == 1:
+            res[ks[j]] = float(v[j] / v[j - 1] - 1)
+    return res
+
+
+def by_month(res, years=None):
+    """{1..12: stats} of monthly returns {'YYYY-MM': r}: mean, median, share up, t, years."""
+    out = {}
+    for m in range(1, 13):
+        a = np.array([r for k, r in res.items() if int(k[5:7]) == m and (years is None or years(int(k[:4])))])
+        if len(a) >= 3:
+            sd = a.std(ddof=1)
+            out[str(m)] = {'mean': r_(a.mean()), 'median': r_(float(np.median(a))), 'up': r_((a > 0).mean(), 3),
+                           't': r_(a.mean() / (sd / math.sqrt(len(a))), 2) if sd > 0 else None, 'n': int(len(a))}
+    return out
+
+
+def calendar_eval(days, A, raw, ok, cost, mac=None):
+    """The calendar, descriptive: SPY's return in each month of the year since its first full month, the "sell in May"
+    rule (Nov–Apr in SPY, May–Oct in cash at the fed funds rate) against holding, and what the 40-week trend and the
+    4-week dip paid over the next 4 weeks by the month each was read in (every liquid company from CAL_FROM, after costs)."""
+    yrs = years_of(days)
+    spy = A['spy']
+    res = month_returns(spy, days)
+    last = int(yrs[-1])
+    first = int(min(res)[:4]) if res else last
+    split = TEST_FROM
+    out = {'spy': {'from': min(res) if res else None, 'periods': [f'{first}–{last}', f'{first}–{split - 1}', f'{split}–{last}'],
+                   'months': {f'{first}–{last}': by_month(res), f'{first}–{split - 1}': by_month(res, lambda y: y < split),
+                              f'{split}–{last}': by_month(res, lambda y: y >= split)}}}
+    # sell in May: each month in SPY (Nov–Apr) or in cash (May–Oct, the fed funds rate known at the month's start)
+    ff = (mac or {}).get('x', {}).get('ff') if mac else None
+    mo = days.astype('datetime64[M]')
+    cash = {}
+    if ff is not None:
+        for t in range(len(days)):
+            k = str(mo[t])
+            if k not in cash and np.isfinite(ff[t]):
+                cash[k] = ff[t] / 100 / 12
+    rule = {}
+    for start in (first, SELL_IN_MAY_PAPER + 1):
+        keys = [k for k in sorted(res) if int(k[:4]) >= start]
+        if len(keys) < 24:
+            continue
+        hold = np.array([res[k] for k in keys])
+        sim = np.array([res[k] if int(k[5:7]) in (11, 12, 1, 2, 3, 4) else cash.get(k, 0.0) for k in keys])
+        st_ = {}
+        for name, r in (('hold', hold), ('nov_apr', sim)):
+            eq = np.cumprod(1 + r)
+            st_[name] = {'cagr': r_(eq[-1] ** (12 / len(r)) - 1, 4), 'maxdd': r_(float(np.min(eq / np.maximum.accumulate(eq) - 1)), 4),
+                         'vol': r_(r.std(ddof=1) * math.sqrt(12), 4)}
+        rule[f'{start}–{last}'] = {**st_, 'from': keys[0], 'months': len(keys)}
+    six = {'nov_apr': [], 'may_oct': []}                             # the two halves of each year, compounded
+    for y in range(first, last + 1):
+        a = [res.get(f'{y - 1}-{m:02d}') for m in (11, 12)] + [res.get(f'{y}-{m:02d}') for m in (1, 2, 3, 4)]
+        b = [res.get(f'{y}-{m:02d}') for m in (5, 6, 7, 8, 9, 10)]
+        if all(v is not None for v in a):
+            six['nov_apr'].append(float(np.prod([1 + v for v in a]) - 1))
+        if all(v is not None for v in b):
+            six['may_oct'].append(float(np.prod([1 + v for v in b]) - 1))
+    halves = {}
+    for k, v in six.items():
+        a = np.array(v)
+        if len(a) >= 3:
+            halves[k] = {'mean': r_(a.mean()), 'up': r_((a > 0).mean(), 3), 't': r_(a.mean() / (a.std(ddof=1) / math.sqrt(len(a))), 2), 'n': len(a)}
+    out['sell_in_may'] = {'rule': rule, 'halves': halves, 'paper': SELL_IN_MAY_PAPER, 'cash': bool(cash)}
+    # the signals by the month they were read in, the next 4 weeks
+    rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
+    Y4 = HY.fwd_sum(rel, 4)
+    month = (days.astype('datetime64[M]').astype(int) % 12) + 1
+    sig_ = {}
+    gross_ = {}
+    for name, X in (('above40', raw['tr40']), ('dip4', raw['rev4'])):
+        _, net, gross = per_week(X, Y4, ok, cost, 'sign')
+        sig_[name], gross_[name] = {}, {}
+        for lab, ys in ((f'{CAL_FROM}–{last}', yrs >= CAL_FROM), (f'{split}–{last}', yrs >= split)):
+            sig_[name][lab] = {str(m): week_stats(net[ys & (month == m)], 4) for m in range(1, 13)}
+            gross_[name][lab] = {str(m): week_stats(gross[ys & (month == m)], 4) for m in range(1, 13)}
+    out['signals'] = {'by_month': sig_, 'gross_by_month': gross_, 'periods': [f'{CAL_FROM}–{last}', f'{split}–{last}']}
+    return out
+
+
+def company_season(c, spy, days, since=CAL_FROM):
+    """A company's own months: its simple return against SPY in each calendar month since `since` (its own history),
+    the mean, the share above SPY and the years."""
+    ri, rs = month_returns(c, days), month_returns(spy, days)
+    rel = {k: (1 + v) / (1 + rs[k]) - 1 for k, v in ri.items() if k in rs and int(k[:4]) >= since}
+    m = by_month(rel)
+    return {'m': [m.get(str(j), {}).get('mean') for j in range(1, 13)], 'up': [m.get(str(j), {}).get('up') for j in range(1, 13)],
+            'n': [m.get(str(j), {}).get('n', 0) for j in range(1, 13)], 'from': min(rel)[:4] if rel else None}
+
+
 # ------------------------------------------------------------------ lines and inputs
 def moving(X, k):
-    """Simple average of the last k weeks (NaN unless all k are there)."""
-    if X.shape[1] < k:
-        return np.full(X.shape, np.nan)
-    w = swv(np.concatenate([np.full((X.shape[0], k - 1), np.nan), X], 1), k, axis=1)
+    """Simple average of the last k weeks (NaN unless all k are there), from running sums (no rows × weeks × k array)."""
+    L, W = X.shape
+    out = np.full((L, W), np.nan)
+    if W < k:
+        return out
+    f = np.isfinite(X)
+    c = np.concatenate([np.zeros((L, 1)), np.cumsum(np.where(f, X, 0.0), 1)], 1)
+    n = np.concatenate([np.zeros((L, 1), np.int64), np.cumsum(f, 1)], 1)
     with np.errstate(invalid='ignore'):
-        return np.where(np.isfinite(w).all(2), w.mean(2), np.nan)
+        out[:, k - 1:] = np.where(n[:, k:] - n[:, :-k] == k, (c[:, k:] - c[:, :-k]) / k, np.nan)
+    return out
 
 
 def own_median_log(X, win=PE_WINDOW, need=PE_MIN):
@@ -651,9 +955,11 @@ def costs(C, V):
     return out
 
 
-def inputs(A, Lns, mz=None):
+def inputs(A, Lns, mz=None, extra=None):
     """The ranked inputs; with mz ({reading: z-score per week on its own past}) also the trend inputs × each reading
-    (the trend's weight allowed to move with the macro: the 'ma_macro' model)."""
+    (the trend's weight allowed to move with the macro: the 'ma_macro' model); with extra ({name: raw array}: the own
+    season 'seas13' / 'seas26', the distance's own percentile 'hd_pct' and its extremes 'hd_ext') those, ranked, missing
+    as the average; and always the trend and the reversal × the year's cycle (sine and cosine of the day of the year)."""
     P, EPS = A['P'], A['EPS']
     with np.errstate(invalid='ignore', divide='ignore'):
         lP = np.log(P)
@@ -664,14 +970,23 @@ def inputs(A, Lns, mz=None):
     Z = {}
     for k, X in raw.items():
         if k == 'guid':
-            Z[k] = np.where(ok, X, np.nan)
+            Z[k] = np.where(ok, X, np.nan).astype(np.float32)
             continue
-        z = HY.xs_z(X, ok).astype(np.float64)
-        Z[k] = z if k in ('tr40', 'tr10_40', 'rev4') else np.where(ok & ~np.isfinite(z), 0.0, z)   # missing: the average
+        z = HY.xs_z(X, ok).astype(np.float32)                         # kept in float32; the fits run in float64
+        Z[k] = z if k in ('tr40', 'tr10_40', 'rev4') else np.where(ok & ~np.isfinite(z), np.float32(0), z)   # missing: the average
     for k, zm in (mz or {}).items():
-        m = np.where(np.isfinite(zm), zm, 0.0)[None]                  # before a reading has three years: no tilt
-        Z[f'tr40x{k}'] = np.where(ok, Z['tr40'] * m, np.nan)
-        Z[f'tr10x{k}'] = np.where(ok, Z['tr10_40'] * m, np.nan)
+        m = np.where(np.isfinite(zm), zm, 0.0).astype(np.float32)[None]   # before a reading has three years: no tilt
+        Z[f'tr40x{k}'] = np.where(ok, Z['tr40'] * m, np.float32(np.nan))
+        Z[f'tr10x{k}'] = np.where(ok, Z['tr10_40'] * m, np.float32(np.nan))
+    ang = year_angle(A['days'])
+    for k in ('tr40', 'rev4'):                                        # the year's cycle: the weight may wax and wane
+        for name, fn in (('sin', np.sin), ('cos', np.cos)):
+            Z[f'{k}_{name}'] = np.where(ok, Z[k] * fn(ang).astype(np.float32)[None], np.float32(np.nan))
+    for k, X in (extra or {}).items():
+        raw[k] = X
+        z = HY.xs_z(X, ok).astype(np.float32)
+        Z[k] = np.where(ok & ~np.isfinite(z), np.float32(0), z)
+    raw = {k: v.astype(np.float32) for k, v in raw.items()}
     return raw, Z, ok
 
 
@@ -689,10 +1004,10 @@ def walk_forward(days, Z, ok, Ydm, cols, h):
             continue
         y = Ydm[tr]
         lo, hi = np.quantile(y, WINSOR)
-        X = np.stack([Z[c][tr] for c in cols], 1)
+        X = np.stack([Z[c][tr] for c in cols], 1).astype(np.float64)
         m = HY.ridge(X, np.clip(y, lo, hi), RIDGE)
         te = ok & (yrs == Y)[None]
-        F[te] = HY.ridge_predict(m, np.stack([Z[c][te] for c in cols], 1))
+        F[te] = HY.ridge_predict(m, np.stack([Z[c][te] for c in cols], 1).astype(np.float64))
         coefs[Y] = {c: r_(b / s, 6) for c, b, s in zip(cols, m['b'], m['sd'])}
     return F, coefs
 
@@ -757,7 +1072,7 @@ def hybrid_log(lns, w, g, G):
     return base + np.log1p(g * np.where(np.isfinite(G), G, 0.0))
 
 
-def evaluate(days, A, lns, raw, Z, ok, cost, verbose=lambda *a: None):
+def evaluate(days, A, lns, raw, Z, ok, cost, verbose=lambda *a: None, t_keep=None):
     yrs = years_of(days)
     rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
     out = {'models': {}, 'rules': {}, 'lines': {}, 'picks': {}, 'coefs': {}, 'ic_by_year': {}, 'net_by_year': {}}
@@ -768,6 +1083,7 @@ def evaluate(days, A, lns, raw, Z, ok, cost, verbose=lambda *a: None):
         Ydm = HY.demean(Y, ok)
         out['models'][str(h)], out['coefs'][str(h)], out['ic_by_year'][str(h)], out['net_by_year'][str(h)] = {}, {}, {}, {}
         for name, cols in MODELS.items():
+            cols = [c.replace('{h}', str(h)) for c in cols]           # the own season is the horizon's own
             if not all(c in Z for c in cols):                         # no macro file: no macro model
                 continue
             F, coefs = walk_forward(days, Z, ok, Ydm, cols, h)
@@ -778,7 +1094,7 @@ def evaluate(days, A, lns, raw, Z, ok, cost, verbose=lambda *a: None):
                                               if np.isfinite(ic[yrs == Yr]).sum() >= 10}
             out['net_by_year'][str(h)][name] = {str(Yr): r_(np.nanmean(net[yrs == Yr]), 4) for Yr in range(TEST_FROM, int(yrs[-1]) + 1)
                                                if np.isfinite(net[yrs == Yr]).sum() >= 10}
-            F_now[(h, name)] = F
+            F_now[(h, name)] = F[:, t_keep].copy() if t_keep is not None else F   # only this week's are used later
             s0 = out['models'][str(h)][name][list(periods(days))[0]]
             verbose(f"ma hybrid {h}w {name}: IC {(s0['ic'] or {}).get('mean')}, best − worst fifth after costs {(s0['net'] or {}).get('mean')}")
         out['rules'][str(h)] = {}
@@ -823,24 +1139,31 @@ def ndays_eval(days, A, ok, cost, dg=None):
     returns against SPY after costs. 'weekly': from 2016, each N-day average in its weekly form (the N/5-week average of
     weekly closes; none for 5 days), the same companies and weeks for every length. 'daily' (dg: the daily signals on
     the grid): exactly, on daily closes, from the first Friday with every average behind it — with the weekly form on
-    the same companies and weeks beside it, to show what the weekly form misses."""
+    the same companies and weeks beside it, to show what the weekly form misses. One signal at a time (memory)."""
     rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
     nanw = np.full(len(days), np.nan)
     wl = lambda n: int(round(n / 5))
     with np.errstate(divide='ignore', invalid='ignore'):
         lP = np.log(A['P'])
-        lm = {k: np.log(moving(A['P'], k)) for k in sorted({wl(n) for n in NDAYS + sum(CROSSES, ()) if wl(n) >= 2})}
-    wk = {f'above:{n}': lP - lm[wl(n)] for n in NDAYS if wl(n) >= 2}
-    wk.update({f'cross:{a}/{b}': lm[wl(a)] - lm[wl(b)] for a, b in CROSSES if wl(a) >= 2})
-    common = ok & np.isfinite(wk['above:250'])
+        lm = {k: np.log(moving(A['P'], k)).astype(np.float32) for k in sorted({wl(n) for n in NDAYS + sum(CROSSES, ()) if wl(n) >= 2})}
+    names = [f'above:{n}' for n in NDAYS if wl(n) >= 2] + [f'cross:{a}/{b}' for a, b in CROSSES if wl(a) >= 2]
+
+    def weekly_form(name):
+        kind, spec = name.split(':')
+        if kind == 'above':
+            return (lP - lm[wl(int(spec))]).astype(np.float32)
+        a, b = (int(x) for x in spec.split('/'))
+        return lm[wl(a)] - lm[wl(b)]
+    common = ok & np.isfinite(weekly_form('above:250'))
     out = {'n': list(NDAYS), 'crosses': [list(c) for c in CROSSES], 'weeks_for': {str(n): wl(n) for n in NDAYS if wl(n) >= 2},
-           'weekly': {}, 'daily': None}
+           'weekly': {str(h): {} for h in HORIZONS}, 'daily': None}
     Ys = {h: HY.fwd_sum(rel, h) for h in HORIZONS}
-    for h in HORIZONS:
-        out['weekly'][str(h)] = {}
-        for name, X in wk.items():
+    for name in names:
+        X = weekly_form(name)
+        for h in HORIZONS:
             _, net, gross = per_week(X, Ys[h], common, cost, 'sign')
             out['weekly'][str(h)][name] = summarize(days, h, nanw, net, gross)
+        del X
     if dg:
         has = ok & np.isfinite(dg['above:250']) & np.isfinite(dg[f'cross:{CROSSES[-1][0]}/{CROSSES[-1][1]}'])
         cover = has.sum(0)
@@ -850,21 +1173,25 @@ def ndays_eval(days, A, ok, cost, dg=None):
             sl = slice(t0, None)
             P = sub_periods(days, t0)
             D = {'from': str(days[t0]), 'companies': int(np.median(cover[good])), 'periods': list(P), 'to': {}}
+            last = {h: None for h in HORIZONS}
             for h in HORIZONS:
                 D[str(h)] = {}
-                last = None
-                for name, X in dg.items():
+            for name, X in dg.items():
+                Xw = weekly_form(name)[:, sl] if name in names else None
+                for h in HORIZONS:
                     _, net, gross = per_week(X[:, sl], Ys[h][:, sl], has[:, sl], cost[:, sl], 'sign')
                     same = None
-                    if name in wk:                            # the weekly form on the same companies and weeks
-                        _, sn, _ = per_week(wk[name][:, sl], Ys[h][:, sl], has[:, sl] & np.isfinite(wk[name][:, sl]), cost[:, sl], 'sign')
+                    if Xw is not None:                       # the weekly form on the same companies and weeks
+                        _, sn, _ = per_week(Xw, Ys[h][:, sl], has[:, sl] & np.isfinite(Xw), cost[:, sl], 'sign')
                         same = week_stats(sn, h)
                     D[str(h)][name] = {'periods': {p: {'net': week_stats(net[m], h), 'gross': week_stats(gross[m], h)} for p, m in P.items()},
                                        'weekly_form': same}
                     f = np.where(np.isfinite(net))[0]
                     if len(f):
-                        last = max(last or 0, int(f[-1]) + t0)
-                D['to'][str(h)] = str(days[last]) if last is not None else None
+                        last[h] = max(last[h] or 0, int(f[-1]) + t0)
+                del Xw
+            for h in HORIZONS:
+                D['to'][str(h)] = str(days[last[h]]) if last[h] is not None else None
             out['daily'] = D
     return out
 
@@ -978,6 +1305,12 @@ def macro_state(regimes, index):
 
 
 # ------------------------------------------------------------------ now
+def fnow(F_now, h, name, t):
+    """A model's forecasts this week (evaluate keeps only this week's column; a full matrix is read at week t)."""
+    a = F_now[(h, name)]
+    return a[:, t] if a.ndim == 2 else a
+
+
 def pct_rank(v, ok):
     out = np.full(len(v), np.nan)
     m = ok & np.isfinite(v)
@@ -1006,9 +1339,12 @@ def with_daily(row, daily):
 
 def current_rows(days, A, lns, raw, ok, F_now, t, val=None, mdna=None, daily=None):
     rows = []
-    s_ma, s_hy = F_now[(26, 'ma')][:, t], F_now[(26, 'hybrid')][:, t]
-    s_mm = F_now[(26, 'ma_macro')][:, t] if (26, 'ma_macro') in F_now else np.full(len(s_ma), np.nan)
+    s_ma, s_hy = fnow(F_now, 26, 'ma', t), fnow(F_now, 26, 'hybrid', t)
+    s_of = lambda name: fnow(F_now, 26, name, t) if (26, name) in F_now else np.full(len(s_ma), np.nan)
+    s_mm, s_tm, s_ds = s_of('ma_macro'), s_of('ma_time'), s_of('ma_dist')
     p_ma, p_hy, p_mm = pct_rank(s_ma, ok[:, t]), pct_rank(s_hy, ok[:, t]), pct_rank(s_mm, ok[:, t])
+    p_tm, p_ds = pct_rank(s_tm, ok[:, t]), pct_rank(s_ds, ok[:, t])
+    hp = raw['hd_pct'][:, t] + 0.5 if 'hd_pct' in raw else np.full(len(s_ma), np.nan)
     lHd = hybrid_log(lns, DEFAULT[0], DEFAULT[1], A['G'])[:, t]
     for i, tk in enumerate(A['ids']):
         if not ok[i, t]:
@@ -1023,7 +1359,9 @@ def current_rows(days, A, lns, raw, ok, F_now, t, val=None, mdna=None, daily=Non
                      'hybrid': sig(math.exp(lHd[i])) if fin(lHd[i]) else None,
                      'gap40': r_(raw['tr40'][i, t], 4), 'gap_hybrid': r_(math.log(P) - lHd[i], 4) if fin(lHd[i]) and fin(P) else None,
                      's_ma': r_(s_ma[i], 5), 's_hybrid': r_(s_hy[i], 5), 'pct_ma': r_(p_ma[i], 3), 'pct_hybrid': r_(p_hy[i], 3),
-                     's_macro': r_(s_mm[i], 5), 'pct_macro': r_(p_mm[i], 3),
+                     's_macro': r_(s_mm[i], 5), 'pct_macro': r_(p_mm[i], 3), 's_time': r_(s_tm[i], 5), 'pct_time': r_(p_tm[i], 3),
+                     's_dist': r_(s_ds[i], 5), 'pct_dist': r_(p_ds[i], 3), 'hd_pct': r_(hp[i], 3),
+                     'seas13': r_(raw['seas13'][i, t], 4) if 'seas13' in raw else None, 'seas26': r_(raw['seas26'][i, t], 4) if 'seas26' in raw else None,
                      'sue': r_(raw['sue'][i, t], 2), 'srg': r_(raw['srg'][i, t], 4)})
         rows[-1]['val'], rows[-1]['mdna'] = snapshot(val or {}, mdna or {}, tk, P)
         with_daily(rows[-1], daily)
@@ -1035,7 +1373,8 @@ def series_file(days, A, lns, i, t, row=None):
     week's numbers from its row (P/E, its own median, the models' percentiles)."""
     lo = max(0, t - SERIES_WEEKS + 1)
     pick = lambda a: [sig(v) for v in a[i, lo:t + 1]]
-    now = {k: row.get(k) for k in ('pe', 'pe_med', 'pct_ma', 'pct_hybrid', 'pct_macro', 's_ma', 's_hybrid', 's_macro', 'sue', 'srg', 'val', 'mdna')} if row else None
+    now = {k: row.get(k) for k in ('pe', 'pe_med', 'pct_ma', 'pct_hybrid', 'pct_macro', 'pct_time', 'pct_dist', 's_ma', 's_hybrid', 's_macro', 'hd_pct',
+                                   'seas13', 'seas26', 'sue', 'srg', 'val', 'mdna')} if row else None
     return {'id': A['ids'][i], 'name': A['meta'][A['ids'][i]]['name'], 'start': str(days[lo]), 'p': pick(A['P']), 'ma10': pick(lns['ma10']),
             'ma40': pick(lns['ma40']), 'el': pick(lns['el']), 'g': [None if not fin(v) else int(v) for v in A['G'][i, lo:t + 1]],
             'guidance': A['meta'][A['ids'][i]]['guidance'], 'now': now}
@@ -1045,7 +1384,7 @@ def series_file(days, A, lns, i, t, row=None):
 def ledger_update(book, days, t, A, lns, raw, ok, F_now, val=None, mdna=None, macro=None):
     asof = str(days[t])
     rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
-    m = ok[:, t] & np.isfinite(F_now[(26, 'hybrid')][:, t])
+    m = ok[:, t] & np.isfinite(fnow(F_now, 26, 'hybrid', t))
     if m.sum() > LEDGER_MAX_LINES:
         dv = np.where(m, A['C'][:, t] * np.nan_to_num(A['V'][:, max(0, t - 12):t + 1]).mean(1), -np.inf)
         m = np.zeros_like(m)
@@ -1056,8 +1395,8 @@ def ledger_update(book, days, t, A, lns, raw, ok, F_now, val=None, mdna=None, ma
     for h in HORIZONS:
         if len(idx):
             FB.freeze(book, f'ma:{h}', asof, asof, {'ids': [A['ids'][i] for i in idx],
-                                                   's_ma': [r_(v, 5) for v in F_now[(h, 'ma')][idx, t]],
-                                                   's_hybrid': [r_(v, 5) for v in F_now[(h, 'hybrid')][idx, t]],
+                                                   's_ma': [r_(v, 5) for v in fnow(F_now, h, 'ma', t)[idx]],
+                                                   's_hybrid': [r_(v, 5) for v in fnow(F_now, h, 'hybrid', t)[idx]],
                                                    'gap40': [r_(v, 4) for v in raw['tr40'][idx, t]],
                                                    'gap_el': [r_(v, 4) for v in gap_el[idx]],
                                                    'guid': [int(v) for v in raw['guid'][idx, t]],
@@ -1066,7 +1405,11 @@ def ledger_update(book, days, t, A, lns, raw, ok, F_now, val=None, mdna=None, ma
                                                    'p_above': [((val or {}).get(A['ids'][i]) or {}).get('mc_p_above') for i in idx],
                                                    'p_implied': [((val or {}).get(A['ids'][i]) or {}).get('p_implied') for i in idx],
                                                    'mdna_tone': [((mdna or {}).get(A['ids'][i]) or {}).get('tone') for i in idx],
-                                                   's_macro': [r_(v, 5) for v in F_now[(h, 'ma_macro')][idx, t]] if (h, 'ma_macro') in F_now else None,
+                                                   's_macro': [r_(v, 5) for v in fnow(F_now, h, 'ma_macro', t)[idx]] if (h, 'ma_macro') in F_now else None,
+                                                   's_time': [r_(v, 5) for v in fnow(F_now, h, 'ma_time', t)[idx]] if (h, 'ma_time') in F_now else None,
+                                                   's_dist': [r_(v, 5) for v in fnow(F_now, h, 'ma_dist', t)[idx]] if (h, 'ma_dist') in F_now else None,
+                                                   'hd_pct': [r_(v + 0.5, 3) for v in raw['hd_pct'][idx, t]] if 'hd_pct' in raw else None,
+                                                   'seas': [r_(v, 4) for v in raw[f'seas{h}'][idx, t]] if f'seas{h}' in raw else None,
                                                    'macro': macro},
                       meta={'model': f'ma_hybrid v{VERSION}'})
         ix = {k: i for i, k in enumerate(A['ids'])}
@@ -1086,7 +1429,7 @@ def ledger_scores(book):
     out = {}
     for fam in sorted(book.get('families') or {}):
         ents = FB.entries(book, fam, resolved=True)
-        ics, ls, ab, extra = [], [], [], {k: [] for k in ('dcf_gap', 'p_above', 'mdna_tone', 's_ma', 's_macro')}
+        ics, ls, ab, extra = [], [], [], {k: [] for k in ('dcf_gap', 'p_above', 'mdna_tone', 's_ma', 's_macro', 's_time', 's_dist', 'seas')}
         for _, e in ents:
             f, y = e['forecast'], (e['actual'] or {}).get('rel') or []
             for k in extra:                                       # the recorded valuation, odds, MD&A tone and the other models, ranked
@@ -1188,9 +1531,14 @@ def build(public, fundamentals, guidance=None, ledger=None, today=None, verbose=
                         x09[:mac['weekly_from']] = np.nan
                         mz[f'{k}_09'] = expanding(x09)[2]
             flags = macro_flags(mac)
-        raw, Z, ok = inputs(A, lns, mz)
+        rel = np.diff(np.log(A['C']), axis=1, prepend=np.nan) - np.diff(np.log(A['spy']), prepend=np.nan)[None]
+        hd0 = np.log(A['P']) - hybrid_log(lns, DEFAULT[0], DEFAULT[1], A['G'])      # the distance to the default line
+        pc0 = own_pct(hd0, int(np.searchsorted(years_of(days), FIT_FROM - 1)))
+        extra = {'seas13': seasonal(rel, 13), 'seas26': seasonal(rel, 26), 'hd_pct': pc0 - 0.5, 'hd_ext': (2 * pc0 - 1) ** 3}
+        raw, Z, ok = inputs(A, lns, mz, extra)
         cost = costs(A['C'], A['V'])
-        ev, F_now = evaluate(days, A, lns, raw, Z, ok, cost, log)
+        ev, F_now = evaluate(days, A, lns, raw, Z, ok, cost, log, t_keep=t)
+        del Z                                                # the ranked inputs are not needed past the models
         ev['guidance_events'] = guidance_events(days, A, ok)
         val, mdna, mev = load_extras(A, valuation, outlook)
         ev['mdna_events'] = mdna_events(days, A, ok, mev) if mev else None
@@ -1201,13 +1549,21 @@ def build(public, fundamentals, guidance=None, ledger=None, today=None, verbose=
         if mac:
             ev['macro'] = {'regimes': macro_regimes(days, A, raw, ok, cost, mac, ex, t) if ex else None,
                            'index': index_timing(public, days, mac, flags, t) if flags else None, 'generated_at': mac.get('generated_at')}
+        ev['distance'] = distance_eval(days, A, lns, ok, cost, log, pre={f'{DEFAULT[0]:g}|{DEFAULT[1]:g}': pc0})
+        ev['calendar'] = calendar_eval(days, A, raw, ok, cost, mac)
+        ev['seasonal'] = {}
+        for h in HORIZONS:                                   # the own season alone: best − worst fifth, after costs
+            ic, net, gross = per_week(raw[f'seas{h}'], HY.fwd_sum(rel, h), ok, cost, 'fifths')
+            ev['seasonal'][str(h)] = summarize(days, h, ic, net, gross)
         rows = current_rows(days, A, lns, raw, ok, F_now, t, val, mdna, daily)
     pub = Path(public)
     (pub / 'ma').mkdir(parents=True, exist_ok=True)
     keep, by_id = set(), {r['id']: r for r in rows}
     for i, tk in enumerate(A['ids']):
         if ok[i, t]:
-            (pub / 'ma' / f'{tk}.json').write_text(json.dumps(clean(series_file(days, A, lns, i, t, by_id.get(tk))), separators=(',', ':')), encoding='utf-8')
+            sf = series_file(days, A, lns, i, t, by_id.get(tk))
+            sf['season'] = company_season(A['C'][i], A['spy'], days)
+            (pub / 'ma' / f'{tk}.json').write_text(json.dumps(clean(sf), separators=(',', ':')), encoding='utf-8')
             keep.add(f'{tk}.json')
     for f in (pub / 'ma').glob('*.json'):                  # a company no longer liquid: its file goes
         if f.name not in keep:
