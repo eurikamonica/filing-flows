@@ -3669,7 +3669,10 @@
             set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Before ${fmtD(first)}:</b> start earlier and the ${esc(ix)} is reconstructed quarter by quarter — its members${hist ? ' at the time' : ' (today’s: the site keeps this index’s membership only from Oct 2026)'} ${wt}, as the Sector weights video does; marked “reconstructed” on the video. Prices on the site begin in 1993. ${back}`, '1993-06-30', hi);
             return;
           }
-          set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Max:</b> ${maxTxt}`, lo, hi);
+          // an index fund typed as an ETF: its index can reach back before the reports (Index mode)
+          const ixOf = Object.entries(root.FFActual.TRACKERS).find(([k, v]) => v[1] === sym && IDX[k]);
+          const viaIdx = ixOf ? `<br>Its index before ${fmtD(lo || NPORT0)}: <button type="button" class="pill" data-recon-index="${ixOf[0]}">${esc(IDX[ixOf[0]])} from 1999, reconstructed</button>` : '';
+          set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Max:</b> ${maxTxt}${viaIdx}`, lo, hi);
         } else if (st.aw === '13f') {
           const cik = String(st.ac || '').replace(/\D/g, '').replace(/^0+/, '');
           if (!cik) { set('Type a manager’s CIK to see the quarters on file.'); return; }
@@ -3726,6 +3729,8 @@
       if (e.target.closest('[data-range-all]')) { st.from = ''; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
       const rf = e.target.closest('[data-range-from]');
       if (rf) { st.from = rf.dataset.rangeFrom; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
+      const ri = e.target.closest('[data-recon-index]');
+      if (ri) { st.aw = 'index'; st.at = ri.dataset.reconIndex; st.from = '1999-12-31'; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
       const yb = e.target.closest('[data-yrs]');
       if (yb) { st.from = iso(Date.now() - (+yb.dataset.yrs) * 365.25 * DAY); st.to = ''; st.yrs = ''; side(); rebuild(); }
       const sb = e.target.closest('[data-speed]');
