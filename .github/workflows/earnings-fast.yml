@@ -179,6 +179,9 @@ jobs:
     needs: build
     if: needs.build.outputs.published == 'true' && vars.PAGES_DEPLOY != 'off'
     runs-on: ubuntu-latest
+    concurrency:                       # one GitHub Pages deployment at a time, across scan.yml and earnings-fast.yml
+      group: github-pages-deploy       # (Pages refuses a second one: "due to in progress deployment")
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
