@@ -83,9 +83,11 @@
     return out;
   }
 
+  // a script of the hub's page: downloaded in parallel with the others, run in the page's order (async = false)
   const script = (src) => new Promise((ok, bad) => {
     const el = document.createElement('script');
     el.src = src;
+    el.async = false;
     el.onload = () => ok();
     el.onerror = () => bad(new Error(src + ' did not load'));
     document.head.appendChild(el);
@@ -119,7 +121,7 @@
     // the scripts in the page's order; the site's own (../) are loaded already
     const list = [...doc.querySelectorAll('script[src]')].map((s) => s.getAttribute('src') || '').filter((s) => s && !/^(\.\.\/|https?:|\/\/)/.test(s));
     box.classList.add('hub-loading');
-    for (const s of list) await script(HUB + s);
+    await Promise.all(list.map((s) => script(HUB + s)));    // ~80 files: one after the other took ~8 s on the live site
     box.classList.remove('hub-loading');
     // links the hub writes for its own page (./#x, disclosures/#x) open here
     box.addEventListener('click', (e) => {
@@ -147,6 +149,7 @@
     if (!ready) ready = load().catch((e) => { ready = null; throw e; });
     if (!box) { app.hidden = false; app.innerHTML = '<div class="page-head"><p class="muted">Loading Disclosures…</p></div>'; }
     await ready;
+    if (ctx && ctx.here && !ctx.here()) return null;        // the reader went on to another page while the hub loaded
     app.hidden = true;
     box.hidden = false;
     const tab = title(h);
