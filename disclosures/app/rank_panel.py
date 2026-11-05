@@ -35,6 +35,10 @@ the studio). stats.check in meta.json reports how many agreed within 10% before 
 A month's value is left out when it cannot be right (see plausible: a missing reverse split blows a micro cap up to
 hundreds of billions, but not its trading); stats.implausible counts them.
 
+A company whose SEC registrant changed (a new holding company: ExxonMobil 2025, Alphabet 2015, Disney 2019; a redomicile:
+Medtronic, Eaton, Linde; a merger into a new issuer: Oracle 2006, Comcast 2002) carries the counts of the registrants
+before it (cover_shares.PREDECESSORS), each where its last count meets the next one's within 2.5× (stats.predecessors).
+
 Survivorship: today's companies only — names that were delisted, merged or went bankrupt are missing from earlier
 leaderboards; the studio says so on the video.
 """
@@ -43,6 +47,11 @@ import json
 import math
 import urllib.request
 from pathlib import Path
+
+try:
+    from cover_shares import PREDECESSORS          # the registrants before a company's (a new holding company …)
+except ImportError:                                 # noqa: E722 — run from elsewhere: no chains
+    PREDECESSORS = {}
 
 NASDAQ = 'https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true'
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
@@ -223,6 +232,37 @@ def with_cover(dei, root, cik):
     return sorted([(d, v) for d, v in old if d < cut] + dei)
 
 
+def carried(cik, chain, dei, wavg, eps_sh, root=None):
+    """A company's share counts and, before them, those of the registrants it succeeded (chain, oldest first:
+    cover_shares.PREDECESSORS — a new holding company, a redomicile, a merger into a new issuer), each registrant's only
+    where its last count meets the next one's first within 2.5× and 400 days (weighted averages where both have them:
+    they count every class). → (cover counts, weighted averages, net income ÷ EPS, [[cik, ratio or None], …])"""
+    d = with_cover(dei.get(cik), root, cik)
+    w, e = sorted(wavg.get(cik) or []), sorted(eps_sh.get(cik) or [])
+    used = []
+    for p in reversed(chain):
+        dp = with_cover(dei.get(p), root, p)
+        wp = sorted(wavg.get(p) or []) or sorted(eps_sh.get(p) or [])
+        first = min([x[0] for x in d[:1] + w[:1] + e[:1]], default=None)
+        if not first:
+            break
+        wa_p, cov_p, wa_s = [x for x in wp if x[0] < first][-1:], [x for x in dp if x[0] < first][-1:], (w or e)[:1]
+        pair = next(((x, y) for x, y in ((wa_p, wa_s), (cov_p, d[:1]), (wa_p, d[:1]), (cov_p, wa_s)) if x and y), None)
+        if not pair:
+            used.append([p, None])
+            break
+        (a,), (b,) = pair
+        ratio = b[1] / a[1] if a[1] else 0
+        if (dt.date.fromisoformat(b[0]) - dt.date.fromisoformat(a[0])).days > 400 or not 0.4 <= ratio <= 2.5:
+            used.append([p, None])                     # not the same company's count: the chain stops here
+            break
+        d = [x for x in dp if x[0] < first] + d
+        w = [x for x in sorted(wavg.get(p) or []) if x[0] < first] + w
+        e = [x for x in sorted(eps_sh.get(p) or []) if x[0] < first] + e
+        used.append([p, round(ratio, 2)])
+    return d, w, e, used
+
+
 def asof(points, day, stale=400):
     """The last (date, value) on or before `day` — None when older than `stale` days."""
     best = None
@@ -343,7 +383,11 @@ def build(out_dir, companies, docs, frames_root=None, today=None, names=None, na
         cap = [None] * len(grid)
         ev = doc.get('ev')
         n_now = caps[t][0] / caps[t][1] if t in caps else None
-        sh = share_history(with_cover(dei.get(cik), frames_root, cik), wavg.get(cik), (ev or {}).get('split'), eps_sh.get(cik), now=n_now) if cik else []
+        chain = [str(int(p)) for p in PREDECESSORS.get(t, ()) if str(int(p)) != cik]
+        d_, w_, e_, used = carried(cik, chain, dei, wavg, eps_sh, frames_root) if cik else ([], [], [], [])
+        if used:
+            stats.setdefault('predecessors', []).append([t] + used)
+        sh = share_history(d_, w_, (ev or {}).get('split'), e_, now=n_now) if cik else []
         if ev is None:
             stats['splits_unknown'] += 1
         else:

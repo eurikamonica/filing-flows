@@ -142,5 +142,26 @@ class Build(unittest.TestCase):
         self.assertEqual(eq[0][1], 2000)
 
 
+class Predecessors(unittest.TestCase):
+    def test_a_new_registrant_carries_the_old_ones_counts(self):
+        dei = {'2': [('2015-10-25', 690e6), ('2016-01-25', 688e6)],                    # the new holding company
+               '1': [('2009-04-25', 300e6), ('2015-07-25', 680e6)],                    # the registrant before it
+               '9': [('2009-04-25', 30e9)]}                                            # not the same company's count
+        wavg = {'2': [('2015-12-31', 691e6)], '1': [('2015-06-30', 685e6)]}
+        d, w, e, used = R.carried('2', ['1'], dei, wavg, {})
+        self.assertEqual([x[0] for x in d], ['2009-04-25', '2015-07-25', '2015-10-25', '2016-01-25'])
+        self.assertEqual([x[0] for x in w], ['2015-06-30', '2015-12-31'])
+        self.assertEqual(used, [['1', 1.01]])
+        d, w, e, used = R.carried('2', ['9'], dei, wavg, {})
+        self.assertEqual(([x[0] for x in d], used), (['2015-10-25', '2016-01-25'], [['9', None]]))
+        d, w, e, used = R.carried('2', ['5', '1'], dei, wavg, {})                     # one with no counts ends the chain
+        self.assertEqual([x[0] for x in d][:1], ['2009-04-25'])
+        self.assertEqual(used, [['1', 1.01], ['5', None]])
+        dei['3'] = [('2005-03-01', 250e6), ('2008-12-01', 280e6)]
+        d, w, e, used = R.carried('2', ['3', '1'], dei, wavg, {})                     # oldest first, each meeting the next
+        self.assertEqual([x[0] for x in d][:3], ['2005-03-01', '2008-12-01', '2009-04-25'])
+        self.assertEqual(R.PREDECESSORS['GOOGL'], [1288776])
+
+
 if __name__ == '__main__':
     unittest.main()
