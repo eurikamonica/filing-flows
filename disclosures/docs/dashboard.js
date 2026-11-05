@@ -89,13 +89,13 @@ function bindDashboard(){
  document.querySelectorAll('[data-open-kind]').forEach(b=>b.onclick=()=>{
   const kind=b.dataset.openKind,id=b.dataset.openId;
   if(kind==='holdings')state.manager=id;
-  else if(kind==='congress'){state.creport=id;const r=data().modules.congress.reports.find(r=>r.report_id===id);state.person=r?.person;state.ckind=r?.report_type==='PTR'?'transaction':'asset'}
+  else if(kind==='congress'){const set=()=>{state.creport=id;const r=(data().modules.congress.reports||[]).find(r=>r.report_id===id);state.person=r?.person;state.ckind=r?.report_type==='PTR'?'transaction':'asset'};if(ensureLazy('congress',()=>{set();render()}))set()}   // the list may still be loading (live.js leaves it out)
   else if(kind==='banks'){state.cert=id;state.date=''}
   else if(kind==='cot'){const r=data().modules.cot.series.find(r=>r.id===id);state.market=r.dataset+'|'+r.code;state.date='';state.from='';state.to=''}
-  else if(kind==='npx'){state.filing=data().modules.npx.filings.find(f=>Number(f.cik)===Number(id))?.accession||'';state.query='';state.direction=''}
+  else if(kind==='npx'){const set=()=>{state.filing=(data().modules.npx.filings||[]).find(f=>Number(f.cik)===Number(id))?.accession||'';state.query='';state.direction=''};if(ensureLazy('npx',()=>{set();render()}))set()}
   navigate(kind);
  });
- if($('npx-more'))$('npx-more').onclick=()=>loadMoreVotes(data().modules.npx.filings.find(f=>f.accession===state.filing));
+ if($('npx-more'))$('npx-more').onclick=()=>loadMoreVotes((data().modules.npx.filings||[]).find(f=>f.accession===state.filing));
  document.querySelectorAll('[data-security]').forEach(b=>{b.onclick=()=>{state.security=b.dataset.security;render();$('security')?.scrollIntoView?.({block:'center',behavior:'smooth'})};b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();b.onclick()}}});
 }
 function navigate(tab){state.tab=tab;state.page=0;document.querySelectorAll('nav button[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);b.setAttribute('aria-pressed',String(b.dataset.tab===tab))});render()}

@@ -223,9 +223,24 @@ function npx(){
  return out;
 }
 function status(){return health()}
+/* live.js leaves the long lists only their own tabs show in files of their own (a module's _lazy: {field: path};
+   app/core.py page_copy): loaded the first time a tab asks for one, then the tab is drawn again */
+const LAZY_FOR={congress:'congress',review:'congress',npx:'npx'},lazyLoads=new Map();
+function lazyNeed(){if(state.mode==='demo')return null;return LAZY_FOR[state.tab]||(state.tab==='directory'&&(state.dtype==='congress'||state.dtype==='npx')?state.dtype:null)}
+function ensureLazy(kind,then){
+ const m=data().modules[kind],want=m&&m._lazy?Object.keys(m._lazy):[];
+ if(!want.length)return true;
+ if(m._lazyError)return false;
+ if(!lazyLoads.has(kind))lazyLoads.set(kind,Promise.all(want.map(f=>fetch('data/'+m._lazy[f]).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(v=>{m[f]=Array.isArray(v)?v:[];delete m._lazy[f]})))
+  .catch(e=>{m._lazyError=String(e&&e.message||e)}).then(()=>{lazyLoads.delete(kind)}));
+ lazyLoads.get(kind).then(()=>{if(then&&!m._lazyError)then();else render()});
+ return false;
+}
 function render(){
  baseRender();exported=[];
  tipData.length=0;
+ const need=lazyNeed();
+ if(need&&!ensureLazy(need)){const m=data().modules[need]||{};$('workspace').innerHTML=m._lazyError?empty(`This list did not load (${m._lazyError}). Refresh the page to try again.`):`<div class="loading-lazy">${empty(need==='congress'?"Loading the officials' reports…":'Loading the N-PX filings…')}</div>`;return}
  $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView,valuation:valView,filings:filingsView,maps:mapsView,...(window.HUB_VIEWS||{})}[state.tab]||window[state.tab+'View']||status)();
  fast13fRefresh();
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');

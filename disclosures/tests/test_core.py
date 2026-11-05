@@ -163,6 +163,27 @@ class DataTests(unittest.TestCase):
             self.assertTrue((p/'live.js').read_text().startswith('window.DISCLOSURE_LIVE'))
             self.assertEqual(read_json(p/'live.json',{})['mode'],'official')
 
+    def test_the_page_copy_leaves_the_long_lists_to_their_tabs(self):
+        """live.js (every visit to the hub) without the officials' reports, the N-PX filings and the attempt logs;
+        live.json (the collectors' state) with everything."""
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp)
+            data={'mode':'official','modules':{'congress':{'reports':[{'report_id':'house-1','person':'A'}],'counts':{'discovered_reports':1}},
+                  'npx':{'filings':[{'accession':'x'}]},'holdings':{'managers':[{'cik':'1'}],'attempts':[{'cik':'1','at':'t'}]},'cot':{'series':[]}}}
+            publish(p,data)
+            full=read_json(p/'live.json',{})
+            self.assertEqual(full['modules']['congress']['reports'][0]['report_id'],'house-1')
+            self.assertEqual(len(full['modules']['holdings']['attempts']),1)
+            js=(p/'live.js').read_text()
+            page=json.loads(js[js.index('{'):js.rindex('}')+1])
+            c=page['modules']['congress']
+            self.assertEqual((c['reports'],c['reports_count'],c['_lazy']),([],1,{'reports':'lazy/congress-reports.json'}))
+            self.assertEqual(read_json(p/'lazy'/'congress-reports.json',None),[{'report_id':'house-1','person':'A'}])
+            self.assertEqual(page['modules']['npx']['_lazy'],{'filings':'lazy/npx-filings.json'})
+            self.assertNotIn('attempts',page['modules']['holdings'])
+            self.assertEqual(page['modules']['holdings']['managers'],[{'cik':'1'}])            # what every tab needs: as before
+            self.assertEqual(data['modules']['congress']['reports'][0]['person'],'A')          # the caller's data untouched
+
     def test_missing_contact_stops_sec_request(self):
         with tempfile.TemporaryDirectory()as tmp,patch.dict(os.environ,{'SEC_USER_AGENT':''}):
             with self.assertRaises(ValueError):Client(tmp,{}).get('https://data.sec.gov/test',sec=True)

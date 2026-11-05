@@ -34,6 +34,32 @@ def money(v):
     return seo.money(v) if v is not None else "—"
 
 
+_PEOPLE = None
+
+
+def person_of(cik):
+    """the investor a fund is known by, from the hub's watch list ("Scion Asset Management (Michael Burry)" in
+    disclosures/config/settings.json): people search "Michael Burry 13F", not the filer's name"""
+    global _PEOPLE
+    if _PEOPLE is None:
+        _PEOPLE = {}
+        try:
+            cfg = json.load(open(os.path.join(os.path.dirname(__file__), "..", "disclosures", "config", "settings.json"), encoding="utf-8"))
+            for r in (cfg.get("holdings") or {}).get("managers", []) + (cfg.get("holdings") or {}).get("watch", []):
+                mm = re.search(r"\(([^()]+)\)\s*$", r.get("name") or "")
+                if mm and r.get("cik"):
+                    _PEOPLE[str(r["cik"]).lstrip("0")] = mm.group(1).strip()
+        except (OSError, ValueError):
+            pass
+    return _PEOPLE.get(str(cik or "").lstrip("0"))
+
+
+def quarter_of(day):
+    """'2026-06-30' → 'Q2 2026' (a 13F's quarter), else ''"""
+    mm = re.fullmatch(r"(\d{4})-(\d{2})-\d{2}", str(day or ""))
+    return f"Q{(int(mm.group(2)) - 1) // 3 + 1} {mm.group(1)}" if mm else ""
+
+
 def manager_name(m):
     """a 13F filer's name as the filing writes it ('BNP PARIBAS FINANCIAL MARKETS', 'BERKSHIRE HATHAWAY INC'), cased"""
     return seo._names.cased(m.get("name") or "")
@@ -85,8 +111,12 @@ def manager_page(m, base):
     name, slug = manager_name(m), m["slug"]
     url = f"{base}/m/{slug}/"
     c = m.get("clone") or {}
-    title = f"{name} 13F portfolio: top holdings, latest changes and a copy-the-13F backtest | Filing Flows"
-    desc = (f"{seo.poss(name)} 13F for the quarter ended {m['period']} (filed {seo.fdate(m['filed'])}): {seo.n_of(m['positions'], 'common-share position')}, "
+    who, qtr = person_of(m.get("cik")), quarter_of(m.get("period"))
+    # the words of the search: "Michael Burry 13F", "Berkshire 13F Q3 2026" (the quarter changes the day a new 13F is read)
+    short = re.sub(r",?\s+(?:LLC|L\.L\.C\.|L\.?P\.?|Inc\.?|Ltd\.?|Limited|Co\.?)$", "", name, flags=re.I)        # "Scion Asset Management"
+    title = (f"{who} 13F Portfolio ({short}){' ' + qtr if qtr else ''}: Holdings, Buys and Sells" if who else
+             f"{name} 13F Portfolio{' ' + qtr if qtr else ''}: Top Holdings, Buys and Sells")
+    desc = ((f"{seo.poss(who)} fund. " if who else "") + f"{seo.poss(name)} 13F for the quarter ended {m['period']} (filed {seo.fdate(m['filed'])}): {seo.n_of(m['positions'], 'common-share position')}, "
             f"{money(m['aum'])} reported. "
             + (f"Copying each 13F the day after it was filed returned {pct(c.get('total'))} from {seo.fdate(c.get('start'))} to "
                f"{seo.fdate(c.get('end'))}, against {pct(c.get('spy_total'))} for SPY." if c.get("total") is not None else ""))
@@ -102,7 +132,7 @@ def manager_page(m, base):
               f"{pct(rec.get('hit'), False)} were on the right side of SPY over the next three months (Disclosures → Smart money).</p>"
               if rec.get("scored") else "")
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../">13F managers</a> › {e(name)}</p>
-<h1>{e(name)}: 13F portfolio and what copying it returned</h1>
+<h1>{e(name)}{(" (" + e(who) + ")") if who else ""}: 13F portfolio{(" " + e(qtr)) if qtr else ""} and what copying it returned</h1>
 <p class="lead">{e(desc)}</p>
 <div class="seo-tiles">{tiles}</div>
 <h2>Copying the 13F</h2>
@@ -123,7 +153,7 @@ no costs). A 13F lists only US long positions at quarter end, reported up to 45 
 <p><a class="seo-cta" href="../../disclosures/#people/m-{e(m['cik'])}">Open in Disclosures →</a> <span class="muted">every quarter, the clone month by month, the smart-money record</span></p>
 <p class="muted">Source: SEC Form 13F-HR, filer CIK {e(m['cik'])}. Not investment advice.</p>"""
     ld = {"@context": "https://schema.org", "@graph": [
-        {"@type": "Organization", "name": name, "url": url, "identifier": f"SEC CIK {m['cik']}"},
+        {"@type": "Organization", "name": name, "url": url, "identifier": f"SEC CIK {m['cik']}", **({"founder": {"@type": "Person", "name": who}} if who else {})},
         {"@type": "BreadcrumbList", "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Filing Flows", "item": base + "/"},
             {"@type": "ListItem", "position": 2, "name": "13F managers", "item": base + "/m/"},

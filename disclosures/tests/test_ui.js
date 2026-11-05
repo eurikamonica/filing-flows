@@ -25,7 +25,7 @@ context.window.DISCLOSURE_LIVE=live;
 // the page's own scripts, in its order (docs/index.html), so a new view is tested as soon as the page loads it
 const PAGE_SCRIPTS=[...fs.readFileSync(path.join(root,'docs','index.html'),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]).filter(f=>f!=='data/live.js'&&!f.startsWith('../'));   // ../nav.js: the site's shared menu, not part of the hub
 for(const f of PAGE_SCRIPTS)vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
-let checks=0;
+let checks=0,lazyChecks=Promise.resolve();
 const derivedFresh=vm.runInContext("derivedMarketNotice('signals',{holdings:{updated_at:'2026-10-18T21:32:54Z'},congress:{updated_at:'2026-10-20T01:00:00Z'}},{signals:{data:{generated_at:'2026-10-21T04:15:47Z'}}},Date.parse('2026-10-21T04:41:00Z'))",context);
 assert.equal(derivedFresh.stale,false);
 assert.ok(derivedFresh.text.includes('Generated 2026-10-21T04:15:47Z'));
@@ -45,6 +45,27 @@ for(const mode of ['official','demo'])for(const tab of ['holdings','congress','r
 for(const mode of ['official','demo'])for(const kind of ['holdings','congress','cot','banks','npx']){
  vm.runInContext(`state.mode='${mode}';state.tab='directory';state.dtype='${kind}';state.dq='';state.dstatus='';render()`,context);
  assert.ok(elements.get('workspace').innerHTML.includes('Search results'));checks++;
+}
+// live.js leaves the officials' reports to their tab (app/core.py page_copy): the tab shows that it is loading, fetches
+// data/lazy/congress-reports.json once, and is drawn again with them
+{
+ const C=context.window.DISCLOSURE_LIVE.modules.congress;
+ if(C){
+  const saved=C.reports,savedFetch=context.fetch,asked=[];
+  C.reports=[];C._lazy={reports:'lazy/congress-reports.json'};
+  context.fetch=(u)=>{asked.push(u);return Promise.resolve({ok:true,json:async()=>saved})};
+  vm.runInContext(`state.mode='official';state.tab='congress';state.page=0;render()`,context);
+  assert.ok(elements.get('workspace').innerHTML.includes("Loading the officials"),'the congress tab says it is loading: '+elements.get('workspace').innerHTML.slice(0,200));checks++;
+  lazyChecks=(async()=>{
+   for(let i=0;i<5&&C._lazy&&C._lazy.reports;i++)await new Promise(r=>setTimeout(r,0));
+   assert.deepEqual(asked,['data/lazy/congress-reports.json']);
+   assert.equal(C.reports,saved);assert.ok(!C._lazy.reports,'loaded once');
+   await new Promise(r=>setTimeout(r,0));
+   assert.ok(!elements.get('workspace').innerHTML.includes("Loading the officials"),'drawn again with the reports');
+   vm.runInContext(`render()`,context);assert.equal(asked.length,1,'not fetched again');
+   context.fetch=savedFetch;checks+=4;
+  })();
+ }
 }
 assert.equal(vm.runInContext(`esc('<img src=x onerror="bad">')`,context),'&lt;img src=x onerror=&quot;bad&quot;&gt;');checks++;
 assert.equal(vm.runInContext(`csvCell('=HYPERLINK("bad")')`,context),'"\'=HYPERLINK(""bad"")"');checks++;
@@ -294,7 +315,19 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   html=run(`rrgView()`);
   for(const want of ['Inside the 80% range','rrgl-pit','forecasts of EWJ, frozen every week','independent'])assert.ok(html.includes(want),`the backtest lacks “${want}”`);
   assert.ok(!/NaN|undefined|Infinity/.test(html),'the backtest shows NaN/undefined');
-  run(`state.rrgsolo='';state.rrgfz='';state.rrgbtopen=false`);
+  // rolling frozen forecasts: one frozen every week; the window's +1 / +2 scores, the chart's markers, the table and CSV
+  run(`state.rrgsolo='EWJ';state.rrgfz='';state.rrgbtopen=false;state.rrgroll='1,2';state.rrgrollw='26';state.rf=ROT.ctx.Q.length-1`);html=run(`rrgView()`);
+  for(const want of ['Rolling frozen forecasts · EWJ · +1 week and +2 weeks','Inside the 80% range','rrgl-roll-now','rrgl-roll-trk','rrgl-roll-ahead','rrgl-roll-chart','missed by','Forecast frozen 2 weeks before (+2)','rrglrollcsv','Play 26 weeks'])
+   assert.ok(html.includes(want),`rolling freeze lacks “${want}”`);
+  assert.ok(!html.includes('id="rrgfzb"'),'rolling: no single freeze button');
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'rolling freeze shows NaN/undefined');
+  {const csv=run(`RRGL.rollcsv`);assert.ok(csv.length>=26&&csv.some(r=>r.h1_miss!=null&&r.h2_miss!=null&&typeof r.h1_inside_80==='boolean'),'the rolling CSV');}
+  // each week's +1 is the forecast frozen the week before, its +2 the one frozen two weeks before
+  {const day=d=>Date.parse(d+'T00:00:00Z')/864e5,csv=run(`RRGL.rollcsv`).filter(r=>r.h1_frozen&&r.h2_frozen);
+   assert.ok(csv.length>20&&csv.every(r=>day(r.week)-day(r.h1_frozen)===7&&day(r.week)-day(r.h2_frozen)===14),'the rolling rows: frozen one and two weeks before');}
+  run(`state.rrgroll='4,13';state.rrgrollw='13'`);html=run(`rrgView()`);
+  assert.ok(html.includes('+4 weeks and +13 weeks')&&!/NaN|undefined|Infinity/.test(html),'other horizons');
+  run(`state.rrgsolo='';state.rrgfz='';state.rrgbtopen=false;state.rrgroll=''`);
   run(`state.rrgf='d';state.rrgu='site'`);
   assert.ok(run(`rrgView()`).includes('weekly only'),'site sectors on the daily chart: explained');
   // the Rotation research view from a server file (the browser's own research has the server's shape)

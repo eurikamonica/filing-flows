@@ -94,6 +94,14 @@ jobs:
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}   # a secret keeps the email out of public logs
     steps:
+      # The checkout, the data store and the built site (114,000 pages) filled the runner's disk on Nov 5, 2026 (the hub
+      # being copied into the site: "No space left on device", no site deployed). The runner's Android SDK, .NET, Haskell
+      # and CodeQL, which no step uses, are ~25 GB.
+      - name: Free disk space
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost || true
+          df -h / | tail -1
       # The repository is ~9 GB, ~7 GB of it the hub's 13F quarter files and N-PX vote records, which the site build
       # never reads (stage-public.py serves them from raw.githubusercontent.com): leave them out, ~7 min → ~1 min.
       - uses: actions/checkout@v4

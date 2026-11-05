@@ -586,12 +586,14 @@ def event_pages(site, base, L, evs, ES=None):
     """one page per material 8-K: what the item means, the company's own words, the company's figures and its other events"""
     evs = sorted(evs, key=lambda r: (r.get('filed') or '', r.get('accession') or ''), reverse=True)
     by_co, by_topic, urls = {}, {}, []
-    same_day = {}
+    same_day, same_hl = {}, {}
+    hl_of = lambda r: (lambda hl: hl[:48].rsplit(' ', 1)[0] if len(hl) > 48 else hl)(re.sub(r'\s+', ' ', r.get('headline') or '').strip())
     for r in evs:
         r['_slug'] = r.get('slug') or event_slug(r, L)
         by_co.setdefault(str(r.get('cik')), []).append(r)
         k = (str(r.get('cik')), r.get('filed'), (r.get('topics') or [r.get('code')])[0])
         same_day[k] = same_day.get(k, 0) + 1
+        same_hl[k + (hl_of(r),)] = same_hl.get(k + (hl_of(r),), 0) + 1
         for t in r.get('topics') or ['other']:
             by_topic.setdefault(t, []).append(r)
     for r in evs:
@@ -603,9 +605,10 @@ def event_pages(site, base, L, evs, ES=None):
             kind = ITEMS.get(r.get('code')) or (ITEMS.get(its[0]) if its else '8-K')
             topic = TOPIC.get((r.get('topics') or [None])[0], kind)
             title = f"{name}{' (' + tk + ')' if tk else ''} 8-K, {fdate(r.get('filed'))}: {topic.lower() if topic != kind else kind.lower()}"
-            if same_day.get((str(r.get('cik')), r.get('filed'), (r.get('topics') or [r.get('code')])[0]), 0) > 1:   # two filings that day on the same subject: tell them apart
-                hl = re.sub(r'\s+', ' ', r.get('headline') or '').strip()
-                title += f" — {hl[:48].rsplit(' ', 1)[0] if len(hl) > 48 else hl}" if hl else f" (items {', '.join(its) or r.get('code') or ''}, {str(r.get('accession') or '')[-6:]})"
+            k = (str(r.get('cik')), r.get('filed'), (r.get('topics') or [r.get('code')])[0])
+            if same_day.get(k, 0) > 1:                   # two filings that day on the same subject: tell them apart
+                hl = hl_of(r)                            # by the headline, or by the filing when the headlines are the same
+                title += f" — {hl}" if hl and same_hl.get(k + (hl,), 0) < 2 else f" (items {', '.join(its) or r.get('code') or ''}, {str(r.get('accession') or '')[-6:]})"
             body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>8-K events</a> › {e(name)}</p>"
                     f"<h1>{e(name)}: {e(kind.lower())}</h1><p class='muted'>Form {e(r.get('form') or '8-K')} filed {e(fdate(r.get('filed')))} · items "
                     f"{e(', '.join(its) or '—')}</p>")

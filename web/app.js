@@ -4238,14 +4238,23 @@
 
   // ---------- a company the site has no chart for yet (found by the search) ----------
   let secList = null;
+  let secAlias = {};
   function secCompanies() {                          // [cik, ticker, name] for every company on SEC's ticker list
-    if (!secList) secList = getJSON('companies.json').then((d) => d.companies || []).catch(() => { secList = null; return []; });
+    if (!secList) secList = getJSON('companies.json').then((d) => { secAlias = d.alias || {}; return d.companies || []; }).catch(() => { secList = null; return []; });
     return secList;
   }
   async function cikForTicker(tk) {                  // BRK.B, BRK/B and BRK-B are the same ticker; SEC writes BRK-B
     const norm = (x) => String(x || '').toUpperCase().replace(/[./\s]+/g, '-');
     const want = norm(tk), all = await secCompanies();
     const hit = all.find((x) => norm(x[1]) === want) || all.find((x) => norm(x[1]).replace(/-/g, '') === want.replace(/-/g, ''));
+    if (hit) return hit[0];
+    const k = Object.keys(secAlias).find((a) => norm(a) === want || norm(a).replace(/-/g, '') === want.replace(/-/g, ''));
+    return k ? secAlias[k] : null;                   // another class of the same company: GOOG → Alphabet, BRK-A → Berkshire
+  }
+  async function etfForTicker(tk) {                  // a fund (the Disclosure Hub's ETF list, data/search.json)
+    const want = String(tk || '').toUpperCase().replace(/[./\s]+/g, '-');
+    const sx = await getJSON('search.json').catch(() => null);
+    const hit = ((sx && sx.etfs) || []).find((r) => String(r[0] || '').toUpperCase() === want);
     return hit ? hit[0] : null;
   }
   async function askForCompany(cik) {
@@ -5565,7 +5574,14 @@
       if ((m = /^t-(.+)$/.exec(h))) {                    // a ticker link from the disclosures hub: open that company's page
         const cik = await cikForTicker(m[1]);
         if (!here()) return;
-        if (!cik) throw new Error(`No SEC-registered company has the ticker ${m[1].toUpperCase()}`);
+        if (!cik) {                                      // a fund: its page in the Disclosure Hub
+          const etf = await etfForTicker(m[1]);
+          if (!here()) return;
+          if (etf) { location.replace('disclosures/#etf/' + encodeURIComponent(etf)); return; }
+          const e = new Error(`No company or fund on SEC's ticker list has the ticker ${m[1].toUpperCase()}: it may trade over the counter, have changed its ticker or have been delisted`);
+          e.plain = true;
+          throw e;
+        }
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
@@ -5598,7 +5614,7 @@
       if (acct.flash) { toast(acct.flash); acct.flash = null; }
     } catch (err) {
       if (!here()) return;
-      app.innerHTML = `<div class="page-head"><h1>Not available</h1><p class="muted">${t(err.message)}. The data may not have been generated yet; the scan runs every 15 minutes.</p><p><a href="#home">Back to the latest filings</a></p></div>`;
+      app.innerHTML = `<div class="page-head"><h1>Not available</h1><p class="muted">${t(err.message)}.${err.plain ? ' Search for it by name at the top of the page.' : ' The data may not have been generated yet; the scan runs every 15 minutes.'}</p><p><a href="#home">Back to the latest filings</a></p></div>`;
     }
   }
   let lastPage = null;

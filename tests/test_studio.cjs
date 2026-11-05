@@ -458,6 +458,77 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     V.style = 'hist'; V.endCard = true; for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 5, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t);
     n++;
   }
+  // the newest month or week, before the data is in: each price history is refreshed every few days, so early in a month
+  // only the companies refreshed since it began reach it (the top 10 most traded stocks of November 2026 were INO, HBAN…)
+  {
+    S.resetPanel();
+    const months = 140, R = 'disclosures/data/market/history/rank/', T = 'disclosures/data/market/history/t/';
+    const cos = Array.from({ length: 12 }, (_, j) => ['K' + j, 'K' + j + ' Widgets', j % 3 ? 'technology' : 'financials']);
+    const full = (f) => [0, ...Array.from({ length: months }, (_, i) => f(i))], short = (f) => [0, ...Array.from({ length: months - 1 }, (_, i) => f(i))];
+    const capOf = (j) => (i) => (j === 11 ? 1e3 + 3.5e5 * Math.max(0, i - 120) / 18 : 1e4 * (12 - j) * (1 + i / 100));   // K11 climbs from last to first
+    files[R + 'meta.json'] = { generated_at: '2021-08-04T20:00:00+00:00', months: { start: '2010-01', n: months }, quarters: [], cos, cap_now: cos.map(() => 1e4) };
+    files[R + 'm-cap.json'] = { rows: cos.map((_, j) => (j < 2 ? full : short)(capOf(j))) };            // August 2021: two of twelve
+    files[R + 'm-dv.json'] = { rows: cos.map((_, j) => (j < 2 ? full : short)((i) => 100 * (12 - j) + i)) };
+    files[R + 'm-px.json'] = { rows: cos.map((_, j) => (j < 2 ? full : short)((i) => 10 + j + i / 10)) };
+    let V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '10', from: '2020-01-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 6, 31) && [...V.notes].some((x) => /^Aug 2021 is left out: only 2 of 12 companies/.test(x)), 'a month two of twelve companies have reached is left out: ' + [...V.notes].join(' | '));
+    ok(/→ Jul 2021/.test(V.sub), 'the subtitle ends at the last month shown: ' + V.sub);
+    S.finish(V, V);
+    ok(V.final.length === 10 && V.final[0].label === '1. K11', 'the end card: all ten, the climber first: ' + V.final.map((r) => r.label));
+    // drawn: every place on the end card, the places 1–10 fixed at the left, no two tickers printed over each other
+    const rec = [], rctx = new Proxy({ canvas: { width: 1920, height: 1080 }, globalAlpha: 1 }, {
+      get(o, k) {
+        if (k in o) return o[k];
+        if (k === 'fillText') return (t, x, y) => rec.push([String(t), x, y, o.globalAlpha]);
+        if (k === 'measureText') return (s) => ({ width: String(s).length * 12 });
+        if (k === 'createLinearGradient' || k === 'createRadialGradient') return () => ({ addColorStop() {} });
+        return () => {};
+      },
+      set(o, k, v) { o[k] = v; return true; },
+    });
+    for (const [w, h] of [[1920, 1080], [1080, 1920], [1080, 1080]]) {
+      rec.length = 0; V.endCard = true; S.draw(rctx, w, h, V, { theme: 'terminal', dur: 12 }, 11.95);
+      ok(rec.filter((r) => /^\d+\. K\d+$/.test(r[0])).length === 10, `the end card lists the ten (${w}×${h}): ` + rec.filter((r) => /^\d+\. /.test(r[0])).map((r) => r[0]));
+    }
+    V.endCard = false;
+    const tick = new Set(cos.map((c) => c[0]));
+    let close = 0, frames = 0;
+    for (let t = 0.3; t < 11.9; t += 0.04) {
+      rec.length = 0; S.draw(rctx, 1920, 1080, V, { theme: 'terminal', dur: 12 }, t); frames++;
+      const places = rec.filter((r) => /^\d+$/.test(r[0]) && +r[0] >= 1 && +r[0] <= 10);
+      ok(places.length === 10 && new Set(places.map((r) => r[0])).size === 10 && places.every((r, i) => i === 0 || r[2] > places[i - 1][2]), 'the places 1–10, once each, top to bottom, at ' + t.toFixed(2));
+      const lab = rec.filter((r) => tick.has(r[0]) && r[3] >= 0.5).map((r) => r[2]).sort((a, b) => a - b);
+      for (let i = 1; i < lab.length; i++) if (lab[i] - lab[i - 1] < 27) close++;
+    }
+    ok(close === 0 && frames > 200, `no two tickers printed over each other (${close} too close in ${frames} frames)`);
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'dv', top: '10', from: '2020-01-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 6, 31) && /weekly volume × close/.test(V.sub), 'dollar volume: the thin month left out');
+    // every company reached August, but on August 4 the month is not over: no month of trading yet
+    S.resetPanel(); files[R + 'm-dv.json'] = { rows: cos.map((_, j) => full((i) => 100 * (12 - j) + i)) };
+    files[R + 'm-cap.json'] = { rows: cos.map((_, j) => full(capOf(j))) };
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'dv', top: '10', from: '2020-01-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 6, 31) && [...V.notes].some((x) => /^Aug 2021 is left out: the month is not over yet\.$/.test(x)), 'dollar volume: a month still running is left out: ' + [...V.notes].join(' | '));
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '10', from: '2020-01-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 7, 31), 'market value: a month every company has reached is shown (the latest closes)');
+    // weekly: a history fetched on a Monday night has that week's Monday only — its dollar volume is not the week's
+    const tw = (j, asof) => ({ t: 'K' + j, start: '2021-01-01', c: Array.from({ length: 35 }, (_, i) => 10 + j + i / 50), v: Array.from({ length: 35 }, () => 1000 * (12 - j)), ...(asof ? { asof } : {}) });
+    cos.forEach((c, j) => { files[T + c[0] + '.json'] = tw(j, j < 2 ? '2021-08-28T05:00:00+00:00' : '2021-08-24T03:00:00+00:00'); });
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'dv', top: '10', step: 'w', from: '2021-03-01', to: '2021-08-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 7, 20) && [...V.notes].some((x) => /^The last 2 weeks are left out/.test(x)), 'weekly dollar volume ends at the last week most histories have in full: ' + new Date(V.grid[V.grid.length - 1]).toISOString().slice(0, 10) + ' | ' + [...V.notes].join(' | '));
+    S.finish(V, V); ok(V.endTitle === 'Dollar volume traded · week to Aug 20, 2021', 'a weekly leaderboard\'s end card names the week: ' + V.endTitle);
+    cos.forEach((c, j) => { files[T + c[0] + '.json'] = tw(j, null); });
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'dv', top: '10', step: 'w', from: '2021-03-01', to: '2021-08-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 7, 20), 'without the fetch time, a history\'s last week is not counted as full');
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'ret', win: '1', top: '10', step: 'w', from: '2021-03-01', to: '2021-08-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 7, 27), 'weekly returns use the latest close, whatever the volume: ' + new Date(V.grid[V.grid.length - 1]).toISOString().slice(0, 10));
+    // the map and the mix: a month two of twelve have reached is no picture of the market
+    S.resetPanel(); files[R + 'm-cap.json'] = { rows: cos.map((_, j) => (j < 2 ? full : short)(capOf(j))) };
+    V = await S.build(Object.assign(S.parseState('k=treemap'), { tn: '10', from: '2020-01-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 6, 31) && [...V.notes].some((x) => /^Aug 2021 is left out/.test(x)), 'the map ends at the last month most companies reached');
+    V = await S.build(Object.assign(S.parseState('k=sectors'), { from: '2020-01-31' }));
+    ok(V.grid[V.grid.length - 1] === Date.UTC(2021, 6, 31), 'sector weights end at the last month most companies reached');
+    S.resetPanel();
+  }
   // drawdowns and monthly returns
   {
     let V = await S.build(Object.assign(S.parseState('k=drawdown'), { t: 'AAA,BBB', from: start }));

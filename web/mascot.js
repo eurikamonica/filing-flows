@@ -104,6 +104,42 @@
     for (const w of s.match(/\b[a-z][a-z.\-]{1,5}\b/g) || []) { const u = w.toUpperCase(); if (!STOP.has(u) && !WORDS.has(w) && byT.has(u)) return byT.get(u); }   // "nvda"
     return null;
   }
+  // a ticker of a company the site has not processed (not in index.json): SEC's ticker list (data/companies.json, the
+  // search's list: [cik, ticker, name]) names it, so the answer is about that company and never about the page's one.
+  // Only a cashtag or a capitalised token counts ("NUCL latest SEC filings"); lower-case words are too often words.
+  const ACRONYMS = new Set(['SEC', 'FCF', 'ROE', 'ROA', 'ROIC', 'GAAP', 'EBIT', 'EBITDA', 'USD', 'AI', 'IPO', 'CPI', 'FOMC', 'GDP', 'FED', 'LBO', 'CAPEX', 'OPEX', 'SBC',
+    'YTD', 'TTM', 'FY', 'QOQ', 'MOM', 'ATH', 'ATL', 'OTC', 'NYSE', 'NASDAQ', 'ADR', 'REIT', 'MLP', 'SPAC', 'ESG', 'API', 'FAQ', 'PDF', 'CSV', 'URL', 'UTC', 'EST', 'PST', 'USA', 'US',
+    'UK', 'EU', 'CN', 'HK', 'JP', 'KPI', 'NAV', 'AUM', 'PTR', 'NT', 'LOI', 'MOU', 'IR', 'PR', 'CFTC', 'FINRA', 'FDIC', 'IRS', 'DOJ', 'FTC', 'FDA', 'EPA', 'NPX', 'XBRL']);
+  let SECL = null, SECA = {};
+  const secList = () => SECL || (SECL = json(DATA + 'companies.json').then((d) => { SECA = (d && d.alias) || {}; return d && Array.isArray(d.companies) ? d.companies : []; }));
+  async function findOther(q, ix) {
+    const s = String(q || '').replace(/\b(?:P\/[EBS]|EV\/(?:EBITDA|S(?:ales)?)|S&P(?: 500)?|Q&A)\b/gi, ' ');
+    const cash = (s.match(/\$([A-Za-z][A-Za-z.\-]{0,6})\b/g) || []).map((x) => x.slice(1).toUpperCase());
+    const caps = (s.match(/\b[A-Z][A-Z0-9.\-]{0,5}\b/g) || []).filter((w) => !STOP.has(w) && !ACRONYMS.has(w) && !WORDS.has(w.toLowerCase()) && !/^\d/.test(w));
+    const want = [...cash, ...caps];
+    if (!want.length) return null;
+    const norm = (x) => String(x || '').toUpperCase().replace(/[./\s]+/g, '-');
+    const known = new Set(((ix && ix.companies) || []).map((c) => norm(c.ticker)));
+    const all = await secList();
+    for (const w of want) {
+      if (known.has(norm(w))) continue;
+      let hit = all.find((x) => norm(x[1]) === norm(w));
+      if (!hit && SECA[norm(w)]) {                       // another share class (GOOG, BRK-A): the company itself
+        const cik = +SECA[norm(w)], on = ((ix && ix.companies) || []).find((c) => +c.cik === cik);
+        if (on) return on;
+        hit = all.find((x) => +x[0] === cik);
+      }
+      if (hit) return { cik: +hit[0], ticker: String(hit[1]), name: String(hit[2] || hit[1]), uncovered: true };
+    }
+    return null;
+  }
+  // what the Disclosure Hub has seen of a company lately (its alert feed: 8-Ks, news; disclosures/data/market/flo-alerts.json)
+  async function hubSeen(c) {
+    const f = await json(HUB + 'market/flo-alerts.json?t=' + Math.floor(Date.now() / 120000));   // read again every two minutes, like flo-alerts.js
+    const ev = ((f && f.events) || []).filter((e) => e && e.kind !== 'price' && (e.ticker === c.ticker || (Array.isArray(e.symbols) && e.symbols.includes(c.ticker))
+      || (c.cik && new RegExp('/edgar/data/0*' + (+c.cik) + '/').test(String(e.source_url || '')))) && /^https:\/\/(?:www\.)?sec\.gov\//.test(String(e.source_url || '')));
+    return ev.sort((a, b) => String(b.event_at || '').localeCompare(String(a.event_at || ''))).slice(0, 5);
+  }
   const pageCik = () => { const m = /^#c-(\d+)/.exec((root.location && root.location.hash) || ''); return m ? +m[1] : null; };
 
   /* ---------- the page it is on: default questions and the greeting follow it ---------- */
@@ -306,11 +342,22 @@
     const qs = ((d && d.quarters) || []).filter(q =>
       q && /^10-[KQ](?:\/A)?$/i.test(String(q.form || '')) &&
       /^\d{4}-\d{2}-\d{2}/.test(String(q.filed || '')));
+    // the filings the Disclosure Hub has seen lately (8-Ks and the news it reads), newest first
+    const seen = await hubSeen(c).catch(() => []);
+    const seenHtml = seen.length ? '<ul class="flo-seen">' + seen.map((e) => '<li><b>' + esc(e.form || String(e.kind || '').toUpperCase()) + '</b> · ' + esc(String(e.filed || e.event_at || '').slice(0, 10)) +
+      ' · ' + esc(e.title || '') + ((e.topics || []).length ? ' <span class="muted">(' + esc(e.topics.join(', ')) + ')</span>' : '') + '</li>').join('') + '</ul>' : '';
+    const seenFacts = seen.map((e) => (e.form || e.kind) + ' filed ' + String(e.filed || e.event_at || '').slice(0, 10) + ': ' + (e.title || ''));
+    seen.slice(0, 2).forEach((e) => links.unshift([e.source_url, (e.form || 'Filing') + ' · ' + String(e.filed || e.event_at || '').slice(0, 10)]));
+    const who = esc(c.ticker) + (c.uncovered && c.name ? ' (' + esc(c.name) + ')' : '');
     if (!qs.length) {
+      if (c.uncovered) links.push([BASE + '#c-' + c.cik, L(lg, 'Its page on Filing Flows (ask for it to be built)', 'Filing Flows 公司页（可申请收录）')]);
       const html = L(lg,
-        'I cannot verify ' + esc(c.ticker) + "'s latest SEC filing from this site's published reports. Check the live EDGAR link. A 10-K/10-Q is not necessarily the newest SEC submission.",
-        '目前网站发布的数据无法核实 ' + esc(c.ticker) + ' 最新的 SEC 申报。请通过 EDGAR 实时页面查看；最新 10-K/10-Q 不一定是最新 SEC 文件。');
-      return {html, facts:[], mood:'think', links};
+        (c.uncovered ? who + ' is not one of the companies with financial statements on Filing Flows yet, so there is no processed 10-K / 10-Q to quote. '
+          : "I cannot verify " + who + "'s latest SEC filing from this site's published reports. ") +
+        (seen.length ? 'Filings the Disclosure Hub has seen lately:' + seenHtml : '') + 'For every form, newest first, open SEC EDGAR below.',
+        (c.uncovered ? who + ' 还不在 Filing Flows 已处理财报的公司之列，没有可引用的 10-K / 10-Q。' : '目前网站发布的数据无法核实 ' + who + ' 最新的 SEC 申报。') +
+        (seen.length ? 'Disclosure Hub 最近看到的申报：' + seenHtml : '') + '要按时间查看所有表格，请打开下方 SEC EDGAR 链接。');
+      return {html, facts: [c.ticker + (c.uncovered ? ' (' + c.name + ') has no processed 10-K/10-Q on Filing Flows.' : ': no processed 10-K/10-Q found.'), ...seenFacts], mood:'think', links, company: c};
     }
     qs.sort((a,b)=> String(b.filed).localeCompare(String(a.filed)) ||
       String(b.label || '').localeCompare(String(a.label || '')));
@@ -320,15 +367,16 @@
     links.push([BASE + '#c-' + c.cik, L(lg, 'Filing Flows: financial statements', 'Filing Flows 财报页面')]);
     const facts = [c.ticker + ' latest processed financial filing: ' + q.form +
       ', quarter ' + (q.label || 'unknown') + ', filed ' + q.filed +
-      '. All-form latest SEC submission NOT verified from this cache.'];
+      '. All-form latest SEC submission NOT verified from this cache.', ...seenFacts];
     const html = L(lg,
       'The most recent <b>10-K/10-Q in Filing Flows</b> for <b>' + esc(c.ticker) +
       '</b> is <b>' + esc(q.form) + '</b> (' + esc(q.label || 'period unavailable') +
       '), filed <b>' + esc(q.filed) +
-      '</b>. This is the latest <em>processed financial report</em>, not necessarily the newest SEC filing overall. For newer 8-K, Form 4, 144 or other submissions, check the live SEC EDGAR link.',
+      '</b>. This is the latest <em>processed financial report</em>, not necessarily the newest SEC filing overall.' +
+      (seen.length ? ' Newer filings the Disclosure Hub has seen:' + seenHtml : '') + ' For newer 8-K, Form 4, 144 or other submissions, check the live SEC EDGAR link.',
       '<b>' + esc(c.ticker) + '</b> 在 Filing Flows 已处理的最新 <b>10-K/10-Q</b> 是 <b>' +
       esc(q.form) + '</b>（' + esc(q.label || '报告期间未知') + '），于 <b>' + esc(q.filed) +
-      '</b> 提交。这只是网站处理过的最新<b>财务定期报告</b>，不代表 SEC 所有表格中最新的一份。要查看更新的 8-K、Form 4、144 等，请打开 SEC EDGAR 实时页面。');
+      '</b> 提交。这只是网站处理过的最新<b>财务定期报告</b>，不代表 SEC 所有表格中最新的一份。' + (seen.length ? 'Disclosure Hub 最近看到的更新申报：' + seenHtml : '') + '要查看更新的 8-K、Form 4、144 等，请打开 SEC EDGAR 实时页面。');
     return {html, facts, mood:'talk', links};
   }
 
@@ -441,7 +489,9 @@
   async function ask(q, ixArg, ctxCo) {
     q = String(q || '');
     const lg = lang(q), ix = ixArg || await index(), cls = classify(q);
-    let co = findCompany(q, ix) || ctxCo || null;
+    // a ticker the site has not processed ("NUCL latest SEC filings" from an 8-K alert): that company, not the page's
+    const other = findCompany(q, ix) ? null : await findOther(q, ix).catch(() => null);
+    let co = findCompany(q, ix) || other || ctxCo || null;
     // Same-page alert intelligence (only on explicit ask-for-updates intent);
     // leave ordinary 8-K and company filing lookups on the established handlers.
     // Exact-interval intraday scans are sourced from a separate authenticated
@@ -506,11 +556,11 @@
       const R = insightHandlers();
       const onPage = !!pageCik();                                   // the company of the page, not the last one talked about
       const mkt = mine.filter((k) => R.MK[k]);
-      const fz = named ? null : IN.fuzzyCompany(q, ix, WORDS);       // "appel short interest" is about Apple; "most shorted stocks" is not
+      const fz = named || other ? null : IN.fuzzyCompany(q, ix, WORDS);   // "appel short interest" is about Apple; "most shorted stocks" is not; "NUCL …" is NUCL
       // a screen, what follows an 8-K and whether insider trades predict anything are about the market by nature: a
       // word that also spells a company ("momentum" → Momentus) does not turn them into a company question
       const marketOnly = !named && mkt.some((k) => ['screen', 'afterEvent', 'insiderSignal'].includes(k));
-      if ((mkt.length || R.STAKES.test(q)) && (marketOnly || IN.isMarket(q, named || (IN.marketWords(q) ? null : fz), onPage))) {
+      if (!other && (mkt.length || R.STAKES.test(q)) && (marketOnly || IN.isMarket(q, named || (IN.marketWords(q) ? null : fz), onPage))) {
         const keys = mkt.length ? mkt.slice(0, 2) : ['stakes'];
         const parts = (await Promise.all(keys.map((k) => (k === 'stakes' ? R.MK.stakes : R.MK[k])(lg, ix, q).catch(() => null)))).filter(Boolean);
         if (parts.length) {
@@ -522,6 +572,7 @@
       }
       named = named || fz || null;
       if (named) co = named;
+      else if (other) co = other;
     }
     if (!co && pageCik() && ix) co = (ix.companies || []).find((c) => +c.cik === pageCik()) || null;
     if (!co) return cls.includes('help') || !q.trim() ? helpAnswer(lg, null)
@@ -534,7 +585,10 @@
     intents = intents.filter((k) => typeof H[k] === 'function');
     const parts = (await Promise.all(intents.slice(0, 3).map((k) => H[k](co, lg, q).catch(() => null)))).filter(Boolean);
     LAST.intents = intents.slice(0, 3);
-    if (!parts.length) return { html: L(lg, `I don't have that for ${esc(co.ticker)} yet: its data is not published.`, `暂时没有 ${esc(co.ticker)} 的这项数据：尚未发布。`), facts: [], mood: 'worried', links: [[`${BASE}#c-${co.cik}`, co.ticker]], company: co, intents,
+    if (!parts.length) return { html: co.uncovered ? L(lg, `<b>${esc(co.ticker)}</b> (${esc(co.name)}) is not one of the companies with financial statements on Filing Flows yet, so I have no numbers for that. Its page can ask for it to be built (usually by the next scan); its filings are on SEC EDGAR.`,
+        `<b>${esc(co.ticker)}</b>（${esc(co.name)}）还不在 Filing Flows 已处理财报的公司之列，暂时没有这项数据。可以在它的公司页申请收录（通常下一次扫描就会生成）；它的申报文件可在 SEC EDGAR 查看。`)
+      : L(lg, `I don't have that for ${esc(co.ticker)} yet: its data is not published.`, `暂时没有 ${esc(co.ticker)} 的这项数据：尚未发布。`), facts: co.uncovered ? [`${co.ticker} (${co.name}) is not covered by Filing Flows' financial statements.`] : [], mood: co.uncovered ? 'think' : 'worried',
+      links: [[`${BASE}#c-${co.cik}`, co.uncovered ? L(lg, `${co.ticker}: ask for it to be built`, `${co.ticker}：申请收录`) : co.ticker], ...(co.uncovered ? [['https://www.sec.gov/edgar/browse/?CIK=' + co.cik, L(lg, 'SEC EDGAR: its filings', 'SEC EDGAR：它的申报')]] : [])], company: co, intents,
       actions: IN ? IN.followUps(intents.slice(0, 3), co, lg) : [] };
     const order = ['worried', 'happy', 'talk'], mood = parts.map((p) => p.mood).sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
     const actions = IN ? IN.followUps(intents.slice(0, 3), co, lg) : [];
@@ -1127,13 +1181,14 @@
       controls.className='flo-actions';
       const q=ev.kind==='price'?ticker+' valuation':ev.kind==='13f'?ticker+' industry rotation':ticker+' latest SEC filings';
       const explainBtn=doc.createElement('button');
-      explainBtn.type='button';explainBtn.textContent=zhUI()?'继续分析公司基本面':'Compare company fundamentals';
+      explainBtn.type='button';explainBtn.textContent=ev.kind==='price'?(zhUI()?'估值':'Valuation'):ev.kind==='13f'?(zhUI()?'行业轮动':'Industry rotation'):(zhUI()?'最新 SEC 申报':'Latest SEC filings');
       explainBtn.className='flo-action';
       explainBtn.addEventListener('click',()=>send(q));
       const companyLink=doc.createElement('a');
       companyLink.href=BASE+'#t-'+encodeURIComponent(ticker);
       companyLink.textContent=zhUI()?'打开公司财报':'Open company financials';
       companyLink.className='flo-action flo-signal-company';
+      index().then(ix=>{if(ix&&!(ix.companies||[]).some(c=>String(c.ticker||'').toUpperCase()===ticker))companyLink.textContent=zhUI()?'公司页（尚未收录，可申请）':'Company page (not built yet: ask for it)';}).catch(()=>{});
       controls.append(explainBtn,companyLink);
       box.append(controls);
     }
