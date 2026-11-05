@@ -37,6 +37,7 @@ SNAP_FROM = dt.date(2024, 1, 1)                      # monthly revisions of the 
 NDX_PAGE = 'Nasdaq-100'
 NDX_FROM = dt.date(2003, 1, 1)                       # the article's member list at each quarter's start from here
 NDX_PER_RUN = 45                                     # revisions read a run: a first run reads the rest the next times
+NDX_PARSER = 1                                       # a new ndx_members: the lists are read again
 # Nasdaq-100 symbols of the past → the site's ticker of the same company (a share class it keeps one of, a rename the
 # S&P lists' CIKs do not reach)
 NDX_ALIASES = {'FB': 'META', 'PCLN': 'BKNG', 'GOOG': 'GOOGL', 'FISV': 'FI', 'SYMC': 'GEN', 'NLOK': 'GEN', 'CMCSK': 'CMCSA',
@@ -241,10 +242,12 @@ def ndx_members(page_html):
     """The member list of a revision of “Nasdaq-100” → sorted symbols, [] when nothing reads as one (80–115 symbols):
     a table with a Ticker / Symbol column, else the “NASDAQ: XXXX” links of a list, else lines ending “(XXXX)”."""
     ok = lambda got: sorted(got) if 80 <= len(got) <= 115 else None
-    for t in tables(page_html):
+    tabs = tables(page_html)                               # the member table first (a change table lists tickers too)
+    tabs.sort(key=lambda t: 0 if t['id'] == 'constituents' or re.search(r'component|constituent', t['head'] or '', re.I) else 1)
+    for t in tabs:
         rows = t['rows']
         hi = next((i for i, r in enumerate(rows[:3]) if any(re.search(r'\b(ticker|symbol)\b', c, re.I) for c in r['cells'])), None)
-        if hi is None:
+        if hi is None or any(re.search(r'\b(added|removed|replaced|date)\b', c, re.I) for r in rows[:hi + 1] for c in r['cells']):
             continue
         col = next(i for i, c in enumerate(rows[hi]['cells']) if re.search(r'\b(ticker|symbol)\b', c, re.I))
         got = set()
@@ -357,6 +360,8 @@ def collect(root, today=None):
         print('members: wikipedia', str(exc)[:200])
     try:                                                   # the Nasdaq-100's member list at each quarter's start
         nd = cache.setdefault('ndx', {})
+        if nd.get('parser', 1) != NDX_PARSER:
+            nd['snaps'], nd['parser'] = {}, NDX_PARSER
         nrev = revisions(NDX_PAGE, quarters(NDX_FROM, today), nd)
         nsn = nd.setdefault('snaps', {})
         todo = list(dict.fromkeys(str(r) for _, r in sorted(nrev.items()) if str(r) not in nsn))

@@ -100,6 +100,9 @@ class Nasdaq100(unittest.TestCase):
         lines = '<ul>' + ''.join(f'<li><a href="/wiki/{x}">{x} Corp</a> ({x})</li>' for x in syms) + '</ul>'
         self.assertEqual(IM.ndx_members(lines), sorted(syms))
         self.assertEqual(IM.ndx_members(ndx_table(syms[:40])), [])                  # not a whole list: none
+        changes = '<h2>Changes</h2><table class="wikitable"><tr><th>Date</th><th>Added ticker</th><th>Removed ticker</th></tr>' + \
+                  ''.join(f'<tr><td>2020-01-01</td><td>X{x}</td><td>{x}</td></tr>' for x in syms[:95]) + '</table>'
+        self.assertEqual(IM.ndx_members(changes + ndx_table(syms)), sorted(syms))   # a change table is not the list
         self.assertEqual(IM.ndx_members('<p>no list</p>'), [])
 
     def test_history_joins_departures_and_a_gap(self):
