@@ -581,6 +581,14 @@
   };
   const SECTORS = { technology: 'Technology', communication: 'Communication', 'consumer-disc': 'Consumer discretionary', 'consumer-staples': 'Consumer staples',
     health: 'Health care', financials: 'Financials', 'real-estate': 'Real estate', energy: 'Energy', materials: 'Materials', industrials: 'Industrials', utilities: 'Utilities', other: 'Other' };
+  // the theme's colours in order; past the tenth, the same again lighter (on a light theme darker), so the eleventh
+  // series is not the first one's twin
+  const palAt = (th, i) => {
+    const p = th.pal, c = p[i % p.length], k = Math.floor(i / p.length);
+    if (!k || !/^#[0-9a-f]{6}$/i.test(c)) return c;
+    const n = parseInt(c.slice(1), 16), to = th.text === '#1d1d1b' ? 0 : 255, t = Math.min(0.6, 0.34 * k);
+    return '#' + [n >> 16 & 255, n >> 8 & 255, n & 255].map((v) => Math.round(v + (to - v) * t).toString(16).padStart(2, '0')).join('');
+  };
   const secCol = (th, sec) => { const i = Object.keys(SECTORS).indexOf(sec); return i < 0 || sec === 'other' ? (th.text === '#1d1d1b' ? '#8d8a84' : '#a9b3c1') : i === 10 ? (th.text === '#1d1d1b' ? '#8a6a3a' : '#e3c79f') : th.pal[i % th.pal.length]; };
   const PANEL = new Map();
   const panel = (name) => { if (!PANEL.has(name)) PANEL.set(name, json(RANKP + name + '.json').then((d) => (d && Array.isArray(d.rows) ? d.rows : d))); return PANEL.get(name); };
@@ -1861,7 +1869,7 @@
   function draw(ctx, W, H, V, opt, t) {
     const th = (opt.theme === 'appearance' ? (opt.appearanceTheme || root.FFAppearance?.videoTheme()) : THEMES[opt.theme]) || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt), f = frameIndex(V, tm, t);
     const portrait = H > W * 1.2, square = !portrait && H > W * 0.8;
-    const pal = (i) => { const x = V.series && V.series[i]; return x && x.role ? roleCol(th, x.role) : x && x.bench ? benchCol(th, x.bench) : th.pal[i % th.pal.length]; };
+    const pal = (i) => { const x = V.series && V.series[i]; return x && x.role ? roleCol(th, x.role) : x && x.bench ? benchCol(th, x.bench) : palAt(th, i); };
     const F = (w, px) => `${w} ${Math.round(px * S)}px ${th.font}`;
     // background: a deep gradient, a soft light, a faint grid of dots
     const g = ctx.createLinearGradient(0, 0, W * 0.4, H);
@@ -2424,7 +2432,7 @@
     for (let y = new Date(G[0]).getUTCFullYear() + 1; y <= new Date(G[n - 1]).getUTCFullYear(); y += Math.max(1, Math.ceil((new Date(G[n - 1]).getUTCFullYear() - new Date(G[0]).getUTCFullYear()) / 9))) { const x = X(Date.UTC(y, 0, 1)); ctx.fillStyle = th.axis; ctx.fillText(String(y), x, b.y + b.h + 10 * S); }
     const base = G.map(() => 0), heads = [];
     V.series.forEach((s, band) => {
-      const top = s.v.map((v, i) => base[i] + (fin(v) ? v : 0)), col = V.actual && V.group === 'companies' && s.key !== 'other' ? th.pal[band % th.pal.length] : secCol(th, s.sec);
+      const top = s.v.map((v, i) => base[i] + (fin(v) ? v : 0)), col = V.actual && V.group === 'companies' && s.key !== 'other' ? palAt(th, band) : secCol(th, s.sec);
       ctx.beginPath();
       for (let i = 0; i <= i0 && i < n; i++) (i ? ctx.lineTo(X(G[i]), Y(top[i])) : ctx.moveTo(X(G[i]), Y(top[i])));
       const tv = valAt(top, f), bv = valAt(base, f); ctx.lineTo(X(tCur), Y(tv)); ctx.lineTo(X(tCur), Y(bv));
@@ -3232,7 +3240,7 @@
       + `<tr class="st-tot"><th scope="row">In all</th>${tot.map((v) => `<td class="num">${v == null ? '' : esc2((v < 0 ? '−' : '') + money(Math.abs(v), 0))}</td>`).join('')}</tr></tbody></table></div>`;
   }
   function reportHTML(R, th) {
-    const col = (r) => (r.role ? roleCol(th, r.role) : r.bench ? benchCol(th, r.bench) : r.sec ? secCol(th, r.sec) : R.kind === 'cash' ? 'transparent' : th.pal[(r.k || 0) % th.pal.length]);
+    const col = (r) => (r.role ? roleCol(th, r.role) : r.bench ? benchCol(th, r.bench) : r.sec ? secCol(th, r.sec) : R.kind === 'cash' ? 'transparent' : palAt(th, r.k || 0));
     const cls = (k, c) => (k === 'gain' && c[2] != null ? (c[2] >= 0 ? 'num up' : 'num down') : 'num');
     const head = `<tr><th scope="col"><span class="st-sr">Series</span></th>${R.cols.map(([, l, help]) => `<th scope="col" class="num"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>`).join('')}</tr>`;
     const body = R.rows.map((r) => `<tr${r.strong ? ' class="st-strong"' : ''}><th scope="row"><i style="background:${esc(col(r))}"></i>${esc(r.label)}${r.name && r.name !== r.label ? `<small>${esc(String(r.name).slice(0, 38))}</small>` : ''}</th>`
@@ -3243,7 +3251,7 @@
       // on a phone the same figures turned around: a row for each figure, a column for each series
       + (R.rows.length && R.kind !== 'cash' ? `<div class="tbl-wrap st-tall"><table class="st-tbl"><thead><tr><th scope="col"><span class="st-sr">Figure</span></th>${R.rows.map((r) => `<th scope="col" class="num"><i style="background:${esc(col(r))}"></i>${esc(r.label)}</th>`).join('')}</tr></thead><tbody>`
         + R.cols.map(([k, l, help]) => `<tr><th scope="row"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>${R.rows.map((r) => { const c = r.cells[k] || ['—', '']; return `<td class="${cls(k, c)}">${esc(c[0])}${c[1] ? `<small>${esc(c[1])}</small>` : ''}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>' : '')
-      + yearsTable(R, esc, (k, role) => (role ? roleCol(th, role) : th.pal[(k || 0) % th.pal.length]))
+      + yearsTable(R, esc, (k, role) => (role ? roleCol(th, role) : palAt(th, k || 0)))
       + (R.events && R.events.length ? `<div class="st-yh"><h3>Events</h3></div><div class="tbl-wrap st-years"><table class="st-tbl"><tbody>${R.events.map((e) => `<tr><th scope="row">${esc(e.date)}</th><td>${esc(e.label)}</td><td class="num">${e.amount ? esc((e.amount > 0 ? '+' : '−') + money(Math.abs(e.amount), 0)) : ''}</td></tr>`).join('')}</tbody></table></div>` : '')
       + (R.caption ? `<div class="st-capbox"><div class="st-caph"><span>Caption to post</span><button class="btn small" type="button" data-rep="cap">Copy</button></div><div class="st-cap" id="st-cap">${esc(R.caption)}</div></div>` : '')
       + (R.notes.length ? `<ul class="st-notes" id="st-notes">${R.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '')
@@ -3821,6 +3829,6 @@
     if (+st.yrs > 0) { const end = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(); st = Object.assign({}, st, { from: iso(end - (+st.yrs) * 365.25 * DAY) }); }
     const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, mixParts, figure, headAt, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, reconstructIndex, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, mixParts, figure, headAt, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, reconstructIndex, palAt, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

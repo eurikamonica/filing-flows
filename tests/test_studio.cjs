@@ -592,6 +592,7 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     ok(V.series[0].key === 'health' || V.series[0].key === 'technology', 'the largest sector first');
     S.finish(V, V); ok(V.final.length === 4 && / pts$/.test(V.final[0].change), 'sector end card in points');
     for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 6, 11.9]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: 'clean', dur: 12 }, t); } n++;
+    for (const th of Object.values(S.THEMES).filter((x) => x.pal)) ok(S.palAt(th, 3) === th.pal[3] && S.palAt(th, 10) !== th.pal[0] && /^#[0-9a-f]{6}$/.test(S.palAt(th, 11)) && S.palAt(th, 21) !== S.palAt(th, 11), 'the eleventh series is not the first one\'s twin');
     // an index's actual-holdings video reaching back before its fund's first report: the badge, then the boundary
     {
       const R0 = Object.assign({}, V, { actual: { fund: 'QQQ', recon: 30, reconTo: V.grid[60], reconHow: 'cap', reports: 10 } });
