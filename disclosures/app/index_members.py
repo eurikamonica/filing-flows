@@ -36,7 +36,7 @@ DOW_PAGE = 'Historical_components_of_the_Dow_Jones_Industrial_Average'
 SNAP_FROM = dt.date(2024, 1, 1)                      # monthly revisions of the S&P 500 list from here (the change table ends)
 NDX_PAGE = 'Nasdaq-100'
 NDX_FROM = dt.date(2003, 1, 1)                       # the article's member list at each quarter's start from here
-NDX_PER_RUN = 45                                     # revisions read a run: a first run reads the rest the next times
+NDX_PER_RUN = 90                                     # revisions read a run: a first run reads the rest the next times
 NDX_PARSER = 1                                       # a new ndx_members: the lists are read again
 # Nasdaq-100 symbols of the past → the site's ticker of the same company (a share class it keeps one of, a rename the
 # S&P lists' CIKs do not reach)
