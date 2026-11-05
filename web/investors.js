@@ -288,7 +288,8 @@ td.iv-wrap{white-space:normal;min-width:240px;max-width:520px}
     const f = F(ix), mset = new Set(((mgrs && mgrs.rows) || []).map((r) => +r[0]));
     const corp = new Map(((cross && cross.holders) || []).filter((h) => h.kind === 'corp').map((h) => [+h.cik, h]));
     const st = { fin: false, sort: 'total', all: false };
-    const sorts = [['total', 'Total'], ['nm', 'Non-marketable'], ['em', 'Equity method'], ['fv', 'Marketable'], ['g_share', 'Gains ÷ pretax'], ['named', 'Named investees']];
+    const sorts = [['total', 'Total'], ['nm', 'Non-marketable'], ['em', 'Equity method'], ['fv', 'Marketable'], ['g_ttm', 'Gains, 12 months'],
+      ['g_loss', 'Losses, 12 months'], ['g_share', 'Gains ÷ pretax'], ['named', 'Named investees']];
     const chip = (x, i) => `<a class="iv-chip"${i >= 10 ? ' data-more hidden' : ''} href="#investee-${enc(x.key)}">${esc(x.name)}<span class="n">${x.n} listed investor${x.n === 1 ? '' : 's'}${x.t ? ' · ' + esc(x.t) : ''}</span></a>`;
     const tops = (ix.investees || []).slice(0, 30);
     const chips = tops.map(chip).join('') + (tops.length > 10 ? `<button type="button" class="pill" id="iv-more">+${tops.length - 10} more</button>` : '');
@@ -315,7 +316,10 @@ td.iv-wrap{white-space:normal;min-width:240px;max-width:520px}
     const draw = () => {
       let rows = (ix.rows || []).filter((r) => st.fin || !r[f.fin]);
       const key = st.sort, k = f[key];
-      rows = rows.slice().sort((a, b) => (Math.abs(b[k] || 0) - Math.abs(a[k] || 0)) || ((b[f.total] || 0) - (a[f.total] || 0)));
+      if (key === 'g_ttm' || key === 'g_loss') {           // the gains themselves, or the losses: largest first, by sign
+        const s = key === 'g_ttm' ? 1 : -1;
+        rows = rows.filter((r) => s * (r[f.g_ttm] || 0) > 0).sort((a, b) => s * (b[f.g_ttm] - a[f.g_ttm]));
+      } else rows = rows.slice().sort((a, b) => (Math.abs(b[k] || 0) - Math.abs(a[k] || 0)) || ((b[f.total] || 0) - (a[f.total] || 0)));
       if (key === 'g_share') rows = rows.filter((r) => r[f.g_share] != null);
       const shown = st.all ? rows : rows.slice(0, 40);
       document.getElementById('iv-table').innerHTML = `<div class="tbl-wrap"><table class="small iv-rank"><thead><tr><th>#</th><th>Company · named investees</th><th class="num">Non-marketable</th><th class="num">Equity method</th><th class="num">Marketable</th><th class="num">Total</th><th class="num">1-year change</th><th class="num">Gains, 12 months<br><span class="muted">of pretax income</span></th></tr></thead><tbody>
