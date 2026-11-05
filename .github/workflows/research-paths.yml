@@ -90,7 +90,8 @@ jobs:
       - name: Move odds (public/moves/)
         # each asset's daily returns for the move odds (company pages and the hub's Move odds tab): runs even when the
         # path models' build above was skipped or failed, as it needs only the daily bars; with it the highs, the lows
-        # and the ranges (app/highs.py, app/regimes.py), a few minutes more
+        # and the ranges (app/highs.py, app/regimes.py) and the walk-forward test of their similar-days odds
+        # (app/regime_odds.py, about four minutes of the ten)
         if: ${{ !cancelled() }}
         continue-on-error: true
         timeout-minutes: 35

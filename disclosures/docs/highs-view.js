@@ -6,8 +6,12 @@
    In a range (sideways for 3 months, narrow or wide): how long until the breakout, which way, and whether it holds.
    One asset (the company page's tab and the hub's Move odds → Highs, lows & ranges): where it stands, its state (each
    variable against its own history where marked), what followed the most similar days of the same kind of asset, and
-   for the highs its own past runs. The hub adds every asset in the regime now and the research tables by each state
-   variable. Descriptive history, not a forecast.
+   for the highs its own past runs; the spread of what followed (the fan of the return over the next year, the histograms
+   of the returns 1, 3 and 12 months on and of the regime's own falls and rises, against every day of the regime), the
+   odds given each of its conditions alone and all together, and the walk-forward test of the similar-days odds
+   (app/regime_odds.py: Brier skill, AUC, calibration, the top − bottom fifth, by year). The hub adds every asset in the
+   regime now, the spread and the test of every day, and the research tables by each state variable. Descriptive
+   history, not a forecast.
    window.HighsView = {render(el, {ticker | key, hub, regime}), hub(doc, opts), lowsHub(doc, reg, opts), rangesHub(…), …}. */
 (function () {
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -42,7 +46,9 @@
 .hv-k{font:inherit;border:0;background:none;padding:0;color:var(--accent,#1f6f4a);cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-align:left}
 .hv-more summary{cursor:pointer;font-size:13px;color:var(--accent,#1f6f4a);margin:4px 0 8px}.hv-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.hv-chip{font:inherit;font-size:12.5px;border:1px solid var(--line,#ddd);border-radius:999px;padding:4px 11px;background:var(--surface,#fff);color:inherit;cursor:pointer}
 .hv-chip.on{background:var(--accent,#1f6f4a);border-color:var(--accent,#1f6f4a);color:#fff}.hv-chip small{opacity:.75;margin-left:4px}
-.hv-bar{display:inline-block;height:9px;border-radius:2px;background:var(--mk-cost,#c0392b);opacity:.7;vertical-align:middle;margin-right:6px}.hv-up{color:var(--mk-profit,#17734a)}.hv-down{color:var(--mk-cost,#c0392b)}`;
+.hv-bar{display:inline-block;height:9px;border-radius:2px;background:var(--mk-cost,#c0392b);opacity:.7;vertical-align:middle;margin-right:6px}.hv-up{color:var(--mk-profit,#17734a)}.hv-down{color:var(--mk-cost,#c0392b)}
+.hv-hists{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px 18px;margin:6px 0 10px;max-width:1080px}.hv-hbox{min-width:0}.hv-htitle{font-size:12.5px;line-height:1.45;margin:0 0 2px}.hv-htitle span{color:var(--muted,#777)}
+.hv-hist{max-width:420px}.hv-dd{font-size:11.5px;margin-left:4px;font-variant-numeric:tabular-nums}.hv-t tr.hv-base td{background:var(--surface-2,#f3f2ee)}`;
     document.head.appendChild(s);
   }
   const tone = (v) => (!fin(v) ? '' : v > 0 ? 'hv-up' : v < 0 ? 'hv-down' : '');
@@ -117,14 +123,158 @@
         { label: 'the run still ahead of its peak', curve: (A.run_left || {}).curve, col: 'var(--mk-profit,#17734a)' },
         ...(base ? [{ dash: true, curve: (base.t10 || {}).curve, col: 'var(--mk-cost,#c0392b)', who: GROUP[groupKey] }, { dash: true, curve: (base.t5 || {}).curve, col: 'var(--q-warm,#d9822b)', who: GROUP[groupKey] }] : [])], g);
       h += oddsTable(A, base);
+      h += spreadBlock(A, opts.group, opts.params, 'high day', ['mdd63', 'gain_left']);
+      h += condBlock(S, A, opts.group, 'highs', 'high day', GROUP[groupKey] || 'its kind');
       if ((A.nearest || []).length) h += `<h4>The nearest of them</h4>` + table(['Asset', 'Day', 'Run age', 'Highs in 63 d', 'To its peak', 'To a 10% pullback', 'The pullback after', '12 months'], A.nearest.map((e) => [
         esc(e.key), esc(mdy(e.date)), td(e.age), num(e.highs63), e.run_left == null ? 'not yet' : td(e.run_left), e.t10 == null ? 'not yet' : td(e.t10), sp(e.pullback), `<span class="${tone(e.fwd252)}">${sp(e.fwd252)}</span>`]), [0, 1]);
+      h += backtestBlock((opts.group || {}).backtest, 'highs', 'high day', GROUP[groupKey] || 'its kind');
     } else if (S.high) h += `<p class="hv-sub">Too few similar high days with every state variable on file to compare.</p>`;
     if (O.runs) {
       h += `<h3>Its own runs</h3><p class="hv-sub">${esc(name)}'s ${num(O.runs)} completed runs of highs (from the first ATH after a 10% drawdown to the last one before the next): median <b>${td((O.run_days || {}).p50)}</b> from first high to peak (25–75%: ${num((O.run_days || {}).p25)}–${num((O.run_days || {}).p75)}); the pullback after them median <b>${sp((O.pullback || {}).p50)}</b> (25–75%: ${sp((O.pullback || {}).p25)} to ${sp((O.pullback || {}).p75)}); back to the peak in a median ${td((O.days_back || {}).p50)}.</p>`;
       h += table(['Run began', 'Peak', 'Days to the peak', 'The pullback after', 'Back to the peak'], (O.last || []).slice().reverse().map((r) => [esc(mdy(r.start)), esc(mdy(r.peak)), num(r.days), `<span class="hv-down">${sp(r.pullback)}</span>`, r.days_back == null ? 'not yet' : td(r.days_back)]), [0, 1]);
     }
     h += `<p class="hv-sub">Adjusted closes (dividends reinvested), so an all-time high is a total-return high; P/E: price ÷ the last four first-filed quarterly diluted EPS (SEC), positive only. Companies are today's (survivors), which flatters what came after their highs. History, not a forecast.</p>`;
+    return h;
+  }
+
+  /* ---------- the spread of what followed, one condition at a time, the walk-forward test (app/regime_odds.py) ---------- */
+  const DLAB = { fwd21: '1 month on', fwd63: '3 months on', fwd252: '12 months on', fall63: 'Lowest close of the next 3 months', bounce: 'The rebound from the low before a 10% rebound',
+    rise63: 'Highest close of the next 3 months', mdd63: 'Largest fall within 3 months', gain_left: 'The gain left to the run’s peak' };
+  const pct0 = (v) => (fin(v) ? (v < 0 ? '−' : v > 0 ? '+' : '') + num(Math.abs(100 * v)) + '%' : '');
+  const binLabel = (E, i) => (i === 0 ? `under ${pct0(E[0])}` : i === E.length ? `${pct0(E[E.length - 1])} or more` : `${pct0(E[i - 1])} to ${pct0(E[i])}`);
+  /* bars: the share of the similar days in each band; a dark tick: the share of every day of the regime */
+  const FALLS = ['fall63', 'mdd63'], RISES = ['bounce', 'rise63', 'gain_left'];
+  const plural = (w) => String(w).replace(/^(high )?day\b/, (m) => m + 's');
+  function histChart(counts, E, base, title, sub, key) {
+    const n = (counts || []).reduce((a, b) => a + b, 0);
+    if (!n || !E || counts.length !== E.length + 1) return '';
+    const nb = (base || []).reduce((a, b) => a + b, 0), k = counts.length, W = 340, H = 158, L = 6, R = 6, T = 8, B = 26, bw = (W - L - R) / k;
+    const sh = counts.map((c) => c / n), shb = nb && base.length === k ? base.map((c) => c / nb) : null, mx = Math.max(0.05, ...sh, ...(shb || []));
+    const y = (v) => T + (1 - v / mx) * (H - T - B);
+    let s = `<svg class="hv-chart hv-hist" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}: the share of days in each band"><line class="hv-g" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/>`;
+    counts.forEach((c, i) => {
+      const lo = i === 0 ? null : E[i - 1], hi = i === k - 1 ? null : E[i], mid = lo == null ? hi - 1 : hi == null ? lo + 1 : (lo + hi) / 2, x = L + i * bw;
+      const down = FALLS.includes(key) ? true : RISES.includes(key) ? false : mid < 0;
+      s += `<rect x="${(x + 2).toFixed(1)}" y="${y(sh[i]).toFixed(1)}" width="${(bw - 4).toFixed(1)}" height="${Math.max(0, y(0) - y(sh[i])).toFixed(1)}" fill="${down ? 'var(--mk-cost,#c0392b)' : 'var(--mk-profit,#17734a)'}" opacity=".78"><title>${esc(binLabel(E, i))}: ${pc(sh[i])} of these days${shb ? ` · ${pc(shb[i])} of every day` : ''}</title></rect>`;
+      if (shb) s += `<line x1="${(x + 1).toFixed(1)}" x2="${(x + bw - 1).toFixed(1)}" y1="${y(shb[i]).toFixed(1)}" y2="${y(shb[i]).toFixed(1)}" stroke="var(--ink,#222)" stroke-width="1.8"/>`;
+    });
+    E.forEach((e, i) => { if (k <= 10 || i % 2 === 1) s += `<text x="${(L + (i + 1) * bw).toFixed(1)}" y="${H - 9}" text-anchor="middle">${pct0(e) || '0'}</text>`; });
+    return `<div class="hv-hbox"><div class="hv-htitle"><b>${esc(title)}</b>${sub ? ` <span>· ${sub}</span>` : ''}</div>${s}</svg></div>`;
+  }
+  function niceStep(span) { const raw = span / 4, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map((m) => m * p).find((x) => x >= raw) || raw; }
+  /* the fan: the return from the day at each week to a year — the middle half, eight in ten, the median; dashed: the median of every day */
+  function fanChart(F, Fb, grid, what) {
+    if (!F || !F.p50) return '';
+    grid = grid && grid.length === F.p50.length ? grid : F.p50.map((_, i) => i * 7);
+    const vals = [...F.p10, ...F.p90, ...((Fb && Fb.p50) || [])].filter(fin);
+    if (vals.length < 4) return '';
+    let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const W = 720, H = 250, L = 50, R = 16, T = 10, B = 32, gx = grid[grid.length - 1];
+    const sx = (d) => L + (d / gx) * (W - L - R), sy = (v) => T + ((hi - v) / (hi - lo)) * (H - T - B);
+    const band = (a, b, op) => { const up = [], dn = []; grid.forEach((g, i) => { if (fin(a[i]) && fin(b[i])) { up.push(`${sx(g).toFixed(1)},${sy(b[i]).toFixed(1)}`); dn.unshift(`${sx(g).toFixed(1)},${sy(a[i]).toFixed(1)}`); } });
+      return up.length > 1 ? `<polygon points="${up.concat(dn).join(' ')}" fill="var(--accent,#1f6f4a)" opacity="${op}"/>` : ''; };
+    const line = (a) => grid.map((g, i) => (fin(a[i]) ? `${sx(g).toFixed(1)},${sy(a[i]).toFixed(1)}` : null)).filter(Boolean).join(' ');
+    let s = `<svg class="hv-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="The spread of the return from the day over the next year">`;
+    const st = niceStep(hi - lo);
+    for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) s += `<line class="hv-g" x1="${L}" x2="${W - R}" y1="${sy(v).toFixed(1)}" y2="${sy(v).toFixed(1)}"${Math.abs(v) < 1e-9 ? ' style="stroke:var(--muted,#999)"' : ''}/><text x="${L - 6}" y="${(sy(v) + 4).toFixed(1)}" text-anchor="end">${pct0(Math.abs(v) < 1e-9 ? 0 : v) || '0%'}</text>`;
+    [0, 21, 63, 126, 189, 252].filter((d) => d <= gx).forEach((d) => { s += `<text x="${sx(d).toFixed(1)}" y="${H - 12}" text-anchor="middle">${d === 0 ? 'the day' : d === 21 ? '1 mo' : d === 63 ? '3 mo' : d === 126 ? '6 mo' : d === 189 ? '9 mo' : '12 mo'}</text>`; });
+    s += band(F.p10, F.p90, 0.13) + band(F.p25, F.p75, 0.28) + `<polyline class="hv-l" points="${line(F.p50)}" style="stroke:var(--accent,#1f6f4a)"/>`;
+    if (Fb && Fb.p50) s += `<polyline class="hv-b" points="${line(Fb.p50)}" style="stroke:var(--ink,#444)"/>`;
+    s += '</svg>';
+    return s + `<div class="hv-key"><span><i style="background:var(--accent,#1f6f4a);opacity:.5;height:8px"></i>the middle half (25–75%)</span><span><i style="background:var(--accent,#1f6f4a);opacity:.2;height:8px"></i>eight in ten (10–90%)</span><span><i style="background:var(--accent,#1f6f4a)"></i>the median</span>${Fb && Fb.p50 ? `<span><i style="background:var(--ink,#444);height:1px"></i>dashed: the median of every ${esc(what || 'day')}</span>` : ''}</div>`;
+  }
+  /* the fan and the histograms of what followed (the similar days, with every day of the regime beside them) */
+  function spreadBlock(A, G, params, what, extra) {
+    if (!A || !A.dist) return '';
+    const E = (params && params.edges) || {}, D = A.dist, Db = (G && G.dist) || {}, q_ = (k) => A[k] || {};
+    const fan = fanChart(A.fan, G && G.fan, params && params.fan_grid, what);
+    const sub = (k) => (fin(q_(k).p50) ? `median <span class="${tone(q_(k).p50)}">${pct0(q_(k).p50)}</span>${fin(q_(k).up) && k.startsWith('fwd') ? `, ${pc(q_(k).up)} up` : ''}` : '');
+    const H = ['fwd21', 'fwd63', 'fwd252', ...extra].filter((k) => D[k] && E[k]).map((k) => histChart(D[k], E[k], Db[k], DLAB[k] || k, sub(k), k)).join('');
+    if (!fan && !H) return '';
+    const cmp = G && G.dist ? ` — the bars are these days, the dark ticks every ${esc(what)} of the group, on the same bands` : '';
+    return `<h3>The spread of what followed</h3><p class="hv-sub">Not just the median: the return from the day over the next year at every week (the fan), and how the returns and ${extra.map((k) => 'the ' + (DLAB[k] || k).replace(/^the /i, '').replace(/^./, (c) => c.toLowerCase())).join(' and ')} spread out${cmp}.</p>${fan}<div class="hv-hists">${H}</div>`;
+  }
+  const OUT = {
+    lows: [['fwd63_up', '3 months on: up', (x) => (x.fwd63 || {}).up], ['fwd252_up', '12 months on: up', (x) => (x.fwd252 || {}).up],
+      ['next_low_p63', 'A new low within 3 months', (x) => p_(x.next_low, '63')], ['r10_p63', 'A 10% rebound within 3 months', (x) => p_(x.r10, '63')]],
+    ranges: [['fwd63_up', '3 months on: up', (x) => (x.fwd63 || {}).up], ['fwd252_up', '12 months on: up', (x) => (x.fwd252 || {}).up],
+      ['breakout_p63', 'A breakout within 3 months', (x) => p_(x.breakout, '63')], ['up_first', 'Up first', (x) => x.up_first]],
+    highs: [['fwd63_up', '3 months on: up', (x) => (x.fwd63 || {}).up], ['fwd252_up', '12 months on: up', (x) => (x.fwd252 || {}).up],
+      ['t10_p63', 'A 10% pullback within 3 months', (x) => p_(x.t10, '63')], ['more_highs', 'Another new high', (x) => x.more_highs]],
+  };
+  const PCTF = ['mom_pct', 'mom_xs', 'vol_pct', 'pe_pct', 'ext_pct', 'width_pct'];
+  function valOf(f, v) {
+    if (!fin(v)) return '—';
+    if (PCTF.includes(f)) return `the ${ord(v)} percentile`;
+    if (f === 'dd_ath' || f === 'ext200') return sp(v, 0);
+    if (f === 'age') return td(v);
+    if (f === 'pe') return num(v, 1);
+    if (f === 'volu') return num(v, 2) + '×';
+    if (f === 'width') return pc(v, 1);
+    if (f === 'pos') return pc(v);
+    return num(v);
+  }
+  const delta = (v, b) => (fin(v) && fin(b) ? `<span class="hv-dd ${v - b > 0.005 ? 'hv-up' : v - b < -0.005 ? 'hv-down' : 'm'}">${v - b >= 0 ? '+' : '−'}${num(Math.abs(100 * (v - b)))} pts</span>` : '');
+  /* the odds given each of its conditions alone (every day of the group in the same band), against every day, and all together (the similar days) */
+  function condBlock(S, A, G, kind, what, who) {
+    if (!G || !G.buckets || !G.base) return '';
+    const O = OUT[kind], B = G.base, rows = [];
+    for (const [f, b] of Object.entries(G.buckets)) {
+      const v = S[f], E = b.edges;
+      if (!fin(v) || !E) continue;
+      const i = E.findIndex((e, j) => j < E.length - 1 && v >= e && v < E[j + 1]);
+      const r = i >= 0 ? b.rows[i] : null;
+      if (!r || !r.days || r.days < 100) continue;
+      rows.push({ f, title: b.title, label: r.label, v, r, d: fin(r[O[0][0]]) && fin(O[0][2](B)) ? Math.abs(r[O[0][0]] - O[0][2](B)) : 0 });
+    }
+    if (!rows.length) return '';
+    rows.sort((a, b) => b.d - a.d);
+    const cells = (get) => O.map(([k, , g]) => { const v = get(k, g), b = g(B); return `${pc(v)}${get === base_ ? '' : delta(v, b)}`; });
+    const base_ = (k, g) => g(B);
+    const head = ['Given', 'Days', ...O.map((o) => o[1])];
+    const T = [[`<b>Every ${esc(what)}</b> of ${esc(who)}`, num(B.days), ...cells(base_)]];
+    if (A && A.days) T.push([`<b>All its conditions together</b>: the ${num(A.days)} most similar days`, num(A.days), ...cells((k, g) => g(A))]);
+    for (const x of rows) T.push([`${esc(x.title)}: <b>${esc(x.label)}</b> <span class="m">(it: ${esc(valOf(x.f, x.v))})</span>`, num(x.r.days), ...cells((k) => x.r[k])]);
+    const tb = table(head, T, [0]).replace('<tbody><tr>', '<tbody><tr class="hv-base">');
+    return `<h3>The odds given its conditions — one at a time, and all together</h3><p class="hv-sub">Conditional probabilities from every ${esc(what)} of ${esc(who)}: each row keeps only the days in the same band as ${'its'} state on that one condition, the points against every day beside it; the second row puts every condition together (the most similar days above). Sorted by how much the condition moves the 3-month odds. Overlapping days and today's companies only: a guide to which conditions matter, not a forecast.</p>${tb}`;
+  }
+  const ONAME = { up63: 'Higher 3 months later', up252: 'Higher 12 months later', low63: 'A new low within 3 months', r10_63: 'A 10% rebound within 3 months',
+    brk63: 'A breakout within 3 months', upfirst: 'Up first (of the breakouts)', pull63: 'A 10% pullback within 3 months' };
+  const VERD = { useful: ['useful', 'hv-up'], small: ['small', ''], none: ['none: no better than the base rate', 'hv-down'] };
+  function calibChart(s, title) {
+    if (!s || !(s.calibration || []).length) return '';
+    const W = 300, H = 230, L = 40, R = 20, T = 10, B = 34, pts = s.calibration.filter((c) => fin(c[0]) && fin(c[1]));
+    const all = pts.flatMap((c) => [c[0], c[1]]), lo = Math.max(0, Math.floor(10 * Math.min(...all)) / 10), hi = Math.min(1, Math.ceil(10 * Math.max(...all)) / 10 || 1);
+    const sx = (v) => L + ((v - lo) / Math.max(0.05, hi - lo)) * (W - L - R), sy = (v) => T + (1 - (v - lo) / Math.max(0.05, hi - lo)) * (H - T - B);
+    let g = `<svg class="hv-chart hv-hist" viewBox="0 0 ${W} ${H}" role="img" aria-label="Calibration: said against happened, by tenth of the odds">`;
+    for (let v = lo; v <= hi + 1e-9; v += 0.1) g += `<line class="hv-g" x1="${L}" x2="${W - R}" y1="${sy(v).toFixed(1)}" y2="${sy(v).toFixed(1)}"/><text x="${L - 5}" y="${(sy(v) + 4).toFixed(1)}" text-anchor="end">${pc(v)}</text><text x="${sx(v).toFixed(1)}" y="${H - 18}" text-anchor="middle">${pc(v)}</text>`;
+    g += `<line x1="${sx(lo)}" y1="${sy(lo)}" x2="${sx(hi)}" y2="${sy(hi)}" stroke="var(--muted,#999)" stroke-dasharray="4 4"/>`;
+    for (const c of pts) g += `<circle cx="${sx(c[0]).toFixed(1)}" cy="${sy(c[1]).toFixed(1)}" r="4.5" fill="var(--accent,#1f6f4a)"><title>said ${pc(c[0], 1)}, happened ${pc(c[1], 1)} (${num(c[2])} days)</title></circle>`;
+    g += `<text x="${(L + W - R) / 2}" y="${H - 3}" text-anchor="middle">said (the similar days' odds)</text></svg>`;
+    return `<div class="hv-hbox"><div class="hv-htitle"><b>${esc(title)}</b> <span>· happened (up) against said (across), by tenth</span></div>${g}</div>`;
+  }
+  function yearBars(by) {
+    const v = (by || []).filter((r) => fin(r[2]));
+    if (v.length < 5) return '';
+    const W = 720, H = 140, L = 44, R = 10, T = 10, B = 26, mx = Math.max(0.02, ...v.map((r) => Math.abs(r[2]))), bw = (W - L - R) / v.length;
+    const sy = (x) => T + ((mx - x) / (2 * mx)) * (H - T - B);
+    let s = `<svg class="hv-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Brier skill by year"><line class="hv-g" x1="${L}" x2="${W - R}" y1="${sy(0)}" y2="${sy(0)}" style="stroke:var(--muted,#999)"/>`;
+    s += `<text x="${L - 5}" y="${(sy(mx) + 4).toFixed(1)}" text-anchor="end">+${num(100 * mx, 1)}%</text><text x="${L - 5}" y="${(sy(-mx) + 4).toFixed(1)}" text-anchor="end">−${num(100 * mx, 1)}%</text>`;
+    v.forEach((r, i) => { const x = L + i * bw, y0 = sy(0), y1 = sy(r[2]); s += `<rect x="${(x + 1).toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${Math.abs(y1 - y0).toFixed(1)}" fill="${r[2] >= 0 ? 'var(--mk-profit,#17734a)' : 'var(--mk-cost,#c0392b)'}" opacity=".8"><title>${r[0]}: skill ${num(100 * r[2], 1)}% (${num(r[1])} days; happened ${pc(r[3])})</title></rect>`;
+      if (i % Math.max(1, Math.round(v.length / 8)) === 0) s += `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 9}" text-anchor="middle">${r[0]}</text>`; });
+    return s + '</svg>';
+  }
+  /* the walk-forward test of the similar-days odds for this regime and kind of asset */
+  function backtestBlock(bt, kind, what, who) {
+    if (!bt || !bt.outcomes || !Object.keys(bt.outcomes).length) return '';
+    const O = bt.outcomes, sp_ = bt.spread, other = { lows: 'low63', ranges: 'brk63', highs: 'pull63' }[kind];
+    let h = `<h3>Has it worked? The similar-days odds, tested year by year</h3><p class="hv-sub">A historical backtest without look-ahead: each year from ${esc(bt.years[0])} to ${esc(bt.years[1])}, up to ${num(bt.per_year)} ${esc(plural(what))} of ${esc(who)} (one per asset in any 21 trading days) were given the odds of their ${num(bt.k)} nearest days — the same rule as above, but found only among days whose 12-month outcome was known before that year began — and checked against what then happened: ${num(bt.days)} days in all. Brier skill: how much better those odds scored than always saying the base rate (0 = no better, negative = worse); AUC: how often they ranked a day that happened above one that didn't (0.5 = a coin toss).</p>`;
+    h += table(['Outcome', 'Days', 'Happened', 'Brier skill', 'AUC', 'Verdict'], Object.entries(O).map(([k, s]) => [esc(ONAME[k] || k), num(s.n), pc(s.rate), fin(s.skill) ? `${s.skill >= 0 ? '+' : '−'}${num(Math.abs(100 * s.skill), 1)}%` : '—', num(s.auc, 3),
+      `<span class="${(VERD[s.verdict] || [])[1] || ''}">${esc((VERD[s.verdict] || [s.verdict || '—'])[0])}</span>`]), [0, 5]);
+    h += `<div class="hv-hists">${calibChart(O.up63, ONAME.up63)}${other && O[other] ? calibChart(O[other], ONAME[other]) : ''}</div>`;
+    if (sp_) h += `<p class="hv-head">Sorted by those odds within each year, the fifth with the best 3-month odds rose <b class="${tone(sp_.top)}">${pct0(sp_.top)}</b> on average over the next 3 months and the worst fifth <b class="${tone(sp_.bottom)}">${pct0(sp_.bottom)}</b> (every tested day ${pct0(sp_.all)}): <b>${sp(sp_.diff, 1)}</b> between them (t ${num(sp_.t, 1)} over ${num(sp_.years)} years, ahead in ${pc(sp_.pos)} of them), before trading costs.</p>`;
+    if (O.up63 && O.up63.by_year) h += `<h4>Brier skill of the 3-month odds, year by year</h4>${yearBars(O.up63.by_year)}`;
     return h;
   }
 
@@ -168,6 +318,7 @@
       }), [0]) : '<p class="hv-sub">None at their highs on the last day.</p>';
     h += `<div id="hv-one" data-k="${esc(o.pick || '')}"></div>`;
     const fs = Object.keys(G.buckets || {});
+    h += groupOdds(G, doc.params, 'highs', 'high day', GROUP[grp], ['mdd63', 'gain_left']);
     h += `<h3>By the state at the high — every high day of ${esc(GROUP[grp])}</h3><p class="hv-sub">Each row: the high days with the state in that range, how long until the first 5% and 10% pullback (Kaplan–Meier medians: the ones still waiting at the end of the data count for as long as they were watched), the rest of the run, the pullback that ended it and the next 12 months. The bar is the median days to a 10% pullback.</p>`;
     h += fs.map((f) => bucketTable(G, f)).join('');
     return h + '</div>';
@@ -258,8 +409,11 @@
         ...(base ? [{ dash: true, curve: (base.next_low || {}).curve, col: 'var(--mk-cost,#c0392b)', who: GROUP[groupKey], what: 'low day' }, { dash: true, curve: (base.r20 || {}).curve, col: 'var(--q-warm,#d9822b)', who: GROUP[groupKey], what: 'low day' }] : [])],
       g, 'trading days after the low day', 'Survival curves: the share of low days not yet followed by a new low or a rebound');
       h += table(['Within', ...Object.values(HZW), 'Median'], [oddsRow(`A new ${SPAN[reg]} low`, A.next_low, base && base.next_low), oddsRow('A 10% rebound', A.r10, base && base.r10), oddsRow('A 20% rebound', A.r20, base && base.r20)], [0]);
+      h += spreadBlock(A, opts.group, opts.params, `day at ${A_N(reg)} low`, ['fall63', 'bounce']);
+      h += condBlock(S, A, opts.group, 'lows', `day at ${A_N(reg)} low`, GROUP[groupKey] || 'its kind');
       if ((A.nearest || []).length) h += `<h4>The nearest of them</h4>` + table(['Asset', 'Day', 'The slide’s age', 'Under its high', 'To a 10% rebound', 'The low before it', 'The rebound after', '12 months'], A.nearest.map((e) => [
         esc(e.key), esc(mdy(e.date)), td(e.age), sp(e.dd_ath, 0), e.r10 == null ? (e.seen >= 252 ? 'none in a year' : 'not yet') : td(e.r10), `<span class="${tone(e.fall)}">${sp(e.fall)}</span>`, `<span class="${tone(e.bounce)}">${sp(e.bounce)}</span>`, `<span class="${tone(e.fwd252)}">${sp(e.fwd252)}</span>`]), [0, 1]);
+      h += backtestBlock((opts.group || {}).backtest, 'lows', `day at ${A_N(reg)} low`, GROUP[groupKey] || 'its kind');
     } else h += `<p class="hv-sub">Too few similar low days with every state variable on file to compare.</p>`;
     return h + `<p class="hv-sub">${NOTE}</p>`;
   }
@@ -277,9 +431,12 @@
       h += table(['Within', ...Object.values(HZW), 'Median'], [oddsRow('A breakout, either way', A.breakout, base && base.breakout),
         ['Up first', ...['21', '63', '126', '252'].map((x) => `${w(A, x, 'up')}${base ? ` <span class="m">· ${w(base, x, 'up')}</span>` : ''}`), ''],
         ['Down first', ...['21', '63', '126', '252'].map((x) => `${w(A, x, 'down')}${base ? ` <span class="m">· ${w(base, x, 'down')}</span>` : ''}`), '']], [0]);
+      h += spreadBlock(A, opts.group, opts.params, `day in a ${reg} range`, ['fall63', 'rise63']);
+      h += condBlock(S, A, opts.group, 'ranges', `day in a ${reg} range`, GROUP[groupKey] || 'its kind');
       if ((A.nearest || []).length) h += `<h4>The nearest of them</h4>` + table(['Asset', 'Day', 'Width', 'Days in it', 'Breakout', 'Which way', '3 months after it', '12 months'], A.nearest.map((e) => [
         esc(e.key), esc(mdy(e.date)), pc(e.width, 1), num(e.age), e.brk == null ? (e.seen >= 252 ? 'none in a year' : 'not yet') : td(e.brk), e.up == null ? '—' : e.up ? '<span class="hv-up">up</span>' : '<span class="hv-down">down</span>',
         `<span class="${tone(e.after63)}">${sp(e.after63)}</span>`, `<span class="${tone(e.fwd252)}">${sp(e.fwd252)}</span>`]), [0, 1]);
+      h += backtestBlock((opts.group || {}).backtest, 'ranges', `day in a ${reg} range`, GROUP[groupKey] || 'its kind');
     } else h += `<p class="hv-sub">Too few similar days with every state variable on file to compare.</p>`;
     return h + `<p class="hv-sub">${NOTE.replace('after their lows', 'after these days').replace(' (one slide gives many low days)', '')}</p>`;
   }
@@ -300,6 +457,12 @@
       b.rows.map((r) => !r.days ? [esc(r.label), '—', '', '', '', '', ''] : [esc(r.label), `${num(r.days)} · ${num(r.runs)}`,
         `<span class="hv-bar" style="width:${(50 * (r.breakout_median || 0) / mx).toFixed(0)}px;background:var(--accent,#1f6f4a)"></span>${r.breakout_median == null ? '252+' : num(r.breakout_median)} · ${pc(r.breakout_p63)}`, pc(r.up_first),
         `<span class="${tone(r.after63_up)}">${sp(r.after63_up)}</span> · <span class="${tone(r.after63_down)}">${sp(r.after63_down)}</span>`, `${pc(r.failed_up)} · ${pc(r.failed_down)}`, `<span class="${tone(r.fwd252)}">${sp(r.fwd252)}</span> · ${pc(r.fwd252_up)}`]), [0]);
+  }
+  /* the hub: every day of the regime — its spread and the walk-forward test */
+  function groupOdds(G, params, kind, what, who, extra) {
+    if (!G || !G.base) return '';
+    const A = Object.assign({}, G.base, { dist: G.dist, fan: G.fan });
+    return spreadBlock(A, null, params, what, extra) + backtestBlock(G.backtest, kind, what, who);
   }
   const LIST_CAP = 50;
   const capped = (head, rows, cls, what) => (rows.length <= LIST_CAP + 10 ? table(head, rows, cls)
@@ -333,6 +496,7 @@
           `<span class="${tone((A.fwd252 || {}).p50)}">${sp((A.fwd252 || {}).p50)}</span><br><span class="m">${pc((A.fwd252 || {}).up)}</span>`];
       }), [0], GROUP[grp]) : `<p class="hv-sub">None at ${A_N(reg)} low on the last day.</p>`;
     h += `<div id="hv-one" data-k="${esc(o.pick || '')}" data-r="${esc(reg)}"></div>`;
+    h += groupOdds(G, doc.params, 'lows', `day at ${A_N(reg)} low`, GROUP[grp], ['fall63', 'bounce']);
     h += `<h3>By the state at the low — every day at ${A_N(reg)} low of ${esc(GROUP[grp])}</h3><p class="hv-sub">Each row: the low days with the state in that range, how long until the next new low and a 10% and 20% rebound (Kaplan–Meier medians: the ones still waiting at the end of the data count for as long as they were watched; 252+ = over a year), the low before the rebound and the rebound from it, and the next 12 months. The bar is the median days to the next new low.</p>`;
     return h + Object.keys(G.buckets || {}).map((f) => lowBucket(G, f)).join('') + '</div>';
   }
@@ -361,6 +525,7 @@
           `<span class="${tone((A.fwd252 || {}).p50)}">${sp((A.fwd252 || {}).p50)}</span><br><span class="m">${pc((A.fwd252 || {}).up)}</span>`];
       }), [0], GROUP[grp]) : `<p class="hv-sub">None in a ${reg} range on the last day.</p>`;
     h += `<div id="hv-one" data-k="${esc(o.pick || '')}" data-r="${esc(reg)}"></div>`;
+    h += groupOdds(G, doc.params, 'ranges', `day in a ${reg} range`, GROUP[grp], ['fall63', 'rise63']);
     h += `<h3>By the state in the range — every day in a ${reg} range of ${esc(GROUP[grp])}</h3><p class="hv-sub">Each row: the days with the state in that range, how long until the breakout (a Kaplan–Meier median; 252+ = over a year), which way it went first, the move 3 months after it, how often it failed (back into the other half of the range within a month) and the next 12 months. The bar is the median days to the breakout.</p>`;
     return h + Object.keys(G.buckets || {}).map((f) => rangeBucket(G, f)).join('') + '</div>';
   }
@@ -405,18 +570,20 @@
     try { all = await get(`${hub_}data/research/paths/moves/${kind}.json`); } catch (e) { all = null; }
     if (!here()) return;
     const gk = { stock: 'companies', index: 'indices' }[doc.kind] || 'funds', name = doc.kind === 'stock' ? `${doc.ticker || key} (${doc.name || ''})` : doc.name || key;
-    const grp = (x) => (x && x.groups && x.groups[gk] ? x.groups[gk].base : null);
+    const grpOf = (x) => (x && x.groups && x.groups[gk] ? x.groups[gk] : null), grp = (x) => (grpOf(x) || {}).base || null;
+    const R_ = all && all.regimes && all.regimes[reg], o_ = { params: all && all.params, group: kind === 'highs' ? grpOf(all) : grpOf(R_) };
     let body;
-    if (kind === 'highs') body = block(doc.highs, name, doc.kind, grp(all), gk, { params: all && all.params });
-    else if (kind === 'lows') body = lowBlock(doc.lows[reg], name, doc.kind, grp(all && all.regimes && all.regimes[reg]), gk, reg, { params: all && all.params });
-    else body = rangeBlock(doc.ranges[reg], name, doc.kind, grp(all && all.regimes && all.regimes[reg]), gk, reg, { params: all && all.params });
+    if (kind === 'highs') body = block(doc.highs, name, doc.kind, grp(all), gk, o_);
+    else if (kind === 'lows') body = lowBlock(doc.lows[reg], name, doc.kind, grp(R_), gk, reg, o_);
+    else body = rangeBlock(doc.ranges[reg], name, doc.kind, grp(R_), gk, reg, o_);
     const title = { highs: 'At the highs — how long runs last, how deep the pullback', lows: `${REG[reg]} — how long until the next low, how far the rebound`, ranges: `${REG[reg]} — when it breaks out, which way` }[kind];
     const none = regimesOf(doc).length === 1 && kind === 'highs' && !(doc.highs.state || {}).high ? `<p class="hv-sub">Not at its highs, at its lows or in a sideways range on the last close; below, where it stands against its high and its own past runs.</p>` : '';
     el.innerHTML = `<div class="hv">${ctx.title === false ? '' : `<h3 style="margin-top:4px">${esc(title)}</h3>`}${chips(doc, reg)}${none}${body}</div>`;
     if (el.querySelectorAll) el.querySelectorAll('[data-hvr]').forEach((b) => { b.onclick = () => { if (typeof ctx.onRegime === 'function') ctx.onRegime(b.dataset.hvr); render(el, Object.assign({}, ctx, { regime: b.dataset.hvr })); }; });
   }
 
-  const api = { render, hub, block, bucketTable, kmChart, facts, tiles, headline, css, lowsHub, rangesHub, lowBlock, rangeBlock, lowBucket, rangeBucket, regimesOf, pickRegime, REG };
+  const api = { render, hub, block, bucketTable, kmChart, facts, tiles, headline, css, lowsHub, rangesHub, lowBlock, rangeBlock, lowBucket, rangeBucket, regimesOf, pickRegime, REG,
+    histChart, fanChart, spreadBlock, condBlock, backtestBlock, calibChart, groupOdds };
   if (typeof window !== 'undefined') window.HighsView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();
