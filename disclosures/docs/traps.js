@@ -1,17 +1,19 @@
-/* Analysis traps tab (Disclosure Hub): the six rules with how many companies each triggers on (data/traps/index.json),
+/* Analysis traps tab (Disclosure Hub): the ten rules with how many companies each triggers on (data/traps/index.json),
    a company's findings through traps-view.js. #traps/NVDA opens a company. */
 const trStore = {};
 function trData() {
   const m = trStore.d || (trStore.d = {});
   if (m.data || m.err || m.loading) return m;
   m.loading = fetch('../data/traps/index.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
-    .then(d => { d.list = (d.rows || []).map(r => Object.fromEntries(d.fields.map((k, i) => [k, r[i]]))); m.data = d; if (state.tab === 'traps') render() })
+    .then(async d => { d.list = (d.rows || []).map(r => Object.fromEntries(d.fields.map((k, i) => [k, r[i]])));
+      d.changes = await fetch('../data/traps/changes.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(c => (c && c.changes) || []).catch(() => []);
+      m.data = d; if (state.tab === 'traps') render() })
     .catch(e => { m.err = e.message; if (state.tab === 'traps') render() });
   return m;
 }
 function trapsView() {
   const t = String(state.trt || '').trim().toUpperCase().replace(/[./]/g, '-');
-  let out = head('Analysis traps', 'Where a company\'s figures could mislead a reader — free cash flow up, EPS up, low net debt, adjusted profit — checked on every filing by six rules, each with the innocent explanation that would produce the same figures. A triggered rule is a question to verify, not a verdict.', 'RESEARCH');
+  let out = head('Analysis traps', 'Where a company\'s figures could mislead a reader — free cash flow up, EPS up, low net debt, adjusted profit — checked on every filing by ten rules, each with the innocent explanation that would produce the same figures. A triggered rule is a question to verify, not a verdict.', 'RESEARCH');
   out += `<div class="toolbar"><div class="field wide"><label for="trt">Ticker</label><input id="trt" value="${esc(state.trt || '')}" placeholder="e.g. NVDA, AAPL · Enter"></div></div>`;
   const m = trData();
   if (t) return out + `<div id="tr-one" data-k="${esc(t)}" style="margin-top:10px"></div>`;
@@ -25,6 +27,12 @@ function trapsView() {
       const hits = d.list.filter(x => (x.triggered || []).includes(k)).slice(0, 12);
       return `<tr><td class="mono">${esc(k)}</td><td><b>${esc(r.name)}</b><br><span class="muted">${esc(r.blurb)}</span></td><td class="num">${counts[k]}</td><td>${hits.map(x => `<a href="#traps/${esc(x.ticker)}">${esc(x.ticker)}</a>`).join(', ')}</td></tr>`;
     }).join('') + '</tbody></table></div>';
+  const CH = { new: 'newly triggered', released: 'no longer triggered', severity: 'severity changed', review: 'now to review', lapsed: 'no longer checkable' };
+  const ch = (d.changes || []).slice(0, 30);
+  out += '<h3 style="margin:18px 0 6px">What a newer filing changed</h3><p class="muted">Each rule is re-run when a company files; a trap that appears, goes or changes severity between two filings is listed here (a change to a rule on this site is not).</p>';
+  out += ch.length ? '<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Company</th><th>Rule</th><th>Change</th><th>On the filing to</th><th>Figures</th></tr></thead><tbody>'
+    + ch.map(c => `<tr><td class="mono">${esc(c.date)}</td><td><a href="#traps/${esc(c.ticker)}">${esc(c.ticker)}</a> <span class="muted">${esc(c.name)}</span></td><td class="mono">${esc(c.rule)}</td><td><b>${esc(CH[c.kind] || c.kind)}</b>${c.kind === 'severity' ? ` (${esc(c.from_severity)} → ${esc(c.severity)})` : c.severity && c.kind === 'new' ? ` · ${esc(c.severity)}` : ''}</td><td class="mono">${esc(c.as_of)}<span class="muted"> (was ${esc(c.prev_as_of || '—')})</span></td><td class="muted">${esc(String(c.explanation || '').split('. ')[0])}</td></tr>`).join('') + '</tbody></table></div>'
+    : empty('No change yet: the changes are found by comparing each company\'s findings with those of its previous filing, from the next scans on.');
   out += '<p class="muted">Statuses: triggered, to review, not triggered, insufficient data, not applicable, out of date. Missing data is never shown as clear; severity and confidence are kept apart. <a href="analysis-traps/">The rules explained, with every company by rule →</a></p>';
   return out;
 }

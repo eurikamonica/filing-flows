@@ -26,6 +26,13 @@ Missing data is never shown as clear; severity and confidence are separate field
 every finding carries its figures, so a reader can apply stricter ones. False positives and negatives found in review go
 in this file's log below.
 
+**Evidence changes (P3):** `scripts/seo_traps.py --store store` keeps each company's last findings in the data branch
+(`traps-state.json`) and logs, in `traps-changes.json` / `data/traps/changes.json`, every rule whose status or severity
+changed between two filings (newly triggered, no longer triggered, severity changed, now to review, no longer checkable);
+a status that flips without a newer filing (a rule upgrade) is not logged. Shown on `disclosures/analysis-traps/#changes`,
+the Hub tab, the company view, Flo ("which traps changed with the latest filings?") and Flo's pulse feed (kind `trap`,
+cited to the filing).
+
 **Review log**
 - 2026-11-05 v1.1: E02, E07, J06, J08 added (E02 first flagged steady growers such as NVDA and META → ≥ 2 down years
   required; fiscal years older than the latest quarter's year − 2 are dropped from every rule's inputs, after Boston

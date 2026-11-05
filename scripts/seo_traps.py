@@ -16,6 +16,7 @@ the environment skips it. Not investment advice: a triggered rule is a question 
 import argparse
 import datetime as dt
 import json
+import re
 import os
 import sys
 from xml.sax.saxutils import escape as xesc
@@ -191,21 +192,125 @@ def hub_page(site, base, docs, rows, slugs):
         secs += (f"<h2 id='{k}'>{e(k)} · {e(nm)} <span class='muted'>{len(hits)} of {n}</span></h2>"
                  + (f"<p>{e(RULE_BLURB[k])}</p>")
                  + (f"<ul class='seo-list'>" + "".join(f"<li>{L(cik)} <span class='muted'>{e(f['severity'])} · {e(f['explanation'].split('. ')[0])}.</span></li>" for cik, f in hits[:40]) + "</ul>" if hits else "<p class='muted'>No company triggers it on the latest filings.</p>"))
+    ch = (read(os.path.join(site, "data", "traps", "changes.json")) or {}).get("changes") or []
+    if ch:
+        secs += ("<h2 id='changes'>What a newer filing changed <span class='muted'>last " + str(KEEP_DAYS) + " days</span></h2>"
+                 "<p>Each rule is re-run when a company files; a trap that appears, goes, or changes severity between two filings is listed here (a rule changed on this site is not).</p><ul class='seo-list'>"
+                 + "".join(f"<li>{e(c['date'])} · <a href='{e(c['url'])}'><b>{e(c['ticker'])}</b></a> {e(c['rule'])} {e(lower(c['rule_name']))}: <b>{e(CHANGE_WORD[c['kind']])}</b>"
+                           + (f" ({e(c.get('from_severity') or '')} → {e(c.get('severity') or '')})" if c["kind"] == "severity" else "") + f" on the filing to {e(c.get('as_of') or '')} (was {e(c.get('prev_as_of') or '')})"
+                           + (f" <span class='muted'>{e(c['explanation'].split('. ')[0])}.</span>" if c.get("explanation") else "") + "</li>" for c in ch[:40]) + "</ul>")
     counts = {k: len(by_rule[k]) for k in T.NAMES}
     lead = (f"{seo.n_of(len(T.NAMES), 'rule')} on {seo.n_of(n, 'company', 'companies')}' filings, each a common misreading of a figure: "
             + ", ".join(f"{lower(T.NAMES[k][0])} ({counts[k]})" for k in T.NAMES) + ". A triggered rule is a question to verify, with the normal explanation that would produce the same figures.")
     url = f"{base}/disclosures/analysis-traps/"
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Analysis traps</p><h1>Analysis traps: where the figures could mislead you</h1>"
-            f"<p class='lead'>{e(lead)}</p><nav class='seo-toc'>" + "".join(f"<a href='#{k}'>{k}</a>" for k in T.NAMES) + "</nav>" + secs
-            + "<h2 id='method'>Method</h2><div class='seo-note'><p>Six rules of a hundred-item catalogue (docs/TRAP_RULEBOOK.md in the repository), chosen because the site already holds every figure they need: "
+            f"<p class='lead'>{e(lead)}</p><nav class='seo-toc'>" + "".join(f"<a href='#{k}'>{k}</a>" for k in T.NAMES) + ("<a href='#changes'>Changes</a>" if ch else "") + "</nav>" + secs
+            + "<h2 id='method'>Method</h2><div class='seo-note'><p>Ten rules of a hundred-item catalogue (docs/TRAP_RULEBOOK.md in the repository), chosen because the site already holds every figure they need: "
               "the cash bridge, capex, stock compensation and share counts, receivables, debt maturities, adjusted against GAAP EPS. Each reads the company's own filings by a fixed formula with coarse, "
               "documented thresholds and carries its figures, so a reader can apply stricter ones. Statuses: triggered, to review, not triggered, insufficient data, not applicable, out of date; "
               "missing data is never shown as clear. Severity and confidence are kept apart. The rules are independent of the earnings quality score and change nothing in it.</p></div>" + DISCLAIMER)
     d = os.path.join(site, "disclosures", "analysis-traps")
     os.makedirs(d, exist_ok=True)
     ld = {"@context": "https://schema.org", "@graph": [{"@type": "WebPage", "name": "Analysis traps: where the figures could mislead you", "url": url, "description": lead[:300]}]}
-    open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(seo.page("Analysis Traps: Six Ways a Company's Figures Mislead, Checked on Every Filing", lead[:300], url, body, 2, base + "/og.png", ld))
+    open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(seo.page("Analysis Traps: Ten Ways a Company's Figures Mislead, Checked on Every Filing", lead[:300], url, body, 2, base + "/og.png", ld))
     return url
+
+
+# ---------------------------------------------------------------- evidence changes: a new filing makes a trap appear or go
+CHANGE_WORD = {"new": "newly triggered", "released": "no longer triggered", "severity": "severity changed", "review": "now to review", "lapsed": "no longer checkable"}
+KEEP_DAYS, FEED_MAX = 180, 20
+
+
+def state_of(doc):
+    return {"as_of": doc.get("as_of"), "filed": doc.get("filed"), "f": {f["rule_id"]: [f["status"], f.get("severity")] for f in doc["findings"]}}
+
+
+def diff(prev, doc, today):
+    """the changes between a company's previous findings and today's, only when a newer filing is behind them (a rule
+    upgrade that flips a status without a new filing is not an evidence change)"""
+    out = []
+    if not prev or not doc.get("filed") or (prev.get("filed") or "") >= doc["filed"]:
+        return out
+    old = prev.get("f") or {}
+    for f in doc["findings"]:
+        was = old.get(f["rule_id"])
+        if not was:
+            continue
+        st0, sv0 = was[0], was[1]
+        st1, sv1 = f["status"], f.get("severity")
+        kind = None
+        if st1 == "triggered" and st0 != "triggered":
+            kind = "new"
+        elif st0 == "triggered" and st1 in ("clear", "review"):
+            kind = "released"
+        elif st0 == "triggered" and st1 in ("insufficient_data", "not_applicable", "expired"):
+            kind = "lapsed"
+        elif st0 == st1 == "triggered" and sv0 != sv1:
+            kind = "severity"
+        elif st1 == "review" and st0 == "clear":
+            kind = "review"
+        if not kind:
+            continue
+        ev = next((x.get("url") for x in (f.get("evidence") or []) if x.get("url")), None) or doc.get("doc_url")
+        out.append({"date": today.isoformat(), "cik": doc["cik"], "ticker": doc.get("ticker") or "", "name": doc.get("name") or "", "rule": f["rule_id"], "rule_name": f["name"],
+                    "kind": kind, "from": st0, "to": st1, "severity": sv1, "from_severity": sv0, "as_of": doc.get("as_of"), "prev_as_of": prev.get("as_of"), "filed": doc["filed"],
+                    "explanation": (f.get("explanation") or f.get("reason") or "")[:240], "doc_url": ev})
+    return out
+
+
+def track_changes(site, store, docs, slugs, base, today):
+    """store/traps-state.json (last findings per company) and store/traps-changes.json (the log) in the data store;
+    data/traps/changes.json on the site, and up to FEED_MAX trap events in Flo's alert feed"""
+    state = read(os.path.join(store, "traps-state.json")) if store else None
+    prev = (state or {}).get("companies") or {}
+    log = (read(os.path.join(store, "traps-changes.json")) if store else None) or {}
+    changes = [c for c in (log.get("changes") or []) if (c.get("date") or "") >= (today - dt.timedelta(days=KEEP_DAYS)).isoformat()]
+    seen = {(c["cik"], c["rule"], c.get("as_of"), c["kind"]) for c in changes}
+    fresh = []
+    for cik, doc in docs.items():
+        for c in diff(prev.get(str(cik)), doc, today):
+            if (c["cik"], c["rule"], c.get("as_of"), c["kind"]) in seen:
+                continue
+            c["url"] = f"{base}/c/{slugs[cik]}/analysis-traps/#{c['rule']}" if cik in slugs else f"{base}/disclosures/#traps/{c['ticker']}"
+            fresh.append(c)
+    changes = sorted(fresh + changes, key=lambda c: (c["date"], c.get("filed") or ""), reverse=True)[:2000]
+    if store:
+        os.makedirs(store, exist_ok=True)
+        with open(os.path.join(store, "traps-state.json"), "w", encoding="utf-8") as f:
+            json.dump({"generated_at": today.isoformat(), "rule_version": T.RULE_VERSION, "companies": {str(cik): state_of(d) for cik, d in docs.items()}}, f, separators=(",", ":"))
+        with open(os.path.join(store, "traps-changes.json"), "w", encoding="utf-8") as f:
+            json.dump({"generated_at": today.isoformat(), "changes": changes}, f, separators=(",", ":"))
+    with open(os.path.join(site, "data", "traps", "changes.json"), "w", encoding="utf-8") as f:
+        json.dump({"generated_at": today.isoformat(), "first_run": not prev, "n": len(changes), "changes": changes[:400]}, f, separators=(",", ":"))
+    flo_feed(site, [c for c in changes if c["date"] >= (today - dt.timedelta(days=3)).isoformat()], today)
+    print(f"analysis traps: {len(fresh)} evidence changes today ({len(changes)} in the last {KEEP_DAYS} days)" + ("; first run, state saved" if not prev else ""))
+    return fresh
+
+
+def flo_feed(site, fresh, today):
+    """trap events into disclosures/data/market/flo-alerts.json (built earlier in the run by scripts/build_flo_alerts.py,
+    without them): the last three days' changes, since the feed is rebuilt every run and the pulse shows 72 hours. The
+    feed takes only SEC-cited events, so a change is added only with the filing it rests on"""
+    p = os.path.join(site, "disclosures", "data", "market", "flo-alerts.json")
+    feed = read(p)
+    if not feed or feed.get("schema") != 1 or not isinstance(feed.get("events"), list):
+        return 0
+    rank = {"new": 0, "severity": 1, "released": 2, "review": 3, "lapsed": 4}
+    pick = sorted([c for c in fresh if c.get("doc_url") and c["ticker"] and re.fullmatch(r"https://(www\.)?sec\.gov/Archives/.*", c["doc_url"])],
+                  key=lambda c: (rank[c["kind"]], {"high": 0, "medium": 1, "low": 2}.get(c.get("severity"), 3)))[:FEED_MAX]
+    events = [e for e in feed["events"] if (e or {}).get("kind") != "trap"]
+    for c in pick:
+        at = f"{c['date']}T00:00:00Z"
+        pr = "high" if c["kind"] in ("new", "severity") and c.get("severity") == "high" else "medium" if c["kind"] in ("new", "severity") else "info"
+        events.append({"id": f"trap:{c['cik']}:{c['rule']}:{c.get('as_of')}:{c['kind']}", "kind": "trap", "ticker": c["ticker"], "priority": pr,
+                       "title": f"{c['ticker']} {c['rule']} {c['rule_name']}: {CHANGE_WORD[c['kind']]}" + (f" ({c.get('from_severity')} → {c.get('severity')})" if c["kind"] == "severity" else ""),
+                       "detail": c["explanation"][:180], "event_at": at, "filed": c["filed"], "rule": c["rule"], "change": c["kind"], "status": c["to"], "was": c["from"],
+                       "severity": c.get("severity"), "as_of": c.get("as_of"), "page": c.get("url"), "source_url": c["doc_url"], "source_label": "SEC filing · Filing Flows analysis traps",
+                       "scope": "A rule re-run on a newer filing; a question to verify, not a verdict."})
+    feed["events"] = events[:300]
+    with open(p, "w", encoding="utf-8") as f:
+        json.dump(feed, f, separators=(",", ":"))
+    return len(pick)
 
 
 RULE_BLURB = {
@@ -222,7 +327,7 @@ RULE_BLURB = {
 }
 
 
-def write(site, base, today=None):
+def write(site, base, today=None, store=None):
     base = base.rstrip("/")
     today = today or dt.date.today()
     ix = read(os.path.join(site, "data", "index.json")) or {}
@@ -271,6 +376,7 @@ def write(site, base, today=None):
         json.dump({"generated_at": today.isoformat(), "rule_version": T.RULE_VERSION, "rules": {k: {"name": v[0], "area": v[1], "blurb": RULE_BLURB[k]} for k, v in T.NAMES.items()},
                    "fields": ["ticker", "cik", "name", "sector", "as_of", "triggered", "top_severity", "priority", "insufficient"], "rows": index_rows}, f, separators=(",", ":"))
     if docs:
+        track_changes(site, store, docs, slugs, base, today)
         urls.insert(0, (hub_page(site, base, docs, rows, slugs), today.isoformat()))
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     sm += [f"<url><loc>{xesc(u)}</loc>" + (f"<lastmod>{xesc(str(m)[:10])}</lastmod>" if m else "") + "</url>" for u, m in urls]
@@ -289,8 +395,9 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--site", default="_site")
     ap.add_argument("--site-url", default=os.environ.get("SITE_URL") or "https://filing-flows.com")
+    ap.add_argument("--store", default=None, help="the data store (branch data): previous findings, the change log")
     a = ap.parse_args()
     if (os.environ.get("TRAPS") or "").lower() == "off":
         print("analysis traps: TRAPS=off, skipped")
     else:
-        write(a.site, a.site_url)
+        write(a.site, a.site_url, store=a.store)

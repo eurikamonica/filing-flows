@@ -11,7 +11,7 @@ const script=doc&&doc.currentScript&&doc.currentScript.src||'';
 const BASE=script?script.replace(/[^/]*$/,''):'';
 const FEED=BASE+'disclosures/data/market/flo-alerts.json';
 const KEY='ff:flo-pulse:v2',INTERVAL=120000,MAX_SEEN=1000;
-const KINDS=['8k','13f','news','price'];
+const KINDS=['8k','13f','news','price','trap'];
 const priority={high:3,medium:2,info:1};
 const escape=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const url=v=>{
@@ -42,6 +42,7 @@ function react(e){
  if(e.kind==='8k')return e.priority==='high'?'worried':'think';
  if(e.kind==='13f')return 'wave';
  if(e.kind==='price')return e.change_pct<0?'worried':'happy';
+ if(e.kind==='trap')return e.priority==='high'?'worried':e.change==='released'?'happy':'think';
  return 'talk';
 }
 function watchSet(config){
@@ -54,7 +55,7 @@ function shown(e,config={}){
  return !watch.length||watch.some(t=>t===e.ticker||Array.isArray(e.symbols)&&e.symbols.includes(t));
 }
 function explain(e,zh=false,related=[]){
- const label=e.kind==='8k'?'SEC Form 8-K':e.kind==='13f'?'SEC Form 13F':e.kind==='price'?'Daily price change':'Published news';
+ const label=e.kind==='8k'?'SEC Form 8-K':e.kind==='13f'?'SEC Form 13F':e.kind==='price'?'Daily price change':e.kind==='trap'?(zh?'分析陷阱变化':'Analysis trap change'):'Published news';
  const name=e.kind==='13f'?(e.manager||'Institution'):(e.ticker||e.source_label||'');
  const data=[],notes=[];
  if(e.kind==='8k'){
@@ -86,6 +87,14 @@ function explain(e,zh=false,related=[]){
      }
    }
    notes.push(zh?'这些是季度末申报持仓，不是申报当日买卖。要判断真实变化，应比较两期股数、权重及拆股，并注意披露滞后。':'These are quarter-end reported positions, NOT trades on filing day. Compare quantities and weights across quarters, account for splits and disclosure lag.');
+ }else if(e.kind==='trap'){
+   const W={new:zh?'新触发':'newly triggered',released:zh?'不再触发':'no longer triggered',severity:zh?'严重性变化':'severity changed',review:zh?'转为待复核':'now to review',lapsed:zh?'不再可检查':'no longer checkable'};
+   if(e.rule)data.push((zh?'规则：':'Rule: ')+escape(e.rule));
+   if(e.change)data.push((zh?'变化：':'Change: ')+escape(W[e.change]||e.change)+(e.was&&e.status?' ('+escape(e.was)+' → '+escape(e.status)+')':''));
+   if(e.severity)data.push((zh?'严重性：':'Severity: ')+escape(e.severity));
+   if(e.as_of)data.push((zh?'财报截至：':'Filings to: ')+escape(e.as_of));
+   if(e.filed)data.push((zh?'SEC 提交日：':'Filed: ')+escape(e.filed));
+   notes.push(zh?'规则在新的申报上重新运行；触发是需要对照申报核实的问题，不是结论，也不是对股价的判断。':'The rule was re-run on a newer filing. A triggered rule is a question to verify against the filing, not a verdict and not a view on the stock.');
  }else if(e.kind==='price'){
    if(Number.isFinite(e.price))data.push((zh?'发布的日收盘价：':'Published close: ')+'$'+escape(Number(e.price).toFixed(2)));
    if(Number.isFinite(e.change_pct))data.push((zh?'单日变化：':'Daily change: ')+escape((e.change_pct>=0?'+':'')+e.change_pct.toFixed(2)+'%'));
@@ -115,10 +124,11 @@ function explain(e,zh=false,related=[]){
  }
  out+='<p class="flo-source">'+escape(e.event_at.slice(0,16))+' UTC · '+escape(e.source_label||'')+' · '+escape(e.scope||'')+'</p>';
  if(evidence)out+='<div class="flo-links"><a target="_blank" rel="noopener noreferrer" href="'+escape(evidence)+'">'+
-  (zh?'查看原始 SEC / 新闻资料':'Read original SEC / news source')+'</a></div>';
+  (zh?'查看原始 SEC / 新闻资料':'Read original SEC / news source')+'</a>'+
+  (e.kind==='trap'&&/^https:\/\/(?:www\.)?filing-flows\.com\//.test(String(e.page||''))?' · <a href="'+escape(e.page)+'">'+(zh?'该公司的分析陷阱页':'The company\'s analysis-traps page')+'</a>':'')+'</div>';
  return out;
 }
-let seen=[],initialized=false,settings={quiet:false,minPriority:'info',watch:'',kinds:{'8k':true,'13f':true,news:true,price:true}};
+let seen=[],initialized=false,settings={quiet:false,minPriority:'info',watch:'',kinds:{'8k':true,'13f':true,news:true,price:true,trap:true}};
 let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='',lastPopupAt=0,scanHealth={},marketContext={benchmarks:{},generated_at:''};
 function storage(){
  try{root.localStorage&&root.localStorage.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings,lastPopupAt}));}catch(_){}
@@ -253,7 +263,7 @@ function renderInbox(){
  for(const k of KINDS){
    const label=el('label',''),box=el('input');box.type='checkbox';box.checked=settings.kinds[k]!==false;
    box.addEventListener('change',()=>{settings.kinds[k]=box.checked;storage();renderInbox()});
-   label.append(box,doc.createTextNode(' '+(k==='8k'?'8-K':k==='13f'?'13F':k==='news'?'News':'Daily close')));
+   label.append(box,doc.createTextNode(' '+(k==='8k'?'8-K':k==='13f'?'13F':k==='news'?'News':k==='trap'?(isZH()?'分析陷阱':'Traps'):'Daily close')));
    types.append(label);
  }
  inbox.append(controls,types);
@@ -368,7 +378,7 @@ function report(q,zh=false){
 
  const matched=upper.match(/\$([A-Z]{1,7})\b/)||upper.match(/\b(?:NVDA|AAPL|MSFT|OKLO|IREN|CRWV|TSLA|META|AMZN)\b/);
  const tickerQuery=matched?matched[1]||matched[0]:null;
- const type=/8.?k/i.test(query)?'8k':/13f/i.test(query)?'13f':/异动|价格|price|move/i.test(query)?'price':null;
+ const type=/8.?k/i.test(query)?'8k':/13f/i.test(query)?'13f':/异动|价格|price|move/i.test(query)?'price':/trap|陷阱/i.test(query)?'trap':null;
  const list=items.filter(e=>(!type||e.kind===type)&&(!tickerQuery||e.ticker===tickerQuery||(e.symbols||[]).includes(tickerQuery))).slice(0,7);
  let html='<b>'+escape(zh?'Flo 最近发布的扫描信息':'Flo latest published observations')+'</b><p>'+
    escape(zh?'内容来自网站已经发布的扫描数据；不是实时 SEC 推送或盘中行情。':'These are already published site snapshots, not realtime SEC pushes or intraday quotes.')+'</p>';

@@ -660,7 +660,8 @@
     const slugOf = (c) => { const t = String(c.ticker || '').toLowerCase().replace(/\./g, '-'); return /^[a-z0-9-]{1,12}$/.test(t) ? t : 'cik-' + c.cik; };
     const qrows = async () => { const d = await json(DATA + 'quality-score.json'); if (!d || !d.fields) return null; const F = d.fields; return { n: d.n, rows: (d.rows || []).map((r) => Object.fromEntries(F.map((k, i) => [k, r[i]]))) }; };
     const GRADE_ZH = { A: '优', B: '良', C: '中', D: '差', E: '很差' };
-    const TRAP_ZH = { A01: '自由现金流增长 = 经营改善', A07: '股权激励加回 = 没有经济成本', B02: '应收增长 = 未来现金确定', B08: '调整后利润 = 经济利润', C02: '净债务低 = 没有再融资风险', D03: 'EPS 增长 = 利润增长' };
+    const TRAP_ZH = { A01: '自由现金流增长 = 经营改善', A07: '股权激励加回 = 没有经济成本', B02: '应收增长 = 未来现金确定', B08: '调整后利润 = 经济利润', C02: '净债务低 = 没有再融资风险', D03: 'EPS 增长 = 利润增长', E02: '周期顶部的低市盈率 = 便宜', E07: 'DCF 的点值 = 价值', J06: '银行的创纪录利润 = 正常年份', J08: 'REIT 的分红 = 由利润覆盖' };
+    const CHANGE_ZH = { new: ['newly triggered', '新触发'], released: ['no longer triggered', '不再触发'], severity: ['severity changed', '严重性变化'], review: ['now to review', '转为待复核'], lapsed: ['no longer checkable', '不再可检查'] };
     const ST_ZH = { triggered: '触发', clear: '未触发', insufficient_data: '数据不足', not_applicable: '不适用', review: '待复核', expired: '已过期' };
     async function traps(c, lg) {
       const d = await json(DATA + 'traps/' + c.cik + '.json');
@@ -670,12 +671,16 @@
       const s = d.summary || {};
       const line = (f) => L(lg, `<b>${esc(f.name)}</b> (${esc(f.status === 'review' ? 'to review' : 'triggered')}, severity ${esc(f.severity || '—')}): ${esc(f.explanation)}${(f.alternative_explanations || [])[0] ? ` <i>Innocent reading: ${esc(f.alternative_explanations[0])}.</i>` : ''}`,
         `<b>${esc(TRAP_ZH[f.rule_id] || f.name)}</b>（${ST_ZH[f.status]}${f.severity ? '，严重性 ' + esc(f.severity) : ''}）：${esc(f.explanation)}${(f.alternative_explanations || [])[0] ? ` <i>正常解释：${esc(f.alternative_explanations[0])}。</i>` : ''}`);
+      const ch = ((await json(DATA + 'traps/changes.json')) || {}).changes || [];
+      const mine = ch.filter((x) => String(x.cik) === String(c.cik)).slice(0, 4);
+      const changed = mine.length ? ' ' + L(lg, `The latest filing (to ${esc(mine[0].as_of)}) changed: ${mine.map((x) => `${esc(x.rule)} ${esc(x.rule_name)} ${esc(CHANGE_ZH[x.kind][0])}${x.kind === 'severity' ? ` (${esc(x.from_severity)} → ${esc(x.severity)})` : ''}`).join('; ')}.`,
+        `最新一期财报（截至 ${esc(mine[0].as_of)}）带来的变化：${mine.map((x) => `${esc(x.rule)} ${esc(TRAP_ZH[x.rule] || x.rule_name)} ${esc(CHANGE_ZH[x.kind][1])}${x.kind === 'severity' ? `（${esc(x.from_severity)} → ${esc(x.severity)}）` : ''}`).join('；')}。`) : '';
       const html = (pri.length
         ? L(lg, `Before taking <b>${esc(c.ticker)}</b>'s figures at face value, ${num(s.triggered || 0)} of ${num(d.findings.length)} analysis-trap rules are triggered on the filings to ${esc(d.as_of || '')}:`, `读 <b>${esc(c.ticker)}</b> 的数字之前：截至 ${esc(d.as_of || '')} 的财报触发了 ${num(d.findings.length)} 条分析陷阱规则中的 ${num(s.triggered || 0)} 条：`) + ol(pri.map(line))
         : L(lg, `None of the ${num(d.findings.length)} analysis-trap rules is triggered on <b>${esc(c.ticker)}</b>'s filings to ${esc(d.as_of || '')}`, `截至 ${esc(d.as_of || '')} 的财报，<b>${esc(c.ticker)}</b> 没有触发 ${num(d.findings.length)} 条分析陷阱规则中的任何一条`)
           + (s.insufficient_data ? L(lg, ` (${num(s.insufficient_data)} could not be checked for lack of data)`, `（${num(s.insufficient_data)} 条因数据不足无法检查）`) : '') + '.')
-        + L(lg, ' A triggered rule is a question to verify against the filing, not a verdict.', ' 触发只是需要核实的问题，不是结论。');
-      return { html, facts: d.findings.filter((f) => f.status === 'triggered').map((f) => `trap ${f.rule_id} ${f.name}: ${f.explanation}`).concat([`traps summary ${JSON.stringify(s)}`]),
+        + L(lg, ' A triggered rule is a question to verify against the filing, not a verdict.', ' 触发只是需要核实的问题，不是结论。') + changed;
+      return { html, facts: d.findings.filter((f) => f.status === 'triggered').map((f) => `trap ${f.rule_id} ${f.name}: ${f.explanation}`).concat([`traps summary ${JSON.stringify(s)}`], mine.map((x) => `trap change ${x.rule} ${x.kind} on ${x.as_of}`)),
         mood: pri.some((f) => f.severity === 'high') ? 'worried' : 'talk',
         links: [lk(`${BASE}c/${slugOf(c)}/analysis-traps/`, L(lg, 'Every rule, the figures and the innocent explanations', '全部规则、数字与正常解释')), lk(`${BASE}#c-${c.cik}-x-traps`, L(lg, 'Analysis traps view', '分析陷阱视图'))] };
     }
@@ -683,7 +688,15 @@
       const d = await json(DATA + 'traps/index.json');
       if (!d || !d.fields) return null;
       const rows = (d.rows || []).map((r) => Object.fromEntries(d.fields.map((k, i) => [k, r[i]])));
-      const m = String(q || '').match(/\b([A-D]0\d)\b/i);
+      if (/\b(new|newly|recent|latest|chang|this week|appear|disappear|released|since)\b|最近|最新|新触发|变化|新增|解除/i.test(String(q || ''))) {
+        const ch = (((await json(DATA + 'traps/changes.json')) || {}).changes || []).slice(0, 12);
+        if (!ch.length) return { html: L(lg, 'No evidence change on file yet: each company\'s findings are compared with those of its previous filing from the next scans on.', '还没有记录到证据变化：从下次扫描起，每家公司的结果会与其上一期财报的结果比较。'), facts: [], mood: 'talk', links: [lk(`${BASE}disclosures/#traps`, L(lg, 'Analysis traps', '分析陷阱'))] };
+        return { html: L(lg, `Traps a newer filing changed, newest first (${num(ch.length)} shown):`, `最近因新财报而变化的分析陷阱（最新在前，共 ${num(ch.length)} 条）：`)
+          + ol(ch.map((x) => `${esc(x.date)} ${coLink(x.ticker, x.cik)} ${esc(x.rule)} ${esc(lg === 'zh' ? (TRAP_ZH[x.rule] || x.rule_name) : x.rule_name)}: <b>${esc(CHANGE_ZH[x.kind][lg === 'zh' ? 1 : 0])}</b>${x.kind === 'severity' ? ` (${esc(x.from_severity)} → ${esc(x.severity)})` : x.kind === 'new' && x.severity ? ` · ${esc(x.severity)}` : ''} ${L(lg, `on the filing to ${esc(x.as_of)}`, `（截至 ${esc(x.as_of)} 的财报）`)}`))
+          + L(lg, ' A change to a rule on this site is not listed, only a newer filing re-read by the same rule.', ' 只列出同一规则在更新财报上的重算结果，不含规则本身的修改。'),
+          facts: ch.map((x) => `trap change ${x.ticker} ${x.rule} ${x.kind} ${x.as_of}`), mood: ch.some((x) => x.kind === 'new' && x.severity === 'high') ? 'worried' : 'talk', links: [lk(`${BASE}disclosures/analysis-traps/#changes`, L(lg, 'Every change of the last six months', '最近六个月的全部变化'))] };
+      }
+      const m = String(q || '').match(/\b([A-J]0\d)\b/i);
       const rule = m ? m[1].toUpperCase() : null;
       const rev = Object.fromEntries(((ix && ix.companies) || []).filter((x) => x.ticker).map((x) => [fileT(x.ticker), x.revenue || 0]));
       const hit = rows.filter((r) => (rule ? (r.triggered || []).includes(rule) : (r.triggered || []).length)).sort((a, b) => (rule ? 0 : (b.triggered || []).length - (a.triggered || []).length) || (rev[fileT(b.ticker)] || 0) - (rev[fileT(a.ticker)] || 0)).slice(0, 10);
@@ -883,7 +896,7 @@
     ['congress', 'What is Congress trading?', '国会议员最近在交易什么？'], ['owners', 'What did funds buy most last quarter?', '上季度机构买得最多的股票'],
     ['moves', 'Most unusual moves today', '今天最罕见的涨跌'], ['events', 'Latest deals and material 8-Ks', '最新的并购和重大 8-K'], ['shorts', 'Most shorted stocks', '空头最多的股票'],
     ['guidanceRecord', 'Who raised guidance lately?', '最近谁上调了指引？'], ['sectors', 'Which sectors are leading?', '哪些板块最强？'],
-    ['quality', 'Lowest earnings quality scores', '盈余质量最差的公司'], ['traps', 'Which companies trigger the most analysis traps?', '哪些公司触发的分析陷阱最多？'], ['screen', 'Find stocks with insiders buying', '找内部人在买的股票'], ['afterEvent', 'Which 8-K items move stocks?', '哪类公告最能推动股价？'], ['insiderSignal', 'Do insider trades predict the stock?', '跟着内部人买靠谱吗？'], ['runway', 'Who is running out of cash?', '哪些公司快没现金了？']];
+    ['quality', 'Lowest earnings quality scores', '盈余质量最差的公司'], ['traps', 'Which companies trigger the most analysis traps?', '哪些公司触发的分析陷阱最多？'], ['traps', 'Which analysis traps changed with the latest filings?', '最近财报让哪些分析陷阱变了？'], ['screen', 'Find stocks with insiders buying', '找内部人在买的股票'], ['afterEvent', 'Which 8-K items move stocks?', '哪类公告最能推动股价？'], ['insiderSignal', 'Do insider trades predict the stock?', '跟着内部人买靠谱吗？'], ['runway', 'Who is running out of cash?', '哪些公司快没现金了？']];
 
   const marketWords = (q) => MARKET.test(String(q || ''));
   const API = { glossary, GLOSSARY, QLABEL, classify, merge, isMarket, marketWords, isFollow, fuzzyCompany, make, followUps, MARKET_ASK, INTENTS, lev };

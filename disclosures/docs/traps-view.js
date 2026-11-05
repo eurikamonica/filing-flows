@@ -65,11 +65,15 @@
     let d;
     try { d = await load(site, opt.cik); } catch (e) { if (here()) el.innerHTML = `<div class="tv"><p class="muted">${esc(e.message)}</p></div>`; return; }
     if (!here()) return;
+    const ch = await fetch(`${site}data/traps/changes.json`, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((c) => ((c && c.changes) || []).filter((x) => String(x.cik) === String(opt.cik)).slice(0, 8)).catch(() => []);
+    if (!here()) return;
+    const CH = { new: 'newly triggered', released: 'no longer triggered', severity: 'severity changed', review: 'now to review', lapsed: 'no longer checkable' };
     const F = Object.fromEntries(d.findings.map((f) => [f.rule_id, f]));
     const pri = (d.priority || []).map((k) => F[k]).filter(Boolean);
     const s = d.summary || {};
     const lead = `${s.triggered || 0} of ${d.findings.length} rules triggered on the filings to ${esc(d.as_of || '')}` + (s.review ? `, ${s.review} to review` : '') + (s.insufficient_data ? `, ${s.insufficient_data} with insufficient data` : '') + (s.not_applicable ? `, ${s.not_applicable} not applicable` : '') + '.';
     el.innerHTML = `<div class="tv"><div><h3>Analysis traps: where the figures could mislead you</h3><p class="muted">${lead} Each is a question to verify, with the normal explanation that would produce the same figures; not a finding of manipulation, not a view on the stock. Rules v${esc(d.rule_version)}.</p></div>`
+      + (ch.length ? `<div><p><b>What the latest filing changed</b></p><ul>${ch.map((c) => `<li>${esc(c.date)} · <span class="tv-id">${esc(c.rule)}</span>${esc(c.rule_name)}: <b>${esc(CH[c.kind] || c.kind)}</b>${c.kind === 'severity' ? ` (${esc(c.from_severity)} → ${esc(c.severity)})` : ''} on the filing to ${esc(c.as_of)} (was ${esc(c.prev_as_of || '—')})</li>`).join('')}</ul></div>` : '')
       + (pri.length ? `<div><p><b>Check these first</b></p>${pri.map((f) => `<div class="tv-card ${CLS[f.status]}"><p><b>${esc(f.name)}</b><span class="tv-st ${CLS[f.status]}">${WORD[f.status]}</span>${f.severity ? ` <span class="muted tv-small">severity ${esc(f.severity)}</span>` : ''}</p><p>${esc(f.explanation)}</p>${(f.alternative_explanations || [])[0] ? `<p class="muted tv-small">Innocent reading: ${esc(f.alternative_explanations[0])}.</p>` : ''}</div>`).join('')}</div>`
         : '<p>No rule is triggered on the latest filings.</p>')
       + `<div><p><b>Every rule</b></p>${d.findings.map(one).join('')}</div>`

@@ -646,7 +646,7 @@ def evaluate(c, er=None, today=None, val=None):
         seen.add(f["group"])
         pri.append(f["rule_id"])
     pri += [f["rule_id"] for f in out if f["status"] == "review"][:max(0, 3 - len(pri))]
-    return {"cik": ((c or {}).get("profile") or {}).get("cik"), "name": I["name"], "as_of": as_of, "filed": filed, "generated_at": today.isoformat(),
+    return {"cik": ((c or {}).get("profile") or {}).get("cik"), "name": I["name"], "as_of": as_of, "filed": filed, "doc_url": latest.get("doc_url"), "generated_at": today.isoformat(),
             "rule_version": RULE_VERSION, "findings": out, "summary": summary, "priority": pri[:3], "is_demo": False,
             "note": ("Each finding is a question to verify against the filing, with the normal explanations that produce the same figures. "
                      "A triggered rule is not a finding of manipulation and not a view on the stock. Not investment advice.")}

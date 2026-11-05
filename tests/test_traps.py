@@ -184,3 +184,45 @@ def test_release_reconciliation_tables():
     assert r2["rank"] == 0 and "non-gaap" in r2["measure"].lower()
     r3 = R.reconciliation(R.read_tables(html(ebitda)), scale=1e6)
     assert r3 and r3["rank"] in (1, 2)
+
+
+def test_evidence_changes(tmp_path):
+    """a newer filing that makes a trap go or appear is logged (store/traps-changes.json, data/traps/changes.json) and
+    reaches Flo's alert feed with the filing it rests on; the first run only saves the state; a status that changes
+    without a newer filing is not a change"""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    import seo_traps as S
+    s, store = tmp_path / "site", tmp_path / "store"
+    (s / "data" / "c").mkdir(parents=True); (s / "c" / "aaa").mkdir(parents=True); (s / "disclosures" / "data" / "market").mkdir(parents=True)
+    (s / "c" / "aaa" / "index.html").write_text('<html><main class="seo"><nav class="seo-toc"><a href="#s">S</a></nav></main></html>')
+    (s / "data" / "index.json").write_text(json.dumps({"companies": [{"cik": 1, "ticker": "AAA", "name": "ALPHA INC", "sector": "technology", "revenue": 1.1e9, "filed": "2025-11-01"}]}))
+    (s / "disclosures" / "data" / "market" / "flo-alerts.json").write_text(json.dumps({"schema": 1, "events": [{"id": "8k:x", "kind": "8k"}]}))
+    c = company(); (s / "data" / "c" / "1.json").write_text(json.dumps(c))
+    S.write(str(s), "https://x.test", TODAY, store=str(store))
+    ch = json.loads((s / "data" / "traps" / "changes.json").read_text())
+    assert ch["first_run"] and ch["changes"] == [] and json.loads((store / "traps-state.json").read_text())["companies"]["1"]["f"]["A01"][0] == "triggered"
+    # the same filing, A01 now clear (a rule change, say: capex no longer fell) → the state moves on, no change is logged
+    c2 = json.loads(json.dumps(c)); c2["quality"]["cap"]["fy"][-1]["items"]["capex"] = -60e6; c2["quality"]["fy"][-1]["bridge"]["items"] = [["d_ar", -10e6], ["d_inv", -5e6]]
+    (s / "data" / "c" / "1.json").write_text(json.dumps(c2))
+    S.write(str(s), "https://x.test", TODAY, store=str(store))
+    assert json.loads((s / "data" / "traps" / "changes.json").read_text())["changes"] == []
+    assert json.loads((store / "traps-state.json").read_text())["companies"]["1"]["f"]["A01"][0] == "clear"
+    # back to the first figures on a newer filing → A01 newly triggered, logged once, in the feed; then the next filing releases it
+    (s / "data" / "c" / "1.json").write_text(json.dumps(c))
+    S.write(str(s), "https://x.test", TODAY, store=str(store))        # same filing again: nothing logged, state = triggered
+    c2["quarters"][0].update({"end": "2025-12-31", "label": "Q4 2025", "filed": "2026-02-01", "doc_url": "https://www.sec.gov/Archives/edgar/data/1/0001-26-1.htm"})
+    (s / "data" / "c" / "1.json").write_text(json.dumps(c2))
+    S.write(str(s), "https://x.test", TODAY, store=str(store))
+    S.write(str(s), "https://x.test", TODAY, store=str(store))
+    ch = json.loads((s / "data" / "traps" / "changes.json").read_text())
+    a01 = [x for x in ch["changes"] if x["rule"] == "A01"]
+    assert len(a01) == 1 and a01[0]["kind"] == "released" and a01[0]["from"] == "triggered" and a01[0]["to"] == "clear" and a01[0]["as_of"] == "2025-12-31" and a01[0]["prev_as_of"] == "2025-09-30"
+    assert a01[0]["url"] == "https://x.test/c/aaa/analysis-traps/#A01" and not ch["first_run"]
+    feed = json.loads((s / "disclosures" / "data" / "market" / "flo-alerts.json").read_text())
+    ev = [e for e in feed["events"] if e["kind"] == "trap"]
+    assert feed["events"][0]["id"] == "8k:x" and ev and all(e["source_url"].startswith("https://www.sec.gov/Archives/") for e in ev)
+    rel = next(e for e in ev if e["rule"] == "A01")
+    assert rel["priority"] == "info" and rel["change"] == "released" and "no longer triggered" in rel["title"] and rel["ticker"] == "AAA"
+    hub = (s / "disclosures" / "analysis-traps" / "index.html").read_text()
+    assert "What a newer filing changed" in hub and "no longer triggered" in hub and "(was 2025-09-30)" in hub
+    assert json.loads((store / "traps-changes.json").read_text())["changes"] == ch["changes"]
