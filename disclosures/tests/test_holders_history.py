@@ -238,5 +238,122 @@ class Collect(unittest.TestCase):
         self.assertFalse((root / 'public' / 'c' / 'GOOG.json').exists())
 
 
+
+class Managers(unittest.TestCase):
+    """Each filer's own quarter, from the same pass: the long equity book, its options, its largest positions and the
+    book by sector, published for the managers of more than GIANT positions."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.src = self.tmp / 'src'
+        self.src.mkdir()
+        for n, fs in SETS.items():
+            dataset(self.src / n, fs)
+        self.hub = self.tmp / 'hub'
+        (self.hub / 'market').mkdir(parents=True)
+        (self.hub / 'cache' / 'prices').mkdir(parents=True)
+        (self.hub / 'market' / 'cusip-tickers.json').write_text(json.dumps({AAPL: 'AAPL', MSFT: 'MSFT'}))
+        (self.hub / 'cache' / 'prices' / 'sec-tickers.json').write_text(json.dumps({'rows': [
+            {'ticker': 'AAPL', 'title': 'Apple Inc.'}, {'ticker': 'MSFT', 'title': 'MICROSOFT CORP'}, {'ticker': 'MDT', 'title': 'Medtronic plc'}]}))
+        self.sec = self.tmp / 'meta.json'                 # the rank panel's meta: ticker → sector
+        self.sec.write_text(json.dumps({'cos': [['AAPL', 'Apple Inc.', 'technology'], ['MSFT', 'Microsoft', 'technology']]}))
+        self.etf = self.tmp / 'etf-sectors.json'           # the ETF build's: a ticker the meta lacks
+        self.etf.write_text(json.dumps({'sectors': {'MDT': 'health', 'AAPL': 'industrials'}}))
+        self.keep = (HH.MIN_BOOK, HH.MIN_BOOK_USD, HH.GIANT)
+        HH.MIN_BOOK, HH.MIN_BOOK_USD, HH.GIANT = 1, 0, 0
+
+    def tearDown(self):
+        HH.MIN_BOOK, HH.MIN_BOOK_USD, HH.GIANT = self.keep
+
+    def fetch(self, url, dest=None):
+        name = url.rsplit('/', 1)[-1]
+        if not (self.src / name).exists():
+            raise HH.Missing(url)
+        Path(dest).write_bytes((self.src / name).read_bytes())
+        return dest
+
+    def collect(self):
+        return HH.collect(self.tmp / 'hh', 60, page_html=PAGE_HTML, fetch=self.fetch, early=False, hub=self.hub, sectors=[self.sec, self.etf])
+
+    def test_books_options_sectors_and_the_largest_positions(self):
+        self.collect()
+        q1 = HH.read_gz(self.tmp / 'hh' / 'cache' / 'managers' / '2024-03-31.json.gz')
+        self.assertEqual(q1['fields'], HH.MANAGER_FIELDS)
+        usd, lines, put, call, top, sectors = q1['rows']['555']
+        self.assertEqual((usd, lines, put, call), (171_000_000, 1, 0, 50_000_000))     # the call and the note left out of the book
+        self.assertEqual(top, [[AAPL, 1_000_000, 171_000_000]])
+        self.assertEqual(sectors, {'technology': 171_000_000})                         # the meta before the ETF build's
+        small = q1['rows']['999']                                                      # the restatement, then its new holdings
+        self.assertEqual(small[1], 2)
+        self.assertEqual(small[5], {'technology': 25_650 + 84_000})
+        self.assertEqual(q1['names']['555'], 'OPTIONS FUND')
+        self.assertEqual(q1['rows']['444'][5], {}, 'Medtronic: no ticker before a build has named its CUSIP')
+        self.assertIn(MDT, q1['issuers'])
+        HH.build(self.tmp / 'hh', self.hub, min_usd=1)                                 # names it by its SEC listing (cusips.json)
+        st = json.loads((self.tmp / 'hh' / 'cache' / 'sets.json').read_text())
+        st['mversion'] = 0
+        (self.tmp / 'hh' / 'cache' / 'sets.json').write_text(json.dumps(st))
+        self.collect()                                                                  # read again: now a sector
+        q1 = HH.read_gz(self.tmp / 'hh' / 'cache' / 'managers' / '2024-03-31.json.gz')
+        self.assertEqual(q1['rows']['444'][5], {'health': 8_700_000})                  # through the ETF build's map
+        q2 = HH.read_gz(self.tmp / 'hh' / 'cache' / 'managers' / '2024-06-30.json.gz')
+        self.assertEqual(q2['rows']['555'][0], 210_000)                                # thousands: ×1000, as for the holders
+        self.assertTrue(HH.read_gz(self.tmp / 'hh' / 'cache' / 'managers' / '2024-12-31.json.gz')['open'])
+
+    def test_the_published_managers(self):
+        self.collect()
+        st = HH.build(self.tmp / 'hh', self.hub, min_usd=1)
+        self.assertGreaterEqual(st['managers']['managers'], 5)
+        doc = json.loads((self.tmp / 'hh' / 'public' / 'm' / '102909.json').read_text())
+        self.assertEqual(doc['periods'], ['2024-03-31', '2024-06-30', '2024-09-30'])
+        self.assertEqual(doc['usd'], [2_052_000_000, 2_100_000_000, 3_495_000_000])
+        self.assertEqual(doc['top'][0], [['AAPL', 12_000_000, 2_052_000_000]])
+        self.assertEqual(doc['names']['AAPL'], 'Apple Inc.')
+        self.assertEqual(doc['open'], ['2024-09-30'])
+        self.assertEqual(doc['name'], 'Vanguard Group')
+        small = json.loads((self.tmp / 'hh' / 'public' / 'm' / '999.json').read_text())
+        keys = {k for k, _, _ in small['top'][0]}
+        self.assertEqual(keys, {'AAPL', 'MSFT'})
+        mdt = json.loads((self.tmp / 'hh' / 'public' / 'm' / '444.json').read_text())
+        self.assertEqual(mdt['top'][0][0][0], 'MDT')                                   # named by the issuer's SEC listing name
+        cus = json.loads((self.tmp / 'hh' / 'public' / 'cusips.json').read_text())['cusips']
+        self.assertEqual(cus[AAPL], 'AAPL')
+        ix = json.loads((self.tmp / 'hh' / 'public' / 'm' / 'index.json').read_text())
+        self.assertEqual(ix['fields'], ['cik', 'name', 'first', 'last', 'lines', 'usd'])
+        self.assertEqual(ix['rows'][0][0], 102909)                                     # the largest book first
+        HH.GIANT = 5                                                                   # only the managers of over 5 lines
+        HH.build(self.tmp / 'hh', self.hub, min_usd=1)
+        self.assertEqual(list((self.tmp / 'hh' / 'public' / 'm').glob('*[0-9].json')), [])
+
+    def test_unnamed_issuers_and_a_new_layout_reads_again(self):
+        self.collect()
+        root = self.tmp / 'hh'
+        p = root / 'cache' / 'managers' / '2024-03-31.json.gz'
+        d = HH.read_gz(p)
+        d['rows']['444'][4] = [['999999990', 10, 5_000_000]]                         # a CUSIP no map names
+        d['issuers']['999999990'] = ['HESS CORP', 'COM']
+        HH.write_gz(p, d)
+        HH.build(root, self.hub, min_usd=1)
+        doc = json.loads((root / 'public' / 'm' / '444.json').read_text())
+        self.assertEqual(doc['top'][0], [['~999999', 10, 5_000_000]])
+        self.assertEqual(doc['names']['~999999'], 'Hess')
+        state = json.loads((root / 'cache' / 'sets.json').read_text())
+        self.assertEqual(state['mversion'], HH.MANAGERS_VERSION)
+        state['mversion'] = 0                                                          # an older layout on file
+        (root / 'cache' / 'sets.json').write_text(json.dumps(state))
+        calls = []
+        orig = self.fetch
+        self.fetch = lambda url, dest=None: (calls.append(url.rsplit('/', 1)[-1]), orig(url, dest))[1]
+        self.collect()
+        self.assertEqual(calls, list(SETS))                                            # every data set read again
+        self.assertEqual(json.loads((root / 'cache' / 'sets.json').read_text())['mversion'], HH.MANAGERS_VERSION)
+
+    def test_ticker_sectors_from_the_sites_files(self):
+        idx = self.tmp / 'index.json'
+        idx.write_text(json.dumps({'companies': [{'ticker': 'BRK.B', 'sector': 'financials'}, {'ticker': 'X', 'sector': 'nope'}]}))
+        t = HH.ticker_sectors([self.sec, self.etf, idx, self.tmp / 'missing.json'])
+        self.assertEqual(t, {'AAPL': 'technology', 'MSFT': 'technology', 'MDT': 'health', 'BRK-B': 'financials'})
+
+
 if __name__ == '__main__':
     unittest.main()

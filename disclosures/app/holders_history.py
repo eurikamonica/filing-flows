@@ -19,12 +19,19 @@ together.
             a CUSIP replaced in a merger or a new holding company) by its issuer's name when exactly one SEC listing
             carries that name; a few renamed ones by hand (FORMER); a company's share classes together (CLASSES)
 
+  managers  the same pass keeps each filer's own quarter (the 13F holdings video of a manager, web/actual-weights.js):
+            its long equity book (shares, ETFs), the number of lines, puts and calls (their underlying value), its
+            MKEEP largest positions and the book by sector over every line (CUSIP → ticker → the site's sector) — for
+            the filers the site's own 13F files keep only from Q4 2024 (more than GIANT positions: holdings13f/ranges.py)
+
   cache/sets.json                     the data sets read, the quarters closed
   cache/periods/<YYYY-MM-DD>.json.gz  per CUSIP: 13F holders, shares and value in all, the KEEP largest holders
+  cache/managers/<YYYY-MM-DD>.json.gz per filer: its book (MANAGER_FIELDS); filers of MIN_BOOK lines or MIN_BOOK_USD
   public/c/<TICKER>.json              per ticker: the quarters, the 13F filers on file, all 13F holders, the TOP largest
-  public/index.json, public/status.json
+  public/m/<CIK>.json                 per manager of more than GIANT positions: its books, quarter by quarter
+  public/index.json, public/m/index.json, public/cusips.json (CUSIP → ticker), public/status.json
 
-    python app/holders_history.py collect --root hh --minutes 40
+    python app/holders_history.py collect --root hh --minutes 40 [--hub disclosures/docs/data --sectors a.json b.json …]
     python app/holders_history.py build --root hh --hub disclosures/docs/data
 """
 import argparse
@@ -52,6 +59,14 @@ CLOSE_DAYS = 140                # a quarter is final once a data set starting th
 KEEP = 30                       # largest holders kept per CUSIP and quarter (a family's smaller filers fall inside it)
 TOP = 20                        # largest holders published per ticker and quarter
 MIN_USD = 1_000_000             # a CUSIP's quarter below this in all is left out of the cache
+MKEEP = 40                      # a manager's largest positions kept per quarter (the video draws at most 20)
+MIN_BOOK, MIN_BOOK_USD = 200, 1e9   # a filer's quarter kept in cache/managers: this many lines, or this much in all
+GIANT = 500                     # managers published in public/m: more lines than this in some quarter (the site's own
+                                # 13F files read the others back to 2013 or 2021, holdings13f/ranges.py tiers)
+MANAGERS_VERSION = 1            # cache/managers' layout: a new one reads every data set again (sets.json "mversion")
+SECTORS = ('technology', 'communication', 'consumer-disc', 'consumer-staples', 'health', 'financials', 'real-estate',
+           'energy', 'materials', 'industrials', 'utilities')
+MANAGER_FIELDS = ['usd', 'lines', 'put', 'call', 'top', 'sectors']   # top: [[cusip, shares, usd]]; sectors: {key: usd}
 csv.field_size_limit(1 << 30)
 
 # fund families: one holder however many filers (CIKs) report for it — [name, short label, CIKs]
@@ -261,8 +276,9 @@ class Book:
     """The filings of the open quarters, as compact arrays: period → cik → [(filed, accession, kind, cusip ids, shares,
     values)], with the CUSIPs and names seen."""
 
-    def __init__(self, closed=()):
+    def __init__(self, closed=(), sector_of=None):
         self.closed = set(closed)
+        self.sector_of = sector_of or (lambda cusip: None)     # CUSIP → one of SECTORS (or None), for the managers' books
         self.cusip_id, self.cusips = {}, []
         self.issuer = {}                           # cusip id → Counter of (issuer, class)
         self.names = {}                            # cik → (filed, name)
@@ -322,6 +338,7 @@ class Book:
                 continue
             keep[acc] = (cik, period, filed, kind)
         lines = defaultdict(dict)                  # accession → cusip id → [shares, value]
+        opts = defaultdict(lambda: [0.0, 0.0])     # accession → [puts, calls] (the value of the shares under them)
         it = _rows(z, T['INFOTABLE'])
         h = next(it)
         need = ('ACCESSION_NUMBER', 'NAMEOFISSUER', 'TITLEOFCLASS', 'CUSIP', 'VALUE', 'SSHPRNAMT', 'SSHPRNAMTTYPE', 'PUTCALL')
@@ -333,7 +350,13 @@ class Book:
             acc = r[I['ACCESSION_NUMBER']].strip()
             if acc not in keep:
                 continue
-            if r[I['SSHPRNAMTTYPE']].strip().upper() != 'SH' or ('PUTCALL' in I and r[I['PUTCALL']].strip()):
+            pc = r[I['PUTCALL']].strip().upper() if 'PUTCALL' in I else ''
+            if pc:                                 # an option: counted for its manager's book, not a holding
+                v = _num(r[I['VALUE']])
+                if v > 0:
+                    opts[acc][0 if pc.startswith('P') else 1] += v
+                continue
+            if r[I['SSHPRNAMTTYPE']].strip().upper() != 'SH':
                 continue
             cusip = r[I['CUSIP']].strip().upper()
             if not re.fullmatch(r'[0-9A-Z]{9}', cusip) or cusip == '000000000':
@@ -363,7 +386,8 @@ class Book:
                 ids.append(c)
                 shs.append(sh)
                 vals.append(val * k)
-            self.filings[period][cik].append((filed, acc, kind, ids, shs, vals))
+            o = opts.get(acc, (0.0, 0.0))
+            self.filings[period][cik].append((filed, acc, kind, ids, shs, vals, o[0] * k, o[1] * k))
             self.seen.add(acc)
             self.stats['filings'] += 1
         z.close()
@@ -376,6 +400,7 @@ class Book:
         keys, kidx = [], {}
         C, K, S, V = [], [], [], []
         filers = 0
+        books = []                                # (cik, cusip ids, shares, values, puts, calls): the managers' own quarters
         for cik, fs in by_cik.items():
             parts = []
             for f in sorted(fs, key=lambda f: (f[0], f[1])):
@@ -392,6 +417,7 @@ class Book:
             if len(parts) > 1:                     # a CUSIP in the original and an amendment: one position
                 u, inv = np.unique(ids, return_inverse=True)
                 ids, sh, va = u.astype(np.int32), np.bincount(inv, weights=sh), np.bincount(inv, weights=va)
+            books.append((cik, ids, sh, va, sum(p[6] for p in parts if len(p) > 7), sum(p[7] for p in parts if len(p) > 7)))
             hk = holder_key(cik)
             if hk not in kidx:
                 kidx[hk] = len(keys)
@@ -401,6 +427,7 @@ class Book:
             S.append(sh)
             V.append(va)
         out = {'period': period, 'filers': filers, 'rows': {}, 'names': {}, 'issuers': {}}
+        self.last_books = self.books(period, books)   # collect() writes it beside the quarter (cache/managers)
         if not C:
             return out
         c, k, s, v = np.concatenate(C).astype(np.int64), np.concatenate(K), np.concatenate(S), np.concatenate(V)
@@ -431,6 +458,39 @@ class Book:
             if hk.startswith('c'):
                 cik = int(hk[1:])
                 out['names'][hk] = (self.names.get(cik) or ('', ''))[1]
+        return out
+
+    def books(self, period, books):
+        """Each filer's own quarter (cache/managers): [usd, lines, puts, calls, its MKEEP largest [cusip, shares, usd], its
+        book by sector over every line {sector: usd}] for the filers of MIN_BOOK lines or MIN_BOOK_USD; the issuers of the
+        CUSIPs kept and the filers' names."""
+        import numpy as np
+        out = {'period': period, 'fields': MANAGER_FIELDS, 'rows': {}, 'issuers': {}, 'names': {}}
+        if not books:
+            return out
+        n = len(self.cusips)
+        sec = getattr(self, '_sec', None)
+        if sec is None or len(sec) < n:            # a sector index for every CUSIP seen (len(SECTORS): none known)
+            old = 0 if sec is None else len(sec)
+            add = np.array([SECTORS.index(x) if x in SECTORS else len(SECTORS)
+                            for x in (self.sector_of(c) for c in self.cusips[old:n])], dtype=np.int64)
+            sec = self._sec = add if sec is None else np.concatenate([sec, add])
+        used = set()
+        for cik, ids, sh, va, put, call in books:
+            usd = float(va.sum())
+            if len(ids) < MIN_BOOK and usd < MIN_BOOK_USD:
+                continue
+            order = np.argsort(-va, kind='stable')[:MKEEP]
+            top = [[self.cusips[int(ids[j])], int(round(sh[j])), int(round(va[j]))] for j in order if va[j] > 0]
+            used.update(t[0] for t in top)
+            by = np.bincount(sec[ids.astype(np.int64)], weights=va, minlength=len(SECTORS) + 1)
+            sectors = {SECTORS[i]: int(round(by[i])) for i in range(len(SECTORS)) if by[i] > 0}
+            out['rows'][str(cik)] = [int(round(usd)), int(len(ids)), int(round(put)), int(round(call)), top, sectors]
+            out['names'][str(cik)] = (self.names.get(cik) or ('', ''))[1]
+        for cusip in used:
+            ctr = self.issuer.get(self.cusip_id[cusip])
+            if ctr:
+                out['issuers'][cusip] = list(ctr.most_common(1)[0][0])
         return out
 
 
@@ -481,6 +541,61 @@ def read_gz(path, default=None):
         return default
 
 
+def ticker_sectors(paths):
+    """Ticker → the site's sector from its files: the rank panel's meta ({cos: [[ticker, name, sector]]}), the ETF build's
+    sectors ({sectors: {ticker: sector}}) and the site's index ({companies: [{ticker, sector}]}); the first file that
+    names a ticker wins."""
+    out = {}
+    norm = lambda t: str(t or '').strip().upper().replace('.', '-').replace('/', '-')
+    for path in paths or ():
+        try:
+            d = json.loads(Path(path).read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            continue
+        pairs = []
+        if isinstance(d, dict) and isinstance(d.get('cos'), list):
+            pairs = [(r[0], r[2]) for r in d['cos'] if isinstance(r, list) and len(r) > 2]
+        elif isinstance(d, dict) and isinstance(d.get('sectors'), dict):
+            pairs = list(d['sectors'].items())
+        elif isinstance(d, dict) and isinstance(d.get('companies'), list):
+            pairs = [(c.get('ticker'), c.get('sector')) for c in d['companies'] if isinstance(c, dict)]
+        for t, sec in pairs:
+            if norm(t) and sec in SECTORS:
+                out.setdefault(norm(t), sec)
+    return out
+
+
+def sector_map(root, hub=None, sectors=()):
+    """CUSIP → sector for the managers' books: CUSIP → ticker (the last build's public/cusips.json; else the Hub's map
+    and the names of the quarters on file, ticker_map), then ticker → sector (ticker_sectors). Returns (function, how
+    many CUSIPs and tickers it knows)."""
+    root = Path(root)
+    tick = ticker_sectors(sectors)
+    cmap = {}
+    if hub:                                        # the Hub's map, whole: CUSIPs no quarter on file has yet included
+        try:
+            cmap = {c.upper(): t.upper().replace('/', '-').replace('.', '-')
+                    for c, t in json.loads((Path(hub) / 'market' / 'cusip-tickers.json').read_text()).items() if t}
+        except (OSError, ValueError):
+            pass
+    try:
+        cmap.update(json.loads((root / 'public' / 'cusips.json').read_text(encoding='utf-8')).get('cusips') or {})
+    except (OSError, ValueError):                  # no build yet: the names of the quarters on file, as build() names them
+        if hub:
+            files = sorted((root / 'cache' / 'periods').glob('*.json.gz'))
+            periods = [(f.name[:10], read_gz(f, {'rows': {}, 'issuers': {}})) for f in files]
+            try:
+                cmap.update(ticker_map(hub, periods)[0])
+            except Exception:                      # noqa: BLE001 — the books go on with fewer sectors rather than stop
+                pass
+    def of(cusip):
+        t = cmap.get(cusip) or FORMER.get(cusip)
+        if t in CLASSES:
+            t = CLASSES[t][0]
+        return tick.get(t)
+    return of, {'cusips': len(cmap), 'tickers': len(tick)}
+
+
 def plan(sets, state):
     """The data sets this run reads: none when every listed set has been read (a set never changes, so the open
     quarters can only change with a new one); else from the first set that can hold filings of the earliest quarter
@@ -524,15 +639,23 @@ def quarter_ends(a, b):
     return out
 
 
-def collect(root, minutes=40, ua=None, page_html=None, fetch=None, early=True):
+def collect(root, minutes=40, ua=None, page_html=None, fetch=None, early=True, hub=None, sectors=()):
     """Read the data sets the plan gives, closing quarters as their late filings come in; the open quarters are written
-    too (and read again on the next run). Returns the run's summary."""
+    too (and read again on the next run). hub, sectors: where the managers' books find each CUSIP's sector
+    (sector_map). Returns the run's summary."""
     root = Path(root)
     ua = ua or os.environ.get('SEC_USER_AGENT') or ''
     if fetch is None and ('@' not in ua or 'example.com' in ua):
         raise SystemExit('Set SEC_USER_AGENT to the project name and a real contact e-mail (SEC requires it)')
     fetch = fetch or (lambda url, dest=None: sec_get(url, ua, dest))
     state = json.loads((root / 'cache' / 'sets.json').read_text()) if (root / 'cache' / 'sets.json').exists() else {}
+    if state and state.get('mversion') != MANAGERS_VERSION:
+        # the managers' books are new (or laid out anew): every data set read again, each quarter closed again — the
+        # holders' quarters come out the same
+        print(f"managers' books (version {MANAGERS_VERSION}): reading every data set again", flush=True)
+        state = dict(state, done=[], closed=[])
+    sector_of, known = sector_map(root, hub, sectors)
+    print(f"sectors for the managers' books: {known['cusips']:,} CUSIPs with a ticker, {known['tickers']:,} tickers with a sector", flush=True)
     if page_html is None:
         page_html = fetch(PAGE).decode('utf-8', 'replace')
     sets = listing(page_html)
@@ -542,7 +665,7 @@ def collect(root, minutes=40, ua=None, page_html=None, fetch=None, early=True):
         raise SystemExit('no 13F data sets listed on ' + PAGE)
     todo = plan(sets, state)
     t0, budget = time.monotonic(), minutes * 60
-    book = Book(state.get('closed') or [])
+    book = Book(state.get('closed') or [], sector_of)
     done, closed = set(state.get('done') or []), set(state.get('closed') or [])
     failed = dict(state.get('failed') or {})
     read, last_start = [], None
@@ -584,16 +707,19 @@ def collect(root, minutes=40, ua=None, page_html=None, fetch=None, early=True):
                 continue
             if p in book.filings:
                 write_gz(root / 'cache' / 'periods' / f'{p}.json.gz', book.close(p))
-                print(f'  {p} closed', flush=True)
+                write_gz(root / 'cache' / 'managers' / f'{p}.json.gz', book.last_books)
+                print(f'  {p} closed ({len(book.last_books["rows"]):,} managers\' books)', flush=True)
             closed.add(p)
             book.closed.add(p)
     for p in sorted(book.filings):                 # still open: written now, read again from its sets next time
         doc = book.close(p)
         doc['open'] = True
         write_gz(root / 'cache' / 'periods' / f'{p}.json.gz', doc)
+        book.last_books['open'] = True
+        write_gz(root / 'cache' / 'managers' / f'{p}.json.gz', book.last_books)
     left = [u for u, _, _ in sets if u.rsplit('/', 1)[-1].lower() not in done]
     state = {'updated_at': now(), 'done': sorted(done), 'closed': sorted(closed), 'sets': len(sets), 'left': len(left), 'failed': failed,
-             'last_read': read[-1] if read else state.get('last_read'), 'stats': dict(book.stats)}
+             'last_read': read[-1] if read else state.get('last_read'), 'stats': dict(book.stats), 'mversion': MANAGERS_VERSION}
     (root / 'cache').mkdir(parents=True, exist_ok=True)
     (root / 'cache' / 'sets.json').write_text(json.dumps(state, indent=1))
     return {'read': read, 'left': len(left), 'closed': len(closed), 'last_start': last_start}
@@ -720,6 +846,72 @@ def tidy(row):
     return row
 
 
+def build_managers(root, pub, cmap, names, giant=None):
+    """public/m/<CIK>.json for every manager of more than `giant` positions in some quarter: its books quarter by
+    quarter — the long equity book in dollars, its lines, puts and calls, its book by sector, its largest positions by
+    ticker (a company's share classes together; a CUSIP no ticker names, by its issuer: '~' and the CUSIP's first six
+    characters) with the names; public/m/index.json lists them."""
+    root, out_dir = Path(root), Path(pub) / 'm'
+    giant = GIANT if giant is None else giant
+    files = sorted((root / 'cache' / 'managers').glob('*.json.gz'))
+    docs = [(f.name[:10], read_gz(f, {'rows': {}})) for f in files]
+    docs = [(p, d) for p, d in docs if p >= MIN_PERIOD]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for f in out_dir.glob('*.json'):
+        f.unlink()
+    P = [p for p, _ in docs]
+    per, filer, iss = defaultdict(dict), {}, {}
+    opn = {p for p, d in docs if d.get('open')}
+    for i, (p, d) in enumerate(docs):
+        for cik, row in (d.get('rows') or {}).items():
+            per[cik][i] = row
+            nm = (d.get('names') or {}).get(cik)
+            if nm:
+                filer[cik] = nm
+        iss.update(d.get('issuers') or {})
+    index = []
+    for cik, rows in per.items():
+        if max(r[1] for r in rows.values()) <= giant:
+            continue
+        first, last = min(rows), max(rows)
+        usd, lines, opts, secs, tops, labels = [], [], [], [], [], {}
+        for i in range(first, last + 1):
+            r = rows.get(i)
+            if not r:
+                for a in (usd, lines, opts, secs):
+                    a.append(None)
+                tops.append([])
+                continue
+            u, n, put, call, top, sectors = r
+            usd.append(u)
+            lines.append(n)
+            opts.append([put, call])
+            secs.append(sectors)
+            agg = {}
+            for cusip, sh, v in top:
+                t = cmap.get(cusip) or FORMER.get(cusip)
+                if t in CLASSES:
+                    t = CLASSES[t][0]
+                key = t or '~' + cusip[:6]
+                if key not in labels:
+                    labels[key] = names.get(t) or t if t else pretty((iss.get(cusip) or [cusip])[0])[0]
+                a = agg.get(key)
+                agg[key] = [a[0] + sh, a[1] + v] if a else [sh, v]
+            tops.append([[k, int(sh), int(v)] for k, (sh, v) in sorted(agg.items(), key=lambda kv: -kv[1][1])])
+        name = pretty(filer.get(cik) or '', int(cik))[0] or cik
+        doc = {'cik': int(cik), 'name': name, 'filer': filer.get(cik) or '', 'source': 'SEC Form 13F data sets',
+               'periods': P[first:last + 1], 'open': [P[i] for i in range(first, last + 1) if P[i] in opn],
+               'fields': {'top': ['key', 'shares', 'usd'], 'options': ['put', 'call']},
+               'usd': usd, 'lines': lines, 'options': opts, 'sectors': secs, 'top': tops, 'names': labels}
+        (out_dir / f'{int(cik)}.json').write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')
+        index.append([int(cik), name, P[first], P[last], next((x for x in reversed(lines) if x is not None), None),
+                      next((x for x in reversed(usd) if x is not None), None)])
+    index.sort(key=lambda r: -(r[5] or 0))
+    (out_dir / 'index.json').write_text(json.dumps({'generated_at': now(), 'periods': P, 'fields': ['cik', 'name', 'first', 'last', 'lines', 'usd'],
+                                                    'rows': index}, separators=(',', ':')), encoding='utf-8')
+    return {'managers': len(index), 'quarters': len(P), 'first': P[0] if P else None, 'last': P[-1] if P else None}
+
+
 def build(root, hub, top=TOP, min_usd=20_000_000):
     root, pub = Path(root), Path(root) / 'public'
     files = sorted((root / 'cache' / 'periods').glob('*.json.gz'))
@@ -817,8 +1009,11 @@ def build(root, hub, top=TOP, min_usd=20_000_000):
     index.sort(key=lambda r: -(r[5] or 0))
     (pub / 'index.json').write_text(json.dumps({'generated_at': stamp, 'periods': P, 'fields': ['ticker', 'name', 'first', 'last', 'holders', 'usd'],
                                                 'rows': index}, separators=(',', ':')), encoding='utf-8')
+    # CUSIP → ticker as named here (the managers' books and the 13F weights video read it: web/actual-weights.js)
+    (pub / 'cusips.json').write_text(json.dumps({'generated_at': stamp, 'cusips': dict(sorted(cmap.items()))}, separators=(',', ':')), encoding='utf-8')
+    managers = build_managers(root, pub, cmap, names)
     state = json.loads((root / 'cache' / 'sets.json').read_text()) if (root / 'cache' / 'sets.json').exists() else {}
-    status = {'built_at': stamp, 'tickers': len(index), 'quarters': len(P), 'first': P[0], 'last': P[-1],
+    status = {'built_at': stamp, 'tickers': len(index), 'quarters': len(P), 'first': P[0], 'last': P[-1], 'managers': managers,
               'open': [p for p, d in periods if d.get('open')], 'cusips_named': how, 'sets_read': len(state.get('done') or []),
               'sets_left': state.get('left'), 'families': {k: v[0] for k, v in FAMILIES.items()}}
     (pub / 'status.json').write_text(json.dumps(status, indent=1), encoding='utf-8')
@@ -831,12 +1026,14 @@ def main():
     c = sp.add_parser('collect')
     c.add_argument('--root', required=True)
     c.add_argument('--minutes', type=float, default=40)
+    c.add_argument('--hub', help="the Hub's data folder (market/cusip-tickers.json): CUSIP → ticker for the managers' books")
+    c.add_argument('--sectors', nargs='*', default=[], help='ticker → sector files (rank meta, ETF sectors, the site index)')
     b = sp.add_parser('build')
     b.add_argument('--root', required=True)
     b.add_argument('--hub', required=True)
     a = ap.parse_args()
     if a.cmd == 'collect':
-        r = collect(a.root, a.minutes)
+        r = collect(a.root, a.minutes, hub=a.hub, sectors=a.sectors)
         print(json.dumps(r))
         gh = os.environ.get('GITHUB_OUTPUT')
         if gh:

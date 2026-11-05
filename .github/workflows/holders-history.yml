@@ -1,4 +1,5 @@
-# Who held each stock and ETF, quarter by quarter, since 2013 (the video studio's "Major holders" video):
+# Who held each stock and ETF, quarter by quarter, since 2013 (the video studio's "Major holders" video), and each large
+# 13F manager's own quarters (public/m/<CIK>.json: the 13F holdings video of a manager before the site's own 13F files):
 # SEC's Form 13F data sets (one zip of every 13F filed in a quarter or three-month window) read into each CUSIP's
 # 13F holders, shares and value per quarter-end, the largest holders and fund families together, then one file per
 # ticker (disclosures/app/holders_history.py). The site's own 13F files keep the index giants only from Q4 2024.
@@ -52,10 +53,22 @@ jobs:
             mkdir hh && git -C hh init --quiet -b holders-history && git -C hh remote add origin "$url"
           fi
           du -sh hh; ls hh/cache 2>/dev/null | head
+      - name: Sectors for the managers' books (the site's rank panel, ETF and company files)
+        # each 13F manager's quarter is also kept by sector (the 13F holdings video of a manager): ticker → sector from
+        # what the site publishes; a file that does not come leaves its tickers unclassified, never stops the run
+        run: |
+          mkdir -p sectors
+          for u in disclosures/data/market/history/rank/meta.json disclosures/data/etf/sectors.json data/index.json; do
+            curl -sfL --retry 3 --max-time 120 -o "sectors/$(echo "$u" | tr '/' '_')" "${{ vars.SITE_URL || 'https://filing-flows.com' }}/$u" \
+              || echo "::warning::$u not read: its tickers stay unclassified"
+          done
+          ls -la sectors
       - name: Read the 13F data sets
         id: collect
         timeout-minutes: 60
-        run: python disclosures/app/holders_history.py collect --root hh --minutes "${{ inputs.minutes || '40' }}"
+        run: |
+          python disclosures/app/holders_history.py collect --root hh --minutes "${{ inputs.minutes || '40' }}" \
+            --hub disclosures/docs/data --sectors sectors/*.json
       - name: One file per ticker
         timeout-minutes: 12
         run: python disclosures/app/holders_history.py build --root hh --hub disclosures/docs/data

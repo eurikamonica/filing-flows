@@ -3733,11 +3733,16 @@
           if (!cik) { set(String(st.ac || '').trim() ? `No 13F manager the Hub follows is called “${esc(st.ac)}” — type its CIK (EDGAR's company search shows it).` : 'Type a manager’s name or CIK to see the quarters on file.'); return; }
           set(`Looking up CIK ${esc(cik)}…`);
           const cfg = await json(HUB + 'remote.json'), base = cfg && /^https:\/\//.test(cfg.base || '') && (cfg.prefixes || []).some((x) => 'shards/holdings/'.startsWith(x)) ? cfg.base : HUB;
-          const doc = await json(base + 'shards/holdings/' + cik + '.json');
-          if (!doc) { set(`No 13F manager with CIK ${esc(cik)} on file yet.`); return; }
-          const ps = (doc.snapshots || []).filter((x) => x.complete).map((x) => x.period).sort(), lo = ps[0] || '', hi = ps[ps.length - 1] || '';
-          const since = String(doc.since || ''), deep = since && since <= F13_0;
-          set(`<b>${esc(doc.label || doc.name || 'CIK ' + cik)}</b><br><b>On file:</b> ${ps.length ? `${ps.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}` : 'no complete quarter yet'}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter: 13F holdings are machine-readable from Q2 2013, and each quarter is filed within 45 days. ${deep ? 'This manager is read from then.' : `This manager is read from ${fmtD(since)} so far; the history back-fill deepens it.`}`, lo, hi);
+          // the Hub's quarters, and before them SEC's 13F data sets' (a manager of thousands of lines: holders_history.py)
+          const [doc0, hist] = await Promise.all([json(base + 'shards/holdings/' + cik + '.json'),
+            cfg && /^https:\/\//.test(cfg.holders || '') ? json(cfg.holders + 'm/' + cik + '.json') : null]);
+          if (!doc0 && !hist) { set(`No 13F manager with CIK ${esc(cik)} on file yet.`); return; }
+          const doc = doc0 || { name: hist.filer || hist.name, snapshots: [] };
+          const own = (doc.snapshots || []).filter((x) => x.complete).map((x) => x.period).sort();
+          const older = ((hist && hist.periods) || []).filter((p, i) => (hist.usd || [])[i] > 0 && (!own.length || p < own[0]));
+          const ps = older.concat(own), lo = ps[0] || '', hi = ps[ps.length - 1] || '';
+          const since = older.length ? older[0] : String(doc.since || ''), deep = since && since <= F13_0;
+          set(`<b>${esc(doc.label || doc.name || 'CIK ' + cik)}</b><br><b>On file:</b> ${ps.length ? `${ps.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}` : 'no complete quarter yet'}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter: 13F holdings are machine-readable from Q2 2013, and each quarter is filed within 45 days. ${older.length ? `${fmtD(older[0])} → ${fmtD(older[older.length - 1])}: SEC's 13F data sets (the 40 largest positions a quarter, the sectors over every line)${own.length ? `; from ${fmtD(own[0])}: each 13F as filed` : ''}.` : deep ? 'This manager is read from then.' : `This manager is read from ${fmtD(since)} so far; the history back-fill deepens it.`}`, lo, hi);
         } else if (st.aw === 'official') {
           const name = String(st.ap || '').trim(), slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
           if (!slug) { set('Type an official’s name to see the trades on file.'); return; }

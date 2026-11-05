@@ -41,7 +41,7 @@
     const seen = new Map();
     (raw || []).forEach((p) => {
       const ticker = symbol(p && p[0]), w = p && Number(p[1]);
-      if (!/^[A-Z][A-Z0-9-]{0,9}$/.test(ticker) || !Number.isFinite(w) || w <= 0) return;
+      if (!/^(~[0-9A-Z]{6}|[A-Z][A-Z0-9-]{0,9})$/.test(ticker) || !Number.isFinite(w) || w <= 0) return;   // ~: a 13F issuer no ticker names
       seen.set(ticker, (seen.get(ticker) || 0) + w);
     });
     return [...seen.entries()].sort((a, b) => b[1] - a[1]);
@@ -111,6 +111,21 @@
     const cfg = await Promise.resolve(api.json(api.hub + 'remote.json')).catch(() => null);
     return cfg && typeof cfg.base === 'string' && /^https:\/\//.test(cfg.base) && (cfg.prefixes || []).some((x) => 'shards/holdings/'.startsWith(x)) ? cfg.base : api.hub;
   }
+  // SEC's 13F data sets read into each large manager's quarters (holders_history.py, branch holders-history): the Hub's
+  // data/remote.json names where ("holders"); none on a local build
+  async function holdersBase(api) {
+    const cfg = await Promise.resolve(api.json(api.hub + 'remote.json')).catch(() => null);
+    return cfg && typeof cfg.holders === 'string' && /^https:\/\//.test(cfg.holders) ? cfg.holders : null;
+  }
+  const CLASS_OF = { GOOG: 'GOOGL', 'BRK-A': 'BRK-B', FOX: 'FOXA', NWS: 'NWSA' };   // a company's share classes as one
+  // an issuer's name as filed, tidied: 'HESS CORP' → 'Hess', 'CYBERARK SOFTWARE LTD' → 'Cyberark Software'
+  function issuerLabel(s) {
+    let t = String(s || '').replace(/\s*\/[A-Z]{2,4}\/?\s*$/, '').trim();
+    for (let i = 0; i < 3; i++) t = t.replace(/[\s,]+(INC|INCORPORATED|CORP|CORPORATION|CO|COMPANY|LLC|LP|LTD|LIMITED|PLC|SA|AG|SE|NV|N V|HLDGS|HOLDINGS?|GROUP|NEW|COM|SHS|CL [A-Z])\.?$/i, '').trim();
+    if (!t) return '';
+    return t === t.toUpperCase() ? t.split(/\s+/).map((w) => (w.length <= 3 && !/[AEIOUY]/.test(w) ? w : w.charAt(0) + w.slice(1).toLowerCase())).join(' ') : t;
+  }
+  const usdShort = (v) => (v >= 1e12 ? `$${(v / 1e12).toFixed(2)}T` : v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${Math.round(v / 1e6)}M`);
   // a 13F manager typed by name: the CIK of the one the Hub follows (research/people/managers.json) that it names
   async function managerCik(q, api) {
     const s = String(q || '').trim().toLowerCase();
@@ -126,24 +141,66 @@
     if (st.aw === '13f') {
       const cik = (await managerCik(st.ac || '1067983', api)) || '';
       if (!/^\d{1,10}$/.test(cik)) throw new Error(`No 13F manager the Hub follows is called “${String(st.ac || '').trim()}”: type its CIK`);
-      const base = await shardBase(api);
-      // a report not yet enriched with tickers is named through the Hub's CUSIP map (market.py → market/cusip-tickers.json)
-      const [doc, cmap] = await Promise.all([api.json(base + 'shards/holdings/' + cik + '.json'),
-        Promise.resolve(api.json(api.hub + 'market/cusip-tickers.json')).catch(() => null)]);
-      if (!doc) throw new Error('Manager holdings are not published yet');
-      const tickerOf = (r) => r.ticker || (cmap && r.cusip && cmap[r.cusip]) || '';
-      const rows = (doc.snapshots || []).filter(s => s.complete === true && (!st.from || s.period >= st.from) && (!st.to || s.period <= st.to));
-      const snaps = await Promise.all(rows.map(async s => {
+      const base = await shardBase(api), hb = await holdersBase(api);
+      // the Hub's quarters (every line as filed; from Q4 2024 for the managers of thousands of lines), the quarters
+      // before them from SEC's 13F data sets (holders_history.py: public/m/<CIK>.json), and the CUSIPs named by both
+      const [doc, cmap, hist, named] = await Promise.all([
+        Promise.resolve(api.json(base + 'shards/holdings/' + cik + '.json')).catch(() => null),
+        Promise.resolve(api.json(api.hub + 'market/cusip-tickers.json')).catch(() => null),
+        hb ? Promise.resolve(api.json(hb + 'm/' + cik + '.json')).catch(() => null) : null,
+        hb ? Promise.resolve(api.json(hb + 'cusips.json')).catch(() => null) : null]);
+      if (!doc && !hist) throw new Error('Manager holdings are not published yet');
+      const nmap = (named && named.cusips) || {}, labels = {};
+      // a line's ticker (a share class of a company as the company: GOOG as GOOGL, BRK-A as BRK-B), else its issuer:
+      // '~' and the CUSIP's first six characters, the issuer's name as the label
+      const keyOf = (r) => {
+        let t = symbol(r.ticker || (cmap && r.cusip && cmap[r.cusip]) || nmap[r.cusip] || '');
+        if (CLASS_OF[t]) t = CLASS_OF[t];
+        if (/^[A-Z][A-Z0-9-]{0,9}$/.test(t)) return t;
+        const c = String(r.cusip || '').toUpperCase();
+        if (!/^[0-9A-Z]{6}/.test(c)) return '';
+        const k = '~' + c.slice(0, 6);
+        if (!labels[k]) labels[k] = issuerLabel(r.issuer) || c;
+        return k;
+      };
+      const equity = (r) => (!r.put_call || r.put_call === 'NONE') && (!r.share_type || r.share_type === 'SH');
+      const rows = ((doc && doc.snapshots) || []).filter(s => s.complete === true && (!st.from || s.period >= st.from) && (!st.to || s.period <= st.to));
+      let opt = null;
+      const snaps = await Promise.all(rows.map(async (s, i) => {
         const shard = String(s.positions_shard || ''), okPath = /^[A-Za-z0-9_+./-]+\.json$/.test(shard) && !shard.includes('..') && !shard.startsWith('/');
         const p = s.positions || (okPath ? await api.json(base + shard) : null);
         if (!Array.isArray(p) || !(s.total_usd > 0)) throw new Error('Missing positions for ' + s.period);
-        // Options and unresolved identifiers stay in the denominator/residual.
-        return {date:s.period, date_basis:'reported', source:'SEC 13F', positions:p.filter(r => (!r.put_call || r.put_call === 'NONE') && tickerOf(r))
-          .map(r => [tickerOf(r), r.value_usd / s.total_usd]), filed:s.filed, sources:s.sources};
+        // the long equity book is 100%: options (the value of the shares under them) and principal amounts left out
+        const eq = p.reduce((a, r) => a + (equity(r) && r.value_usd > 0 ? r.value_usd : 0), 0) || s.total_usd;
+        if (i === rows.length - 1) {
+          const o = p.reduce((a, r) => { if (r.put_call === 'PUT') a[0] += r.value_usd || 0; else if (r.put_call === 'CALL') a[1] += r.value_usd || 0; return a; }, [0, 0]);
+          opt = { period: s.period, put: o[0], call: o[1], total: s.total_usd };
+        }
+        const by = new Map();
+        p.forEach((r) => { if (!equity(r) || !(r.value_usd > 0)) return; const k = keyOf(r); if (k) by.set(k, (by.get(k) || 0) + r.value_usd); });
+        return {date:s.period, date_basis:'reported', source:'SEC 13F', positions:[...by].map(([k, v]) => [k, v / eq]), filed:s.filed, sources:s.sources};
       }));
-      if (!snaps.some(x => x.positions.length)) throw new Error((doc.label || doc.name || cik) + ': none of the reported positions could be matched to a ticker');
-      return {name:doc.label || doc.name || cik, id:cik, snapshots:snaps,
-        basis:'Share of reported 13F value', note:'Quarter-end reported long holdings, not current positions or total AUM. Options and unmatched securities remain in Other. Weight changes include price movement, not just trading. Latest amended reports may restate history; this is not a point-in-time backtest.', evidence:rows};
+      // the quarters before the Hub's first: the data sets' books (the 40 largest positions; the sectors over every line)
+      const first = snaps.length ? snaps[0].date : null;
+      const older = [];
+      if (hist && Array.isArray(hist.periods)) {
+        Object.entries(hist.names || {}).forEach(([k, v]) => { if (k.startsWith('~') && v && !labels[k]) labels[k] = v; });
+        hist.periods.forEach((p, i) => {
+          const usd = (hist.usd || [])[i];
+          if (!(usd > 0) || (first && p >= first) || (st.from && p < st.from) || (st.to && p > st.to)) return;
+          const sw = {};
+          Object.entries((hist.sectors || [])[i] || {}).forEach(([k, v]) => { if (v > 0) sw[k] = v / usd; });
+          older.push({ date: p, date_basis: 'reported', source: 'SEC 13F data sets', history: true, lines: (hist.lines || [])[i],
+            positions: ((hist.top || [])[i] || []).filter((x) => x[2] > 0).map(([k, , v]) => [CLASS_OF[k] || k, v / usd]), sector_weights: sw });
+        });
+      }
+      const all = older.concat(snaps);
+      if (!all.some(x => x.positions.length)) throw new Error(((doc && (doc.label || doc.name)) || (hist && hist.name) || cik) + ': none of the reported positions could be matched to a ticker');
+      const name = (doc && (doc.label || doc.name)) || (hist && (hist.filer || hist.name)) || cik;
+      const notes = ['Quarter-end long holdings as reported (shares and ETFs), not current positions or total AUM. The weights are shares of the long equity book: options (puts and calls, reported at the value of the shares under them) and principal amounts are left out of it. A line no ticker names is shown under its issuer. Weight changes include price movement, not just trading. Latest amended reports may restate history; this is not a point-in-time backtest.'];
+      if (older.length) notes.push(`${older[0].date} to ${older[older.length - 1].date} (${older.length} quarters): SEC's Form 13F data sets — each quarter's 40 largest positions and the book by sector over every line${snaps.length ? `; from ${first}: each 13F as filed, every line` : ''}.`);
+      if (opt && opt.total > 0 && (opt.put + opt.call) / opt.total >= 0.05) notes.push(`Options in its ${opt.period} 13F: puts ${usdShort(opt.put)} and calls ${usdShort(opt.call)} (the value of the shares under them), ${Math.round(100 * (opt.put + opt.call) / opt.total)}% of the reported ${usdShort(opt.total)} — not in the weights.`);
+      return {name, id:cik, snapshots:all, labels, basis:'Share of the long equity book (13F)', note:notes.join(' '), evidence:rows};
     }
     if (st.aw === 'official') {
       const person = String(st.ap || '').trim();
@@ -274,8 +331,9 @@
       tables.forEach(m=>{const rest=[...m].filter(([k])=>!keys.includes(k)).reduce((s,[,v])=>s+v,0); m.set('other',rest);});
       keys.push('other');
     }
-    out.series = keys.map(k=>({key:k,label:k==='other'?'Other / unclassified':sector?(SEC[k]||k):k,
-      name:sector?(SEC[k]||k):((co.get(k)||{}).name||k), sec:sector?k:secFor(all[all.length-1],k),
+    const lab = (external && external.labels) || {};      // a 13F issuer no ticker names: its name
+    out.series = keys.map(k=>({key:k,label:k==='other'?(sector?'Other / unclassified':'All other holdings'):sector?(SEC[k]||k):(lab[k]||k),
+      name:sector?(SEC[k]||k):(lab[k]||(co.get(k)||{}).name||k), sec:sector?k:secFor(all[all.length-1],k),
       v:tables.map(m=>m.get(k)||0)}));
     out.metric = external ? external.basis : 'Reported NAV ' + (sector?'sector':'company') + ' weight';
     if (area && all.length >= 2) {
