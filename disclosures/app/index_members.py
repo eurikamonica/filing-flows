@@ -39,7 +39,7 @@ NDX_LIST_PAGE = 'List of NASDAQ-100 companies'       # where the article sent it
 NDX_FROM = dt.date(2003, 1, 1)                       # the article's member list at each quarter's start from here
 NDX_PER_RUN = 100                                    # revisions read a run (2.5 s each): a first run reads the rest the next times
 NDX_PARSER_ALL = 2                                   # a new ndx_members: every list is read again (2: the Components section)
-NDX_PARSER = 4                                       # a better one: the revisions read as none are read again (4: “( ATVI )”, <br> lines)
+NDX_PARSER = 5                                       # a better one: the revisions read as none are read again (4: “( ATVI )”, <br> lines)
 # Nasdaq-100 symbols of the past → the site's ticker of the same company (a share class it keeps one of, a rename the
 # S&P lists' CIKs do not reach)
 NDX_ALIASES = {'FB': 'META', 'PCLN': 'BKNG', 'GOOG': 'GOOGL', 'FISV': 'FI', 'SYMC': 'GEN', 'NLOK': 'GEN', 'CMCSK': 'CMCSA',
@@ -400,7 +400,8 @@ def collect(root, today=None):
                 sec = components(h)
                 heads = [re.sub(r'<[^>]+>|\s+', ' ', x).strip()[:40] for x in re.findall(r'<h[23][^>]*>(.*?)</h[23]>', h, re.S)]
                 lis = [re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', x))).strip()[:80] for x in re.findall(r'<li[^>]*>(.*?)</li>', sec or h, re.S)[:3]]
-                text = re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', sec or '')))[:300]
+                body = re.sub(r'<style[^>]*>.*?</style>', '', sec or '', flags=re.S)
+                text = re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', body)))[:300] + ' || ' + re.sub(r'\s+', ' ', body[300:1500])
                 whyv[rid] = [NDX_PARSER, {'section': bool(sec), 'tables': len(tables(sec or h)), 'li': (sec or h).count('<li'), 'heads': heads[:14], 'lines': lis, 'text': text}]
         # a quarter whose article holds no list: the list page's revision in force then
         empty = [dt.date.fromisoformat(k) for k, r in sorted(nrev.items()) if str(r) in nsn and not nsn[str(r)]]
@@ -417,7 +418,7 @@ def collect(root, today=None):
                   ' '.join(f'{k}:{len(nsn.get(str(r)) or [])}' for k, r in sorted(nrev.items()) if str(r) in todo[:NDX_PER_RUN]), flush=True)
             for k, r in sorted(nrev.items()):
                 if str(r) in todo[:NDX_PER_RUN] and str(r) in whyv:
-                    print('members: nasdaq-100 none in', k, json.dumps(whyv[str(r)][1], ensure_ascii=False)[:900], flush=True)
+                    print('members: nasdaq-100 none in', k, json.dumps(whyv[str(r)][1], ensure_ascii=False)[:2400], flush=True)
     except Exception as exc:                               # noqa: BLE001
         print('members: wikipedia nasdaq-100', str(exc)[:200])
     cache['fetched'] = stamp
