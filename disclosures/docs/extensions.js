@@ -52,6 +52,11 @@ function holdings(){
  out+=`<div class="charts"><div class="panel"><h3>Reported position weights</h3><p class="sub">All disclosed types · hover for exact value</p>${treemap(current.positions,current.total_usd)}</div><div class="panel"><h3>Largest weight changes</h3><p class="sub">Percentage points · all disclosed types</p>${signedBars(changes)}</div></div>`;
  // the manager's holdings quarter by quarter as a video (hub-video.js + the Video Studio), and how crowded they are (crowding.js)
  if(state.mode!=='demo'&&typeof HubVideo!=='undefined'&&snaps.filter(s=>s.complete).length)out+=`<div class="panel"><h3>Holdings video: stock weights and sector areas, quarter by quarter</h3><p class="sub">Each complete 13F report of ${esc(manager.label||manager.name)} — share of its long equity book (options left out) by stock or by sector (the site's sector map), the race of the biggest positions, and the changes in percentage points; for a manager of thousands of lines, the quarters back to 2013 from SEC's 13F data sets. Play here or export an MP4.</p>${HubVideo.slot('13f:'+manager.cik,{title:(manager.label||manager.name)+' holdings',file:'13f-'+manager.cik,styles:HubVideo.WEIGHT_STYLES,state:{k:'actual',aw:'13f',ac:String(manager.cik)},unit:'quarters'})}</div>`;
+ // the quarters before this manager's first here: SEC's 13F data sets (holders_history.py → public/m/<CIK>.json, branch
+ // holders-history) for the managers of thousands of lines, whose own 13F files here start in Q4 2024
+ if(state.mode!=='demo'){const mh=managerHistory(manager.cik),H=mh.data,first=snaps.length?snaps[0].period:'';
+  const older=H&&Array.isArray(H.periods)?H.periods.map((p,i)=>({p,i})).filter(x=>(!first||x.p<first)&&H.usd[x.i]>0):[];
+  if(older.length)out+=mhPanel(H,older,first);}
  if(state.mode!=='demo'&&typeof cwPortfolio==='function'&&current.complete&&current.total_usd>0){
   const book=cwBook(current);
   if(book&&book.length)out+=cwPortfolio('13f:'+manager.cik,manager.label||manager.name,book,`Its ${current.period} report: common-stock positions with a ticker (${fmt(book.length)}).`);
@@ -147,4 +152,28 @@ function bindExtensions(){
  };
  $('remove-review').onclick=()=>{draft().delete(source.id);render()};
  $('export-review').onclick=()=>{const content='\ufeff'+[reviewFields.map(csvCell).join(','),...[...draft().values()].map(r=>reviewFields.map(k=>csvCell(r[k])).join(','))].join('\r\n');const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=state.mode==='demo'?'DEMO-reviewed-disclosures.csv':'reviewed-disclosures.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)};
+}
+
+/* a large manager's quarters from SEC's 13F data sets (public/m/<CIK>.json): read once, shown under its own quarters */
+const MH={};
+function managerHistory(cik){
+ if(MH[cik])return MH[cik];
+ MH[cik]={loading:true};
+ if(typeof fetch!=='function')return MH[cik];
+ if(!remoteCfg)remoteCfg=fetch((globalThis.FF_HUB_ROOT||'')+'data/remote.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
+ remoteCfg.then(c=>c&&/^https:\/\//.test(c.holders||'')?fetch(c.holders+'m/'+encodeURIComponent(cik)+'.json').then(r=>r.ok?r.json():null):null)
+  .then(d=>{MH[cik]={data:d};if(d&&state.tab==='holdings')render()}).catch(()=>{MH[cik]={data:null}});
+ return MH[cik];
+}
+function mhPanel(H,older,first){
+ const name=(k)=>k.startsWith('~')?(H.names||{})[k]||k:k;
+ const pts=older.map(x=>H.usd[x.i]),max=Math.max(...pts),W=720,Hh=120,step=W/Math.max(1,older.length-1);
+ const line=older.map((x,j)=>`${(j*step).toFixed(1)},${(Hh-8-(H.usd[x.i]/max)*(Hh-24)).toFixed(1)}`).join(' ');
+ const rows=older.slice().reverse().map(x=>{const i=x.i,o=(H.options||[])[i]||[0,0],u=H.usd[i];
+  const top=((H.top||[])[i]||[]).slice(0,5).map(t=>`${esc(name(t[0]))} ${pct(H.unit>0&&t.length===2?t[1]*H.unit:(t[2]||0)/u)}`).join(' · ');
+  return `<tr><td>${esc(x.p)}</td><td class="num">$${compact(u)}</td><td class="num">${fmt((H.lines||[])[i]||0)}</td><td class="num">$${compact(o[0])}</td><td class="num">$${compact(o[1])}</td><td class="sub">${top}</td></tr>`}).join('');
+ return `<details class="panel"><summary><b>Before ${esc(first||'these quarters')}: ${older.length} quarters from SEC's 13F data sets</b> <span class="muted">(${esc(older[0].p)} → ${esc(older[older.length-1].p)}; the video above plays them too)</span></summary>
+  <p class="sub">The long equity book (shares and ETFs) each quarter, its lines, puts and calls (at the value of the shares under them) and its five largest positions as shares of the book — read from SEC's quarterly 13F data sets, which keep each manager's 100 largest positions and its book by sector over every line.</p>
+  <svg class="plot" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Long equity book by quarter"><polyline fill="none" stroke="var(--accent,#17734a)" stroke-width="2.5" points="${line}"/><text x="4" y="14" font-size="12" fill="currentColor">$${compact(max)} at most</text></svg>
+  <div class="tablebox"><table><thead><tr><th>Quarter</th><th>Long equity</th><th>Lines</th><th>Puts</th><th>Calls</th><th>Largest positions</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
 }
