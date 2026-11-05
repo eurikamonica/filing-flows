@@ -240,30 +240,33 @@ def carried(cik, chain, dei, wavg, eps_sh, root=None, splits=None):
     average (or net income ÷ EPS) — the two nearest in time are compared.
     → (cover counts, weighted averages, net income ÷ EPS, [[cik, ratio or None], …])"""
     day = dt.date.fromisoformat
-    d = with_cover(dei.get(cik), root, cik)
-    w, e = sorted(wavg.get(cik) or []), sorted(eps_sh.get(cik) or [])
+    real = lambda pts: sorted(x for x in pts or [] if x[1] and x[1] >= 1e4)     # not a shell's single share
+    d = real(with_cover(dei.get(cik), root, cik))
+    w, e = real(wavg.get(cik)), real(eps_sh.get(cik))
     used = []
     for p in reversed(chain):
-        dp = with_cover(dei.get(p), root, p)
-        wp = sorted((wavg.get(p) or []) + (eps_sh.get(p) or []))
+        dp = real(with_cover(dei.get(p), root, p))
+        wp = real((wavg.get(p) or []) + (eps_sh.get(p) or []))
         first = min([x[0] for x in d[:1] + w[:1] + e[:1]], default=None)
         if not first:
             break
-        a_c = [lst[-1] for lst in ([x for x in dp if x[0] < first], [x for x in wp if x[0] < first]) if lst]
-        b_c = [lst[0] for lst in (d, sorted(w + e)) if lst]
-        pairs = sorted(((day(b[0]) - day(a[0])).days, a, b) for a in a_c for b in b_c)
+        a_c = [x for lst in ([x for x in dp if x[0] < first], [x for x in wp if x[0] < first]) for x in lst[-2:]]
+        b_c = [x for lst in (d, sorted(w + e)) for x in lst[:2]]
         ratio = None
-        if pairs and pairs[0][0] <= 400:
-            _, a, b = pairs[0]
+        for gap, a, b in sorted(((day(b[0]) - day(a[0])).days, a, b) for a in a_c for b in b_c):
+            if gap > 400:
+                break
             at = a[1] * split_factor(splits, a[0])
             fits = [x / at for x in (b[1] * split_factor(splits, b[0]) / k for k in restated_bases(splits, b[0], within=40000)) if at and 0.4 <= x / at <= 2.5]
-            ratio = fits[0] if fits else None
+            if fits:
+                ratio = fits[0]
+                break
         if ratio is None:
             used.append([p, None])                     # not the same company's count (or none near): the chain stops
             break
         d = [x for x in dp if x[0] < first] + d
-        w = [x for x in sorted(wavg.get(p) or []) if x[0] < first] + w
-        e = [x for x in sorted(eps_sh.get(p) or []) if x[0] < first] + e
+        w = [x for x in real(wavg.get(p)) if x[0] < first] + w
+        e = [x for x in real(eps_sh.get(p)) if x[0] < first] + e
         used.append([p, round(ratio, 2)])
     return d, w, e, used
 

@@ -173,6 +173,12 @@ class Predecessors(unittest.TestCase):
         eps = {'new': [('2014-09-30', 13.8e9)]}                                       # a figure restated for the later split
         self.assertEqual(R.carried('new', ['old'], {}, wavg, eps, splits=sp)[3], [['old', 1.01]])
         self.assertEqual(R.carried('new', ['old'], {}, wavg, {'new': [('2016-09-30', 690e6)]}, splits=sp)[3], [['old', None]])   # years apart
+        # ICE 2013: the new holding company's single share before the merger is no count; the next nearest pair is met
+        dei = {'new': [('2013-08-05', 1), ('2013-11-01', 1), ('2014-02-12', 115e6)], 'old': [('2013-05-01', 72.8e6), ('2013-11-01', 72.9e6)]}
+        wv = {'new': [('2013-03-31', 73e6), ('2013-09-30', 74e6)], 'old': [('2012-12-31', 73.1e6), ('2013-09-30', 73.5e6)]}
+        d, w, e, used = R.carried('new', ['old'], dei, wv, {}, splits=[['2016-11-04', 5.0]])
+        self.assertEqual(used, [['old', 1.0]])
+        self.assertNotIn(1, [x[1] for x in d])
 
 
 if __name__ == '__main__':
