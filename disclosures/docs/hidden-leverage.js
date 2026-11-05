@@ -13,7 +13,7 @@
     const o = cache[path] || (cache[path] = {});
     if (o.data || o.error || o.loading) return o;
     o.loading = true;
-    fetch('data/debt/' + path + '.json').then(r => {
+    fetch((globalThis.FF_HUB_ROOT||'')+'data/debt/' + path + '.json').then(r => {
       if (!r.ok) throw Error('HTTP ' + r.status);
       return r.json();
     }).then(d => { o.data = d; o.loading = false; if (state.tab === 'hidden') render(); })

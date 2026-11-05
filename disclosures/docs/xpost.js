@@ -12,7 +12,7 @@ const XPOST={on:false,client:null,sent:new Map()};          // sent: this visit'
  const JS=['cdn.jsdelivr.net/npm','fastly.jsdelivr.net/npm','unpkg.com'].map(h=>`https://${h}/@supabase/supabase-js@2.58.0/dist/umd/supabase.js`);
  const load=src=>new Promise((res,rej)=>{const el=document.createElement('script');const t=setTimeout(()=>{el.remove();rej(new Error('timeout'))},6000);
   el.src=src;el.onload=()=>{clearTimeout(t);res()};el.onerror=()=>{clearTimeout(t);el.remove();rej(new Error('blocked'))};document.head.appendChild(el)});
- fetch('../data/site.json').then(r=>r.ok?r.json():{}).then(async site=>{
+ fetch((globalThis.FF_SITE_ROOT??'../')+'data/site.json').then(r=>r.ok?r.json():{}).then(async site=>{
   if(!fake&&(!site.supabase_url||!site.supabase_key))return;
   let c=fake||null;
   if(!c){

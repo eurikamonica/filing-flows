@@ -8,7 +8,7 @@ const xhStore={};
 function xhData(){
  const m=xhStore;
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/market/crossholdings.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;xhIndex(d);render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/market/crossholdings.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;xhIndex(d);render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const XH_KINDS=[['gov','US government','#2f5fae'],['president','President Trump','#c46a1c'],['officials','Congress','#8a3f9a'],['ta','Trump Accounts','#17804f'],['corp','Companies that file 13F','#5d6774']];

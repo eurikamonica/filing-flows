@@ -4,9 +4,9 @@ const trStore = {};
 function trData() {
   const m = trStore.d || (trStore.d = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('../data/traps/index.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
+  m.loading = fetch((globalThis.FF_SITE_ROOT??'../')+'data/traps/index.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
     .then(async d => { d.list = (d.rows || []).map(r => Object.fromEntries(d.fields.map((k, i) => [k, r[i]])));
-      d.changes = await fetch('../data/traps/changes.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(c => (c && c.changes) || []).catch(() => []);
+      d.changes = await fetch((globalThis.FF_SITE_ROOT??'../')+'data/traps/changes.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(c => (c && c.changes) || []).catch(() => []);
       m.data = d; if (state.tab === 'traps') render() })
     .catch(e => { m.err = e.message; if (state.tab === 'traps') render() });
   return m;
@@ -43,10 +43,10 @@ function bindTraps() {
   if (el && window.TrapsView && !el.dataset.on) {
     el.dataset.on = '1';
     const t = el.dataset.k;
-    fetch('../data/index.json', { cache: 'no-cache' }).then(r => r.json()).then(ix => {
+    fetch((globalThis.FF_SITE_ROOT??'../')+'data/index.json', { cache: 'no-cache' }).then(r => r.json()).then(ix => {
       const row = (ix.companies || []).find(c => String(c.ticker || '').toUpperCase().replace(/[./]/g, '-') === t);
       if (!row) { el.innerHTML = empty('No company on the site with that ticker.'); return; }
-      window.TrapsView.render(el, { cik: row.cik, ticker: row.ticker, site: '../', here: () => state.tab === 'traps' });
+      window.TrapsView.render(el, { cik: row.cik, ticker: row.ticker, site: (globalThis.FF_SITE_ROOT??'../'), here: () => state.tab === 'traps' });
     }).catch(e => { el.innerHTML = empty('Could not read the company index (' + esc(e.message) + ').') });
   }
 }

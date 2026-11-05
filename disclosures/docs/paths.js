@@ -8,7 +8,7 @@ const pvStore={};
 function pvData(name){
  const m=pvStore[name]||(pvStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/research/paths/'+name+'.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/paths/'+name+'.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const PV_VIEWS=[['all','Every company'],['company','One company'],['rules','Price-action rules & evidence'],['models','Model scorecard'],['portfolios','13F & officials\' portfolios'],['ledger','Track record']];
@@ -103,9 +103,9 @@ function bindPaths(){
  document.querySelectorAll('#workspace [data-pvport]').forEach(b=>b.onclick=()=>{state.pvport=b.dataset.pvport;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-pvpback]').forEach(b=>b.onclick=()=>{state.pvport='';render()});
  const one=$('pv-one');
- if(one&&window.PathsView&&one.dataset.drawn!==one.dataset.cik){one.dataset.drawn=one.dataset.cik;PathsView.render(one,{cik:one.dataset.cik,hub:''})}
+ if(one&&window.PathsView&&one.dataset.drawn!==one.dataset.cik){one.dataset.drawn=one.dataset.cik;PathsView.render(one,{cik:one.dataset.cik,hub:(globalThis.FF_HUB_ROOT||'')})}
  const port=$('pv-port');
- if(port&&window.PathsView&&PathsView.portfolio&&!port.dataset.drawn){port.dataset.drawn='1';PathsView.portfolio(port,{kind:port.dataset.kind,id:port.dataset.id,hub:''})}
+ if(port&&window.PathsView&&PathsView.portfolio&&!port.dataset.drawn){port.dataset.drawn='1';PathsView.portfolio(port,{kind:port.dataset.kind,id:port.dataset.id,hub:(globalThis.FF_HUB_ROOT||'')})}
 }
 function pathsDeepLink(arg){
  const v=decodeURIComponent(arg||'').trim();if(!v)return;

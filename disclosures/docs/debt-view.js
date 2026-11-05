@@ -230,8 +230,10 @@
     if (!d) { el.innerHTML = '<p class="dv-sub">No debt data for this company yet.</p>'; return; }
     el.classList.add('dv');
     const hl = d.hidden_leverage || {}, hc = (hl.categories || []).length, ht = (hl.text_signals || []).length;
-    const linkToHidden = (typeof location !== 'undefined' && location.pathname.includes('/disclosures/'))
-      ? '#hidden/' + encodeURIComponent(d.cik) : 'disclosures/#hidden/' + encodeURIComponent(d.cik);
+    // the Hidden leverage section: a page of the site (globalThis.FF_SITE_ROOT: the site's root from here), else the hub's own tab
+    const siteRoot = typeof window !== 'undefined' && globalThis.FF_SITE_ROOT != null ? globalThis.FF_SITE_ROOT
+      : (typeof location !== 'undefined' && location.pathname.includes('/disclosures/')) ? '' : 'disclosures/';
+    const linkToHidden = siteRoot + '#hidden/' + encodeURIComponent(d.cik);
     const hiddenLink = '<div class="dv-card"><span>Hidden leverage &amp; contractual obligations</span><b>' +
       hc + ' numeric groups · ' + ht + ' text leads</b><i>SEC commitments, guarantees and uncommenced lease leads. Original net debt unchanged. ' +
       '<a href="' + esc(linkToHidden) + '">Inspect filing evidence ↗</a></i></div>';

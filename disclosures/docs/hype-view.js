@@ -32,7 +32,7 @@
   };
   const store = {};
   function load(hub, name) {
-    const url = (hub || '') + 'data/market/' + (name || 'hype-history.json');
+    const url = (hub || globalThis.FF_HUB_ROOT || '') + 'data/market/' + (name || 'hype-history.json');
     return store[url] || (store[url] = fetch(url, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .catch((e) => { delete store[url]; throw e; }));
   }
@@ -216,7 +216,7 @@
         if (window.CrowdTransitions) go();
         else if (typeof document !== 'undefined') {
           const sc = document.createElement('script');
-          sc.src = (opt.hub || '') + 'transition-matrix.js'; sc.onload = go; document.head.appendChild(sc);
+          sc.src = (opt.hub || globalThis.FF_HUB_ROOT || '') + 'transition-matrix.js'; sc.onload = go; document.head.appendChild(sc);
         }
       }
       function bind() {

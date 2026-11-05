@@ -160,7 +160,7 @@ def page_for(x, slug, base, universe, has_cf=True):
             "<h2 id='how'>How the score is built</h2><div class='seo-note'><p>Eight published measures, each scored against the whole universe or on its own scale and weighted: "
             "accruals 20, discretionary accruals 10, Beneish M 15, Dechow F 15, Montier C 15, Piotroski F 10, the non-GAAP gap 10, smoothness 5. "
             "A measure that cannot be computed (Beneish for a bank, say) drops out and the rest is rescaled, so every company is scored on what applies to it.</p></div>"
-            f"<p><a class='seo-cta' href='../../../disclosures/earnings-quality/'>Every company ranked →</a> <a href='../../../disclosures/#quality'>The full quality workbench, live →</a> "
+            f"<p><a class='seo-cta' href='../../../disclosures/earnings-quality/'>Every company ranked →</a> <a href='../../../#quality'>The full quality workbench, live →</a> "
             + (f"<a href='../cash-flow/'>{e(name)}: cash flow →</a>" if has_cf else '') + f"</p>{DISCLAIMER}")
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},

@@ -7,7 +7,7 @@ const etfStore={};
 function etfData(name){
  const m=etfStore[name]||(etfStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/etf/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/etf/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 function etfGate(name,title){
@@ -121,7 +121,7 @@ function etfPxPanel(sym,px){
  const recent=(px.div||[]).slice(-8).reverse();
  return `<h3>Price over ${fmt(yrs,1)} years — as traded and with distributions reinvested</h3>${s}<div class="mk-legend"><span><i class="mk-key" style="background:var(--ink)"></i>Price as traded ${etfSpct(pr)}</span><span><i class="mk-key" style="background:var(--mk-profit)"></i>Distributions reinvested ${etfSpct(tr)}</span><span class="muted">weekly closes since ${esc(first[0])}</span></div>`+
   etfCards([['Distributions, last 12 months','$'+fmt(ttm,2),last[1]?`${etfPct(ttm/last[1],2)} of the price`:''],['Distributions since '+first[0].slice(0,4),'$'+fmt(allDiv,2),`${fmt((px.div||[]).length)} payments`],
-   ['From distributions',etfSpct(tr-pr),'total return − price return'],['Make a video',`<a href="../#studio/k=growth&t=${encodeURIComponent(sym)},SPY&div=split&from=${esc(first[0])}">Growth race ↗</a>`,'$10,000 in '+esc(sym)+' vs SPY, distributions split out']])+
+   ['From distributions',etfSpct(tr-pr),'total return − price return'],['Make a video',`<a href="${(globalThis.FF_SITE_ROOT??'../')}#studio/k=growth&t=${encodeURIComponent(sym)},SPY&div=split&from=${esc(first[0])}">Growth race ↗</a>`,'$10,000 in '+esc(sym)+' vs SPY, distributions split out']])+
   (recent.length?etfTbl(['Ex-date (week)','Distribution per share'],recent.map(d=>[esc(d[0]),'$'+fmt(d[1],4)]),[1]):'')+
   `<p class="sub">${esc(px.source||'')}. A distribution is dated to the week of its ex-date and estimated from the two closes, so it can differ from the declared amount by a few percent.</p>`;
 }
@@ -239,7 +239,7 @@ function etfOne(){
  }
  // owners and traders
  out+=`<div class="panel"><h3>Who owns and trades it</h3>`;
- if(o13)out+=`<p class="sub">${fmt(o13.holders)} 13F managers held ${etfMoney(o13.usd)} at ${esc(o13.period)} (${o13.prev_holders!=null?`${fmt(o13.new)} new, ${fmt(o13.exits)} gone since the quarter before`:''}).${d.symbol?` <a href="../#studio/k=holders&amp;t=${encodeURIComponent(d.symbol)}">▶ Video: its largest 13F holders since 2013</a>`:''}</p>`+etfTbl(['Manager','Value','Shares','Change in shares'],(o13.top||[]).slice(0,15).map(x=>[esc(x[0]),etfMoney(x[1]),fmt(x[2]),x[3]==null?'<span class="muted">new</span>':`<span class="${x[3]>0?'positive':x[3]<0?'negative':''}">${x[3]>0?'+':''}${fmt(x[3])}</span>`]),[1,2,3]);
+ if(o13)out+=`<p class="sub">${fmt(o13.holders)} 13F managers held ${etfMoney(o13.usd)} at ${esc(o13.period)} (${o13.prev_holders!=null?`${fmt(o13.new)} new, ${fmt(o13.exits)} gone since the quarter before`:''}).${d.symbol?` <a href="${(globalThis.FF_SITE_ROOT??'../')}#studio/k=holders&amp;t=${encodeURIComponent(d.symbol)}">▶ Video: its largest 13F holders since 2013</a>`:''}</p>`+etfTbl(['Manager','Value','Shares','Change in shares'],(o13.top||[]).slice(0,15).map(x=>[esc(x[0]),etfMoney(x[1]),fmt(x[2]),x[3]==null?'<span class="muted">new</span>':`<span class="${x[3]>0?'positive':x[3]<0?'negative':''}">${x[3]>0?'+':''}${fmt(x[3])}</span>`]),[1,2,3]);
  else out+=`<p class="sub">No 13F manager holding on file for this ticker.</p>`;
  if(d.officials&&d.officials.length)out+=`<h3>Officials' trades</h3>`+etfTbl(['Date','Official','Trade','Amount','Owner'],d.officials.slice(0,15).map(x=>[esc(x.date||''),esc(x.person||'')+` <span class="muted">${esc(x.jurisdiction||'')}</span>`,esc(x.type||''),x.amount_min!=null?`$${compact(x.amount_min)}–$${compact(x.amount_max)}`:'—',esc(x.owner||'')]),[3]);
  if(d.short)out+=`<p class="sub"><b>Short interest</b> (FINRA, ${esc(d.short.settlement||'')}): ${fmt(d.short.short)} shares, ${d.short.change_pct!=null?(d.short.change_pct>0?'+':'')+fmt(d.short.change_pct,1)+'% since the previous report':''}, ${fmt(d.short.dtc,1)} days to cover.</p>`;
@@ -293,6 +293,6 @@ function bindEtf(){
  for(const k of ['eq','esym','ea','eb','ehold'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-etf]').forEach(b=>b.onclick=()=>{state.eview='one';state.esym=b.dataset.etf;render();scrollTo({top:0,behavior:'smooth'})});
  const opp=$('etf-opp');
- if(opp&&window.OpportunityView&&opp.dataset.drawn!==opp.dataset.t){opp.dataset.drawn=opp.dataset.t;OpportunityView.render(opp,{ticker:opp.dataset.t,kind:'etfs',hub:''})}
+ if(opp&&window.OpportunityView&&opp.dataset.drawn!==opp.dataset.t){opp.dataset.drawn=opp.dataset.t;OpportunityView.render(opp,{ticker:opp.dataset.t,kind:'etfs',hub:(globalThis.FF_HUB_ROOT||'')})}
  document.querySelectorAll('#workspace [data-cco]').forEach(b=>b.onclick=()=>{state.tab='consensus';state.cview='company';state.cq=b.dataset.cco;syncPills();try{history.replaceState(null,'','#consensus')}catch(e){}render();scrollTo({top:0,behavior:'smooth'})});
 }

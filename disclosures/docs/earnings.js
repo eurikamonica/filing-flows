@@ -9,7 +9,7 @@ const erStore = {};
 function erData(name) {
   const m = erStore[name] || (erStore[name] = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('data/research/earnings/' + name + '.json', { cache: 'no-cache' })
+  m.loading = fetch((globalThis.FF_HUB_ROOT||'')+'data/research/earnings/' + name + '.json', { cache: 'no-cache' })
     .then((r) => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json(); })
     .then((d) => { m.data = d; if (state.tab === 'earnings') render(); })
     .catch((e) => { m.err = e.message; if (state.tab === 'earnings') render(); });
@@ -125,7 +125,7 @@ function bindEarnings() {
   if ($('erq')) { $('erq').onchange = (e) => { state.etk = e.target.value.trim().toUpperCase(); render(); }; $('erq').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); }; }
   document.querySelectorAll('#workspace [data-ert]').forEach((b) => (b.onclick = () => { state.etk = b.dataset.ert; render(); scrollTo({ top: 0, behavior: 'smooth' }); }));
   const co = $('er-co');
-  if (co && window.EarningsPreviewView) window.EarningsPreviewView.render(co, { ticker: state.etk, hub: '' });
+  if (co && window.EarningsPreviewView) window.EarningsPreviewView.render(co, { ticker: state.etk, hub:(globalThis.FF_HUB_ROOT||'') });
   if (!document.getElementById('er-css')) {
     const s = document.createElement('style'); s.id = 'er-css';
     s.textContent = `.er-heat{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;max-width:640px;margin:8px 0 16px}.er-hd{font-size:11px;color:var(--muted,#888);text-align:center}

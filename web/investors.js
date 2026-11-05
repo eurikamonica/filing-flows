@@ -220,7 +220,7 @@ td.iv-wrap{white-space:normal;min-width:240px;max-width:520px}
   function f13Block(holder, mgr, name) {
     if (!holder || !(holder.edges || []).length) return '';
     const top = holder.edges.slice(0, 10);
-    const link = mgr ? `<a href="disclosures/#people/m-${esc(holder.cik)}">Every quarter of its 13F →</a>` : `<a href="disclosures/#cross/holders">Cross-holdings →</a>`;
+    const link = mgr ? `<a href="#people/m-${esc(holder.cik)}">Every quarter of its 13F →</a>` : `<a href="#cross/holders">Cross-holdings →</a>`;
     return `<section class="section"><div class="section-head"><h2>Listed stakes in its own 13F</h2><span class="muted">${esc(name)} files a 13F for its own portfolio · quarter ended ${esc(fdate(holder.as_of))}, filed ${esc(fdate(holder.filed))} · ${link}</span></div>
       <div class="tbl-wrap"><table class="small"><thead><tr><th>Stock</th><th>Issuer</th><th class="num">Value</th><th class="num">Of the 13F</th><th class="num">Of its shares</th></tr></thead><tbody>
       ${top.map((e) => `<tr><td><a class="mono" href="#t-${esc(e.ticker)}">${esc(e.ticker)}</a></td><td>${esc(e.issuer || '')}</td><td class="num">${esc(usd(e.usd))}</td><td class="num">${esc(pct(e.weight, 1))}</td><td class="num">${e.pct_out != null ? esc(pct(e.pct_out, 1)) : '—'}</td></tr>`).join('')}
@@ -309,8 +309,8 @@ td.iv-wrap{white-space:normal;min-width:240px;max-width:520px}
         <div class="tbl-wrap"><table class="small"><thead><tr><th>Company</th><th class="num">13F total</th><th>Largest positions</th><th>Quarter</th></tr></thead><tbody>
         ${corpRows.map((h) => `<tr><td><span class="co"><a class="mono" href="#c-${h.cik}-invest">${esc(h.ticker || '')}</a> <span>${esc(h.label)}</span></span></td><td class="num">${esc(usd(h.total))}</td>
           <td class="iv-wrap"><div class="iv-mini">${(h.edges || []).slice(0, 5).map((e) => `<span><a class="mono" href="#t-${esc(e.ticker)}">${esc(e.ticker)}</a> ${esc(usd(e.usd))}</span>`).join('')}</div></td>
-          <td>${mset.has(+h.cik) ? `<a href="disclosures/#people/m-${h.cik}">${esc(fdate(h.as_of))} ↗</a>` : esc(fdate(h.as_of))}</td></tr>`).join('')}
-        </tbody></table></div><p class="muted small">From the Disclosures hub’s <a href="disclosures/#cross">cross-holdings</a>. A 13F lists listed shares only: SpaceX entered Alphabet’s and NVIDIA’s 13F once it listed; their private stakes are in the table above.</p></section>` : ''}
+          <td>${mset.has(+h.cik) ? `<a href="#people/m-${h.cik}">${esc(fdate(h.as_of))} ↗</a>` : esc(fdate(h.as_of))}</td></tr>`).join('')}
+        </tbody></table></div><p class="muted small">From the Disclosures hub’s <a href="#cross">cross-holdings</a>. A 13F lists listed shares only: SpaceX entered Alphabet’s and NVIDIA’s 13F once it listed; their private stakes are in the table above.</p></section>` : ''}
       <p class="muted small iv">Read from SEC filings by fixed rules: balances from SEC’s company facts (us-gaap tags), investees from each company’s latest 10-Q and 10-K (members of investee axes in its XBRL, and sentences such as “we invested $5.0 billion in …”). Carrying values are neither cost nor market value; non-marketable stakes are revalued only when a financing round gives an observable price. Updated ${esc(fdate(ix.generated))}. Not investment advice.</p>`;
     const draw = () => {
       let rows = (ix.rows || []).filter((r) => st.fin || !r[f.fin]);
@@ -323,7 +323,7 @@ td.iv-wrap{white-space:normal;min-width:240px;max-width:520px}
           const ch = r[f.total] != null && r[f.total_ya] ? r[f.total] - r[f.total_ya] : null;
           const tops = r[f.top] || [];
           const top = tops.map(([n, t, kk]) => `<a href="#investee-${enc(kk || keyOf(n))}">${esc(n)}</a>`).join(' · ');
-          const f13 = corp.has(+r[f.cik]) ? ` <a class="tag" href="${mset.has(+r[f.cik]) ? `disclosures/#people/m-${r[f.cik]}` : 'disclosures/#cross/holders'}" title="Files a 13F for its own portfolio">13F</a>` : '';
+          const f13 = corp.has(+r[f.cik]) ? ` <a class="tag" href="${mset.has(+r[f.cik]) ? `#people/m-${r[f.cik]}` : '#cross/holders'}" title="Files a 13F for its own portfolio">13F</a>` : '';
           return `<tr><td class="muted">${i + 1}</td><td class="iv-wrap"><span class="co"><span class="mono">${esc(r[f.t] || '')}</span><a href="#c-${r[f.cik]}-invest"><b>${esc(r[f.name])}</b></a>${f13}</span>
             ${top ? `<div class="iv-mini muted">${top}${r[f.named] > tops.length ? ` <span>+${r[f.named] - tops.length} more</span>` : ''}</div>` : ''}
             <div class="iv-ph small">Total <b>${esc(usd(r[f.total]))}</b>${ch == null ? '' : ` <span class="muted">(${esc(usd(ch, true))} in a year)</span>`}${r[f.g_ttm] != null ? ` · gains ${esc(usd(r[f.g_ttm], true))}${r[f.g_share] != null ? ` <span class="muted">(${esc(pct(r[f.g_share]))} of pretax)</span>` : ''}` : ''}</div></td>
@@ -400,7 +400,7 @@ td.iv-wrap{white-space:normal;min-width:240px;max-width:520px}
       ${holders.length ? `<section class="section iv"><div class="section-head"><h2>In companies’ own 13F</h2><span class="muted">Operating companies that file a 13F, latest quarter</span></div>
         <div class="tbl-wrap"><table class="small"><thead><tr><th>Holder</th><th class="num">Value</th><th class="num">Of its 13F</th><th class="num">Of the shares</th><th>Quarter</th></tr></thead><tbody>
         ${holders.map(([h, e]) => `<tr><td><span class="co"><span class="mono">${esc(h.ticker || '')}</span><a class="name" href="#c-${h.cik}-invest">${esc(h.label)}</a></span></td><td class="num">${esc(usd(e.usd))}</td><td class="num">${esc(pct(e.weight, 1))}</td><td class="num">${e.pct_out != null ? esc(pct(e.pct_out, 1)) : '—'}</td><td>${esc(fdate(h.as_of))}</td></tr>`).join('')}
-        </tbody></table></div><p class="muted small">All 13F holders, funds included: <a href="disclosures/#cross/${esc(ticker)}">cross-holdings for ${esc(ticker)} →</a></p></section>` : ''}
+        </tbody></table></div><p class="muted small">All 13F holders, funds included: <a href="#cross/${esc(ticker)}">cross-holdings for ${esc(ticker)} →</a></p></section>` : ''}
       <p class="muted small iv">An amount is the one the filing gives for this investee: a balance tagged on it in XBRL where there is one, else the value, investment or commitment its sentences state — the largest one stated, not a sum, so stakes bought in several rounds can be larger. A filing that reports the stake inside a total without naming it is not counted. Read automatically from SEC filings; check the filing before relying on a figure. Not investment advice.</p>`;
   }
 

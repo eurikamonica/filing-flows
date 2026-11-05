@@ -9,7 +9,7 @@ const afStore={};
 function afData(path){
  const m=afStore[path]||(afStore[path]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/'+path+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/'+path+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const AF_VIEWS=[['stocks','Every stock, every group side by side'],['agree','Where the groups agree'],['split','Where they split'],['names','Most active names']];

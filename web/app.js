@@ -764,7 +764,7 @@
       const hit = cos.find((c) => c.ticker.toLowerCase() === s) || cos.find((c) => c.name.toLowerCase().startsWith(s)) || cos.find((c) => c.name.toLowerCase().includes(s));
       if (hit) { location.hash = `c-${hit.cik}`; return; }
       const m = $('#hero-miss');
-      if (m) { m.hidden = false; m.innerHTML = `“${t(q)}” is not among the latest filings here — <a href="c/">browse every company page</a> or <a href="disclosures/">search the Disclosure Hub</a>.`; }
+      if (m) { m.hidden = false; m.innerHTML = `“${t(q)}” is not among the latest filings here — <a href="c/">browse every company page</a> or <a href="#signals">search the Disclosure Hub</a>.`; }
     };
     const f = $('#hero-search');
     if (f) f.addEventListener('submit', (ev) => { ev.preventDefault(); go($('#hero-q').value); });
@@ -1396,7 +1396,7 @@
     if (!d) {
       body.innerHTML = `<div class="section"><p class="muted">${err ? 'The debt data could not load (' + t(err) + ').'
         : 'The debt figures for this company have not been read yet: the collector reads a few hundred companies every two hours, largest first.'}</p>
-        <p class="muted">Market rates, banks’ deposits and the screener of every company are in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.</p></div>`;
+        <p class="muted">Market rates, banks’ deposits and the screener of every company are in the <a href="#debt">Disclosure Hub → Debt &amp; rates</a>.</p></div>`;
       return;
     }
     const box = document.createElement('div');
@@ -1406,7 +1406,7 @@
     window.DebtView.render(box, d);
     const more = document.createElement('p');
     more.className = 'muted';
-    more.innerHTML = `Compare with every company, market rates and banks’ CDs in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.`;
+    more.innerHTML = `Compare with every company, market rates and banks’ CDs in the <a href="#debt">Disclosure Hub → Debt &amp; rates</a>.`;
     body.appendChild(more);
   }
 
@@ -1432,7 +1432,7 @@
     if (!d) {
       body.innerHTML = `<div class="section"><p class="muted">${err ? 'The consensus data could not load (' + t(err) + ').'
         : 'Analysts\u2019 estimates for this company have not been read yet: the collector reads every company over its first runs, largest first, then refreshes each daily.'}</p>
-        <p class="muted">The earnings calendar, every open prediction market and the track record are in the <a href="disclosures/#consensus">Disclosure Hub → Consensus</a>.</p></div>`;
+        <p class="muted">The earnings calendar, every open prediction market and the track record are in the <a href="#consensus">Disclosure Hub → Consensus</a>.</p></div>`;
       return;
     }
     const box = document.createElement('div');
@@ -1442,7 +1442,7 @@
     window.ConsensusView.render(box, d);
     const more = document.createElement('p');
     more.className = 'muted';
-    more.innerHTML = `The earnings calendar, every open prediction market and how they did are in the <a href="disclosures/#consensus">Disclosure Hub → Consensus</a>.`;
+    more.innerHTML = `The earnings calendar, every open prediction market and how they did are in the <a href="#consensus">Disclosure Hub → Consensus</a>.`;
     body.appendChild(more);
   }
 
@@ -3252,7 +3252,7 @@
       <div class="sm13-line"><span class="sm13-gauge" role="img" aria-label="${t(`Smart score ${sg(S)} of plus or minus 100`)}"><b class="${S >= 0 ? 'up' : 'down'}" style="${S >= 0 ? 'left' : 'right'}:50%;width:${w.toFixed(1)}%"></b></span>
         <span>${n.n} vote${n.n === 1 ? '' : 's'} · everyone alike ${sg(n.raw)}${Object.entries(n.groups || {}).map(([g, x]) => ` · ${G[g] || g}s ${sg(x.S)}`).join('')}</span></div>
       ${votes ? `<ul class="sm13-votes">${votes}</ul>` : ''}
-      <p class="muted">Every disclosed trade by 13F managers, active ETFs, insiders and officials is scored by the stock's return less SPY's over the next 63 trading days (a sale is right when the stock lagged); each vote now counts by that actor's record, so a buyer who is usually wrong counts against buying.${b && b[1] ? ` In the backtest, stocks scoring ${t(b[0])} averaged ${b[2] > 0 ? '+' : ''}${(b[2] * 100).toFixed(1)}% against SPY over the next 63 trading days (${b[1].toLocaleString('en-US')} stock-months).` : ''} <a href="disclosures/#smart/${encodeURIComponent(sym)}">Who is voting, and their records →</a></p></div>`;
+      <p class="muted">Every disclosed trade by 13F managers, active ETFs, insiders and officials is scored by the stock's return less SPY's over the next 63 trading days (a sale is right when the stock lagged); each vote now counts by that actor's record, so a buyer who is usually wrong counts against buying.${b && b[1] ? ` In the backtest, stocks scoring ${t(b[0])} averaged ${b[2] > 0 ? '+' : ''}${(b[2] * 100).toFixed(1)}% against SPY over the next 63 trading days (${b[1].toLocaleString('en-US')} stock-months).` : ''} <a href="#smart/${encodeURIComponent(sym)}">Who is voting, and their records →</a></p></div>`;
   }
 
   // ---------- ETFs that hold it (data/etf/by/<TICKER>.json, app/etf.py): the largest by dollars, and the creations and
@@ -3299,7 +3299,7 @@
         <svg class="q13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`Estimated ETF flows into ${sym} by month`)}"><line class="br13-axis" x1="10" x2="${W - 10}" y1="${mid}" y2="${mid}"/>${bars}</svg>`;
     }
     return `<h3>ETFs that hold it</h3>
-      <p class="muted">${whole(d.etfs)} ETFs hold ${money(d.usd)} of ${t(sym)} in their latest N-PORT portfolios; the largest by dollars, with ${t(sym)}’s weight in each. <a href="disclosures/#etf">All ETFs →</a></p>
+      <p class="muted">${whole(d.etfs)} ETFs hold ${money(d.usd)} of ${t(sym)} in their latest N-PORT portfolios; the largest by dollars, with ${t(sym)}’s weight in each. <a href="#etf">All ETFs →</a></p>
       <ol class="etf13">${list}</ol>${flows}`;
   }
 
@@ -3344,9 +3344,9 @@
         <td>${x.source_url ? `<a href="${t(x.source_url)}" target="_blank" rel="noopener">13F ↗</a>` : '—'}</td></tr>`).join('');
     box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2>
         <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${ins.length} insider trade${ins.length === 1 ? '' : 's'} · ${stakes.length} 13D / 13G · ${f144.length} Form 144 · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
-        · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}${inst.length ? ` · <a href="#studio/k=holders&amp;t=${encodeURIComponent(sym)}">▶ Video: its largest holders since 2013</a>` : ''}</span></div>
+        · from <a href="#signals">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}${inst.length ? ` · <a href="#studio/k=holders&amp;t=${encodeURIComponent(sym)}">▶ Video: its largest holders since 2013</a>` : ''}</span></div>
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
-        h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="disclosures/#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
+        h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
       ${own13(inst, (h && h.exits) || [], sym, av, h && h.q13f)}
       ${smartBlock(sm, sym, av)}
       <h3>Institutional investors (13F)</h3>
@@ -5608,6 +5608,7 @@
       h = 'account';
     }
     let m;
+    if (window.FFHubShell) window.FFHubShell.hide();     // the Disclosures sections' container: shown again below for theirs
     try {
       if ((m = /^t-(.+)$/.exec(h))) {                    // a ticker link from the disclosures hub: open that company's page
         const cik = await cikForTicker(m[1]);
@@ -5615,7 +5616,7 @@
         if (!cik) {                                      // a fund: its page in the Disclosure Hub
           const etf = await etfForTicker(m[1]);
           if (!here()) return;
-          if (etf) { location.replace('disclosures/#etf/' + encodeURIComponent(etf)); return; }
+          if (etf) { location.replace('#etf/' + encodeURIComponent(etf)); return; }
           const e = new Error(`No company or fund on SEC's ticker list has the ticker ${m[1].toUpperCase()}: it may trade over the counter, have changed its ticker or have been delisted`);
           e.plain = true;
           throw e;
@@ -5634,7 +5635,7 @@
       else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if ((m = /^studio(?:\/([\s\S]*))?$/.exec(h)) && window.FFStudio) await window.FFStudio.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if ((m = /^backtest(?:\/([\s\S]*))?$/.exec(h)) && window.FFBacktest) await window.FFBacktest.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
-      else if (h === 'investors' && window.FFInvestors) await window.FFInvestors.index(app, { getJSON, setNav, here });
+      else if (/^investors(\/|$)/.test(h) && window.FFInvestors) await window.FFInvestors.index(app, { getJSON, setNav, here });   // the Disclosures hub's #investors/… too
       else if ((m = /^investee-(.+)$/.exec(h)) && window.FFInvestors) await window.FFInvestors.investee(app, m[1], { getJSON, setNav, here });
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
       else if (h === 'model' && window.FFModel) await window.FFModel.overview(app, chainCtx());
@@ -5646,6 +5647,8 @@
       else if (h === 'owner') await ownerPage();
       else if (h === 'owner-xreport') { await ownerPage(); const x = $('#xreport'); if (x) x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       else if ((m = /^unsubscribe-([0-9a-f-]{36})$/.exec(h))) await unsubscribePage(m[1]);
+      // a Disclosures section (#signals, #smart, #etf/SPY …): the hub's pages, part of the site (web/hub-shell.js)
+      else if (window.FFHubShell && window.FFHubShell.owns(h)) await window.FFHubShell.show(h, { setNav });
       else await home();
       initFollowButtons();
       initSendButtons();

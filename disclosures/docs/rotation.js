@@ -624,7 +624,7 @@ function spin(){
   ROT.yaw+=.006;ROT.ctx.paint(state.rf);requestAnimationFrame(step)};
  requestAnimationFrame(step);
 }
-const coLink=c=>`<a href="../#c-${esc(c.cik)}" title="Earnings Sankey and filings"><b>${esc(c.t)}</b></a> <span class="muted">${esc(c.n)}</span>`;
+const coLink=c=>`<a href="${(globalThis.FF_SITE_ROOT??'../')}#c-${esc(c.cik)}" title="Earnings Sankey and filings"><b>${esc(c.t)}</b></a> <span class="muted">${esc(c.n)}</span>`;
 
 /* ---------- diverging colour (blue = higher / better, red = lower, grey = middle), five steps per arm ---------- */
 function divColor(t){                                    // t in [-1, 1]
@@ -960,10 +960,10 @@ function rotHybrid(el){                                  // rrg-hybrid.js loads 
  document.head.appendChild(s);el.innerHTML=empty('Loading the Hybrid RRG…');
 }
 function rotMAHybrid(el){                                 // ma-hybrid-view.js loads only when Moving averages+ is opened
- if(window.MAHybridView){MAHybridView.renderHub(el,{hub:''});return}
+ if(window.MAHybridView){MAHybridView.renderHub(el,{hub:(globalThis.FF_HUB_ROOT||'')});return}
  if(document.querySelector('script[data-ma-hybrid]')){el.innerHTML=empty('Loading Moving averages+…');return}
  const s=document.createElement('script');s.src='ma-hybrid-view.js';s.dataset.maHybrid='1';
- s.onload=()=>{const e=$('ma-hybrid');if(e&&window.MAHybridView)MAHybridView.renderHub(e,{hub:''})};
+ s.onload=()=>{const e=$('ma-hybrid');if(e&&window.MAHybridView)MAHybridView.renderHub(e,{hub:(globalThis.FF_HUB_ROOT||'')})};
  s.onerror=()=>{const e=$('ma-hybrid');if(e)e.innerHTML=empty('The Moving averages+ script did not load.')};
  document.head.appendChild(s);el.innerHTML=empty('Loading Moving averages+…');
 }
@@ -992,5 +992,5 @@ function bindRotation(){
  if(state.tab==='rotation'&&state.rview==='track'&&typeof bindLedger==='function')bindLedger();
  if(state.tab==='rotation'&&state.rview==='hybrid'&&$('rrg-hybrid'))rotHybrid($('rrg-hybrid'));
  if(state.tab==='rotation'&&state.rview==='mahybrid'&&$('ma-hybrid'))rotMAHybrid($('ma-hybrid'));
- if(state.tab==='rotation'&&state.rview==='ind'&&$('rrg-ind')){if(window.RRGCompanyView)RRGCompanyView.renderIndustries($('rrg-ind'),{hub:'',id:/:/.test(state.rrgu||'')?state.rrgu:''});else $('rrg-ind').innerHTML=empty('The industry RRG script did not load.')}
+ if(state.tab==='rotation'&&state.rview==='ind'&&$('rrg-ind')){if(window.RRGCompanyView)RRGCompanyView.renderIndustries($('rrg-ind'),{hub:(globalThis.FF_HUB_ROOT||''),id:/:/.test(state.rrgu||'')?state.rrgu:''});else $('rrg-ind').innerHTML=empty('The industry RRG script did not load.')}
 }

@@ -17,7 +17,7 @@ function mvData(){
  const m=mvStore.ix||(mvStore.ix={});
  if(m.data||m.err||m.loading)return m;
  if(typeof fetch!=='function'){m.err='this browser cannot load data files';return m}
- m.loading=fetch('data/research/paths/moves/index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/paths/moves/index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message;if(typeof render==='function')render()});
  return m;
 }
@@ -27,7 +27,7 @@ const mvRegFile=r=>['atl','52w','3m'].includes(r)?'lows':['narrow','wide'].inclu
 function mvHighsData(file='highs'){
  const m=mvStore[file]||(mvStore[file]={});
  if(m.data||m.err||m.loading||typeof fetch!=='function')return m;
- m.loading=fetch(`data/research/paths/moves/${file}.json`,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+`data/research/paths/moves/${file}.json`,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message;if(typeof render==='function')render()});
  return m;
 }
@@ -52,14 +52,14 @@ function mvHighs(){
 function mvDays(){
  const m=mvStore.days||(mvStore.days={});
  if(m.data||m.err||m.loading||typeof fetch!=='function')return m;
- m.loading=fetch('data/research/paths/moves/days/index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/paths/moves/days/index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message});
  return m;
 }
 function mvDayDoc(day){
  const m=mvStore['d'+day]||(mvStore['d'+day]={});
  if(m.data||m.err||m.loading||typeof fetch!=='function')return m;
- m.loading=fetch('data/research/paths/moves/days/'+day+'.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/paths/moves/days/'+day+'.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message;if(typeof render==='function')render()});
  return m;
 }
@@ -216,7 +216,7 @@ function bindMoves(){
  document.querySelectorAll('#workspace [data-hvk]').forEach(b=>b.onclick=()=>{state.mvk=b.dataset.hvk;render();const el=$('hv-one');if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'})});
  const hv=$('hv-one');
  const hid=hv?hv.dataset.k+'@'+(hv.dataset.r||'highs'):'';
- if(hv&&window.HighsView&&hv.dataset.k&&hv.dataset.drawn!==hid){hv.dataset.drawn=hid;window.HighsView.render(hv,{key:hv.dataset.k,hub:'',title:false,regime:hv.dataset.r||'highs'})}
+ if(hv&&window.HighsView&&hv.dataset.k&&hv.dataset.drawn!==hid){hv.dataset.drawn=hid;window.HighsView.render(hv,{key:hv.dataset.k,hub:(globalThis.FF_HUB_ROOT||''),title:false,regime:hv.dataset.r||'highs'})}
  if($('mvt')){$('mvt').onchange=e=>{state.mvt=e.target.value;render()};$('mvt').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-mvk]').forEach(b=>b.onclick=()=>{
   if(b.dataset.mvone){state.mvv='one';state.mvt=b.dataset.mvk}else state.mvk=b.dataset.mvk;
@@ -224,7 +224,7 @@ function bindMoves(){
  });
  const one=$('mv-one');
  const id=one?one.dataset.k+'@'+(one.dataset.d||''):'';
- if(one&&window.MovesView&&one.dataset.drawn!==id){one.dataset.drawn=id;MovesView.render(one,{key:one.dataset.k,hub:'',state:one.dataset.d?{mode:'date',date:one.dataset.d,before:true}:undefined})}
+ if(one&&window.MovesView&&one.dataset.drawn!==id){one.dataset.drawn=id;MovesView.render(one,{key:one.dataset.k,hub:(globalThis.FF_HUB_ROOT||''),state:one.dataset.d?{mode:'date',date:one.dataset.d,before:true}:undefined})}
 }
 function movesDeepLink(arg){
  let v=decodeURIComponent(arg||'').trim();if(!v)return;

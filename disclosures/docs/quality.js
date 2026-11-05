@@ -8,7 +8,7 @@ const qStore = {};
 function qData(name) {
   const m = qStore[name] || (qStore[name] = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('data/research/quality/' + name + '.json').then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
+  m.loading = fetch((globalThis.FF_HUB_ROOT||'')+'data/research/quality/' + name + '.json').then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
     .then(d => { m.data = d; render() }).catch(e => { m.err = e.message; render() });
   return m;
 }
@@ -184,10 +184,10 @@ function bindQuality() {
     state.qt = b.dataset.qt;
     let box = $('q-detail');
     if (!box) { box = document.createElement('div'); box.id = 'q-detail'; $('workspace').prepend(box); }
-    if (window.QualityView) window.QualityView.render(box, { ticker: state.qt, hub: '' });
+    if (window.QualityView) window.QualityView.render(box, { ticker: state.qt, hub:(globalThis.FF_HUB_ROOT||'') });
     box.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
-  if (state.qt && $('q-detail') && window.QualityView && !$('q-detail').innerHTML) window.QualityView.render($('q-detail'), { ticker: state.qt, hub: '' });
+  if (state.qt && $('q-detail') && window.QualityView && !$('q-detail').innerHTML) window.QualityView.render($('q-detail'), { ticker: state.qt, hub:(globalThis.FF_HUB_ROOT||'') });
 }
 function qualityDeepLink(arg) {                  /* #quality/more, #quality/persist, #quality/MSFT */
   const v = decodeURIComponent(arg || '').trim();

@@ -67,7 +67,7 @@ function rrgChains(){
  const m=RRG_CH.m||(RRG_CH.m={});
  if(m.data||m.err||m.loading)return m;
  if(typeof fetch!=='function'){m.err='no fetch';return m}
- m.loading=fetch('../data/chains/index.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_SITE_ROOT??'../')+'data/chains/index.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 function rrgBasket(D,id,name,tickers){

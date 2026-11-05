@@ -17,7 +17,7 @@
     ['all', 'Every eligible stock (unconditional)'], ['price_rising', 'Price-only: rising'], ['price_falling', 'Price-only: falling'], ['crowd_added', 'Crowd-only: net added'], ['crowd_cut', 'Crowd-only: net cut'],
     ['coverage_high', 'Coverage-only: ≥ 90% matched'], ['coverage_low', 'Coverage-only: < 90% matched']];
   const store = {};
-  const load = (hub) => { const url = (hub || '') + 'data/market/crowd-transitions.json';
+  const load = (hub) => { const url = (hub || globalThis.FF_HUB_ROOT || '') + 'data/market/crowd-transitions.json';
     return store[url] || (store[url] = fetch(url, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).catch((e) => { delete store[url]; throw e; })); };
   const sel = (id, label, opts, v) => `<label style="display:inline-flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted,#777)">${label}<select data-ctc="${id}">${opts.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
   const badge = '<span style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;background:var(--chip,#eef1f4);color:var(--muted,#555)">Descriptive only · not a forecast</span>';

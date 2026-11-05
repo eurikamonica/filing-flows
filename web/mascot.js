@@ -318,7 +318,7 @@
     const facts = [`industry ${row.label}: ${QN.en[A.st.q]} vs SPY`, ok ? `index move into Leading next week ${spc(lead)}` : '', pv ? `4-week odds ${QN.en.map((n, j) => `${n} ${pc(pv[j])}`).join(', ')}` : ''].filter(Boolean);
     const html = L(lg, `${esc(c.ticker)}'s industry, <b>${esc(row.label)}</b> (${num(row.members)} companies), is <b>${Q[A.st.q]}</b> against the S&P 500.${ok ? ` Its index needs ${spc(lead)} next week (SPY flat) to be Leading.` : ''}${pv ? ` 4 weeks on, lines like it stood: ${Q.map((n, j) => `${n} ${pc(pv[j])}`).join(', ')}.` : ''}`,
       `${esc(c.ticker)} 所在行业 <b>${esc(row.label)}</b>（${num(row.members)} 家公司）相对标普 500 处于<b>${Q[A.st.q]}</b>象限。${ok ? `行业指数下周需要 ${spc(lead)}（SPY 不动）才能进入领先。` : ''}${pv ? `同类行业 4 周后：${Q.map((n, j) => `${n} ${pc(pv[j])}`).join('，')}。` : ''}`);
-    return { html, facts, mood: A.st.q === 0 ? 'happy' : A.st.q === 2 ? 'worried' : 'talk', links: [[`${BASE}disclosures/#rotation/ind~${encodeURIComponent(row.id)}`, L(lg, 'This industry in the Industry RRG', '行业 RRG 中查看')]] };
+    return { html, facts, mood: A.st.q === 0 ? 'happy' : A.st.q === 2 ? 'worried' : 'talk', links: [[`${BASE}#rotation/ind~${encodeURIComponent(row.id)}`, L(lg, 'This industry in the Industry RRG', '行业 RRG 中查看')]] };
   }
   async function options(c, lg) {
     const o = await json(HUB + 'market/options/' + encodeURIComponent(fileT(c.ticker)) + '.json');
@@ -424,7 +424,7 @@
         'No issuer-verified earnings-call transcript is published for ' + esc(c.ticker) +
         '. An 8-K earnings release or webcast listing is not a transcript.',
         esc(c.ticker) + ' 尚无已验证的官方财报电话会议逐字稿。8-K 业绩公告或 Webcast 入口不等于逐字稿。'),
-      facts: [], mood: 'think', links: [[BASE + 'disclosures/#calls', 'Earnings calls']]};
+      facts: [], mood: 'think', links: [[BASE + '#calls', 'Earnings calls']]};
     const g = (r.guidance || [])[0], qa = (r.analyst_questions || [])[0],
       ex = (r.quantitative_exercises || [])[0];
     const desc = g ? L(lg,
@@ -445,7 +445,7 @@
         '练习题所用数据尚未独立核验。') + '</em>' : '');
     return {html, facts: [c.ticker + ' verified issuer IR call ' + r.date,
       ...(g ? ['Company-stated guidance '+ g.metric + ' '+g.horizon+' '+g.low+'-'+g.high+' '+g.unit+' (not SEC-reconciled)'] : [])],
-      mood: 'talk', links: [[BASE + 'disclosures/#calls', L(lg, 'Earnings calls / practice', '会议与练习题')], 
+      mood: 'talk', links: [[BASE + '#calls', L(lg, 'Earnings calls / practice', '会议与练习题')], 
       ...(r.ir_url ? [[r.ir_url, L(lg, 'Original issuer transcript', '公司官方逐字稿')]] : [])]};
   }
 
@@ -1208,7 +1208,7 @@
     const title=esc(event.ticker)+' · '+esc(event.date||'date not provided');
     addMsg('<b>'+title+'</b> — '+(zhUI()?'公司 IR 电话会议逐字稿链接已验证；管理层指引需独立核对。':
       'Issuer IR transcript link verified; guidance remains unverified.')+
-      ' <a href="'+BASE+'disclosures/#calls">'+(zhUI()?'查看来源与练习':'Official sources and practice')+'</a>','bot');
+      ' <a href="'+BASE+'#calls">'+(zhUI()?'查看来源与练习':'Official sources and practice')+'</a>','bot');
     if(ui.panel.hidden||ui.activeTool!=='chat')notify('earnings',
       event.ticker+' · '+(zhUI()?'电话会议资料已更新':'Verified earnings call'));
     return true;

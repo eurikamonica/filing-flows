@@ -150,7 +150,7 @@ no costs). A 13F lists only US long positions at quarter end, reported up to 45 
 <h2>Biggest adds</h2><ul class="seo-list">{lst(m.get('adds') or []) or '<li class="muted">None reported.</li>'}</ul>
 <h2>Biggest cuts</h2><ul class="seo-list">{lst(m.get('cuts') or []) or '<li class="muted">None reported.</li>'}</ul>
 {record}
-<p><a class="seo-cta" href="../../disclosures/#people/m-{e(m['cik'])}">Open in Disclosures →</a> <span class="muted">every quarter, the clone month by month, the smart-money record</span></p>
+<p><a class="seo-cta" href="../../#people/m-{e(m['cik'])}">Open in Disclosures →</a> <span class="muted">every quarter, the clone month by month, the smart-money record</span></p>
 <p class="muted">Source: SEC Form 13F-HR, filer CIK {e(m['cik'])}. Not investment advice.</p>"""
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Organization", "name": name, "url": url, "identifier": f"SEC CIK {m['cik']}", **({"founder": {"@type": "Person", "name": who}} if who else {})},
@@ -207,7 +207,7 @@ def official_page(o, base):
 {f'<h2>Every trade on file and how it did</h2><div class="tbl-wrap"><table><thead><tr><th>Traded</th><th>Ticker</th><th>Side</th><th class="num">Amount (middle of the range)</th><th>Disclosed</th><th class="num">Stock vs SPY, 63 days after disclosure</th><th>Right side?</th></tr></thead><tbody>{scored_rows}</tbody></table></div><p class="muted">A purchase is on the right side when the stock then beat SPY, a sale when it lagged; a dash: not 63 trading days on yet, or no price on file.</p>' if scored_rows else ''}
 <p class="muted">Performance: each scored trade’s stock return less SPY’s over the 63 trading days after it was disclosed (a sale counts when the
 stock then lagged), weighted by the middle of the reported amount range{', ' + str(perf.get('first')) + ' to ' + str(perf.get('last')) if perf.get('first') else ''}.</p>
-<p><a class="seo-cta" href="../../disclosures/#people/o-{e(slug)}">Open in Disclosures →</a></p>
+<p><a class="seo-cta" href="../../#people/o-{e(slug)}">Open in Disclosures →</a></p>
 <p class="muted">Source: House and Senate periodic transaction reports; committees from the congress-legislators project. Not investment advice.</p>"""
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Person", "name": name, "jobTitle": f"U.S. {role}" if role != "Official" else None, "url": url},

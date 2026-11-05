@@ -13,14 +13,14 @@ const frStore={};
 function frData(name){
  const m=frStore[name]||(frStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/research/filings/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/filings/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const FR_VIEWS=[['flags','Red flags'],['letters','SEC comment letters'],['capital','Buybacks & dividends'],['dilution','Dilution & offerings'],['ipos','IPOs & lock-ups'],['deals','Merger arbitrage'],['pay','CEO pay vs return'],['gov','Contracts, lobbying & officials'],['company','One company']];
 const FR_FILE={flags:'redflags',letters:'letters',capital:'capital',dilution:'dilution',ipos:'ipos',deals:'deals',pay:'paycomp',gov:'gov'};
 const frMoney=v=>v==null||!Number.isFinite(+v)?'—':(v<0?'−$':'$')+compact(Math.abs(v));
 const frPct=(v,d=1)=>v==null||!Number.isFinite(+v)?'—':(v>0?'+':v<0?'−':'')+fmt(Math.abs(v*100),d)+'%';
-const frCo=(r,tk,name)=>{const t=tk||r.ticker,n=name||r.company||'';return `${t?`<b>${esc(String(t).replace(/-/g,'.'))}</b> `:''}<span class="muted">${esc(n)}</span>${r.cik?` <a class="muted" href="../#c-${esc(r.cik)}" title="Company page">↗</a>`:''}`};
+const frCo=(r,tk,name)=>{const t=tk||r.ticker,n=name||r.company||'';return `${t?`<b>${esc(String(t).replace(/-/g,'.'))}</b> `:''}<span class="muted">${esc(n)}</span>${r.cik?` <a class="muted" href="${(globalThis.FF_SITE_ROOT??'../')}#c-${esc(r.cik)}" title="Company page">↗</a>`:''}`};
 const frLink=(u,l)=>/^https:\/\//.test(u||'')?`<a target="_blank" rel="noopener" href="${esc(u)}">${esc(l||'Filing ↗')}</a>`:'—';
 const frSev=s=>`<span class="pill" style="${s==='high'?'color:var(--mk-cost);border-color:var(--mk-cost)':s==='medium'?'color:var(--q-warm,#d9822b)':''}">${esc(s||'—')}</span>`;
 function frQ(rows,keys){const q=(state.frq||'').trim().toLowerCase();return q?rows.filter(r=>keys.some(k=>String(r[k]||'').toLowerCase().includes(q))):rows}
@@ -124,5 +124,5 @@ function bindFilings(){
  for(const k of ['frv','frk','frs','frc','frd','frp','frg','frt'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
  if($('frq')){$('frq').onchange=e=>{state.frq=e.target.value;state.page=0;render()};$('frq').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  const box=$('fr-company');
- if(box&&window.FilingsRadarView)window.FilingsRadarView.render(box,{ticker:box.dataset.tk,hub:''});
+ if(box&&window.FilingsRadarView)window.FilingsRadarView.render(box,{ticker:box.dataset.tk,hub:(globalThis.FF_HUB_ROOT||'')});
 }

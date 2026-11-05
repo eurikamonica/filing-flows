@@ -225,7 +225,7 @@
     const agree = near && no && fin(no.max_pain) ? (Math.abs(near.ev / no.max_pain - 1) < 0.01 ? 'agree' : near.ev > no.max_pain ? 'sit above max pain' : 'sit below max pain') : null;
     const story = near ? `The crowd ${agree === 'agree' ? 'and the options agree' : agree ? agree.replace('sit', 'sits') + ' (' + usd(no.max_pain) + ')' : 'sets the line'} for ${day(near.end)}: ${usd(near.ev)} expected against ${usd(spot)} now${no && fin(no.call_wall) ? `, between the put wall at ${usd(no.put_wall)} and the call wall at ${usd(no.call_wall)}` : ''}. ${pairs.length || vs.startsWith('Both') ? vs : ''}`.trim()
       : paras[0] || '';
-    const lk = B.cik ? link(B, 'consensus') : `${siteURL()}disclosures/#consensus`;
+    const lk = B.cik ? link(B, 'consensus') : `${siteURL()}#consensus`;
     const post = fit(lines, 'Who\'s right — 1) the crowd 2) the options 3) neither? 👇', lk);
     return { kind: 'markets', label: 'Prediction markets & options', title: `${B.name}: what the crowd and the options expect`, paras, story, post, link: lk };
   }
@@ -277,7 +277,7 @@
       : ups.length ? `Every group that traded ${B.name} in ${headline[0]} was a net buyer.` : downs.length ? `Every group that traded ${B.name} in ${headline[0]} was a net seller.` : '') +
       (sm && fin(sm.S) ? ` The traders with the best records lean ${sm.S > 20 ? 'to buying' : sm.S < -20 ? 'to selling' : 'neither way'} (${sm.S > 0 ? '+' : ''}${num(sm.S, 0)}).` : '')
       : paras[0];
-    const lk = B.cik ? link(B, '') : `${siteURL()}disclosures/#smart/${encodeURIComponent(B.ticker)}`;
+    const lk = B.cik ? link(B, '') : `${siteURL()}#smart/${encodeURIComponent(B.ticker)}`;
     const post = fit(lines, ups.length && downs.length ? 'Who has it right? 1) the funds 2) the insiders 3) Washington 👇' : 'Signal or noise? 1) signal 2) noise 3) too early 👇', lk);
     return { kind: 'flows', label: 'Flows', title: `${B.name}: who is buying and selling`, paras, story, post, link: lk };
   }
@@ -408,8 +408,8 @@
       }
     }
     const story = r ? `${B.name} is in the ${QN[r.q]} quadrant against the market${rs ? ` and ${QN[rs.q]} against its sector` : ''}, ${heading(r)}. ${r.turn < -0.3 ? 'The rotation runs the usual way, clockwise' : r.turn > 0.3 ? 'The rotation runs against the usual direction' : 'The line has not turned much'}${r.q === 3 ? ': next stop, if it continues, is Leading' : r.q === 1 ? ': next stop, if it continues, is Lagging' : ''}.` : paras[0];
-    const post = fit(lines, 'Rotation in or out? 1) in 2) out 3) chop 👇', `${siteURL()}disclosures/#rotation`);
-    return { kind: 'rotation', label: 'Rotation (RRG · clock · solar · galaxy)', title: `${B.name}: where it sits in the rotation`, paras, story, post, link: `${siteURL()}disclosures/#rotation` };
+    const post = fit(lines, 'Rotation in or out? 1) in 2) out 3) chop 👇', `${siteURL()}#rotation`);
+    return { kind: 'rotation', label: 'Rotation (RRG · clock · solar · galaxy)', title: `${B.name}: where it sits in the rotation`, paras, story, post, link: `${siteURL()}#rotation` };
   }
 
   // ---------------------------------------------------------------- 8-Ks and news
@@ -434,8 +434,8 @@
       if (!lines.length) lines.push(`${T} in the news: "${String(N[0].title || N[0].headline || '').slice(0, 120)}".`);
     }
     const story = top ? `What ${B.name} told the SEC most recently: ${top.label || 'an 8-K'} on ${day(top.filed)}.` : paras[0];
-    const post = fit(lines, 'How do you read it — 1) material 2) routine 3) wait for more? 👇', B.cik ? link(B, '') : `${siteURL()}disclosures/#events`);
-    return { kind: 'events', label: '8-Ks and news', title: `${B.name}: what it filed and what was said`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}disclosures/#events` };
+    const post = fit(lines, 'How do you read it — 1) material 2) routine 3) wait for more? 👇', B.cik ? link(B, '') : `${siteURL()}#events`);
+    return { kind: 'events', label: '8-Ks and news', title: `${B.name}: what it filed and what was said`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}#events` };
   }
 
   // ---------------------------------------------------------------- insiders (Form 4)
@@ -453,8 +453,8 @@
     if (who.size >= 3) { paras.push(`Cluster: ${who.size} insiders bought within 30 days.`); lines.unshift(`${who.size} ${T} insiders bought in 30 days.`); }
     if (!lines.length && (bigS || plan[0])) { const x = bigS || plan[0]; lines.push(`${T}: ${x.title || x.role} ${x.insider} sold ${big(x.value)} on ${day(x.date)}${x.plan_10b5_1 ? ' under a 10b5-1 plan' : ''} (Form 4).`); }
     const story = buys.length ? `Insiders put their own money into ${B.name}: ${big(sum(buys))} in the open market, against ${big(sum(disc))} sold at their own discretion.` : `No open-market purchase by ${B.name}'s insiders; ${big(sum(sales))} sold, ${pct(sum(plan) / (sum(sales) || 1))} of it under pre-arranged plans.`;
-    const post = fit(lines, buys.length ? 'Conviction or optics? 1) conviction 2) optics 3) too small 👇' : 'Routine or telling? 1) routine 2) telling 3) too early 👇', B.cik ? link(B, '') : `${siteURL()}disclosures/#insiders`);
-    return { kind: 'insiders', label: 'Insiders (Form 4)', title: `${B.name}: what its insiders did`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}disclosures/#insiders` };
+    const post = fit(lines, buys.length ? 'Conviction or optics? 1) conviction 2) optics 3) too small 👇' : 'Routine or telling? 1) routine 2) telling 3) too early 👇', B.cik ? link(B, '') : `${siteURL()}#insiders`);
+    return { kind: 'insiders', label: 'Insiders (Form 4)', title: `${B.name}: what its insiders did`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}#insiders` };
   }
 
   // ---------------------------------------------------------------- officials (House, Senate)
@@ -472,8 +472,8 @@
     const story = b.length > s_.length ? `Washington has been buying ${B.name}: ${b.length} purchases to ${s_.length} sales in a year.` : s_.length > b.length ? `Washington has been selling ${B.name}: ${s_.length} sales to ${b.length} purchases in a year.` : `Officials' trades in ${B.name} are balanced.`;
     const lines = [`${L0.jurisdiction && /senate/i.test(L0.jurisdiction) ? 'Senate' : 'House'} disclosure: ${L0.person}${whose(L0) ? `'s ${whose(L0)}` : ''} ${isBuy(L0) ? 'bought' : isSale(L0) ? 'sold' : 'traded'} ${T} (${rng(L0)}) on ${day(L0.date)}${L0.filed_date ? `, reported ${day(L0.filed_date)}` : ''}.`,
       `12 months: ${b.length} buys, ${s_.length} sales by officials.`];
-    const post = fit(lines, 'How do you read officials\' trades — 1) noise 2) worth tracking 3) depends who 👇', B.cik ? link(B, '') : `${siteURL()}disclosures/#trades`);
-    return { kind: 'officials', label: 'Officials\' trades', title: `${B.name}: what officials traded`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}disclosures/#trades` };
+    const post = fit(lines, 'How do you read officials\' trades — 1) noise 2) worth tracking 3) depends who 👇', B.cik ? link(B, '') : `${siteURL()}#trades`);
+    return { kind: 'officials', label: 'Officials\' trades', title: `${B.name}: what officials traded`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}#trades` };
   }
 
   // ---------------------------------------------------------------- market move: the stock against its normal range
@@ -507,8 +507,8 @@
     }
     if (!paras.length) return null;
     const story = fin(z) ? (Math.abs(z) >= 2 ? `An unusual day for ${B.name}: ${spct(dmove, 1)}, about ${num(Math.abs(z), 1)} times its normal daily swing.` : `An ordinary day for ${B.name} by its own standards (${spct(dmove, 1)}).`) : paras[0];
-    const post = fit(lines, 'What\'s behind it — 1) news 2) the market 3) flows? 👇', B.cik ? link(B, '') : `${siteURL()}disclosures/#signals`);
-    return { kind: 'moves', label: 'Market move', title: `${B.name}: the move against its normal range`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}disclosures/#signals` };
+    const post = fit(lines, 'What\'s behind it — 1) news 2) the market 3) flows? 👇', B.cik ? link(B, '') : `${siteURL()}#signals`);
+    return { kind: 'moves', label: 'Market move', title: `${B.name}: the move against its normal range`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}#signals` };
   }
 
   // ---------------------------------------------------------------- today: the latest quote against the day, the year and the options
@@ -560,8 +560,8 @@
       lines.push(`${spct(q.price / hi - 1, 0)} from its 52-week high.`);
     }
     const story = fin(q.chg) ? (Math.abs(q.chg) >= 0.03 ? `A big day for ${B.name}: ${spct(q.chg, 1)}.` : `A quiet day for ${B.name}: ${spct(q.chg, 1)}.`) : `${B.name} at ${usd(q.price)}.`;
-    const post = fit(lines, 'What are you watching — 1) the range 2) the volume 3) the next report? 👇', B.cik ? link(B, '') : `${siteURL()}disclosures/#signals`);
-    return { kind: 'today', label: 'Today', title: `${B.name}: today's quote against its day and its year`, paras, story, post, lines, link: B.cik ? link(B, '') : `${siteURL()}disclosures/#signals`, quote: q };
+    const post = fit(lines, 'What are you watching — 1) the range 2) the volume 3) the next report? 👇', B.cik ? link(B, '') : `${siteURL()}#signals`);
+    return { kind: 'today', label: 'Today', title: `${B.name}: today's quote against its day and its year`, paras, story, post, lines, link: B.cik ? link(B, '') : `${siteURL()}#signals`, quote: q };
   }
 
   // ---------------------------------------------------------------- the composer: tick the angles, one post
@@ -675,8 +675,8 @@
     }
     if (!paras.length) return null;
     const story = O && fin(O.iv30_chg) && Math.abs(O.iv30_chg) >= 3 ? `The options market repriced ${B.name}: implied volatility ${O.iv30_chg > 0 ? 'up' : 'down'} ${num(Math.abs(O.iv30_chg), 1)} points in a day.` : Q && fin(Q.pc_usd) ? `Funds' disclosed options lean ${Q.pc_usd > 1.2 ? 'to puts' : Q.pc_usd < 0.8 ? 'to calls' : 'neither way'} (put/call ${num(Q.pc_usd, 2)}).` : paras[0];
-    const post = fit(lines, 'Hedge or bet? 1) hedge 2) bet 3) noise 👇', B.cik ? link(B, 'consensus') : `${siteURL()}disclosures/#options`);
-    return { kind: 'optmoves', label: 'Options move', title: `${B.name}: what the options market did`, paras, story, post, link: B.cik ? link(B, 'consensus') : `${siteURL()}disclosures/#options` };
+    const post = fit(lines, 'Hedge or bet? 1) hedge 2) bet 3) noise 👇', B.cik ? link(B, 'consensus') : `${siteURL()}#options`);
+    return { kind: 'optmoves', label: 'Options move', title: `${B.name}: what the options market did`, paras, story, post, link: B.cik ? link(B, 'consensus') : `${siteURL()}#options` };
   }
 
   const BUILD = { today, earnings, markets, flows, capital, debt, rotation, events, insiders, officials, moves, optmoves };

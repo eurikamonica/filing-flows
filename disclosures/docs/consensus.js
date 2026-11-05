@@ -5,7 +5,7 @@ const consStore={};
 function consData(name){
  const m=consStore[name]||(consStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/consensus/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/consensus/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 function consGate(name,title){
@@ -138,7 +138,7 @@ function consCompany(){
  const c=consData('c/'+r.cik);
  if(c.err)return empty('Could not load '+q+' ('+c.err+')');
  if(!c.data)return empty('Loading '+q+'…');
- return `<div class="panel"><h3>${esc(c.data.name||q)} <span class="muted">${esc(r.ticker||'')}</span> <a class="tk" href="../#c-${r.cik}-consensus">open on the company page →</a></h3><div id="cons-view"></div></div>`;
+ return `<div class="panel"><h3>${esc(c.data.name||q)} <span class="muted">${esc(r.ticker||'')}</span> <a class="tk" href="${(globalThis.FF_SITE_ROOT??'../')}#c-${r.cik}-consensus">open on the company page →</a></h3><div id="cons-view"></div></div>`;
 }
 function bindConsensus(){
  if(state.tab!=='consensus')return;

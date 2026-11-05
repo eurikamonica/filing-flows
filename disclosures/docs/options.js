@@ -10,7 +10,7 @@ function optDetail(t){
  const m=optStore[t]||(optStore[t]={});
  if(m.data||m.err||m.loading)return m;
  if(typeof fetch!=='function'){m.err='cannot load';return m}
- m.loading=fetch('data/market/options/'+encodeURIComponent(t)+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/market/options/'+encodeURIComponent(t)+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const ivp=v=>v==null?'—':fmt(v*100,1)+'%';

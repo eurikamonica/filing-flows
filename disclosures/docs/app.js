@@ -231,7 +231,7 @@ function ensureLazy(kind,then){
  const m=data().modules[kind],want=m&&m._lazy?Object.keys(m._lazy):[];
  if(!want.length)return true;
  if(m._lazyError)return false;
- if(!lazyLoads.has(kind))lazyLoads.set(kind,Promise.all(want.map(f=>fetch('data/'+m._lazy[f]).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(v=>{m[f]=Array.isArray(v)?v:[];delete m._lazy[f]})))
+ if(!lazyLoads.has(kind))lazyLoads.set(kind,Promise.all(want.map(f=>fetch((globalThis.FF_HUB_ROOT||'')+'data/'+m._lazy[f]).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(v=>{m[f]=Array.isArray(v)?v:[];delete m._lazy[f]})))
   .catch(e=>{m._lazyError=String(e&&e.message||e)}).then(()=>{lazyLoads.delete(kind)}));
  lazyLoads.get(kind).then(()=>{if(then&&!m._lazyError)then();else render()});
  return false;
@@ -275,4 +275,4 @@ function fromHash(){const [h,...rest]=location.hash.slice(1).split('/'),arg=rest
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();
 render();
-if(typeof fetch==='function')fetch('data/build.json').then(r=>r.ok?r.json():null).then(b=>{if(b){window.HUB_BUILD=b;baseRender()}}).catch(()=>{});
+if(typeof fetch==='function')fetch((globalThis.FF_HUB_ROOT||'')+'data/build.json').then(r=>r.ok?r.json():null).then(b=>{if(b){window.HUB_BUILD=b;baseRender()}}).catch(()=>{});

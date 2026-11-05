@@ -6,7 +6,7 @@ const scStore = {};
 function scData() {
   const m = scStore.d || (scStore.d = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('data/screener.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
+  m.loading = fetch((globalThis.FF_HUB_ROOT||'')+'data/screener.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
     .then(d => { const F = d.fields; d.list = (d.rows || []).map(r => Object.fromEntries(F.map((k, i) => [k, r[i]]))); m.data = d; if (scStore.pending) { scApplyPreset(d, scStore.pending); scStore.pending = null; } if (state.tab === 'screener') render() })
     .catch(e => { m.err = e.message; if (state.tab === 'screener') render() });
   return m;
@@ -101,7 +101,7 @@ function screenerView() {
   out += `<div class="section-head"><div><h3>${p ? esc(p.title) : 'Companies that pass'} <span class="tag">${fmt(L.length)} of ${fmt(D.list.length)}</span></h3>${p ? `<p class="sub">${esc(p.line)}</p>` : ''}</div><button class="action" id="csv">Export CSV ↓</button></div>`;
   const th = (k, label) => `<th><button class="text-button sc-sort" data-scs="${k}">${esc(label)}${sk === k ? (dir < 0 ? ' ↓' : ' ↑') : ''}</button></th>`;
   out += `<div class="tablebox"><table><thead><tr><th>#</th>${th('ticker', 'Company')}${cols.map(c => th(c[0], c[1])).join('')}</tr></thead><tbody>
-    ${L.slice(0, state.scShow || 150).map((r, i) => `<tr><td>${i + 1}</td><td><a href="../#c-${esc(r.cik)}"><b>${esc(r.ticker)}</b></a><br><span class="sub">${esc(r.name || '')}${r.label ? ' · ' + esc(r.label) : ''}</span></td>
+    ${L.slice(0, state.scShow || 150).map((r, i) => `<tr><td>${i + 1}</td><td><a href="${(globalThis.FF_SITE_ROOT??'../')}#c-${esc(r.cik)}"><b>${esc(r.ticker)}</b></a><br><span class="sub">${esc(r.name || '')}${r.label ? ' · ' + esc(r.label) : ''}</span></td>
       ${cols.map(c => `<td class="num">${scCell(c[2], r[c[0]])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   if (L.length > (state.scShow || 150)) out += `<p><button class="action" id="scmore">Show ${Math.min(L.length, (state.scShow || 150) + 300)} of ${fmt(L.length)}</button></p>`;
   out += `<div class="explain">${esc(D.note || '')} Built ${esc(D.generated_at || '')}. Thresholds in percent are of the latest fiscal year (growth, margins, yields) or the latest quarter (revenue Y/Y, operating margin); returns and the distance from the 52-week high are from daily closes. A blank cell means the file has no figure, and a company with a blank fails that threshold.</div>`;

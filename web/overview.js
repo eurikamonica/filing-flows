@@ -89,7 +89,7 @@
     }
     // smart money
     const S = F.smart && F.smart.now;
-    if (S && fin(S.S)) tile('Smart-money score', `${S.S > 0 ? '+' : S.S < 0 ? '−' : ''}${num(Math.abs(S.S), 0)}`, `of ±100 · ${num(S.n)} disclosed traders, weighted by record`, `disclosures/#smart/${encodeURIComponent(fileT(ticker))}`, S.S >= 20 ? 'good' : S.S <= -20 ? 'bad' : '');
+    if (S && fin(S.S)) tile('Smart-money score', `${S.S > 0 ? '+' : S.S < 0 ? '−' : ''}${num(Math.abs(S.S), 0)}`, `of ±100 · ${num(S.n)} disclosed traders, weighted by record`, `#smart/${encodeURIComponent(fileT(ticker))}`, S.S >= 20 ? 'good' : S.S <= -20 ? 'bad' : '');
     // insiders, last 90 days
     const H = F.holders || {};
     const since90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
@@ -98,16 +98,16 @@
       const buys = ins.filter((x) => x.code === 'P'), sells = ins.filter((x) => x.code === 'S');
       const bv = buys.reduce((s, x) => s + (x.value || 0), 0), sv = sells.reduce((s, x) => s + (x.value || 0), 0);
       tile('Insiders, 90 days', buys.length ? `${buys.length} buy${buys.length > 1 ? 's' : ''} · ${money(bv)}` : `${sells.length} sale${sells.length > 1 ? 's' : ''}`,
-        [sells.length && buys.length ? `${sells.length} sales · ${money(sv)}` : sells.length ? money(sv) + ' sold' : '', ins[0] ? `latest ${day(ins[0].date)}` : ''].filter(Boolean).join(' · '), 'disclosures/#insiders', buys.length ? 'good' : '');
+        [sells.length && buys.length ? `${sells.length} sales · ${money(sv)}` : sells.length ? money(sv) + ' sold' : '', ins[0] ? `latest ${day(ins[0].date)}` : ''].filter(Boolean).join(' · '), '#insiders', buys.length ? 'good' : '');
     }
     // 13F flow (the quarter's buyers / sellers among the managers the hub reads)
     const fl = H.flows;
-    if (fl && (fin(fl.buyers) || fin(fl.sellers))) tile('13F managers', `${num(fl.buyers)} buyers · ${num(fl.sellers)} sellers`, [fin(fl.usd_net) ? `net ${fl.usd_net >= 0 ? '+' : '−'}${money(Math.abs(fl.usd_net))}` : '', fl.label || ''].filter(Boolean).join(' · '), 'disclosures/#flows', fin(fl.usd_net) ? (fl.usd_net >= 0 ? 'good' : 'bad') : '');
+    if (fl && (fin(fl.buyers) || fin(fl.sellers))) tile('13F managers', `${num(fl.buyers)} buyers · ${num(fl.sellers)} sellers`, [fin(fl.usd_net) ? `net ${fl.usd_net >= 0 ? '+' : '−'}${money(Math.abs(fl.usd_net))}` : '', fl.label || ''].filter(Boolean).join(' · '), '#flows', fin(fl.usd_net) ? (fl.usd_net >= 0 ? 'good' : 'bad') : '');
     // short interest (FINRA, twice a month)
     const sh2 = (H.short || []).filter((x) => x && fin(x[1]));
     if (sh2.length) {
       const last = sh2[sh2.length - 1], prev = sh2.length > 1 ? sh2[sh2.length - 2] : null;
-      tile('Short interest', `${num(last[1] / 1e6, 1)}M shares`, [prev && prev[1] ? `${spct(last[1] / prev[1] - 1)} since ${day(prev[0])}` : '', `as of ${day(last[0])}`].filter(Boolean).join(' · '), 'disclosures/#shorts');
+      tile('Short interest', `${num(last[1] / 1e6, 1)}M shares`, [prev && prev[1] ? `${spct(last[1] / prev[1] - 1)} since ${day(prev[0])}` : '', `as of ${day(last[0])}`].filter(Boolean).join(' · '), '#shorts');
     }
     // debt cushion
     const A = (F.debt && F.debt.analysis) || {};

@@ -274,7 +274,7 @@ def track_changes(site, store, docs, slugs, base, today):
         for c in diff(prev.get(str(cik)), doc, today):
             if (c["cik"], c["rule"], c.get("as_of"), c["kind"]) in seen:
                 continue
-            c["url"] = f"{base}/c/{slugs[cik]}/analysis-traps/#{c['rule']}" if cik in slugs else f"{base}/disclosures/#traps/{c['ticker']}"
+            c["url"] = f"{base}/c/{slugs[cik]}/analysis-traps/#{c['rule']}" if cik in slugs else f"{base}/#traps/{c['ticker']}"
             fresh.append(c)
     changes = sorted(fresh + changes, key=lambda c: (c["date"], c.get("filed") or ""), reverse=True)[:2000]
     if store:
@@ -340,7 +340,7 @@ def practice_items(docs, rows, slugs, base):
                                         "claim": CLAIM[f["rule_id"]], "as_of": d.get("as_of"), "figures": figs, "answer": a, "severity": f.get("severity"),
                                         "explanation": f.get("explanation") or f.get("reason") or "", "alternatives": (f.get("alternative_explanations") or [])[:3],
                                         "falsified_if": (f.get("falsified_if") or [])[:3], "how": f.get("how") or "",
-                                        "url": f"{base}/c/{slugs[cik]}/analysis-traps/#{f['rule_id']}" if cik in slugs else f"{base}/disclosures/#traps/{d.get('ticker') or ''}"})
+                                        "url": f"{base}/c/{slugs[cik]}/analysis-traps/#{f['rule_id']}" if cik in slugs else f"{base}/#traps/{d.get('ticker') or ''}"})
     out, count = [], {"trap": 0, "holds": 0, "unknown": 0}
     for i in range(80):
         for k in T.NAMES:

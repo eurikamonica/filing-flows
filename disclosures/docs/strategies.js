@@ -4,7 +4,7 @@
    positions frozen and scored on later prices). Data: data/market/history/strategies.json and strategies-curves.json
    (rotation-history; app/strategies.py). Deep links: #strategies, #strategies/trend, #strategies/overfit. */
 const stStore={};
-const ST_PATH={rows:'data/market/history/strategies.json',curves:'data/market/history/strategies-curves.json'};
+const ST_PATH={rows:(globalThis.FF_HUB_ROOT||'')+'data/market/history/strategies.json',curves:(globalThis.FF_HUB_ROOT||'')+'data/market/history/strategies-curves.json'};
 function stData(name){
  const m=stStore[name]||(stStore[name]={});
  if(m.data||m.err||m.loading)return m;

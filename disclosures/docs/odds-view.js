@@ -62,7 +62,7 @@
   }
   async function render(el, opt) {
     css();
-    const hub = (opt && opt.hub) || '', t = tk(opt && opt.ticker);
+    const hub = (opt && opt.hub) || globalThis.FF_HUB_ROOT || '', t = tk(opt && opt.ticker);
     if (!t) { el.innerHTML = '<p class="muted">No ticker.</p>'; return; }
     el.innerHTML = '<p class="muted">Reading the odds…</p>';
     let d, s, err;

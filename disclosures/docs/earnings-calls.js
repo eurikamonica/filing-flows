@@ -6,7 +6,7 @@
   function load() {
     if (store.data || store.error || store.loading) return;
     store.loading = true;
-    fetch('data/earnings-calls/index.json', {cache: 'no-cache'})
+    fetch((globalThis.FF_HUB_ROOT||'')+'data/earnings-calls/index.json', {cache: 'no-cache'})
       .then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json(); })
       .then(d => {store.data = d; store.loading = false; if (state.tab === 'calls') render();})
       .catch(e => {store.error = e.message; store.loading = false; if (state.tab === 'calls') render();});

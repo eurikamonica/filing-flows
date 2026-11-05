@@ -432,7 +432,7 @@
 
   async function render(el, ctx) {
     css();
-    const hub = (ctx && ctx.hub != null ? ctx.hub : ''), base = hub + 'data/market/history/';
+    const hub = (ctx && ctx.hub != null ? ctx.hub : (globalThis.FF_HUB_ROOT||'')), base = hub + 'data/market/history/';
     const T = String((ctx && ctx.ticker) || '').toUpperCase().replace(/\./g, '-');
     if (!T) { el.innerHTML = '<p class="muted">No ticker: the RRG needs a share price.</p>'; return; }
     el.innerHTML = '<p class="muted">Loading the rotation history…</p>';
@@ -493,7 +493,7 @@
   const indName = (r) => r.label + (r.level !== 'sic4' && r.ind ? ` (mostly ${r.ind})` : '');
   async function renderIndustries(el, ctx) {
     css();
-    const hub = (ctx && ctx.hub != null ? ctx.hub : ''), base = hub + 'data/market/history/';
+    const hub = (ctx && ctx.hub != null ? ctx.hub : (globalThis.FF_HUB_ROOT||'')), base = hub + 'data/market/history/';
     const U = ui.__ind || (ui.__ind = { h: 4, tail: 13, sort: 'members', q: -1, id: (ctx && ctx.id) || '' });
     if (ctx && ctx.id && !U.seen) { U.id = ctx.id; U.seen = 1; }
     if (!el.innerHTML) el.innerHTML = '<p class="muted">Loading the industry indices…</p>';

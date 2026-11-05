@@ -8,7 +8,7 @@ const gbStore = {};
 function gbData() {
   const m = gbStore.b || (gbStore.b = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('data/market/guidance-board.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
+  m.loading = fetch((globalThis.FF_HUB_ROOT||'')+'data/market/guidance-board.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
     .then(d => { m.data = d; if (state.tab === 'guidance') render() }).catch(e => { m.err = e.message; if (state.tab === 'guidance') render() });
   return m;
 }
@@ -123,7 +123,7 @@ function bindGuidance() {
     const t = e.target.value.trim().toUpperCase(), r = (((gbData().data) || {}).rows || []).find(x => x.t === t);
     one(r ? String(r.cik) : '', t);
   };
-  if (state.gbv === 'one' && $('gb-one') && state.gbonet && window.OutlookView) window.OutlookView.render($('gb-one'), { cik: state.gbone, ticker: state.gbonet, hub: '' });
+  if (state.gbv === 'one' && $('gb-one') && state.gbonet && window.OutlookView) window.OutlookView.render($('gb-one'), { cik: state.gbone, ticker: state.gbonet, hub:(globalThis.FF_HUB_ROOT||'') });
 }
 function guidanceDeepLink(arg) {
   const v = decodeURIComponent(arg || '').trim();

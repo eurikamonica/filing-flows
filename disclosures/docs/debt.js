@@ -5,7 +5,7 @@ const debtStore={};
 function debtData(name){
  const m=debtStore[name]||(debtStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/debt/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/debt/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 function debtGate(name,title){
@@ -60,7 +60,7 @@ function debtCompany(){
  const c=debtData('c/'+r.cik);
  if(c.err)return empty('Could not load '+q+' ('+c.err+')');
  if(!c.data)return empty('Loading '+q+'…');
- return `<div class="panel"><h3>${esc(c.data.name||q)} <span class="muted">${esc(r.ticker||'')} · ${esc(c.data.sic_description||'')}</span> <a class="tk" href="../#c-${r.cik}-debt">open on the company page →</a></h3><div id="debt-view"></div></div>`;
+ return `<div class="panel"><h3>${esc(c.data.name||q)} <span class="muted">${esc(r.ticker||'')} · ${esc(c.data.sic_description||'')}</span> <a class="tk" href="${(globalThis.FF_SITE_ROOT??'../')}#c-${r.cik}-debt">open on the company page →</a></h3><div id="debt-view"></div></div>`;
 }
 function bindDebt(){
  if(state.tab!=='debt')return;

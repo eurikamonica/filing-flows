@@ -34,7 +34,7 @@ function bindNotes(){
  if($('nts'))$('nts').onchange=e=>{state.nts=e.target.value;state.page=0;render()};
  document.querySelectorAll('#workspace [data-ntco]').forEach(b=>b.onclick=()=>{state.ntq=b.dataset.ntco;render();scrollTo({top:0,behavior:'smooth'})});
  const one=$('nt-one');
- if(one&&window.NotesView&&one.dataset.drawn!==one.dataset.t){one.dataset.drawn=one.dataset.t;NotesView.render(one,{ticker:one.dataset.t,hub:'',tab:one.dataset.tab})}
+ if(one&&window.NotesView&&one.dataset.drawn!==one.dataset.t){one.dataset.drawn=one.dataset.t;NotesView.render(one,{ticker:one.dataset.t,hub:(globalThis.FF_HUB_ROOT||''),tab:one.dataset.tab})}
 }
 function notesDeepLink(arg){const [t,tab]=decodeURIComponent(arg||'').split('~');if(t){state.ntq=t.toUpperCase();state.nttab=tab||'read'}}
 window.notesDeepLink=notesDeepLink;

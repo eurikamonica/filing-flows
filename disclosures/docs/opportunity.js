@@ -7,8 +7,8 @@
    opportunity-view.js (shared with the company pages). Deep links: #opportunity/NVDA, #opportunity/etfs~QQQ,
    #opportunity/etfs, #opportunity/model, #opportunity/ledger. */
 const opStore={};
-const OP_PATH={stocks:'data/market/history/opportunity-stocks.json',etfs:'data/etf/opportunity-etfs.json',
- 'ledger-stocks':'data/market/history/opportunity-ledger-stocks.json','ledger-etfs':'data/etf/opportunity-ledger-etfs.json'};
+const OP_PATH={stocks:(globalThis.FF_HUB_ROOT||'')+'data/market/history/opportunity-stocks.json',etfs:(globalThis.FF_HUB_ROOT||'')+'data/etf/opportunity-etfs.json',
+ 'ledger-stocks':(globalThis.FF_HUB_ROOT||'')+'data/market/history/opportunity-ledger-stocks.json','ledger-etfs':(globalThis.FF_HUB_ROOT||'')+'data/etf/opportunity-ledger-etfs.json'};
 function opData(name){
  const m=opStore[name]||(opStore[name]={});
  if(m.data||m.err||m.loading)return m;
@@ -115,7 +115,7 @@ function bindOpportunity(){
  for(const k of ['opq','opt'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-opt]').forEach(b=>b.onclick=()=>{state.opv='one';state.opt=b.dataset.opt;render();scrollTo({top:0,behavior:'smooth'})});
  const one=$('op-one');
- if(one&&window.OpportunityView){const key=one.dataset.k+'|'+one.dataset.t;if(one.dataset.drawn!==key){one.dataset.drawn=key;OpportunityView.render(one,{ticker:one.dataset.t,kind:one.dataset.k,hub:''})}}
+ if(one&&window.OpportunityView){const key=one.dataset.k+'|'+one.dataset.t;if(one.dataset.drawn!==key){one.dataset.drawn=key;OpportunityView.render(one,{ticker:one.dataset.t,kind:one.dataset.k,hub:(globalThis.FF_HUB_ROOT||'')})}}
 }
 function opportunityDeepLink(arg){
  const v=decodeURIComponent(arg||'').trim();if(!v)return;

@@ -10,7 +10,7 @@ function bindComposer(){
  if(state.tab!=='composer')return;
  if($('cmt')){$('cmt').onchange=e=>{state.cmt=e.target.value;render()};$('cmt').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  const el=$('cm-one');
- if(el&&window.ComposerView&&!el.dataset.on){el.dataset.on='1';window.ComposerView.render(el,{ticker:el.dataset.k,hub:'',site:'../',here:()=>state.tab==='composer'})}
+ if(el&&window.ComposerView&&!el.dataset.on){el.dataset.on='1';window.ComposerView.render(el,{ticker:el.dataset.k,hub:(globalThis.FF_HUB_ROOT||''),site:(globalThis.FF_SITE_ROOT??'../'),here:()=>state.tab==='composer'})}
 }
 function composerDeepLink(arg){state.cmt=String(decodeURIComponent(arg||'')).toUpperCase()}
 // a tool, not a source: each chart it reads keeps its own freshness line in its own tab (without this the fallback read

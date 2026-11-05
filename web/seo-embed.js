@@ -5,6 +5,9 @@
 (function () {
   'use strict';
   const BASE = window.FF_BASE || '';
+  // the hub's views read their data under disclosures/ and link to the site's pages from here
+  if (window.FF_HUB_ROOT == null) window.FF_HUB_ROOT = BASE + 'disclosures/';
+  if (window.FF_SITE_ROOT == null) window.FF_SITE_ROOT = BASE;
   const loaded = {};
   const load = (src) => loaded[src] || (loaded[src] = new Promise((ok, bad) => {
     const s = document.createElement('script');

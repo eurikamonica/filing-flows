@@ -29,8 +29,8 @@
     }).join('')}</svg>`;
   }
   async function render(el, ctx) {
-    const hub = (ctx && ctx.hub != null) ? ctx.hub : '';
-    const site = hub ? hub.replace(/disclosures\/?$/, '') : '../';      // the main site, from the app, a search page or the hub
+    const hub = (ctx && ctx.hub != null) ? ctx.hub : (globalThis.FF_HUB_ROOT||'');
+    const site = hub ? hub.replace(/disclosures\/?$/, '') : (globalThis.FF_SITE_ROOT??'../');      // the main site, from the app, a search page or the hub
     el.innerHTML = '<p class="muted">Loading the investments…</p>';
     let d = null;
     try { const r = await fetch(`${hub}data/research/investors/c/${parseInt(ctx.cik, 10)}.json`, { cache: 'no-cache' }); d = r.ok ? await r.json() : null; } catch (e) { d = null; }

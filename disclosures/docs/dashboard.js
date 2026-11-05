@@ -5,9 +5,9 @@ const inflight=new Map();
    published commit). Without that file — a local server, your own host — everything is read from data/. */
 let remoteCfg=null;
 function shardFetch(path){
- if(!remoteCfg)remoteCfg=fetch('data/remote.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
+ if(!remoteCfg)remoteCfg=fetch((globalThis.FF_HUB_ROOT||'')+'data/remote.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
  return remoteCfg.then(async c=>{
-  const base=c&&typeof c.base==='string'&&/^https:\/\//.test(c.base)&&(c.prefixes||[]).some(x=>path.startsWith(x))?c.base:'data/';
+  const base=c&&typeof c.base==='string'&&/^https:\/\//.test(c.base)&&(c.prefixes||[]).some(x=>path.startsWith(x))?c.base:(globalThis.FF_HUB_ROOT||'')+'data/';
   const liveBase=window.HUB_FAST_13F_BASE;
   if(liveBase&&path.startsWith('shards/holdings/')){
    try{const response=await fetch(liveBase+path,{cache:'no-store'});if(response.ok)return response}catch(e){/* use last published shard */}
@@ -36,7 +36,7 @@ function ensureCatalog(kind){
  if(!m.directory_shard||Array.isArray(m.directory))return true;
  const path=m.directory_shard;
  if(path!==`catalogs/${kind}.json`){m._catalogError='Invalid catalog path';return false}
- if(!inflight.has(path)&&!m._catalogError){inflight.set(path,fetch('data/'+path).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(rows=>{if(!Array.isArray(rows))throw Error('Invalid catalog');m.directory=rows;render()}).catch(e=>{m._catalogError=e.message;render()}).finally(()=>inflight.delete(path)))}
+ if(!inflight.has(path)&&!m._catalogError){inflight.set(path,fetch((globalThis.FF_HUB_ROOT||'')+'data/'+path).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(rows=>{if(!Array.isArray(rows))throw Error('Invalid catalog');m.directory=rows;render()}).catch(e=>{m._catalogError=e.message;render()}).finally(()=>inflight.delete(path)))}
  return false;
 }
 function coverageStrip(kind){

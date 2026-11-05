@@ -76,7 +76,7 @@
   const card = (label, value, cls = '', note = '') => `<div class="fv-card"><span>${esc(label)}</span><b class="${cls}">${value}</b>${note ? `<i>${note}</i>` : ''}</div>`;
 
   // ---------- the peer tiers and the peer explorer (app/peer_tiers.py, data/research/valuation/peers-list.json) ----------
-  let BASE = 'data/research/valuation/';
+  let BASE = (globalThis.FF_HUB_ROOT||'') + 'data/research/valuation/';
   const TIERS = [['plain', 'Broad (tier 1)'], ['weighted', 'Weighted'], ['matched', 'Matched (tier 2)'], ['selected', 'Selected (tier 3)'], ['adjusted', 'Fitted']];
   const MET = { pe: 'P/E', ev_ebitda: 'EV/EBITDA', ev_sales: 'EV/Sales' };
   const WIN = { tight: 'tight: same 3-digit SIC and stage, revenue ¼–4×, growth and margin ±10 pts', medium: 'medium: same 3-digit SIC, same side of break-even, 1/10–10×, ±15 pts',
@@ -739,7 +739,7 @@
   }
 
   async function render(el, ctx) {
-    const base = (ctx && ctx.hub != null ? ctx.hub : '') + 'data/research/valuation/';
+    const base = (ctx && ctx.hub != null ? ctx.hub : (globalThis.FF_HUB_ROOT||'')) + 'data/research/valuation/';
     BASE = base;
     el.innerHTML = '<p class="muted">Loading the valuation…</p>';
     let d;
