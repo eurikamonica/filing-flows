@@ -1943,14 +1943,17 @@
     if (V.actual && V.actual.recon && V.kind === 'rank') {     // a bar race of an index: which frames are reconstructed
       const rec = V.grid[k] < V.actual.reconTo;
       ctx.font = F(700, 22); ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = rec ? th.accent : th.muted;
-      ctx.fillText(rec ? reconTag(V) : 'REPORTED · ' + V.actual.fund + ' holdings', W - pad, bottom - (portrait ? 190 : 180) * S);
+      ctx.fillText(rec ? reconTag(V, k) : 'REPORTED · ' + V.actual.fund + ' holdings', W - pad, bottom - (portrait ? 190 : 180) * S);
     }
     brand(ctx, W, H, S, th, F, portrait);
     ctx.fillStyle = alpha(th.accent, 0.9); ctx.fillRect(0, H - 6 * S, W * clamp(t / tm.D, 0, 1), 6 * S);
     if (V.endCard && t > tm.D - tm.hold) endCard(ctx, V, W, H, S, th, F, pal, clamp((t - (tm.D - tm.hold)) / 0.6, 0, 1), portrait);
   }
   const quarterLabel = (ms) => { const d = new Date(ms); return 'Q' + (Math.floor(d.getUTCMonth() / 3) + 1) + ' ' + d.getUTCFullYear(); };
-  const reconTag = (V) => 'RECONSTRUCTED · members × ' + (V.actual.reconHow === 'price' ? 'share price' : 'market value');
+  const reconTag = (V, k) => {
+    const c = (V.actual.reconCov || [])[k], N = V.actual.reconSize;
+    return 'RECONSTRUCTED · members × ' + (V.actual.reconHow === 'price' ? 'share price' : 'market value') + (c ? ` · ${c}${N ? ' of ' + N : ''} on file` : '');
+  };
   function lines(ctx, text, maxW, font) { ctx.save(); ctx.font = font; let n = 1, line = ''; for (const w of String(text || '').split(' ')) { const tt = line ? line + ' ' + w : w; if (ctx.measureText(tt).width > maxW && line) { n++; line = w; } else line = tt; } ctx.restore(); return Math.min(n, 2); }
   function wrap(ctx, text, x, y, maxW, lh, max) {
     let line = '', n = 0; const words = String(text || '').split(' ');
@@ -2454,7 +2457,7 @@
       ctx.textAlign = 'left'; ctx.fillText('reported →', xr + 8 * S, b.y - 6 * S);
     } else if (rt != null && tCur < rt) {
       ctx.font = F(700, 17); ctx.textBaseline = 'bottom'; ctx.textAlign = 'left'; ctx.fillStyle = th.accent;
-      ctx.fillText(reconTag(V), b.x, b.y - 6 * S);
+      ctx.fillText(reconTag(V, Math.min(n - 1, Math.round(f))), b.x, b.y - 6 * S);
     }
     const lh = 30 * S, sorted = heads.filter((h) => fin(h.v) && h.v > (share ? 0.004 : 0)).sort((a, c) => a.y - c.y);
     sorted.forEach((h, i) => { h.ly = Math.max(h.y, i ? sorted[i - 1].ly + lh : b.y + lh / 2); });

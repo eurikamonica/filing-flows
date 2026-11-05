@@ -209,6 +209,8 @@
     if (recon.length) {
       const r0 = recon[0].date, r1 = recon[recon.length - 1].date, how = { price: 'share prices as traded (the Dow adds up its prices)', ndx: 'modified market values (the Nasdaq-100 caps its largest members; the caps here are an approximation)' }[R.how] || 'market values (every share outstanding; the index uses the shares that trade freely)';
       out.actual.reconTo = reported0 ? day(reported0) : Infinity; out.actual.recon = recon.length; out.actual.reconLast = day(r1); out.actual.reconHow = R.how;
+      // each frame's members on file (the video says how much of the index it stands on), aligned with out.grid
+      out.actual.reconCov = all.map((x, i) => (i < recon.length ? x.on_file : null)); out.actual.reconSize = R.history ? R.size || 0 : 0;
       out.notes.add(`${r0} to ${r1}: RECONSTRUCTED, not the fund's holdings — the ${ref[0]}'s members at each quarter-end weighted by their ${how}, as the Sector weights video computes them.` + (reported0 ? ` From ${reported0}: ${ticker}'s reported holdings (SEC N-PORT and the sponsor's files).` : ''));
       const lo = recon.reduce((a, x) => (x.on_file < a.on_file ? x : a), recon[0]), hi = recon.reduce((a, x) => (x.on_file > a.on_file ? x : a), recon[0]);
       if (R.history && R.histNote) out.notes.add(`${ref[0]} membership: ${R.histNote}.`);
@@ -286,6 +288,7 @@
         out.notes.add('No previous holdings were inferred, no weights were backfilled, and no percentage-point deltas were calculated.');
       } else {
         out.series.forEach(s=>{s.v=s.v.slice(1).map((v,i)=>v-s.v[i]);});
+        if (out.actual.reconCov) out.actual.reconCov = out.actual.reconCov.slice(1);
         out.order='abs'; out.grid=out.grid.slice(1); out.fmt=v=>(v>=0?'+':'')+(100*v).toFixed(2)+' pp';
         out.metric='Weight change vs previous disclosed snapshot';
         out.notes.add('Changes are percentage points, not trade size or proof of rebalancing. Use the date range to select the comparison periods.');

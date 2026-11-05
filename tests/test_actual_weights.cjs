@@ -60,6 +60,7 @@ assert.equal(A.snapshots(history,file,'2016-01-01','2016-12-31').length,0);
   assert.equal(rs.kind,'sectors');
   assert.equal(rs.actual.reconTo, Date.parse('2019-09-30T00:00:00Z'));
   assert.equal(rs.actual.recon, 2); assert.equal(rs.actual.reports, 2);
+  assert.deepEqual(rs.actual.reconCov, [3, 2, null, null]); assert.equal(rs.actual.reconSize, 0);   // no membership history: no "of 100"
   assert.equal(rs.series.find(s=>s.key==='technology').v[0], 1);
   assert(Math.abs(rs.series.find(s=>s.key==='technology').v[2]-.23)<1e-9);
   const rnotes = [...rs.notes].join(' ');

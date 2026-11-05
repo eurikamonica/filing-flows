@@ -153,7 +153,12 @@ class Nasdaq100(unittest.TestCase):
         self.assertEqual(doc['rows']['NEW']['was']['ndx'], [['2026-10-01', None]])    # in QQQ, in no list yet: from the last list
         self.assertIn('ndx', doc['history'])
         self.assertEqual(out['ndx_lists'], 2)
-        stale = IM.build(root, by, root / 'pub', cos, today=dt.date(2027, 12, 1), fetch=False)   # the lists stop short of today: none
+        later = IM.build(root, by, root / 'pub', cos, today=dt.date(2027, 12, 1), fetch=False)   # the lists reach the tracker's record
+        doc = json.loads((root / 'pub' / 'members.json').read_text())
+        self.assertIn('ndx', doc['history'])
+        cache['ndx']['rev'] = {'2003-01-01': 1, '2010-01-01': 2}                    # lists that stop years before it: none
+        (root / 'cache' / 'members' / 'wiki.json').write_text(json.dumps(cache))
+        IM.build(root, by, root / 'pub', cos, today=dt.date(2027, 12, 1), fetch=False)
         doc = json.loads((root / 'pub' / 'members.json').read_text())
         self.assertNotIn('ndx', doc['history'])
         self.assertNotIn('ndx', (doc['rows'].get('WMT') or {}).get('was', {}))

@@ -548,7 +548,13 @@ def build(root, by, pub, site_companies=None, today=None, fetch=True):
     hist = {'sp500': sp500_history(cache, cik_ticker, ticker_name), 'dji': dow_history(cache, name_ticker)}
     tick_of = symbol_map(cache, cik_ticker)
     nd_iv, nd_first, nd_last = ndx_history(cache, lambda x: NDX_ALIASES.get(x) or tick_of.get(x, x))
-    if nd_iv and nd_last and nd_last >= (today - dt.timedelta(days=200)).isoformat() and now.get('ndx'):
+    # the lists must reach the time this module's own record of QQQ begins (the article may stop carrying its list)
+    try:
+        nd_seen0 = min(v[0] for v in json.loads((root / 'cache' / 'members' / 'seen.json').read_text(encoding='utf-8')).get('ndx', {}).values())
+    except (OSError, ValueError):
+        nd_seen0 = today.isoformat()
+    nd_reach = (min(today, dt.date.fromisoformat(nd_seen0)) - dt.timedelta(days=200)).isoformat()
+    if nd_iv and nd_last and nd_last >= nd_reach and now.get('ndx'):
         for t, lst in nd_iv.items():                       # today's tracker closes it: gone from QQQ after the last list
             if t not in now['ndx']:
                 for x in lst:
