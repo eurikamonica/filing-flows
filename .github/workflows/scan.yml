@@ -600,6 +600,10 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # the site's ~114,000 pages: Pages' "syncing files" outlasted the default 10 minutes on Nov 5, 2026 (14:22 run:
+          # "Timeout reached, aborting!", the deployment cancelled and the site an hour behind)
+          timeout: 1800000
 
   # Your own server: rsync of the changed files, then one switch on the server (deploy-server.yml; does nothing
   # until the secrets DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS and DEPLOY_HOST exist).
