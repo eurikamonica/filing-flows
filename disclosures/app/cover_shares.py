@@ -35,7 +35,7 @@ UA_DEFAULT = 'Filing Flows research filingflows@gmail.com'
 # each count meets the next registrant's within 2.5× and 400 days before using it)
 PREDECESSORS = {'XOM': [34088], 'GOOGL': [1288776], 'ORCL': [777676], 'DIS': [29082, 1001039], 'AVGO': [1441634, 1649338],
                 'LIN': [884905], 'MDT': [64670], 'ETN': [31277], 'CI': [701221], 'CMCSA': [22301], 'MRVL': [1058057],
-                'ICE': [1174746], 'DUK': [30371], 'NOC': [72945], 'COP': [78214], 'BLK': [1364742], 'ACN': [1281761]}
+                'ICE': [1174746], 'DUK': [30371], 'NOC': [72945], 'COP': [78214], 'BLK': [1364742]}
 SINCE = '1993-01-01'
 UNTIL = '2011-12-31'                             # never after the company's first XBRL filing either
 PASSES = [('annual', ('10-K', '10-K405', '10-KSB', '10-KT', '10-K40', '10-KSB40')), ('quarterly', ('10-Q', '10-QSB', '10-QT'))]

@@ -162,6 +162,18 @@ class Predecessors(unittest.TestCase):
         self.assertEqual([x[0] for x in d][:3], ['2005-03-01', '2008-12-01', '2009-04-25'])
         self.assertEqual(R.PREDECESSORS['GOOGL'], [1288776])
 
+    def test_the_nearest_counts_on_todays_basis(self):
+        # Alphabet: weighted averages only from 2023 (after a 20-for-1 split), net income ÷ EPS from 2014; Google Inc's to 2014
+        sp = [['2022-07-18', 20.0]]
+        wavg = {'new': [('2023-06-30', 12.76e9)], 'old': [('2014-03-31', 684e6), ('2014-06-30', 686e6)]}
+        eps = {'new': [('2014-09-30', 690e6)]}
+        d, w, e, used = R.carried('new', ['old'], {}, wavg, eps, splits=sp)
+        self.assertEqual(used, [['old', 1.01]])
+        self.assertEqual([x[0] for x in w], ['2014-03-31', '2014-06-30', '2023-06-30'])
+        eps = {'new': [('2014-09-30', 13.8e9)]}                                       # a figure restated for the later split
+        self.assertEqual(R.carried('new', ['old'], {}, wavg, eps, splits=sp)[3], [['old', 1.01]])
+        self.assertEqual(R.carried('new', ['old'], {}, wavg, {'new': [('2016-09-30', 690e6)]}, splits=sp)[3], [['old', None]])   # years apart
+
 
 if __name__ == '__main__':
     unittest.main()

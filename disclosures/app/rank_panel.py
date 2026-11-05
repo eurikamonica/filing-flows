@@ -232,29 +232,34 @@ def with_cover(dei, root, cik):
     return sorted([(d, v) for d, v in old if d < cut] + dei)
 
 
-def carried(cik, chain, dei, wavg, eps_sh, root=None):
+def carried(cik, chain, dei, wavg, eps_sh, root=None, splits=None):
     """A company's share counts and, before them, those of the registrants it succeeded (chain, oldest first:
     cover_shares.PREDECESSORS — a new holding company, a redomicile, a merger into a new issuer), each registrant's only
-    where its last count meets the next one's first within 2.5× and 400 days (weighted averages where both have them:
-    they count every class). → (cover counts, weighted averages, net income ÷ EPS, [[cik, ratio or None], …])"""
+    where its last count meets the next one's first within 400 days and 2.5× on today's split basis (a later filing's
+    figure may already be on a later split's basis). Of the counts of each kind — the cover page's, the weighted
+    average (or net income ÷ EPS) — the two nearest in time are compared.
+    → (cover counts, weighted averages, net income ÷ EPS, [[cik, ratio or None], …])"""
+    day = dt.date.fromisoformat
     d = with_cover(dei.get(cik), root, cik)
     w, e = sorted(wavg.get(cik) or []), sorted(eps_sh.get(cik) or [])
     used = []
     for p in reversed(chain):
         dp = with_cover(dei.get(p), root, p)
-        wp = sorted(wavg.get(p) or []) or sorted(eps_sh.get(p) or [])
+        wp = sorted((wavg.get(p) or []) + (eps_sh.get(p) or []))
         first = min([x[0] for x in d[:1] + w[:1] + e[:1]], default=None)
         if not first:
             break
-        wa_p, cov_p, wa_s = [x for x in wp if x[0] < first][-1:], [x for x in dp if x[0] < first][-1:], (w or e)[:1]
-        pair = next(((x, y) for x, y in ((wa_p, wa_s), (cov_p, d[:1]), (wa_p, d[:1]), (cov_p, wa_s)) if x and y), None)
-        if not pair:
-            used.append([p, None])
-            break
-        (a,), (b,) = pair
-        ratio = b[1] / a[1] if a[1] else 0
-        if (dt.date.fromisoformat(b[0]) - dt.date.fromisoformat(a[0])).days > 400 or not 0.4 <= ratio <= 2.5:
-            used.append([p, None])                     # not the same company's count: the chain stops here
+        a_c = [lst[-1] for lst in ([x for x in dp if x[0] < first], [x for x in wp if x[0] < first]) if lst]
+        b_c = [lst[0] for lst in (d, sorted(w + e)) if lst]
+        pairs = sorted(((day(b[0]) - day(a[0])).days, a, b) for a in a_c for b in b_c)
+        ratio = None
+        if pairs and pairs[0][0] <= 400:
+            _, a, b = pairs[0]
+            at = a[1] * split_factor(splits, a[0])
+            fits = [x / at for x in (b[1] * split_factor(splits, b[0]) / k for k in restated_bases(splits, b[0], within=40000)) if at and 0.4 <= x / at <= 2.5]
+            ratio = fits[0] if fits else None
+        if ratio is None:
+            used.append([p, None])                     # not the same company's count (or none near): the chain stops
             break
         d = [x for x in dp if x[0] < first] + d
         w = [x for x in sorted(wavg.get(p) or []) if x[0] < first] + w
@@ -384,7 +389,7 @@ def build(out_dir, companies, docs, frames_root=None, today=None, names=None, na
         ev = doc.get('ev')
         n_now = caps[t][0] / caps[t][1] if t in caps else None
         chain = [str(int(p)) for p in PREDECESSORS.get(t, ()) if str(int(p)) != cik]
-        d_, w_, e_, used = carried(cik, chain, dei, wavg, eps_sh, frames_root) if cik else ([], [], [], [])
+        d_, w_, e_, used = carried(cik, chain, dei, wavg, eps_sh, frames_root, (ev or {}).get('split')) if cik else ([], [], [], [])
         if used:
             stats.setdefault('predecessors', []).append([t] + used)
         sh = share_history(d_, w_, (ev or {}).get('split'), e_, now=n_now) if cik else []
