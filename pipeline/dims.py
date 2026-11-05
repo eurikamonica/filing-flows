@@ -234,10 +234,32 @@ def period_value(facts_, end, annual=False):
 
 
 def humanize(qname):
+    """A member's name in words: "IPhoneMember" → "IPhone", and a filer's own prefix glued to it gone
+    ("Clr_oilsalesMember" → "Oil sales", "Clr_naturalGasAndNGLSalesMember" → "Natural Gas And NGL Sales")."""
     name = qname.split(":")[-1]
     name = re.sub(r"Member$", "", name)
+    name = re.sub(r"^[A-Za-z][a-z]{1,5}_(?=[a-z])", "", name)                  # Continental's "Clr_oilsales"
+    name = re.sub(r"(?<=[a-z]{3})(sales|revenues?)$", r" \1", name)           # "oilsales" → "oil sales"
     name = re.sub(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", " ", name)
-    return name.strip()
+    name = name.replace("_", " ").strip()
+    return name[:1].upper() + name[1:]
+
+
+# a revenue line named after the cost or the expense of the same activity — the filer tagged its revenue with a member
+# it named for its cost table (Solventum: "Cost of software and rentals" is the line of software and rental sales;
+# Dyadic: "Research and Development Expenses" its research revenue). "Cost reimbursements" is revenue as it stands.
+COST_OF = re.compile(r"^costs? of (the )?(?=\w)", re.I)
+RD_EXPENSES = re.compile(r"^(research and development)\s+expenses?$", re.I)
+
+
+def revenue_name(label):
+    """The name of a revenue line as the revenue it is."""
+    t = str(label or "").strip()
+    if COST_OF.search(t):
+        t = COST_OF.sub("", t)
+        t = t[:1].upper() + t[1:]
+    t = RD_EXPENSES.sub(lambda m: m.group(1), t)
+    return _words(t)
 
 
 def parse_instance(xml_text, labels=None):
@@ -273,7 +295,7 @@ def parse_instance(xml_text, labels=None):
             continue
         axis, member = dims[0][0].split(":")[-1], dims[0][1]
         elid = member.replace(":", "_")
-        label = (labels or {}).get(elid) or humanize(member)
+        label = revenue_name((labels or {}).get(elid) or humanize(member))
         out.append((axis, member, label, start, end, val))
     return out
 

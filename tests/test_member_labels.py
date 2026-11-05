@@ -72,3 +72,36 @@ def test_stored_names_are_read_again_once(tmp_path, monkeypatch):
     assert store.state["labels_v"] == build.LINE_LABEL_VERSION       # done: the pass no longer runs
     build.refresh_labels(store)
     assert asked == [1327811]
+
+
+def test_a_revenue_line_named_for_its_cost_or_a_raw_tag():
+    """Solventum tags its software and rental sales with a member it named for the cost table, Dyadic its research
+    revenue with "Research and Development Expenses", Continental Resources' members have no label at all."""
+    assert dims.revenue_name("Cost of software and rentals") == "Software and rentals"
+    assert dims.revenue_name("Research and Development Expenses") == "Research and Development"
+    assert dims.revenue_name("Cost reimbursements") == "Cost reimbursements"            # revenue as it stands
+    assert dims.revenue_name("Reimbursable expenses") == "Reimbursable expenses"
+    assert dims.humanize("ck0000732834:Clr_oilsalesMember") == "Oil sales"
+    assert dims.revenue_name(dims.humanize("ck0000732834:Clr_naturalGasAndNGLSalesMember")) == "Natural Gas and NGL Sales"
+    assert dims.humanize("x:Five_GMember") == "Five G"                                 # not a prefix: kept
+    assert dims.humanize("nn:CommercialServicesMember") == "Commercial Services"
+
+
+def test_stored_cost_and_tag_names_are_read_again(tmp_path, monkeypatch):
+    store = build.Store(str(tmp_path))
+    ls = {"axis": "ProductOrServiceAxis", "groups": [],
+          "leaves": [{"id": "us-gaap:ProductMember", "label": "Product"},
+                     {"id": "solv:CostOfSoftwareAndRentalsMember", "label": "Cost of software and rentals"}]}
+    store.put(1964738, {"profile": {"name": "Solventum"}, "lab_v": 1, "quarters": {"2026-06-30": {
+        "end": "2026-06-30", "form": "10-Q", "accn": "0001964738-26-000050", "lines_struct": ls, "notes": {}}}})
+    ls2 = {"axis": "ProductOrServiceAxis", "groups": [],
+           "leaves": [{"id": "ck0000732834:Clr_oilsalesMember", "label": "Clr_oilsales"},
+                      {"id": "ck0000732834:Clr_naturalGasAndNGLSalesMember", "label": "Clr_natural Gas and NGL Sales"}]}
+    store.put(732834, {"profile": {"name": "Continental Resources"}, "lab_v": 1, "quarters": {"2026-09-30": {
+        "end": "2026-09-30", "form": "10-Q", "accn": "0000732834-26-000040", "lines_struct": ls2, "notes": {}}}})
+    monkeypatch.setattr(build.dims, "find_files", lambda cik, accn: ("inst", "lab"))
+    monkeypatch.setattr(build.sec, "get", lambda url: _linkbase([("solv_CostOfSoftwareAndRentalsMember", [("label", "Cost of software and rentals")])]))
+    monkeypatch.setattr(build, "time_up", lambda *a, **k: False)
+    build.refresh_labels(store)
+    assert [x["label"] for x in store.company(1964738)["quarters"]["2026-06-30"]["lines_struct"]["leaves"]] == ["Product", "Software and rentals"]
+    assert [x["label"] for x in store.company(732834)["quarters"]["2026-09-30"]["lines_struct"]["leaves"]] == ["Oil sales", "Natural Gas and NGL Sales"]

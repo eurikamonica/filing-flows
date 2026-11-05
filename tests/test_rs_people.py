@@ -85,7 +85,10 @@ def test_seo_people_pages(tmp_path):
     (out / "robots.txt").write_text("User-agent: *\nAllow: /\nSitemap: https://x.test/sitemap.xml\n")
     assert seo_people.write_pages(str(tmp_path / "research" / "people"), str(out), "https://x.test/") == (1, 1)
     m = (out / "m" / "berkshire-hathaway-1067983" / "index.html").read_text()
-    assert "<title>Berkshire Hathaway 13F portfolio" in m and '"@type": "Organization"' in m and "+61.2%" in m and "<svg" in m
+    assert "<title>Berkshire Hathaway 13F Portfolio Q" in m and '"@type": "Organization"' in m and "+61.2%" in m and "<svg" in m
+    # a fund known by its investor leads with the name people search, and every title carries the 13F's quarter
+    import seo_people as SP
+    assert SP.person_of("1649339") == "Michael Burry" and SP.person_of("1067983") is None and SP.quarter_of("2026-09-30") == "Q3 2026"
     o = (out / "o" / "jane-roe" / "index.html").read_text()
     assert "Armed Services" in o and "not a finding of wrongdoing" in o and 'rel="canonical" href="https://x.test/o/jane-roe/"' in o
     sm = (out / "sitemap-people.xml").read_text()

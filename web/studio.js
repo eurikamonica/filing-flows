@@ -682,6 +682,18 @@
       const base = need.find((f) => f.startsWith('q-')), cnt = (q) => F[base].reduce((a, row) => a + (fin(at(row, q)) ? 1 : 0), 0);
       while (months.length > 2) { const q = qks[months.length - 1]; if (q < 1 || cnt(q) >= 0.8 * cnt(q - 1)) break; months.pop(); qks.pop(); }
     }
+    // the newest steps, before the data is in. Dollar volume: a month (a quarter) still running is not a month of trading.
+    // Every measure: each price history is refreshed every few days, so in the first days of a month only the companies
+    // refreshed since it began have a close in it — a leaderboard of those alone would crown whoever came first.
+    const asOf = Date.parse(meta.generated_at || '') || Date.now(), left = [];
+    if (key === 'dv' && step !== 'w') while (months.length > 2 && mEnd(months[months.length - 1], m0) + DAY > asOf) { left.push([months.pop(), 'running']); qks.pop(); }
+    const count = (j) => { let n = 0; for (let ci = 0; ci < NC; ci++) if (U.ok(ci, months[j]) && fin(val(ci, months[j], qks[j]))) n++; return n; };
+    while (months.length > 2) {
+      const L = months.length - 1, n = count(L), ref = Math.max(count(L - 1), L > 1 ? count(L - 2) : 0);
+      if (n >= 0.8 * ref) break;
+      left.push([months.pop(), `only ${n.toLocaleString('en-US')} of ${ref.toLocaleString('en-US')} companies have a close in it yet`]); qks.pop();
+    }
+    if (step !== 'w') left.reverse().forEach(([mi, why]) => out.notes.add(`${step === 'q' ? quarterLabel(mEnd(mi, m0)) : monthYear(mEnd(mi, m0))} is left out: ${why === 'running' ? `the ${step === 'q' ? 'quarter' : 'month'} is not over yet` : why + ' (the price histories are refreshed every few days)'}.`));
     const sorter = (a, b) => (desc ? b[1] - a[1] : a[1] - b[1]);
     const pick = new Set(), extra = step === 'w' ? 6 : 0;
     months.forEach((mi, j) => {
@@ -695,25 +707,31 @@
       const G = weeklyGrid(iso(mEnd(i0 - 1, m0) + DAY), iso(Math.min(toMs, mEnd(i1, m0))));
       const TH = new Map();
       await Promise.all([...pick].map(async (ci) => { const th = await json(HUB + 'market/history/t/' + tick(ci) + '.json'); if (th && th.c) TH.set(ci, th); }));
+      // a week's trading is all in once the history was fetched after that Friday's close (asof: when it was fetched;
+      // files without it: every week but the last on file)
+      const over = (th, i, g) => (th.asof ? Date.parse(th.asof) >= g + 22 * 3600e3 : i < th.c.length - 1);
       const wv = (ci, g) => {
         const th = TH.get(ci); if (!th) return null;
         const s0 = Date.parse(th.start + 'T00:00:00Z'), i = Math.round((g - s0) / WEEK), A = th.c, Pp = th.p && th.p.length ? th.p : th.c;
         if (i < 0 || i >= A.length || !fin(A[i])) return null;
         if (key === 'ret') { const w = win === 'ytd' ? Math.round((g - Date.UTC(new Date(g).getUTCFullYear() - 1, 11, 31)) / WEEK) : Math.round(win * 52 / 12); return i - w >= 0 && fin(A[i - w]) && A[i - w] > 0 ? A[i] / A[i - w] - 1 : null; }
-        if (key === 'dv') return fin(th.v && th.v[i]) && fin(Pp[i]) ? th.v[i] * 1000 * Pp[i] : null;
+        if (key === 'dv') return over(th, i, g) && fin(th.v && th.v[i]) && fin(Pp[i]) ? th.v[i] * 1000 * Pp[i] : null;
         const mi = mIndex(g, m0) - 1, c = at(F['m-cap'][ci], mi), j = Math.floor((mEnd(mi, m0) - s0) / WEEK);
         return fin(c) && j >= 0 && fin(Pp[j]) && fin(Pp[i]) ? c * 1e6 * Pp[i] / Pp[j] : null;
       };
       out.series = [...pick].map((ci) => ({ key: tick(ci), label: tick(ci), name: meta.cos[ci][1], sec: meta.cos[ci][2], v: G.map((g) => (U.ok(ci, mIndex(g, m0) - 1) ? wv(ci, g) : null)) }));
-      let end = G.length;                                 // the newest weeks, before most of the candidates have a close
-      while (end > 2 && out.series.filter((x) => fin(x.v[end - 1])).length < Math.min(N, out.series.length) * 0.8) end--;
+      // the newest weeks, before most of the candidates have one (a history refreshed a few days ago ends a week earlier)
+      const cnt = G.map((_, j) => out.series.reduce((a, x) => a + (fin(x.v[j]) ? 1 : 0), 0));
+      let end = G.length;
+      while (end > 2 && cnt[end - 1] < Math.max(0.8 * Math.max(...cnt.slice(Math.max(0, end - 13), end - 1)), Math.min(N, out.series.length) * 0.8)) end--;
+      if (end < G.length) out.notes.add(`The last ${G.length - end === 1 ? 'week is' : (G.length - end) + ' weeks are'} left out: most of the companies' histories do not reach ${G.length - end === 1 ? 'it' : 'them'} yet${key === 'dv' ? ', or the week was not over when they were fetched' : ''} (they are refreshed every few days).`);
       out.grid = G.slice(0, end); out.series.forEach((x) => { x.v = x.v.slice(0, end); });
     } else {
       out.grid = months.map((mi) => mEnd(mi, m0));
       out.quarterly = step === 'q';
       out.series = [...pick].map((ci) => ({ key: tick(ci), label: tick(ci), name: meta.cos[ci][1], sec: meta.cos[ci][2], v: months.map((mi, j) => (U.ok(ci, mi) ? val(ci, mi, qks[j]) : null)) }));
     }
-    out.kind = 'rank'; out.rankN = N; out.order = desc ? 'desc' : 'asc'; out.fmt = fmtFor(unit); out.unit = unit === '$' ? '$' : '%'; out.metric = mname;
+    out.kind = 'rank'; out.rankN = N; out.weekly = step === 'w'; out.order = desc ? 'desc' : 'asc'; out.fmt = fmtFor(unit); out.unit = unit === '$' ? '$' : '%'; out.metric = mname;
     const lowest = !desc, sc = U.scope ? ' · ' + U.scope : '';
     const TT = { cap: lowest ? `The ${N} smallest companies by market value` : `The ${N} most valuable companies`, rev: `The ${N} ${lowest ? 'smallest' : 'biggest'} companies by revenue`,
       gp: `The ${N} ${lowest ? 'lowest' : 'biggest'} gross profits`, oi: `The ${N} ${lowest ? 'lowest' : 'biggest'} operating profits`, ni: `The ${N} ${lowest ? 'biggest losses' : 'biggest earners'}`,
@@ -722,7 +740,7 @@
       dv: `The ${N} most traded stocks`, ret: `The ${N} ${lowest ? 'worst' : 'best'} stocks: ${win === 'ytd' ? 'year to date' : win + '-month total return'}` };
     out.title = out.title || TT[key] + sc;
     const G = out.grid, L = G.length - 1;
-    out.sub = out.sub || `${out.quarterly ? quarterLabel(G[0]) : monthYear(G[0])} → ${out.quarterly ? quarterLabel(G[L]) : monthYear(G[L])} · ${mname}` + (fundamental ? ' · SEC filings' : ' · weekly closes') + ' · US-listed companies on the site';
+    out.sub = out.sub || `${out.quarterly ? quarterLabel(G[0]) : monthYear(G[0])} → ${out.quarterly ? quarterLabel(G[L]) : monthYear(G[L])} · ${mname}` + (fundamental ? ' · SEC filings' : key === 'dv' ? ' · weekly volume × close' : ' · weekly closes') + ' · US-listed companies on the site';
     out.foot = "Today's companies only: those delisted, merged or bankrupt are missing from earlier years";
     out.notes.add(out.foot + '.');
     if (fundamental && step !== 'q') out.notes.add('A quarter\'s figures count from 46 days after it ended, when they were public.');
@@ -797,7 +815,7 @@
     if (capF && st.capby !== 'now') F['m-cap'] = await panel('m-cap');
     if (!Array.isArray(F['m-px'])) throw new Error('A leaderboard file is missing (m-px)');
     const MB = st.idx ? await members() : null;
-    const U = universe(st, meta, F, MB), lastM = meta.months.n - 1;
+    const U = universe(st, meta, F, MB), lastM = lastReached(F['m-px'], meta.months.n - 1, out.notes, m0);
     const y0 = Math.max(m0.y + 1, st.from ? +st.from.slice(0, 4) : 2001), now = new Date(mEnd(lastM, m0)), y1 = Math.min(now.getUTCFullYear(), st.to ? +st.to.slice(0, 4) : 9999);
     const spyP = await price('SPY'), spy = spyP && (spyP.long || (spyP.px && { t: spyP.px.t, v: spyP.px.a }));
     const yrs = [];
@@ -833,8 +851,18 @@
     for (const f of Object.keys(F)) if (!Array.isArray(F[f])) throw new Error('A leaderboard file is missing (' + f + ')');
     return F;
   }
-  function monthRange(st, meta, defFrom) {
-    const m0 = meta._m0, lastM = meta.months.n - 1;
+  // the newest month most companies have reached: each price history is refreshed every few days, so in the first days of
+  // a month only those refreshed since it began have a close in it (a map or a mix of those alone would be no picture)
+  function lastReached(rows, last, notes, m0) {
+    if (!Array.isArray(rows)) return last;
+    const n = (i) => { let c = 0; for (const r of rows) if (fin(at(r, i))) c++; return c; };
+    const full = last;
+    while (last > 2 && n(last) < 0.8 * Math.max(n(last - 1), n(last - 2))) last--;
+    if (notes && last < full) notes.add(`${monthYear(mEnd(last + 1, m0))} ${full > last + 1 ? 'and after are' : 'is'} left out: only ${n(last + 1).toLocaleString('en-US')} of ${n(last).toLocaleString('en-US')} companies have a close in it yet (the price histories are refreshed every few days).`);
+    return last;
+  }
+  function monthRange(st, meta, defFrom, rows, notes) {
+    const m0 = meta._m0, lastM = lastReached(rows, meta.months.n - 1, notes, m0);
     const fromMs = st.from ? Date.parse(st.from + 'T00:00:00Z') : defFrom, toMs = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now();
     const i0 = clamp(mIndex(fromMs, m0), 13, lastM), i1 = clamp(mIndex(toMs, m0), i0, lastM), out = [];
     for (let i = i0; i <= i1; i++) out.push(i);
@@ -856,7 +884,7 @@
     const kx = RANK[st.bx] ? st.bx : 'growth', ky = RANK[st.by] ? st.by : 'ret', ks = BUB_SIZE[st.bs] ? st.bs : 'cap';
     const F = await panelFiles([...RANK[kx][2], ...RANK[ky][2], ...RANK[ks][2], 'm-cap']);
     const MB = st.idx ? await members() : null, U = universe(st, meta, F, MB);
-    const months = monthRange(st, meta, Date.UTC(2012, 0, 31)), qFor = qForOf(Q, m0, 'm'), qks = months.map(qFor);
+    const months = monthRange(st, meta, Date.UTC(2012, 0, 31), F['m-cap'], out.notes), qFor = qForOf(Q, m0, 'm'), qks = months.map(qFor);
     const o = { m0, step: 'm', minrev: Math.max(0, +st.minrev || 0) * 1e3, win: st.win === 'ytd' ? 'ytd' : Math.max(1, Math.round(+st.win || 12)) };
     const mx = makeMeasure(kx, F, o), my = makeMeasure(ky, F, o), ms = makeMeasure(ks, F, o), cap = makeMeasure('cap', F, o);
     const typed = tickers({ t: st.bt }), N = clamp(Math.round(+st.bn || 25), 5, 80), L = months.length - 1;
@@ -888,7 +916,7 @@
   async function buildTreemap(st, out) {
     const meta = await rankMeta(), m0 = meta._m0;
     const F = await panelFiles(['m-cap', 'm-px']), MB = st.idx ? await members() : null, U = universe(st, meta, F, MB);
-    const months = monthRange(st, meta, Date.UTC(2012, 0, 31)), N = clamp(Math.round(+st.tn || 50), 10, 150);
+    const months = monthRange(st, meta, Date.UTC(2012, 0, 31), F['m-cap'], out.notes), N = clamp(Math.round(+st.tn || 50), 10, 150);
     const top = months.map((mi) => {
       const list = [];
       for (let ci = 0; ci < meta.cos.length; ci++) if (U.ok(ci, mi)) { const v = at(F['m-cap'][ci], mi); if (fin(v) && v > 0) list.push([ci, v]); }
@@ -938,7 +966,7 @@
     const meta = await rankMeta(), m0 = meta._m0;
     if (st.sw === 'fund') return buildFundSectors(st, out, meta);
     const F = await panelFiles(['m-cap']), MB = st.idx ? await members() : null, U = universe(Object.assign({}, st, { sec: '' }), meta, F, MB);
-    const months = monthRange(st, meta, Date.UTC(2012, 0, 31));
+    const months = monthRange(st, meta, Date.UTC(2012, 0, 31), F['m-cap'], out.notes);
     const how = U.ix && st.sw !== 'cap' ? IDX_W[U.ix] || 'cap' : 'cap';
     let share = st.sa !== 'abs';
     if (!share && how === 'price') { share = true; out.notes.add('A price-weighted index has no dollar size to show: shares of the index instead'); }
@@ -989,7 +1017,7 @@
     const m0 = meta._m0, sym = norm(st.sf || 'DIA'), e = await json(HUB + 'etf/e/' + sym + '.json');
     const h = e && e.holdings, top = (h && h.top) || [];
     if (!top.length) throw new Error(`No holdings on file for ${sym || 'that fund'} — try an ETF ticker such as DIA, QQQ, XLK or SCHD`);
-    const F = await panelFiles(['m-px']), months = monthRange(st, meta, Date.UTC(2012, 0, 31)), lastM = meta.months.n - 1;
+    const F = await panelFiles(['m-px']), months = monthRange(st, meta, Date.UTC(2012, 0, 31), F['m-px'], out.notes), lastM = lastReached(F['m-px'], meta.months.n - 1);
     // holdings without a ticker (iShares reports CUSIPs only) are matched by name
     const nameKey = (n) => String(n || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\b(the|inc|corp|corporation|co|company|class [a-z]|ltd|plc|holdings?|group)\b/g, ' ').replace(/\s+/g, ' ').trim();
     const byT = new Map(meta.cos.map((c, i) => [c[0], i])), byN = new Map();
@@ -2142,17 +2170,26 @@
       const a = r0.has(k) ? r0.get(k) : N + 1.5, c = r1.has(k) ? r1.get(k) : N + 1.5, r = lerp(a, c, e);
       if (r > N + 0.6) return;
       let v = valAt(s.v, f); if (!fin(v)) v = fin(s.v[i1]) ? s.v[i1] : s.v[i0];
-      if (fin(v)) rows.push({ s, k, r, v, rank: (e < 0.5 ? a : c) + 1 });
+      if (fin(v)) rows.push({ s, k, r, v, c });
     });
+    // two bars passing each other: the one that ends lower lets its words fade while they overlap (no two tickers or values
+    // printed over each other), back in full once a bar's height apart
+    rows.forEach((p) => { let d = 9; rows.forEach((q) => { if (q !== p && q.c < p.c) d = Math.min(d, Math.abs(q.r - p.r)); }); p.ink = clamp((d - 0.3) / 0.45, 0, 1); });
+    // the places, 1 to N (as many as there are companies), stay where they are; the bars move through them
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'right'; ctx.font = F(600, Math.min(24, bh / S * 0.42)); ctx.fillStyle = th.muted;
+    for (let i = 0; i < Math.min(N, Math.max(r0.size, r1.size)); i++) ctx.fillText(String(i + 1), b.x + 40 * S, b.y + i * slot + slot / 2);
     ctx.save(); ctx.beginPath(); ctx.rect(b.x - 20 * S, b.y - 6 * S, b.w + 40 * S, area + 6 * S); ctx.clip();
-    rows.sort((p, q) => q.r - p.r).forEach(({ s, r, v, rank }) => {
+    // drawn from the bottom of the table up, and the bar whose words show on top of the one it passes
+    rows.sort((p, q) => q.c - p.c || q.r - p.r).forEach(({ s, r, v, ink }) => {
       const y = b.y + r * slot + (slot - bh) / 2, w = Math.max(6 * S, Math.min(1.08, Math.abs(v) / vmax) * room), col = secCol(th, s.sec);
-      ctx.globalAlpha = clamp(N - r + 0.15, 0, 1);
+      const op = clamp(N - r + 0.15, 0, 1);
+      ctx.globalAlpha = op;
       const gr = ctx.createLinearGradient(x0, 0, x0 + w, 0); gr.addColorStop(0, alpha(col, 0.72)); gr.addColorStop(1, col);
       ctx.fillStyle = v < 0 ? alpha('#ff6b6b', 0.85) : gr; if (th.glow) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * 0.7 * S; }
       roundRect(ctx, x0, y, w, bh, Math.min(12 * S, bh / 3)); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.globalAlpha = op * ink;
+      if (ink <= 0) return;
       ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
-      ctx.font = F(600, Math.min(24, bh / S * 0.42)); ctx.fillStyle = th.muted; ctx.fillText(rank > N ? '' : String(Math.round(rank)), b.x + 40 * S, y + bh / 2);
       ctx.font = F(700, Math.min(30, bh / S * 0.5)); ctx.fillStyle = th.text; ctx.fillText(s.label, x0 - 16 * S, y + bh / 2);
       const nm = String(s.name || '').replace(/\s*\/[A-Z]{2,3}\/?$/, '').replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO|HOLDINGS|GROUP)\.?$/i, '').replace(/[\s,&/]+$/, '');
       ctx.textAlign = 'left'; ctx.font = F(700, Math.min(28, bh / S * 0.46)); ctx.fillStyle = th.text;
@@ -2580,15 +2617,17 @@
   // The dedicated snowball card keeps all three requested metrics visible.
   function endCard(ctx, V, W, H, S, th, F, pal, a, portrait) {
     const snow = V.kind === 'snowball' && Array.isArray(V.snowballSummary) && V.snowballSummary.length;
-    const rows = snow ? V.snowballSummary : V.final.slice(0, portrait ? 10 : V.kind === 'rank' ? 8 : 6);
+    // a leaderboard lists every place its title counts (the top 10: ten rows), in two columns when one would be too tight
+    const rows = snow ? V.snowballSummary : V.final.slice(0, V.kind === 'rank' ? Math.max(V.rankN || 0, portrait ? 10 : 8) : portrait ? 10 : 6);
     const pad = 34 * S, capW = (portrait ? 920 : 1100) * S;
     const w = Math.min(W - 64 * S, capW);
     const availableH = H - 72 * S, headerH = snow ? 164 * S : 145 * S;
     const subOf = (r) => (r.sub && !(r.subTr && V.dinc === 'off') ? r.sub : ''), hasSub = !snow && rows.some(subOf);
+    const cols = !snow && !hasSub && rows.length * 54 * S > availableH - headerH - 32 * S ? 2 : 1, per = Math.ceil(rows.length / cols);
     const rh = Math.max(38 * S, Math.min(snow ? 126 * S : hasSub ? 98 * S : 78 * S,
-      (availableH - headerH - 32 * S) / Math.max(1, rows.length)));
+      (availableH - headerH - 32 * S) / Math.max(1, per)));
     const two = hasSub && rh >= 72 * S;
-    const h = Math.min(availableH, headerH + rows.length * rh + 24 * S);
+    const h = Math.min(availableH, headerH + per * rh + 24 * S);
     const x = (W - w) / 2, y = (H - h) / 2 + (1 - a) * 36 * S;
     ctx.fillStyle = 'rgba(0,0,0,' + (0.45 * a) + ')'; ctx.fillRect(0, 0, W, H);
     ctx.save();
@@ -2620,18 +2659,19 @@
         ctx.fillText(r.monthlyNote, x + pad + cw, yy + 92 * S, cw - 9 * S);
       });
     } else {
-      const usable = w - 2 * pad;
+      const cw = w / cols, usable = cw - 2 * pad;
+      if (cols > 1) { ctx.strokeStyle = alpha(th.muted, .25); ctx.lineWidth = 1.5 * S; ctx.beginPath(); ctx.moveTo(x + cw, y + headerH); ctx.lineTo(x + cw, y + headerH + per * rh); ctx.stroke(); }
       rows.forEach((r, i) => {
-        const yy = y + headerH + i * rh + rh * (two ? .46 : .60);
+        const cx = x + Math.floor(i / per) * cw, yy = y + headerH + (i % per) * rh + rh * (two ? .46 : .60);
         const change = String(r.change || '');
         const changeW = change ? Math.min(usable * .25, 186 * S) : 0;
         const valueW = Math.min(usable * .30, 235 * S);
         const labelW = Math.max(70 * S, usable - valueW - changeW - 22 * S);
-        const right = x + w - pad;
+        const right = cx + cw - pad;
         ctx.fillStyle = r.role ? roleCol(th, r.role) : r.sec ? secCol(th, r.sec) : pal(r.k || 0);
-        ctx.beginPath(); ctx.arc(x + pad + 8 * S, yy - 8 * S, 7 * S, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + pad + 8 * S, yy - 8 * S, 7 * S, 0, Math.PI * 2); ctx.fill();
         ctx.font = F(700, 27); ctx.fillStyle = th.text; ctx.textAlign = 'left';
-        ctx.fillText(String(r.label || ''), x + pad + 22 * S, yy, labelW - 18 * S);
+        ctx.fillText(String(r.label || ''), cx + pad + 22 * S, yy, labelW - 18 * S);
         ctx.textAlign = 'right';
         ctx.fillText(String(r.value || ''), right - changeW - (changeW ? 10 * S : 0), yy, valueW);
         if (change) {
@@ -2639,7 +2679,7 @@
           ctx.fillText(change, right, yy, changeW);
         }
         const sub = two ? subOf(r) : '';
-        if (sub) { ctx.font = F(500, 19); ctx.fillStyle = th.muted; ctx.textAlign = 'left'; ctx.fillText(sub, x + pad + 22 * S, yy + 31 * S, usable - 22 * S); }
+        if (sub) { ctx.font = F(500, 19); ctx.fillStyle = th.muted; ctx.textAlign = 'left'; ctx.fillText(sub, cx + pad + 22 * S, yy + 31 * S, usable - 22 * S); }
       });
     }
     ctx.restore();
@@ -2651,9 +2691,10 @@
     if (V.kind === 'rank') {
       const ord = V.series.map((s, k) => ({ k, v: s.v[L] })).filter((x) => fin(x.v)).sort((a, c) => (V.order === 'abs' ? Math.abs(c.v) - Math.abs(a.v) : V.order === 'asc' ? a.v - c.v : c.v - a.v)).slice(0, V.rankN);
       V.final = ord.map((x, i) => ({ k: x.k, label: `${i + 1}. ${V.series[x.k].label}`, value: V.fmt(x.v), change: '', v: x.v, sec: V.series[x.k].sec }));
-      V.endTitle = V.actual ? `${V.metric} · ${dayLabel(G[L])}` : `${V.metric} · ${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}`;
+      const when = V.actual ? dayLabel(G[L]) : V.weekly ? 'week to ' + dayLabel(G[L]) : V.quarterly ? quarterLabel(G[L]) : monthYear(G[L]);
+      V.endTitle = `${V.metric} · ${when}`;
       V.endSub = V.title;
-      V.caption = `${V.title} (${V.actual ? dayLabel(G[L]) : V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}): ` + V.final.map((r) => `${r.label} ${r.value}`).join(' · ');
+      V.caption = `${V.title} (${when}): ` + V.final.map((r) => `${r.label} ${r.value}`).join(' · ');
       return;
     }
     if (V.kind === 'bubble') {
@@ -3200,7 +3241,7 @@
     s.textContent = `.st-wrap{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:22px;align-items:start}.st-main{min-width:0}@media(max-width:900px){.st-wrap{grid-template-columns:1fr}.st-main{order:-1}}
 .st-side{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface)}.st-side h3{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .st-side h3:first-child{margin-top:2px}.st-side label{display:block;font-size:12.5px;color:var(--muted);margin:8px 0 3px}.st-side .input,.st-side select,.st-side textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
-.st-side textarea{min-height:84px;font-family:var(--mono);font-size:13px}.st-row{display:flex;gap:8px}.st-row>*{flex:1}.st-pills{display:flex;flex-wrap:wrap;gap:6px}.st-pills .pill{font-size:12.5px;padding:5px 10px}
+.st-side textarea{min-height:84px;font-family:var(--mono);font-size:13px}.st-range{line-height:1.55;margin-top:6px}.st-range .pill{font-size:12px;padding:2px 8px;margin-left:4px}.st-row{display:flex;gap:8px}.st-row>*{flex:1}.st-pills{display:flex;flex-wrap:wrap;gap:6px}.st-pills .pill{font-size:12.5px;padding:5px 10px}
 .st-stage{background:#0b1220;border-radius:14px;overflow:hidden;display:flex;justify-content:center;align-items:center;box-shadow:var(--shadow)}.st-stage canvas{display:block;max-width:100%;max-height:72vh;height:auto}
 .st-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 6px}.st-bar .sp{flex:1}.st-status{font-size:13px;color:var(--muted)}.st-prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:6px 0}.st-prog i{display:block;height:100%;background:var(--accent);width:0}
 .st-notes{font-size:12.5px;color:var(--muted);line-height:1.5;margin:8px 0 0;padding-left:18px}.st-notes li{margin:2px 0}
@@ -3262,10 +3303,13 @@
     }
     function actualSide() {
       let h = `<label for="st-aw">Weight source</label>${sel('st-aw', [['index', 'Index (tracking ETF proxy)'], ['etf', 'ETF disclosed holdings'], ['13f', '13F manager holdings'], ['official', 'Officials: transaction composition']], st.aw)}`;
-      if (st.aw === 'etf') h += `<label for="st-ah">ETF ticker</label><input class="input" id="st-ah" list="st-list" autocomplete="off" placeholder="SPY, QQQ, DIA" value="${esc(st.ah)}"><datalist id="st-list"></datalist>`;
-      else if (st.aw === '13f') h += `<label for="st-ac">Manager CIK</label><input class="input" id="st-ac" value="${esc(st.ac)}"><div class="st-help">Berkshire: 1067983 · Bridgewater: 1350694 · Scion: 1649339</div>`;
-      else if (st.aw === 'official') h += `<label for="st-ap">Official name (as disclosed)</label><input class="input" id="st-ap" value="${esc(st.ap)}"><label for="st-ao">Transactions</label>${sel('st-ao', [['all','All gross activity'],['buy','Purchases'],['sell','Sales']], st.ao)}`;
+      // a ticker typed, not picked from a list (a phone's list of 5,000 ETFs covers the page); under it, the dates on file
+      // and the most the sources could ever give (rangeInfo)
+      if (st.aw === 'etf') h += `<label for="st-ah">ETF ticker</label><input class="input" id="st-ah" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Type a ticker: SPY, QQQ, XLK, SCHD" value="${esc(st.ah)}">`;
+      else if (st.aw === '13f') h += `<label for="st-ac">Manager CIK</label><input class="input" id="st-ac" inputmode="numeric" autocomplete="off" value="${esc(st.ac)}"><div class="st-help">Berkshire: 1067983 · Bridgewater: 1350694 · Scion: 1649339</div>`;
+      else if (st.aw === 'official') h += `<label for="st-ap">Official name (as disclosed)</label><input class="input" id="st-ap" autocomplete="off" value="${esc(st.ap)}"><label for="st-ao">Transactions</label>${sel('st-ao', [['all','All gross activity'],['buy','Purchases'],['sell','Sales']], st.ao)}`;
       else h += `<label for="st-at">Index</label>${sel('st-at', Object.entries(root.FFActual.TRACKERS).map(([k, v]) => [k, v[0] + ' · ' + v[1]]), st.at)}`;
+      h += `<div class="st-help st-range" id="st-range" aria-live="polite"></div>`;
       if (st.style === 'changes') h += `<label for="st-ag">Group changes</label>${sel('st-ag', [['company','Company'],['sector','Sector']], st.ag)}`;
       h += `<label for="st-an">Top holdings shown</label>${sel('st-an', [['5', '5'], ['10', '10'], ['12', '12'], ['15', '15'], ['20', '20']], st.an)}`;
       return h + '<div class="st-help">ETF NAV weights; 13F reported-value weights; officials show monthly transaction lower-bound shares, NOT holdings. Source dates are retained; official transaction charts use month-end buckets. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Dates before the first actual snapshot cannot be animated.</div>';
@@ -3430,6 +3474,7 @@
       h += `<label for="st-title">Title (blank: written for you)</label><input class="input" id="st-title" value="${esc(st.title)}" placeholder="${esc((V && V.title) || '')}"><label for="st-sub">Subtitle</label><input class="input" id="st-sub" value="${esc(st.sub)}" placeholder="${esc((V && V.sub) || '')}">`;
       h += `<label for="st-end">End card</label>${sel('st-end', [['1', 'The result, ranked'], ['0', 'None']], st.end)}`;
       $('#st-side').innerHTML = h;
+      if (k === 'actual') rangeInfo();
     }
     function relabel() {
       const L = growthLabels(st), a = app.querySelector('label[for="st-amt"]'), r = app.querySelector('label[for="st-rec"]'), hp = $('#st-goal-help');
@@ -3524,6 +3569,53 @@
         c.toBlob((blob) => { if (blob) download(blob, fileStem(V) + '.png'); }, 'image/png');
       }
     });
+    // the dates on file for the fund, manager or official chosen, and the widest range its source could give
+    const fmtD = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d || '')); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '—'; };
+    const NPORT0 = '2019-09-30', F13_0 = '2013-06-30', PTR0 = '2012-01-01';
+    let rangeTok = 0;
+    async function rangeInfo() {
+      const el = $('#st-range'); if (!el || st.k !== 'actual') return;
+      const my = ++rangeTok, set = (html, lo, hi) => {
+        if (my !== rangeTok || !el.isConnected) return;
+        el.innerHTML = html;
+        for (const id of ['#st-from', '#st-to']) { const d = $(id); if (d) { if (lo) d.min = lo; else d.removeAttribute('min'); if (hi) d.max = hi; else d.removeAttribute('max'); } }
+      };
+      const all = (lo, hi) => lo ? ` <button type="button" class="pill" data-range-all="1">Use all on file</button>` : '';
+      try {
+        if (st.aw === 'etf' || st.aw === 'index') {
+          const sym = String(st.aw === 'etf' ? st.ah : ((root.FFActual.TRACKERS[st.at] || [])[1] || '')).trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
+          if (!sym) { set('Type a ticker to see the dates on file.'); return; }
+          set(`Looking up ${esc(sym)}…`);
+          const [ix, w] = await Promise.all([json(HUB + 'etf/index.json'), json(HUB + 'etf/weights/' + encodeURIComponent(sym) + '.json')]);
+          const F = (ix && ix.fields) || [], row = ((ix && ix.rows) || []).find((r) => String(r[F.indexOf('symbol')]).toUpperCase() === sym);
+          const name = row ? row[F.indexOf('name')] : '', inc = row ? row[F.indexOf('inception')] : null;
+          if (!row && !w) { set(`<b>${esc(sym)}</b> is not one of the US-listed ETFs on file. Try SPY, QQQ, DIA, XLK or SCHD.`); return; }
+          const q = (w && w.quarterly && w.quarterly.dates) || [], d = ((w && w.snapshots) || []).map((x) => x.date).filter(Boolean).sort();
+          const lo = [q[0], d[0]].filter(Boolean).sort()[0] || '', hi = [q[q.length - 1], d[d.length - 1]].filter(Boolean).sort().slice(-1)[0] || '';
+          const onFile = q.length || d.length ? [q.length ? `${q.length} quarter-end portfolios, ${fmtD(q[0])} → ${fmtD(q[q.length - 1])} (SEC N-PORT)` : '',
+            d.length ? `${d.length} ${d.length === 1 ? 'snapshot' : 'snapshots'}, ${fmtD(d[0])}${d.length > 1 ? ' → ' + fmtD(d[d.length - 1]) : ''} (${d.length > 1 ? 'daily sponsor files' : 'the latest report'})` : ''].filter(Boolean).join(' · ') : 'nothing yet';
+          const start = inc && inc > NPORT0 ? inc : NPORT0;
+          const maxTxt = `${fmtD(start)} → today. SEC’s data sets of fund portfolios begin ${fmtD(NPORT0)}${inc ? (inc > NPORT0 ? `; ${esc(sym)} launched ${fmtD(inc)}` : `; ${esc(sym)} launched ${fmtD(inc)}, so its earlier years are not in them`) : ''}. Each quarter-end turns up about 60 days after it; some funds’ first reports come later.`;
+          set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Max:</b> ${maxTxt}`, lo, hi);
+        } else if (st.aw === '13f') {
+          const cik = String(st.ac || '').replace(/\D/g, '').replace(/^0+/, '');
+          if (!cik) { set('Type a manager’s CIK to see the quarters on file.'); return; }
+          set(`Looking up CIK ${esc(cik)}…`);
+          const cfg = await json(HUB + 'remote.json'), base = cfg && /^https:\/\//.test(cfg.base || '') && (cfg.prefixes || []).some((x) => 'shards/holdings/'.startsWith(x)) ? cfg.base : HUB;
+          const doc = await json(base + 'shards/holdings/' + cik + '.json');
+          if (!doc) { set(`No 13F manager with CIK ${esc(cik)} on file yet.`); return; }
+          const ps = (doc.snapshots || []).filter((x) => x.complete).map((x) => x.period).sort(), lo = ps[0] || '', hi = ps[ps.length - 1] || '';
+          const since = String(doc.since || ''), deep = since && since <= F13_0;
+          set(`<b>${esc(doc.label || doc.name || 'CIK ' + cik)}</b><br><b>On file:</b> ${ps.length ? `${ps.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}` : 'no complete quarter yet'}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter: 13F holdings are machine-readable from Q2 2013, and each quarter is filed within 45 days. ${deep ? 'This manager is read from then.' : `This manager is read from ${fmtD(since)} so far; the history back-fill deepens it.`}`, lo, hi);
+        } else if (st.aw === 'official') {
+          const name = String(st.ap || '').trim(), slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
+          if (!slug) { set('Type an official’s name to see the trades on file.'); return; }
+          const doc = await json(HUB + 'market/officials/' + slug + '.json');
+          if (!doc) { set(`No trades on file for “${esc(name)}” (the name as the reports spell it, e.g. Nancy Pelosi).`); return; }
+          set(`<b>${esc(doc.name || name)}</b> · ${esc(doc.jurisdiction || '')}<br><b>On file:</b> ${(doc.n || 0).toLocaleString('en-US')} trades, ${fmtD(doc.first)} → ${fmtD(doc.last)}${all(doc.first, doc.last)}<br><b>Max:</b> ${fmtD(PTR0)} → today: periodic transaction reports since the STOCK Act (2012); the House reports are being read back to then.`, doc.first, doc.last);
+        }
+      } catch (e) { set(''); }
+    }
     async function suggest() {
       const list = $('#st-list'); if (!list || list.dataset.done) return; list.dataset.done = '1';
       const [ix, ex] = await Promise.all([json(SITE + 'index.json'), st.k === 'fund' ? null : json(HUB + 'etf/index.json')]);
@@ -3558,16 +3650,19 @@
         if (st.k === 'actual' || st.k === 'holdings') { st.style = 'bars'; st.from = ''; st.to = ''; st.yrs = ''; }
         side(); rebuild(); return;
       }
+      if (e.target.closest('[data-range-all]')) { st.from = ''; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
       const yb = e.target.closest('[data-yrs]');
       if (yb) { st.from = iso(Date.now() - (+yb.dataset.yrs) * 365.25 * DAY); st.to = ''; st.yrs = ''; side(); rebuild(); }
       const sb = e.target.closest('[data-speed]');
       if (sb) { st.dur = String(clamp(Math.round((+st.dur || 20) / +sb.dataset.speed), 4, 300)); const d = $('#st-dur'); if (d) d.value = st.dur; if (V) { paint(); save(); status(); } }
     });
-    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t' || e.target.id === 'st-ah') suggest(); if (e.target.id === 'st-hid') suggestHoldings(); });
+    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t') suggest(); if (e.target.id === 'st-hid') suggestHoldings(); });
     box.addEventListener('input', (e) => {
       const id = e.target.id; if (!id || !id.startsWith('st-') || e.target.tagName === 'SELECT') return;
       const key = id.slice(3); if (!(key in DEF)) return;
+      if (key === 'ah') { const v = e.target.value.toUpperCase(); if (v !== e.target.value) { const p = e.target.selectionStart; e.target.value = v; try { e.target.setSelectionRange(p, p); } catch (x) { /* a phone keyboard */ } } }
       st[key] = e.target.value;
+      if (key === 'ah' || key === 'ac' || key === 'ap') { clearTimeout(rangeInfo.t); rangeInfo.t = setTimeout(rangeInfo, 300); }
       if (key === 'title' || key === 'sub') { if (V) { V.title = st.title || V._title; V.sub = st.sub || V._sub; paint(); save(); } return; }
       if (LOOK.includes(key)) { if (V) { paint(); save(); status(); } return; }
       if (['rec', 'goal'].includes(key)) relabel();
@@ -3590,6 +3685,7 @@
       }
       if (key === 'sp' && SPEND[st.sp]) { Object.assign(st, SPEND[st.sp].s); st.title = ''; st.sub = ''; }
       if (['rm', 'bx', 'by', 'sw', 'aw', 'hsrc', 'ssolve', 'sgoal', 'div', 'sp', 'sphab', 'spl', 'spinf', 'sphe', 'fi', 'fsplit'].includes(key)) side();
+      else if (key === 'at') rangeInfo();
       rebuild();
     });
     const tplAll = (on) => { const g = $('#st-tpl'), b = $('#st-tpl-all'); g.classList.toggle('all', on); b.setAttribute('aria-expanded', String(on)); b.textContent = on ? 'Fewer ▴' : `All ${TEMPLATES.length} ▾`; };
