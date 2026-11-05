@@ -61,13 +61,40 @@ def _r(v, d=3):
     return round(v, d) if fin(v) else None
 
 
+# what would show the trap did not apply after all: the counter-evidence a reader should go and look for (one card per
+# triggered or to-review finding, so every finding is falsifiable, not only arguable)
+FALSIFIED_IF = {
+    "A01": ["Next year's FCF holds or rises with capex back at its earlier level and working capital no longer releasing cash",
+            "The 10-K's capex guidance and the segment capex show the cut is a completed programme, not deferral",
+            "The working-capital release matches a disclosed change in terms or a divestiture, not stretched payables or a collection push"],
+    "A07": ["The diluted share count falls over two years with buybacks at least equal to the stock compensation",
+            "Stock compensation falls as a share of revenue in each of the next two years"],
+    "B02": ["Receivables fall back in line with revenue in the next quarter and DSO returns to its history",
+            "The 10-Q attributes the increase to a disclosed one-off (a large customer's timing, an acquisition) and the allowance for doubtful accounts did not rise"],
+    "B08": ["The reconciliation shows the excluded items ending (a restructuring with its final charge, a settlement paid) and the gap to GAAP closes in the next quarters",
+            "The excluded items are only amortisation of acquired intangibles and the cash paid for the deals is in the investing cash flow"],
+    "C02": ["The 10-K lists an undrawn credit facility that covers the debt due, or the maturity is refinanced before it falls due",
+            "Cash plus FCF of the next quarter exceeds the debt due within a year"],
+    "D03": ["Net income grows at the pace of EPS in the next two quarters", "The buybacks were made below the shares' later value (the share count fell and book value per share rose)"],
+    "E02": ["Profit holds at this level through the next two years (the eight-year peak was a new base, not a top)",
+            "The industry's capacity and prices stay where they are rather than reverting"],
+    "E07": ["The DCF's value is robust to the terminal growth and discount rate (the range's low end is still above the price)",
+            "The company's cash flows over the next three years track the DCF's early years"],
+    "J06": ["Provisions and net charge-offs stay at this year's level through the next two years and capital ratios hold",
+            "Net interest margin holds while deposit costs rise"],
+    "J08": ["FFO or AFFO per share covers the dividend after recurring capex, and operating cash flow catches up with the dividend in the next year",
+            "The gap to operating cash flow is a disclosed one-off (a lease settlement, a timing difference) that reverses"],
+}
+
+
 def finding(rule_id, status, observed=None, severity=None, confidence=None, explanation="", alternatives=None, missing=None,
-            evidence=None, how="", next_review="next_filing", reason=""):
-    """one rule's result; the fields of the rulebook's finding record (§6.1)"""
+            evidence=None, how="", next_review="next_filing", reason="", falsified_if=None):
+    """one rule's result; the fields of the rulebook's finding record (§6.1), with what would falsify it"""
     name, area = NAMES[rule_id]
     return {"rule_id": rule_id, "rule_version": RULE_VERSION, "name": name, "area": area, "group": GROUPS[rule_id], "status": status,
             "severity": severity if status == "triggered" else None, "confidence": confidence if status in ("triggered", "clear", "review") else None,
             "observed": observed or {}, "explanation": explanation, "alternative_explanations": alternatives or [], "missing_evidence": missing or [],
+            "falsified_if": (falsified_if or FALSIFIED_IF.get(rule_id, [])) if status in ("triggered", "review") else [],
             "evidence": evidence or [], "how": how, "next_review": next_review, "reason": reason}
 
 

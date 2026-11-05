@@ -109,6 +109,8 @@ def finding_html(f, name):
             body += "<p><b>What would explain it innocently</b></p><ul class='seo-list'>" + "".join(f"<li>{e(x)}</li>" for x in f["alternative_explanations"]) + "</ul>"
         if f.get("missing_evidence"):
             body += "<p><b>What to look for in the filing</b></p><ul class='seo-list'>" + "".join(f"<li>{e(x)}</li>" for x in f["missing_evidence"]) + "</ul>"
+        if f.get("falsified_if"):
+            body += "<p><b>What would show the trap does not apply</b></p><ul class='seo-list'>" + "".join(f"<li>{e(x)}</li>" for x in f["falsified_if"]) + "</ul>"
         body += f"<p class='muted'>Look again: {e(f.get('next_review', 'next filing').replace('_', ' '))}.</p>"
     return head + body
 
@@ -205,6 +207,7 @@ def hub_page(site, base, docs, rows, slugs):
     url = f"{base}/disclosures/analysis-traps/"
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Disclosures</a> › Analysis traps</p><h1>Analysis traps: where the figures could mislead you</h1>"
             f"<p class='lead'>{e(lead)}</p><nav class='seo-toc'>" + "".join(f"<a href='#{k}'>{k}</a>" for k in T.NAMES) + ("<a href='#changes'>Changes</a>" if ch else "") + "</nav>" + secs
+            + "<h2 id='practice'>Practice</h2><p><a href='practice/'>Practice on real filings →</a> the figures first, then a reader's conclusion, then your call; the answer comes with the innocent explanations and what would show the trap does not apply.</p>"
             + "<h2 id='method'>Method</h2><div class='seo-note'><p>Ten rules of a hundred-item catalogue (docs/TRAP_RULEBOOK.md in the repository), chosen because the site already holds every figure they need: "
               "the cash bridge, capex, stock compensation and share counts, receivables, debt maturities, adjusted against GAAP EPS. Each reads the company's own filings by a fixed formula with coarse, "
               "documented thresholds and carries its figures, so a reader can apply stricter ones. Statuses: triggered, to review, not triggered, insufficient data, not applicable, out of date; "
@@ -313,6 +316,100 @@ def flo_feed(site, fresh, today):
     return len(pick)
 
 
+# ---------------------------------------------------------------- practice mode: the figures first, the reading second
+CLAIM = {"A01": "Free cash flow rose, so the business improved.", "A07": "Adjusted profit adds stock compensation back, and rightly: it costs no cash.",
+         "B02": "Receivables are growing with sales; the cash will follow.", "B08": "Adjusted EPS is the right measure of profit: the excluded items are one-offs.",
+         "C02": "Net debt is low, so refinancing is no concern.", "D03": "EPS is growing, so profit is growing.", "E02": "The P/E is low, so the stock is cheap.",
+         "E07": "The DCF's value is the stock's fair value.", "J06": "A record profit at a low P/E: the bank is cheap.", "J08": "The REIT's dividend is well covered."}
+ANSWER = {"triggered": "trap", "review": "trap", "clear": "holds", "insufficient_data": "unknown"}
+PRACTICE_MAX = {"trap": 60, "holds": 40, "unknown": 12}
+
+
+def practice_items(docs, rows, slugs, base):
+    """quiz items from real findings: the figures, the naive claim, the answer (the trap applies / the figures hold up /
+    cannot tell), the explanation and the counter-evidence; round-robin over the rules, largest companies first"""
+    rev = {int(r["cik"]): r.get("revenue") or 0 for r in rows}
+    pools = {k: [] for k in T.NAMES}
+    for cik, d in sorted(docs.items(), key=lambda kv: -rev.get(kv[0], 0)):
+        for f in d["findings"]:
+            a = ANSWER.get(f["status"])
+            if not a or not f.get("observed") or (a == "holds" and f.get("confidence") == "low"):
+                continue
+            figs = [[LABEL.get(k, k.replace("_", " ")), fmt_obs(k, v)] for k, v in list(f["observed"].items())[:9]]
+            pools[f["rule_id"]].append({"id": f"{cik}-{f['rule_id']}", "ticker": d.get("ticker") or "", "name": d.get("name") or "", "rule": f["rule_id"], "trap": f["name"],
+                                        "claim": CLAIM[f["rule_id"]], "as_of": d.get("as_of"), "figures": figs, "answer": a, "severity": f.get("severity"),
+                                        "explanation": f.get("explanation") or f.get("reason") or "", "alternatives": (f.get("alternative_explanations") or [])[:3],
+                                        "falsified_if": (f.get("falsified_if") or [])[:3], "how": f.get("how") or "",
+                                        "url": f"{base}/c/{slugs[cik]}/analysis-traps/#{f['rule_id']}" if cik in slugs else f"{base}/disclosures/#traps/{d.get('ticker') or ''}"})
+    out, count = [], {"trap": 0, "holds": 0, "unknown": 0}
+    for i in range(80):
+        for k in T.NAMES:
+            if i < len(pools[k]) and count[pools[k][i]["answer"]] < PRACTICE_MAX[pools[k][i]["answer"]]:
+                out.append(pools[k][i]); count[pools[k][i]["answer"]] += 1
+    return out
+
+
+PRACTICE_JS = r"""
+(function(){
+var E=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var root=document.getElementById('practice'),items=[],order=[],i=0,score={right:0,done:0},rule='',KEY='ff:traps-practice:v1';
+var WORD={trap:'Not necessarily: the figures fit the trap',holds:'The figures hold up under this rule',unknown:'Cannot tell from these figures'};
+function load(){try{var d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&d.score)score=d.score}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({score:score}))}catch(e){}}
+function shuffle(a){for(var j=a.length-1;j>0;j--){var k=Math.floor(Math.random()*(j+1)),t=a[j];a[j]=a[k];a[k]=t}return a}
+function start(){var pool=items.filter(function(x){return !rule||x.rule===rule});order=shuffle(pool.slice());i=0;show()}
+function show(){
+ if(!order.length){root.innerHTML='<p class="muted">No item for this rule yet.</p>';return}
+ var x=order[i%order.length];
+ root.innerHTML='<div class="trap-card"><p class="muted">'+E(x.rule)+' · '+E(x.trap)+' · item '+(i+1)+' of '+order.length+(score.done?' · '+score.right+' / '+score.done+' right so far':'')+'</p>'
+ +'<p><b>'+E(x.ticker)+'</b> '+E(x.name)+', filings to '+E(x.as_of)+'. The figures:</p><div class="tbl-wrap"><table><tbody>'+x.figures.map(function(r){return'<tr><td>'+E(r[0])+'</td><td class="num">'+E(r[1])+'</td></tr>'}).join('')+'</tbody></table></div>'
+ +'<p class="muted">'+E(x.how)+'</p><p>A reader concludes: <b>“'+E(x.claim)+'”</b> Does it follow?</p><p class="pr-btns">'
+ +['holds','trap','unknown'].map(function(a){return'<button class="btn" data-a="'+a+'">'+E(WORD[a])+'</button>'}).join(' ')+'</p><div id="pr-reveal"></div></div>';
+ Array.prototype.forEach.call(root.querySelectorAll('button[data-a]'),function(b){b.onclick=function(){answer(x,b.getAttribute('data-a'))}});
+}
+function answer(x,a){
+ var ok=a===x.answer;score.done++;if(ok)score.right++;save();
+ var r=document.getElementById('pr-reveal');
+ r.innerHTML='<p><b>'+(ok?'Right.':'Not this time.')+'</b> '+E(WORD[x.answer])+(x.severity?' (severity '+E(x.severity)+')':'')+'.</p><p>'+E(x.explanation)+'</p>'
+ +(x.alternatives.length?'<p><b>What would explain it innocently</b></p><ul class="seo-list">'+x.alternatives.map(function(t){return'<li>'+E(t)+'</li>'}).join('')+'</ul>':'')
+ +(x.falsified_if.length?'<p><b>What would show the trap does not apply</b></p><ul class="seo-list">'+x.falsified_if.map(function(t){return'<li>'+E(t)+'</li>'}).join('')+'</ul>':'')
+ +'<p><a href="'+E(x.url)+'">The company\'s analysis-traps page →</a> · <button class="btn" id="pr-next">Next</button></p>';
+ Array.prototype.forEach.call(root.querySelectorAll('button[data-a]'),function(b){b.disabled=true;if(b.getAttribute('data-a')===x.answer)b.classList.add('pr-ok')});
+ document.getElementById('pr-next').onclick=function(){i++;show()};
+}
+load();
+fetch('../../../data/traps/practice.json',{cache:'no-cache'}).then(function(r){return r.json()}).then(function(d){
+ items=d.items||[];var sel=document.getElementById('pr-rule');
+ Object.keys(d.rules||{}).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k+' · '+d.rules[k];sel.appendChild(o)});
+ sel.onchange=function(){rule=sel.value;start()};
+ document.getElementById('pr-reset').onclick=function(){score={right:0,done:0};save();start()};
+ start();
+}).catch(function(){root.innerHTML='<p class="muted">The practice set could not be read.</p>'});
+})();
+"""
+
+
+def practice_page(site, base, items):
+    """disclosures/analysis-traps/practice/: one real finding at a time, the figures before the reading"""
+    url = f"{base}/disclosures/analysis-traps/practice/"
+    n_rules = len({x["rule"] for x in items})
+    lead = (f"{len(items)} real findings from the latest filings, {n_rules} rules: the figures first, then a reader's conclusion, then your call: do the figures hold up, do they fit a trap, "
+            "or can they not say? The answer comes with the innocent explanations and what would show the trap does not apply. No fabricated numbers; not investment advice.")
+    body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../../'>Disclosures</a> › <a href='../'>Analysis traps</a> › Practice</p>"
+            f"<h1>Analysis traps: practice on real filings</h1><p class='lead'>{e(lead)}</p>"
+            "<p><label>Rule <select id='pr-rule'><option value=''>All rules</option></select></label> · <button class='btn' id='pr-reset'>Reset the score</button></p>"
+            "<div id='practice'><p class='muted'>Reading the practice set…</p></div>"
+            "<h2>How the practice set is built</h2><div class='seo-note'><p>Every item is a finding of the same rules that run on every company (data/traps/&lt;cik&gt;.json), shown with its figures: "
+            "triggered and to-review findings answer “the figures fit the trap”, findings the rule cleared with at least medium confidence answer “the figures hold up”, "
+            "and findings with insufficient data answer “cannot tell” (missing data is never shown as clear). The set is drawn round-robin over the rules, largest companies first, and rebuilt with the site.</p></div>"
+            + DISCLAIMER + f"<script>{PRACTICE_JS}</script>")
+    d = os.path.join(site, "disclosures", "analysis-traps", "practice")
+    os.makedirs(d, exist_ok=True)
+    ld = {"@context": "https://schema.org", "@graph": [{"@type": "WebPage", "name": "Analysis traps: practice on real filings", "url": url, "description": lead[:300]}]}
+    open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(seo.page("Analysis Traps Practice: Read the Figures, Then Decide", lead[:300], url, body, 3, base + "/og.png", ld))
+    return url
+
+
 RULE_BLURB = {
     "A01": "Free cash flow rose, but working capital released cash or capital expenditure fell: the part of the increase that need not repeat next year.",
     "A07": "Stock compensation is a real cost paid in shares; 'adjusted' figures that add it back only hold up when buybacks have paid for the dilution.",
@@ -377,6 +474,10 @@ def write(site, base, today=None, store=None):
                    "fields": ["ticker", "cik", "name", "sector", "as_of", "triggered", "top_severity", "priority", "insufficient"], "rows": index_rows}, f, separators=(",", ":"))
     if docs:
         track_changes(site, store, docs, slugs, base, today)
+        items = practice_items(docs, rows, slugs, base)
+        with open(os.path.join(out_dir, "practice.json"), "w", encoding="utf-8") as f:
+            json.dump({"generated_at": today.isoformat(), "rule_version": T.RULE_VERSION, "rules": {k: v[0] for k, v in T.NAMES.items()}, "items": items}, f, separators=(",", ":"))
+        urls.insert(0, (practice_page(site, base, items), today.isoformat()))
         urls.insert(0, (hub_page(site, base, docs, rows, slugs), today.isoformat()))
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     sm += [f"<url><loc>{xesc(u)}</loc>" + (f"<lastmod>{xesc(str(m)[:10])}</lastmod>" if m else "") + "</url>" for u, m in urls]

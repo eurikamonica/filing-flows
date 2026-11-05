@@ -705,7 +705,7 @@
         `${rule ? `触发 ${rule}（${esc(TRAP_ZH[rule] || '')}）的公司` : '触发分析陷阱规则最多的公司'}，按规模排序（共评估 ${num(rows.length)} 家）：`)
         + ol(hit.map((r) => `${coLink(r.ticker, r.cik)} ${(r.triggered || []).join(', ')}${r.top_severity ? ` · ${esc(r.top_severity)}` : ''}`))
         + L(lg, ` By rule: ${counts.map(esc).join('; ')}.`, ` 各规则触发数：${counts.map(esc).join('；')}。`),
-        facts: counts, mood: 'talk', links: [lk(`${BASE}disclosures/analysis-traps/`, L(lg, 'Every rule and the companies it triggers on', '全部规则及触发公司'))] };
+        facts: counts, mood: 'talk', links: [lk(`${BASE}disclosures/analysis-traps/`, L(lg, 'Every rule and the companies it triggers on', '全部规则及触发公司')), lk(`${BASE}disclosures/analysis-traps/practice/`, L(lg, 'Practice on real filings', '用真实财报练习'))] };
     };
     async function quality(c, lg) {
       const d = await qrows();

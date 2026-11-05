@@ -33,7 +33,7 @@ function trapsView() {
   out += ch.length ? '<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Company</th><th>Rule</th><th>Change</th><th>On the filing to</th><th>Figures</th></tr></thead><tbody>'
     + ch.map(c => `<tr><td class="mono">${esc(c.date)}</td><td><a href="#traps/${esc(c.ticker)}">${esc(c.ticker)}</a> <span class="muted">${esc(c.name)}</span></td><td class="mono">${esc(c.rule)}</td><td><b>${esc(CH[c.kind] || c.kind)}</b>${c.kind === 'severity' ? ` (${esc(c.from_severity)} → ${esc(c.severity)})` : c.severity && c.kind === 'new' ? ` · ${esc(c.severity)}` : ''}</td><td class="mono">${esc(c.as_of)}<span class="muted"> (was ${esc(c.prev_as_of || '—')})</span></td><td class="muted">${esc(String(c.explanation || '').split('. ')[0])}</td></tr>`).join('') + '</tbody></table></div>'
     : empty('No change yet: the changes are found by comparing each company\'s findings with those of its previous filing, from the next scans on.');
-  out += '<p class="muted">Statuses: triggered, to review, not triggered, insufficient data, not applicable, out of date. Missing data is never shown as clear; severity and confidence are kept apart. <a href="analysis-traps/">The rules explained, with every company by rule →</a></p>';
+  out += '<p class="muted">Statuses: triggered, to review, not triggered, insufficient data, not applicable, out of date. Missing data is never shown as clear; severity and confidence are kept apart. <a href="analysis-traps/">The rules explained, with every company by rule →</a> · <a href="analysis-traps/practice/">Practice on real filings →</a></p>';
   return out;
 }
 function bindTraps() {

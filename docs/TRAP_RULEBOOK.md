@@ -33,6 +33,12 @@ a status that flips without a newer filing (a rule upgrade) is not logged. Shown
 the Hub tab, the company view, Flo ("which traps changed with the latest filings?") and Flo's pulse feed (kind `trap`,
 cited to the filing).
 
+**Counter-evidence and practice (P4):** every triggered or to-review finding carries `falsified_if`, the conditions that
+would show the trap does not apply (per rule in `pipeline/traps.FALSIFIED_IF`; a rule may pass its own), shown as "What
+would show the trap does not apply" on the pages and views. `disclosures/analysis-traps/practice/` is the training mode:
+`data/traps/practice.json` holds real findings (the figures, the naive claim, the answer, the explanations); the page
+shows one at a time and scores the reader's call, with the score kept only in the reader's browser.
+
 **Review log**
 - 2026-11-05 v1.1: E02, E07, J06, J08 added (E02 first flagged steady growers such as NVDA and META → ≥ 2 down years
   required; fiscal years older than the latest quarter's year − 2 are dropped from every rule's inputs, after Boston

@@ -105,6 +105,13 @@ def test_pages(tmp_path):
     assert 'href="analysis-traps/"' in main and "Before you read the chart" in main
     hub = (s / "disclosures" / "analysis-traps" / "index.html").read_text()
     assert "FCF growth = the business improved" in hub and "1 of 1" in hub
+    pr = json.loads((s / "data" / "traps" / "practice.json").read_text())
+    assert pr["items"] and {x["answer"] for x in pr["items"]} <= {"trap", "holds", "unknown"} and all(x["figures"] and x["claim"] for x in pr["items"])
+    trap_item = next(x for x in pr["items"] if x["answer"] == "trap")
+    assert trap_item["falsified_if"] and trap_item["url"] == f"https://x.test/c/aaa/analysis-traps/#{trap_item['rule']}"
+    assert "What would show the trap does not apply" in page and "practice/" in hub
+    pp = (s / "disclosures" / "analysis-traps" / "practice" / "index.html").read_text()
+    assert "Does it follow?" in pp and "data/traps/practice.json" in pp and "https://x.test/disclosures/analysis-traps/practice/" in (s / "sitemap-traps.xml").read_text()
     assert "sitemap-traps.xml" in (s / "robots.txt").read_text() and "https://x.test/c/aaa/analysis-traps/" in (s / "sitemap-traps.xml").read_text()
 
 

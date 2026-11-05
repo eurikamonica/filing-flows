@@ -54,6 +54,7 @@
     if (st === 'triggered' || st === 'review') {
       if ((f.alternative_explanations || []).length) h += `<p><b>What would explain it innocently</b></p><ul>${f.alternative_explanations.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
       if ((f.missing_evidence || []).length) h += `<p><b>What to look for in the filing</b></p><ul>${f.missing_evidence.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+      if ((f.falsified_if || []).length) h += `<p><b>What would show the trap does not apply</b></p><ul>${f.falsified_if.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
     }
     return h + '</div>';
   }
