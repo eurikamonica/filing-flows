@@ -229,7 +229,11 @@ jobs:
           pending=$(python3 -c "import json; print(((json.load(open('disclosures/docs/data/live.json'))['modules'].get('congress') or {}).get('counts') or {}).get('house_ptr', {}).get('ptr_pending', 0))" 2>/dev/null || echo 0)
           if [ "${pending:-0}" -le 0 ]; then echo "no House reports waiting"; exit 0; fi
           if [ "$HOP" -ge 400 ]; then echo "chain cap reached (400 runs)"; exit 0; fi
-          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow disclosures.yml --status queued --json databaseId --jq length)
+          # a run waiting for its turn behind the running one in its concurrency group is "pending", not "queued": a hop
+          # started then took its place (GitHub keeps one pending run a group) — the 13F, price and scheduled runs lost
+          # every turn to the chain that way. Any waiting run of this workflow, in any state of waiting, holds the hop.
+          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/disclosures.yml/runs?per_page=40" \
+                --jq "[.workflow_runs[] | select(.id != $GITHUB_RUN_ID and (.status == \"queued\" or .status == \"pending\" or .status == \"waiting\" or .status == \"requested\"))] | length" 2>/dev/null || echo 1)
           if [ "${n:-0}" -gt 0 ]; then echo "another run is already waiting ($pending House reports waiting)"; exit 0; fi
           gh workflow run disclosures.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f module=congress -f chain=true -f hop=$((HOP + 1))
           echo "officials chain: hop $((HOP + 1)) started ($pending House reports waiting)"
