@@ -180,6 +180,13 @@ def official_page(o, base):
                  f"<td>{e(x['committee'])}</td><td>{e(x['area'])}</td></tr>" for x in o.get("overlaps") or [])
     rec = "".join(f"<tr><td>{e(t[0])}</td><td><b>{e(t[1])}</b></td><td>{e(t[2])}</td><td>{e(amount(t[3], t[4]))}</td><td>{e(t[5] or '')}</td><td>{e(t[6] or '')}</td></tr>"
                   for t in (o.get("recent") or [])[:30])
+    # every trade the record scores, with what the stock did against SPY after it was disclosed: the evidence behind the
+    # headline figure (and the trades themselves, when none is recent enough for the list above)
+    sc = [x for x in o.get("scored") or [] if isinstance(x, list) and len(x) >= 7]
+    def side(x):
+        return "—" if x[5] is None else "yes" if x[2] * x[5] > 0 else "no"
+    scored_rows = "".join(f"<tr><td>{e(x[0])}</td><td><b>{e(x[1])}</b></td><td>{'Bought' if x[2] > 0 else 'Sold'}</td><td class='num'>{e('about ' + money(abs(x[3])) if x[3] else '—')}</td>"
+                          f"<td>{e(x[6] or '')}</td><td class='num'>{e(pct(x[5]))}</td><td>{side(x)}</td></tr>" for x in sc[:40])
     tot = {}
     for x in o.get("recent") or []:
         if not x[1]:                                            # a trade without a ticker (a fund, a bond): not a bar
@@ -197,6 +204,7 @@ def official_page(o, base):
 {f'<h2>Trades in sectors under their committees</h2><p class="muted">A trade in a sector that one of the member’s committees oversees (the map is published with the data). A fact pattern from public disclosures, not a finding of wrongdoing.</p><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Ticker</th><th>Type</th><th>Amount</th><th>Committee</th><th>Area</th></tr></thead><tbody>{ov}</tbody></table></div>' if ov else ''}
 {trade_chart}
 {f'<h2>Recent disclosed trades</h2><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Ticker</th><th>Type</th><th>Amount</th><th>Owner</th><th>Filed</th></tr></thead><tbody>{rec}</tbody></table></div>' if rec else ''}
+{f'<h2>Every trade on file and how it did</h2><div class="tbl-wrap"><table><thead><tr><th>Traded</th><th>Ticker</th><th>Side</th><th class="num">Amount (middle of the range)</th><th>Disclosed</th><th class="num">Stock vs SPY, 63 days after disclosure</th><th>Right side?</th></tr></thead><tbody>{scored_rows}</tbody></table></div><p class="muted">A purchase is on the right side when the stock then beat SPY, a sale when it lagged; a dash: not 63 trading days on yet, or no price on file.</p>' if scored_rows else ''}
 <p class="muted">Performance: each scored trade’s stock return less SPY’s over the 63 trading days after it was disclosed (a sale counts when the
 stock then lagged), weighted by the middle of the reported amount range{', ' + str(perf.get('first')) + ' to ' + str(perf.get('last')) if perf.get('first') else ''}.</p>
 <p><a class="seo-cta" href="../../disclosures/#people/o-{e(slug)}">Open in Disclosures →</a></p>

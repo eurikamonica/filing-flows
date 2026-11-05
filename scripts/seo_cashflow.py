@@ -236,7 +236,8 @@ def page_for(c, row, slug, base):
     body += "<h2 id='table'>Every quarter</h2>" + seo_table(['Quarter'] + [SC.CASH[k] for k in cols] + ['Free cash flow'], [
         [e(x['label'])] + [money(x['items'].get(k)) if x['items'].get(k) is not None else '—' for k in cols] + [money(fcf(x))] for x in reversed(qs)])
     body += (f"<h2 id='sankey'>{e(name)}: income statement and cash flow</h2>"
-             + SH.sankey_figure(row['cik'], row.get('label') or '', f"{name} earnings and cash flow Sankey", up='../../../')
+             + SH.sankey_figure(row['cik'], row.get('label') or '', f"{name} earnings and cash flow Sankey", up='../../../',
+                                fallback=SH.figure_words(name, row.get('label'), row.get('revenue'), row.get('yoy'), om=row.get('om')))
              + f"<p><a class='seo-cta' href='../'>{e(name)}: every quarter, Q/Q and Y/Y →</a> <a href='../../../#c-{row['cik']}'>Open in the app</a></p>"
              "<p class='muted'>Read automatically from the company’s XBRL cash-flow statements; quarterly figures for the fourth quarter are the year less the first three. "
              "Errors are possible. Not investment advice.</p>")

@@ -76,6 +76,44 @@ def margin(n, k, i):
 
 
 KEY = [('revenue', 'Revenue'), ('gp', 'Gross profit'), ('oi', 'Operating profit'), ('net', 'Net earnings'), ('ocf', 'Operating cash flow'), ('fcf', 'Free cash flow')]
+HEADLINE = {'oi': 'oi', 'net': 'ni', 'ocf': 'ocf'}      # the lines a loss-maker's Sankey draws under other names (no "oi" node)
+
+
+def key_lines(c, i, n):
+    """[(label, this, previous quarter, a year earlier)] of the key lines: from the Sankey's nodes, else (a company losing
+    money has no "oi", "net" or "ocf" node: its chart draws the loss and the cash used) from the quarters' headlines"""
+    qs = c['quarters']
+    lab = qs[i].get('label')
+    prev = (qs[i + 1].get('headline') or {}) if i + 1 < len(qs) else {}
+    ya = next((x.get('headline') or {} for x in qs if x.get('label') == year_ago(lab)), {})
+    h = qs[i].get('headline') or {}
+    out = []
+    for k, t in KEY:
+        if k in n and n[k][1] is not None:
+            out.append((t, n[k][1], n[k][2], n[k][3]))
+        elif k in HEADLINE and h.get(HEADLINE[k]) is not None:
+            out.append((t, h[HEADLINE[k]], prev.get(HEADLINE[k]), ya.get(HEADLINE[k])))
+    return out
+
+
+def figure_words(who, label, revenue=None, yoy=None, ni=None, om=None, ocf=None, extra=''):
+    """a Sankey's quarter in a sentence: what its figure holds until the chart is drawn, and all a reader without
+    JavaScript (or a search engine's first read) gets; '' without revenue"""
+    if not revenue:
+        return ''
+    s = f"{who}, {label}: revenue {money(revenue)}" + (f" ({pc(yoy)} year over year)" if yoy is not None else '')
+    if om is not None and abs(om) < 1000:
+        s += f", operating margin {om:.1f}%"
+    if ni is not None:
+        s += f", net {'earnings' if ni >= 0 else 'loss'} {money(abs(ni))}"
+    if ocf is not None:
+        s += f", operating cash flow {money(ocf)}"
+    return s + '. ' + (extra or 'The chart follows the revenue to costs, profit and cash.')
+
+
+def quarter_words(who, q, extra=''):
+    h = (q or {}).get('headline') or {}
+    return figure_words(who, (q or {}).get('label'), h.get('revenue'), h.get('yoy'), h.get('ni'), h.get('om'), h.get('ocf'), extra)
 
 
 def sankey_figure(cik, label, alt, compare='', up='../../../', fallback=''):
@@ -119,12 +157,13 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
         f" and {seo.vs(qoq, 'the quarter before')}" if qoq is not None else '') + '.'
     # net earnings: the figure the chart draws (headline.ni), whichever node holds it (net, netinc, or netloss as a loss)
     net = h.get('ni') if h.get('ni') is not None else (n['net'][1] if 'net' in n else n['netinc'][1] if 'netinc' in n else -n['netloss'][1] if 'netloss' in n and n['netloss'][1] is not None else None)
-    om = margin(n, 'oi', 1)
+    oi = n['oi'][1] if 'oi' in n and n['oi'][1] is not None else h.get('oi')        # an operating loss: from the headline
+    om = margin(n, 'oi', 1) if 'oi' in n else seo.ratio(oi, rev[1])
     nm = seo.ratio(net, rev[1])
     if om is not None:
         lead += f" Operating margin was {om:.1f}%" + (f", net {'earnings' if net >= 0 else 'loss'} {money(abs(net))} ({abs(nm):.1f}% of revenue)" if nm is not None else '') + '.'
-    rows = ''.join(f"<tr><td>{e(t)}</td><td class='num'>{e(money(n[k][1]))}</td><td class='num'>{e(pc(chg(n[k][1], n[k][2])))}</td><td class='num'>{e(pc(chg(n[k][1], n[k][3])))}</td></tr>"
-                   for k, t in KEY if k in n and n[k][1] is not None)
+    rows = ''.join(f"<tr><td>{e(t)}</td><td class='num'>{e(money(v))}</td><td class='num'>{e(pc(chg(v, vq)))}</td><td class='num'>{e(pc(chg(v, vy)))}</td></tr>"
+                   for t, v, vq, vy in key_lines(c, i, n))
     qs = c['quarters']
     prev_q = qs[i + 1] if i + 1 < len(qs) else None
     next_q = qs[i - 1] if i > 0 else None
@@ -142,7 +181,7 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
     analysis = ''.join(f'<p>{e(a)}</p>' for a in (q.get('analysis') or [])[:4])
     qa = [(f"What was {seo.poss(name)} revenue in the {words}?", first(lead))]
     if om is not None:
-        qa.append((f"Was {name} profitable in the {words}?", f"Operating profit was {money(n['oi'][1])} ({om:.1f}% of revenue)" + (f" and net {'earnings' if net >= 0 else 'loss'} {money(abs(net))}." if net is not None else '.')))
+        qa.append((f"Was {name} profitable in the {words}?", f"Operating {'profit was' if oi >= 0 else 'loss was'} {money(abs(oi))} ({om:.1f}% of revenue)" + (f" and net {'earnings' if net >= 0 else 'loss'} {money(abs(net))}." if net is not None else '.')))
     url = f"{base}/c/{slug}/{qslug(lab)}/"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(lab)}</p>"
             f"<h1>{e(who)} {e(lab)} earnings results ({e(words)})</h1><p class='muted'>{e(q.get('form'))} filed {e(fdate(q.get('filed')))}</p>"
@@ -150,7 +189,7 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
             + "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{k}</span><b>{e(v)}</b></div>" for k, v in (
                 ('Revenue', money(rev[1])), ('Year over year', pc(yoy)), ('Quarter over quarter', pc(qoq)),
                 ('Operating margin', f'{om:.1f}%' if om is not None else '—'), ('Net earnings', money(net) if net is not None else '—'))) + "</div>"
-            + f"{sankey_figure(r['cik'], lab, f'{who} {lab} income statement Sankey')}"
+            + f"{sankey_figure(r['cik'], lab, f'{who} {lab} income statement Sankey', fallback=quarter_words(name, q))}"
             f"<div class='tbl-wrap'><table><thead><tr><th>{e(lab)}</th><th class='num'>Amount</th><th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>"
             + (f"<h2>What changed</h2>{analysis}" if analysis else '') + faq(qa)
             + f"<p><a class='seo-cta' href='../../../#c-{r['cik']}'>Open the interactive Sankey →</a></p>"
@@ -199,7 +238,8 @@ def period_page(r, c, i, base, slug, who, name, mode):
     title = f"{who} {lab} vs {other}: {what} revenue {pc(chg(rev[1], rev[j]))}, margins and every line compared | Filing Flows"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › <a href='../{qslug(lab)}/'>{e(lab)}</a> › vs {e(other)}</p>"
             f"<h1>{e(who)} {e(lab)} vs {e(other)} ({e(what)})</h1><p class='lead'>{e(lead)}</p>"
-            + sankey_figure(r['cik'], lab, f"{who} {lab} vs {other} Sankey: increases drawn inside each band", 'q' if mode == 'qoq' else 'y')
+            + sankey_figure(r['cik'], lab, f"{who} {lab} vs {other} Sankey: increases drawn inside each band", 'q' if mode == 'qoq' else 'y',
+                            fallback=quarter_words(name, q, f"The chart draws each line against {other}, the increases inside each band."))
             + SV.diverging(sorted(((v[0], v[1] - v[j]) for k, v in n.items() if v[1] is not None and v[j] is not None and k != 'revenue'),
                                                                       key=lambda z: -abs(z[1])), money, f"{name}: what changed, {lab} vs {other}")
             + (f"<h2>Margins</h2><div class='tbl-wrap'><table><thead><tr><th></th><th class='num'>{e(lab)}</th><th class='num'>{e(other)}</th><th class='num'>Change</th></tr></thead><tbody>{mrows}</tbody></table></div>" if mrows else '')
@@ -247,7 +287,8 @@ def metric_page(r, c, base, slug, who, name, mslug, label, key, kind):
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(label[0].upper() + label[1:])}</p>"
             f"<h1>{e(who)} {e(label)} by quarter</h1><p class='lead'>{e(lead)}</p>" + SV.bars([(x[0], x[1]) for x in reversed(s)], fmt, f"{name} {label} by quarter")
             + f"<div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>{e(label[0].upper() + label[1:])}</th><th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>"
-            + f"<h2>{e(latest[0])} at a glance</h2>" + sankey_figure(r['cik'], latest[0], f"{who} {latest[0]} income statement Sankey")
+            + f"<h2>{e(latest[0])} at a glance</h2>" + sankey_figure(r['cik'], latest[0], f"{who} {latest[0]} income statement Sankey",
+                                                                    fallback=quarter_words(name, next((x for x in c.get('quarters') or [] if x.get('label') == latest[0]), None)))
             + faq(qa) + f"<p><a href='../{qslug(latest[0])}/'>{e(latest[0])} results →</a> · <a href='../revenue/'>How {e(name)} makes money →</a></p>")
     crumbs = [('Filing Flows', base + '/'), (who, f'{base}/c/{slug}/'), (label, url)]
     mod = (latest[2] or '')[:10] or None
@@ -314,7 +355,23 @@ def vs_mid(v, unit):
     return '—' if v is None else f"{v:+.1f}{' pts' if unit == 'pct' else '%'}"
 
 
-def guidance_page(r, rec, base, slug, who, name, has_outlook=True):
+def gaap_line(metric, spec):
+    """the filings' own figure of a guided line the record does not judge (cash flow, capital spending, the tax rate):
+    from the period's Sankey (a company using cash draws it as "burn"), else its headline; None when the chart has none"""
+    v = {x.get('id'): x.get('v') for x in (spec or {}).get('nodes') or []}
+    h = (spec or {}).get('headline') or {}
+    if metric == 'ocf':
+        return v['ocf'] if v.get('ocf') is not None else -v['burn'] if v.get('burn') is not None else h.get('ocf')
+    if metric == 'capex':
+        return v.get('capex')
+    if metric == 'fcf':
+        return v.get('fcf')
+    if metric == 'tax_rate':
+        return 100 * v['tax'] / v['pretax'] if v.get('tax') is not None and (v.get('pretax') or 0) > 0 else None
+    return None
+
+
+def guidance_page(r, rec, base, slug, who, name, has_outlook=True, c=None):
     ms = [m for m in rec.get('metrics') or [] if m.get('rows')]
     if not ms:
         return None
@@ -331,22 +388,33 @@ def guidance_page(r, rec, base, slug, who, name, has_outlook=True):
     if said.get('raised') or said.get('lowered'):
         lead += f" Its releases raised guidance {seo.times(said.get('raised', 0))} and lowered it {seo.times(said.get('lowered', 0))}."
     OUT = {'above': 'above the range', 'within': 'within the range', 'below': 'below the range', 'met': 'met'}
+    specs = {s_.get('label'): s_ for s_ in ((c or {}).get('years') or []) + ((c or {}).get('quarters') or []) if s_.get('label')}
     body = ''
     for m in ms[:6]:
-        rows = ''
+        rows, shown_gaap = '', 0
         for x in m['rows'][:10]:
+            gaap = None
+            if x.get('actual') is None and not x.get('pending') and m.get('basis') != 'non-GAAP':
+                gaap = gaap_line(m.get('metric'), specs.get(x.get('label')))      # reported, but not a line the record judges
+                shown_gaap += gaap is not None
             guides = ' → '.join(f"{(x2.get('change') + ' ') if i and x2.get('change') not in (None, 'first') else ''}{unit_fmt(x2['lo'], m['unit'])}"
                                 + (f"–{unit_fmt(x2['hi'], m['unit'])}" if x2.get('hi') is not None and x2['hi'] != x2['lo'] else '') + f" ({fdate(x2.get('filed'))})"
                                 for i, x2 in enumerate(x.get('guides') or []))
-            res = OUT.get(x.get('outcome')) or ('to be reported' if x.get('pending') else '—')
-            rows += (f"<tr><td>{e(x.get('label'))}</td><td>{e(guides)}</td><td class='num'>{e(unit_fmt(x.get('actual'), m['unit']))}</td><td>{e(res)}</td>"
+            res = OUT.get(x.get('outcome')) or ('to be reported' if x.get('pending') else 'not judged' if gaap is not None else '—')
+            rep_v = unit_fmt(x.get('actual'), m['unit']) if x.get('actual') is not None else (unit_fmt(gaap, m['unit']) + ' (GAAP)') if gaap is not None else '—'
+            rows += (f"<tr><td>{e(x.get('label'))}</td><td>{e(guides)}</td><td class='num'>{e(rep_v)}</td><td>{e(res)}</td>"
                      f"<td class='num'>{e(vs_mid(x.get('vsMid'), m['unit']))}</td></tr>")
         h = m.get('hits') or {}
         chart = SV.ranges([(x.get('label'), (x.get('guides') or [{}])[-1].get('lo'), (x.get('guides') or [{}])[-1].get('hi'), x.get('actual'))
                            for x in reversed(m['rows'][:10]) if (x.get('guides') or [{}])[-1].get('lo') is not None],
                           lambda v, u=m['unit']: unit_fmt(v, u), f"{name} {m['name']}: last guidance vs reported")
+        why = ("The GAAP figure from the filings is shown for each period reported; it is not judged against the guide, which may leave "
+               "items out (one-off payments, acquisitions)." if shown_gaap else
+               "Every guided period is still to be reported." if all(x.get('pending') for x in m['rows'][:10]) else
+               "The guide is on an adjusted basis that the GAAP statements do not show, so there is no reported figure to hold it to." if m.get('basis') == 'non-GAAP' else
+               "This line is not in the statements Filing Flows reads, so there is no reported figure to hold it to.")
         body += (f"<h2>{e(m['name'])}</h2>" + chart + (f"<p>Met or beat {h['hitOrBeat']} of {h['n']} periods ({h.get('above', 0)} above, {h.get('within', 0) + h.get('met', 0)} within, {h.get('below', 0)} below).</p>" if h.get('n') else
-                                               "<p class='muted'>No reported figure to hold it to yet (adjusted figures are not in the GAAP statements, or the period is still to be reported).</p>")
+                                               f"<p class='muted'>{e(why)}</p>")
                  + f"<div class='tbl-wrap'><table><thead><tr><th>Period</th><th>Guided (and how it moved)</th><th class='num'>Reported</th><th>Result</th><th class='num'>vs midpoint</th></tr></thead><tbody>{rows}</tbody></table></div>")
     qa = [(f"Does {name} beat its guidance?", lead.split(' Its releases')[0] if n else lead)]
     if said.get('raised') or said.get('lowered'):
@@ -355,7 +423,7 @@ def guidance_page(r, rec, base, slug, who, name, has_outlook=True):
     title = f"{who} guidance history: guided vs reported" + (f", met or beat {round(100 * hit / n)}% of the time" if n else '') + ' | Filing Flows'
     page_body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › Guidance history</p>"
                  f"<h1>{e(who)} guidance history: what it guided and what it reported</h1><p class='lead'>{e(lead)}</p>{body}"
-                 + "<h2>The latest quarter</h2>" + sankey_figure(r['cik'], '', f"{who} latest quarter Sankey") + faq(qa)
+                 + "<h2>The latest quarter</h2>" + sankey_figure(r['cik'], '', f"{who} latest quarter Sankey", fallback=quarter_words(name, ((c or {}).get('quarters') or [None])[0])) + faq(qa)
                  + ("<p><a href='../guidance/'>Latest guidance and outlook →</a></p>" if has_outlook else '') + "<p class='muted'>Each guided period is held to the last guidance given before its figures were reported; a single figure counts as in line within 1% (0.25 pts for a rate). Reported figures are GAAP, from the company's filings; adjusted guidance shows its moves only.</p>")
     crumbs = [('Filing Flows', base + '/'), (who, f'{base}/c/{slug}/'), ('Guidance history', url)]
     return url, (rec.get('latest') or '')[:10] or None, seo.page(title, lead[:300], url, page_body, 3, base + '/og.png', ld(base, crumbs, qa))
@@ -439,7 +507,7 @@ def write(site, base, period_pages=PERIOD_PAGES):
                     send_on(d, old_slug, out[0], f'{who} {label} by quarter')
         rec = read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))
         if rec:
-            out = guidance_page(r, rec, base, slug, who, name, os.path.exists(os.path.join(d, 'guidance', 'index.html')))   # seo_topics.py ran first
+            out = guidance_page(r, rec, base, slug, who, name, os.path.exists(os.path.join(d, 'guidance', 'index.html')), c)   # seo_topics.py ran first
             if out:
                 put(os.path.join(d, 'guidance-history'), *out, 'metrics')
                 counts['guidance'] += 1

@@ -236,9 +236,28 @@ _NEG0 = re.compile(r"(?<![\w.,])[-−](0(?:[.,]0+)?(?:\s|&nbsp;)?%)")
 
 # The fonts load with display=optional: a phone that does not have IBM Plex in time keeps the fallback font instead of
 # reflowing the page when it arrives (c/nvda/ on slow 4G: layout shift 0.14 with swap, 0 with optional).
+_SENT_END = re.compile(r"(?<=[.!?…)])\s+(?=[A-Z0-9“\"'(])|(?<=[。！？])")      # English, and Chinese (no space after 。)
+
+
+def snippet(desc, n=300):
+    """the meta description in whole sentences: the generators hand over their lead cut at n characters ("… 22¢ was left
+    as operating profit, 1"), which a search result shows as is; such a cut ends at the last whole sentence (or the last
+    whole word and an ellipsis when the first sentence alone runs past n)"""
+    d = re.sub(r"\s+", " ", desc or "").strip()
+    if len(d) > n:
+        d = d[:n]
+    elif len(d) < n - 25 or re.search(r"[.!?…)\]”\"'。！？）]$", d):
+        return d                                                     # short, or ends where a sentence does: left alone
+    cuts = [m.start() for m in _SENT_END.finditer(d) if m.start() < len(d)]
+    if cuts and cuts[-1] >= 80:
+        return d[:cuts[-1]].rstrip()
+    return d.rsplit(" ", 1)[0].rstrip(",;:—–- ") + "…"
+
+
 def page(title, desc, canonical, body, depth, image, jsonld=None):
     if len(title) > 70 and title.endswith(" | Filing Flows"):      # a long title keeps its own words; search shows the site's name anyway
         title = title[:-len(" | Filing Flows")]
+    desc = snippet(desc)
     body, desc = _NEG0.sub(r"\1", body), _NEG0.sub(r"\1", desc)
     body = _signs(body)
     up = "../" * depth
@@ -538,7 +557,7 @@ def index_charts(latest, names):
 def sector_charts(items, sname):
     """A sector page's charts: the largest companies, growth against margin, and the largest one's Sankey."""
     import seo_svg as SV
-    from seo_history import sankey_figure
+    from seo_history import sankey_figure, figure_words
     out = SV.hbars([(x.get("ticker") or display_name(x.get("name")), x.get("revenue")) for x in items], money, f"{sname}: the largest companies by quarterly revenue", n=15)
     pts = [(x.get("ticker") or display_name(x.get("name")), max(-100, min(300, x["yoy"])), max(-100, min(100, x["om"])), x.get("revenue"))
            for x in items[:150] if x.get("yoy") is not None and x.get("om") is not None]
@@ -547,7 +566,8 @@ def sector_charts(items, sname):
     if items:
         top = items[0]
         out += (f"<h2>The largest: {e(display_name(top.get('name')))}</h2>"
-                + sankey_figure(top["cik"], top.get("label"), f"{display_name(top.get('name'))} {top.get('label')} Sankey", up="../../"))
+                + sankey_figure(top["cik"], top.get("label"), f"{display_name(top.get('name'))} {top.get('label')} Sankey", up="../../",
+                                fallback=figure_words(display_name(top.get('name')), top.get('label'), top.get('revenue'), top.get('yoy'), om=top.get('om'))))
     return out
 
 
@@ -721,7 +741,10 @@ def gamma_charts(d, mdl, nm, sic):
         out += SV.ranges([(qname(q), lo, hi, rv) for q, g, rv, lo, hi, *_ in fc], money, f"{nm}: the growth model's forecast of industry revenue",
                          legend=("80% range", "model's central forecast"))
     out += (f"<section class='seo-live' data-kind='industry' data-sic='{e(sic)}' data-sector='{e(d.get('sector') or '')}'><h2>Money flow: where the industry's revenue goes</h2>"
-            f"<p class='muted'>Loading the interactive chart…</p></section><script>window.FF_BASE='../../';</script><script src='../../sankey.js' defer></script>"
+            f"<p class='muted'>Drawn in the browser: an estimate of where the industry's revenue goes — what it buys from other industries, "
+            f"the pay that reaches households, taxes and profit — beside its filed cash flow, two tiers of suppliers and its capital spending "
+            f"by kind of asset.</p>"
+            f"</section><script>window.FF_BASE='../../';</script><script src='../../sankey.js' defer></script>"
             f"<script src='../../chains.js' defer></script><script src='../../flowlab.js' defer></script><script src='../../seo-embed.js' defer></script>")
     return out
 
