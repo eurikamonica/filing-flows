@@ -189,7 +189,7 @@ class Collect(unittest.TestCase):
         self.assertEqual(doc['open'], ['2024-09-30', '2024-12-31'])
         who = {w[0]: w for w in doc['who']}
         self.assertEqual(who['f:blackrock'][1], 'BlackRock')
-        self.assertEqual(sorted(who['f:blackrock'][3]), [1364742, 2012383])
+        self.assertTrue({1364742, 2012383, 1006249} <= set(who['f:blackrock'][3]))      # its filers, old and new
         bl = [next((x for x in row if doc['who'][x[0]][0] == 'f:blackrock'), None) for row in doc['top']]
         self.assertTrue(all(bl))                         # BlackRock in every quarter, through the change of CIK
         self.assertEqual(doc['total'][0][0], 4)
@@ -197,6 +197,27 @@ class Collect(unittest.TestCase):
         self.assertEqual(json.loads((self.tmp / 'hh' / 'public' / 'c' / 'MDT.json').read_text())['total'][0][0], 3)   # the restatement dropped the small fund's
         ix = json.loads((self.tmp / 'hh' / 'public' / 'index.json').read_text())
         self.assertEqual(ix['rows'][0][0], 'AAPL')
+
+    def test_mistyped_filings_stray_quarters_and_late_family_members(self):
+        tmp = Path(tempfile.mkdtemp())
+        root, hub = tmp / 'hh', tmp / 'hub'
+        (root / 'cache' / 'periods').mkdir(parents=True)
+        many = [[f'c{100 + k}', 1000, 100_000] for k in range(70)]           # 70 holders at $100 a share
+        q = lambda p, rows, h=None: HH.write_gz(root / 'cache' / 'periods' / f'{p}.json.gz', {'period': p, 'filers': 99, 'names': {}, 'issuers': {}, 'rows': {AAPL: [h or len(rows), sum(r[1] for r in rows), sum(r[2] for r in rows), rows]}})
+        q('2015-03-31', [['c1', 1000, 100_000]], h=1)                          # one filer early: a stray report
+        q('2015-06-30', [['c913414', 5000, 500_000], ['c1006249', 4000, 400_000], ['c7', 9_000_000, 100_000]] + many)
+        q('2015-09-30', [['c913414', 5000, 500_000]] + many)
+        (hub / 'market').mkdir(parents=True)
+        (hub / 'market' / 'cusip-tickers.json').write_text(json.dumps({AAPL: 'AAPL'}))
+        HH.build(root, hub, min_usd=1)
+        doc = json.loads((root / 'public' / 'c' / 'AAPL.json').read_text())
+        self.assertEqual(doc['periods'], ['2015-06-30', '2015-09-30'])          # the stray quarter left out
+        who = [w[0] for w in doc['who']]
+        first = {who[w]: (sh, usd) for w, sh, usd in doc['top'][0]}
+        self.assertEqual(first['f:blackrock'], (9000, 900_000))               # two BlackRock filers of 2015 as one
+        self.assertEqual(first['c7'], (1000, 100_000))                        # 9 million shares worth $100,000: the smaller kept
+        self.assertEqual(who[doc['top'][0][0][0]], 'f:blackrock')
+        self.assertLess(doc['total'][0][1], 9_000_000)                        # the total bounded the same way
 
     def test_former_cusips_and_share_classes(self):
         tmp = Path(tempfile.mkdtemp())

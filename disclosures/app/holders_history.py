@@ -57,11 +57,17 @@ csv.field_size_limit(1 << 30)
 # fund families: one holder however many filers (CIKs) report for it — [name, short label, CIKs]
 FAMILIES = {
     'vanguard': ['Vanguard', 'Vanguard', [102909, 2100119, 2100121, 933478, 1811242, 1680208, 1550100, 1767306, 1984256, 947529]],
-    'blackrock': ['BlackRock', 'BlackRock', [1364742, 2012383]],
-    'capital': ['Capital Group', 'Capital Group', [1422848, 1422849, 1562230, 895213, 1065349, 1065350]],
+    # until 2016 BlackRock reported through its trust company, fund advisors, UK group, advisors and investment managers
+    'blackrock': ['BlackRock', 'BlackRock', [1364742, 2012383, 913414, 1006249, 1003283, 1086364, 1305227, 1085635]],
+    'capital': ['Capital Group', 'Capital Group', [1422848, 1422849, 1562230, 895213, 1065349, 1065350, 314965]],
     'troweprice': ['T. Rowe Price', 'T. Rowe Price', [80255, 1897612]],
-    'ubs': ['UBS', 'UBS', [1114446, 1610520, 861177]],
-    'schwab': ['Charles Schwab', 'Schwab', [884546, 1789219]],
+    'ubs': ['UBS', 'UBS', [1114446, 1610520, 861177, 1132716]],
+    'schwab': ['Charles Schwab', 'Schwab', [884546, 1789219, 1501902]],
+    'tiaa': ['TIAA / Nuveen', 'Nuveen (TIAA)', [887793, 939222, 1091559, 1711615, 1997405, 1521019, 1871926, 2124867, 315038]],
+    'janus': ['Janus Henderson', 'Janus Henderson', [812295, 1274173]],
+    'twosigma': ['Two Sigma', 'Two Sigma', [1478735, 1179392]],
+    'cibc': ['CIBC', 'CIBC', [1421224, 1021926, 1056527, 1298088]],
+    'mufg': ['Mitsubishi UFJ (MUFG)', 'MUFG', [67088, 1462160, 1466546, 1597694]],
 }
 FAMILY_OF = {cik: key for key, (_, _, ciks) in FAMILIES.items() for cik in ciks}
 # the names filers report under, as people say them: [name, short label]
@@ -77,13 +83,18 @@ PRETTY = {
     1009207: ['D. E. Shaw', 'D. E. Shaw'], 1871926: ['Nuveen', 'Nuveen'], 1350694: ['Bridgewater Associates', 'Bridgewater'],
 }
 # CUSIPs the Hub's map cannot name and whose issuer was renamed (so no name matches): CUSIP → ticker
-FORMER = {'38259P508': 'GOOGL', '38259P706': 'GOOG', '74005P104': 'LIN', 'Y0486S104': 'AVGO', 'Y09827109': 'AVGO'}
+FORMER = {'38259P508': 'GOOGL', '38259P706': 'GOOG', '74005P104': 'LIN', 'Y0486S104': 'AVGO', 'Y09827109': 'AVGO', '73935A104': 'QQQ'}
 # a company's share classes in one file: class → (the ticker it joins, its shares in the other's: 1 class A = 1,500 B)
 CLASSES = {'GOOG': ('GOOGL', 1), 'BRK-A': ('BRK-B', 1500), 'FOX': ('FOXA', 1), 'NWS': ('NWSA', 1)}
-NOT_COMMON = re.compile(r'\b(PFD|PREF|PREFERRED|NOTE|NOTES|WT|WTS|WARRANT|WARRANTS|RIGHT|RIGHTS|UNIT|UNITS|DEB|DEBT|BOND|CONV)\b', re.I)
+NOT_COMMON = re.compile(r'\b(PFD|PREF|PREFERRED|NOTE|NOTES|WT|WTS|WARRANT|WARRANTS|RIGHT|RIGHTS|UNIT|UNITS|DEB|DEBT|BOND|CONV|WHEN|WI|EXDISTRIB\w*|EX DISTRIB\w*|TRACKING)\b', re.I)
 STOP = set('INC INCORPORATED CORP CORPORATION CO COMPANY LTD LIMITED PLC NEW DEL THE HLDGS HOLDINGS HOLDING GROUP SA NV AG SE LLC LP '
            'COM CL CLASS SHS ORD N V S A B C IRELAND BERMUDA SWITZERLAND NETHERLANDS JERSEY CAYMAN LUXEMBOURG UK NY MD DE'.split())
 MON = {m: i + 1 for i, m in enumerate('JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC'.split())}
+# the short forms 13F issuer names use (cut to 28 characters): 'JOHNSON CTLS INTL PLC' is Johnson Controls International plc
+ABBR = {'INTL': 'INTERNATIONAL', 'CTLS': 'CONTROLS', 'TECH': 'TECHNOLOGY', 'TECHNOLOGIES': 'TECHNOLOGY', 'MFG': 'MANUFACTURING',
+        'SVCS': 'SERVICES', 'SVC': 'SERVICES', 'COS': 'COMPANIES', 'FINL': 'FINANCIAL', 'PHARMACEUTICALS': 'PHARMACEUTICAL',
+        'PPTYS': 'PROPERTIES', 'RLTY': 'REALTY', 'INVT': 'INVESTMENT', 'MGMT': 'MANAGEMENT', 'COMMUNICATIONS': 'COMMUNICATION',
+        'SYS': 'SYSTEMS', 'HLDNGS': '', 'HLDGS': '', 'HLDG': '', 'HOLDG': '', 'PL': '', 'LT': '', 'INDS': 'INDUSTRIES', 'BANCORPORATION': 'BANCORP'}
 
 
 def now():
@@ -158,12 +169,26 @@ def closes(period, start):
 def name_key(s):
     """An issuer's name without its legal form, punctuation and country: 'MEDTRONIC PLC' and 'Medtronic plc' → 'MEDTRONIC'."""
     s = re.sub(r'/[A-Z]{2,4}/?', ' ', (s or '').upper())
-    words = [w for w in re.sub(r'[^A-Z0-9 ]+', ' ', s.replace('&', ' AND ')).split() if w not in STOP]
-    return ''.join(words)
+    words = [ABBR.get(w, w) for w in re.sub(r'[^A-Z0-9 ]+', ' ', s.replace('&', ' AND ')).split() if w not in STOP]
+    return ''.join(w for w in words if w)
+
+
+def cusip_ok(c):
+    """A real CUSIP: its ninth character is the check digit of the first eight (some filers type a SEDOL or an ISIN's
+    middle instead, '00BTN1Y11')."""
+    if not re.fullmatch(r'[0-9A-Z*@#]{8}[0-9]', c or ''):
+        return False
+    tot = 0
+    for i, ch in enumerate(c[:8]):
+        v = int(ch) if ch.isdigit() else ord(ch) - 55 if ch.isalpha() else 36 + '*@#'.index(ch)
+        if i % 2:
+            v *= 2
+        tot += v // 10 + v % 10
+    return (10 - tot % 10) % 10 == int(c[8])
 
 
 def class_letter(s):
-    m = re.search(r'\bCL(?:ASS)?\s*([A-C])\b', (s or '').upper())
+    m = re.search(r'\bCL(?:ASS)?\s*([A-Z])\b', (s or '').upper())
     return m.group(1) if m else ''
 
 
@@ -596,15 +621,18 @@ def ticker_map(hub, periods):
                     titles[k].add(t)
     except (OSError, ValueError):
         pass
-    span, issuers, size = {}, defaultdict(Counter), Counter()
+    per_q, issuers, size = defaultdict(dict), defaultdict(Counter), Counter()
     for p, doc in periods:
         for cusip, row in doc['rows'].items():
-            a = span.get(cusip)
-            span[cusip] = (min(a[0], p), max(a[1], p)) if a else (p, p)
+            per_q[cusip][p] = row[0]
             size[cusip] = max(size[cusip], row[0])
             nm = doc['issuers'].get(cusip)
             if nm:
                 issuers[cusip][tuple(nm)] += 1
+    span = {}
+    for cusip, q in per_q.items():                 # the quarters with a tenth of its most holders: its own life
+        main = sorted(p for p, h in q.items() if h >= max(3, 0.1 * size[cusip])) or sorted(q)
+        span[cusip] = (main[0], main[-1])
     out, how = {}, Counter()
     for cusip in span:
         t = cmap.get(cusip) or FORMER.get(cusip)
@@ -614,25 +642,82 @@ def ticker_map(hub, periods):
     taken = defaultdict(list)
     for c, t in out.items():
         taken[t].append(span[c])
+    by8 = defaultdict(list)                        # titles by their first letters, for a name cut short in a filing
+    for k, ts in titles.items():
+        by8[k[:10]].append((k, ts))
+    cand = defaultdict(list)                       # ticker → the CUSIPs whose issuer is named like its listing
     for cusip, (a, b) in span.items():
-        if cusip in out or size[cusip] < 3 or not issuers[cusip]:
+        if cusip in out or size[cusip] < 3 or not issuers[cusip] or not cusip_ok(cusip):
             continue
         (issuer, cls), _ = issuers[cusip].most_common(1)[0]
         if NOT_COMMON.search(cls or '') or NOT_COMMON.search(issuer or ''):
             continue
-        cand = {t for t in titles.get(name_key(issuer), ()) if '-' not in t} or titles.get(name_key(issuer), set())
+        ik = name_key(issuer)
+        ts = set(titles.get(ik, ()))
+        if not ts and len(ik) >= 10:               # 'SEAGATE TECHNOLOGY HLDNGS PL…': a listing whose name starts the same
+            ts = {t for k, tt in by8.get(ik[:10], ()) if (ik.startswith(k) or k.startswith(ik)) and min(len(k), len(ik)) >= 10 for t in tt}
+        ts = {t for t in ts if '-' not in t} or ts
         letter = class_letter(cls)
-        if len(cand) > 1 and letter:
-            cand = {t for t in cand if t.endswith('-' + letter)} or cand
-        if len(cand) != 1:
-            continue
-        t = next(iter(cand))
-        if any(len(quarter_ends(max(a, x0), min(b, x1))) > 1 for x0, x1 in taken[t]):
-            continue                               # the ticker's own CUSIP covers these quarters: not the same security
-        out[cusip] = t
-        taken[t].append((a, b))
-        how['by name'] += 1
+        if len(ts) > 1 and letter:
+            ts = {t for t in ts if t.endswith('-' + letter)} or ts
+        if len(ts) == 1:
+            cand[next(iter(ts))].append(cusip)
+    for t, cs in cand.items():
+        # the most held first, each quarter to one CUSIP: a company's own CUSIP before the odd identifiers some filers
+        # type for it; then only those linked, quarter after quarter, to the ticker's own (a chain of replaced CUSIPs,
+        # not another company of the same name years apart)
+        own = {class_letter(issuers[c].most_common(1)[0][0][1]) for c, tt in out.items() if tt == t and issuers.get(c)} - {''}
+        got = []
+        for c in sorted(cs, key=lambda c: -size[c]):
+            a, b = span[c]
+            # a quarter shared only where one CUSIP ends and the next begins (and goes on past it); never a CUSIP
+            # inside another's years
+            if any(len(quarter_ends(max(a, x0), min(b, x1))) > (1 if (a >= x1 and b > x1) or (b <= x0 and a < x0) else 0)
+                   for x0, x1 in taken[t] + [span[g] for g in got]):
+                continue
+            letter = class_letter(issuers[c].most_common(1)[0][0][1])
+            if letter and own and letter not in own:
+                continue                           # another class of share (Dell's class V tracking stock is not class C)
+            got.append(c)
+        seeds = list(taken[t]) or [span[max(got, key=lambda c: size[c])]] if got else list(taken[t])
+        linked, grew = [], True
+        while grew:
+            grew = False
+            for c in got:
+                if c not in linked and any(gap(span[c], x) <= 4 for x in seeds):
+                    linked.append(c)
+                    seeds.append(span[c])
+                    grew = True
+        for c in linked:
+            out[c] = t
+            taken[t].append(span[c])
+            how['by name'] += 1
     return out, names, issuers, dict(how)
+
+
+def gap(u, v):
+    """Quarter-ends from the end of one span to the start of the other (2: back to back; 0: they overlap)."""
+    (a, b), (x0, x1) = u, v
+    return len(quarter_ends(b, x0)) if b < x0 else len(quarter_ends(x1, a)) if x1 < a else 0
+
+
+def tidy(row):
+    """A ticker's quarter made consistent: [holders, shares, usd, {holder: [shares, usd]}] with each holder's shares and
+    value put at the quarter's price (the median value per share among its largest holders) where a filing's two figures
+    disagree more than five times (shares typed wrong, a value in thousands): the smaller of the two is kept, so a
+    mistyped filing never makes a giant; and the totals: the lower of the value filed and the shares at that price."""
+    px = sorted(v / s for s, v in row[3].values() if s > 0 and v > 0)
+    if len(px) < 3:
+        return row
+    p = px[len(px) // 2]
+    for k, (s, v) in list(row[3].items()):
+        if s > 0 and v > 0 and not 0.2 <= v / (s * p) <= 5:
+            size = min(v, s * p)
+            row[3][k] = [size / p, size]
+    if row[1] > 0 and row[2] > 0 and not 0.99 <= row[2] / (row[1] * p) <= 1.01:   # all holders together: the lower of
+        usd = min(row[2], row[1] * p)                                               # the value filed and shares × price
+        row[1], row[2] = usd / p, usd
+    return row
 
 
 def build(root, hub, top=TOP, min_usd=20_000_000):
@@ -668,6 +753,8 @@ def build(root, hub, top=TOP, min_usd=20_000_000):
             a[1] += shares * ratio
             a[2] += usd
             for hk, sh, va in tops:
+                if hk.startswith('c') and int(hk[1:]) in FAMILY_OF:
+                    hk = 'f:' + FAMILY_OF[int(hk[1:])]
                 b = a[3].get(hk)
                 if b:
                     b[0] += sh * ratio
@@ -682,6 +769,12 @@ def build(root, hub, top=TOP, min_usd=20_000_000):
     for t, rows in per.items():
         if max(r[2] for r in rows.values()) < min_usd or max(r[0] for r in rows.values()) < 3:
             continue
+        for r in rows.values():
+            tidy(r)
+        # the first and last quarters a handful of filers still (or already) report a CUSIP in: not the ticker's history
+        hmax = max(r[0] for r in rows.values())
+        real = [i for i, r in rows.items() if r[0] >= (0.05 * hmax if hmax >= 60 else 1)]
+        rows = {i: r for i, r in rows.items() if min(real) <= i <= max(real)}
         who, widx = [], {}
         tops, total = [], []
         for i in range(len(P)):
@@ -690,7 +783,7 @@ def build(root, hub, top=TOP, min_usd=20_000_000):
                 total.append(None)
                 tops.append([])
                 continue
-            total.append([r[0], int(round(r[1])), r[2]])
+            total.append([r[0], int(round(r[1])), int(round(r[2]))])
             best = sorted(r[3].items(), key=lambda x: -x[1][0])[:top]
             row = []
             for hk, (sh, va) in best:

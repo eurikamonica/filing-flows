@@ -104,7 +104,7 @@
     const label = (s) => (who[s.w] || [])[2] || (who[s.w] || [])[1] || 'Holder';
     const nameOf = (s) => {
       const x = who[s.w] || [];
-      return (x[1] || '') + (x[0] && x[0].startsWith('f:') && (x[3] || []).length > 1 ? ' (its filers together)' : '');
+      return (x[1] || '') + (x[0] && x[0].startsWith('f:') ? ' (its filers together)' : '');
     };
     const company = (den && den.name) || doc.name || sym, isFund = den ? den.kind === 'fund' : !mv && !!na;
     const subject = isFund || !den ? sym : company.replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '').replace(/\.$/, ''), title = `Who owns ${subject}`;
@@ -155,8 +155,8 @@
     };
     // notes: the source, the families met here, the quarters still open, what 13F leaves out
     out.notes.add(`SEC Form 13F data sets: every 13F filed since May 2013 — what each manager with $100M or more in US-listed stocks and ETFs held at each quarter-end, filed within 45 days. ${span}.`);
-    const fams = [...ser.values()].map((s) => who[s.w]).filter((x) => x && x[0].startsWith('f:') && (x[3] || []).length > 1);
-    if (fams.length) out.notes.add('Fund families as one holder: ' + fams.slice(0, 4).map((x) => `${x[1]} (${x[3].length} filers)`).join(', ') + ' — Vanguard reports through Vanguard Capital Management and Vanguard Portfolio Management from 2026, BlackRock under a new CIK from Q4 2024.');
+    const fams = [...ser.values()].sort((a, b) => peak(b) - peak(a)).map((s) => who[s.w]).filter((x) => x && x[0].startsWith('f:'));
+    if (fams.length) out.notes.add('Fund families as one holder, whichever of their companies filed: ' + fams.slice(0, 5).map((x) => x[1]).join(', ') + ' — BlackRock reported through its trust company, fund advisors and other arms until 2016, under a new CIK from Q4 2024; Vanguard through Vanguard Capital Management and Vanguard Portfolio Management from 2026.');
     if ((doc.classes || []).length > 1) out.notes.add(`${doc.classes.join(' and ')} together: every share class of the company (holders of both count once each class).`);
     const open = (doc.open || []).filter((p) => P.includes(p));
     if (open.length) out.notes.add(`${open.map(qLabel).join(', ')}: late amendments can still change ${open.length > 1 ? 'these quarters' : 'this quarter'} a little.`);
@@ -176,7 +176,7 @@
       ['sh', 'Shares', 'Reported at ' + qLabel(H.last)], ['usd', 'Value', 'Reported 13F value at ' + qLabel(H.last)]];
     const rows = H.rows.map((r) => ({ k: r.pal, label: r.label, name: r.name, cells: {
       v0: cell(f(r.v0), r.q0 !== H.first ? 'from ' + qLabel(r.q0) : '', r.v0), v: cell(f(r.v), '', r.v), chg: cell(ch(r.v0, r.v), '', fin(r.v0) && fin(r.v) ? r.v - r.v0 : null),
-      sh: cell(count(r.sh), '', r.sh), usd: cell(money(r.usd), r.filers.length > 1 ? r.filers.length + ' filers' : '', r.usd) } }));
+      sh: cell(count(r.sh), '', r.sh), usd: cell(money(r.usd), r.key.startsWith('f:') ? 'fund family' : '', r.usd) } }));
     const I = H.inst;
     rows.push({ k: 0, label: 'Every 13F holder', strong: true, sec: 'other', cells: { v0: cell(f(I.v0), I.holders0.toLocaleString('en-US') + ' managers', I.v0), v: cell(f(I.v), I.holders.toLocaleString('en-US') + ' managers', I.v),
       chg: cell(ch(I.v0, I.v), '', fin(I.v0) && fin(I.v) ? I.v - I.v0 : null), sh: cell(''), usd: cell(money(I.usd), '', I.usd) } });

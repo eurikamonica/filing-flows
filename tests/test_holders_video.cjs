@@ -56,13 +56,13 @@ const build = (s) => S.build(Object.assign(S.parseState('k=holders'), s));
   near(V.series[0].v[0], 0.09, 'Vanguard: its 13F value ÷ the market value');
   ok(V.title === 'Who owns Apple' && V.metric === 'Share of Apple' && V.fmt(0.09) === '9.0%', 'title and measure: ' + V.title + ' · ' + V.metric);
   const notes = [...V.notes].join(' | ');
-  ok(/Vanguard \(2 filers\), BlackRock \(2 filers\)/.test(notes) && /Q4 2024: late amendments/.test(notes) && /more managers crossed/.test(notes), 'the notes: ' + notes);
+  ok(/one holder, whichever of their companies filed: Vanguard, BlackRock/.test(notes) && /Q4 2024: late amendments/.test(notes) && /more managers crossed/.test(notes), 'the notes: ' + notes);
   ok(V.series.find((s) => s.label === 'Small').v.slice(0, 3).every((x) => x == null), 'a holder outside a quarter\'s largest has no bar then');
   V.style = 'bars'; V.endCard = true; S.finish(V, Object.assign(S.parseState('k=holders'), { t: 'AAPL' }));
   ok(V.final[0].label === '1. Vanguard' && V.final[0].value === '10.5%' && /Share of Apple · Q4 2024/.test(V.endTitle), 'the end card: ' + V.final.map((r) => r.label + ' ' + r.value).join(', '));
   let Rp = S.report(V);
   ok(Rp.cols.map((c) => c[1]).join() === 'Q1 2024,Q4 2024,Change,Shares,Value' && Rp.rows[0].cells.chg[0] === '+1.50 pp' && Rp.rows[Rp.rows.length - 1].label === 'Every 13F holder', 'the table: ' + Rp.rows.map((r) => r.label + ' ' + r.cells.chg[0]).join(', '));
-  ok(Rp.rows[0].cells.usd[1] === '2 filers' && Rp.rows[Rp.rows.length - 1].cells.v[1] === '5,300 managers', 'the table names the filers and the managers');
+  ok(Rp.rows[0].cells.usd[1] === 'fund family' && Rp.rows[Rp.rows.length - 1].cells.v[1] === '5,300 managers', 'the table names the families and the managers');
   ok(S.csvOf(V, Rp).split('\n')[0].startsWith('date,Vanguard,BlackRock'), 'the CSV: each holder a column');
   // the whole ownership as areas: the largest, every other 13F holder, the rest, adding up to 100%
   V = await build({ t: 'AAPL', style: 'stack', hn: '3' });
