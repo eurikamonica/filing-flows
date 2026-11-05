@@ -2231,16 +2231,22 @@
   }
   // a leaderboard: N slots, bars sliding as ranks change, coloured by sector, entering from below and leaving downwards
   function rankRace(ctx, V, f, b, S, th, F) {
-    const N = V.rankN, i0 = Math.floor(f), i1 = Math.min(V.grid.length - 1, i0 + 1), e = easeIO(f - i0);
-    const order = (i) => { const arr = V.series.map((s, k) => ({ k, v: s.v[i] })).filter((x) => fin(x.v)); arr.sort((a, c) => (V.order === 'abs' ? Math.abs(c.v) - Math.abs(a.v) : V.order === 'asc' ? a.v - c.v : c.v - a.v)); return new Map(arr.map((x, r) => [x.k, r])); };
-    const r0 = order(i0), r1 = order(i1);
-    const top = (m, i) => { let mx = 0; for (const [k, r] of m) if (r < N) mx = Math.max(mx, Math.abs(V.series[k].v[i])); return mx || 1; };
-    const vmax = lerp(top(r0, i0), top(r1, i1), e);
+    const N = V.rankN, i0 = Math.floor(f), i1 = Math.min(V.grid.length - 1, i0 + 1);
+    // keyframes: ten moments between two reports, every bar ranked by its value at each (the values move straight from one
+    // report to the next, as the bars' lengths do), and the bars slide from one moment's places to the next. The board
+    // stays full and the bars swap a few at a time, even when most of the top changes between two reports (a 13F of
+    // thousands of lines); a bar enters from just below the board and leaves to just below it
+    const K = 10, uK = Math.max(0, Math.min(1, f - i0)) * K, j = Math.min(K - 1, Math.floor(uK)), e = easeIO(uK - j);
+    const at = (s, u) => { const a = s.v[i0], c = s.v[i1]; return fin(a) && fin(c) ? a + (c - a) * u : fin(c) ? (u > 0 ? c : NaN) : fin(a) ? (u < 1 ? a : NaN) : NaN; };
+    const order = (u) => { const arr = V.series.map((s, k) => ({ k, v: at(s, u) })).filter((x) => fin(x.v)); arr.sort((a, c) => (V.order === 'abs' ? Math.abs(c.v) - Math.abs(a.v) : V.order === 'asc' ? a.v - c.v : c.v - a.v)); return new Map(arr.map((x, r) => [x.k, r])); };
+    const u0 = j / K, u1 = (j + 1) / K, r0 = order(u0), r1 = order(u1);
+    const top = (m, u) => { let mx = 0; for (const [k, r] of m) if (r < N) mx = Math.max(mx, Math.abs(at(V.series[k], u))); return mx || 1; };
+    const vmax = lerp(top(r0, u0), top(r1, u1), e);
     const legendH = 50 * S, footH = V.foot ? 30 * S : 0, area = b.h - legendH - footH, slot = area / N, bh = Math.min(slot * 0.76, 120 * S);
     const lab = 230 * S, room = Math.max(100 * S, b.w - lab - 250 * S), x0 = b.x + lab;
     const rows = [];
     V.series.forEach((s, k) => {
-      const a = r0.has(k) ? r0.get(k) : N + 1.5, c = r1.has(k) ? r1.get(k) : N + 1.5, r = lerp(a, c, e);
+      const off = N + 1.5, a = r0.has(k) ? Math.min(r0.get(k), off) : off, c = r1.has(k) ? Math.min(r1.get(k), off) : off, r = lerp(a, c, e);
       if (r > N + 0.6) return;
       let v = valAt(s.v, f); if (!fin(v)) v = fin(s.v[i1]) ? s.v[i1] : s.v[i0];
       if (fin(v)) rows.push({ s, k, r, v, c });
