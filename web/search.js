@@ -8,6 +8,9 @@
   const U = root.FFUx;
   let IX = null, loading = null;
   const PAGES = [['Latest filings', '#home'], ['Sectors', '#sectors'], ['Follow feed', '#feed'], ['Custom charts', '#chart'], ['Alerts & account', '#account'],
+    ['Videos: animated charts to post', '#studio'], ['IPO & prospectuses', '#ipo'], ['Industries (SIC)', '#gamma'], ['Supply chains & themes', '#chains'],
+    ['Growth model: forecasts', '#model'], ['Corporate investors', '#investors'], ['Today in the filings', 'daily/'], ['Material 8-K events', 'events/'],
+    ['13F managers A–Z', 'm/'], ["Officials' stock trades A–Z", 'o/'], ['Cross-holdings: who holds whom', 'disclosures/#cross'],
     ['Method', '#method'], ['Disclosures: signals', 'disclosures/#signals'], ['Disclosures: 13F flows', 'disclosures/#flows'],
     ["Disclosures: officials' trades", 'disclosures/#trades'], ['Disclosures: insider trades', 'disclosures/#insiders'], ['Disclosures: 8-K events', 'disclosures/#events'],
     ['Disclosures: smart money', 'disclosures/#smart'], ['Disclosures: all flows', 'disclosures/#allflows'], ['Disclosures: ETFs', 'disclosures/#etf'],
@@ -43,10 +46,11 @@
     if (!q) return 0;
     const tk = (e.tk || '').toLowerCase(), name = (e.name || '').toLowerCase();
     if (tk && tk === q) return 1000;
+    if (tk && tk.length >= 3 && q.split(/\s+/)[0] === tk && /\s/.test(q)) return 980;   // "nvda revenue": the ticker, then words about it
     if (tk && tk.replace(/[.-]/g, '') === q.replace(/[.-]/g, '')) return 950;
     if (tk && tk.startsWith(q)) return 800 - tk.length;
     if (name === q) return 900;
-    if (name.startsWith(q)) return 700;
+    if (name.startsWith(q)) return e.k === 'page' ? 750 : 700;       // "video": the Videos page before Video River Networks
     const words = name.split(/[^a-z0-9&]+/).filter(Boolean);
     const parts = q.split(/\s+/).filter(Boolean);
     if (parts.every((p) => words.some((w) => w.startsWith(p)))) return 600 - words.length;
@@ -80,6 +84,12 @@
   const row = (e, i, hi) => `<a href="${U.esc(e.href)}" class="${i === hi ? 'hi' : ''}${e.off ? ' off' : ''}" data-i="${i}">${e.tk ? `<span class="mono">${U.esc(e.tk)}</span>` : `<span class="fx-kind">${KIND[e.k]}</span>`}<span>${U.esc(e.name)}${e.sub ? ` <small class="muted">${U.esc(e.sub)}</small>` : ''}</span>${e.off ? '<span class="tag">no chart yet</span>' : ''}</a>`;
 
   // the header box: hub people and funds under the company results (never companies: app.js lists those)
+  // the header search box: every kind, ranked as the palette ranks them ({html, flat}: the rows and what each opens)
+  function headerHTML(q, hi = 0) {
+    const groups = find(q, 6), flat = groups.flatMap((g) => g[1]);
+    let i = 0;
+    return { flat, html: groups.map(([h, l]) => `<div class="fx-sg">${U.esc(h)}</div>` + l.map((e) => row(e, i++, hi)).join('')).join('') };
+  }
   function moreHTML(q) {
     if (!IX) { load(); return ''; }
     const groups = find(q, 0).filter((g) => g[0] !== 'Companies' && g[0] !== 'Pages' && g[0] !== 'Industries & themes');
@@ -170,7 +180,7 @@
     const q = document.getElementById('q');
     if (q) q.addEventListener('focus', () => load(), { once: true });
   }
-  root.FFSearch = { load, find, actions, score, moreHTML, open, close, _setIndex: (ix) => { IX = ix; } };
+  root.FFSearch = { load, find, actions, score, moreHTML, headerHTML, go, ready: () => !!IX, open, close, _setIndex: (ix) => { IX = ix; } };
   if (typeof module !== 'undefined') module.exports = root.FFSearch;
   else setup();
 })(typeof globalThis !== 'undefined' ? globalThis : this);

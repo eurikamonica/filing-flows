@@ -4487,9 +4487,26 @@
     const input = $('#q'), box = $('#suggest');
     let hi = 0, items = [];
     const close = () => { box.hidden = true; };
+    let hrefs = null;                                    // the rows' links when the site-wide search drew them
     input.addEventListener('input', async () => {
       const q = input.value.trim().toLowerCase();
       if (!q) { close(); return; }
+      // every kind at once (companies, ETFs, 13F managers, officials, industries, themes, pages), ranked together: a
+      // first query typed before the index was loaded showed companies only ("QQQ" offered QQQX, not the ETF)
+      const S = window.FFSearch;
+      if (S && S.headerHTML) {
+        if (!S.ready()) { box.innerHTML = '<div class="muted" style="padding:8px 10px">Searching…</div>'; box.hidden = false; }
+        await S.load().catch(() => null);
+        if (input.value.trim().toLowerCase() !== q) return;
+        if (S.ready()) {
+          const r = S.headerHTML(q, 0);
+          items = r.flat.length ? r.flat : []; hrefs = items.map((e) => e.href); hi = 0;
+          box.innerHTML = r.html || '<div class="muted" style="padding:8px 10px">Nothing found</div>';
+          box.hidden = false;
+          return;
+        }
+      }
+      hrefs = null;
       const ix = await getJSON('index.json');
       const exact = (c) => (c.ticker || '').toLowerCase() === q;
       const match = (c) => (c.ticker || '').toLowerCase().startsWith(q) || c.name.toLowerCase().includes(q);
@@ -4523,7 +4540,7 @@
         hi = (hi + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length;
         $$('a', box).forEach((a, i) => a.classList.toggle('hi', i === hi));
       } else if (e.key === 'Enter') {
-        location.hash = `c-${items[hi].cik}`;
+        if (hrefs && window.FFSearch) window.FFSearch.go(hrefs[hi]); else location.hash = `c-${items[hi].cik}`;
         input.value = '';
         close();
       } else if (e.key === 'Escape') close();
