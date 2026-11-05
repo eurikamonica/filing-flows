@@ -452,7 +452,7 @@ def gif_post(e, c, q, assets, cfg, media_dir, site_url, draft=False):
     link = (site_url or cfg.get("site_url", "")).rstrip("/")
     reply = "Every quarter, oldest first:\n" + "\n".join("· " + l.split(", net earnings")[0] for l in lines[-6:])
     reply = reply if social.xlen(reply) <= 280 else reply[:270].rsplit("\n", 1)[0]
-    posts = [post, reply] + ([f"Interactive charts, read from the SEC filings: {link}/#c-{c['profile']['cik']}"] if link else [])
+    posts = [post, reply] + ([f"Interactive charts, read from the SEC filings: {social.page_url(link, c['profile']['cik'], t)}"] if link else [])
     path = os.path.join(xdir, "pending.json")
     pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
     pending.append({"cik": e["cik"], "end": e["end"], "label": f"{t or e['cik']} 8-quarter GIF", "posts": posts, "written_by": via,

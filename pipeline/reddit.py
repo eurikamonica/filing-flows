@@ -238,7 +238,7 @@ def main():
                 print(f"::warning::no post for {a['ticker']} ({str(err)[:160]})")
                 continue
             reply = (f"Chart: {c_json['profile']['name']} {q['label']} from revenue to profit and cash, read from the {q.get('form')} "
-                     f"filed {q.get('filed')}. Not investment advice. {site_url}/#c-{e['cik']}")
+                     f"filed {q.get('filed')}. Not investment advice. {social.page_url(site_url, e['cik'], a.get('ticker') or e.get('ticker'))}")
             print(f"{a['ticker']}: {post}\n   ↳ {reply}")
             if args.dry_run:
                 continue

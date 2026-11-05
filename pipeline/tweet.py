@@ -355,7 +355,7 @@ def holders_thread(ticker, site_url, cik, today=None):
         return out if out != head else ""
     replies = [r for r in (listing(f"Bought or added, quarter ended {_day(period)}:", buys[:6]),
                            listing("Sold or cut:", sells[:6])) if r]
-    link = f"{site_url.rstrip('/')}/#c-{cik}" if site_url else ""
+    link = social.page_url(site_url, cik, ticker, "who-owns") if site_url and cik else ""
     replies.append("Source: 13F-HR filings with the SEC — quarter-end positions, not trades, filed up to 45 days after the quarter. "
                    "Not investment advice." + (f" Every holder: {link}" if link else ""))
     return {"post": post, "replies": replies, "lead": lead, "period": period, "filed": filed,
