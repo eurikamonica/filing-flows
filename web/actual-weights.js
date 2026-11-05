@@ -1,7 +1,9 @@
 /* Independent actual ETF / index-tracker holdings videos.
- * Unlike the existing Sector Weights, these NEVER compute company market-cap
- * shares. Reports are tied to their original as-of dates. Missing snapshots
- * are not backfilled with today's portfolio.
+ * Reports are tied to their original as-of dates. Missing snapshots are not backfilled with today's portfolio.
+ * An index proxy (QQQ for the Nasdaq-100, SPY for the S&P 500 …) can reach back before the fund's first report (SEC's
+ * N-PORT data sets begin Sep 30, 2019) the way the Sector weights video does: the index's members at each quarter-end
+ * weighted by their market values (studio.js reconstructIndex) — marked as reconstructed on the video, in its subtitle
+ * and notes, never as the fund's holdings. st.recon = '0' keeps the reports alone.
  */
 (function (root) {
   'use strict';
@@ -176,9 +178,25 @@
       api.json(api.hub + 'etf/weights/' + ticker + '.json'),
       api.json(api.hub + 'etf/e/' + ticker + '.json')
     ]);
-    const all = snapshots(history, current, external && st.aw === 'official' ? '' : st.from, external && st.aw === 'official' ? '' : st.to);
+    let all = snapshots(history, current, external && st.aw === 'official' ? '' : st.from, external && st.aw === 'official' ? '' : st.to);
     if (external) { out.notes.add(external.note); out.evidence = external.evidence; }
-    if (!all.length) throw new Error(ticker + ': no source-dated constituent weights in this date range; choose a newer date or fund');
+    // an index before its tracking fund's first report: the members and their market values, as the Sector weights video
+    let recon = [], R = null;
+    const reported0 = all.length ? all[0].date : null;
+    // only for a start chosen before the first report: a blank start keeps the reports alone ("all on file")
+    if (indexed && st.recon !== '0' && api.reconstruct && isDate(st.from)) {
+      const first = reported0 || (isDate(st.to) ? new Date(day(st.to) + 864e5).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
+      if (st.from < first) {
+        R = await Promise.resolve(api.reconstruct(st.at, st.from, first)).catch(() => null);
+        recon = ((R && R.snaps) || []).filter((x) => isDate(x.date) && x.date < first && x.date >= st.from).map((x) => {
+          const y = Object.assign({}, x, { positions: sortedPositions(x.positions), date_basis: 'reconstructed', reconstructed: true }), sw = sectorWeights(x.sector_weights);
+          if (sw) y.sector_weights = sw; else delete y.sector_weights;
+          return y;
+        }).filter((x) => x.positions.length);
+      }
+    }
+    if (!all.length && !recon.length) throw new Error(ticker + ': no source-dated constituent weights in this date range; choose a newer date or fund');
+    all = recon.concat(all);
     const [meta, extra] = await Promise.all([api.rankMeta().catch(() => null), Promise.resolve(api.json(api.hub + 'etf/sectors.json')).catch(() => null)]);
     const co = new Map(((meta && meta.cos) || []).map((r) => [symbol(r[0]), { name: r[1], sec: r[2] }]));
     const xsec = (extra && extra.sectors) || {};          // the ETF build's sector of every company ETFs hold (app/etf.py)
@@ -187,8 +205,20 @@
     const label = external ? external.basis : indexed ? 'Index-tracker holdings proxy' : 'Actual fund disclosures';
     out.grid = all.map((s) => day(s.date));
     out.group = (st.style === 'stack' || (st.style === 'changes' && st.ag === 'sector')) ? 'sectors' : 'companies';
-    out.fmt = percent; out.unit = '%'; out.actual = { fund: external ? external.id : ticker, source:st.aw, index: indexed ? st.at : null, reports: all.length };
-    out.notes.add('Observed or reported source dates: ' + from + (from === to ? '' : ' to ' + to) + '. No synthetic 2016–2026 history.');
+    out.fmt = percent; out.unit = '%'; out.actual = { fund: external ? external.id : ticker, source:st.aw, index: indexed ? st.at : null, reports: all.length - recon.length };
+    if (recon.length) {
+      const r0 = recon[0].date, r1 = recon[recon.length - 1].date, how = { price: 'share prices as traded (the Dow adds up its prices)', ndx: 'modified market values (the Nasdaq-100 caps its largest members; the caps here are an approximation)' }[R.how] || 'market values (every share outstanding; the index uses the shares that trade freely)';
+      out.actual.reconTo = reported0 ? day(reported0) : Infinity; out.actual.recon = recon.length; out.actual.reconLast = day(r1); out.actual.reconHow = R.how;
+      out.notes.add(`${r0} to ${r1}: RECONSTRUCTED, not the fund's holdings — the ${ref[0]}'s members at each quarter-end weighted by their ${how}, as the Sector weights video computes them.` + (reported0 ? ` From ${reported0}: ${ticker}'s reported holdings (SEC N-PORT and the sponsor's files).` : ''));
+      const lo = recon.reduce((a, x) => (x.on_file < a.on_file ? x : a), recon[0]), hi = recon.reduce((a, x) => (x.on_file > a.on_file ? x : a), recon[0]);
+      if (R.history && R.size) out.notes.add(`Members on file: ${lo.on_file} of the ${ref[0]}'s ${R.size} (${lo.date})${hi !== lo ? ' to ' + hi.on_file + ' (' + hi.date + ')' : ''}. Companies delisted, merged or bankrupt since are not on the site: the members on file share the whole index between them.`);
+      if (R.thin) out.notes.add(`Up to ${R.thin}: too few of the members have prices on the site (from mid-1993) — left out.`);
+      if (!R.history) out.notes.add(`${ref[0]}: membership history only from ${R.since || 'when the site began keeping it'} — before that, today's members are used: former members are left out and today's are counted in years before they joined (survivorship).`);
+      if (R.how !== 'price') out.notes.add('Market values: each month-end close × the latest shares outstanding, put on today\'s basis with the split history — a company that has since bought back or issued many shares is smaller or larger here than it was. A company counts once, all its share classes together; the reports list each class (GOOGL and GOOG).');
+      if (st.style === 'changes') out.notes.add('The change at ' + (reported0 || 'the switch') + ' compares a reconstruction with the fund\'s report: it shows the two methods as much as the portfolio.');
+    }
+    out.notes.add((recon.length ? 'Reported source dates: ' + (reported0 ? reported0 + ' to ' + to + '; before them, reconstructed quarter-ends (above).' : 'none in this range: every snapshot is reconstructed.')
+      : 'Observed or reported source dates: ' + from + (from === to ? '' : ' to ' + to) + '. No synthetic history.'));
     if (all.some(s => s.date_basis === 'observed')) out.notes.add('Some sponsor workbook dates are retrieval OBSERVATIONS because the source did not expose a parseable holdings as-of date; they are NOT claimed to be report effective dates.');
     if (all.some(s => s.date_basis === 'unknown')) out.notes.add('At least one older holdings record lacks date provenance. Its displayed date must NOT be claimed as a verified portfolio effective/report date.');
     out.notes.add(label + '. Sources: ' + sources + (external ? '.' : '. Report weights use fund NAV, not constituent market capitalization.'));
@@ -263,11 +293,12 @@
     const range = from === to ? from : from + ' → ' + to;
     const tag = external ? external.basis : indexed && st.at === 'dji' ? 'DIA tracking basket · price-weighted index proxy' : label + ' · ' + ticker;
     out.title = (external ? external.name : indexed ? ref[0] : ticker) + ': ' + (missingChangeHistory ? 'single dated ' + (sector ? 'sector' : 'company') + ' weight snapshot (no changes)' : st.style === 'changes' ? 'weight changes' : (sector ? 'sector' : 'company') + ' weights') + (st.aw === 'official' ? ' · transaction lower bounds' : '');
-    out.sub = range + ' · ' + tag + ' · ' + all.length + ' dated snapshot' + (all.length === 1 ? '' : 's') + (all.some(s => s.date_basis === 'observed') ? ' · observed date(s) included' : '') + (all.some(s => s.date_basis === 'unknown') ? ' · date basis unverified' : '');
+    out.sub = range + ' · ' + (recon.length ? 'reconstructed to ' + recon[recon.length - 1].date + (reported0 ? ', then ' + ticker + '\'s reports' : '') : tag) + ' · ' + all.length + ' dated snapshot' + (all.length === 1 ? '' : 's') + (all.some(s => s.date_basis === 'observed') ? ' · observed date(s) included' : '') + (all.some(s => s.date_basis === 'unknown') ? ' · date basis unverified' : '');
     out.foot = missingChangeHistory ? ('Only ' + from + ' is on file · single disclosed snapshot, not a weight-change history' +
       (st.aw === 'official' ? ' · transactions only, NOT holdings' : st.aw === '13f' ? ' · reported 13F values, NOT AUM' : ' · reported NAV weights'))
       : st.aw === 'official' ? 'Transaction LOWER-BOUND composition · not actual holdings · limited recent feed'
       : st.aw === '13f' ? 'Quarter-end 13F reported value · not current holdings or total AUM'
+      : recon.length ? 'Before ' + (reported0 || 'the fund\'s first report') + ': reconstructed from the index members\' market values · then reported holdings · transitions illustrative'
       : from === to ? 'Single reported holdings snapshot — not a history' : 'Reported holdings dates only; transitions illustrative';
     return out;
   }

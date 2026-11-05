@@ -962,6 +962,49 @@
     return P[k] * f;
   }
   const IDX_W = { dji: 'price', ndx: 'ndx' };                // every other index: market value
+  const IDX_N = { sp500: 500, ndx: 100, dji: 30, sp400: 400, sp600: 600, r1000: 1000, r2000: 2000 };   // members, nominally
+  // an index's members at each quarter-end and their weights as the index weighs them — market value, the Nasdaq-100's
+  // modified market value, the Dow's share prices as traded: the Sector weights video's method, company by company. The
+  // actual-holdings video (web/actual-weights.js) draws it before the tracking fund's first report (N-PORT, Sep 2019),
+  // marked as a reconstruction. → {snaps: [{date, positions [[ticker, weight]], sector_weights, on_file, members}], how}
+  async function reconstructIndex(idx, from, to, o = {}) {
+    if (!IDX[idx]) return { snaps: [] };
+    const meta = await rankMeta(), m0 = meta._m0, F = await panelFiles(['m-cap']), MB = await members();
+    if (!MB || !MB.rows) return { snaps: [] };
+    const U = universe({ idx, idxw: 'then', sec: '', cmin: '', cmax: '' }, meta, F, MB), how = IDX_W[idx] || 'cap', NC = meta.cos.length;
+    const last = lastReached(F['m-cap'], meta.months.n - 1), a = Date.parse(from + 'T00:00:00Z'), b = Date.parse(to + 'T00:00:00Z');
+    const months = [];
+    for (let i = Math.max(13, mIndex(a, m0)); i <= Math.min(last, mIndex(b, m0)); i++) if ((m0.m + i) % 3 === 2 && mEnd(i, m0) >= a && mEnd(i, m0) < b) months.push(i);
+    if (!months.length) return { snaps: [] };
+    let TH = null;
+    if (how === 'price') {                                // the Dow: each member's share price as traded, every quarter
+      const cand = []; for (let ci = 0; ci < NC; ci++) if (months.some((mi) => U.ok(ci, mi))) cand.push(ci);
+      TH = new Map();
+      await Promise.all(cand.map(async (ci) => { const th = await json(HUB + 'market/history/t/' + meta.cos[ci][0] + '.json'); if (th) TH.set(ci, th); }));
+    }
+    const tickers = Object.keys(MB.rows);
+    const snaps = months.map((mi) => {
+      const day = iso(mEnd(mi, m0)), list = [];
+      for (let ci = 0; ci < NC; ci++) {
+        if (!U.ok(ci, mi)) continue;
+        const v = how === 'price' ? tradedAt(TH.get(ci), mi, m0) : at(F['m-cap'][ci], mi);
+        if (fin(v) && v > 0) list.push([ci, v]);
+      }
+      let w = list.map((x) => x[1]);
+      const t0 = w.reduce((s2, x) => s2 + x, 0);
+      if (!(t0 > 0)) return null;
+      if (how === 'ndx') w = ndxWeights(w.map((x) => x / t0)).map((x) => x * t0);
+      const tot = w.reduce((s2, x) => s2 + x, 0), sw = {};
+      const positions = list.map(([ci], k) => { const sc = meta.cos[ci][2] || 'other'; sw[sc] = (sw[sc] || 0) + w[k] / tot; return [meta.cos[ci][0], w[k] / tot]; }).sort((p, q) => q[1] - p[1]);
+      const membersThen = tickers.reduce((n2, tk) => n2 + (isMember(MB, tk, idx, day, false) ? 1 : 0), 0);
+      return { date: day, date_basis: 'reconstructed', source: 'Reconstructed from the index members and their market values', positions, sector_weights: sw, on_file: list.length, members: membersThen };
+    }).filter(Boolean);
+    // the first quarters of the site's prices (mid-1993 on) price only a few members: from the first with a quarter of them
+    const history = ['sp500', 'dji'].includes(idx), size = IDX_N[idx] || 0, since = ((MB.history || {}).others || '').replace(/^from /, '');
+    const need = o.need || Math.max(5, Math.ceil(0.25 * (history ? size : Math.max(...snaps.map((x) => x.members), 0) || size)));
+    const k0 = snaps.findIndex((x) => x.on_file >= need), cut = k0 < 0 ? snaps.length : k0;
+    return { snaps: snaps.slice(cut), how, history, since, size, thin: cut ? snaps[cut - 1].date : null };
+  }
   async function buildSectors(st, out) {
     const meta = await rankMeta(), m0 = meta._m0;
     if (st.sw === 'fund') return buildFundSectors(st, out, meta);
@@ -1436,7 +1479,7 @@
     if (k === 'bubble') return buildBubble(st, out);
     if (k === 'treemap') return buildTreemap(st, out);
     if (k === 'sectors') return buildSectors(st, out);
-    if (k === 'actual') return root.FFActual.build(st, out, { json, hub: HUB, rankMeta });
+    if (k === 'actual') return root.FFActual.build(st, out, { json, hub: HUB, rankMeta, reconstruct: reconstructIndex });
     if (k === 'holdings') return root.FFHoldingsVideo.build(st, out, { json, hub: HUB, rankMeta });
     if (k === 'sankey') return buildSankey(st, out, T);
     if (k === 'cash') return buildCash(st, out, T);
@@ -1888,11 +1931,17 @@
     ctx.font = F(700, portrait ? 120 : 110);
     if (!V.yearly && style !== 'heat' && !['sankey', 'treemap', 'bubble'].includes(V.kind) && !(V.kind === 'cash' && style !== 'columns')) ctx.fillText(V.actual ? dayLabel(V.grid[k]) : V.quarterly ? (V.qlabel || quarterLabel)(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
     if (V.kind === 'treemap') { ctx.font = F(800, 64); ctx.fillStyle = th.text; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText(monthYear(V.grid[k]), W - pad, top - 10 * S); }
+    if (V.actual && V.actual.recon && V.kind === 'rank') {     // a bar race of an index: which frames are reconstructed
+      const rec = V.grid[k] < V.actual.reconTo;
+      ctx.font = F(700, 22); ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = rec ? th.accent : th.muted;
+      ctx.fillText(rec ? reconTag(V) : 'REPORTED · ' + V.actual.fund + ' holdings', W - pad, bottom - (portrait ? 190 : 180) * S);
+    }
     brand(ctx, W, H, S, th, F, portrait);
     ctx.fillStyle = alpha(th.accent, 0.9); ctx.fillRect(0, H - 6 * S, W * clamp(t / tm.D, 0, 1), 6 * S);
     if (V.endCard && t > tm.D - tm.hold) endCard(ctx, V, W, H, S, th, F, pal, clamp((t - (tm.D - tm.hold)) / 0.6, 0, 1), portrait);
   }
   const quarterLabel = (ms) => { const d = new Date(ms); return 'Q' + (Math.floor(d.getUTCMonth() / 3) + 1) + ' ' + d.getUTCFullYear(); };
+  const reconTag = (V) => 'RECONSTRUCTED · members × ' + (V.actual.reconHow === 'price' ? 'share price' : 'market value');
   function lines(ctx, text, maxW, font) { ctx.save(); ctx.font = font; let n = 1, line = ''; for (const w of String(text || '').split(' ')) { const tt = line ? line + ' ' + w : w; if (ctx.measureText(tt).width > maxW && line) { n++; line = w; } else line = tt; } ctx.restore(); return Math.min(n, 2); }
   function wrap(ctx, text, x, y, maxW, lh, max) {
     let line = '', n = 0; const words = String(text || '').split(' ');
@@ -2384,6 +2433,20 @@
       for (let i = 0; i < n; i++) base[i] = top[i];
     });
     ctx.strokeStyle = th.text; ctx.globalAlpha = 0.5; ctx.lineWidth = 2 * S; ctx.beginPath(); ctx.moveTo(X(tCur), b.y); ctx.lineTo(X(tCur), b.y + b.h); ctx.stroke(); ctx.globalAlpha = 1;
+    // an index's reconstructed quarters before its tracking fund's first report: marked while drawn, then where the
+    // method changes
+    const rt = V.actual && V.actual.recon ? V.actual.reconTo : null;
+    if (rt != null && fin(rt) && rt > G[0] && rt <= G[n - 1] && tCur >= rt) {
+      const xr = X(rt);
+      ctx.save(); ctx.setLineDash([8 * S, 7 * S]); ctx.strokeStyle = th.text; ctx.globalAlpha = 0.75; ctx.lineWidth = 2 * S;
+      ctx.beginPath(); ctx.moveTo(xr, b.y - 4 * S); ctx.lineTo(xr, b.y + b.h); ctx.stroke(); ctx.restore();
+      ctx.font = F(700, 17); ctx.textBaseline = 'bottom'; ctx.fillStyle = th.text;
+      ctx.textAlign = 'right'; ctx.fillText('← reconstructed', xr - 8 * S, b.y - 6 * S);
+      ctx.textAlign = 'left'; ctx.fillText('reported →', xr + 8 * S, b.y - 6 * S);
+    } else if (rt != null && tCur < rt) {
+      ctx.font = F(700, 17); ctx.textBaseline = 'bottom'; ctx.textAlign = 'left'; ctx.fillStyle = th.accent;
+      ctx.fillText(reconTag(V), b.x, b.y - 6 * S);
+    }
     const lh = 30 * S, sorted = heads.filter((h) => fin(h.v) && h.v > (share ? 0.004 : 0)).sort((a, c) => a.y - c.y);
     sorted.forEach((h, i) => { h.ly = Math.max(h.y, i ? sorted[i - 1].ly + lh : b.y + lh / 2); });
     for (let i = sorted.length - 1; i >= 0; i--) { const lim = i === sorted.length - 1 ? b.y + b.h - lh / 2 : sorted[i + 1].ly - lh; if (sorted[i].ly > lim) sorted[i].ly = lim; }
@@ -2715,7 +2778,7 @@
       const share = V.stack.share;
       V.final = V.series.map((s, k) => ({ k, sec: s.sec, label: s.label, v: s.v[L], v0: s.v.find(fin) })).sort((a, c) => (c.v || 0) - (a.v || 0)).slice(0, 8)
         .map((r) => ({ k: r.k, sec: r.sec, label: r.label, value: V.fmt(r.v), change: share && fin(r.v0) ? `${r.v >= r.v0 ? '+' : '−'}${Math.abs(100 * (r.v - r.v0)).toFixed(1)} pts` : (fin(r.v0) && r.v0 > 0 ? pctf(r.v / r.v0 - 1, 0) : ''), up: r.v >= (r.v0 || 0) }));
-      V.endTitle = V.actual ? `${V.metric}, ${dayLabel(G[L])}` : `${share ? V.metric || 'Share of market value' : 'Market value'}, ${monthYear(G[L])}`; V.endSub = V.actual ? `reported observations since ${dayLabel(G[0])}` : `change since ${monthYear(G[0])}`;
+      V.endTitle = V.actual ? `${V.metric}, ${dayLabel(G[L])}` : `${share ? V.metric || 'Share of market value' : 'Market value'}, ${monthYear(G[L])}`; V.endSub = V.actual ? (V.actual.recon ? `reconstructed from ${dayLabel(G[0])}` + (fin(V.actual.reconTo) ? `, reported since ${dayLabel(V.actual.reconTo)}` : '') : `reported observations since ${dayLabel(G[0])}`) : `change since ${monthYear(G[0])}`;
       V.caption = `${V.title}, ${monthYear(G[0])} → ${monthYear(G[L])}: ` + V.final.map((r) => `${r.label} ${r.value} (${r.change})`).join(' · ');
       return;
     }
@@ -3312,7 +3375,7 @@
       h += `<div class="st-help st-range" id="st-range" aria-live="polite"></div>`;
       if (st.style === 'changes') h += `<label for="st-ag">Group changes</label>${sel('st-ag', [['company','Company'],['sector','Sector']], st.ag)}`;
       h += `<label for="st-an">Top holdings shown</label>${sel('st-an', [['5', '5'], ['10', '10'], ['12', '12'], ['15', '15'], ['20', '20']], st.an)}`;
-      return h + '<div class="st-help">ETF NAV weights; 13F reported-value weights; officials show monthly transaction lower-bound shares, NOT holdings. Source dates are retained; official transaction charts use month-end buckets. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Dates before the first actual snapshot cannot be animated.</div>';
+      return h + '<div class="st-help">ETF NAV weights; 13F reported-value weights; officials show monthly transaction lower-bound shares, NOT holdings. Source dates are retained; official transaction charts use month-end buckets. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Index mode only: a start before the fund’s first report is reconstructed from the index’s members (labeled on the video); funds, managers and officials show their reports alone.</div>';
     }
     function holdingsSide() {
       let h = '<label for="st-hsrc">Disclosure source</label>' +
@@ -3487,7 +3550,7 @@
       const what = V.actual ? (' ' + (V.group || 'holdings')) : V.kind === 'cash' ? ' company' : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
       $('#st-status').textContent = V.actual && V.actual.fallback === 'single-disclosure'
         ? 'Only one real disclosure available · showing dated holdings, NOT weight changes · ' + V.series.length + what + ' · ' + tm.D + ' s'
-        : V.actual ? `${V.series.length + what} · ${V.grid.length} actual dated snapshot${V.grid.length === 1 ? '' : 's'} · ${tm.D} s${V.grid.length === 1 ? ' (single-date card)' : ' (transitions illustrative)'}`
+        : V.actual ? `${V.series.length + what} · ${V.grid.length} ${V.actual.recon ? '' : 'actual '}dated snapshot${V.grid.length === 1 ? '' : 's'}${V.actual.recon ? ` (${V.actual.recon} reconstructed, ${V.actual.reports} reported)` : ''} · ${tm.D} s${V.grid.length === 1 ? ' (single-date card)' : ' (transitions illustrative)'}`
         : `${V.series.length + what} · ${V.grid.length} ${unit} · ${tm.D} s (${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second)`;
       const pn = $('#st-pace-note'); if (pn) pn.textContent = V.actual ? (V.grid.length === 1 ? 'One disclosed/observed date · no invented historical movement.' : 'Transitions between observed dates are visual only, not daily observations.') : `About ${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second.`;
     }
@@ -3596,6 +3659,15 @@
             d.length ? `${d.length} ${d.length === 1 ? 'snapshot' : 'snapshots'}, ${fmtD(d[0])}${d.length > 1 ? ' → ' + fmtD(d[d.length - 1]) : ''} (${d.length > 1 ? 'daily sponsor files' : 'the latest report'})` : ''].filter(Boolean).join(' · ') : 'nothing yet';
           const start = inc && inc > NPORT0 ? inc : NPORT0;
           const maxTxt = `${fmtD(start)} → today. SEC’s data sets of fund portfolios begin ${fmtD(NPORT0)}${inc ? (inc > NPORT0 ? `; ${esc(sym)} launched ${fmtD(inc)}` : `; ${esc(sym)} launched ${fmtD(inc)}, so its earlier years are not in them`) : ''}. Each quarter-end turns up about 60 days after it; some funds’ first reports come later.`;
+          if (st.aw === 'index' && IDX[st.at]) {
+            // before the tracking fund's first report: the index rebuilt from its members, as the Sector weights video does
+            const hist = ['sp500', 'dji'].includes(st.at), ix = IDX[st.at], first = lo || NPORT0;
+            const wt = { dji: 'weighted by their share prices, as the Dow is', ndx: 'weighted by their market values, capped as the Nasdaq-100 caps them' }[st.at] || 'weighted by their market values';
+            const back = [['1999-12-31', 'From 1999'], ['2008-12-31', 'From 2008'], ['2012-01-31', 'From 2012']].filter(([d]) => d < first)
+              .map(([d, t]) => `<button type="button" class="pill" data-range-from="${d}"${st.from === d ? ' aria-pressed="true"' : ''}>${t}</button>`).join(' ');
+            set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Before ${fmtD(first)}:</b> start earlier and the ${esc(ix)} is reconstructed quarter by quarter — its members${hist ? ' at the time' : ' (today’s: the site keeps its membership only from Oct 2026)'} ${wt}, as the Sector weights video does; marked “reconstructed” on the video. Prices on the site begin in 1993. ${back}`, '1993-06-30', hi);
+            return;
+          }
           set(`<b>${esc(sym)}</b>${name ? ' · ' + esc(name) : ''}<br><b>On file:</b> ${onFile}${all(lo, hi)}<br><b>Max:</b> ${maxTxt}`, lo, hi);
         } else if (st.aw === '13f') {
           const cik = String(st.ac || '').replace(/\D/g, '').replace(/^0+/, '');
@@ -3651,6 +3723,8 @@
         side(); rebuild(); return;
       }
       if (e.target.closest('[data-range-all]')) { st.from = ''; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
+      const rf = e.target.closest('[data-range-from]');
+      if (rf) { st.from = rf.dataset.rangeFrom; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
       const yb = e.target.closest('[data-yrs]');
       if (yb) { st.from = iso(Date.now() - (+yb.dataset.yrs) * 365.25 * DAY); st.to = ''; st.yrs = ''; side(); rebuild(); }
       const sb = e.target.closest('[data-speed]');
@@ -3738,6 +3812,6 @@
     if (+st.yrs > 0) { const end = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(); st = Object.assign({}, st, { from: iso(end - (+st.yrs) * 365.25 * DAY) }); }
     const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, mixParts, figure, headAt, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, mixParts, figure, headAt, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, reconstructIndex, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

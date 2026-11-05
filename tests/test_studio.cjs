@@ -439,6 +439,16 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     ok(at('AAA', '2014-06-30') == null && at('AAA', '2016-06-30') != null && at('BBB', '2012-06-30') != null && at('BBB', '2014-06-30') == null && !V.series.some((x) => x.key === 'CCC'), 'S&P 500 members at each step');
     V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '3', idx: 'sp500', idxw: 'now', from: '2010-06-30', to: '2020-12-31' }));
     ok(V.series.map((x) => x.key).sort().join() === 'AAA,DDD' && /S&P 500 members/.test(V.title), "today's S&P 500 members: " + V.series.map((x) => x.key));
+    // an index before its tracking fund's first report (the actual-holdings video): its members at each quarter-end,
+    // weighted by their market values — the Sector weights method, company by company
+    let RC = await S.reconstructIndex('sp500', '2010-01-31', '2019-09-30', { need: 1 });
+    const rq = (d) => RC.snaps.find((x) => x.date === d), rn = (d) => rq(d).positions.map((p) => p[0]).sort().join();
+    ok(RC.snaps[0].date === '2011-03-31' && RC.snaps[RC.snaps.length - 1].date === '2019-06-30' && RC.snaps.every((x) => /-(03-31|06-30|09-30|12-31)$/.test(x.date)), 'reconstruction: quarter-ends before the first report: ' + RC.snaps.map((x) => x.date).slice(0, 3));
+    ok(rn('2012-12-31') === 'BBB,DDD' && rn('2013-06-30') === 'DDD' && rn('2015-03-31') === 'AAA,DDD', 'reconstruction: the members of each quarter');
+    ok(rq('2016-06-30').positions[0][0] === 'AAA' && Math.abs(rq('2016-06-30').positions[0][1] - 485 / 685) < 1e-9 && Math.abs(rq('2016-06-30').sector_weights.technology - 485 / 685) < 1e-9, 'reconstruction: market-value weights');
+    ok(RC.how === 'cap' && RC.history && RC.size === 500 && rq('2016-06-30').on_file === 2, 'reconstruction: method and coverage');
+    RC = await S.reconstructIndex('sp500', '2010-01-31', '2019-09-30');
+    ok(!RC.snaps.length && RC.thin === '2019-06-30', 'reconstruction: quarters pricing under a quarter of the members are left out');
     V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'pe', top: '3', from: '2011-06-30', to: '2019-12-31', step: 'q' }));
     ok(V.quarterly && V.series.every((x) => x.key !== 'BBB'), 'P/E leaves losses out');
     V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'growth', top: '2', minrev: '0', from: '2012-01-31', to: '2019-12-31' }));
@@ -582,6 +592,13 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     ok(V.series[0].key === 'health' || V.series[0].key === 'technology', 'the largest sector first');
     S.finish(V, V); ok(V.final.length === 4 && / pts$/.test(V.final[0].change), 'sector end card in points');
     for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 6, 11.9]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: 'clean', dur: 12 }, t); } n++;
+    // an index's actual-holdings video reaching back before its fund's first report: the badge, then the boundary
+    {
+      const R0 = Object.assign({}, V, { actual: { fund: 'QQQ', recon: 30, reconTo: V.grid[60], reconHow: 'cap', reports: 10 } });
+      const R1 = Object.assign({}, V, { actual: { fund: 'QQQ', recon: V.grid.length, reconTo: Infinity, reconHow: 'price', reports: 0 } });
+      for (const RV of [R0, R1]) for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 7, 11.9]) { RV.endCard = true; S.draw(ctx, ar[0], ar[1], RV, { theme: 'clean', dur: 12 }, t); }
+      n++;
+    }
     V = await S.build(Object.assign(S.parseState('k=sectors'), { sa: 'abs', from: '2011-01-31', to: '2020-12-31' }));
     ok(!V.stack.share && V.series.find((x) => x.key === 'health').v[0] === 2e5 * 1e6, 'sector market value in dollars');
     S.finish(V, V); S.draw(ctx, 1920, 1080, V, { theme: 'bull', dur: 12 }, 6); n++;
@@ -598,6 +615,8 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     V = await S.build(Object.assign(S.parseState('k=sectors'), { idx: 'dji', sw: 'cap', from: '2014-01-31', to: '2018-12-31' }));
     ok(V.weighting === 'cap' && Math.abs(at('technology', 2015, 6) - 1e5 * (1 + 65 / 20) / (1e5 * (1 + 65 / 20) + (3e5 - 65e3) + 2e5)) < 1e-9, 'the same members by market value');
     S.finish(V, V); n++;
+    const RD = await S.reconstructIndex('dji', '2014-01-31', '2018-12-31', { need: 1 }), dw = (d, t) => RD.snaps.find((x) => x.date === d).positions.find((p) => p[0] === t)[1];
+    ok(RD.how === 'price' && Math.abs(dw('2015-06-30', 'AAA') - 2 / 3) < 1e-9 && Math.abs(dw('2017-06-30', 'AAA') - 0.5) < 1e-9, 'Dow reconstruction: share prices as traded, split-aware');
     // a fund's own holdings: weights at the report, moved back with each stock's price; a holding without a ticker by name
     files['disclosures/data/etf/e/XLK.json'] = { name: 'Tech Fund', holdings: { date: '2020-06-30', n: 3, top: [['A Corp', '', 'c1', null, 'AAA', null, 0.6, 'EC'], ['B Corp.', '', 'c2', null, null, null, 0.3, 'EC'], ['Unknown Co', '', 'c3', null, 'ZZQ', null, 0.1, 'EC'], ['Cash', '', '', null, null, null, 0.05, 'STIV']] } };
     V = await S.build(Object.assign(S.parseState('k=sectors'), { sw: 'fund', sf: 'XLK', from: '2014-01-31', to: '2020-12-31' }));
