@@ -316,7 +316,7 @@ def images_for(assets, items, cfg, full=FULL_ITEMS):
     for e, c, q, _ in items[:full]:
         k = notify.item_key(e)
         out[k] = {"std": assets.image(e, c, q, "std")}
-        if "year_ago" in (cfg.get("images") or []) and q.get("compare_y"):
+        if "year_ago" in social.email_images(cfg) and q.get("compare_y"):
             out[k]["y"] = assets.image(e, c, q, "y")
     return out
 
@@ -381,7 +381,7 @@ def day_message(site, day, s, cfg, sender, to, site_url, assets):
 
 def thread_message(e, c, q, assets, cfg, sender, to):
     """One quarter's X thread with its chart PNGs attached (the owner's "Email me this thread")."""
-    modes = ["std"] + (["y"] if "year_ago" in (cfg.get("images") or []) and q.get("compare_y") else [])
+    modes = ["std"] + (["y"] if "year_ago" in social.email_images(cfg) and q.get("compare_y") else [])
     pngs = [assets.image(e, c, q, m, "png") for m in modes]
     names = social.image_names(e, q, len(modes))
     files = [(n, p) for n, p in zip(names, pngs) if p]
@@ -400,11 +400,17 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url, draft=False):
         if social.media_ok(cfg, "gif"):
             return gif_post(e, c, q, assets, cfg, media_dir, site_url, draft)
         kind = "post"                                # config/x.json "media" without "gif": the still PNG charts instead
-    modes = ["std"] + (["y"] if kind == "post" and "year_ago" in (cfg.get("images") or []) and q.get("compare_y") else [])
-    pngs = [assets.image(e, c, q, m, "png") for m in modes]
-    names = social.image_names(e, q, len(modes))
+    # the X card (pipeline/xcard.py) and / or the site's charts, as config/x.json "images" says; a holders post: one chart
+    wanted = [k for k in (cfg.get("images") or ["x"]) if k in ("x", "standard", "year_ago")] or ["x"]
+    if kind != "post":
+        wanted = wanted[:1]
+    views = [{"x": "x" if kind == "post" else "xplain", "standard": "std", "year_ago": "y"}[k] for k in wanted]
+    views = [v for v in views if v != "y" or q.get("compare_y")]
+    pngs = [assets.image(e, c, q, v, "png") for v in views]
+    sfx = {"x": "x", "xplain": "x", "std": "1-chart", "y": "2-vs-" + re.sub(r"[^A-Za-z0-9]+", "-", (q.get("compare_y") or {}).get("vs", "year-ago"))}
+    names = [social.post_image_name(e, q, sfx[v]) for v in views]
     if kind == "post_holders":
-        names = [n.replace("-1-chart", "-holders-chart") for n in names]
+        names = [n.replace(f"-{sfx[views[0]]}.png", "-holders-chart.png") for n in names]
     files = [(n, p) for n, p in zip(names, pngs) if p]
     xdir = os.path.join(media_dir, "x")
     os.makedirs(xdir, exist_ok=True)
@@ -413,7 +419,8 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url, draft=False):
             f.write(png)
     thread = bool(cfg.get("owner_thread", True))
     parts = social.compose_parts(c, q, dict(cfg, numbered=False, include_link=True, site_url=site_url or cfg.get("site_url", "")))
-    fallback, replies = parts[0]["text"], thread_replies(parts, kind)
+    from . import xcard                              # the fallback post: its point first (pipeline/xcard.py)
+    fallback, replies = xcard.rule_post(c, q, tweet.post_tags(c, q, cfg, e.get("ticker") or "", kind)), thread_replies(parts, kind)
     if kind == "post_holders":                       # who bought and sold, not the earnings: its own fallback and replies
         th = tweet.holders_thread(e.get("ticker") or "", site_url or cfg.get("site_url", ""), e["cik"])
         if th:

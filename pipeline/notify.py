@@ -776,6 +776,9 @@ class Assets:
     def what(c, q, view, decreases=False):
         if view == "h":
             return ("history", history_company(c, q))
+        if view in ("x", "xplain"):                     # the X card (pipeline/xcard.py): big headline and numbers, fewer lines
+            from . import xcard
+            return ("chart", xcard.spec(c, q) if view == "x" else xcard.plain_spec(c, q), None)
         return ("chart", q, None if view == "std" else view, {"decreases": bool(decreases and view in ("q", "y"))})
 
     def _get(self, key, make):

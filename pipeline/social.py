@@ -37,7 +37,7 @@ MAIL_SECRETS = ("MAIL_USERNAME", "MAIL_PASSWORD")
 BUFFER_SECRETS = ("BUFFER_API_KEY",)            # mode "buffer": threads go to Buffer's queue (pipeline/buffer.py)
 MAIL_MAX_BYTES = 18_000_000            # Gmail accepts 25 MB; attachments grow by a third when encoded
 DEFAULTS = {"enabled": True, "mode": "email", "scope": "all", "min_revenue": 1e9, "max_per_run": 4, "max_age_days": 3,
-            "preliminary": True, "include_link": False, "images": ["standard", "year_ago"], "site_url": "",
+            "preliminary": True, "include_link": False, "images": ["x"], "site_url": "",
             # "links": false = no web address in any post or reply (Buffer, X, the hand-posting e-mail): text and the
             # chart images only (no_links below). The charts still carry the site's name, drawn into the image.
             "links": True,
@@ -371,7 +371,7 @@ def compose_parts(c, q, cfg):
     prelim = q.get("form") == "8-K"
     numbered = cfg.get("numbered", True)
     room = LIMIT - (6 if numbered else 0)                          # "\n\n3/8" (up to 9/9)
-    n_images = 1 + ("year_ago" in (cfg.get("images") or []) and bool(q.get("compare_y")))
+    n_images = 1 + ("year_ago" in email_images(cfg) and bool(q.get("compare_y")))
     parts = [("headline", _post1(c, q, dict(cfg, _room=room), tick, name, n_images))]
 
     biz = business(c, q)
@@ -646,6 +646,34 @@ def intent_url(text):
     return "https://x.com/intent/post?text=" + quote(text, safe="")
 
 
+def email_images(cfg):
+    """The site's charts an e-mailed thread carries (the owner's daily report, "Email me this thread"): config/x.json
+    "email_images"; X posts use "images" (post_images)."""
+    v = cfg.get("email_images")
+    return v if isinstance(v, list) else [x for x in (cfg.get("images") or []) if x in ("standard", "year_ago")] or ["standard", "year_ago"]
+
+
+def post_images(c, q, cfg):
+    """[(file name suffix, spec, compare mode)] for an X post, in config/x.json "images" order: "x" = the X card
+    (pipeline/xcard.py: the point in big type, fewer lines, no notes), "standard" = the site's chart, "year_ago" = the
+    site's chart vs the same quarter a year earlier. X shows one picture full width; two or more as small tiles."""
+    from . import xcard
+    out = []
+    for kind in cfg.get("images") or ["x"]:
+        if kind == "x":
+            out.append(("x", xcard.spec(c, q), None))
+        elif kind == "standard":
+            out.append(("1-chart", q, None))
+        elif kind == "year_ago" and q.get("compare_y"):
+            out.append((f"2-vs-{re.sub(r'[^A-Za-z0-9]+', '-', q['compare_y'].get('vs', 'year-ago'))}", q, "y"))
+    return out or [("x", xcard.spec(c, q), None)]
+
+
+def post_image_name(e, q, suffix):
+    base = re.sub(r"[^A-Za-z0-9.]+", "-", f"{e.get('ticker') or e['cik']}-{q['label']}").strip("-")
+    return f"{base}-{suffix}.png"
+
+
 def image_names(e, q, n):
     base = re.sub(r"[^A-Za-z0-9.]+", "-", f"{e.get('ticker') or e['cik']}-{q['label']}").strip("-")
     names = [f"{base}-1-chart.png"]
@@ -752,7 +780,7 @@ def send_one(site, cfg, cik, end):
     if q["end"] != end:
         raise SystemExit(f"no quarter ending {end} on the site for CIK {cik}")
     e["ticker"] = (c["profile"].get("tickers") or [""])[0]
-    modes = [None] + (["y"] if "year_ago" in cfg["images"] and q.get("compare_y") else [])
+    modes = [None] + (["y"] if "year_ago" in email_images(cfg) and q.get("compare_y") else [])
     pngs = render_charts(site, [(q, m) for m in modes])
     item = (e, c, q, compose(c, q, cfg), list(zip(image_names(e, q, len(modes)), pngs)))
     send_email(build_email([item], cfg, sender_address(user), os.environ.get("MAIL_TO") or user), user, password)
@@ -818,14 +846,20 @@ def main():
     jobs, threads = [], []
     for e in todo:
         c, q = quarter_of(args.site, e)
-        modes = [None] + (["y"] if "year_ago" in cfg["images"] and q.get("compare_y") else [])
-        threads.append((e, c, q, len(modes)))
-        jobs += [(q, m) for m in modes]
+        if mode == "email":                          # the hand-posting e-mail: the site's charts, as before
+            modes = [None] + (["y"] if "year_ago" in email_images(cfg) and q.get("compare_y") else [])
+            names = image_names(e, q, len(modes))
+            jobs += [(q, m) for m in modes]
+        else:                                        # X (Buffer or the API): config/x.json "images", the X card first
+            imgs = post_images(c, q, cfg)
+            names = [post_image_name(e, q, sfx) for sfx, _, _ in imgs]
+            jobs += [(sp, m) for _, sp, m in imgs]
+        threads.append((e, c, q, names))
     pngs = render_charts(args.site, jobs)
     items, k = [], 0
-    for e, c, q, n in threads:
-        items.append((e, c, q, compose(c, q, cfg), list(zip(image_names(e, q, n), pngs[k:k + n]))))
-        k += n
+    for e, c, q, names in threads:
+        items.append((e, c, q, compose(c, q, cfg), list(zip(names, pngs[k:k + len(names)]))))
+        k += len(names)
     now = lambda: dt.datetime.utcnow().isoformat(timespec="seconds")
     if mode == "email":
         to = os.environ.get("MAIL_TO") or keys["MAIL_USERNAME"]
@@ -850,7 +884,12 @@ def main():
             for name, png in images:
                 with open(os.path.join(xdir, name), "wb") as f:
                     f.write(png)
-            first = posts[0]["text"] if isinstance(posts[0], dict) else posts[0]
+            # the fallback: the rule-based X post (pipeline/xcard.py) — its point first, then the figures
+            from . import xcard
+            tags = tweet.post_tags(c, q, cfg, e.get("ticker") or "")
+            first = xcard.rule_post(c, q, tags)
+            if links_off(cfg):
+                first = no_links(first)
             post, via = tweet.post_for(c, q, cfg, e.get("ticker") or "", first, xlen)
             pending.append({"cik": e["cik"], "end": e["end"], "label": f"{e.get('ticker') or e['cik']} {q['label']}",
                             "posts": [post], "written_by": via, "images": [n for n, _ in images]})
