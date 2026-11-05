@@ -144,7 +144,7 @@
   };
   async function render(el, ctx) {
     css();
-    const hub = ctx && ctx.hub != null ? ctx.hub : '', T = String((ctx && ctx.ticker) || '').toUpperCase().replace(/\./g, '-');
+    const hub = ctx && ctx.hub != null ? ctx.hub : (globalThis.FF_HUB_ROOT||''), T = String((ctx && ctx.ticker) || '').toUpperCase().replace(/\./g, '-');
     if (!T) { el.innerHTML = '<p class="muted">No ticker: options need a listed share.</p>'; return; }
     el.innerHTML = '<p class="muted">Loading the option chain…</p>';
     const [c, sum] = await Promise.all([get(hub + 'data/market/options/' + encodeURIComponent(T) + '.json').catch(() => null), get(hub + 'data/market/options.json').catch(() => null), share()]);

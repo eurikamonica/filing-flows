@@ -1,35 +1,84 @@
-/* The site's top navigation, in four groups, shared by the app (index.html) and the Disclosure Hub (disclosures/):
- *   Companies · Industries & themes · Market signals · Method
+/* The site's top navigation, in six groups — every page of the site, the Disclosures sections among them:
+ *   Companies · Industries & themes · Money & people · Filings & news · Markets & odds · Method
  * On a wide screen each group opens a menu (hover, click or keyboard); on a phone the whole navigation folds into one
  * menu button. <nav class="nav" id="site-nav" data-base="../" data-here="disclosures"> is filled in here, so the list
  * of pages lives in one place. FFNav.mark() highlights the group of the current page (the app calls it on each route). */
 (function (global) {
   'use strict';
+  // every page of the site, the Disclosures sections included (they open here: web/hub-shell.js)
   const GROUPS = [
     { id: 'companies', label: 'Companies', items: [
       ['home', '#home', 'Latest filings', 'Every new 10-Q, 10-K and earnings release, drawn'],
       ['ipo', '#ipo', 'IPO & prospectuses', 'S-1 / F-1 filings, quality measures and cash-flow Sankeys'],
       ['chart', '#chart', 'Charts', 'Any company’s figures over time, side by side'],
-      ['studio', '#studio', 'Videos', 'Animated charts to post: growth races, rankings, RRG, earnings'],
+      ['studio', '#studio', 'Videos', 'Animated charts to post: growth races, rankings, holders, earnings'],
+      ['screener', '#screener', 'Screener', 'Every company by its figures, ready-made screens'],
+      ['valuation', '#valuation', 'Valuation', 'Fair value by every method, company by company'],
+      ['consensus', '#consensus', 'Consensus & odds', 'Analysts, prediction markets and the earnings calendar'],
+      ['quality', '#quality', 'Earnings quality', 'Accruals, cash conversion, reserves'],
+      ['traps', '#traps', 'Analysis traps', 'Where the figures mislead, with the innocent explanation'],
+      ['buyouts', '#buyouts', 'Buyouts', 'Who a private buyer could take over, and at what price'],
+      ['composer', '#composer', 'Chart composer', 'A page of charts for one stock or ETF, to print or post'],
       ['az', 'c/', 'All companies A–Z', 'Every company with an earnings Sankey'],
     ] },
     { id: 'industries', label: 'Industries & themes', items: [
-      ['sectors', '#sectors', 'Sectors', 'Sector and industry totals, quarter by quarter'],
-      ['gamma', '#gamma', 'Industries (SIC)', 'Growth distributions and who sells to whom'],
+      ['sectors', '#sectors', 'Sectors & industries', 'Every sector and SIC industry: combined charts, growth, who sells to whom'],
       ['chains', '#chains', 'Supply chains & themes', 'Where the money flows: AI capex, power, GLP-1…'],
       ['model', '#model', 'Growth model', 'Company, industry, sector and theme forecasts'],
+      ['rotation', '#rotation', 'Rotation (RRG)', 'Which sectors and themes lead, week by week'],
+      ['maps', '#maps', 'Market maps', 'Money flows, heatmaps, the ownership network'],
+      ['workforce', '#workforce', 'Workforce', 'Headcount and pay from the filings'],
     ] },
-    { id: 'signals', label: 'Market signals', items: [
+    { id: 'money', label: 'Money & people', items: [
+      ['signals', '#signals', 'Signals', 'What funds, insiders and officials did, this quarter'],
+      ['smart', '#smart', 'Smart money', 'Every disclosed trade, scored by what came next'],
+      ['allflows', '#allflows', 'All flows', '13F, ETFs, insiders and officials together'],
+      ['flows', '#flows', 'Market flows', 'What the 13F managers added, sold and net-bought'],
+      ['holdings', '#holdings', '13F managers', 'Each manager’s quarters and moves'],
+      ['insiders', '#insiders', 'Insider trades', 'Form 4 buying and selling'],
+      ['form144', '#form144', 'Form 144', 'Planned sales by officers and directors'],
+      ['trades', '#trades', 'Officials’ trades', 'Congress, the President and state officials'],
+      ['stakes', '#stakes', '13D / 13G stakes', 'Who owns more than 5%'],
+      ['cross', '#cross', 'Cross-holdings', 'Who holds whom: US government, the President, Congress, Nvidia, Alphabet…'],
+      ['investors', '#investors', 'Corporate investors', 'What companies invest in: private stakes, 13F holdings'],
+      ['etf', '#etf', 'ETFs', 'Every US-listed ETF: prices, distributions, prospectus, holdings'],
+      ['people', '#people', 'People & index', 'Every manager, official and insider: copy-the-filings backtests'],
+    ] },
+    { id: 'filings', label: 'Filings & news', items: [
       ['feed', '#feed', 'Your feed', 'What the companies you follow disclosed, newest first'],
-      ['daily', 'daily/', 'Today in the filings', 'Insider buying, Congress trades, guidance, new 13D stakes: the whole market, each day'],
-      ['events', 'events/', 'Material 8-K events', 'Deals, new debt, impairments, restatements, leadership changes'],
-      ['etfs', 'disclosures/#etf', 'ETF scanner', 'Every US-listed ETF: prices, distributions, prospectus, holdings'],
-      ['disclosures', 'disclosures/', 'Disclosures', '13F flows, insiders, officials, short interest…'],
-      ['cross', 'disclosures/#cross', 'Cross-holdings', 'Who holds whom: US government, the President, Congress, Nvidia, Alphabet…'],
-      ['investors', '#investors', 'Corporate investors', 'What companies invest in: private stakes, 13F holdings, who backs Anthropic'],
+      ['daily', 'daily/', 'Today in the filings', 'The whole market’s disclosures, each day'],
+      ['events', '#events', '8-K events', 'Deals, new debt, impairments, restatements, leadership changes'],
+      ['news', '#news', 'News', 'Press releases, FDA approvals, SEC actions'],
+      ['calls', '#calls', 'Earnings calls', 'What management said, and practice questions'],
+      ['earnings', '#earnings', 'Earnings season', 'Who reports when, and how they did'],
+      ['filings', '#filings', 'Filings radar', 'Unusual filings worth a look'],
+      ['guidance', '#guidance', 'Guidance', 'What companies forecast, and how it turned out'],
+      ['notes', '#notes', 'Notes & ties', 'Every note of a 10-K drawn, and how the figures tie'],
+      ['hidden', '#hidden', 'Hidden leverage', 'Leases, guarantees and contracts off the balance sheet'],
+      ['outside', '#outside', 'Beyond the filings', 'Free public data on companies: jobs, web, patents…'],
+      ['debt', '#debt', 'Debt & rates', 'Maturities, coverage, market rates and banks’ CDs'],
       ['account', '#account', 'Alerts', 'E-mail when your companies file'],
     ] },
-    { id: 'method', label: 'Method', href: '#method', nav: 'method' },
+    { id: 'markets', label: 'Markets & odds', items: [
+      ['options', '#options', 'Options', 'Walls, max pain and the paths prices can take'],
+      ['paths', '#paths', 'Price paths', 'Seven path models and price patterns'],
+      ['moves', '#moves', 'Move odds', 'How far prices move after an event'],
+      ['odds', '#odds', 'Odds', 'Rotation forecasts and how they did'],
+      ['mmodels', '#mmodels', 'Market models', 'The market’s valuation gauges'],
+      ['opportunity', '#opportunity', 'Opportunity', 'Stocks and ETFs off their usual range'],
+      ['strategies', '#strategies', 'Strategies', 'Rules tested on the site’s data'],
+      ['shorts', '#shorts', 'Short interest', 'FINRA short positions, twice a month'],
+      ['cot', '#cot', 'COT', 'Futures positions by trader type'],
+    ] },
+    { id: 'method', label: 'Method', items: [
+      ['method', '#method', 'Method', 'How every figure is read and drawn'],
+      ['status', '#status', 'Data health', 'Every source: when it was last read'],
+      ['directory', '#directory', 'Explore the data', 'Every file the site publishes'],
+      ['npx', '#npx', 'Proxy votes (N-PX)', 'How funds voted'],
+      ['banks', '#banks', 'Banks (FDIC)', 'Bank financials'],
+      ['congress', '#congress', 'Officials’ reports', 'The disclosure records as filed'],
+      ['review', '#review', 'PDF / OCR review', 'Check scanned reports against the official page'],
+    ] },
   ];
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -40,10 +89,10 @@
 
   function build(nav) {
     const base = nav.dataset.base || '', here = nav.dataset.here || '';
-    nav.innerHTML = GROUPS.map((g) => {
+    nav.innerHTML = GROUPS.map((g, gi) => {
       if (g.href) return `<a class="nav-top" href="${esc(href(base, g.href, here))}" data-nav="${g.nav}">${esc(g.label)}</a>`;
-      return `<div class="nav-group" data-group="${g.id}"><button class="nav-top" type="button" aria-expanded="false" aria-haspopup="true">${esc(g.label)}<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
-        <div class="nav-menu" role="menu">${g.items.map(([id, h, l, d]) =>
+      return `<div class="nav-group${gi >= GROUPS.length - 2 ? ' end' : ''}" data-group="${g.id}"><button class="nav-top" type="button" aria-expanded="false" aria-haspopup="true">${esc(g.label)}<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+        <div class="nav-menu${g.items.length > 7 ? ' wide' : ''}" role="menu">${g.items.map(([id, h, l, d]) =>
           `<a role="menuitem" href="${esc(href(base, h, here))}" data-nav="${id}"${here === id ? ' class="on" aria-current="page"' : ''}><b>${esc(l)}</b><span>${esc(d)}</span></a>`).join('')}</div></div>`;
     }).join('') +
       // phones: the site's settings live in this menu instead of a lone button beside the logo (web/appearance.js)

@@ -7,7 +7,7 @@
 const H={d:null,err:null,loading:null,co:null,coErr:null,coLoading:null,mode:'hybrid',q:'',panel:'funds',h:'13'};
 const HQ=[['Leading','#1baf7a'],['Weakening','#c98a00'],['Lagging','#d1495b'],['Improving','#2a78d6']];
 const HB={rrg:'RRG geometry',momentum:'Momentum & volatility',volume:'Volume'};
-const base='data/market/history/';
+const base=(globalThis.FF_HUB_ROOT||'')+'data/market/history/';
 function get(name,ok,fail){if(typeof fetch!=='function'){fail('no fetch');return}fetch(base+name,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(ok).catch(e=>fail(e.message))}
 function load(){
  if(H.d||H.err||H.loading)return;

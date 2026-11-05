@@ -469,7 +469,7 @@
 
   async function render(el, ctx) {
     css();
-    const hub = (ctx && ctx.hub != null ? ctx.hub : ''), base = hub + 'data/market/history/';
+    const hub = (ctx && ctx.hub != null ? ctx.hub : (globalThis.FF_HUB_ROOT||'')), base = hub + 'data/market/history/';
     const T = String((ctx && ctx.ticker) || '').toUpperCase().replace(/\./g, '-');
     if (!T) { el.innerHTML = '<p class="muted">No ticker: the moving averages need a share price.</p>'; return; }
     el.innerHTML = '<p class="muted">Loading the moving averages…</p>';
@@ -639,7 +639,7 @@
   }
   async function renderHub(el, ctx) {
     css();
-    const hub = (ctx && ctx.hub != null ? ctx.hub : ''), base = hub + 'data/market/history/';
+    const hub = (ctx && ctx.hub != null ? ctx.hub : (globalThis.FF_HUB_ROOT||'')), base = hub + 'data/market/history/';
     el.innerHTML = '<p class="muted">Loading Moving averages+…</p>';
     let d, rows;
     try { [d, rows] = await Promise.all([get(base + 'ma-hybrid.json'), get(base + 'ma-hybrid-rows.json').catch(() => null)]);

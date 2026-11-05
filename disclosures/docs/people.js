@@ -12,7 +12,7 @@ const peStore={};
 function peData(path){
  const m=peStore[path]||(peStore[path]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/research/people/'+path+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/people/'+path+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const PE_VIEWS=[['managers','13F managers: copy-the-13F backtests'],['officials','Officials: trades, committees, overlaps'],['insiders','Insider trades in context'],['preview','Next 13F preview'],['sp500','S&P 500 candidates'],['targets','Analysts\' price targets: hit rate']];
@@ -50,9 +50,9 @@ function peManagers(){
 function peManager(cik){
  const d=peData('m/'+cik);if(d.err)return empty('This manager could not load ('+d.err+').');if(!d.data)return empty('Loading…');
  const m=d.data,c=m.clone||{};
- let out=`<p><button class="text-button" data-peback="1">← All managers</button> · <a href="../m/${esc(m.slug)}/">page for search engines ↗</a></p>`;
+ let out=`<p><button class="text-button" data-peback="1">← All managers</button> · <a href="${(globalThis.FF_SITE_ROOT??'../')}m/${esc(m.slug)}/">page for search engines ↗</a></p>`;
  out+=`<div class="section-head"><div><h2>${esc(m.name)}</h2><p class="sub">13F for the quarter ended ${esc(m.period)}, filed ${esc(m.filed)} · CIK ${esc(m.cik)}</p></div><span class="tag">13F</span></div>`;
- if(m.corporate)out+=`<div class="explain">${esc(m.name)} is a listed company investing its own capital. A 13F lists listed shares only; its stakes in private companies are in its 10-Q and 10-K: <a href="../#c-${esc(m.cik)}-invest">its investments, and the companies it names as investees →</a></div>`;
+ if(m.corporate)out+=`<div class="explain">${esc(m.name)} is a listed company investing its own capital. A 13F lists listed shares only; its stakes in private companies are in its 10-Q and 10-K: <a href="${(globalThis.FF_SITE_ROOT??'../')}#c-${esc(m.cik)}-invest">its investments, and the companies it names as investees →</a></div>`;
  out+=`<div class="metrics">${kpi('13F assets',peUsd(m.aum),'all reported positions')}${kpi('Positions',fmt(m.positions),'common shares')}${kpi('Clone return',c.total==null?'—':(c.total>0?'+':'')+fmt(c.total*100,1)+'%',c.start?`${c.start} → ${c.end}`:'')}${kpi('SPY, same days',c.spy_total==null?'—':(c.spy_total>0?'+':'')+fmt(c.spy_total*100,1)+'%',`max drawdown ${c.max_dd==null?'—':fmt(c.max_dd*100,1)+'%'} vs ${c.spy_max_dd==null?'—':fmt(c.spy_max_dd*100,1)+'%'}`)}</div>`;
  out+=`<div class="panel"><h3>Copying each 13F the day after it was filed</h3>${peLine(c.monthly)||empty('Not enough priced history yet.')}<p class="sub">Value-weighted over the common-share positions with a price (${pct(c.coverage,0)} of the portfolio on average), held until the next 13F; ${fmt(c.filings)} filings since ${esc(c.first_filing||'—')}. Price returns, no dividends or costs, for the clone and SPY alike.</p></div>`;
  out+=table(['Ticker','Company','Weight','Value','Change in the quarter'],(m.holdings||[]).filter(h=>h[0]).map(h=>[`<b>${esc(h[0])}</b>`,esc(h[1]),pct(h[2]),peUsd(h[3]),esc((h[4]||'unchanged').toLowerCase())+(h[5]!=null&&['INCREASE','DECREASE'].includes(h[4])?' '+peSp(h[5]/100):'')]));
@@ -72,7 +72,7 @@ function peOfficials(){
 function peOfficial(slug){
  const d=peData('o/'+slug);if(d.err)return empty('Could not load ('+d.err+').');if(!d.data)return empty('Loading…');
  const o=d.data,p=o.performance||{};
- let out=`<p><button class="text-button" data-peback="1">← All officials</button> · <a href="../o/${esc(o.slug)}/">page for search engines ↗</a> · <button class="text-button" data-pesm="${esc(o.id)}">record in Smart money</button></p>`;
+ let out=`<p><button class="text-button" data-peback="1">← All officials</button> · <a href="${(globalThis.FF_SITE_ROOT??'../')}o/${esc(o.slug)}/">page for search engines ↗</a> · <button class="text-button" data-pesm="${esc(o.id)}">record in Smart money</button></p>`;
  out+=`<div class="section-head"><div><h2>${esc(o.name)}</h2><p class="sub">${esc([o.chamber,o.party,o.state].filter(Boolean).join(' · '))}</p></div><span class="tag">OFFICIAL</span></div>`;
  out+=`<div class="metrics">${kpi('Trades on file',fmt(p.n),p.first?`${p.first} → ${p.last}`:'')}${kpi('Scored',fmt(p.scored),'63 trading days after')}${kpi('After disclosure vs SPY',p.follow==null?'—':(p.follow>0?'+':'')+fmt(p.follow*100,1)+'%','midpoint-weighted')}${kpi('Right side of SPY',pct(p.hit,0),'from the trade date')}</div>`;
  if((o.committees||[]).length)out+=`<div class="panel"><h3>Committees</h3><ul>${o.committees.map(c=>`<li>${esc(c[1])}${c[2]?' — '+esc(c[2]):''}</li>`).join('')}</ul></div>`;
@@ -126,7 +126,7 @@ function bindPeople(){
  document.querySelectorAll('#workspace [data-pem]').forEach(b=>b.onclick=()=>{state.pem=b.dataset.pem;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-peo]').forEach(b=>b.onclick=()=>{state.peo=b.dataset.peo;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-peback]').forEach(b=>b.onclick=()=>{state.pem='';state.peo='';render()});
- document.querySelectorAll('#workspace div[data-pvport]').forEach(el=>{if(window.PathsView&&PathsView.portfolio&&!el.dataset.drawn){el.dataset.drawn='1';const [k,id]=el.dataset.pvport.split(':');PathsView.portfolio(el,{kind:k,id,hub:'',compact:true})}});
+ document.querySelectorAll('#workspace div[data-pvport]').forEach(el=>{if(window.PathsView&&PathsView.portfolio&&!el.dataset.drawn){el.dataset.drawn='1';const [k,id]=el.dataset.pvport.split(':');PathsView.portfolio(el,{kind:k,id,hub:(globalThis.FF_HUB_ROOT||''),compact:true})}});
  document.querySelectorAll('#workspace [data-pesm]').forEach(b=>b.onclick=()=>{state.tab='smart';if(typeof smartDeepLink==='function')smartDeepLink(b.dataset.pesm);if(typeof syncPills==='function')syncPills();render()});
 }
 /* deep links: disclosures/#people/m-1067983 (a manager), #people/o-nancy-pelosi (an official), #people/sp500 … */

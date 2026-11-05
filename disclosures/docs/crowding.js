@@ -11,7 +11,7 @@ const cwFiles={};
 function cwFile(path,quiet){
  const m=cwFiles[path]||(cwFiles[path]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/'+path).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;if(!quiet||m.wanted)render()}).catch(e=>{m.err=e.message;if(!quiet||m.wanted)render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/'+path).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;if(!quiet||m.wanted)render()}).catch(e=>{m.err=e.message;if(!quiet||m.wanted)render()});
  return m;
 }
 const cwQ=p=>{const m=/^(\d{4})-(\d{2})/.exec(p||'');return m?`Q${Math.floor((+m[2]-1)/3)+1} ${m[1]}`:String(p||'')};

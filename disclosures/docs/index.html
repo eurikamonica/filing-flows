@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* The Disclosures sections are pages of the site now (web/hub-shell.js): disclosures/#smart opens as /#smart there.
+   ?standalone keeps this page, for working on the hub alone. */
+if (!/[?&]standalone\b/.test(location.search)) location.replace('../' + (location.hash && location.hash.length > 1 ? location.hash : '#signals'));
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Disclosures · Filing Flows</title>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="icon" href="../favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -32,7 +37,7 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
       <span>Filing Flows</span>
     </a>
     <nav class="nav" id="site-nav" data-ff-nav data-base="../" data-here="disclosures" aria-label="Sections">
-      <a href="../#home">Latest</a><a href="../#sectors">Sectors</a><a href="../#chains">Chains</a><a href="../#gamma">Industries</a>
+      <a href="../#home">Latest</a><a href="../#sectors">Sectors &amp; industries</a><a href="../#chains">Chains</a>
       <a href="../#feed">Feed</a><a href="./" class="on" aria-current="page">Disclosures</a><a href="../#method">Method</a>
     </nav>
     <script src="../nav.js"></script>

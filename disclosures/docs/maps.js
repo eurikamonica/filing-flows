@@ -7,7 +7,7 @@ const mmStore={};
 function mmData(name){
  const m=mmStore[name]||(mmStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/research/market/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/market/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const MM_VIEWS=[['flows','Money flows: groups → sectors → stocks'],['manager','A manager’s portfolio by sector'],['race','Holdings race'],['heatmap','Market heatmap'],['network','Ownership network & crowding'],['maturity','Debt maturity wall'],['thermo','Valuation thermometer'],['liquidity','Net liquidity']];
@@ -98,7 +98,7 @@ function mmRace(){
  s+='</svg>';
  const img=state.mmr==='all'?'race-all.gif':`race-${state.mmr}.gif`;
  return `<div class="toolbar">${field('mmr','Portfolio',opts,state.mmr,true)}<div class="field wide"><label for="mmq">Quarter ended ${esc(q.period)} (${state.mmq+1} of ${race.length})</label><input type="range" id="mmq" min="0" max="${race.length-1}" value="${state.mmq}"></div><div class="field"><label>&nbsp;</label><button class="action" id="mmplay">▶ Play</button></div></div>
- <div class="panel"><h3>Largest holdings · quarter ended ${esc(q.period)} · ${mmUSD(q.total)}${q.managers?` · ${fmt(q.managers)} managers`:''}</h3>${s}<p class="sub">The animated version for X: <a href="data/research/market/img/${esc(img)}" target="_blank" rel="noopener">${esc(img)} ↗</a> (rebuilt after each session for the largest portfolios).</p></div>
+ <div class="panel"><h3>Largest holdings · quarter ended ${esc(q.period)} · ${mmUSD(q.total)}${q.managers?` · ${fmt(q.managers)} managers`:''}</h3>${s}<p class="sub">The animated version for X: <a href="${(globalThis.FF_HUB_ROOT||'')}data/research/market/img/${esc(img)}" target="_blank" rel="noopener">${esc(img)} ↗</a> (rebuilt after each session for the largest portfolios).</p></div>
  <div class="explain">13F long positions at each quarter's end; the same colour follows a stock across quarters. Combined: all watched managers' positions summed, for quarters most of them have filed.</div>`;
 }
 function mmColor(v,kind,span){

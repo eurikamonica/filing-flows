@@ -119,7 +119,7 @@ def insider_entries(hub, site_url, limit=60):
         price = f" at ${t['price']:,.2f}" if isinstance(t.get("price"), (int, float)) else ""
         out.append({"date": t.get("date"), "title": f"{t.get('ticker') or t.get('issuer')}: {t.get('insider')} ({t.get('title') or t.get('role')}) {verb} {t.get('shares') or 0:,.0f} shares{price}",
                     "summary": ", ".join(x for x in [money(t.get("value")), "10b5-1 plan" if t.get("plan_10b5_1") else "", f"Form 4 {t.get('accession')}"] if x),
-                    "link": t.get("url") or f"{site_url}disclosures/#insiders", "id": f"{t.get('accession')}:{t.get('date')}:{t.get('shares')}"})
+                    "link": t.get("url") or f"{site_url}#insiders", "id": f"{t.get('accession')}:{t.get('date')}:{t.get('shares')}"})
     return out
 
 
@@ -127,7 +127,7 @@ def events_entries(hub, site_url, limit=60):
     d = read(hub / "market" / "events8k.json", {}) or {}
     rows = sorted(d.get("rows") or [], key=lambda r: r.get("accepted") or r.get("filed") or "", reverse=True)[:limit]
     return [{"date": r.get("filed"), "title": f"{r.get('ticker') or r.get('company')}: 8-K — {r.get('label') or ', '.join(r.get('items') or [])}",
-             "summary": (r.get("headline") or r.get("quote") or "")[:400], "link": r.get("url") or f"{site_url}disclosures/#events", "id": r.get("accession")} for r in rows]
+             "summary": (r.get("headline") or r.get("quote") or "")[:400], "link": r.get("url") or f"{site_url}#events", "id": r.get("accession")} for r in rows]
 
 
 def officials_entries(hub, site_url, limit=60):
@@ -135,7 +135,7 @@ def officials_entries(hub, site_url, limit=60):
     rows = sorted(d.get("trades") or [], key=lambda t: (t.get("filed_date") or "", t.get("date") or ""), reverse=True)[:limit]
     amt = lambda t: (f"${t['amount_min']:,.0f}–${t['amount_max']:,.0f}" if t.get("amount_max") else f"over ${t['amount_min'] - 1:,.0f}" if t.get("amount_min") else "amount not disclosed")
     return [{"date": t.get("filed_date") or t.get("date"), "title": f"{t.get('person')}: {t.get('type')} {t.get('ticker_canon') or t.get('ticker') or ''} ({amt(t)})".strip(),
-             "summary": f"Traded {t.get('date')}, reported {t.get('filed_date')} · {t.get('jurisdiction')}", "link": t.get("source_url") or f"{site_url}disclosures/#trades",
+             "summary": f"Traded {t.get('date')}, reported {t.get('filed_date')} · {t.get('jurisdiction')}", "link": t.get("source_url") or f"{site_url}#trades",
              "id": f"{t.get('report_id')}:{t.get('date')}:{t.get('ticker')}:{t.get('type')}:{t.get('amount_min')}"} for t in rows]
 
 

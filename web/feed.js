@@ -37,13 +37,13 @@
       const last = (H.institutional || []).map((x) => x.filed || '').sort().pop();
       const filed = due && last > due ? due : last;
       const f = H.flows;
-      add(filed, '13f', `13F: ${num(f.buyers)} managers bought, ${num(f.sellers)} sold (${f.label || 'latest quarter'})`, [fin(f.new) ? `${num(f.new)} new positions` : '', fin(f.exits) ? `${num(f.exits)} exits` : '', fin(f.usd_net) ? `net ${f.usd_net >= 0 ? '+' : '−'}${money(Math.abs(f.usd_net))}` : ''].filter(Boolean).join(' · '), 'disclosures/#flows');
+      add(filed, '13f', `13F: ${num(f.buyers)} managers bought, ${num(f.sellers)} sold (${f.label || 'latest quarter'})`, [fin(f.new) ? `${num(f.new)} new positions` : '', fin(f.exits) ? `${num(f.exits)} exits` : '', fin(f.usd_net) ? `net ${f.usd_net >= 0 ? '+' : '−'}${money(Math.abs(f.usd_net))}` : ''].filter(Boolean).join(' · '), '#flows');
     }
     const beat = ((cons && cons.markets) || []).find((m) => m.kind === 'beat' && !m.closed && fin(m.p));
     if (beat) {
       const seen = U.store.get('pm:' + T, null), moved = seen && seen.p != null ? beat.p - seen.p : null;
       add(((cons.analysts || {}).as_of) || new Date().toISOString().slice(0, 10), 'market', `Polymarket: ${pct(beat.p)} chance ${T} beats EPS${fin(beat.eps_strike) ? ` of ${usd(beat.eps_strike)}` : ''}`,
-        [beat.end ? `resolves ${day(beat.end)}` : '', moved != null && Math.abs(moved) >= 0.005 ? `${moved > 0 ? '+' : '−'}${num(Math.abs(moved) * 100, 0)} pts since your last visit` : ''].filter(Boolean).join(' · '), siteRow ? `#c-${siteRow.cik}-consensus` : 'disclosures/#consensus');
+        [beat.end ? `resolves ${day(beat.end)}` : '', moved != null && Math.abs(moved) >= 0.005 ? `${moved > 0 ? '+' : '−'}${num(Math.abs(moved) * 100, 0)} pts since your last visit` : ''].filter(Boolean).join(' · '), siteRow ? `#c-${siteRow.cik}-consensus` : '#consensus');
     }
     if (ext && ext.row) {
       const r = ext.row;

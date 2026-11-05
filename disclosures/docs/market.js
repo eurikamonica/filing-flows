@@ -6,7 +6,7 @@ function marketData(name){
  const m=marketStore[name]||(marketStore[name]={});
  if(m.data||m.err||m.loading)return m;
  if(typeof fetch!=='function'){m.err='this browser cannot load data files';return m}
- m.loading=fetch('data/market/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/market/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
@@ -23,7 +23,7 @@ const smoney=v=>v==null||!Number.isFinite(+v)?'—':(v>0?'+':v<0?'−':'')+'$'+b
 const shortName=s=>{const w=String(s||'').replace(/\b(INC|CORP|CORPORATION|CO|LTD|PLC|HLDGS?|HOLDINGS?|GROUP|THE|N\.?V|S\.?A)\b\.?/gi,'').trim().split(/\s+/);let o=w[0]||'';for(const x of w.slice(1)){if((o+' '+x).length>13)break;o+=' '+x}return o.slice(0,13)};
 const spct=(v,d=1)=>v==null||!Number.isFinite(+v)?'—':(v>0?'+':v<0?'−':'')+fmt(Math.abs(v*100),d)+'%';
 /* A ticker opens its company page on the main site: by CIK when the row has one, otherwise the main site looks the ticker up (#t-…). */
-const coHref=(ticker,cik)=>cik?`../#c-${String(cik).replace(/^0+/,'')}`:`../#t-${encodeURIComponent(ticker)}`;
+const coHref=(ticker,cik)=>cik?`${(globalThis.FF_SITE_ROOT??'../')}#c-${String(cik).replace(/^0+/,'')}`:`${(globalThis.FF_SITE_ROOT??'../')}#t-${encodeURIComponent(ticker)}`;
 const tkLink=(ticker,cik)=>ticker?`<a class="tk" href="${esc(coHref(ticker,cik))}" title="${esc(ticker)} — earnings Sankey and filings on Filing Flows"><b>${esc(ticker)}</b></a>`:'';
 const tick=r=>tkLink(r.ticker,r.cik||r.earn?.cik);
 
@@ -150,7 +150,7 @@ function signals(){
  exported=rows.map(r=>({ticker:r.ticker,name:r.name,heat:r.heat,pressure:r.pressure,tags:r.tags.join(' '),...(r.f13||{}),insider_buy_value_90d:r.insiders?.buy_value,insider_sell_value_90d:r.insiders?.sell_value,officials_buys_12m:r.officials?.y_buys,officials_sales_12m:r.officials?.y_sells,officials_people:(r.officials?.people_buy||[]).join('; '),r1m:r.price?.r1m,r3m:r.price?.r3m,from_52w_high:r.price?.from_high,earnings_label:r.earn?.label,revenue_yoy_pct:r.earn?.yoy,operating_margin_pct:r.earn?.om}));
  out+=`<div class="section-head"><h3>${fmt(rows.length)} flagged securities</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=table(['Security','Heat','Signals','Net managers','Est. net 13F $','New positions','Officials 12m (buys / sales)','Insiders 90d (Form 4)','3-month price','From 52w high','6-month trend','Latest earnings'],rows.map(r=>[
-  `${tick(r)} <span class="muted">${esc(r.name)}</span>${r.earn?.cik?`<br><a href="../#c-${esc(r.earn.cik)}">Earnings chart ↗</a>`:''}`,
+  `${tick(r)} <span class="muted">${esc(r.name)}</span>${r.earn?.cik?`<br><a href="${(globalThis.FF_SITE_ROOT??'../')}#c-${esc(r.earn.cik)}">Earnings chart ↗</a>`:''}`,
   `<b>${r.heat}</b>${r.pressure?` <span class="muted">/ −${r.pressure}</span>`:''}`,`<span class="mk-badges">${tagBadges(r.tags)}</span>`,
   r.f13?`${signed(r.f13.buyers-r.f13.sellers)} <span class="muted">(${fmt(r.f13.buyers)}↑ ${fmt(r.f13.sellers)}↓)</span>`:'—',
   r.f13?`<span class="${r.f13.usd_net>=0?'positive':'negative'}">${smoney(r.f13.usd_net)}</span>`:'—',r.f13?fmt(r.f13.new):'—',
@@ -226,7 +226,7 @@ function mixedFlows(w,fg){
 /* ---------- avatars next to officials and managers: Congress portraits and the owner's pictures (data/avatars.json, built by
    automation/avatars.py with the site), else initials; name keys match avatars.py person_key / org_key ---------- */
 const AVS={d:null,l:null};
-function avReady(){if(AVS.d||AVS.l||typeof fetch!=='function'||state.mode==='demo')return;AVS.l=fetch('data/avatars.json').then(r=>r.ok?r.json():{}).then(d=>{AVS.d=d||{};if(Object.keys(AVS.d.people||{}).length||Object.keys(AVS.d.managers||{}).length)render()}).catch(()=>{AVS.d={}})}
+function avReady(){if(AVS.d||AVS.l||typeof fetch!=='function'||state.mode==='demo')return;AVS.l=fetch((globalThis.FF_HUB_ROOT||'')+'data/avatars.json').then(r=>r.ok?r.json():{}).then(d=>{AVS.d=d||{};if(Object.keys(AVS.d.people||{}).length||Object.keys(AVS.d.managers||{}).length)render()}).catch(()=>{AVS.d={}})}
 const AV_SKIP=new Set(['hon','honorable','dr','mr','mrs','ms','rep','sen','senator','representative','the','jr','sr','ii','iii','iv','md','phd','esq','cpa']);
 const avAscii=x=>String(x||'').normalize('NFKD').replace(/[̀-ͯ]/g,'').toLowerCase();
 function avKey(name){let s=avAscii(name);if((s.match(/,/g)||[]).length===1&&!/,\s*(jr|sr|ii|iii|iv)\b/.test(s)){const [l,f]=s.split(',');s=f+' '+l}const w=s.split(/[^a-z]+/).filter(x=>x&&x.length>1&&!AV_SKIP.has(x));return !w.length?'':w.length===1?w[0]:w[0]+' '+w[w.length-1]}
@@ -301,7 +301,7 @@ function insidersView(){
 }
 
 function bindMarket(){
- if($('hype-live')&&window.HypeView)window.HypeView.render($('hype-live'),{hub:'',legacy:()=>hypeMap(HYPE_ROWS||[]),view:state.hypeview,onview:v=>{state.hypeview=v}});
+ if($('hype-live')&&window.HypeView)window.HypeView.render($('hype-live'),{hub:(globalThis.FF_HUB_ROOT||''),legacy:()=>hypeMap(HYPE_ROWS||[]),view:state.hypeview,onview:v=>{state.hypeview=v}});
  for(const k of ['stag','ssort','fwin','funiv','flist','tchamber','tperson','ttype','tcheck','twin','itype','irole'])bind(k,k);
  for(const k of ['sq','tq','iq'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if(typeof bindFlowGroups==='function')bindFlowGroups();

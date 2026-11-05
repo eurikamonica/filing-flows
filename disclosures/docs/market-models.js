@@ -10,7 +10,7 @@ const mmStore={};
 function mmData(){
  const m=mmStore.d||(mmStore.d={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/market/history/market-models.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/market/history/market-models.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const MM_VIEWS=[['overview','Overview'],['vol','Volatility'],['indices','Six indices'],['regime','Market regime'],['sectors','Sectors'],['spreads','Spreads'],['market','Market direction'],['record','Track record']];

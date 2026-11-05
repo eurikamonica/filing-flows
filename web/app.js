@@ -764,7 +764,7 @@
       const hit = cos.find((c) => c.ticker.toLowerCase() === s) || cos.find((c) => c.name.toLowerCase().startsWith(s)) || cos.find((c) => c.name.toLowerCase().includes(s));
       if (hit) { location.hash = `c-${hit.cik}`; return; }
       const m = $('#hero-miss');
-      if (m) { m.hidden = false; m.innerHTML = `“${t(q)}” is not among the latest filings here — <a href="c/">browse every company page</a> or <a href="disclosures/">search the Disclosure Hub</a>.`; }
+      if (m) { m.hidden = false; m.innerHTML = `“${t(q)}” is not among the latest filings here — <a href="c/">browse every company page</a> or <a href="#signals">search the Disclosure Hub</a>.`; }
     };
     const f = $('#hero-search');
     if (f) f.addEventListener('submit', (ev) => { ev.preventDefault(); go($('#hero-q').value); });
@@ -1396,7 +1396,7 @@
     if (!d) {
       body.innerHTML = `<div class="section"><p class="muted">${err ? 'The debt data could not load (' + t(err) + ').'
         : 'The debt figures for this company have not been read yet: the collector reads a few hundred companies every two hours, largest first.'}</p>
-        <p class="muted">Market rates, banks’ deposits and the screener of every company are in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.</p></div>`;
+        <p class="muted">Market rates, banks’ deposits and the screener of every company are in the <a href="#debt">Disclosure Hub → Debt &amp; rates</a>.</p></div>`;
       return;
     }
     const box = document.createElement('div');
@@ -1406,7 +1406,7 @@
     window.DebtView.render(box, d);
     const more = document.createElement('p');
     more.className = 'muted';
-    more.innerHTML = `Compare with every company, market rates and banks’ CDs in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.`;
+    more.innerHTML = `Compare with every company, market rates and banks’ CDs in the <a href="#debt">Disclosure Hub → Debt &amp; rates</a>.`;
     body.appendChild(more);
   }
 
@@ -1432,7 +1432,7 @@
     if (!d) {
       body.innerHTML = `<div class="section"><p class="muted">${err ? 'The consensus data could not load (' + t(err) + ').'
         : 'Analysts\u2019 estimates for this company have not been read yet: the collector reads every company over its first runs, largest first, then refreshes each daily.'}</p>
-        <p class="muted">The earnings calendar, every open prediction market and the track record are in the <a href="disclosures/#consensus">Disclosure Hub → Consensus</a>.</p></div>`;
+        <p class="muted">The earnings calendar, every open prediction market and the track record are in the <a href="#consensus">Disclosure Hub → Consensus</a>.</p></div>`;
       return;
     }
     const box = document.createElement('div');
@@ -1442,7 +1442,7 @@
     window.ConsensusView.render(box, d);
     const more = document.createElement('p');
     more.className = 'muted';
-    more.innerHTML = `The earnings calendar, every open prediction market and how they did are in the <a href="disclosures/#consensus">Disclosure Hub → Consensus</a>.`;
+    more.innerHTML = `The earnings calendar, every open prediction market and how they did are in the <a href="#consensus">Disclosure Hub → Consensus</a>.`;
     body.appendChild(more);
   }
 
@@ -3252,7 +3252,7 @@
       <div class="sm13-line"><span class="sm13-gauge" role="img" aria-label="${t(`Smart score ${sg(S)} of plus or minus 100`)}"><b class="${S >= 0 ? 'up' : 'down'}" style="${S >= 0 ? 'left' : 'right'}:50%;width:${w.toFixed(1)}%"></b></span>
         <span>${n.n} vote${n.n === 1 ? '' : 's'} · everyone alike ${sg(n.raw)}${Object.entries(n.groups || {}).map(([g, x]) => ` · ${G[g] || g}s ${sg(x.S)}`).join('')}</span></div>
       ${votes ? `<ul class="sm13-votes">${votes}</ul>` : ''}
-      <p class="muted">Every disclosed trade by 13F managers, active ETFs, insiders and officials is scored by the stock's return less SPY's over the next 63 trading days (a sale is right when the stock lagged); each vote now counts by that actor's record, so a buyer who is usually wrong counts against buying.${b && b[1] ? ` In the backtest, stocks scoring ${t(b[0])} averaged ${b[2] > 0 ? '+' : ''}${(b[2] * 100).toFixed(1)}% against SPY over the next 63 trading days (${b[1].toLocaleString('en-US')} stock-months).` : ''} <a href="disclosures/#smart/${encodeURIComponent(sym)}">Who is voting, and their records →</a></p></div>`;
+      <p class="muted">Every disclosed trade by 13F managers, active ETFs, insiders and officials is scored by the stock's return less SPY's over the next 63 trading days (a sale is right when the stock lagged); each vote now counts by that actor's record, so a buyer who is usually wrong counts against buying.${b && b[1] ? ` In the backtest, stocks scoring ${t(b[0])} averaged ${b[2] > 0 ? '+' : ''}${(b[2] * 100).toFixed(1)}% against SPY over the next 63 trading days (${b[1].toLocaleString('en-US')} stock-months).` : ''} <a href="#smart/${encodeURIComponent(sym)}">Who is voting, and their records →</a></p></div>`;
   }
 
   // ---------- ETFs that hold it (data/etf/by/<TICKER>.json, app/etf.py): the largest by dollars, and the creations and
@@ -3299,7 +3299,7 @@
         <svg class="q13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`Estimated ETF flows into ${sym} by month`)}"><line class="br13-axis" x1="10" x2="${W - 10}" y1="${mid}" y2="${mid}"/>${bars}</svg>`;
     }
     return `<h3>ETFs that hold it</h3>
-      <p class="muted">${whole(d.etfs)} ETFs hold ${money(d.usd)} of ${t(sym)} in their latest N-PORT portfolios; the largest by dollars, with ${t(sym)}’s weight in each. <a href="disclosures/#etf">All ETFs →</a></p>
+      <p class="muted">${whole(d.etfs)} ETFs hold ${money(d.usd)} of ${t(sym)} in their latest N-PORT portfolios; the largest by dollars, with ${t(sym)}’s weight in each. <a href="#etf">All ETFs →</a></p>
       <ol class="etf13">${list}</ol>${flows}`;
   }
 
@@ -3344,9 +3344,9 @@
         <td>${x.source_url ? `<a href="${t(x.source_url)}" target="_blank" rel="noopener">13F ↗</a>` : '—'}</td></tr>`).join('');
     box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2>
         <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${ins.length} insider trade${ins.length === 1 ? '' : 's'} · ${stakes.length} 13D / 13G · ${f144.length} Form 144 · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
-        · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}</span></div>
+        · from <a href="#signals">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}${inst.length ? ` · <a href="#studio/k=holders&amp;t=${encodeURIComponent(sym)}">▶ Video: its largest holders since 2013</a>` : ''}</span></div>
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
-        h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="disclosures/#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
+        h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
       ${own13(inst, (h && h.exits) || [], sym, av, h && h.q13f)}
       ${smartBlock(sm, sym, av)}
       <h3>Institutional investors (13F)</h3>
@@ -4363,7 +4363,9 @@
   async function group(level, id, cal) {
     const here = live();
     setNav('sectors');
-    const [ix, g] = await Promise.all([getJSON('index.json'), getJSON(`${level}/${id}.json`)]);
+    const [ix, g] = await Promise.all([getJSON('index.json'), getJSON(`${level}/${id}.json`)
+      .catch((e) => (level === 'i' && window.FFGamma ? null : Promise.reject(e)))]);
+    if (!g) return window.FFGamma.industry(app, id, chainCtx());   // no combined chart: its growth, money flow, named links
     const q = (cal && g.quarters.find((x) => x.cal === cal)) || g.quarters[0];
     const sectors = ix.sector_names || {};
     const byCik = new Map(ix.companies.map((c) => [String(c.cik), c]));
@@ -4417,28 +4419,57 @@
       }).join('')}</tbody></table></div>`;
     body.appendChild(tbl);
     bindRows(tbl);
+    if (level === 'i' && window.FFGamma) {                 // the industry's growth, lifecycle, money flow, named customers (web/gamma.js)
+      const more = document.createElement('div');
+      more.id = 'gamma-sections';
+      body.appendChild(more);
+      await window.FFGamma.sections(more, id, chainCtx());
+    }
   }
 
+  // Sectors and industries: every sector (its combined chart, #s-<id>) and every SEC SIC industry (#i-<sic>: the combined
+  // chart where the site has one, and Gamma's growth, lifecycle, money flow and named customers and suppliers)
   async function sectorsPage() {
     const here = live();
     setNav('sectors');
-    const ix = await getJSON('index.json');
-    const names = ix.sector_names || {};
+    const [ix, gx] = await Promise.all([getJSON('index.json'), getJSON('gamma/index.json').catch(() => null)]);
+    const names = Object.assign({}, (gx && gx.sector_names) || {}, ix.sector_names || {});
     const counts = {};
     ix.companies.forEach((c) => { counts[c.sector] = (counts[c.sector] || 0) + 1; });
     const have = new Map(ix.sectors.map((s) => [s.id, s]));
+    const site = new Map(ix.industries.map((x) => [String(x.id), x]));
+    const gam = new Map(((gx && gx.industries) || []).map((x) => [String(x.sic), x]));
+    const all = [...new Set([...site.keys(), ...gam.keys()])].map((id) => {
+      const a = site.get(id) || {}, b = gam.get(id) || {};
+      return { id, name: S.dec(a.name || b.name || 'SIC ' + id), sector: a.sector || b.sector || '', count: Math.max(a.count || 0, b.count || 0),
+        cal: a.cal || '', yoy: b.median_yoy, observed: b.observed || 0, chart: !!a.id };
+    }).sort((x, y) => x.name.localeCompare(y.name));
     if (!here()) return;
     app.innerHTML = `
-      <div class="page-head"><div class="eyebrow">Sectors and industries</div><h1>Combined Sankeys by sector and industry</h1>
-        <p class="muted" style="max-width:72ch">Companies are grouped by the SIC code on their EDGAR profile. A group chart adds up every company whose fiscal quarter ends in the same calendar quarter; the ten largest appear by name.</p></div>
-      ${Object.entries(names).map(([id, name]) => {
-        const s = have.get(id), inds = ix.industries.filter((x) => x.sector === id);
-        if (!counts[id] && !s) return '';
+      <div class="page-head"><div class="eyebrow">Sectors and industries</div><h1>Every sector and industry</h1>
+        <p class="muted" style="max-width:76ch">Companies are grouped by the SIC code on their EDGAR profile. A sector or industry page adds up every company whose fiscal quarter ends in the same calendar quarter (the combined Sankey; the ten largest appear by name), with the industry’s growth distribution, lifecycle, estimated money flow (BEA input-output) and the customers and suppliers named in filings.</p>
+        <div class="meta"><span>${Object.keys(names).length} sectors</span><span>${all.length} SIC industries</span>${gx && gx.universe ? `<span>${Number(gx.universe).toLocaleString('en-US')} companies with quarterly revenue</span>` : ''}</div>
+        <p class="muted"><a href="supplier-revenue/">Supplier revenue forecast →</a> · <a href="integration-health/">Collection and publication health →</a></p></div>
+      <div class="gamma-toolbar"><input id="ind-q" type="search" placeholder="Find an industry, SIC code or sector" aria-label="Filter industries">
+        <select id="ind-sec" aria-label="Sector"><option value="">All sectors</option>${Object.entries(names).map(([k, v]) => `<option value="${t(k)}">${t(v)}</option>`).join('')}</select></div>
+      <div id="ind-list"></div>`;
+    const draw = () => {
+      const q = $('#ind-q').value.trim().toLowerCase(), sec = $('#ind-sec').value;
+      const html = Object.entries(names).map(([id, name]) => {
+        if (sec && sec !== id) return '';
+        const s = have.get(id), inds = all.filter((x) => x.sector === id && (!q || `${x.id} ${x.name} ${name}`.toLowerCase().includes(q)));
+        if ((q && !inds.length) || (!counts[id] && !s && !inds.length)) return '';
         return `<section class="section"><div class="section-head"><h2>${s ? `<a href="#s-${id}">${t(name)}</a>` : t(name)}</h2>
           <span class="muted">${counts[id] || 0} companies with filings on record${s ? ` · combined chart for ${calLabel(s.cal)}` : ''}</span></div>
-          ${inds.length ? `<div class="cards">${inds.map((x) => `<a class="card" href="#i-${x.id}"><div class="t"><span>${t(x.name)}</span></div>
-          <div class="n">SIC ${t(x.id)} · ${x.count} companies · ${calLabel(x.cal)}</div></a>`).join('')}</div>` : ''}</section>`;
-      }).join('')}`;
+          ${inds.length ? `<div class="gamma-list">${inds.map((x) => `<a class="gamma-industry" href="#i-${t(x.id)}"><div class="gamma-name"><b>${t(x.name)}</b><span>SIC ${t(x.id)}${x.observed ? ` · ${x.observed} comparable` : ''}${x.chart ? ` · chart ${calLabel(x.cal)}` : ''}</span></div>
+            <div class="gamma-meta"><b>${x.yoy == null ? '—' : pct(100 * x.yoy, 1)}</b><span>median Y/Y</span></div>
+            <div class="gamma-meta"><b>${x.count}</b><span>companies</span></div></a>`).join('')}</div>` : ''}</section>`;
+      }).join('');
+      $('#ind-list').innerHTML = html || '<p class="muted">No sector or industry matches this filter.</p>';
+    };
+    $('#ind-q').addEventListener('input', draw);
+    $('#ind-sec').addEventListener('change', draw);
+    draw();
   }
 
   async function methodPage() {
@@ -5608,6 +5639,7 @@
       h = 'account';
     }
     let m;
+    if (window.FFHubShell) window.FFHubShell.hide();     // the Disclosures sections' container: shown again below for theirs
     try {
       if ((m = /^t-(.+)$/.exec(h))) {                    // a ticker link from the disclosures hub: open that company's page
         const cik = await cikForTicker(m[1]);
@@ -5615,7 +5647,7 @@
         if (!cik) {                                      // a fund: its page in the Disclosure Hub
           const etf = await etfForTicker(m[1]);
           if (!here()) return;
-          if (etf) { location.replace('disclosures/#etf/' + encodeURIComponent(etf)); return; }
+          if (etf) { location.replace('#etf/' + encodeURIComponent(etf)); return; }
           const e = new Error(`No company or fund on SEC's ticker list has the ticker ${m[1].toUpperCase()}: it may trade over the counter, have changed its ticker or have been delisted`);
           e.plain = true;
           throw e;
@@ -5623,6 +5655,8 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
+      // Gamma's industries are the site's: #gamma → the sectors and industries page, #gamma-<sic> → the industry's page
+      if ((m = /^gamma(?:-(\d{4}))?$/.exec(h))) { location.replace(m[1] ? '#i-' + m[1] : '#sectors'); return; }
       if ((m = /^c-(\d+)-(cash|dollar|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|invest|shock|holders|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
@@ -5634,18 +5668,18 @@
       else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if ((m = /^studio(?:\/([\s\S]*))?$/.exec(h)) && window.FFStudio) await window.FFStudio.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if ((m = /^backtest(?:\/([\s\S]*))?$/.exec(h)) && window.FFBacktest) await window.FFBacktest.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
-      else if (h === 'investors' && window.FFInvestors) await window.FFInvestors.index(app, { getJSON, setNav, here });
+      else if (/^investors(\/|$)/.test(h) && window.FFInvestors) await window.FFInvestors.index(app, { getJSON, setNav, here });   // the Disclosures hub's #investors/… too
       else if ((m = /^investee-(.+)$/.exec(h)) && window.FFInvestors) await window.FFInvestors.investee(app, m[1], { getJSON, setNav, here });
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
       else if (h === 'model' && window.FFModel) await window.FFModel.overview(app, chainCtx());
-      else if (h === 'gamma' && window.FFGamma) await window.FFGamma.index(app, chainCtx());
-      else if ((m = /^gamma-(\d{4})$/.exec(h)) && window.FFGamma) await window.FFGamma.industry(app, m[1], chainCtx());
       else if ((m = /^chain-([a-z0-9-]+)$/.exec(h)) && window.FFChains) await window.FFChains.page(app, m[1], chainCtx());
       else if (h === 'method') await methodPage();
       else if (h === 'account') await accountPage();
       else if (h === 'owner') await ownerPage();
       else if (h === 'owner-xreport') { await ownerPage(); const x = $('#xreport'); if (x) x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       else if ((m = /^unsubscribe-([0-9a-f-]{36})$/.exec(h))) await unsubscribePage(m[1]);
+      // a Disclosures section (#signals, #smart, #etf/SPY …): the hub's pages, part of the site (web/hub-shell.js)
+      else if (window.FFHubShell && window.FFHubShell.owns(h)) await window.FFHubShell.show(h, { setNav });
       else await home();
       initFollowButtons();
       initSendButtons();

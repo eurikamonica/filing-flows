@@ -8,7 +8,7 @@ const odStore={};
 function odData(name){
  const m=odStore[name]||(odStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/market/history/'+name,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/market/history/'+name,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const OD_VIEWS=[['market','Market'],['leaders','Leaders'],['one','One company'],['record','Track record']];
@@ -93,7 +93,7 @@ function bindOdds(){
  if($('odt')){$('odt').onchange=e=>{state.odt=e.target.value;render()};$('odt').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-odco]').forEach(b=>b.onclick=()=>{state.odv='one';state.odt=b.dataset.odco;render();scrollTo({top:0,behavior:'smooth'})});
  const one=$('od-one');
- if(one&&window.OddsView&&one.dataset.drawn!==one.dataset.t){one.dataset.drawn=one.dataset.t;OddsView.render(one,{ticker:one.dataset.t,hub:''})}
+ if(one&&window.OddsView&&one.dataset.drawn!==one.dataset.t){one.dataset.drawn=one.dataset.t;OddsView.render(one,{ticker:one.dataset.t,hub:(globalThis.FF_HUB_ROOT||'')})}
 }
 function oddsDeepLink(arg){
  const v=decodeURIComponent(arg||'').trim();if(!v)return;

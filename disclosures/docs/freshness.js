@@ -7,7 +7,7 @@ function sourceHealth(key){
  const cached=sourceHealthStore[key]||(sourceHealthStore[key]={});
  if(!cached.pending&&(!cached.checkedAt||Date.now()-cached.checkedAt>120000)&&typeof fetch==='function'){
   cached.checkedAt=Date.now();cached.pending=true;
-  fetch('data/'+key+'-status.json',{cache:'no-store'})
+  fetch((globalThis.FF_HUB_ROOT||'')+'data/'+key+'-status.json',{cache:'no-store'})
    .then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
    .then(d=>{cached.data=d;cached.error=null;cached.pending=false;baseRender()}).catch(e=>{cached.error=e.message;cached.pending=false;baseRender()});
  }

@@ -99,7 +99,7 @@
 
   async function render(el, opt) {
     opt = opt || {};
-    const base = (opt.hub || '') + 'data/research/earnings/c/' + fname(opt.ticker) + '.json';
+    const base = (opt.hub || globalThis.FF_HUB_ROOT || '') + 'data/research/earnings/c/' + fname(opt.ticker) + '.json';
     el.innerHTML = '<p class="muted">Loading the earnings preview…</p>';
     try {
       const r = await fetch(base, { cache: 'no-cache' });

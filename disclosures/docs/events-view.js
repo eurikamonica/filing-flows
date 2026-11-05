@@ -94,7 +94,7 @@
 
   async function render(el, doc) {
     css();
-    const hub = doc.hub || '', T = fileT(doc.ticker), cik = doc.cik;
+    const hub = doc.hub || globalThis.FF_HUB_ROOT || '', T = fileT(doc.ticker), cik = doc.cik;
     el.innerHTML = '<div class="ev2"><p class="ev2-sub">Reading the disclosures…</p></div>';
     const [H, cons, hist] = await Promise.all([T ? get(hub, `data/holders/${encodeURIComponent(String(doc.ticker).toUpperCase())}.json`) : null,
       cik ? get(hub, `data/consensus/c/${+cik}.json`) : null, T ? get(hub, `data/market/history/t/${T}.json`) : null]);

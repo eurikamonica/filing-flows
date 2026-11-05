@@ -7,7 +7,7 @@ const ivStore = {};
 function ivData() {
   const m = ivStore.i || (ivStore.i = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('data/research/investors/index.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
+  m.loading = fetch((globalThis.FF_HUB_ROOT||'')+'data/research/investors/index.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
     .then(d => { const F = d.fields; d.list = (d.rows || []).map(r => Object.fromEntries(F.map((k, i) => [k, r[i]]))); m.data = d; if (state.tab === 'investors') render() })
     .catch(e => { m.err = e.message; if (state.tab === 'investors') render() });
   return m;
@@ -52,7 +52,7 @@ function bindInvestors() {
   document.querySelectorAll('#workspace [data-ivt]').forEach(b => b.onclick = () => one(b.dataset.ivc, b.dataset.ivt));
   if (state.ivv === 'one' && $('iv-one') && window.InvestmentsView) {
     if (!state.ivc) { $('iv-one').innerHTML = '<p class="sub">Type a ticker above (e.g. NVDA, GOOGL, BRK-B).</p>'; return; }
-    window.InvestmentsView.render($('iv-one'), { cik: state.ivc, ticker: state.ivt, hub: '' });
+    window.InvestmentsView.render($('iv-one'), { cik: state.ivc, ticker: state.ivt, hub:(globalThis.FF_HUB_ROOT||'') });
   }
 }
 function investorsDeepLink(arg) {

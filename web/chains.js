@@ -230,10 +230,10 @@
       says how much of it the filings state outright; the rest is an estimate, and each page says how it was made.</p></div>
       <section class="section"><div class="cards chain-cards">${Object.values(themes).flat().map(card).join('')}</div></section>
       <section class="section"><div class="section-head"><h2>Hot concepts</h2><span class="muted">Every layer of every chain as a basket of stocks · open them in the
-        <a href="disclosures/#rotation/rrg~themes">rotation graph</a> to see which theme, or which part of a chain, the market is rotating into</span></div>
+        <a href="#rotation/rrg~themes">rotation graph</a> to see which theme, or which part of a chain, the market is rotating into</span></div>
         <div class="tbl-wrap"><table><thead><tr><th>Concept</th><th>Chain</th><th>Companies</th></tr></thead><tbody>
         ${concepts.map(({ c, L }) => `<tr><td><span class="chain-dot" style="background:${esc(L.color)}"></span>${esc(L.name)}</td>
-          <td><a href="#chain-${esc(c.id)}">${esc(c.name)}</a> · <a class="small" href="disclosures/#rotation/rrg~chain:${esc(c.id)}">rotation ↗</a></td>
+          <td><a href="#chain-${esc(c.id)}">${esc(c.name)}</a> · <a class="small" href="#rotation/rrg~chain:${esc(c.id)}">rotation ↗</a></td>
           <td>${L.tickers.map((x) => `<a class="mono" href="#t-${esc(x)}">${esc(x)}</a>`).join(' ')}</td></tr>`).join('')}
         </tbody></table></div></section>
       <p class="muted small">${esc(ix.about || '')} Updated ${fdate((ix.generated || '').slice(0, 10))}.</p>`;
@@ -355,7 +355,7 @@
       <h1>${esc(d.name)}</h1>
       <p class="intro">${esc(d.about || '')}</p>
       <div class="meta"><span>${esc(KIND[d.kind] || '')}</span><span>Trailing twelve months to ${fdate(d.asof)}</span><span>${(d.companies || []).length} companies</span>
-        <a href="disclosures/#rotation/rrg~chain:${esc(d.id)}">Layers in the rotation graph ↗</a>
+        <a href="#rotation/rrg~chain:${esc(d.id)}">Layers in the rotation graph ↗</a>
         ${d.missing && d.missing.length ? `<span title="not on the site yet, or no filing read yet">Not on file yet: ${d.missing.map(esc).join(', ')}</span>` : ''}</div>
       <div class="fresh">Figures through the members’ latest filings: <b>twelve months to ${fdate(d.asof)}</b>${d.oldest && d.oldest !== d.asof ? ` (some end ${fdate(d.oldest)})` : ''} · chain rebuilt ${fdate((d.generated || '').slice(0, 10))}${d.generated && d.generated.length > 15 ? `, ${esc(d.generated.slice(11, 16))} UTC` : ''}</div></div>
       <div class="toolbar chain-tools">
@@ -525,7 +525,7 @@
       ${L.map((x) => `<tr><td><span class="chain-dot" style="background:${esc(x.l.color)}"></span>${esc(x.l.name)}</td>${x.by.map(([, v]) => `<td class="num ${v > 0 ? 'pos' : v < 0 ? 'neg' : ''}">${v ? usd(v) : '—'}</td>`).join('')}
         <td class="num ${x.net > 0 ? 'pos' : x.net < 0 ? 'neg' : ''}"><b>${x.net ? usd(x.net) : '—'}</b></td>
         <td class="small">${x.ts.map((t) => { const r = ov[t]; return `<span class="mono">${esc(t)}</span>${r && r.net ? ` <span class="${r.net > 0 ? 'pos' : 'neg'}">${usd(r.net)}</span>` : ''}`; }).join(' · ')}</td></tr>`).join('')}
-      </tbody></table></div><p class="muted small">From the <a href="disclosures/#allflows">Disclosures hub</a>: 13F managers, active ETFs, insiders (Form 4) and officials’ trades in the period.</p>`;
+      </tbody></table></div><p class="muted small">From the <a href="#allflows">Disclosures hub</a>: 13F managers, active ETFs, insiders (Form 4) and officials’ trades in the period.</p>`;
   }
 
   function tables(d) {

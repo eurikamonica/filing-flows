@@ -13,7 +13,7 @@ const boStore = {};
 function boData(name) {
   const m = boStore[name] || (boStore[name] = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('data/research/lbo/' + name + '.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
+  m.loading = fetch((globalThis.FF_HUB_ROOT||'')+'data/research/lbo/' + name + '.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
     .then(d => { m.data = d; if (state.tab === 'buyouts') render() }).catch(e => { m.err = e.message; if (state.tab === 'buyouts') render() });
   return m;
 }
@@ -91,7 +91,7 @@ function bindBuyouts() {
     const t = e.target.value.trim().toUpperCase(), r = boRows((boData('board').data) || {}).find(x => x.ticker === t);
     if (r) one(String(r.cik), r.ticker); else $('bo-one').innerHTML = `<p class="muted">${esc(t)}: nothing on file for that ticker.</p>`;
   };
-  if (state.bov === 'one' && $('bo-one') && state.boone && window.LBOView) window.LBOView.render($('bo-one'), { cik: state.boone, hub: '' });
+  if (state.bov === 'one' && $('bo-one') && state.boone && window.LBOView) window.LBOView.render($('bo-one'), { cik: state.boone, hub:(globalThis.FF_HUB_ROOT||'') });
 }
 function buyoutsDeepLink(arg) {
   const v = decodeURIComponent(arg || '').trim();

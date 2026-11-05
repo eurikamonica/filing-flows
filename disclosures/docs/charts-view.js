@@ -76,7 +76,7 @@
   const PANEL = {};
   const panel = (hub, name) => PANEL[hub + name] || (PANEL[hub + name] = fetch(`${hub}data/market/history/rank/${name}.json`).then((r) => (r.ok ? r.json() : null)).then((d) => (d && Array.isArray(d.rows) ? d.rows : d)).catch(() => null));
   let SITE = null;
-  const siteIndex = () => SITE || (SITE = fetch('data/index.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  const siteIndex = () => SITE || (SITE = fetch((globalThis.FF_SITE_ROOT??'../')+'data/index.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
   const at = (row, i) => (row && row.length > 1 && i >= row[0] && i < row[0] + row.length - 1 ? row[1 + i - row[0]] : null);
   async function bump(el, c, hub, state) {
     const [meta, rev, oi, ix] = await Promise.all([panel(hub, 'meta'), panel(hub, 'q-rev'), panel(hub, 'q-oi'), siteIndex()]);

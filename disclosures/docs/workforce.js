@@ -6,7 +6,7 @@ const wfStore = {};
 function wfData(name) {
   const m = wfStore[name] || (wfStore[name] = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('data/research/employees/' + name + '.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
+  m.loading = fetch((globalThis.FF_HUB_ROOT||'')+'data/research/employees/' + name + '.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
     .then(d => { m.data = d; render() }).catch(e => { m.err = e.message; render() });
   return m;
 }
@@ -54,7 +54,7 @@ function bindWorkforce() {
     const back = document.createElement('button'); back.className = 'action'; back.textContent = '← Every company';
     back.onclick = () => { state.wfone = ''; render() };
     one.before(back);
-    window.WorkforceView.render(one, { cik: state.wfone, hub: '' });
+    window.WorkforceView.render(one, { cik: state.wfone, hub:(globalThis.FF_HUB_ROOT||'') });
   }
 }
 function workforceDeepLink(arg) {

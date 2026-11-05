@@ -115,7 +115,7 @@ def finding_html(f, name):
     return head + body
 
 
-def page_for(doc, r, slug, base):
+def page_for(doc, r, slug, base, has_cf=True, has_eq=True):
     name, t = display_name(r.get("name")), r.get("ticker") or ""
     url = f"{base}/c/{slug}/analysis-traps/"
     F = {f["rule_id"]: f for f in doc["findings"]}
@@ -141,7 +141,9 @@ def page_for(doc, r, slug, base):
             "<b>To review</b>: one quarter or a weak signal; a reader's judgement, not a pattern. <b>Not triggered</b>: the pattern is absent on these figures. <b>Insufficient data</b>: the filings read so far do not hold what the rule needs; "
             "this is not a clean bill. <b>Not applicable</b>: the rule is not meant for this kind of company (a bank's working capital, a loss-making quarter's EPS growth). <b>Out of date</b>: the latest filing is more than fifteen months old.</p>"
             "<p>Severity is what the pattern could mean for cash, value or solvency; confidence is how reliable the inputs and the reading are. The two are kept apart.</p></div>"
-            f"<p><a class='seo-cta' href='../../../disclosures/analysis-traps/'>Every rule and the companies it triggers on →</a> <a href='../cash-flow/'>{e(name)}: cash flow →</a> <a href='../earnings-quality/'>Earnings quality score →</a></p>"
+            f"<p><a class='seo-cta' href='../../../disclosures/analysis-traps/'>Every rule and the companies it triggers on →</a>"
+            + (f" <a href='../cash-flow/'>{e(name)}: cash flow →</a>" if has_cf else "")   # only to sibling pages that were written
+            + (" <a href='../earnings-quality/'>Earnings quality score →</a>" if has_eq else "") + "</p>"
             + DISCLAIMER)
     title = f"{name} ({t}) Analysis Traps: {seo.n_of(n_tr, 'rule')} triggered on its filings" if n_tr else f"{name} ({t}) Analysis Traps: what to check before reading the figures"
     qa = [(f"What should I check before trusting {seo.poss(name)} figures?", lead)] + [(f"Is {seo.poss(name)} {f['name'].split(' = ')[0].lower()} what it looks like?", f["explanation"]) for f in pri[:2]]
@@ -274,7 +276,7 @@ def track_changes(site, store, docs, slugs, base, today):
         for c in diff(prev.get(str(cik)), doc, today):
             if (c["cik"], c["rule"], c.get("as_of"), c["kind"]) in seen:
                 continue
-            c["url"] = f"{base}/c/{slugs[cik]}/analysis-traps/#{c['rule']}" if cik in slugs else f"{base}/disclosures/#traps/{c['ticker']}"
+            c["url"] = f"{base}/c/{slugs[cik]}/analysis-traps/#{c['rule']}" if cik in slugs else f"{base}/#traps/{c['ticker']}"
             fresh.append(c)
     changes = sorted(fresh + changes, key=lambda c: (c["date"], c.get("filed") or ""), reverse=True)[:2000]
     if store:
@@ -340,7 +342,7 @@ def practice_items(docs, rows, slugs, base):
                                         "claim": CLAIM[f["rule_id"]], "as_of": d.get("as_of"), "figures": figs, "answer": a, "severity": f.get("severity"),
                                         "explanation": f.get("explanation") or f.get("reason") or "", "alternatives": (f.get("alternative_explanations") or [])[:3],
                                         "falsified_if": (f.get("falsified_if") or [])[:3], "how": f.get("how") or "",
-                                        "url": f"{base}/c/{slugs[cik]}/analysis-traps/#{f['rule_id']}" if cik in slugs else f"{base}/disclosures/#traps/{d.get('ticker') or ''}"})
+                                        "url": f"{base}/c/{slugs[cik]}/analysis-traps/#{f['rule_id']}" if cik in slugs else f"{base}/#traps/{d.get('ticker') or ''}"})
     out, count = [], {"trap": 0, "holds": 0, "unknown": 0}
     for i in range(80):
         for k in T.NAMES:
@@ -460,7 +462,8 @@ def write(site, base, today=None, store=None):
             continue
         slugs[cik] = slug
         try:
-            url, html = page_for(doc, r, slug, base)
+            url, html = page_for(doc, r, slug, base, os.path.exists(os.path.join(site, "c", slug, "cash-flow", "index.html")),
+                                 os.path.exists(os.path.join(site, "c", slug, "earnings-quality", "index.html")))
         except Exception as err:  # noqa: BLE001
             print(f"traps page skipped ({t}): {err}")
             continue

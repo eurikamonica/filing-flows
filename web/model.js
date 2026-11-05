@@ -84,7 +84,7 @@
       <div class="mgrid"><div><div class="mstat"><label>Latest Y/Y</label><b class="${d.g_now > 0 ? 'pos' : 'neg'}">${pct(d.g_now)}</b><span>${esc(d.last)} · ${d.n_now} companies</span></div>${spark(d.series)}</div>
         <div>${fcTable(d.fc, 'Sector revenue')}</div></div>${modelLine(d, 'market')}
       <div class="tbl-wrap"><table class="small"><thead><tr><th>Industry</th><th class="num">Companies</th><th class="num">Latest Y/Y</th><th class="num">Beta to sector</th><th class="num">Next quarter</th><th class="num">Model vs naive</th></tr></thead><tbody>
-      ${inds.map((i) => `<tr><td><a href="#gamma-${esc(i.id)}">${esc(i.name)}</a></td><td class="num">${i.n_now || ''}</td><td class="num ${i.g_now > 0 ? 'pos' : 'neg'}">${pct(i.g_now)}</td>
+      ${inds.map((i) => `<tr><td><a href="#i-${esc(i.id)}">${esc(i.name)}</a></td><td class="num">${i.n_now || ''}</td><td class="num ${i.g_now > 0 ? 'pos' : 'neg'}">${pct(i.g_now)}</td>
         <td class="num">${i.model ? i.model.gamma.toFixed(2) : '—'}</td><td class="num">${i.fc && i.fc[0] ? pct(i.fc[0][1]) : '—'}</td>
         <td class="num">${i.model && i.model.bt ? `<span class="${i.model.bt.uncond < i.model.bt.naive ? 'pos' : 'neg'}">${upct(i.model.bt.uncond)} / ${upct(i.model.bt.naive)}</span>` : '—'}</td></tr>`).join('')}</tbody></table></div>`;
     box.hidden = false;
@@ -148,7 +148,7 @@
         <td class="num">${c.model && c.model.bt ? `<span class="${c.model.bt.uncond < c.model.bt.naive ? 'pos' : 'neg'}">${upct(c.model.bt.uncond)} / ${upct(c.model.bt.naive)}</span>` : '—'}</td></tr>`).join('')}</tbody></table></div></section>
       <section class="section"><div class="section-head"><h2>Industries</h2><span class="muted">By revenue; each opens its Gamma page with every member’s beta</span></div>
       <div class="tbl-wrap"><table class="small"><thead><tr><th>Industry</th><th>Sector</th><th class="num">Companies</th><th class="num">Latest Y/Y</th><th class="num">Beta to sector</th><th class="num">Next quarter</th><th class="num">Model / naive</th></tr></thead><tbody>
-      ${(ix.industries || []).slice(0, 120).map((i) => `<tr><td><a href="#gamma-${esc(i.id)}">${esc(i.name)}</a></td><td class="muted">${esc(i.parent)}</td><td class="num">${i.n_now || ''}</td><td class="num ${i.g_now > 0 ? 'pos' : 'neg'}">${pct(i.g_now)}</td>
+      ${(ix.industries || []).slice(0, 120).map((i) => `<tr><td><a href="#i-${esc(i.id)}">${esc(i.name)}</a></td><td class="muted">${esc(i.parent)}</td><td class="num">${i.n_now || ''}</td><td class="num ${i.g_now > 0 ? 'pos' : 'neg'}">${pct(i.g_now)}</td>
         <td class="num">${i.model ? i.model.gamma.toFixed(2) : '—'}</td><td class="num">${i.fc && i.fc[0] ? pct(i.fc[0][1]) : '—'}</td>
         <td class="num">${i.model && i.model.bt ? `<span class="${i.model.bt.uncond < i.model.bt.naive ? 'pos' : 'neg'}">${upct(i.model.bt.uncond)} / ${upct(i.model.bt.naive)}</span>` : '—'}</td></tr>`).join('')}</tbody></table></div></section>
       <details class="section method-note"><summary>What the model is, and is not</summary>

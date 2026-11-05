@@ -8,7 +8,7 @@ const smStore={};
 function smData(name){
  const m=smStore[name]||(smStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/smart/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/smart/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 function smGate(name,title){

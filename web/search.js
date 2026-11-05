@@ -7,15 +7,22 @@
   'use strict';
   const U = root.FFUx;
   let IX = null, loading = null;
-  const PAGES = [['Latest filings', '#home'], ['Sectors', '#sectors'], ['Follow feed', '#feed'], ['Custom charts', '#chart'], ['Alerts & account', '#account'],
-    ['Videos: animated charts to post', '#studio'], ['IPO & prospectuses', '#ipo'], ['Industries (SIC)', '#gamma'], ['Supply chains & themes', '#chains'],
+  const PAGES = [['Latest filings', '#home'], ['Sectors & industries (SIC)', '#sectors'], ['Follow feed', '#feed'], ['Custom charts', '#chart'], ['Alerts & account', '#account'],
+    ['Videos: animated charts to post', '#studio'], ['IPO & prospectuses', '#ipo'], ['Supply chains & themes', '#chains'],
     ['Growth model: forecasts', '#model'], ['Corporate investors', '#investors'], ['Today in the filings', 'daily/'], ['Material 8-K events', 'events/'],
-    ['13F managers A–Z', 'm/'], ["Officials' stock trades A–Z", 'o/'], ['Cross-holdings: who holds whom', 'disclosures/#cross'],
-    ['Method', '#method'], ['Disclosures: signals', 'disclosures/#signals'], ['Disclosures: 13F flows', 'disclosures/#flows'],
-    ["Disclosures: officials' trades", 'disclosures/#trades'], ['Disclosures: insider trades', 'disclosures/#insiders'], ['Disclosures: 8-K events', 'disclosures/#events'],
-    ['Disclosures: smart money', 'disclosures/#smart'], ['Disclosures: all flows', 'disclosures/#allflows'], ['Disclosures: ETFs', 'disclosures/#etf'],
-    ['Disclosures: consensus', 'disclosures/#consensus'], ['Disclosures: options', 'disclosures/#options'], ['Disclosures: rotation', 'disclosures/#rotation'],
-    ['Disclosures: short interest', 'disclosures/#shorts'], ['Disclosures: 13D / 13G stakes', 'disclosures/#stakes'], ['Disclosures: debt & rates', 'disclosures/#debt']];
+    ['13F managers A–Z', 'm/'], ["Officials' stock trades A–Z", 'o/'], ['Method', '#method'],
+    // every Disclosures section, a page of the site (web/hub-shell.js)
+    ["Signals: what funds, insiders and officials did", '#signals'], ["Smart money", '#smart'], ["All flows", '#allflows'],
+    ["13F flows: market flows", '#flows'], ["Insider trades (Form 4)", '#insiders'], ["Officials' stock trades", '#trades'],
+    ["13D / 13G stakes", '#stakes'], ["Form 144", '#form144'], ["8-K events", '#events'], ["News", '#news'], ["Earnings calls", '#calls'],
+    ["Earnings season", '#earnings'], ["Filings radar", '#filings'], ["Options", '#options'], ["Price paths", '#paths'],
+    ["Opportunity", '#opportunity'], ["Strategies", '#strategies'], ["Odds", '#odds'], ["Market models", '#mmodels'], ["Move odds", '#moves'],
+    ["Rotation (RRG)", '#rotation'], ["Chart composer", '#composer'], ["Short interest", '#shorts'], ["Market maps", '#maps'], ["ETF scanner", '#etf'],
+    ["COT", '#cot'], ["Valuation", '#valuation'], ["Consensus & prediction markets", '#consensus'], ["Quality", '#quality'], ["Screener", '#screener'],
+    ["Analysis traps", '#traps'], ["Workforce", '#workforce'], ["Beyond filings", '#outside'], ["Notes & ties", '#notes'], ["Guidance", '#guidance'],
+    ["Buyouts", '#buyouts'], ["Debt & rates", '#debt'], ["Hidden leverage", '#hidden'], ["Cross-holdings: who holds whom", '#cross'],
+    ["People & index", '#people'], ["13F holdings", '#holdings'], ["Officials", '#congress'], ["N-PX", '#npx'], ["Banks", '#banks'],
+    ["PDF / OCR", '#review'], ["Explore directory", '#directory'], ["Health", '#status']];
 
   function load() {
     if (IX) return Promise.resolve(IX);
@@ -25,9 +32,9 @@
         const have = new Set(site.map((c) => c.id));
         const sec = ((all && all.companies) || []).filter((r) => !have.has(+r[0])).map((r, i) => ({ k: 'company', id: +r[0], tk: r[1] || '', name: r[2] || '', rev: -i, off: true, href: `#c-${r[0]}` }));
         const sxx = sx || {};
-        const mgr = (sxx.managers || []).map((r) => ({ k: 'manager', id: r[0], tk: '', name: r[2] || r[1], sub: r[2] && r[1] !== r[2] ? r[1] : '', w: r[3] || 0, href: `disclosures/#holdings/${r[0]}` }));
-        const off = (sxx.officials || []).map((r) => ({ k: 'official', id: r[0], tk: '', name: r[0], sub: [r[1], r[2] ? `${r[2]} trades` : ''].filter(Boolean).join(' · '), w: r[2] || 0, href: `disclosures/#trades/${encodeURIComponent(r[0])}` }));
-        const etf = (sxx.etfs || []).map((r) => ({ k: 'etf', id: r[0], tk: r[0], name: r[1] || r[0], w: r[2] || 0, href: `disclosures/#etf/${encodeURIComponent(r[0])}` }));
+        const mgr = (sxx.managers || []).map((r) => ({ k: 'manager', id: r[0], tk: '', name: r[2] || r[1], sub: r[2] && r[1] !== r[2] ? r[1] : '', w: r[3] || 0, href: `#holdings/${r[0]}` }));
+        const off = (sxx.officials || []).map((r) => ({ k: 'official', id: r[0], tk: '', name: r[0], sub: [r[1], r[2] ? `${r[2]} trades` : ''].filter(Boolean).join(' · '), w: r[2] || 0, href: `#trades/${encodeURIComponent(r[0])}` }));
+        const etf = (sxx.etfs || []).map((r) => ({ k: 'etf', id: r[0], tk: r[0], name: r[1] || r[0], w: r[2] || 0, href: `#etf/${encodeURIComponent(r[0])}` }));
         const pages = PAGES.map(([n, h]) => ({ k: 'page', id: h, tk: '', name: n, href: h }));
         // sectors, SIC industries and the supply chains / themes, each with its own page
         const names = (ix && ix.sector_names) || {};

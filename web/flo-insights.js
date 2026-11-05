@@ -478,7 +478,7 @@
         const b = d.breadth || {};
         return { html: L(lg, `${esc(d.as_of)}: the rarest falls in their own history — `, `${esc(d.as_of)} 历史上最罕见的下跌：`) + dn.map((x) => `${coLink(x.ticker, x.cik)} ${spc(x.move)}`).join(', ') + L(lg, '; the rarest rises — ', '；最罕见的上涨：') + up.map((x) => `${coLink(x.ticker, x.cik)} ${spc(x.move)}`).join(', ') + '.'
           + (fin(b.down5) ? L(lg, ` ${pc(b.down5)} of stocks had a bottom-5% day and ${pc(b.up5)} a top-5% day (about 5% each on an ordinary day).`, ` 当天 ${pc(b.down5)} 的股票出现历史后 5% 的跌幅，${pc(b.up5)} 出现前 5% 的涨幅（平常各约 5%）。`) : ''),
-        facts: [...dn, ...up].map((x) => `${x.ticker} ${spc(x.move)} (percentile ${num(x.pct, 1)})`), mood: 'talk', links: [lk(`${BASE}disclosures/#moves/stocks`, L(lg, 'Move odds', '涨跌罕见度'))] };
+        facts: [...dn, ...up].map((x) => `${x.ticker} ${spc(x.move)} (percentile ${num(x.pct, 1)})`), mood: 'talk', links: [lk(`${BASE}#moves/stocks`, L(lg, 'Move odds', '涨跌罕见度'))] };
       },
       async events(lg) {
         const d = await json(HUB + 'market/events8k.json');
@@ -690,7 +690,7 @@
       const rows = (d.rows || []).map((r) => Object.fromEntries(d.fields.map((k, i) => [k, r[i]])));
       if (/\b(new|newly|recent|latest|chang|this week|appear|disappear|released|since)\b|最近|最新|新触发|变化|新增|解除/i.test(String(q || ''))) {
         const ch = (((await json(DATA + 'traps/changes.json')) || {}).changes || []).slice(0, 12);
-        if (!ch.length) return { html: L(lg, 'No evidence change on file yet: each company\'s findings are compared with those of its previous filing from the next scans on.', '还没有记录到证据变化：从下次扫描起，每家公司的结果会与其上一期财报的结果比较。'), facts: [], mood: 'talk', links: [lk(`${BASE}disclosures/#traps`, L(lg, 'Analysis traps', '分析陷阱'))] };
+        if (!ch.length) return { html: L(lg, 'No evidence change on file yet: each company\'s findings are compared with those of its previous filing from the next scans on.', '还没有记录到证据变化：从下次扫描起，每家公司的结果会与其上一期财报的结果比较。'), facts: [], mood: 'talk', links: [lk(`${BASE}#traps`, L(lg, 'Analysis traps', '分析陷阱'))] };
         return { html: L(lg, `Traps a newer filing changed, newest first (${num(ch.length)} shown):`, `最近因新财报而变化的分析陷阱（最新在前，共 ${num(ch.length)} 条）：`)
           + ol(ch.map((x) => `${esc(x.date)} ${coLink(x.ticker, x.cik)} ${esc(x.rule)} ${esc(lg === 'zh' ? (TRAP_ZH[x.rule] || x.rule_name) : x.rule_name)}: <b>${esc(CHANGE_ZH[x.kind][lg === 'zh' ? 1 : 0])}</b>${x.kind === 'severity' ? ` (${esc(x.from_severity)} → ${esc(x.severity)})` : x.kind === 'new' && x.severity ? ` · ${esc(x.severity)}` : ''} ${L(lg, `on the filing to ${esc(x.as_of)}`, `（截至 ${esc(x.as_of)} 的财报）`)}`))
           + L(lg, ' A change to a rule on this site is not listed, only a newer filing re-read by the same rule.', ' 只列出同一规则在更新财报上的重算结果，不含规则本身的修改。'),
@@ -716,7 +716,7 @@
       const html = L(lg, `<b>${esc(c.ticker)}</b> scores <b>${num(r.score)} of 100</b> for earnings quality (grade ${esc(r.grade)}, rank ${num(r.rank)} of ${num(d.n)}): eight published measures of whether profit is backed by cash and free of the markers of managed earnings — accruals, discretionary accruals, Beneish M, Dechow F, Montier C, Piotroski F, the non-GAAP gap and smoothness.${lost ? ` It loses the most points on ${lost}.` : ''}${won ? ` Full marks for ${won}.` : ''} A statistical screen, not an audit${r.score < 50 ? '; fast growth lowers it by construction' : ''}.`,
         `<b>${esc(c.ticker)}</b> 盈余质量得分 <b>${num(r.score)}/100</b>（${esc(r.grade)} 级，${num(d.n)} 家中排第 ${num(r.rank)}）：由八项公开指标组成——应计项目、可操纵应计、Beneish M、Dechow F、Montier C、Piotroski F、非 GAAP 差距和利润平滑度，衡量利润是否有现金支撑、是否带有盈余管理的特征。${lost ? `失分最多的是：${lost}。` : ''}${won ? `得满分的是：${won}。` : ''}这是统计筛查，不是审计${r.score < 50 ? '；高增长本身会拉低分数' : ''}。`);
       return { html, facts: [`earnings quality score ${r.score}/100 grade ${r.grade} rank ${r.rank}/${d.n}`, ...(r.lost || []).map((x) => 'loses points: ' + x)], mood: r.score >= 65 ? 'happy' : r.score < 50 ? 'worried' : 'talk',
-        links: [lk(`${BASE}c/${slugOf(c)}/earnings-quality/`, L(lg, 'Earnings quality score', '盈余质量评分')), lk(`${BASE}disclosures/#quality`, L(lg, 'Quality workbench', '质量工作台'))] };
+        links: [lk(`${BASE}c/${slugOf(c)}/earnings-quality/`, L(lg, 'Earnings quality score', '盈余质量评分')), lk(`${BASE}#quality`, L(lg, 'Quality workbench', '质量工作台'))] };
     }
     MK.quality = async (lg, ix, q) => {
       const d = await qrows();
@@ -810,12 +810,12 @@
           const ts = p.tickers.slice(0, 10);
           return { html: L(lg, `<b>${esc(p.title)}</b> — ${esc(p.line)} ${num(p.tickers.length)} companies pass today${ts.length ? ', the first ' + ts.length + ':' : '.'}`, `<b>${esc(p.title)}</b>——${esc(p.line)} 今天有 ${num(p.tickers.length)} 家公司通过${ts.length ? '，前 ' + ts.length + ' 家：' : '。'}`)
             + (ts.length ? ' ' + ts.map((t) => coLink(t, (names[t] || {}).cik)).join(', ') : ''),
-            facts: [`screen ${p.key}: ${p.tickers.length} pass; ${ts.join(' ')}`], mood: 'talk', links: [lk(`${BASE}disclosures/#screener/${p.key}`, L(lg, 'Open this screen live', '打开实时筛选')), lk(`${BASE}disclosures/screener/`, L(lg, 'All preset screens', '全部预设筛选'))] };
+            facts: [`screen ${p.key}: ${p.tickers.length} pass; ${ts.join(' ')}`], mood: 'talk', links: [lk(`${BASE}#screener/${p.key}`, L(lg, 'Open this screen live', '打开实时筛选')), lk(`${BASE}disclosures/screener/`, L(lg, 'All preset screens', '全部预设筛选'))] };
         }
       }
       return { html: L(lg, `The screener holds ${num(d.rows.length)} companies and ${num(d.fields.length - 6)} fields from the filings — growth, margins, cash flow and yields, Piotroski, Altman and Beneish, the quality score, the next report, 13F and insider flows, short interest, cash and runway. Preset screens:`, `筛选器收录 ${num(d.rows.length)} 家公司、${num(d.fields.length - 6)} 个来自财报的字段——增长、利润率、现金流与收益率、Piotroski、Altman、Beneish、质量评分、下次财报、13F 与内部人资金流、空头、现金与跑道。预设筛选：`)
-        + ol(d.presets.map((p) => `<a href="${esc(BASE)}disclosures/#screener/${esc(p.key)}">${esc(p.title)}</a> (${num(p.tickers.length)})`)),
-        facts: d.presets.map((p) => `${p.key}: ${p.tickers.length}`), mood: 'talk', links: [lk(`${BASE}disclosures/#screener`, L(lg, 'Open the screener', '打开筛选器'))] };
+        + ol(d.presets.map((p) => `<a href="${esc(BASE)}#screener/${esc(p.key)}">${esc(p.title)}</a> (${num(p.tickers.length)})`)),
+        facts: d.presets.map((p) => `${p.key}: ${p.tickers.length}`), mood: 'talk', links: [lk(`${BASE}#screener`, L(lg, 'Open the screener', '打开筛选器'))] };
     };
     // "$10,000 in NVDA in January 2024": the daily closes decoded as the backtest page does
     const decodeMoves = (doc) => { if (!doc || !doc.last) return null; let days; if (doc.dates) days = doc.dates.slice(); else { const d = new Date(doc.d0 + 'T00:00:00Z'); days = [doc.d0]; for (const ch of doc.gaps || '') { d.setUTCDate(d.getUTCDate() + parseInt(ch, 36)); days.push(d.toISOString().slice(0, 10)); } } const r = doc.r || [], n = Math.min(days.length, r.length + 1), px = new Array(n); let s = 0; for (let i = n - 1; i >= 0; i--) { px[i] = doc.last * Math.exp(-s); if (i > 0) s += r[i - 1] / 1e4; } return { days: days.slice(0, n), px, asOf: doc.as_of }; };

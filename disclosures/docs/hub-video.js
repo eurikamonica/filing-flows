@@ -41,10 +41,10 @@
   // the Video Studio engine: the Hub's data sit in data/, the site's in ../data/ (studio.js reads FF_HUB / FF_DATA)
   function studio() {
     if (!engine) {
-      root.FF_HUB = root.FF_HUB || 'data/';
-      root.FF_DATA = root.FF_DATA || '../data/';
-      engine = (root.FFActual ? Promise.resolve() : load('../actual-weights.js'))
-        .then(() => (root.FFStudio ? null : load('../studio.js')))
+      root.FF_HUB = root.FF_HUB || (globalThis.FF_HUB_ROOT||'') + 'data/';
+      root.FF_DATA = root.FF_DATA || (globalThis.FF_SITE_ROOT??'../') + 'data/';
+      engine = (root.FFActual ? Promise.resolve() : load((globalThis.FF_SITE_ROOT??'../') + 'actual-weights.js'))
+        .then(() => (root.FFStudio ? null : load((globalThis.FF_SITE_ROOT??'../') + 'studio.js')))
         .then(() => { if (!root.FFStudio || !root.FFStudio._t) throw new Error('the video engine did not load'); return root.FFStudio._t; });
       engine.catch(() => { engine = null; });
     }
@@ -132,7 +132,7 @@
   function pause(p) { p.playing = false; cancelAnimationFrame(p.raf); const b = p.node.querySelector('.hv-play'); if (b) b.textContent = '▶ Play'; }
   function link(p) {
     const a = p.node.querySelector('.hv-studio');
-    if (a && p.T && p.spec.state) { try { a.href = '../#' + p.T.serialize(p.T.parseState(enc(stateOf(p)))); } catch (e) { a.removeAttribute('href'); } }
+    if (a && p.T && p.spec.state) { try { a.href = (globalThis.FF_SITE_ROOT??'../') + '#' + p.T.serialize(p.T.parseState(enc(stateOf(p)))); } catch (e) { a.removeAttribute('href'); } }
   }
   function notes(p) {
     const ul = p.node.querySelector('.hv-notes ul');

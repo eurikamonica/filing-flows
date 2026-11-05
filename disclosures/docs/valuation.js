@@ -8,7 +8,7 @@ const valStore={};
 function valData(name){
  const m=valStore[name]||(valStore[name]={});
  if(m.data||m.err||m.loading)return m;
- m.loading=fetch('data/research/valuation/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/valuation/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
 const VAL_VIEWS=[['all','Every company'],['market','The market as a whole'],['outside','Outside view (base rates)'],['company','One company'],['fits','Banks & insurers'],['track','Track record'],['models','Model scores']];
@@ -156,7 +156,7 @@ function bindValuation(){
  if($('vq')){$('vq').onchange=e=>{state.vq=e.target.value;render()};$('vq').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-vco]').forEach(b=>b.onclick=()=>{state.vview='company';state.vq=b.dataset.vco;render();scrollTo({top:0,behavior:'smooth'})});
  const one=$('val-one');
- if(one&&window.FairValueView&&one.dataset.drawn!==one.dataset.cik){one.dataset.drawn=one.dataset.cik;FairValueView.render(one,{cik:one.dataset.cik,hub:''})}
+ if(one&&window.FairValueView&&one.dataset.drawn!==one.dataset.cik){one.dataset.drawn=one.dataset.cik;FairValueView.render(one,{cik:one.dataset.cik,hub:(globalThis.FF_HUB_ROOT||'')})}
  const fb=$('val-fit-bank'),fi=$('val-fit-ins');
  if(fb){const b=valData('banks');if(b.data)valScatter(fb,b.data.fit,'ROTCE','P/TBV');else fb.innerHTML=empty(b.err?'Not available ('+b.err+').':'Loading…')}
  if(fi){const b=valData('insurers');if(b.data)valScatter(fi,b.data.fit,'ROE','P/B');else fi.innerHTML=empty(b.err?'Not available ('+b.err+').':'Loading…')}

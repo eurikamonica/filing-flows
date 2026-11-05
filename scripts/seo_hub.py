@@ -1,6 +1,6 @@
 """Crawlable pages for the Disclosure Hub's views and for material 8-K events.
 
-The hub itself is one page with #tab routes (disclosures/#rotation …); search engines index a URL, not a fragment.
+The Disclosures sections are #tab routes of the site's one page (#rotation …); search engines index a URL, not a fragment.
 Each important view gets its own URL with the current figures drawn into the page — a snapshot that reads without
 script, with its own analysis, charts and links to every company's pages — and a link to the live, interactive view:
 
@@ -569,7 +569,7 @@ def impact_page(site, base, ES):
     url = f"{base}/events/impact/"
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>8-K events</a> › Impact</p><h1>Which 8-K items move stocks? Every item, scored</h1>"
             f"<p class='lead'>{lead}</p>{chart}<h2 id='items'>Every item</h2>{tbl}<p class='muted'>{e(ES.get('note') or '')}</p>{sets_h}"
-            f"<p><a class='seo-cta' href='../'>The latest material 8-Ks →</a> <a href='../../disclosures/#events'>Live, filterable →</a></p>{DISCLAIMER}")
+            f"<p><a class='seo-cta' href='../'>The latest material 8-Ks →</a> <a href='../../#events'>Live, filterable →</a></p>{DISCLAIMER}")
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'BreadcrumbList', 'itemListElement': [{'@type': 'ListItem', 'position': 1, 'name': 'Filing Flows', 'item': base + '/'},
                                                          {'@type': 'ListItem', 'position': 2, 'name': '8-K events', 'item': base + '/events/'},

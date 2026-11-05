@@ -8,7 +8,7 @@ const ouStore = {};
 function ouData(name) {
   const m = ouStore[name] || (ouStore[name] = {});
   if (m.data || m.err || m.loading) return m;
-  m.loading = fetch('data/research/outside/' + name + '.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
+  m.loading = fetch((globalThis.FF_HUB_ROOT||'')+'data/research/outside/' + name + '.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw Error('HTTP ' + r.status); return r.json() })
     .then(d => { m.data = d; if (state.tab === 'outside') render() }).catch(e => { m.err = e.message; if (state.tab === 'outside') render() });
   return m;
 }
@@ -136,7 +136,7 @@ function bindOutside() {
     const t = e.target.value.trim().toUpperCase(), r = ouRows((ouData('index').data) || {}).find(x => x.ticker === t);
     if (r) one(String(r.cik), r.ticker); else $('ou-one').innerHTML = `<p class="muted">${esc(t)}: nothing matched for that ticker.</p>`;
   };
-  if (state.ouv === 'one' && $('ou-one') && state.ouone && window.OutsideView) window.OutsideView.render($('ou-one'), { cik: state.ouone, hub: '' });
+  if (state.ouv === 'one' && $('ou-one') && state.ouone && window.OutsideView) window.OutsideView.render($('ou-one'), { cik: state.ouone, hub:(globalThis.FF_HUB_ROOT||'') });
 }
 function outsideDeepLink(arg) {
   const v = decodeURIComponent(arg || '').trim();

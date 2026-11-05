@@ -324,7 +324,7 @@
 
   async function render(el, ctx) {
     css();
-    const hub = ctx && ctx.hub != null ? ctx.hub : '';
+    const hub = ctx && ctx.hub != null ? ctx.hub : (globalThis.FF_HUB_ROOT||'');
     HUB = hub;
     const base = hub + 'data/research/paths/';
     el.innerHTML = '<p class="muted">Loading the price paths…</p>';
@@ -364,7 +364,7 @@
   }
   async function portfolio(el, ctx) {
     css();
-    const hub = ctx && ctx.hub != null ? ctx.hub : '';
+    const hub = ctx && ctx.hub != null ? ctx.hub : (globalThis.FF_HUB_ROOT||'');
     const kind = ctx.kind === 'o' ? 'o' : 'm';
     el.innerHTML = '<p class="muted">Loading the portfolio paths…</p>';
     let p;

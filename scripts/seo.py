@@ -814,7 +814,7 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
         body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Industries</a> › {e(sector)} › {e(nm)}</p>"
                 f"<h1>{e(nm)} <span class='muted'>SIC {e(sic)}</span></h1><p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>"
                 + gamma_charts(d, mdl, nm, sic)
-                + f"<p><a class='seo-cta' href='../../#gamma-{e(sic)}'>Open the industry: growth distribution, money flow, network →</a></p>"
+                + f"<p><a class='seo-cta' href='../../#i-{e(sic)}'>Open the industry: growth distribution, money flow, network →</a></p>"
                 + (f"<h2>Who sells to whom</h2><p class='muted'>Customers and suppliers named in the companies' annual reports; the share is of the supplier's revenue.</p><ul class='seo-list'>{links}</ul>" if links else "")
                 + (f"<h2>Growth model</h2><p class='muted'>Industry revenue, the same companies year on year; 80% ranges. Fitted on SEC filings and tested out of sample (<a href='../../model/'>how</a>).</p>"
                    f"<div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>Growth Y/Y</th><th class='num'>Revenue</th><th class='num'>80% range</th></tr></thead><tbody>{fct}</tbody></table></div>" if fct else "")
@@ -833,7 +833,7 @@ def gamma_pages(data_dir, out_dir, base, slugs, images=None):
             parts.append(f"<h2>{e(sname)}</h2><ul class='seo-list'>{lis}</ul>")
         body = ("<p class='crumbs'><a href='../'>Filing Flows</a> › Industries</p><h1>Every industry, by SEC SIC code</h1>"
                 "<p class='lead'>Revenue growth across each industry's companies, the customers and suppliers they name, and a growth "
-                "forecast, from SEC filings.</p><p><a class='seo-cta' href='../#gamma'>Open the industries →</a></p>" + "".join(parts))
+                "forecast, from SEC filings.</p><p><a class='seo-cta' href='../#sectors'>Open the industries →</a></p>" + "".join(parts))
         open(os.path.join(out_dir, "gamma", "index.html"), "w", encoding="utf-8").write(
             page("Industries by SEC SIC code: revenue growth and who sells to whom | Filing Flows",
                  "Every SEC industry (SIC code): median revenue growth, the companies, named customers and suppliers, and a growth forecast.",

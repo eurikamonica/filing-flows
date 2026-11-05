@@ -25,7 +25,11 @@
                investments, borrowing, down to what was added to cash or drawn from it — as a waterfall that moves
                from period to period, or the periods as columns (quality.cap of data/c/<cik>.json: pipeline/capital.py).
                The company video adds free cash flow, capital spending and shareholder returns (the cash flow
-               statements' last eight quarters and five years), the operating cash margin and cash conversion.
+               statements' last eight quarters and ten years), the operating cash margin and cash conversion.
+     holders   who held a company or an ETF at each quarter-end since 2013: its largest 13F holders, fund families
+               together, as a share of the company (13F value ÷ market value) or of the fund (÷ its net assets), of all
+               13F holdings, or in dollars — a bar race, lines, the whole ownership as areas, or the change on the
+               quarter before (holders-video.js; SEC's 13F data sets: disclosures/app/holders_history.py).
      spend     spend or invest: a thing bought — an iPhone every year (Apple's launch prices), a car, furniture, a house, a
                graphics card — or a habit (a coffee a day, Netflix, sneakers), with its value falling (or rising) a set
                share a year, replaced every n years and traded in, kept up ($ a year and a share of its value), bought
@@ -562,14 +566,14 @@
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
     rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
-    goal: '', solve: 'rec', yrs: '', fi: '0', fsplit: 'line', frb: '0', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', sp: 'phone', spi: 'iPhone', spp: '999', spinf: 'pro', spir: '', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0', sphe: 'm', sphn: '1', spe: '', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '' };
+    goal: '', solve: 'rec', yrs: '', fi: '0', fsplit: 'line', frb: '0', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', sp: 'phone', spi: 'iPhone', spp: '999', spinf: 'pro', spir: '', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0', sphe: 'm', sphn: '1', spe: '', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '', hm: 'pct', hn: '10' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
-    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'],
+    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'], ['holders', 'Major holders'],
     ['sankey', 'Earnings flow'], ['cash', 'Where the cash went'], ['snowball', 'Dividend snowball'], ['timing', 'Timing'], ['spend', 'Spend or invest']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
     fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']],
     rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
-    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], holdings: [['bars', 'Actual holdings bars']], sankey: [['sankey', 'Flow']], cash: [['fall', 'Waterfall'], ['columns', 'Period by period']], snowball: [['snow', 'Shares and income']],
+    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], holdings: [['bars', 'Actual holdings bars']], holders: [['bars', 'Holder bar race'], ['line', 'Lines'], ['stack', 'Ownership areas'], ['changes', 'Changes (pp)']], sankey: [['sankey', 'Flow']], cash: [['fall', 'Waterfall'], ['columns', 'Period by period']], snowball: [['snow', 'Shares and income']],
     timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']], spend: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
   const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold', 'dinc', 'dview'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
@@ -1496,6 +1500,7 @@
     if (k === 'sectors') return buildSectors(st, out);
     if (k === 'actual') return root.FFActual.build(st, out, { json, hub: HUB, rankMeta, reconstruct: reconstructIndex });
     if (k === 'holdings') return root.FFHoldingsVideo.build(st, out, { json, hub: HUB, rankMeta });
+    if (k === 'holders') return root.FFHoldersVideo.build(st, out, { json, hub: HUB, rankMeta, panel });
     if (k === 'sankey') return buildSankey(st, out, T);
     if (k === 'cash') return buildCash(st, out, T);
     if (k === 'spend') return buildSpend(st, out, T);
@@ -2248,7 +2253,7 @@
     ctx.save(); ctx.beginPath(); ctx.rect(b.x - 20 * S, b.y - 6 * S, b.w + 40 * S, area + 6 * S); ctx.clip();
     // drawn from the bottom of the table up, and the bar whose words show on top of the one it passes
     rows.sort((p, q) => q.c - p.c || q.r - p.r).forEach(({ s, r, v, ink }) => {
-      const y = b.y + r * slot + (slot - bh) / 2, w = Math.max(6 * S, Math.min(1.08, Math.abs(v) / vmax) * room), col = secCol(th, s.sec);
+      const y = b.y + r * slot + (slot - bh) / 2, w = Math.max(6 * S, Math.min(1.08, Math.abs(v) / vmax) * room), col = fin(s.pal) ? palAt(th, s.pal) : secCol(th, s.sec);
       const op = clamp(N - r + 0.15, 0, 1);
       ctx.globalAlpha = op;
       const gr = ctx.createLinearGradient(x0, 0, x0 + w, 0); gr.addColorStop(0, alpha(col, 0.72)); gr.addColorStop(1, col);
@@ -2270,7 +2275,7 @@
     });
     ctx.restore(); ctx.globalAlpha = 1;
     // sectors on screen
-    const secs = [...new Set(rows.filter((x) => x.r < N - 0.5).map((x) => x.s.sec))];
+    const secs = V.noLegend ? [] : [...new Set(rows.filter((x) => x.r < N - 0.5).map((x) => x.s.sec))];
     let lx = b.x; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = F(600, 20);
     const ly = b.y + area + legendH / 2;
     for (const sc of secs) { const t = SECTORS[sc] || sc, w = ctx.measureText(t).width; if (lx + w + 40 * S > b.x + b.w) break; ctx.fillStyle = secCol(th, sc); ctx.beginPath(); ctx.arc(lx + 8 * S, ly, 8 * S, 0, 7); ctx.fill(); ctx.fillStyle = th.muted; ctx.fillText(t, lx + 22 * S, ly); lx += w + 46 * S; }
@@ -2441,7 +2446,7 @@
     for (let y = new Date(G[0]).getUTCFullYear() + 1; y <= new Date(G[n - 1]).getUTCFullYear(); y += Math.max(1, Math.ceil((new Date(G[n - 1]).getUTCFullYear() - new Date(G[0]).getUTCFullYear()) / 9))) { const x = X(Date.UTC(y, 0, 1)); ctx.fillStyle = th.axis; ctx.fillText(String(y), x, b.y + b.h + 10 * S); }
     const base = G.map(() => 0), heads = [];
     V.series.forEach((s, band) => {
-      const top = s.v.map((v, i) => base[i] + (fin(v) ? v : 0)), col = V.actual && V.group === 'companies' && s.key !== 'other' ? palAt(th, band) : secCol(th, s.sec);
+      const top = s.v.map((v, i) => base[i] + (fin(v) ? v : 0)), col = s.col || (fin(s.pal) ? palAt(th, s.pal) : V.actual && V.group === 'companies' && s.key !== 'other' ? palAt(th, band) : secCol(th, s.sec));
       ctx.beginPath();
       for (let i = 0; i <= i0 && i < n; i++) (i ? ctx.lineTo(X(G[i]), Y(top[i])) : ctx.moveTo(X(G[i]), Y(top[i])));
       const tv = valAt(top, f), bv = valAt(base, f); ctx.lineTo(X(tCur), Y(tv)); ctx.lineTo(X(tCur), Y(bv));
@@ -2772,6 +2777,7 @@
   // the end card's rows and headline, from the last week
   function finish(V, st) {
     const L = V.grid.length - 1, G = V.grid, span = `${dayLabel(G[0])} → ${dayLabel(G[L])}`;
+    if (V.holders && V.kind === 'holders' && root.FFHoldersVideo) { root.FFHoldersVideo.final(V); return; }
     if (V.kind === 'rank') {
       const ord = V.series.map((s, k) => ({ k, v: s.v[L] })).filter((x) => fin(x.v)).sort((a, c) => (V.order === 'abs' ? Math.abs(c.v) - Math.abs(a.v) : V.order === 'asc' ? a.v - c.v : c.v - a.v)).slice(0, V.rankN);
       V.final = ord.map((x, i) => ({ k: x.k, label: `${i + 1}. ${V.series[x.k].label}`, value: V.fmt(x.v), change: '', v: x.v, sec: V.series[x.k].sec }));
@@ -2989,6 +2995,11 @@
     const G = V.grid || [], L = G.length - 1;
     const R = { kind: V.kind, title: V.title || '', sub: V.sub || '', cols: [], rows: [], caption: V.caption || '', notes: [...(V.notes || [])], foot: '' };
     const cell = (t, small, n) => [t == null || t === '' ? '—' : String(t), small || '', fin(n) ? +n : null];
+    if (V.holders && root.FFHoldersVideo) {                  // who held it: the holders at the end, at the start, shares, value
+      const X = root.FFHoldersVideo.report(V, cell);
+      R.title = V.endTitle || R.title; R.sub = V.endSub || R.sub; R.cols = X.cols; R.rows = X.rows; R.foot = X.foot;
+      return R;
+    }
     if (V.kind === 'growth') {
       const yrs = L > 0 ? (G[L] - G[0]) / (365.25 * DAY) : 0, mode = V.div || 'tr', A = V.adj || {}, I = A.infl, C = A.cash;
       const anyDiv = V.series.some((s) => s.inc && s.inc.total > 0), whole = fullYears(G), taxed = A.tax ? `, after ${Math.round(A.tax * 100)}% tax` : '';
@@ -3233,7 +3244,7 @@
   /* ---------- the page ---------- */
   function fileStem(V) {
     const slug = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const what = V.actual ? `actual-weights-${V.actual.fund}-${V.kind === 'sectors' ? 'sectors' : 'holdings'}` : V.kind === 'rank' ? `top-${V.rankN}-${slug(V.metric)}` : V.kind === 'dist' ? 'return-spread' : V.kind === 'calendar' ? V.series[0].key + '-monthly-returns'
+    const what = V.holders ? `holders-${V.holders.sym}-${V.style || 'bars'}` : V.actual ? `actual-weights-${V.actual.fund}-${V.kind === 'sectors' ? 'sectors' : 'holdings'}` : V.kind === 'rank' ? `top-${V.rankN}-${slug(V.metric)}` : V.kind === 'dist' ? 'return-spread' : V.kind === 'calendar' ? V.series[0].key + '-monthly-returns'
       : V.series.map((s) => s.key).join('-').replace(/[^A-Za-z0-9-]+/g, '').slice(0, 40) + (V.kind === 'drawdown' ? '-drawdowns' : V.dca ? '-monthly-buys' : '');
     return 'filing-flows-' + (what.slice(0, 60) || 'video');
   }
@@ -3294,6 +3305,9 @@
     { name: 'ETF company weight history', note: 'Actual disclosed company weights · Top N + Other', s: { k: 'actual', aw: 'etf', ah: 'SPY', style: 'companies', from: '', theme: 'clean', dur: '30' } },
     { name: 'Berkshire: reported portfolio', note: '13F company weights by quarter · not current holdings', s: { k: 'actual', aw: '13f', ac: '1067983', style: 'companies', from: '', theme: 'clean', dur: '30' } },
     { name: 'ETF allocation changes', note: 'Company or sector changes in percentage points', s: { k: 'actual', aw: 'etf', ah: 'SPY', style: 'changes', from: '', dur: '20' } },
+    { name: 'Who owns Apple', note: 'Its largest 13F holders since 2013, fund families together', s: { k: 'holders', t: 'AAPL', hm: 'pct', hn: '10', style: 'bars', from: '', theme: 'bull', dur: '40' } },
+    { name: 'Apple\u2019s owners, as areas', note: 'Vanguard, BlackRock … every other 13F holder, and the rest', s: { k: 'holders', t: 'AAPL', hm: 'pct', hn: '8', style: 'stack', from: '', theme: 'clean', dur: '30' } },
+    { name: 'Who owns SPY', note: 'The fund\u2019s 13F holders, a share of its net assets', s: { k: 'holders', t: 'SPY', hm: 'pct', hn: '10', style: 'bars', from: '', theme: 'terminal', dur: '30' } },
     { name: 'Official transaction composition', note: 'Disclosed lower-bound amounts · NOT actual holdings', s: { k: 'actual', aw: 'official', ap: 'Nancy Pelosi', style: 'stack', from: '', theme: 'clean', dur: '30' } },
     { name: 'What the Dow is made of', note: 'Sector weights by share price, as the index counts', s: { k: 'sectors', idx: 'dji', sw: 'index', from: '2012-01-31', style: 'stack', theme: 'clean', dur: '30' } },
     { name: 'What it took to reach $1M', note: 'QQQ vs SPY: the monthly amount, worked back', s: { k: 'growth', t: 'QQQ,SPY', goal: '1000000', solve: 'rec', amt: '0', from: '2016-10-28', style: 'line', theme: 'bull' } },
@@ -3416,6 +3430,13 @@
         (st.hsrc === 'officials' ? 'Month by month: the trades over time' : 'Quarter by quarter: the reports over time') + '</button></div>';
       return h;
     }
+    // who held a stock or an ETF: the ticker, the measure, how many holders (holders-video.js)
+    function holdersWhoSide() {
+      let h = `<label for="st-t">Company or ETF (ticker)</label><input class="input" id="st-t" value="${esc(tickers(st)[0] || '')}" placeholder="AAPL, NVDA, SPY, QQQ" list="st-list" autocomplete="off" autocapitalize="characters" spellcheck="false"><datalist id="st-list"></datalist>`;
+      h += `<div class="st-help st-range" id="st-range" aria-live="polite"></div>`;
+      h += `<div class="st-row"><div><label for="st-hm">Measure</label>${sel('st-hm', [['pct', 'Share of the company or fund'], ['share13', 'Share of all 13F holdings'], ['usd', 'Value held']], st.hm)}</div><div><label for="st-hn">Holders shown</label>${sel('st-hn', [['5', '5'], ['8', '8'], ['10', '10'], ['15', '15'], ['20', '20']], st.hn)}</div></div>`;
+      return h + '<div class="st-help">Every 13F filed since 2013 (SEC\'s data sets): what each manager with $100M or more held at each quarter-end. Fund families count as one holder (Vanguard\'s and BlackRock\'s filers together). Share of the company: its reported value ÷ the market value then; of an ETF: ÷ the fund\'s net assets. Individuals, insiders and managers outside 13F are in “Not in 13F reports” on the areas.</div>';
+    }
     function moreSide(k) {
       const meas = Object.entries(RANK).filter(([kk]) => !['gp', 'oi', 'ni'].includes(kk)).map(([kk, v]) => [kk, v[0]]);
       let h = '';
@@ -3483,6 +3504,7 @@
       else if (k === 'bubble' || k === 'treemap' || k === 'sectors') h += moreSide(k);
       else if (k === 'actual') h += actualSide();
       else if (k === 'holdings') h += holdingsSide();
+      else if (k === 'holders') h += holdersWhoSide();
       else if (k !== 'formula') {
         const one = k === 'calendar' || k === 'sankey' || k === 'timing' || k === 'cash';
         const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', cash: 'Company (ticker)', spend: 'Stocks to buy instead (tickers, the first is the maker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
@@ -3559,7 +3581,7 @@
       h += `<label for="st-title">Title (blank: written for you)</label><input class="input" id="st-title" value="${esc(st.title)}" placeholder="${esc((V && V.title) || '')}"><label for="st-sub">Subtitle</label><input class="input" id="st-sub" value="${esc(st.sub)}" placeholder="${esc((V && V.sub) || '')}">`;
       h += `<label for="st-end">End card</label>${sel('st-end', [['1', 'The result, ranked'], ['0', 'None']], st.end)}`;
       $('#st-side').innerHTML = h;
-      if (k === 'actual') rangeInfo();
+      if (k === 'actual' || k === 'holders') rangeInfo();
     }
     function relabel() {
       const L = growthLabels(st), a = app.querySelector('label[for="st-amt"]'), r = app.querySelector('label[for="st-rec"]'), hp = $('#st-goal-help');
@@ -3569,7 +3591,7 @@
     function status() {
       if (!V) return;
       const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly || (V.cf && V.cf.per === 'fy') ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || ['calendar', 'bubble', 'treemap', 'sectors'].includes(V.kind) ? 'months' : 'weeks';
-      const what = V.actual ? (' ' + (V.group || 'holdings')) : V.kind === 'cash' ? ' company' : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
+      const what = V.holders ? ' holders' : V.actual ? (' ' + (V.group || 'holdings')) : V.kind === 'cash' ? ' company' : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
       $('#st-status').textContent = V.actual && V.actual.fallback === 'single-disclosure'
         ? 'Only one real disclosure available · showing dated holdings, NOT weight changes · ' + V.series.length + what + ' · ' + tm.D + ' s'
         : V.actual ? `${V.series.length + what} · ${V.grid.length} ${V.actual.recon ? '' : 'actual '}dated snapshot${V.grid.length === 1 ? '' : 's'}${V.actual.recon ? ` (${V.actual.recon} reconstructed, ${V.actual.reports} reported)` : ''} · ${tm.D} s${V.grid.length === 1 ? ' (single-date card)' : ' (transitions illustrative)'}`
@@ -3659,7 +3681,7 @@
     const NPORT0 = '2019-09-30', F13_0 = '2013-06-30', PTR0 = '2012-01-01';
     let rangeTok = 0;
     async function rangeInfo() {
-      const el = $('#st-range'); if (!el || st.k !== 'actual') return;
+      const el = $('#st-range'); if (!el || (st.k !== 'actual' && st.k !== 'holders')) return;
       const my = ++rangeTok, set = (html, lo, hi) => {
         if (my !== rangeTok || !el.isConnected) return;
         el.innerHTML = html;
@@ -3667,6 +3689,17 @@
       };
       const all = (lo, hi) => lo ? ` <button type="button" class="pill" data-range-all="1">Use all on file</button>` : '';
       try {
+        if (st.k === 'holders') {                            // the quarters of 13F holders on file for the ticker
+          const sym = tickers(st)[0];
+          if (!sym) { set('Type a ticker to see the quarters on file.'); return; }
+          set(`Looking up ${esc(sym)}…`);
+          const B = await root.FFHoldersVideo.base({ json, hub: HUB });
+          const doc = await json(B + 'c/' + encodeURIComponent(sym.replace(/[^A-Z0-9-]/g, '_')) + '.json');
+          if (!doc || !(doc.periods || []).length) { const ok = await json(B + 'status.json'); set(ok ? `No 13F holders on file for <b>${esc(sym)}</b>: 13F covers US-listed stocks and ETFs held by managers of $100M or more.` : 'The 13F holders history is still being built: the quarters appear as SEC\'s data sets are read.'); return; }
+          const P = doc.periods, lo = P[0], hi = P[P.length - 1];
+          set(`<b>${esc(doc.name || sym)}</b>${(doc.classes || []).length > 1 ? ' · ' + esc(doc.classes.join(' + ')) : ''}<br><b>On file:</b> ${P.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter in SEC's 13F data sets, published a few weeks after each filing deadline (45 days after the quarter-end).`, lo, hi);
+          return;
+        }
         if (st.aw === 'etf' || st.aw === 'index') {
           const sym = String(st.aw === 'etf' ? st.ah : ((root.FFActual.TRACKERS[st.at] || [])[1] || '')).trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
           if (!sym) { set('Type a ticker to see the dates on file.'); return; }
@@ -3761,6 +3794,7 @@
         if (st.k === 'timing' && st.t === DEF.t) st.t = 'SPY';
         if (st.k === 'sankey') st.theme = 'clean';
         if (st.k === 'actual' || st.k === 'holdings') { st.style = 'bars'; st.from = ''; st.to = ''; st.yrs = ''; }
+        if (st.k === 'holders') { if (st.t === DEF.t || !T0.length) st.t = 'AAPL'; st.from = ''; st.to = ''; st.yrs = ''; }
         side(); rebuild(); return;
       }
       if (e.target.closest('[data-range-all]')) { st.from = ''; st.to = ''; st.yrs = ''; side(); rebuild(); return; }
@@ -3794,7 +3828,7 @@
       const key = id.slice(3); if (!(key in DEF)) return;
       if (key === 'ah') { const v = e.target.value.toUpperCase(); if (v !== e.target.value) { const p = e.target.selectionStart; e.target.value = v; try { e.target.setSelectionRange(p, p); } catch (x) { /* a phone keyboard */ } } }
       st[key] = e.target.value;
-      if (key === 'ah' || key === 'ac' || key === 'ap') { clearTimeout(rangeInfo.t); rangeInfo.t = setTimeout(rangeInfo, 300); }
+      if (key === 'ah' || key === 'ac' || key === 'ap' || (key === 't' && st.k === 'holders')) { clearTimeout(rangeInfo.t); rangeInfo.t = setTimeout(rangeInfo, 300); }
       if (key === 'title' || key === 'sub') { if (V) { V.title = st.title || V._title; V.sub = st.sub || V._sub; paint(); save(); } return; }
       if (LOOK.includes(key)) { if (V) { paint(); save(); status(); } return; }
       if (['rec', 'goal'].includes(key)) relabel();
@@ -3809,7 +3843,7 @@
       if (key === 'from') { st.yrs = ''; const y = $('#st-yrs'); if (y) y.value = ''; }
       if (key === 'solve') relabel();
       // Actual weight bars and sector areas require distinct portfolios, not just a repaint.
-      if (key === 'style' && st.k === 'actual') { side(); rebuild(); return; }
+      if (key === 'style' && (st.k === 'actual' || st.k === 'holders')) { side(); rebuild(); return; }
       if (LOOK.includes(key)) {
         if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; V.dinc = st.dinc; V.dview = st.dview; delete V._dom; sizeCanvas(); paint(); save(); status(); if (key === 'theme') showReport(); if (key === 'dinc') side(); }
         else rebuild();

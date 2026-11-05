@@ -490,7 +490,7 @@ function rrglMoves(k){                                 // one asset's daily file
  const m=RRGL.moves[k]||(RRGL.moves[k]={});
  if(m.data||m.err||m.loading)return m;
  if(typeof fetch!=='function'){m.err='no fetch';return m}
- m.loading=fetch('data/research/paths/moves/a/'+encodeURIComponent(k)+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/paths/moves/a/'+encodeURIComponent(k)+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(d=>{m.data=RRGLab.decodeMoves(d);rrglRedraw()}).catch(e=>{m.err=e.message;rrglRedraw()});
  return m;
 }
@@ -841,7 +841,7 @@ function rrglServer(fq){
  const m=RRGL.srv.d||(RRGL.srv.d={});
  if(m.data||m.err||m.loading)return m;
  if(typeof fetch!=='function'){m.err='no fetch';return m}
- m.loading=fetch('data/research/paths/moves/rrg-research-daily.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;rrglRedraw()}).catch(e=>{m.err=e.message;rrglRedraw()});
+ m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/paths/moves/rrg-research-daily.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;rrglRedraw()}).catch(e=>{m.err=e.message;rrglRedraw()});
  return m;
 }
 const RRGL_IDX=new Set(['QQQ','DIA','IWM','MDY','IJR','RSP']);

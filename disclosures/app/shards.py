@@ -50,6 +50,28 @@ def hydrate_catalogs(root,data):
     return data
 
 
+def publish_manager(root,row):
+    """Write one hydrated 13F manager (cache, public shard and per-quarter position shards); returns its lazy summary row.
+
+    Used by publish_shards and by the prices run, which annotates managers one at a time instead of holding every
+    manager's positions in memory at once."""
+    path=f"shards/holdings/{row['cik']}.json"
+    summary={k:v for k,v in row.items() if k not in ('filings','snapshots','candidates','_loaded','shard','cache',*SHARD_ONLY.get('holdings',()))}
+    cache=f"cache/holdings/{row['cik']}.json.gz";target=Path(root)/cache;target.parent.mkdir(parents=True,exist_ok=True)
+    with gzip.open(target.with_suffix('.tmp'),'wt',encoding='utf-8')as f:json.dump(row,f,separators=(',',':'),ensure_ascii=False,allow_nan=False)
+    target.with_suffix('.tmp').replace(target)
+    snaps=row.get('snapshots',[]);last=snaps[-1] if snaps else {}
+    public_snaps=[]
+    for snap in snaps:
+        positions_path=f"shards/holdings/{row['cik']}-{snap['period']}.json"
+        compact_write(safe_path(root,positions_path),snap['positions'])
+        public_snaps.append({**{k:v for k,v in snap.items() if k not in ('positions','changes')},'positions_shard':positions_path})
+    compact_write(safe_path(root,path),{**summary,'snapshots':public_snaps})
+    summary.update(period_count=len(snaps),latest_period=last.get('period'),position_count=len(last.get('positions',[])),total_usd=last.get('total_usd'),cache=cache)
+    summary['shard']=path
+    return summary
+
+
 def publish_shards(root,data):
     out={**data,'modules':{k:dict(v)for k,v in data.get('modules',{}).items()}}
     for key,field,ident in [('holdings','managers','cik'),('congress','reports','report_id')]:
@@ -58,23 +80,12 @@ def publish_shards(root,data):
             # Already published rows stay lazy, so full-market runs do not hydrate every history.
             if row.get('shard') and ('snapshots' not in row if key=='holdings' else 'candidates' not in row):
                 summaries.append({k:v for k,v in row.items() if k not in SHARD_ONLY.get(key,())});continue
+            if key=='holdings':
+                summaries.append(publish_manager(root,row));continue
             path=f"shards/{key}/{row[ident]}.json"
             summary={k:v for k,v in row.items() if k not in ('filings','snapshots','candidates','_loaded','shard','cache',*SHARD_ONLY.get(key,()))}
-            if key=='holdings':
-                cache=f"cache/holdings/{row[ident]}.json.gz";target=Path(root)/cache;target.parent.mkdir(parents=True,exist_ok=True)
-                with gzip.open(target.with_suffix('.tmp'),'wt',encoding='utf-8')as f:json.dump(row,f,separators=(',',':'),ensure_ascii=False,allow_nan=False)
-                target.with_suffix('.tmp').replace(target)
-                snaps=row.get('snapshots',[]);last=snaps[-1] if snaps else {}
-                public_snaps=[]
-                for snap in snaps:
-                    positions_path=f"shards/holdings/{row[ident]}-{snap['period']}.json"
-                    compact_write(safe_path(root,positions_path),snap['positions'])
-                    public_snaps.append({**{k:v for k,v in snap.items() if k not in ('positions','changes')},'positions_shard':positions_path})
-                compact_write(safe_path(root,path),{**summary,'snapshots':public_snaps})
-                summary.update(period_count=len(snaps),latest_period=last.get('period'),position_count=len(last.get('positions',[])),total_usd=last.get('total_usd'),cache=cache)
-            else:
-                compact_write(safe_path(root,path),row)
-                summary['candidate_count']=len(row.get('candidates',[]))
+            compact_write(safe_path(root,path),row)
+            summary['candidate_count']=len(row.get('candidates',[]))
             summary['shard']=path;summaries.append(summary)
         module[field]=summaries
         if key=='holdings' and 'discovery' in module:
