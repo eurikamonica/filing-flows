@@ -84,6 +84,7 @@ function earningsView() {
     const ix = erData('index');
     if (!ix.data) return out + empty(ix.err ? 'Could not load the previews (' + ix.err + ').' : 'Loading the previews…');
     const rows = erRows(ix.data).filter((r) => r.days_to >= 0);
+    out += `<p class="sub">Every report of the next 45 days with the range of estimates and the revenue estimate: <a href="#consensus/calendar">Consensus → Earnings calendar</a>.</p>`;
     return out + table(['Ticker', 'Reports', 'Sector', 'Consensus EPS', 'Analysts', 'Polymarket: beats', 'Our model', 'Implied move', 'Usual move', 'Beat rate', 'Dispersion', '30-day revision'],
       rows.map((r) => [erTk(r.ticker) + `<br><span class="muted">${esc(r.name || '')}</span>`, esc(r.report_date) + (r.frozen ? ' <span class="tag">frozen</span>' : ''), esc(r.sector || ''), erU(r.eps), fmt(r.n), erP(r.polymarket), erP(r.model),
         r.implied != null ? '±' + erP(r.implied, 1) : '—', r.avg_move != null ? '±' + erP(r.avg_move, 1) : '—', erP(r.beat_rate), erP(r.dispersion), erS(r.revision_30d)])) + `<p class="sub">${esc(ix.data.note || '')}</p>`;
@@ -137,3 +138,5 @@ function bindEarnings() {
 }
 window.HUB_VIEWS = Object.assign(window.HUB_VIEWS || {}, { earnings: earningsView });
 window.HUB_BINDS = Object.assign(window.HUB_BINDS || {}, { earnings: bindEarnings });
+/* #earnings/<view> (#earnings/previews …) opens that view */
+function earningsDeepLink(arg) { const v = decodeURIComponent(arg || ''); if (ER_VIEWS.some((x) => x[0] === v)) state.ev = v; }

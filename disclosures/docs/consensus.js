@@ -63,7 +63,7 @@ function consCalendar(){
  if(!rows.length)return empty('No report on file in the next 45 days yet — the analysts\' data fills in over the first runs, largest companies first.');
  rows.sort((a,b)=>a.date.localeCompare(b.date)||(b.rev||0)-(a.rev||0));
  const wd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'});
- let out=`<div class="section-head"><h3>Reports in the next 45 days — ${fmt(rows.length)} companies</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Consensus EPS with the range of estimates and the number of analysts; the EPS change over 30 days; the Polymarket price of "beats" with its line (the Street estimate when the market opened); and how often the company beat in its last eight reports. Largest companies first within a day.</p>`;
+ let out=`<div class="section-head"><h3>Reports in the next 45 days — ${fmt(rows.length)} companies</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">The next three weeks with the options' implied move, the usual move and our model: <a href="#earnings/previews">Earnings season → Previews</a>.</p><p class="sub">Consensus EPS with the range of estimates and the number of analysts; the EPS change over 30 days; the Polymarket price of "beats" with its line (the Street estimate when the market opened); and how often the company beat in its last eight reports. Largest companies first within a day.</p>`;
  out+=table(['Date','Company','EPS estimate','Range','Analysts','Revenue estimate','EPS change, 30 days','Market: beats?','Beat rate, last 8'],rows.map(r=>[`${esc(wd(r.date))}${r.estimated_date?' <span class="muted">(est.)</span>':''}`,`${consTk(r.ticker)} <span class="muted">${esc(shortName(r.name||''))}</span>`,V.usd(r.eps),`${V.usd(r.eps_low)} – ${V.usd(r.eps_high)}`,fmt(r.n),V.big(r.rev),
    r.eps_rev_30d==null?'—':`<span class="${r.eps_rev_30d>0?'positive':r.eps_rev_30d<0?'negative':''}">${V.spct(r.eps_rev_30d)}</span>`,r.beat_prob==null?'—':`<b>${V.pct(r.beat_prob)}</b> <span class="muted">line ${V.usd(r.pm_strike)}</span>`,r.beat_rate==null?'—':V.pct(r.beat_rate)]));
  return out;
@@ -154,3 +154,5 @@ function bindConsensus(){
  if(el){const g=consData('index');const q=String(state.cq||'').trim().toUpperCase();const r=g.data&&g.data.rows.map(x=>consRow(g.data.fields,x)).find(x=>String(x.ticker||'').toUpperCase()===q||String(x.cik)===q);
   const c=r&&consData('c/'+r.cik);if(c&&c.data&&window.ConsensusView)ConsensusView.render(el,c.data)}
 }
+/* #consensus/<view> (#consensus/calendar …) opens that view */
+function consensusDeepLink(arg){const v=decodeURIComponent(arg||'');if(CONS_VIEWS.some(x=>x[0]===v))state.cview=v}
