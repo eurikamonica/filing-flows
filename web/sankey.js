@@ -46,6 +46,9 @@
     // guidance view: raised (indigo), lowered (plum), other changes, assumed lines
     gup: [14, 600, 19, '#33269a'], gdn: [14, 600, 19, '#8f2163'], gnt: [14, 600, 19, '#4d4380'], gas: [13, 400, 18, '#77756f'],
     cup: [14, 600, 19, '#0b7a75'], cdn: [14, 600, 19, '#c2410c'], cnt: [14, 600, 19, '#6b6a80'],
+    // the X card (spec.xcard, pipeline/xcard.py): fewer lines, drawn big enough to read on a phone
+    xbig: [34, 600, 40, INK], xname: [25, 600, 31, INK], xval: [23, 500, 29, INK2], xmut: [21, 500, 27, INK3],
+    xup: [21, 600, 27, '#17734a'], xdn: [21, 600, 27, '#c2410c'],
   };
   const NW = 14;          // node bar width
   const LGAP = 8;         // label distance from a bar (left/right)
@@ -55,6 +58,8 @@
   const REV_PX = 430;     // the largest node is drawn about this tall
   const MARGIN = 60;
   const HEAD = 168;       // content starts below title + subtitle
+  const XREV_PX = 560;    // the X card: the largest node, drawn taller
+  const XMIN_W = 1600;    // the X card: at least this wide (about 4:3 with its header)
   const NOTE_PAD = 16;    // room after a name for the note marker
 
   const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
@@ -199,6 +204,40 @@
     if (url) shapes.push({ t: 'text', x: tx, y: y + 15 * k + 20, text: url, size: 14, weight: 400, fill: INK3, anchor: 'start' });
   }
 
+  // ---------- the X card's header: kicker, the headline (the post's point), the key numbers ----------
+  // xc: {kicker, headline, stats: [[label, value, change, tone]]} (pipeline/xcard.py); tone 'up' / 'down' colours the change
+  function xcardHead(xc, W) {
+    const shapes = [], maxW = W - 2 * MARGIN;
+    shapes.push({ t: 'text', x: MARGIN, y: 44 + 26, text: dec(xc.kicker || ''), size: 26, weight: 600, fill: SUBINK, anchor: 'start' });
+    let y = 132;
+    const hl = dec(xc.headline || '');
+    let size = 60;
+    while (size > 40 && wrap(hl, size, 700, maxW).length > 2) size -= 4;
+    wrap(hl, size, 700, maxW).slice(0, 3).forEach((ln) => {
+      y += size;
+      shapes.push({ t: 'text', x: MARGIN, y, text: ln, size, weight: 700, fill: INK, anchor: 'start', spacing: -0.8 });
+      y += Math.round(size * 0.18);
+    });
+    const stats = (xc.stats || []).slice(0, 3);
+    if (stats.length) {
+      y += 34;
+      const gap = 56;
+      let x = MARGIN;
+      stats.forEach(([label, value, change, tone]) => {
+        const lw = measure(dec(label || ''), 22, 500), vw = measure(dec(value || ''), 50, 700) + (change ? 14 + measure(dec(change), 26, 600) : 0);
+        shapes.push({ t: 'text', x, y: y + 22, text: dec(label || ''), size: 22, weight: 500, fill: INK3, anchor: 'start' });
+        shapes.push({ t: 'text', x, y: y + 22 + 56, text: dec(value || ''), size: 50, weight: 700, fill: INK, anchor: 'start', spacing: -0.6 });
+        if (change) {
+          shapes.push({ t: 'text', x: x + measure(dec(value || ''), 50, 700) + 14, y: y + 22 + 56, text: dec(change), size: 26, weight: 600,
+            fill: tone === 'up' ? PALETTE.profit.node : tone === 'down' ? '#c2410c' : INK2, anchor: 'start' });
+        }
+        x += Math.max(lw, vw) + gap;
+      });
+      y += 22 + 56 + 12;
+    }
+    return { shapes, h: y + 64 };
+  }
+
   // ---------- layout ----------
   function layout(spec, opts) {
     opts = opts || {};
@@ -225,7 +264,8 @@
       n.ins.sort((a, b) => a.S.idx - b.S.idx);
     });
     const maxV = Math.max(...nodes.map((n) => Math.abs(n.v || 0)));
-    const K = REV_PX / maxV;
+    const XC = spec.xcard || null;                   // the X card: big headline and numbers, no notes (pipeline/xcard.py)
+    const K = (XC ? XREV_PX : REV_PX) / maxV;
     nodes.forEach((n) => {
       n.h = Math.max(Math.abs(n.v || 0) * K, 2);
       n.lab = labelBlock(n, compare ? mode : null, gmode);
@@ -515,7 +555,16 @@
       minY = Math.min(minY, g.a0, g.a1);
       maxY = Math.max(maxY, g.a0 + l.slot, g.a1 + l.slot);
     });
-    const dy = HEAD - minY;
+    // the X card: centred, its header (kicker, headline, the key numbers) sized to the card's width
+    let xW = 0, xHead = null;
+    if (XC) {
+      xW = Math.ceil(Math.max(maxX + MARGIN, XMIN_W, measure(dec(XC.kicker || ''), 26, 600) + 2 * MARGIN + brandWidth() + 40));
+      const sx = (xW - MARGIN - maxX) / 2;
+      if (sx > 1) nodes.forEach((n) => { n.x += sx; });
+      xHead = xcardHead(XC, xW);
+    }
+    const headY = XC ? xHead.h : HEAD;
+    const dy = headY - minY;
     nodes.forEach((n) => { n.top += dy; n.lr = labelRect(n, n.at); });
     let bottom = maxY + dy;
 
@@ -523,7 +572,7 @@
     const checks = spec.checks || [];
     const flagged = checks.some((c) => c.level === 'warn');
     const subtitle = dec(spec.subtitle || '') + (flagged ? ' · data check flagged: see the notes below' : '');
-    let W = Math.max(maxX + MARGIN, 1500, measure(title, 40, 600) + 2 * MARGIN + brandWidth() + 40, measure(subtitle, 18, 400) + 2 * MARGIN);
+    let W = XC ? xW : Math.max(maxX + MARGIN, 1500, measure(title, 40, 600) + 2 * MARGIN + brandWidth() + 40, measure(subtitle, 18, 400) + 2 * MARGIN);
     W = Math.ceil(W);
 
     const shapes = [];
@@ -642,7 +691,7 @@
       const occupied = nodes.map((n) => n.lr).concat(nodes.map((n) => [n.x, n.top, NW, n.h]));
       const boxes = bandBoxes().map((b) => b.r);
       const free = (r) => !occupied.some((o) => overlap(r, o, 16)) && !boxes.some((o) => overlap(r, o, 16));
-      const cands = [[MARGIN, bottom - bh], [W - MARGIN - bw, HEAD], [W - MARGIN - bw, bottom - bh], [MARGIN, HEAD + 40]];
+      const cands = [[MARGIN, bottom - bh], [W - MARGIN - bw, headY], [W - MARGIN - bw, bottom - bh], [MARGIN, headY + 40]];
       let pos = cands.find(([x, y]) => free([x, y, bw, bh]));
       if (!pos) { pos = [MARGIN, bottom + 36]; bottom += 36 + bh; }
       const [cx, cy] = pos;
@@ -667,9 +716,9 @@
       const occupied = nodes.map((n) => n.lr).concat(nodes.map((n) => [n.x, n.top, NW, n.h])).concat(noteRect ? [noteRect] : []);
       const boxes = bandBoxes().map((b) => b.r);
       const free = (r) => !occupied.some((o) => overlap(r, o, 16)) && !boxes.some((o) => overlap(r, o, 16));
-      const cands = [[W - MARGIN - bw, bottom - bh], [MARGIN, bottom - bh], [W - MARGIN - bw, HEAD], [MARGIN, HEAD + 40],
+      const cands = [[W - MARGIN - bw, bottom - bh], [MARGIN, bottom - bh], [W - MARGIN - bw, headY], [MARGIN, headY + 40],
         noteRect ? [noteRect[0] + noteRect[2] + 40, noteRect[1]] : null, noteRect ? [noteRect[0], noteRect[1] - bh - 24] : null].filter(Boolean);
-      let pos = cands.find(([x, y]) => x >= MARGIN && x + bw <= W - MARGIN && y >= HEAD && free([x, y, bw, bh]));
+      let pos = cands.find(([x, y]) => x >= MARGIN && x + bw <= W - MARGIN && y >= headY && free([x, y, bw, bh]));
       if (!pos) { pos = [MARGIN, bottom + 36]; bottom += 36 + bh; }
       const [bx, by] = pos;
       const fmt = (v) => { const a = Math.abs(v); return a >= 0.95e9 ? `$${(a / 1e9).toFixed(a >= 9.95e9 ? 1 : 2)}B` : `$${(a / 1e6).toFixed(a >= 9.95e6 ? 0 : 1)}M`; };
@@ -701,6 +750,17 @@
         wrap(b.note || '', 11, 400, slot - 6).slice(0, 3 - nl).forEach((ln, j) => shapes.push({ t: 'text', x: bx + i * slot + slot / 2, y: base + 18 + (nl + j) * 15, text: ln, size: 11, weight: 400, fill: INK3, anchor: 'middle' }));
       });
       shapes.push({ t: 'path', d: `M${bx} ${base.toFixed(1)}H${bx + bw}`, fill: 'none', stroke: INK3, sw: 1 });
+    }
+
+    // the X card: its own header, one credit line instead of the legend and the notes
+    if (XC) {
+      shapes.push(...xHead.shapes);
+      brandShapes(shapes, W, 48);
+      const credit = dec(XC.credit || DISCLAIMER);
+      const cl = wrap(credit, 19, 400, W - 2 * MARGIN).slice(0, 2);
+      const H = Math.ceil(bottom + 48 + cl.length * 26 + 34);
+      cl.forEach((t, i) => shapes.push({ t: 'text', x: MARGIN, y: H - 34 - (cl.length - 1 - i) * 26, text: t, size: 19, weight: 400, fill: INK3, anchor: 'start' }));
+      return { W, H, bg: spec.bg || BG, shapes, hit, issues: issues.map((i) => i.n.id), nodes: nodes.map((n) => ({ id: n.id, label: n.lr, bar: [n.x, n.top, NW, n.h] })) };
     }
 
     // header

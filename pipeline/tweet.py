@@ -87,6 +87,14 @@ def headline_lines(c, q, ticker):
              f"Net earnings {m(h.get('ni'))}" + (f" · operating cash flow {m(node['ocf']['v'])}" if node.get("ocf") else "")]
     if q.get("form") == "8-K":
         lines.append("Status: preliminary (8-K earnings release; the 10-Q/10-K follows)")
+    try:                                   # the point the figures make, picked by fixed rules (pipeline/xcard.py)
+        from . import xcard
+        ins = xcard.insight(c, q)
+    except Exception:
+        ins = None
+    if ins and ins.get("kind") != "plain":
+        lines.append(f"Suggested opening (from the figures; use it, or a sharper point the filing supports): {ins['line']}")
+        lines.append(f"The attached X card's headline: {ins['headline']}")
     for a in (q.get("analysis") or [])[:3]:
         lines.append("Analysis (fixed rules): " + a)
     if q.get("checks"):
@@ -421,11 +429,10 @@ def post_messages(c, q, ticker, tags, kind="post", site_url="", thread=False, fi
     if thread:
         task += f"\n\nToday is {(today or dt.date.today()).isoformat()}."
         task += ("\n\nTHIS POST OPENS A THREAD (the replies carry the business mix, the analysis and the source link), so it is the "
-                 "hook: begin with a short attention word before the cashtag — BREAKING, JUST FILED, NEW 10-Q or EARNINGS (pick what "
-                 "is true: BREAKING / JUST FILED only when filed within the last two days) — e.g. `BREAKING · $TICK Q3 FY26:`; give the "
-                 "single most striking fact with its number; and end, right before the hashtags, with a pointer into the thread "
-                 "such as `Full breakdown ↓` or `Charts + what drove it ↓`. One arrow or emoji at most. Still factual, no advice, "
-                 "under 250 characters.")
+                 "hook: start with the cashtag and the one point the quarter makes, as a plain sentence (`$TICK: sold more but kept "
+                 "less — revenue +5%, operating profit −18%.`), not a list of figures; then at most two supporting numbers; end, "
+                 "right before the hashtags, with a pointer into the thread such as `Full breakdown ↓`. One arrow or emoji at most. "
+                 "Still factual, no advice, under 250 characters.")
     return [{"role": "system", "content": guide()},
             {"role": "user", "content": task + "\n\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
 

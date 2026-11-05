@@ -55,6 +55,16 @@ import time
 from . import context as CTX, events, hashtags as H, notify, quotes as Q, reddit, sec, social, tweet, xkinds as X
 
 CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "engage.json")
+
+
+def card_view():
+    """The picture an engagement post carries: the X card without its headline (the post makes its own point; big
+    numbers, fewer lines, pipeline/xcard.py) when config/x.json "images" asks for the card, else the site's chart."""
+    try:
+        imgs = json.load(open(os.path.join(os.path.dirname(CFG), "x.json"), encoding="utf-8")).get("images") or []
+    except (OSError, ValueError):
+        imgs = []
+    return "xplain" if "x" in imgs else "std"
 GUIDE = os.path.join(os.path.dirname(CFG), "engage-guide.md")
 DEFAULTS = {
     "days": 1,                      # "filed in the last N days" for question / list
@@ -2307,7 +2317,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         os.makedirs(xdir, exist_ok=True)
         images = []
         for e, cj, q in p["items"][:4]:
-            png = assets.image(e, cj, q, "std", "png")
+            png = assets.image(e, cj, q, card_view(), "png")
             if png:
                 name = social.image_names(e, q, 1)[0].replace("-1-chart", f"-{p['kind']}")
                 open(os.path.join(xdir, name), "wb").write(png)

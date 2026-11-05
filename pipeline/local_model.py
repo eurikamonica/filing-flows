@@ -29,9 +29,9 @@ def enabled():
 
 # ------------------------------------------------------------------ the prompt (training and inference alike)
 SHORT = [  # long production instructions → the same rule in a few words (the facts keep the room)
-    (re.compile(r"^THIS POST OPENS A THREAD", re.S), "Opens a thread: start with BREAKING or JUST FILED only if filed within "
-     "the last two days (else NEW 10-Q, NEW 10-K or EARNINGS), then the cashtag and quarter; give the most striking fact with "
-     "its number; end with “Full breakdown ↓” before the hashtags. Under 250 characters."),
+    (re.compile(r"^THIS POST OPENS A THREAD", re.S), "Opens a thread: start with the cashtag and the one point the quarter makes, "
+     "as a plain sentence (not a list of figures); at most two numbers; end with “Full breakdown ↓” before the hashtags. "
+     "Under 250 characters."),
 ]
 LOW = re.compile(r"^(Business, in the company's words|Filing excerpts|Context on the company)")
 RULE = re.compile(r"^(THIS POST|Today is|Start |Say |Then |Compare |List |Ask |TASK|Name |Write about|Format|Open with|One post|Write a short)")

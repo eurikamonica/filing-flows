@@ -27,7 +27,7 @@ import os
 import re
 import sys
 
-from . import engage, events, local_model as L, notify, social, tweet
+from . import engage, events, local_model as L, notify, social, tweet, xcard
 
 VERSION = 2          # bump when targets or prompts change: older examples are dropped and rebuilt (2: −$44M, no shells)
 
@@ -99,7 +99,6 @@ def earnings_examples(site, cfg, known, today, limit=None):
             # the reader's "today": up to nine days after filing, so the model learns when BREAKING is true
             lag = int(_h("lag", key), 16) % 10
             day = dt.date.fromisoformat(q["filed"][:10]) + dt.timedelta(days=lag)
-            lead = ("BREAKING" if lag <= 1 else "JUST FILED") if lag <= 2 else ("EARNINGS" if q.get("form") == "8-K" else f"NEW {q.get('form')}")
             tags = tweet.post_tags(c, q, cfg, tk, "post")             # as the posting pipeline picks them
             msgs = tweet.post_messages(c, q, tk, tags, kind="post", thread=True, filing=False, today=day)
             rev, ni, label = _m(h.get("revenue")), _m(h.get("ni")), q.get("label")
@@ -107,15 +106,15 @@ def earnings_examples(site, cfg, known, today, limit=None):
             om = f"{h['om']:.1f}%" if h.get("om") is not None else None
             drv = _driver(q)
             T = " ".join(tags)
+            # the opening is the quarter's one point in plain words (pipeline/xcard.py), then a figure or two
+            ins = xcard.insight(c, q) or {}
+            point = ins.get("line") or (f"revenue {rev}" + (f", {yoy}" if yoy else ""))
+            point = point[:1].upper() + point[1:]
             phr = [
-                lambda: f"{lead} · ${tk} {label}: revenue {rev}{f' ({yoy})' if yoy else ''}" + (f", operating margin {om}" if om else "")
-                        + f", net earnings {ni}. {drv} Full breakdown ↓ {T}",
-                lambda: f"{lead} · ${tk} {label}: {rev} of revenue{f', {yoy}' if yoy else ''}. Net earnings {ni}"
-                        + (f" on a {om} operating margin" if om else "") + f". Charts + what drove it ↓ {T}",
-                lambda: f"{lead} · ${tk} {label} — net earnings {ni} on {rev} of revenue" + (f" ({yoy})" if yoy else "")
-                        + f". {drv} Full breakdown ↓ {T}",
-                lambda: f"{lead} · ${tk} {label}: {drv or f'revenue {rev}.'} Revenue {rev}" + (f", operating margin {om}" if om else "")
-                        + f". Full breakdown ↓ {T}",
+                lambda: f"${tk}: {point}. {label} revenue {rev}{f' ({yoy})' if yoy else ''}. {drv} Full breakdown ↓ {T}",
+                lambda: f"${tk}: {point}. Net earnings {ni}" + (f" on a {om} operating margin" if om else "") + f". Charts + what drove it ↓ {T}",
+                lambda: f"${tk}: {point}. {drv or f'{label} revenue {rev}.'} Full breakdown ↓ {T}",
+                lambda: f"${tk} {label}: {point}." + (f" Operating margin {om}." if om else "") + f" Full breakdown ↓ {T}",
             ]
             for i, f in enumerate(_pick(key, phr)):
                 text = re.sub(r"\s+", " ", f()).replace(" .", ".").replace("..", ".")

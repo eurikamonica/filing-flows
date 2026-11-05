@@ -1576,8 +1576,9 @@ def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, rechec
         try:
             info = filings_of(c['cik'], ua)
             time.sleep(0.12)
-            if not info['filings']:
-                s_.update(checked=now.isoformat(timespec='seconds'), error='no 10-Q or 10-K with XBRL')
+            if not info['filings']:                       # a foreign filer (20-F / 40-F): asked again in a week, not every run
+                s_.update(checked=now.isoformat(timespec='seconds'), error='no 10-Q or 10-K with XBRL',
+                          retry_after=(now + dt.timedelta(days=7)).isoformat(timespec='seconds'))
                 continue
             top = info['filings'][0]
             if s_.get('accession') == top['accession'] and s_.get('v') == VERSION and (pub / 'c' / f'{t}.json').exists():
@@ -1601,8 +1602,10 @@ def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, rechec
             errs += 1
             import traceback                                 # where it failed, in the run's log (the state keeps the message)
             print(''.join(traceback.format_exception(type(e), e, e.__traceback__, limit=-4)), file=sys.stderr)
+            # SEC busy (HTTP 503 / 429, a dropped connection): the next run tries again; a reading error waits two days
+            busy = bool(re.search(r'\b(429|500|502|503|504)\b|timed out|Temporary failure|Connection(Reset|Refused|Error)', f'{type(e).__name__} {e}'))
             s_.update(error=f'{type(e).__name__}: {str(e)[:200]}', checked=now.isoformat(timespec='seconds'),
-                      retry_after=(now + dt.timedelta(days=2)).isoformat(timespec='seconds'))
+                      retry_after=(now + (dt.timedelta(hours=3) if busy else dt.timedelta(days=2))).isoformat(timespec='seconds'))
             print(f'{t}: {type(e).__name__}: {e}', file=sys.stderr)
     shutil.rmtree(root / '_cache', ignore_errors=True)
     return write_index(root, state, {'built': done, 'errors': errs, 'unchanged': same, 'waiting': max(0, len(order) - done - errs - same)})
