@@ -287,6 +287,14 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     files['data/index.json'].companies.push({ ticker: 'ONE', cik: 13, name: 'One Year Inc', revenue: 1 });
     files['data/c/13.json'] = { profile: { name: 'One Year Inc' }, quality: { cap: { fy: fy.slice(0, 1), q } }, quarters: [] };
     await assert.rejects(S.build(Object.assign(S.parseState('k=cash'), { t: 'ONE' })), /Fewer than two fiscal years.*try quarters/); n++;
+    // ten fiscal years: the five before the tab's (fy_old, figures only) come first; a year in both is drawn once
+    files['data/index.json'].companies.push({ ticker: 'OLD', cik: 17, name: 'Old Years Inc', revenue: 1 });
+    const old = [yr('2021-12-31', 'FY21', { ocf: 70 * B, capex: -15 * B }), yr('2022-12-31', 'FY22', { ocf: 80 * B, capex: -18 * B }), fy[0]];
+    files['data/c/17.json'] = { profile: { name: 'Old Years Inc' }, quality: { cap: { fy_old: old, fy, q } }, quarters: [] };
+    V = await S.build(Object.assign(S.parseState('k=cash'), { t: 'OLD' }));
+    ok(V.cf.periods.map((p) => p.label).join() === 'FY21,FY22,FY23,FY24,FY25' && V.cf.periods[0].v.fcf === 55 * B && /FY21 → FY25/.test(V.sub), 'ten years: ' + V.cf.periods.map((p) => p.label).join());
+    V = await S.build(Object.assign(S.parseState('k=cash'), { t: 'OLD', cper: 'q' }));
+    ok(V.cf.periods.length === 4, 'quarters leave the older years out');
     // the company video's cash figures: from the last eight quarters (and the years as filed), cash margin and conversion
     const F = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'fcf', ttm: '0' }));
     ok(F.series[0].v.filter((x) => x != null).length === 4 && F.series[0].v[F.grid.length - 1] === 35 * B && /eight quarters/.test([...F.notes].join(' ')), 'free cash flow each quarter');
