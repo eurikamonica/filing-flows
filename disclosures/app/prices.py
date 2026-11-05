@@ -14,6 +14,7 @@ import gzip
 import io
 import json
 import re
+import time
 from pathlib import Path
 from core import now, read_json, write_json
 
@@ -181,49 +182,77 @@ class PriceStore:
 
 
 def apply_prices(data, client, cfg, root):
-    """Annotate 13F positions and reviewed transactions in place; returns the prices module status."""
-    from shards import load_manager
+    """Annotate 13F positions and reviewed transactions in place; returns the prices module status.
+
+    Managers stored in the holdings cache are read one at a time (once for their CUSIPs, once to price them) and an
+    annotated manager is written straight back to its cache and shards, so the run never holds every manager's
+    positions in memory: all of them together no longer fit on a runner (tens of millions of positions)."""
+    from shards import load_manager, publish_manager
     store = PriceStore(client, cfg, root)
     budget = int(cfg.get('ticker_batch', 60))
     holdings = data.get('modules', {}).get('holdings', {})
     managers = holdings.get('managers', [])
-    positions_priced = positions_total = 0
-    # 1) collect CUSIPs across managers (loading cached managers as needed)
-    loaded = []
-    for i, row in enumerate(managers):
-        if 'snapshots' not in row and row.get('cache'):
+    positions_priced = positions_total = deferred = 0
+    started, minutes = time.monotonic(), float(cfg.get('time_budget_minutes', 15))   # the job also installs and commits within its 40 minutes
+    priceable = lambda p: p.get('put_call') == 'NONE' and p.get('share_type') == 'SH'
+
+    from_cache_only = lambda row: 'snapshots' not in row and bool(row.get('cache'))
+
+    def hydrated(row):
+        if from_cache_only(row):
             try:
-                row = load_manager(root, row)
+                return load_manager(root, row), True
             except Exception as exc:
                 store.errors.append(f"manager {row.get('cik')}: {exc}")
-                continue
-        if 'snapshots' not in row:
-            continue
-        managers[i] = row
-        loaded.append(row)
-    cusips = [p['cusip'] for m in loaded for s in m.get('snapshots', []) for p in s.get('positions', []) if p.get('put_call') == 'NONE' and p.get('share_type') == 'SH']
+                return None, False
+        return (row, False) if 'snapshots' in row else (None, False)
+
+    # 1) collect CUSIPs across managers (each cached manager read and released in turn)
+    cusips, failed = {}, set()       # first-seen order, one entry per CUSIP
+    for i, row in enumerate(managers):
+        full, _ = hydrated(row)
+        if full is None:
+            failed.add(i); continue
+        cusips.update(dict.fromkeys(p['cusip'] for s in full.get('snapshots', []) for p in s.get('positions', []) if priceable(p)))
+        del full
+    cusips = list(cusips)
     store.map_cusips(cusips)
     # 2) prices per position
-    histories = {}
-    for m in loaded:
-        for s in m.get('snapshots', []):
+    histories, averages = {}, {}
+    for i, row in enumerate(managers):
+        if i in failed:
+            continue
+        if from_cache_only(row) and time.monotonic() - started > minutes * 60:
+            deferred += 1; continue          # left as published; the next run reaches it after skipping the unchanged ones
+        full, from_cache = hydrated(row)
+        if full is None:
+            continue
+        changed = False
+        for s in full.get('snapshots', []):
             for p in s.get('positions', []):
                 positions_total += 1
-                ticker = store.ticker_for(p.get('cusip', '')) if p.get('put_call') == 'NONE' and p.get('share_type') == 'SH' else None
+                before = tuple(p.get(k) for k in ('ticker', 'price_avg_q', 'price_close_q', 'price_days'))
+                ticker = store.ticker_for(p.get('cusip', '')) if priceable(p) else None
                 for k in ('ticker', 'price_avg_q', 'price_close_q', 'price_days'):
                     p.pop(k, None)
-                if not ticker:
-                    continue
-                if ticker not in histories:
-                    histories[ticker] = store.history(ticker, budget)
-                rows = histories[ticker]
-                if not rows:
-                    continue
-                avg, close, days = quarter_average(rows, s['period'])
-                if avg is None:
-                    continue
-                p.update(ticker=ticker, price_avg_q=round(avg, 4), price_close_q=close, price_days=days)
-                positions_priced += 1
+                if ticker:
+                    if ticker not in histories:
+                        histories[ticker] = store.history(ticker, budget)
+                    rows = histories[ticker]
+                    if rows:
+                        key = (ticker, s['period'])
+                        if key not in averages:
+                            averages[key] = quarter_average(rows, s['period'])
+                        avg, close, days = averages[key]
+                        if avg is not None:
+                            p.update(ticker=ticker, price_avg_q=round(avg, 4), price_close_q=close, price_days=days)
+                            positions_priced += 1
+                changed |= before != tuple(p.get(k) for k in ('ticker', 'price_avg_q', 'price_close_q', 'price_days'))
+        if not from_cache:
+            managers[i] = full              # already in memory; publish_shards writes it
+        elif changed:
+            managers[i] = publish_manager(root, full)   # written now; the row stays lazy
+        del full
     # 3) reviewed transactions with an explicit ticker and date
     records = data.get('modules', {}).get('congress', {}).get('records', [])
     records_priced = 0
@@ -249,11 +278,14 @@ def apply_prices(data, client, cfg, root):
                  est_shares_max=round(r['amount_max'] / close, 2) if r.get('amount_max') is not None else None)
         records_priced += 1
     unmapped = sum(1 for c in set(cusips) if store.cusips.get(c) and not store.cusips[c].get('ticker'))
+    if deferred:
+        store.errors.insert(0, f'time budget of {minutes:g} minutes reached: {deferred} managers keep their earlier estimates until the next run')
     systemic = any(e.startswith('OpenFIGI') for e in store.errors) or (store.fetched_tickers and positions_priced == 0 and records_priced == 0)
     return {'status': 'partial' if systemic else 'ok', 'errors': store.errors[:50],   # unmapped or delisted tickers are notes, not a failed source
             'last_attempt': now(), 'updated_at': now(), 'error': None,
             'counts': {'cusips_seen': len(set(cusips)), 'cusips_mapped': sum(1 for c in set(cusips) if store.ticker_for(c)), 'cusips_unmapped': unmapped,
                        'cusips_pending': sum(1 for c in set(cusips) if c not in store.cusips), 'tickers_fetched_this_run': store.fetched_tickers,
-                       'positions_priced': positions_priced, 'positions_total': positions_total, 'records_priced': records_priced},
+                       'positions_priced': positions_priced, 'positions_total': positions_total, 'records_priced': records_priced,
+                       'managers_deferred': deferred},
             'coverage_note': 'Estimates only. 13F: quantity change × average daily close of the report quarter; transactions: close on or just before the disclosed date (up to 7 days back). Sources: Stooq daily closes, Yahoo Finance chart data as fallback; CUSIP→ticker via OpenFIGI. Options, non-share quantities and unmapped securities have no estimate. Actual execution prices are not disclosed.',
             'source': ' / '.join(cfg.get('sources', ['yahoo', 'stooq'])) + ' + openfigi', 'history_since': store.since}
