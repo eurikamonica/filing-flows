@@ -867,6 +867,9 @@ def process_filing(store, cik, accn, form, starred=False):
             del c["quarters"][k]
     if releases and form != "8-K":
         c["quarters"][end]["from_release"] = release_check(releases[0], raw)
+    ng = next((r["nongaap"] for r in releases if r.get("nongaap")), None)   # the 10-Q has no reconciliation: the release's stays
+    if ng and not c["quarters"][end].get("nongaap"):
+        c["quarters"][end]["nongaap"] = ng
     co = next((r["co_fcf"] for r in releases if r.get("co_fcf")), None)
     set_reported(c["quarters"][end], *((co, "found") if co else
                                        fetch_reported(cik, sub, end, row.get("filingDate"), raw.get("ocf"),
@@ -1380,6 +1383,7 @@ def process_release(store, cik, accn, form, starred=False):
         "end": end, "label": label, "fq": fq, "fy": fy, "cal": facts.calendar_quarter(end), "form": "8-K",
         "accn": accn, "filed": row.get("filingDate"), "doc_url": ex_url,
         "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "raw": raw,
+        **({"nongaap": rel["nongaap"]} if rel.get("nongaap") else {}),      # the release's non-GAAP reconciliation (pipeline/traps.py B08)
         "q1_end": q1_end, "py_end": py_end, "raw_q1": facts.extract(fx, q1_end), "raw_py": facts.extract(fx, py_end),
         "lines_struct": ls, "lines": segs and segs["cur"], "lines_q1": segs and segs.get("q1"),
         "lines_py": segs and segs.get("py"), "notes": notes,
@@ -2519,7 +2523,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     return {
         "cite": sources.citation(name, q),
         "compare": compare, "compare_y": compare_y, "preliminary": q["form"] == "8-K",
-        "release_check": q.get("from_release"),
+        "release_check": q.get("from_release"), **({"nongaap": q["nongaap"]} if q.get("nongaap") else {}),
         "end": q["end"], "label": q["label"], "cal": q["cal"], "form": q["form"], "filed": q["filed"],
         **({"label_was": q["label_was"]} if q.get("label_was") else {}),
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,

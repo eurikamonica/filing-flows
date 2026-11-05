@@ -26,6 +26,7 @@ rulebook; they are deliberately coarse, and every finding carries the figures so
     doc = traps.evaluate(company_json, earnings_json, today=date)
 """
 import datetime as dt
+import re
 
 RULE_VERSION = "1.1"
 STATUSES = ("triggered", "clear", "insufficient_data", "not_applicable", "review", "expired")
@@ -90,7 +91,7 @@ def inputs(c):
         cutoff = f"{int(latest_end[:4]) - 2}-01-01"
         fys = [f for f in fys if f["end"] >= cutoff]
         shares = [x for x in shares if x["end"] >= cutoff]
-    return {"fy": fys, "q": qs, "cap_fy": cap_fy, "shares": shares, "val": Q.get("val") or {}, "mat": cap.get("maturities") or {},
+    return {"fy": fys, "q": qs, "cap_fy": cap_fy, "shares": shares, "val": Q.get("val") or {}, "mat": cap.get("maturities") or {}, "quarters": quarters,
             "ttm": cap.get("ttm") or {}, "drivers": Q.get("drivers") or {}, "latest": latest,
             "sic": str(((c or {}).get("profile") or {}).get("sic") or ""), "name": ((c or {}).get("profile") or {}).get("name") or ""}
 
@@ -270,20 +271,73 @@ def _year_ago(end, ends, tol=20):
 
 
 # ---------------------------------------------------------------- B08
+def _item_key(label):
+    """one adjustment's name across quarters: 'Amortization of acquired intangible assets (1)' = 'amortization of acquired intangible assets'"""
+    k = re.sub(r"\(\d+\)|\([a-z]\)|\*+", " ", str(label or "").lower())
+    k = re.sub(r"\b(net of tax(es)?|pre-?tax|after tax|the|of|and|related|expense|expenses|costs?|charges?|items?|impact)\b", " ", k)
+    k = re.sub(r"[^a-z]+", " ", k).strip()
+    return k[:60]
+
+
+ITEM_KINDS = (("stock|share.based|equity.based|sbc", "stock compensation"), ("amortiz|intangible", "amortisation of acquired intangibles"), ("restructur|severance|reorgani|exit|realign", "restructuring"),
+              ("litigation|legal|settlement", "litigation"), ("acquisition|merger|integration|transaction|deal", "acquisition costs"), ("impairment|write.?(down|off)", "impairments"),
+              ("tax", "tax items"), ("gain|loss|investment|equity (in|investment)|fair value|mark.to.market|derivative|hedg", "gains and losses"), ("depreciation|interest", "definitional (EBITDA)"))
+
+
+def item_kind(label):
+    l = str(label or "").lower()
+    return next((k for pat, k in ITEM_KINDS if re.search(pat, l)), "other")
+
+
 def rule_b08(I, docs, er):
-    """Adjusted profit = economic profit: adjusted (street) EPS above GAAP quarter after quarter (B08)"""
+    """Adjusted profit = economic profit: the same costs excluded quarter after quarter, read from the releases'
+    reconciliation tables (B08); the adjusted-vs-GAAP EPS gap as the stand-in where the tables are not on file"""
+    qs = [q for q in (I["quarters"] or []) if (q.get("nongaap") or {}).get("items")]
+    qs = sorted(qs, key=lambda q: q["end"])[-6:]
+    recon = [q for q in qs if not re.search(r"ebitda|ffo|funds", str(q["nongaap"].get("measure") or ""), re.I) or not re.search(r"net (income|earnings|loss)", str(q["nongaap"].get("from") or ""), re.I)]
+    if len(recon) >= 3:
+        recon = recon[-4:]
+        seen = {}
+        for q in recon:
+            for label, amt in q["nongaap"]["items"]:
+                k = _item_key(label)
+                seen.setdefault(k, {"label": label, "kind": item_kind(label), "quarters": [], "amounts": []})
+                seen[k]["quarters"].append(q.get("label")); seen[k]["amounts"].append(amt)
+        rec = sorted([v for v in seen.values() if len(v["quarters"]) >= 3 and v["kind"] != "definitional (EBITDA)" and sum(v["amounts"]) > 0], key=lambda v: -sum(v["amounts"]))
+        gaps = [(q.get("label"), q["nongaap"]["gaap"], q["nongaap"]["adjusted"]) for q in recon]
+        obs = {"quarters_with_a_reconciliation": [[l, _r(g / 1e6, 0), _r(a / 1e6, 0)] for l, g, a in gaps], "measure": recon[-1]["nongaap"].get("measure"),
+               "recurring_items": [[v["label"], v["kind"], len(v["quarters"]), _r(sum(v["amounts"]) / 1e6, 0)] for v in rec],
+               "latest_items": [[l, _r(a / 1e6, 0)] for l, a in recon[-1]["nongaap"]["items"]]}
+        how = "the items of the release's GAAP-to-adjusted reconciliation, matched by name across the last quarters (the table is kept only where GAAP + the items = the adjusted figure); an item excluded in three or more of four quarters is recurring"
+        ev = [cite(q.get("label"), q.get("doc_url"), f"reconciliation: {q['nongaap'].get('from')} → {q['nongaap'].get('measure')}") for q in recon]
+        if rec:
+            tot = sum(sum(v["amounts"]) for v in rec)
+            gaap_tot = sum(g for _, g, _ in gaps)
+            share = tot / abs(gaap_tot) if gaap_tot else None
+            kinds = sorted({v["kind"] for v in rec})
+            sev = "high" if share is not None and share >= 0.3 else "medium"
+            return finding("B08", "triggered", obs, sev, "medium",
+                           explanation=f"{seo_n(len(rec), 'cost')} excluded from adjusted profit in at least three of the last {len(recon)} quarters: " +
+                                       "; ".join(f"{v['label']} ({_money(sum(v['amounts']))} over {len(v['quarters'])} quarters)" for v in rec[:4]) +
+                                       (f". Together {_money(tot)}, {100 * share:.0f}% of GAAP net income over the same quarters" if share is not None else "") +
+                                       ". A cost that recurs every quarter is a cost of the business, whatever the label.",
+                           alternatives=["Amortisation of acquired intangibles is non-cash and many investors exclude it by choice (the cash was paid at the acquisition)",
+                                         "A multi-year programme (a restructuring, an integration) with a known end date", "Litigation that will end with one judgement"],
+                           missing=["Whether the same items were excluded in earlier years (the releases before these)", "Cash paid for the excluded items (the cash flow statement)", "The share count the adjusted EPS is divided by"],
+                           evidence=ev, how=how)
+        return finding("B08", "clear", obs, confidence="medium", explanation=f"The releases' reconciliations over the last {len(recon)} quarters show no cost excluded in three or more of them.", how=how, evidence=ev)
     pts = [p for p in ((er or {}).get("nongaap") or {}).get("points") or [] if fin(p.get("gap_pct")) and fin(p.get("street")) and fin(p.get("gaap"))]
     if len(pts) < 3:
-        return finding("B08", "insufficient_data", reason="fewer than three quarters with both an adjusted and a GAAP EPS on file")
+        return finding("B08", "insufficient_data", reason=(f"{len(recon)} quarter{'s' if len(recon) != 1 else ''} with a reconciliation table on file (three are needed)" if recon else "no reconciliation table read from the releases yet") + " and fewer than three quarters with both an adjusted and a GAAP EPS")
     pts = sorted(pts, key=lambda p: p["quarter"])[-4:]
     above = [p for p in pts if p["gap_pct"] >= 0.10]
     obs = {"quarters": [[p["quarter"], p["street"], p["gaap"], _r(p["gap_pct"], 3)] for p in pts], "quarters_adjusted_above_gaap_10pct": len(above), "of": len(pts),
            "latest_gap_pct": _r(pts[-1]["gap_pct"], 3)}
-    how = "the analysts' 'actual' (usually the company's adjusted EPS) against GAAP net income ÷ diluted shares for the matching quarter; a gap of 10% or more counts"
+    how = "the analysts' 'actual' (usually the company's adjusted EPS) against GAAP net income ÷ diluted shares for the matching quarter; a gap of 10% or more counts (the stand-in until three releases' reconciliation tables are on file)"
     ev = [cite(p["quarter"], None, f"adjusted {p['street']:.2f} vs GAAP {p['gaap']:.2f}") for p in pts]
     if len(above) >= 3:
         mean_gap = sum(p["gap_pct"] for p in above) / len(above)
-        return finding("B08", "triggered", obs, "high" if mean_gap >= 0.5 else "medium", "medium",
+        return finding("B08", "triggered", obs, "high" if mean_gap >= 0.5 else "medium", "low",
                        explanation=f"Adjusted EPS was at least 10% above GAAP in {len(above)} of the last {len(pts)} quarters (on average {100 * mean_gap:.0f}% above). "
                                    f"Costs excluded every quarter (restructuring, stock compensation, amortisation of acquired intangibles, litigation) are a recurring cost of the business, not a one-off.",
                        alternatives=["A genuine one-off this year (an impairment, a settlement) that happens to span several quarters", "Amortisation of acquired intangibles, which many investors also exclude by choice",
@@ -291,8 +345,12 @@ def rule_b08(I, docs, er):
                        missing=["The reconciliation table in the earnings release: which items, how much, how often", "Whether the same items were excluded in earlier years"],
                        evidence=ev, how=how)
     if above:
-        return finding("B08", "review", obs, confidence="medium", explanation=f"Adjusted EPS was 10% or more above GAAP in {len(above)} of the last {len(pts)} quarters: read the reconciliation before taking the adjusted figure.", how=how, evidence=ev)
-    return finding("B08", "clear", obs, confidence="medium", explanation=f"Adjusted and GAAP EPS were within 10% of each other in the last {len(pts)} quarters" + (" (adjusted below GAAP)" if pts[-1]["gap_pct"] < 0 else "") + ".", how=how, evidence=ev)
+        return finding("B08", "review", obs, confidence="low", explanation=f"Adjusted EPS was 10% or more above GAAP in {len(above)} of the last {len(pts)} quarters: read the reconciliation before taking the adjusted figure.", how=how, evidence=ev)
+    return finding("B08", "clear", obs, confidence="low", explanation=f"Adjusted and GAAP EPS were within 10% of each other in the last {len(pts)} quarters" + (" (adjusted below GAAP)" if pts[-1]["gap_pct"] < 0 else "") + ".", how=how, evidence=ev)
+
+
+def seo_n(n, word):
+    return f"{n} {word}{'' if n == 1 else 's'}"
 
 
 # ---------------------------------------------------------------- C02

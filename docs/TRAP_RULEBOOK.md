@@ -1,28 +1,37 @@
 # Filing Flows · Analysis Traps rulebook（分析陷阱规则手册）
 
-**What is live (v1.0, phase P1):** six rules run on every company with a published quarter, in `pipeline/traps.py`, written
+**What is live (v1.1, phases P1–P2):** ten rules run on every company with a published quarter, in `pipeline/traps.py`, written
 by `scripts/seo_traps.py` with the site: `data/traps/<cik>.json` (every finding), `data/traps/index.json`,
 `c/<slug>/analysis-traps/`, a card on each company page, `disclosures/analysis-traps/`, the Hub tab "Analysis traps"
 and the company view of the same name, and Flo ("what should I check before trusting NVDA's figures?").
 `TRAPS=off` (repository variable) skips the step; the module reads the published files and changes nothing else
 (the earnings quality score keeps its weights).
 
-| Rule | Trap | Trigger (v1.0) | Protective conditions | Not applicable / insufficient |
+| Rule | Trap | Trigger (v1.1) | Protective conditions | Not applicable / insufficient |
 |---|---|---|---|---|
 | A01 | FCF growth = the business improved | ΔFCF > 0 over the last two fiscal years and (working-capital release + capex cut) ≥ 50% of ΔFCF; severity high when ≥ 80% and OCF before working capital did not rise | no percentage on a negative or tiny base; confidence medium when the cash bridge's residual > 5% of OCF | financials; fewer than two years with OCF and capex |
 | A07 | SBC added back = no economic cost | SBC ≥ 3% of revenue and (diluted shares up > 0.5% or buybacks < SBC); high when SBC ≥ 10% | — | fewer than two years of SBC and share counts; no revenue for the year |
 | B02 | Receivables growing = future cash certain | receivables y/y ≥ revenue y/y + 10 pts in each of the last two quarters and DSO ≥ 1.15 × its median over the eight quarters before; one such quarter = "to review" | seasonality, acquisitions and terms are listed as the normal explanations, not tested | financials; fewer than five quarters |
-| B08 | Adjusted profit = economic profit | adjusted (street) EPS ≥ 10% above GAAP in ≥ 3 of the last 4 quarters; 1–2 = "to review"; confidence medium (GAAP EPS ≈ net income ÷ latest diluted shares; the "actual" is the analysts') | the reconciliation items themselves are listed as missing evidence (text, phase P2) | fewer than three quarters with both figures |
+| B08 | Adjusted profit = economic profit | v2: the reconciliation table of each earnings release (`pipeline/release.reconciliation`: GAAP → adjusted net income preferred, then EBITDA/FFO chains; kept only when GAAP + the items = the adjusted figure within 1.5%) stored on the quarter as `nongaap`; with ≥ 3 such quarters, an item excluded in ≥ 3 of the last 4 (names matched after stripping footnote marks and filler words, grouped as stock compensation / amortisation / restructuring / litigation / acquisition / impairments / tax / gains and losses) triggers, confidence medium; high when the recurring items ≥ 30% of GAAP net income over those quarters. Fallback (fewer tables): adjusted (street) EPS ≥ 10% above GAAP in ≥ 3 of the last 4 quarters, confidence low; 1–2 = "to review" | amortisation of acquired intangibles, a dated programme and a single judgement are listed as the normal explanations; definitional EBITDA items (interest, depreciation) never count | fewer than three reconciliations and fewer than three quarters with both EPS figures |
 | C02 | Low net debt = no refinancing risk | debt due within a year (maturity table, else the current portion) > cash and investments + max(0, FCF over twelve months); high when covered < 75% | no credit lines assumed (listed as missing evidence); interest never double-counted | no debt; no maturity table and no current portion; a filer whose debt could not be read ("no debt tagged") is insufficient, not clear |
 | D03 | EPS growth = profit growth | EPS ≥ +5% y/y while net income ≤ +2% and diluted shares ≤ −1%; the bridge attributes profit first, then the share count | the buyback price against value is listed as missing evidence | a loss in either quarter; no driver record |
+| E02 | Low P/E at the cycle peak = cheap | P/E (market cap ÷ trailing net income) ≤ 12 while the last two years are the peak of an eight-year window that holds ≥ 2 down years; the mid-cycle P/E (on the eight-year average profit) is shown beside it; a steady grower is clear | the peak is judged on the window only; confidence medium | financials (J06 instead); fewer than six years of net income; no market cap |
+| E07 | The DCF's point value = the value | always "to review" when a DCF is published: shows the terminal-value share and the swing of the two largest tornado inputs; `watch` high when the terminal value ≥ 70% of the value or the swing ≥ 40% | — | no valuation file |
+| J06 | A bank's record profit = a normal year | banks only: ROE at the peak of the window with ≥ 1 down year in eight, provisions as the missing evidence; confidence low | — | non-banks |
+| J08 | A REIT's dividend = covered by profit | REITs (SIC 6798) only: dividends paid > operating cash flow over the fiscal year, or > 90% = "to review" | FFO/AFFO are listed as the measures to read | non-REITs; no dividend or OCF |
 
 Statuses: `triggered`, `review`, `clear`, `insufficient_data`, `not_applicable`, `expired` (latest filing > 455 days).
 Missing data is never shown as clear; severity and confidence are separate fields; findings in one overlap group
-(cash_conversion: A01 + B02; share_count: A07 + D03) count once in the priority list. Thresholds are starting points;
+(cash_conversion: A01 + B02; share_count: A07 + D03; cycle: E02 + J06) count once in the priority list. Thresholds are starting points;
 every finding carries its figures, so a reader can apply stricter ones. False positives and negatives found in review go
 in this file's log below.
 
 **Review log**
+- 2026-11-05 v1.1: E02, E07, J06, J08 added (E02 first flagged steady growers such as NVDA and META → ≥ 2 down years
+  required; fiscal years older than the latest quarter's year − 2 are dropped from every rule's inputs, after Boston
+  Properties' FY2010–2014 rows). B08 v2 reads the releases' reconciliation tables (checked on Visa's cross-table and
+  Host's EBITDA → EBITDAre chain); the tables accumulate from the next scans, so most companies stay on the EPS-gap
+  stand-in (confidence low) until three releases are on file.
 - 2026-11-05 v1.0: rules A01, A07, B02, B08, C02, D03 live. Checked by hand on 19 large companies (AAPL, AMZN, GM,
   TSLA, ABT, CRM, DIS, INTC triggered at least one). Known limits: B08 has data for few companies (the earnings
   research holds adjusted EPS for a subset); D03 needs the driver record (missing for some filers, e.g. JNJ); C02 cannot

@@ -129,3 +129,58 @@ def test_phase_two_rules():
     assert fr["J08"]["status"] == "clear" and "as a REIT's usually is" in fr["J08"]["explanation"] and fr["J08"]["observed"]["payout_of_ocf"] == 0.62
     reit["quality"]["cap"]["fy"][1]["items"]["div"] = -150e6
     assert by_id(T.evaluate(reit, None, TODAY))["J08"]["status"] == "triggered"
+
+
+def test_b08_reads_the_releases_reconciliations():
+    """B08 v2: the same costs excluded quarter after quarter, read from the GAAP-to-adjusted table of each release;
+    the street-vs-GAAP EPS gap stays the stand-in while fewer than three tables are on file"""
+    def recon(label, items, gaap=1e9):
+        return {"measure": "non-GAAP net income", "from": "Net income", "gaap": gaap, "adjusted": gaap + sum(a for _, a in items), "items": items, "balanced": True, "rank": 0}
+    c = company()
+    qs = []
+    for i, lab in enumerate(["Q4 2024", "Q1 2025", "Q2 2025", "Q3 2025"]):
+        items = [["Stock-based compensation", 3e8], ["Amortization of acquired intangible assets (1)", 5e7]] + ([["Litigation settlement", 3e8]] if i == 1 else [])
+        qs.append({"end": f"2025-{3 * i or 1:02d}-{28 if i else 1:02d}" if i else "2024-12-31", "label": lab, "filed": "2025-11-01", "doc_url": f"https://sec.gov/{i}", "nongaap": recon(lab, items)})
+    c["quarters"] = qs
+    f = by_id(T.evaluate(c, None, TODAY))["B08"]
+    assert f["status"] == "triggered" and f["confidence"] == "medium" and f["severity"] == "high"
+    rec = f["observed"]["recurring_items"]
+    assert [r[1] for r in rec] == ["stock compensation", "amortisation of acquired intangibles"] and rec[0][2] == 4 and rec[0][3] == 1200
+    assert "Litigation" not in str(rec) and "2 costs excluded" in f["explanation"] and "35% of GAAP" in f["explanation"]
+    assert len(f["evidence"]) == 4 and f["evidence"][0]["url"] == "https://sec.gov/0"
+    # only amortisation recurs, and it is small → still triggered, medium
+    for q in c["quarters"]:
+        q["nongaap"]["items"] = [["Amortization of intangibles", 5e7]] if q["label"] != "Q1 2025" else [["Restructuring", 1e8]]
+    f = by_id(T.evaluate(c, None, TODAY))["B08"]
+    assert f["status"] == "triggered" and f["severity"] == "medium" and len(f["observed"]["recurring_items"]) == 1
+    # nothing recurs → clear, with the tables cited
+    for i, q in enumerate(c["quarters"]):
+        q["nongaap"]["items"] = [[["Fire", "Flood", "Strike", "Recall"][i] + " costs", 1e8]]
+    assert by_id(T.evaluate(c, None, TODAY))["B08"]["status"] == "clear"
+    # two tables only → the EPS-gap proxy; none → insufficient with the count in the reason
+    del c["quarters"][0]["nongaap"]; del c["quarters"][1]["nongaap"]
+    f = by_id(T.evaluate(c, None, TODAY))["B08"]
+    assert f["status"] == "insufficient_data" and "2 quarters with a reconciliation" in f["reason"]
+    er = {"nongaap": {"points": [{"quarter": f"2025-Q{i}", "street": 2.0, "gaap": 1.5, "gap_pct": 0.333} for i in range(1, 4)]}}
+    f = by_id(T.evaluate(c, er, TODAY))["B08"]
+    assert f["status"] == "triggered" and f["confidence"] == "low" and "stand-in" in f["how"]
+
+
+def test_release_reconciliation_tables():
+    """pipeline/release.reconciliation on two shapes: a table that runs down (GAAP, items, adjusted) and one that runs
+    across (Visa: GAAP and non-GAAP as columns), and the rank that prefers net income → adjusted over EBITDA chains"""
+    from pipeline import release as R
+    def html(rows):
+        return "<html><body><p>Reconciliation of GAAP to non-GAAP measures (in millions)</p><table>" + "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in rows) + "</table></body></html>"
+    down = [["", "Three Months Ended September 30, 2025", "September 30, 2024"], ["Net income", "$ 1,000", "$ 900"], ["Stock-based compensation", "200", "180"], ["Amortization of acquired intangibles", "50", "50"],
+            ["Income tax effect of adjustments", "(60)", "(55)"], ["Non-GAAP net income", "$ 1,190", "$ 1,075"], ["Diluted shares", "500", "510"]]
+    r = R.reconciliation(R.read_tables(html(down)), scale=1e6)
+    assert r and r["rank"] == 0 and r["gaap"] == 1e9 and r["adjusted"] == 1.19e9 and r["balanced"]
+    assert [x[0] for x in r["items"]] == ["Stock-based compensation", "Amortization of acquired intangibles", "Income tax effect of adjustments"] and r["items"][2][1] == -6e7
+    unbalanced = [row[:] for row in down]; unbalanced[5][1] = "$ 1,500"; unbalanced[5][2] = "$ 1,400"
+    assert R.reconciliation(R.read_tables(html(unbalanced)), scale=1e6) is None
+    ebitda = [["", "2025"], ["Net income", "$ 1,000"], ["Interest expense", "100"], ["Depreciation and amortization", "300"], ["EBITDA", "1,400"], ["Restructuring charges", "50"], ["Adjusted EBITDA", "$ 1,450"]]
+    r2 = R.reconciliation(R.read_tables(html(ebitda) + html(down)), scale=1e6)
+    assert r2["rank"] == 0 and "non-gaap" in r2["measure"].lower()
+    r3 = R.reconciliation(R.read_tables(html(ebitda)), scale=1e6)
+    assert r3 and r3["rank"] in (1, 2)
