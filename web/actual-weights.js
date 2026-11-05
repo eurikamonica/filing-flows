@@ -211,7 +211,15 @@
       // the tickers that are ETFs (holders_history.py names them in cusips.json): the Hub's quarters by sector with the ETFs
       // a band of their own, as the data sets' quarters are
       const etfs = new Set(((named && named.etfs) || []).map(symbol));
-      return {name, id:cik, snapshots:all, labels, etfs, basis:'Share of the long equity book (13F)', note:notes.join(' '), evidence:rows};
+      // by sector, the data sets' quarters: a company no ticker names today (acquired, merged or delisted since) has no
+      // sector in the site's data — how much of a book that leaves unclassified, and its largest such lines
+      let sectorNote = '';
+      const un = older.map((q) => 1 - Object.values(q.sector_weights || {}).reduce((a, b) => a + b, 0)), worst = un.length ? Math.max(...un) : 0;
+      if (worst > 0.15) {
+        const q = older[un.indexOf(worst)], gone = q.positions.filter(([k]) => k.startsWith('~')).slice(0, 3).map(([k]) => labels[k] || k);
+        sectorNote = `By sector, a company no ticker names today (acquired, merged or delisted since) has no sector: up to ${percent(worst)} of a quarter's book is unclassified (${q.date}${gone.length ? `; ${gone.join(', ')} among its largest` : ''}).`;
+      }
+      return {name, id:cik, snapshots:all, labels, etfs, sectorNote, basis:'Share of the long equity book (13F)', note:notes.join(' '), evidence:rows};
     }
     if (st.aw === 'official') {
       const person = String(st.ap || '').trim();
@@ -338,6 +346,7 @@
     });
     if (over) out.notes.add('Some reports\' equity lines add up to more than their net assets (up to ' + (100 * over).toFixed(2) + '%): scaled to 100% for the area chart.');
     if (sector && tables.some((m) => m.get('etf') > 0)) out.notes.add('ETFs: a band of their own — an ETF line is not looked through to the companies it holds.');
+    if (sector && external && external.sectorNote) out.notes.add(external.sectorNote);
     const n = Math.max(3, Math.min(20, +st.an || 12));
     let keys = [...new Set(tables.flatMap(m=>[...m.keys()]))];
     // Fixed membership across the entire animation prevents disappearing bands.

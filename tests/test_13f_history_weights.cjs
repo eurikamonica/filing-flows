@@ -76,6 +76,8 @@ const out = () => ({ notes: new Set(), series: [] });
   assert.equal(etf.v[3], 0.2, "the Hub's quarter: SPY's line");
   assert.ok(Math.abs(sec.series.find((s) => s.key === 'other').v[3] - 0.32) < 1e-9, 'Hess alone unclassified');
   assert.match([...sec.notes].join(' '), /ETFs: a band of their own/);
+  assert.match([...sec.notes].join(' '), /no ticker names today \(acquired, merged or delisted since\) has no sector: up to 30\.00% of a quarter's book is unclassified \(2024-09-30; Medtronic among its largest\)/);
+  assert.ok(![...area.notes].some((n) => /no ticker names today/.test(n)), 'by company: no word of sectors');
 
   // a range on the Hub's quarters alone; a manager the Hub does not follow: the data sets alone
   const recent = await A.disclosedSource({ aw: '13f', ac: '1423053', from: '2025-01-01' }, api);
