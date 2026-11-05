@@ -114,3 +114,28 @@ def test_two_8ks_of_a_day_whose_titles_fall_back_to_the_same_item_get_titles_of_
         if d.is_dir() and p.exists():
             titles.append(_re.search(r"<title>(.*?)</title>", p.read_text(encoding="utf-8"), _re.S).group(1))
     assert len(titles) == 2 and len(set(titles)) == 2, titles
+
+
+def test_two_8ks_of_a_day_from_two_ciks_of_one_name_get_titles_of_their_own(tmp_path):
+    """The real Carlyle Credit Solutions pair of Nov 4, 2026 came from two CIKs: the old Maryland company (1702510) and the
+    successor fund it merged into (2144472). Both titles read "Carlyle Credit Solutions 8-K, Nov 4, 2026: completion of an
+    acquisition or disposition of assets", but the same-day count was kept per CIK, so neither was told apart."""
+    import re as _re
+    import seo_hub as H
+
+    class L:
+        def row(self, ticker, cik):
+            return None
+    base = {"ticker": "", "filed": "2026-11-04", "code": "2.01", "headline": "",
+            "quote": "Carlyle Credit Solutions completed its previously reported reorganization.", "url": "https://www.sec.gov/x"}
+    evs = [dict(base, cik="1702510", company="Carlyle Credit Solutions, Inc.", items=["2.01", "3.03", "5.07", "9.01"],
+                topics=["vote"], accession="0001193125-26-447310"),
+           dict(base, cik="2144472", company="Carlyle Credit Solutions", items=["1.01", "2.01", "5.03", "9.01"],
+                topics=[], accession="0001193125-26-447280")]
+    H.event_pages(str(tmp_path), "https://filing-flows.com", L(), evs)
+    titles = []
+    for d in (tmp_path / "events").iterdir():
+        p = d / "index.html"
+        if d.is_dir() and p.exists():
+            titles.append(_re.search(r"<title>(.*?)</title>", p.read_text(encoding="utf-8"), _re.S).group(1))
+    assert len(titles) == 2 and len(set(titles)) == 2, titles
