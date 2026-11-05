@@ -39,7 +39,7 @@ NDX_LIST_PAGE = 'List of NASDAQ-100 companies'       # where the article sent it
 NDX_FROM = dt.date(2003, 1, 1)                       # the article's member list at each quarter's start from here
 NDX_PER_RUN = 100                                    # revisions read a run (2.5 s each): a first run reads the rest the next times
 NDX_PARSER_ALL = 2                                   # a new ndx_members: every list is read again (2: the Components section)
-NDX_PARSER = 5                                       # a better one: the revisions read as none are read again (4: “( ATVI )”, <br> lines)
+NDX_PARSER = 6                                       # a better one: the revisions read as none are read again (4: “( ATVI )”, <br> lines; 6: the source)
 # Nasdaq-100 symbols of the past → the site's ticker of the same company (a share class it keeps one of, a rename the
 # S&P lists' CIKs do not reach)
 NDX_ALIASES = {'FB': 'META', 'PCLN': 'BKNG', 'GOOG': 'GOOGL', 'FISV': 'FI', 'SYMC': 'GEN', 'NLOK': 'GEN', 'CMCSK': 'CMCSA',
@@ -219,6 +219,14 @@ def revisions(title, starts, cache, pages=20):
     return have
 
 
+def revision_wikitext(revid):
+    q = urllib.parse.urlencode({'action': 'query', 'prop': 'revisions', 'revids': revid, 'rvprop': 'content', 'rvslots': 'main',
+                                'format': 'json', 'formatversion': 2})
+    pages = json.loads(get(WIKI + '?' + q)).get('query', {}).get('pages') or [{}]
+    rv = (pages[0].get('revisions') or [{}])[0]
+    return ((rv.get('slots') or {}).get('main') or {}).get('content') or rv.get('content') or ''
+
+
 def revision_html(revid):
     q = urllib.parse.urlencode({'action': 'parse', 'oldid': revid, 'prop': 'text', 'format': 'json', 'formatversion': 2})
     return json.loads(get(WIKI + '?' + q))['parse']['text']
@@ -289,6 +297,28 @@ def ndx_members(page_html):
 
     sec = components(page_html)
     return (read(sec) if sec else None) or read(page_html) or []
+
+
+def ndx_wikitext(text):
+    """The member list from a revision's source, for one whose rendering lost it (a list inside a template the wiki
+    renders differently today): the lines of the section “Components” with a symbol — {{NASDAQ|ATVI}}, (ATVI), or
+    ([https://… ATVI]) — 80–115 of them, else []."""
+    m = re.search(r'^==\s*(?:Current\s+)?(?:Components|Constituents)\s*==\s*$', text or '', re.M | re.I)
+    if not m:
+        return []
+    nxt = re.search(r'^==[^=]', text[m.end():], re.M)
+    sec = text[m.end(): m.end() + (nxt.start() if nxt else len(text) - m.end())]
+    sub = re.search(r'^===.*(?:histor|change|former).*===\s*$', sec, re.M | re.I)  # a subsection of changes: not the list
+    sec = sec[: sub.start()] if sub else sec
+    got = set()
+    for line in sec.splitlines():
+        if not line.lstrip().startswith(('*', '#', '|')):
+            continue
+        x = (re.search(r'\{\{\s*nasdaq\s*\|\s*([A-Za-z]{1,5})\s*[|}]', line, re.I) or re.search(r'\(\s*\[\S+\s+([A-Z]{1,5})\s*\]\s*\)', line)
+             or re.search(r'\(\s*([A-Z]{1,5})\s*\)\s*$', re.sub(r'<ref.*?(</ref>|/>)', '', line).strip()))
+        if x:
+            got.add(x.group(1).upper())
+    return sorted(got) if 80 <= len(got) <= 115 else []
 
 
 def ndx_history(cache, T):
@@ -394,6 +424,10 @@ def collect(root, today=None):
         for rid in todo[:NDX_PER_RUN]:
             h = revision_html(rid)
             nsn[rid] = ndx_members(h)
+            w = ''
+            if not nsn[rid] and components(h):             # a list the rendering lost: its source
+                w = revision_wikitext(rid)
+                nsn[rid] = ndx_wikitext(w)
             if nsn[rid]:
                 whyv.pop(rid, None)
             else:                                          # what the page held instead, for the log
@@ -402,7 +436,9 @@ def collect(root, today=None):
                 lis = [re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', x))).strip()[:80] for x in re.findall(r'<li[^>]*>(.*?)</li>', sec or h, re.S)[:3]]
                 body = re.sub(r'<style[^>]*>.*?</style>', '', sec or '', flags=re.S)
                 text = re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', body)))[:300] + ' || ' + re.sub(r'\s+', ' ', body[300:1500])
-                whyv[rid] = [NDX_PARSER, {'section': bool(sec), 'tables': len(tables(sec or h)), 'li': (sec or h).count('<li'), 'heads': heads[:14], 'lines': lis, 'text': text}]
+                wm = re.search(r'^==\s*(?:Current\s+)?(?:Components|Constituents)\s*==.*$', w, re.M | re.I)
+                whyv[rid] = [NDX_PARSER, {'section': bool(sec), 'tables': len(tables(sec or h)), 'li': (sec or h).count('<li'), 'heads': heads[:14], 'lines': lis, 'text': text,
+                                          'source': w[wm.start(): wm.start() + 900] if wm else w[:300]}]
         # a quarter whose article holds no list: the list page's revision in force then
         empty = [dt.date.fromisoformat(k) for k, r in sorted(nrev.items()) if str(r) in nsn and not nsn[str(r)]]
         left = max(0, NDX_PER_RUN - len(todo))

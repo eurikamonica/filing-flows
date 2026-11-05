@@ -118,6 +118,14 @@ class Nasdaq100(unittest.TestCase):
         self.assertEqual(IM.ndx_members(changes + ndx_table(syms)), sorted(syms))   # a change table is not the list
         self.assertEqual(IM.ndx_members('<p>no list</p>'), [])
 
+    def test_a_list_the_rendering_lost_is_read_from_the_source(self):
+        syms = ['AAPL', 'MSFT', 'ORCL'] + FILL
+        src = "== History ==\nIn 2013 [[Dell]] (DELL) left.\n== Components ==\n''This list is current as of 2016.''\n{{div col|3}}\n" + \
+              '\n'.join(f'* [[{x} Inc.]] ({x})<ref>x</ref>' if i % 3 == 0 else f'* [[{x} Corp]] ({{{{NASDAQ|{x}}}}})' if i % 3 == 1 else f'* [[{x}]] ([https://www.nasdaq.com/symbol/{x.lower()} {x}])'
+                        for i, x in enumerate(syms)) + "\n{{div col end}}\n=== Historical components ===\n* [[Old]] (OLD)\n== Yearly changes ==\n* X (NEWX)\n"
+        self.assertEqual(IM.ndx_wikitext(src), sorted(syms))
+        self.assertEqual(IM.ndx_wikitext('== Components ==\nSee the list.\n'), [])
+
     def test_history_joins_departures_and_a_gap(self):
         L = lambda *x: list(x) + FILL
         cache = {'ndx': {'rev': {'2003-01-01': 1, '2003-04-01': 1, '2010-01-01': 2, '2010-04-01': 3, '2010-07-01': 4, '2025-04-01': 5},
