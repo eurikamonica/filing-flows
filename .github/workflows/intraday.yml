@@ -1,8 +1,9 @@
 # Move odds, intraday (the hub's Move odds → Market & sectors, live): every five minutes through the US session, each
 # asset's move so far today against its own history at the same time of day, and what followed — to the close and over
 # the next days, and the price against its VWAP (app/intraday.py). A relay: one run scans for about 50 minutes, then
-# starts the next while the session is open (GitHub's clock starts few of the schedules: the cron below only restarts
-# the chain). live.json is force-pushed to the branch intraday-live as one commit each scan; the hub reads it from
+# starts the next while the session is open. GitHub's clock starts few of the schedules (none on the first day), so the
+# X-post watch relay starts it: post-to-x.yml runs around the clock, and its owner lane (pipeline/owner_lane.py) starts
+# this workflow from 9:10 New York whenever no run of it is running or waiting; the cron below is a last resort. live.json is force-pushed to the branch intraday-live as one commit each scan; the hub reads it from
 # raw.githubusercontent.com. The hourly history (h60/) stays in the Actions cache, a key a day. Repository variable
 # INTRADAY_RELAY=off stops it.
 name: Intraday move odds (relay)
@@ -15,6 +16,10 @@ on:
         description: "Relay hop (stops after 12)"
         required: false
         default: '0'
+      once:
+        description: "One scan now, open or not (a check: no relay)"
+        type: boolean
+        default: false
 permissions:
   contents: write      # push the branch intraday-live
   actions: write       # start the next hop
@@ -40,7 +45,9 @@ jobs:
         run: |
           python -m pip install --quiet numpy
           echo "day=$(TZ=America/New_York date +%F)" >> "$GITHUB_OUTPUT"
-          if python disclosures/app/intraday.py --session; then echo "open=1" >> "$GITHUB_OUTPUT"; else echo "open=0" >> "$GITHUB_OUTPUT"; echo "the US session is closed: nothing to scan"; fi
+          if [ "${{ inputs.once }}" = "true" ]; then echo "open=1" >> "$GITHUB_OUTPUT"; echo "one scan, open or not"
+          elif python disclosures/app/intraday.py --session; then echo "open=1" >> "$GITHUB_OUTPUT"
+          else echo "open=0" >> "$GITHUB_OUTPUT"; echo "the US session is closed: nothing to scan"; fi
       - name: The hourly history (the Actions cache)
         id: hist
         if: steps.open.outputs.open == '1'
@@ -70,6 +77,7 @@ jobs:
             t0=$SECONDS
             python disclosures/app/intraday.py --out live --cache h60 || echo "::warning::scan failed (the next one tries again)"
             [ -f live/live.json ] && publish
+            [ "${{ inputs.once }}" = "true" ] && { echo "one scan: done"; break; }
             python disclosures/app/intraday.py --session || { echo "the session has closed: the last scan is published"; break; }
             wait=$((300 - (SECONDS - t0))); [ "$wait" -gt 0 ] && sleep "$wait"
           done
@@ -81,7 +89,7 @@ jobs:
           path: h60
           key: intraday-h60-${{ steps.open.outputs.day }}
       - name: The next hop (a relay)
-        if: steps.open.outputs.open == '1' && github.ref == 'refs/heads/main'
+        if: steps.open.outputs.open == '1' && github.ref == 'refs/heads/main' && inputs.once != true
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
