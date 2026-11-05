@@ -66,4 +66,68 @@ const Hv = V._hub(dv);
 ok(/recorded each week, not yet in the line/.test(Hv) && /0\.002/.test(Hv) && /−0\.025|-0\.025/.test(Hv) && /\+2\.59%/.test(Hv) && /1,006 filings/.test(Hv), 'the record\'s own tests of valuation and MD&A in the hub');
 const ld = V._lead(d);
 ok(/\+3\.5% over 26 weeks/.test(ld) && /\+2\.3% \(t 3\.6, 856 releases\)/.test(ld), 'the lead says what the tests found');
+
+// ------------------------------------------------------------------ the daily chart, any N-day average
+const ND = 420, dp = Array.from({ length: ND }, (_, k) => 50 * Math.exp(0.0015 * k + 0.04 * Math.sin(k / 9)));
+const gaps = Array.from({ length: ND - 1 }, (_, k) => ((k % 5) === 4 ? 3 : 1));                     // weekdays: Friday to Monday is 3 days
+const dd = { id: 'XYZ', start: '2025-03-03', gap: gaps, p: dp, asof: null };
+const D = V._dailyOf(dd);
+ok(D.d.length === ND && D.d[0] === '2025-03-03' && D.d[5] === '2025-03-10', 'the dates come back from the start and the day gaps');
+const a20 = V._sma(dp, 20);
+ok(a20[18] === null && near(a20[19], dp.slice(0, 20).reduce((x, y) => x + y, 0) / 20) && near(a20[ND - 1], dp.slice(ND - 20).reduce((x, y) => x + y, 0) / 20), 'the N-day average');
+const sd = Object.assign({}, s, { start: '2024-03-01' });                                         // the weekly lines cover the daily file
+const h0d = V._dailyHybrid(D, sd, 200, 0, 0), a200 = V._sma(dp, 200);
+ok(near(h0d[ND - 1], a200[ND - 1]) && h0d[198] === null, 'w = 0: the hybrid line is the base average');
+const opt = { nd: [20, 50, 200], xx: 89, range: 252, base: 200, w: 0.5, g: 0.05 };
+const dsvg = V._dailyChart(D, sd, opt, 760);
+ok(dsvg.startsWith('<svg') && (dsvg.match(/<path d="M/g) || []).length === 6 && /stroke-dasharray:6 3/.test(dsvg) && />89</.test(dsvg) && />H</.test(dsvg), 'price, three averages, the XX-day (dashed) and H, each labelled');
+const ui = V._ui; Object.assign(ui, { nd: [5, 20, 200], xx: 89, range: 126, base: 200 });
+const cd = V._company(sd, dn(), sd.now, 0.5, 0.05, 760, 'mh-d', dd);
+function dn() {
+  const per3 = (a) => Object.fromEntries(['2017–2026', '2017–2018', '2019–2026'].map((p, i) => [p, { net: S_(a + 0.001 * i, -1.3 + i * 0.1), gross: S_(a, 1) }]));
+  const daily = { from: '2017-10-13', companies: 1332, periods: ['2017–2026', '2017–2018', '2019–2026'], to: { 13: '2026-07-31', 26: '2026-05-01' } };
+  const weekly = {};
+  for (const h of ['13', '26']) {
+    daily[h] = {}; weekly[h] = {};
+    for (const N of [5, 10, 20, 30, 50, 60, 120, 200, 250]) {
+      daily[h][`above:${N}`] = { periods: per3(N < 120 ? -0.009 : 0.0045), weekly_form: N === 5 ? null : S_(N < 120 ? -0.0088 : 0.0042, -1) };
+      if (N > 5) weekly[h][`above:${N}`] = per(N < 120 ? -0.0038 : 0.0128, -0.01, 0.02);
+    }
+    for (const c of ['5/20', '10/60', '20/60', '50/200', '60/250']) { daily[h][`cross:${c}`] = { periods: per3(0.0066), weekly_form: c === '5/20' ? null : S_(0.006, 0.4) }; if (c !== '5/20') weekly[h][`cross:${c}`] = per(0.0144, -0.0119, 0.0252); }
+  }
+  const fund = (cagr, dd_) => Object.fromEntries(['1996–2026', '1996–2015', '2016–2026'].map((p) => [p, { cagr, vol: 0.15, maxdd: dd_, invested: 0.9, switches: 18, from: p.slice(0, 4) + '-01-05', years: 10 }]));
+  const rules = { hold: 'Hold the fund', above40: 'Hold it while above its 40-week average, else cash', trend_unemployment: '40-week average, out only if unemployment is also above its 12-month average', trend_sahm: '40-week average, out only if the Sahm rule is also on' };
+  const F = { start: '1996-04-26', rules: { hold: fund(0.102, -0.546), above40: fund(0.081, -0.351), trend_unemployment: fund(0.112, -0.318), trend_sahm: fund(0.118, -0.318) },
+    now: { close: 755.7, ma40: 726.8, gap40: 0.039, in: { hold: true, above40: true, trend_unemployment: true, trend_sahm: false } } };
+  const cell = (m, t) => ({ mean: m, t, pos: 0.6, weeks: 120 });
+  const regimes = { period: '2016–2026', tests: 70, readings: { vix: { label: 'VIX', unit: '' }, credit: { label: 'Credit spread (Baa − 10y)', unit: 'pts' }, cpi: { label: 'CPI inflation, year on year', unit: '%' } },
+    now: { vix: { value: 16.46, third: 1, cut: [15.5, 21.4], z: -0.4 }, credit: { value: 1.44, third: 0, cut: [1.88, 2.57], z: -1.2 }, cpi: { value: 3.72, third: 2, cut: [1.9, 2.9], z: 0.7 } } };
+  for (const h of ['13', '26']) regimes[h] = { all: cell(0.0136, 1.0), vix: [cell(0.0209, 1.3), cell(0.0304, 1.6), cell(-0.0235, -0.7)], credit: [cell(0.0355, 2.5), null, cell(-0.048, -1.4)], cpi: [cell(-0.0315, -1.1), cell(0.0206, 1.2), cell(0.038, 2.2)] };
+  return Object.assign({}, d, { daily: { companies: 1481, cross_recent: 10 },
+    scores: Object.assign({}, d.scores, { ndays: { n: [5, 10, 20, 30, 50, 60, 120, 200, 250], crosses: [[5, 20], [10, 60], [20, 60], [50, 200], [60, 250]], weekly, daily },
+      models: Object.assign({}, d.scores.models, { 26: Object.assign({}, d.scores.models['26'], { ma_macro: per(0.0486, 0.0023, 0.0676), ma_macro_09: per(0.032, -0.0007, 0.0454) }) }),
+      net_by_year: { 26: { ma: { 2020: -0.046 }, ma_macro: { 2020: 0.0719 } } }, ic_by_year: { 26: { ma: { 2020: -0.05 }, ma_macro: { 2020: 0.111 } } },
+      macro: { index: { rules, periods: ['1996–2026', '1996–2015', '2016–2026'], switch_bp: 5, sahm_on: 0.5, funds: { SPY: F, QQQ: Object.assign({}, F, { start: '1999-12-10' }) },
+        now: { asof: '2026-10-30', unrate: 4.2, unrate12: 4.294, unemp_up: false, sahm3: 0, sahm_on: false, ff: 3.75 } }, regimes } }) });
+}
+const dz = dn();
+ok(/Daily — any N-day average/.test(cd) && /data-mh-xx/.test(cd) && /89-day/.test(cd) && /not one of the lengths tested/.test(cd), 'the daily section, the XX-day line in its table');
+ok(/<b style="color:#d4a017">5-day<\/b>/.test(cd) && /needs daily closes/.test(cd) && /50-day vs the 200-day/.test(cd), 'the 5-day line (daily closes only) and the 50/200 row');
+ok(/50-day vs 200-day/.test(cd) && /(golden|death) cross of \d{4}-\d{2}-\d{2}|all through the file/.test(cd), 'the 50/200-day card');
+ok(!bad(cd), 'no undefined / NaN with the daily chart');
+const cz = V._company(sd, dz, sd.now, 0.5, 0.05, 760, 'mh-z', dd);
+ok(/−0\.90% \(t −1\.3\)/.test(cz.replace(/<[^>]+>/g, '')) && /class="n cur"/.test(cz) && /Macro now/.test(cz) && /\+ Sahm rule: <b>out<\/b>/.test(cz) && !bad(cz), 'what each length paid, the macro now with today\'s third outlined');
+const cn = V._company(sd, dz, sd.now, 0.5, 0.05, 760, 'mh-n', null);
+ok(/No daily bars on file for this company/.test(cn) && /1,481/.test(cn) && !bad(cn), 'a company without daily bars');
+// the hub's new tables
+const Hz = V._hub(dz);
+ok(/Daily averages, 26 weeks/.test(Hz) && /Weekly form 2016–26/.test(Hz) && /Daily 2017–26/.test(Hz) && /needs daily closes/.test(Hz) && /came within 0\.\d\d points/.test(Hz), 'the daily lengths, weekly form against daily closes');
+ok(/SPY, from 1996-04-26/.test(Hz) && /\+ unemployment/.test(Hz) && /2016–2026 is their fair test/.test(Hz) && /11\.8%/.test(Hz), 'the fund rules');
+ok(/each third of twelve readings, 26 weeks/.test(Hz) && /class="n cur"/.test(Hz) && /70 comparisons/.test(Hz), 'the macro thirds, today\'s outlined');
+ok(/Moving averages × macro/.test(Hz) && /mostly 2020: \+7\.2% against −4\.6%/.test(Hz) && !bad(Hz), 'the macro model and where its lead came from');
+const Lx = V._list([{ id: 'AAA', name: 'A', close: 10, ma40: 8, gap_hybrid: 0.1, x50_200: ['2026-11-03', 1, 0], d_close: 10.2, d50: 0.03, d200: 0.04 },
+  { id: 'BBB', name: 'B', close: 10, ma40: 12, gap_hybrid: -0.2, x50_200: ['2026-10-01', -1, 25], d_close: 9, d50: -0.1, d200: -0.1 }], 0.5, 0.05, 10);
+ok(/Golden crosses/.test(Lx) && /2026-11-03/.test(Lx) && !/2026-10-01/.test(Lx) && /Death crosses[^<]*\(0\)/.test(Lx), 'the latest crosses, only the recent ones');
+const l2 = V._lead(dz);
+ok(/Daily averages, on daily closes 2017–2026/.test(l2) && /holding made 10\.2% a year/.test(l2) && /nearly all of it in 2020/.test(l2), 'the lead sums up the daily lengths and the macro');
 console.log(`ma-hybrid view: ${n} checks passed`);

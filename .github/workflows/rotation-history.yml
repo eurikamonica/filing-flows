@@ -135,17 +135,27 @@ jobs:
         run: |
           python -m pip install --quiet numpy
           python disclosures/app/rrg_hybrid.py --public hist/public --ledger hist/ledger/rrg-hybrid.json
-      - name: Moving averages+ (the 10- and 40-week averages with earnings and guidance mixed in; public/ma-hybrid*.json, public/ma/)
-        # Every weight of the earnings line and of the guidance tested walk-forward from 2016 against the averages alone;
-        # each closed week's inputs and scores frozen in hist/ledger/ma-hybrid.json (app/ma_hybrid.py, about a minute).
-        # The first-filed quarters and MD&A statements (branch data: eps-fundamental/, outlook/) and this week's Fair value
-        # index (research-valuation) are fetched only when a closed week is still to be built.
-        timeout-minutes: 12
+      - name: Moving averages+ (daily and weekly averages with earnings, guidance and the macro; public/ma-hybrid*.json, public/ma/, public/ma-daily/)
+        # Every weight of the earnings line and of the guidance tested walk-forward from 2016 against the averages alone; every
+        # N-day average and cross on daily closes; the index funds' 40-week rule with a macro filter and the trend by macro
+        # third (public/macro.json, built above); each closed week's inputs, scores and macro frozen in
+        # hist/ledger/ma-hybrid.json (app/ma_hybrid.py, about two minutes). The first-filed quarters and MD&A statements
+        # (branch data: eps-fundamental/, outlook/) and this week's Fair value index (research-valuation) are fetched only
+        # when a closed week is still to be built. research-paths' daily bars (cache/ohlc/) are fetched then too, and between
+        # weekly builds once per research-paths commit, to refresh the daily charts and the 50/200-day crosses.
+        timeout-minutes: 15
         continue-on-error: true
         run: |
           python -m pip install --quiet numpy
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          paths_sha="$(git ls-remote --heads "$url" research-paths | cut -f1 || true)"   # empty: no daily bars this run
+          bars() {
+            if [ -n "$paths_sha" ]; then
+              git clone --quiet --depth 1 --filter=blob:none --sparse --branch research-paths "$url" _paths \
+                && git -C _paths sparse-checkout set --no-cone /cache/ohlc/ || echo "::warning::research-paths: no daily bars this run"
+            fi
+          }
           if python disclosures/app/ma_hybrid.py --public hist/public --needed; then
-            url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
             git clone --quiet --depth 1 --filter=blob:none --sparse --branch data "$url" _fund
             git -C _fund sparse-checkout set eps-fundamental outlook
             # this week's Fair value numbers (DCF value, its odds), recorded beside the line, not yet in it
@@ -153,11 +163,15 @@ jobs:
               git clone --quiet --depth 1 --filter=blob:none --sparse --branch research-valuation "$url" _val
               git -C _val sparse-checkout set --no-cone /public/index.json
             fi
+            bars
             python disclosures/app/ma_hybrid.py --public hist/public --fundamentals _fund/eps-fundamental \
               --guidance disclosures/docs/data/cache/guidance --valuation _val/public/index.json --outlook _fund/outlook \
-              --ledger hist/ledger/ma-hybrid.json
+              --bars _paths/cache/ohlc --bars-sha "$paths_sha" --ledger hist/ledger/ma-hybrid.json
+          elif [ -n "$paths_sha" ] && python disclosures/app/ma_hybrid.py --public hist/public --daily-needed --bars-sha "$paths_sha"; then
+            bars
+            python disclosures/app/ma_hybrid.py --public hist/public --bars _paths/cache/ohlc --bars-sha "$paths_sha" --daily
           else
-            echo "Moving averages+: this closed week is already published"
+            echo "Moving averages+: this closed week and research-paths' latest daily bars are already published"
           fi
       - name: Opportunity (direction, buy and short odds; public/opportunity-stocks*.json, ledger/opportunity-stocks.json)
         # For every stock: P(higher in 1 week / 1 month / 3 months), P(a buy makes money after costs), P(a short does, after
