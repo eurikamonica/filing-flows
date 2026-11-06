@@ -61,7 +61,7 @@ def fmt_obs(k, v):
     if any(k.endswith(s) for s in ("_pct", "_pct_revenue", "_yoy", "_growth", "_change", "share_of_delta", "_share")) or k in ("latest_gap_pct", "eps_growth_from_share_count"):
         return f"{100 * v:+.1f}%" if abs(v) < 20 else f"{v:.2f}"
     if k.startswith("eps"):
-        return f"${v:.2f}"
+        return ("-" if round(v, 2) < 0 else "") + f"${abs(v):.2f}"   # -$0.06, not $-0.06
     if k in ("dso", "dso_median_8q", "cover_ratio", "buybacks_over_sbc"):
         return f"{v:.1f}"
     if k.endswith("shares") or k.endswith("_prior") and "shares" in k or "shares" in k:
