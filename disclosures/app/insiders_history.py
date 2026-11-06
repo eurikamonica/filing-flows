@@ -61,9 +61,11 @@ KEEP_DAYS = 730                 # a holding not reported again for two years is 
 KEEP_BIG_DAYS = 1826            # … five years for a holding of BIG of the stock or more
 BIG = 0.005                     # half a percent of the stock's 13F shares
 BLOCK = 50_000                  # the same shares reported by several owners: one block from this many shares
+CAP = 4                         # a holding of more than four times the stock's 13F shares is a slip of the pen
 PERSONAL = re.compile(r'trust|spouse|wife|husband|child|\bsons?\b|daughter|famil|\bira\b|401|grat|gift|estate|custod|foundation|'
                       r'minor|ugma|utma|revocable|living|partnership for|\bself\b|retirement|pension|profit sharing|esop|savings', re.I)
 TOP = 10                        # insiders published per ticker and quarter
+VERSION = 2                     # cache/insiders layout: a new one reads every data set again (2: holdings' words, groups)
 MON = {m: i + 1 for i, m in enumerate('JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC'.split())}
 ENTITY = re.compile(r'\b(LLC|L\.?L\.?C|INC|INCORPORATED|CORP|CORPORATION|CO|COMPANY|LP|L\.?P|LTD|LIMITED|PLC|AG|SA|NV|SE|GMBH|'
                     r'TRUST|FUND|FUNDS|PARTNERS|PARTNERSHIP|CAPITAL|HOLDINGS?|MANAGEMENT|ADVISORS?|ADVISERS?|GROUP|'
@@ -131,18 +133,32 @@ def class_of(title):
     return m.group(1).upper() if m else ''
 
 
-def nature(direct, text, fns, footnotes):
-    """A holding's key: 'D', or 'I:' and its words ("by trust"); a line that only points at a footnote is keyed by the
-    footnote's words, digits left out (the same trust, whatever its number of shares or its footnote's number)."""
+def words_of(t):
+    return re.sub(r'[^a-z]+', ' ', str(t or '').lower()).strip()[:90]
+
+
+def raw_of(t):
+    return re.sub(r'\s+', ' ', str(t or '')).strip()[:120]
+
+
+def nature(direct, text, fns, footnotes, rank=None):
+    """(key, words) of a holding: ('D', ''), or ('I:' and its words, its words) — "by trust"; a line that only points at
+    a footnote is 'I:fn#n', the n-th footnoted holding of its filing (a filer rewords and renumbers its footnotes from one
+    report to the next, but keeps its holdings in the same order), with the footnote's words to name it. rank: the
+    filing's {footnote ids: n}, filled as lines come."""
     if str(direct or '').strip().upper().startswith('D'):
-        return 'D'
+        return 'D', ''
     t = str(text or '').lower()
-    if fns and (not re.sub(r'[^a-z]', '', t) or re.search(r'see\s+(foot)?notes?|footnote|explanation|remarks', t)):
-        words = ' '.join(footnotes.get(f.strip(), '') for f in str(fns).split(',') if f.strip())
-        if words.strip():
-            t = words.lower()
-    t = re.sub(r'[^a-z]+', ' ', t).strip()
-    return 'I:' + t[:90] if t else 'I'
+    ids = tuple(sorted(f.strip() for f in str(fns or '').split(',') if f.strip()))
+    if ids and (not re.sub(r'[^a-z]', '', t) or re.search(r'see\s+(foot)?notes?|footnote|explanation|remarks', t)):
+        raw = raw_of(' '.join(footnotes.get(f, '') for f in ids))
+        if rank is not None:
+            n = rank.setdefault(ids, len(rank) + 1)
+            return f'I:fn#{n}', raw
+        w = words_of(raw)
+        return ('I:' + w if w else 'I'), raw
+    w = words_of(t)
+    return ('I:' + w if w else 'I'), raw_of(text)
 
 
 def read_set(path):
@@ -161,7 +177,7 @@ def read_set(path):
         filed = ddate(r[ix['FILING_DATE']])
         if iss and filed:
             sub[acc] = (iss, filed, ddate(r[ix['PERIOD_OF_REPORT']]) or filed)
-    first, owners = {}, {}
+    first, owners, joint = {}, {}, defaultdict(list)
     rows = HH._rows(z, m['REPORTINGOWNER'])
     ix = {h: i for i, h in enumerate(next(rows))}
     for r in rows:
@@ -172,6 +188,8 @@ def read_set(path):
         if acc not in sub or not cik:
             continue
         first.setdefault(acc, cik)
+        if cik not in joint[acc]:
+            joint[acc].append(cik)
         cell = lambda h: r[ix[h]].strip() if h in ix and len(r) > ix[h] else ''
         owners[str(cik)] = [cell('RPTOWNERNAME'), cell('RPTOWNER_RELATIONSHIP'), cell('RPTOWNER_TITLE')]
     footnotes = defaultdict(dict)
@@ -181,7 +199,7 @@ def read_set(path):
         for r in rows:
             if len(r) > ix['FOOTNOTE_TXT'] and r[ix['ACCESSION_NUMBER']] in sub:
                 footnotes[r[ix['ACCESSION_NUMBER']]][r[ix['FOOTNOTE_ID']].strip()] = r[ix['FOOTNOTE_TXT']][:400]
-    best, prices = {}, defaultdict(list)
+    best, prices, ranks = {}, defaultdict(list), defaultdict(dict)
     for table, deriv, dated in (('NONDERIV_TRANS', False, True), ('NONDERIV_HOLDING', False, False),
                                 ('DERIV_TRANS', True, True), ('DERIV_HOLDING', True, False)):
         if table not in m:
@@ -203,8 +221,10 @@ def read_set(path):
             iss, filed, period = s
             d = (ddate(r[ix['TRANS_DATE']]) if dated and 'TRANS_DATE' in ix else None) or period
             fn = r[ix['NATURE_OF_OWNERSHIP_FN']] if 'NATURE_OF_OWNERSHIP_FN' in ix and len(r) > ix['NATURE_OF_OWNERSHIP_FN'] else ''
-            key = class_of(r[ix['SECURITY_TITLE']]) + '|' + nature(r[ix['DIRECT_INDIRECT_OWNERSHIP']], r[ix['NATURE_OF_OWNERSHIP']]
-                                                                   if 'NATURE_OF_OWNERSHIP' in ix else '', fn, footnotes.get(acc, {}))
+            cls = class_of(r[ix['SECURITY_TITLE']])
+            nk, words = nature(r[ix['DIRECT_INDIRECT_OWNERSHIP']], r[ix['NATURE_OF_OWNERSHIP']] if 'NATURE_OF_OWNERSHIP' in ix else '',
+                               fn, footnotes.get(acc, {}), ranks[(acc, cls)])
+            key = cls + '|' + nk
             if table == 'NONDERIV_TRANS' and r[ix['TRANS_CODE']].strip().upper() in ('P', 'S'):
                 px = HH._num(r[ix['TRANS_PRICEPERSHARE']])
                 if px == px and px > 0:
@@ -213,13 +233,20 @@ def read_set(path):
             k = (iss, first[acc], key, quarter_end(d))
             b = best.get(k)
             if b is None or order > b[0]:
-                best[k] = (order, sh, acc)
+                best[k] = (order, sh, acc, words)
     price_of = {a: sorted(v)[len(v) // 2] for a, v in prices.items()}
     points = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-    for (iss, own, key, _), ((d, filed, _), sh, acc) in best.items():
-        points[str(iss)][str(own)][key].append([d, filed, int(round(sh)), round(price_of.get(acc, 0), 4)])
+    for (iss, own, key, _), ((d, filed, _), sh, acc, words) in best.items():
+        points[str(iss)][str(own)][key].append([d, filed, int(round(sh)), round(price_of.get(acc, 0), 4), words])
     used = {o for per in points.values() for o in per}
-    return {'owners': {o: v for o, v in owners.items() if o in used}, 'points': points}
+    # joint filings: owners who report together (a fund, its general partner and managing members; a family company
+    # and its members) — one group in the build, its blocks counted once
+    groups = defaultdict(set)
+    for acc, cs in joint.items():
+        if len(cs) > 1 and acc in sub:
+            groups[str(sub[acc][0])].add(tuple(sorted(cs)))
+    return {'version': VERSION, 'owners': {o: v for o, v in owners.items() if o in used}, 'points': points,
+            'groups': {i: sorted(list(g) for g in gs) for i, gs in groups.items()}}
 
 
 def collect(root, minutes=25, ua=None, page_html=None, fetch=None):
@@ -233,6 +260,9 @@ def collect(root, minutes=25, ua=None, page_html=None, fetch=None):
     cdir.mkdir(parents=True, exist_ok=True)
     sp = cdir / 'sets.json'
     state = json.loads(sp.read_text()) if sp.exists() else {}
+    if state and state.get('version') != VERSION:
+        print(f'insider data sets (layout {VERSION}): reading every set again', flush=True)
+        state = dict(state, done=[])
     if page_html is None:
         page_html = fetch(PAGE).decode('utf-8', 'replace')
     sets = listing(page_html)
@@ -275,7 +305,7 @@ def collect(root, minutes=25, ua=None, page_html=None, fetch=None):
         read.append(name)
         done.add(name)
     state = {'updated_at': HH.now(), 'done': sorted(done), 'sets': len(sets), 'left': len([n for _, n in sets if n not in done]),
-             'failed': failed, 'last_read': read[-1] if read else state.get('last_read')}
+             'failed': failed, 'last_read': read[-1] if read else state.get('last_read'), 'version': VERSION}
     sp.write_text(json.dumps(state, indent=1))
     return {'read': read, 'left': state['left']}
 
@@ -291,7 +321,8 @@ def person(name):
     def tc(s, entity=False):                       # all capitals (or all small letters) to title case; mixed case kept
         if not (s.isupper() or s.islower()):
             return s
-        return ' '.join(small.get(w, w) if entity and len(w) <= 3 else w[:1].upper() + w[1:].lower() for w in s.upper().split(' '))
+        return ' '.join(small.get(w, w) if entity and len(w) <= 3 else w if entity and '.' in w.rstrip(',.') else w[:1].upper() + w[1:].lower()
+                        for w in s.upper().split(' '))
     if ENTITY.search(n):
         return tc(n, True)
     parts = n.replace(',', ' ').split()
@@ -323,35 +354,41 @@ def safe(t):
 
 
 def holdings_at(lines, q, keep_days, big=None, keep_big=KEEP_BIG_DAYS):
-    """{key: (shares, date, price)} of one owner's holdings on quarter-end q: each one's latest report on or before q,
-    if within keep_days — within keep_big when it is `big` shares or more (price: the report's trade price, 0 when it
-    has none). lines: {key: (dates, rows)} sorted by (date, filed)."""
+    """{key: (shares, date, price, words)} of one owner's holdings on quarter-end q: each one's latest report on or
+    before q, if within keep_days — within keep_big when it is `big` shares or more (price: the report's trade price, 0
+    when it has none; words: what holds it, for an indirect one). lines: {key: (dates, rows)} sorted by (date, filed)."""
     qd = dt.date.fromisoformat(q)
     out = {}
     for key, (dates, rows) in lines.items():
         i = bisect.bisect_right(dates, q) - 1
         if i < 0:
             continue
-        d, sh, px = rows[i][0], rows[i][2], (rows[i][3] if len(rows[i]) > 3 else 0)
+        x = rows[i]
+        d, sh, px, w = x[0], x[2], (x[3] if len(x) > 3 else 0), (x[4] if len(x) > 4 else '')
         age = (qd - dt.date.fromisoformat(d)).days
         if sh > 0 and (age <= keep_days or (big and sh >= big and age <= keep_big)):
-            out[key] = (sh, d, px or 0)
+            out[key] = (sh, d, px or 0, w)
     return out
 
 
-def via(key):
+def via(words):
     """The company an indirect holding is held through, from its words ("by daimler north america corporation" →
-    'Daimler North America Corporation'); '' for a direct one or a personal vehicle (a trust, a spouse, an IRA)."""
-    nat = key.split('|', 1)[-1]
-    if not nat.startswith('I:') or PERSONAL.search(nat):
+    'Daimler North America Corporation'); '' for a personal vehicle (a trust, a spouse, an IRA) or words that name
+    none ("continued from footnote …", a bare "LLC")."""
+    t = raw_of(words)
+    if not t or PERSONAL.search(t):
         return ''
-    t = nat[2:]
-    m = re.search(r'\b(?:by|through|via|in)\s+(.+)', t)
+    m = re.search(r'\b(?:by|through|via|in)\s+(.+)', t, re.I)
     t = m.group(1) if m else t
-    t = re.split(r'\s+(?:of which|for which|which|whose|and the reporting|the reporting|as\s)', t)[0].strip()
-    up = {'llc', 'lp', 'llp', 'plc', 'ag', 'nv', 'sa', 'se', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'}
-    words = [w.upper() if w in up else w.capitalize() for w in t.split()[:7]]
-    return ' '.join(words)
+    t = re.split(r'\s+(?:of which|for which|which|whose|and the reporting|the reporting|as\s)|[;()]', t, flags=re.I)[0].strip()
+    ws = t.split()
+    core = [w for w in ws if re.sub(r'[^a-z]', '', w.lower()) not in ('llc', 'lp', 'l', 'p', 'inc', 'corp', 'ltd', 'co', 'the', '')]
+    if len(core) < 2 or re.match(r'(continued|see|footnote|these|those|such|shares|the shares|represents|includes|consists|'
+                                 r'reporting|securities|common|held|owned|directly|indirectly|a |an |each|all|amount|number|on|'
+                                 r'this|explanation)\b', t, re.I):
+        return ''
+    out = ' '.join(ws[:7]).rstrip(',.;:')
+    return person(out + ' LLC')[:-4] if out.isupper() or out.islower() else out     # capitals to title case, as a company's name
 
 
 STEPS = (1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50, 100)
@@ -423,6 +460,7 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
             tick[int(r['cik'])].append(t)
     owners, names = {}, defaultdict(Counter)       # the latest role; each name as written, a count a data set
     raw = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    joint = defaultdict(list)                      # issuer → the owners who filed together
     sets = sorted((root / 'cache' / 'insiders').glob('*_form345.json.gz'))
     for f in sets:
         d = HH.read_gz(f, {}) or {}
@@ -430,6 +468,9 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
             owners[o] = v
             if v and v[0]:
                 names[o][v[0]] += 1
+        for iss, gs in (d.get('groups') or {}).items():
+            if int(iss) in tick:
+                joint[iss].extend(gs)
         for iss, per in (d.get('points') or {}).items():
             if int(iss) not in tick:
                 continue
@@ -441,7 +482,19 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
     for f in out_dir.glob('*.json'):
         f.unlink()
     made, stamp = 0, HH.now()
+    name_of = lambda o: names[o].most_common(1)[0][0] if names[o] else ''
     for iss, per in raw.items():
+        up = {}                                    # joint filers, one group each (union-find)
+        def find(x):
+            while up.get(x, x) != x:
+                up[x] = up.get(up[x], up[x])
+                x = up[x]
+            return x
+        for g in joint.get(iss, []):
+            for c in g[1:]:
+                a, b = find(str(g[0])), find(str(c))
+                if a != b:
+                    up[b] = a
         lines = {}
         for o, keys in per.items():
             lines[o] = {}
@@ -464,16 +517,30 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
                 price = total[i][2] / total[i][1]
                 blocks = [sh for _, sh, _ in top13[i] if sh > 0]
                 same13 = lambda s: any(abs(s - h) <= 0.01 * h for h in blocks)
-                big = BIG * total[i][1]
-                held = {}
+                big, cap = BIG * total[i][1], CAP * total[i][1]
+                held, words = {}, {}
                 for o, ls in lines.items():
                     if int(o) in ciks13:
                         continue                   # a 13F filer itself: its shares are in its 13F
+                    hs = holdings_at(ls, q, keep_days, big)
                     h = {k: s * ratio.get(k.split('|', 1)[0], 1) * (split_factor(i, d, px, P, cuts, price13) if cuts else 1)
-                         for k, (s, d, px) in holdings_at(ls, q, keep_days, big).items()}
-                    h = {k: s for k, s in h.items() if not same13(s)}
+                         for k, (s, d, px, _) in hs.items()}
+                    h = {k: s for k, s in h.items() if not same13(s) and s <= cap}     # 13F's own block; a slip of the pen
                     if h and not same13(sum(h.values())):
                         held[o] = h
+                        words[o] = {k: hs[k][3] for k in h}
+                # joint filers: the one with the most counts in full, the others only an individual's own shares held
+                # directly (a fund's general partner and managing members report the fund's shares, each of them)
+                bygrp = defaultdict(list)
+                for o in held:
+                    bygrp[find(o)].append(o)
+                for os_ in bygrp.values():
+                    if len(os_) > 1:
+                        keep = max(os_, key=lambda o: (sum(held[o].values()), o))
+                        for o in os_:
+                            if o != keep:
+                                held[o] = {} if ENTITY.search(name_of(o)) else {k: s for k, s in held[o].items() if k.split('|', 1)[1] == 'D'}
+                held = {o: h for o, h in held.items() if h}
                 # one block several owners report (a family company by itself and by each member): the same shares,
                 # one of them at least indirect — to the one who holds it directly, else to the owner with the most
                 size = {o: sum(h.values()) for o, h in held.items()}
@@ -498,11 +565,11 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
                     if o not in widx:
                         widx[o] = len(who)
                         _, rel, ttl = (owners.get(o) or ['', '', ''])[:3]
-                        nm = names[o].most_common(1)[0][0] if names[o] else ''
-                        who.append([int(o), person(nm), role(rel, ttl), ''])
+                        who.append([int(o), person(name_of(o)), role(rel, ttl), ''])
                     k_, s_ = max(held[o].items(), key=lambda x: x[1])
-                    if s_ >= 0.5 * sh and via(k_):
-                        who[widx[o]][3] = via(k_)          # its largest holding another company's (the latest quarter's)
+                    v_ = via(words[o].get(k_)) if k_.split('|', 1)[1].startswith('I') else ''
+                    if s_ >= 0.5 * sh and v_:
+                        who[widx[o]][3] = v_               # its largest holding another company's (the latest quarter's)
                     row.append([widx[o], int(round(sh)), int(round(sh * price))])
                 tops.append(row)
                 s_all = sum(s for s, _ in sums)

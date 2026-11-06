@@ -95,6 +95,22 @@ def make_set(path):
     for acc, cik, nm in (('E1', '0000000911', 'SAME ONE'), ('E2', '0000000912', 'SAME TWO')):
         add(acc, '23-AUG-2025', '21-AUG-2025', TSLA, [(cik, nm, 'Director', '')], [
             ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='60000.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
+    # a fund's general partner, the fund and a director in one joint filing (the partner's aggregate: 157,000), the fund's
+    # own report (120,000, part of it) and the director's own shares: the partner counts, the director's own shares too
+    add('J1', '24-AUG-2025', '22-AUG-2025', TSLA, [('0000000921', 'SILVER LAKE GROUP, L.L.C.', 'TenPercentOwner', ''),
+                                                  ('0000000922', 'SILVER LAKE TECHNOLOGY ASSOCIATES V, L.P.', 'TenPercentOwner', ''),
+                                                  ('0000000923', 'DURBAN EGON', 'Director', '')], [
+        ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='157000.0', DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='See footnotes', NATURE_OF_OWNERSHIP_FN='F1'))],
+        [('F1', 'Held by SL SPV-2, L.P. and Silver Lake Technology Associates V, L.P.')])
+    add('J2', '25-AUG-2025', '22-AUG-2025', TSLA, [('0000000922', 'SILVER LAKE TECHNOLOGY ASSOCIATES V, L.P.', 'TenPercentOwner', '')], [
+        ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='120000.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
+    add('J3', '25-AUG-2025', '22-AUG-2025', TSLA, [('0000000923', 'DURBAN EGON', 'Director', '')], [
+        ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='5000.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
+    for acc, filed, n, txt in (('O1', '12-DEC-2024', '152713846.0', 'Continued from footnote: National Indemnity Company, Berkshire Hathaway'),
+                               ('O2', '11-FEB-2025', '264941431.0', 'The shares reported on this form are held by Berkshire Hathaway subsidiaries')):
+        add(acc, filed, filed, '0000797468', [('0000315090', 'BUFFETT WARREN E', 'TenPercentOwner', '')], [
+            ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS=n, DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='See Footnote', NATURE_OF_OWNERSHIP_FN='F3'))],
+            [('F3', txt)])
     # a class of common stock held in the derivative table (Class B, convertible one for one)
     add('Z1', '05-SEP-2025', '02-SEP-2025', TSLA, [('0000000601', 'ZUCK MARK', 'Director,Officer', 'Chair')], [
         ('DERIV_HOLDING', dict(DERIV_HOLDING_SK=1, SECURITY_TITLE='Class B Common Stock', SHRS_OWND_FOLWNG_TRANS='50.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
@@ -138,11 +154,11 @@ class Insiders(unittest.TestCase):
         c.mkdir(parents=True)
         P = ['2025-06-30', '2025-09-30', '2025-12-31', '2027-12-31']
         (c / 'TSLA.json').write_text(json.dumps({'ticker': 'TSLA', 'name': 'Tesla, Inc.', 'periods': P,
-            'total': [[100, 1000, 300000], [100, 1000, 400000], [100, 1000, 450000], [100, 1_000_000_000, 500000]],   # the last: a large stock, no holding 'big'
+            'total': [[100, 10_000_000, 3e9], [100, 10_000_000, 4e9], [100, 10_000_000, 4.5e9], [100, 1_000_000_000, 5e11]],   # the last: none of them half a percent
             'who': [['c102909', 'Vanguard Group', 'Vanguard', [102909]], ['c999', 'Berkshire Hathaway', 'Berkshire', [999]]],
             'top': [[[0, 500, 150000]], [[0, 500, 200000], [1, 300, 120000]], [[0, 500, 225000], [1, 300, 135000]], [[0, 500, 250000]]]}))
         (c / 'BRK-B.json').write_text(json.dumps({'ticker': 'BRK-B', 'name': 'Berkshire Hathaway', 'periods': ['2025-09-30'],
-            'total': [[50, 2000, 1000000]], 'who': [['c102909', 'Vanguard Group', 'Vanguard', [102909]]], 'top': [[[0, 900, 450000]]]}))
+            'total': [[50, 20000, 10000000]], 'who': [['c102909', 'Vanguard Group', 'Vanguard', [102909]]], 'top': [[[0, 9000, 4500000]]]}))
         after = [[0, 2500, 550000], [1, 1500, 330000], [2, 600, 132000]]
         (c / 'SPLT.json').write_text(json.dumps({'ticker': 'SPLT', 'name': 'Split Co', 'periods': ['2020-06-30', '2020-09-30', '2020-12-31'],
             'total': [[10, 1000, 1000000], [10, 5000, 1100000], [10, 5000, 1200000]], 'who': [['c1', 'A', 'A', [1]], ['c2', 'B', 'B', [2]], ['c3', 'C', 'C', [3]]],
@@ -167,11 +183,16 @@ class Insiders(unittest.TestCase):
     def test_read_set(self):
         d = I.read_set(self.zip)
         musk = d['points']['1318605']['1494730']
-        self.assertEqual(musk['|I:by trust'], [['2025-09-12', '2025-09-15', 411200, 381.5]], 'the last line of the day, one point a quarter, the trade price')
-        self.assertEqual(musk['|D'], [['2025-09-12', '2025-09-15', 96000, 381.5]], "a holding: its filing's trade price")
+        self.assertEqual(musk['|I:by trust'], [['2025-09-12', '2025-09-15', 411200, 381.5, 'By Trust']], 'the last line of the day, one point a quarter, the trade price, its words')
+        self.assertEqual(musk['|D'], [['2025-09-12', '2025-09-15', 96000, 381.5, '']], "a holding: its filing's trade price")
         self.assertEqual(set(musk), {'|I:by trust', '|D'}, 'the RSU is not a share')
         self.assertIn('B|D', d['points']['1318605']['601'], 'Class B common stock in the derivative table')
-        self.assertIn('|I:held by walton enterprises llc of which the reporting person is a managing member', d['points']['1318605']['501'])
+        jim = d['points']['1318605']['501']['|I:fn#1']
+        self.assertEqual(jim[0][4], 'Held by Walton Enterprises, LLC, of which the reporting person is a managing member.', 'a footnoted holding: its place, the footnote\'s words')
+        self.assertEqual(d['groups'], {'1318605': [[921, 922, 923]]}, 'the owners of a joint filing')
+        self.assertEqual(set(d['points']['1067983']['315090']), {'A|D'})
+        self.assertEqual(list(d['points']['797468']['315090']), ['|I:fn#1'], 'one footnoted holding, reworded from one report to the next: one key')
+        self.assertEqual([x[2] for x in d['points']['797468']['315090']['|I:fn#1']], [152_713_846, 264_941_431], 'its last report each quarter')
         self.assertEqual(d['owners']['1494730'], ['Musk Elon', 'Director,Officer,TenPercentOwner', 'CEO'])
 
     def test_collect_and_build(self):
@@ -192,11 +213,14 @@ class Insiders(unittest.TestCase):
         # 2025-06-30: only the officer's report of that day
         self.assertEqual(named(0), [('Gone Person', 40, 12000)])
         # 2025-09-30: Musk's trust and award; Buffett's Berkshire block and Berkshire itself left (13F); the family block once
-        self.assertEqual(named(1), [('Elon Musk', 507200, 507200 * 400), ('Rob Walton', 200010, 200010 * 400), ('Harald Kroeger', 90000, 90000 * 400),
-                                    ('Two Same', 60000, 60000 * 400), ('One Same', 60000, 60000 * 400), ('Mark Zuck', 50, 20000), ('Gone Person', 40, 16000)])
-        self.assertEqual(doc['total'][1], [7, 917300, 917300 * 400])
+        self.assertEqual(named(1), [('Elon Musk', 507200, 507200 * 400), ('Rob Walton', 200010, 200010 * 400), ('Silver Lake Group, L.L.C.', 157000, 157000 * 400),
+                                    ('Harald Kroeger', 90000, 90000 * 400), ('Two Same', 60000, 60000 * 400), ('One Same', 60000, 60000 * 400),
+                                    ('Egon Durban', 5000, 5000 * 400), ('Mark Zuck', 50, 20000), ('Gone Person', 40, 16000)])
+        self.assertEqual(doc['total'][1], [9, 1079300, 1079300 * 400])
+        self.assertNotIn(922, who, 'a fund of a joint filing whose partner counts its shares')
+        self.assertEqual(who[921][3], 'SL SPV-2, L.P. and Silver Lake Technology', "a holding through companies: named from the footnote's words")
         self.assertEqual(who[901][3], 'Daimler North America Corporation', "a company's shares: its name")
-        self.assertEqual(who[502][3], 'Walton Enterprises LLC', 'the family company')
+        self.assertEqual(who[502][3], 'Walton Enterprises, LLC', 'the family company')
         self.assertEqual(who[1494730][3], '', 'his trust: no company named')
         self.assertEqual(who[1494730][2], 'CEO · director · 10% owner')
         self.assertNotIn(315090, who, "Buffett's only holding is Berkshire's 13F block")
@@ -208,7 +232,7 @@ class Insiders(unittest.TestCase):
         # a founder who seldom reports: half a percent of the stock or more counts for five years
         ls = {'|D': (['2020-01-10'], [['2020-01-10', '2020-01-12', 6_000_000, 0]])}
         self.assertEqual(I.holdings_at(ls, '2023-06-30', 730), {}, 'two years: gone')
-        self.assertEqual(I.holdings_at(ls, '2023-06-30', 730, big=5_000_000), {'|D': (6_000_000, '2020-01-10', 0)}, 'a large holding: five years')
+        self.assertEqual(I.holdings_at(ls, '2023-06-30', 730, big=5_000_000), {'|D': (6_000_000, '2020-01-10', 0, '')}, 'a large holding: five years')
         self.assertEqual(I.holdings_at(ls, '2025-06-30', 730, big=5_000_000), {}, 'and not after')
         brk = json.loads((self.root / 'public' / 'i' / 'BRK-B.json').read_text())
         self.assertEqual(brk['top'][0], [[0, 15000, 15000 * 500]], 'class A as 1,500 class B, at the 13F price per class B share')
