@@ -49,7 +49,7 @@ ok(V.status(doc, T(STALE)) === 'stale', 'on, 25 minutes since the last scan: sta
 ok(V.status(doc, T(DOWN)) === 'down', 'on, two hours since the last scan: down');
 ok(V.status(closedDoc, T(AFTER)) === 'closed', 'after 4 pm, a scan after the close: closed');
 ok(V.status(doc, T(AFTER)) === null, 'after 4 pm with no scan near the close: nothing');
-ok(V.status(closedDoc, T(NEXT)) === null, 'the next morning: nothing live');
+ok(V.status(closedDoc, T(NEXT)) === 'closed' && V.status(closedDoc, T('2026-11-10T15:00:00Z')) === null, "the next morning the close stands until the next session's file (or the overnight update); not for days");
 ok(V.status(null) === null && V.status({}) === null, 'no file');
 ok(V.status({ ...doc, assets: { OLD: doc.assets.OLD } }, T(LIVE)) === null, 'no reading of today (before the open, a holiday): nothing');
 ok(!V.isToday(doc.assets.OLD, doc) && V.isToday(doc.assets.SPY, doc), "yesterday's last price is no reading of today");
@@ -123,6 +123,9 @@ at(DOWN, () => ok(V.banner(doc).includes('stopped at 11:25 am'), 'down: the last
 at(AFTER, () => {
   ok(V.banner(closedDoc, null, '2026-11-04').includes("Today's session is over"), "after the close, before tonight's update");
   ok(V.banner(closedDoc, null, '2026-11-05') === '', "tonight's update is in: no banner");
+});
+at(NEXT, () => {
+  ok(V.banner(closedDoc, null, '2026-11-04').includes('The session of Nov 5 is over') && V.detailHtml(closedDoc.assets.SPY, closedDoc).includes('S&amp;P 500 (SPY), Nov 5: closed at'), 'the next morning, before the overnight update: its date, not "today"');
 });
 
 // painting in place

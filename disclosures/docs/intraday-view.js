@@ -73,13 +73,14 @@
     return Date.parse(a.time) >= Date.parse(d.session.start);
   }
   /* 'live' while the session is on and the file is under 15 minutes old, 'stale' up to 90 minutes, 'down' after;
-     'closed' once that day's session is over (and the relay read the close); null with no reading of today */
+     'closed' once that session is over and the relay read its close — until the next session's file replaces it (four
+     days at most; the overnight update takes over sooner, by the slots' data-asof); null with no reading of the day */
   function status(d, now) {
     if (!d || !d.session || !d.assets) return null;
     if (!Object.values(d.assets).some((a) => isToday(a, d))) return null;
     now = now || Date.now();
     const gen = Date.parse(d.generated_at), start = Date.parse(d.session.start), end = Date.parse(d.session.end);
-    if (now >= end) return etDay(now) === d.session.date && gen >= end - 10 * 60000 ? 'closed' : null;
+    if (now >= end) return gen >= end - 10 * 60000 && now - end < 4 * 86400000 ? 'closed' : null;
     if (now < start) return null;
     const age = (now - gen) / 60000;
     return age <= 15 ? 'live' : age <= 90 ? 'stale' : 'down';
@@ -235,7 +236,8 @@
     const o = a.odds, S = o && o.similar, B = (o && o.base) || {}, st = status(d), short = !!(d.session && d.session.short), closed = st === 'closed';
     const by = o ? markLabel(o.mark) : '', toClose = !!(S && S.rest && !short && o.j < 7 && !closed);
     const when = closed ? `closed at ${money(a.price)}, <b class="${tone(a.move)}">${sp(a.move)}</b> on the day` : `<b class="${tone(a.move)}">${sp(a.move)}</b> at ${esc(hm(a.time))} New York time${st === 'stale' ? ' (the feed is behind)' : ''}`;
-    let h = `<div class="iv-panel"><h3>${st === 'live' ? '<span class="iv-dot"></span>' : ''}${esc(a.name)} today: ${when}</h3>`;
+    const onDay = !closed || etDay(Date.now()) === (d.session || {}).date;
+    let h = `<div class="iv-panel"><h3>${st === 'live' ? '<span class="iv-dot"></span>' : ''}${esc(a.name)}${onDay ? ' today' : `, ${esc(day(d.session.date).replace(/, \d{4}$/, ''))}`}: ${when}</h3>`;
     h += `<p class="iv-sub">${money(a.price)}, the previous close ${money(a.prev)}; today's high ${sp(a.hi)}, low ${sp(a.lo)}. ${esc(d.source || '')}, read every five minutes${d.generated_at ? `, last at ${esc(etHm(d.generated_at))}` : ''}.${short ? ` Today's session closes early, at ${esc(etHm(d.session.end))}: the odds to 4 pm of full days don't apply.` : ''}</p>`;
     h += chart(a, toClose, width);
     if (!o) return h + `<p class="iv-sub">Its history at this time of day is not on file yet.</p>` + vwapSection(a, a.vwap_odds, st, short) + '</div>';
@@ -255,7 +257,9 @@
     if (st === 'live') return `<span class="iv-dot"></span><b>Live</b>, ${at} New York time: each card leads with the move so far today, its rank among its own days at that time, where the ${num(d.k || 60)} days most like it went by 4 pm and the price against its VWAP (Yahoo Finance, every five minutes; some prices may be delayed). Its last line is the last close. Pick a card for the path, the spread and the days after.`;
     if (st === 'stale') return `The live feed is behind: the cards show its last reading, at ${at} New York time${e ? ` (${esc(e)})` : ''}.`;
     if (st === 'down') return `The live feed stopped at ${at} New York time: the cards show the last close.`;
-    if (st === 'closed' && asof && asof < d.session.date) return `Today's session is over: the cards lead with today's close from the live feed (Yahoo Finance) until tonight's update; the card's last line is the close before.`;
+    if (st === 'closed' && asof && asof < d.session.date) return etDay(Date.now()) === d.session.date
+      ? `Today's session is over: the cards lead with today's close from the live feed (Yahoo Finance) until tonight's update; the card's last line is the close before.`
+      : `The session of ${esc(day(d.session.date).replace(/, \d{4}$/, ''))} is over: the cards lead with its close from the live feed (Yahoo Finance) until the overnight update has it; the card's last line is the close before.`;
     return '';
   }
   /* the asset to paint into a slot, or null: shown while live, stale or closed; after the close only until the
