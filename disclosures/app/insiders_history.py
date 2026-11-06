@@ -14,10 +14,15 @@ every officer's, director's and 10% owner's shares at each quarter-end since 201
             the last line first in one filing. A joint filing is its first owner's. Kept per data set: each holding's
             last report in each calendar quarter.
   quarters  at each quarter-end: each holding's latest report on or before it, if within KEEP_DAYS — an insider who
-            left stops reporting, and a trust wound up is not always reported at zero
+            left stops reporting, and a trust wound up is not always reported at zero; a large holding (BIG of the stock's
+            13F shares or more: a founder who seldom trades, Larry Page) within KEEP_BIG_DAYS
   13F       counted once: an owner who files 13F (Berkshire in Occidental's Forms 4) and a holding of the same shares as
-            one of the stock's 13F holders that quarter (Berkshire's shares in Warren Buffett's own Form 4) are left out;
-            an indirect holding several owners report (a family company) counts once, for the owner with the most
+            one of the stock's 13F holders that quarter (Berkshire's shares in Warren Buffett's own Form 4) are left out
+  blocks    one block of shares several owners report — a family company held directly by itself and indirectly by each
+            member (Walton Enterprises), a fund by its general partners — counts once: holdings of the same number of
+            shares (BLOCK or more, within 0.1%), one of them at least indirect, go to the one held directly, else to the
+            owner with the most; an owner whose largest holding is another company's ("by Daimler North America")
+            says so (who: its "via")
   value     the shares at the quarter's 13F price (the stock's 13F value ÷ its 13F shares that quarter; Berkshire's
             class A as 1,500 class B, as the 13F side counts them)
   splits    a holding last reported before a stock split counts its shares as split since: a split is a quarter in
@@ -43,7 +48,7 @@ import tempfile
 import time
 import urllib.parse
 import zipfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -53,6 +58,11 @@ PAGE = 'https://www.sec.gov/data-research/sec-markets-data/insider-transactions-
 BASE = 'https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/'
 FIRST = (2010, 1)               # sets read from 2010: the reports up to three years before the first 13F quarter
 KEEP_DAYS = 730                 # a holding not reported again for two years is no longer counted
+KEEP_BIG_DAYS = 1826            # … five years for a holding of BIG of the stock or more
+BIG = 0.005                     # half a percent of the stock's 13F shares
+BLOCK = 50_000                  # the same shares reported by several owners: one block from this many shares
+PERSONAL = re.compile(r'trust|spouse|wife|husband|child|\bsons?\b|daughter|famil|\bira\b|401|grat|gift|estate|custod|foundation|'
+                      r'minor|ugma|utma|revocable|living|partnership for|\bself\b|retirement|pension|profit sharing|esop|savings', re.I)
 TOP = 10                        # insiders published per ticker and quarter
 MON = {m: i + 1 for i, m in enumerate('JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC'.split())}
 ENTITY = re.compile(r'\b(LLC|L\.?L\.?C|INC|INCORPORATED|CORP|CORPORATION|CO|COMPANY|LP|L\.?P|LTD|LIMITED|PLC|AG|SA|NV|SE|GMBH|'
@@ -312,10 +322,10 @@ def safe(t):
     return re.sub(r'[^A-Z0-9-]', '_', t)
 
 
-def holdings_at(lines, q, keep_days):
+def holdings_at(lines, q, keep_days, big=None, keep_big=KEEP_BIG_DAYS):
     """{key: (shares, date, price)} of one owner's holdings on quarter-end q: each one's latest report on or before q,
-    if within keep_days (price: the report's trade price, 0 when it has none). lines: {key: (dates, rows)} sorted by
-    (date, filed)."""
+    if within keep_days — within keep_big when it is `big` shares or more (price: the report's trade price, 0 when it
+    has none). lines: {key: (dates, rows)} sorted by (date, filed)."""
     qd = dt.date.fromisoformat(q)
     out = {}
     for key, (dates, rows) in lines.items():
@@ -323,9 +333,25 @@ def holdings_at(lines, q, keep_days):
         if i < 0:
             continue
         d, sh, px = rows[i][0], rows[i][2], (rows[i][3] if len(rows[i]) > 3 else 0)
-        if sh > 0 and (qd - dt.date.fromisoformat(d)).days <= keep_days:
+        age = (qd - dt.date.fromisoformat(d)).days
+        if sh > 0 and (age <= keep_days or (big and sh >= big and age <= keep_big)):
             out[key] = (sh, d, px or 0)
     return out
+
+
+def via(key):
+    """The company an indirect holding is held through, from its words ("by daimler north america corporation" →
+    'Daimler North America Corporation'); '' for a direct one or a personal vehicle (a trust, a spouse, an IRA)."""
+    nat = key.split('|', 1)[-1]
+    if not nat.startswith('I:') or PERSONAL.search(nat):
+        return ''
+    t = nat[2:]
+    m = re.search(r'\b(?:by|through|via|in)\s+(.+)', t)
+    t = m.group(1) if m else t
+    t = re.split(r'\s+(?:of which|for which|which|whose|and the reporting|the reporting|as\s)', t)[0].strip()
+    up = {'llc', 'lp', 'llp', 'plc', 'ag', 'nv', 'sa', 'se', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'}
+    words = [w.upper() if w in up else w.capitalize() for w in t.split()[:7]]
+    return ' '.join(words)
 
 
 STEPS = (1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50, 100)
@@ -395,12 +421,15 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
         t = HH.CLASSES.get(t, (t, 1))[0]
         if t and safe(t) in have and r.get('cik') and t not in tick[int(r['cik'])]:
             tick[int(r['cik'])].append(t)
-    owners = {}
+    owners, names = {}, defaultdict(Counter)       # the latest role; each name as written, a count a data set
     raw = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     sets = sorted((root / 'cache' / 'insiders').glob('*_form345.json.gz'))
     for f in sets:
         d = HH.read_gz(f, {}) or {}
-        owners.update(d.get('owners') or {})
+        for o, v in (d.get('owners') or {}).items():
+            owners[o] = v
+            if v and v[0]:
+                names[o][v[0]] += 1
         for iss, per in (d.get('points') or {}).items():
             if int(iss) not in tick:
                 continue
@@ -435,36 +464,45 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
                 price = total[i][2] / total[i][1]
                 blocks = [sh for _, sh, _ in top13[i] if sh > 0]
                 same13 = lambda s: any(abs(s - h) <= 0.01 * h for h in blocks)
+                big = BIG * total[i][1]
                 held = {}
                 for o, ls in lines.items():
                     if int(o) in ciks13:
                         continue                   # a 13F filer itself: its shares are in its 13F
                     h = {k: s * ratio.get(k.split('|', 1)[0], 1) * (split_factor(i, d, px, P, cuts, price13) if cuts else 1)
-                         for k, (s, d, px) in holdings_at(ls, q, keep_days).items()}
+                         for k, (s, d, px) in holdings_at(ls, q, keep_days, big).items()}
                     h = {k: s for k, s in h.items() if not same13(s)}
                     if h and not same13(sum(h.values())):
                         held[o] = h
-                # one indirect holding several owners report (a family company, a spouse's shares): the owner with the
-                # most keeps it
+                # one block several owners report (a family company by itself and by each member): the same shares,
+                # one of them at least indirect — to the one who holds it directly, else to the owner with the most
                 size = {o: sum(h.values()) for o, h in held.items()}
-                byblock = defaultdict(list)
-                for o, h in held.items():
-                    for k, s in h.items():
-                        if k.split('|', 1)[1].startswith('I'):
-                            byblock[(k, round(s, -2))].append(o)
-                for (k, _), os_ in byblock.items():
-                    if len(os_) > 1:
-                        keep = max(os_, key=lambda o: (size[o], o))
-                        for o in os_:
-                            if o != keep:
+                ent = sorted((s, o, k) for o, h in held.items() for k, s in h.items() if s >= BLOCK)
+                g = 0
+                while g < len(ent):
+                    e = g + 1
+                    while e < len(ent) and ent[e][0] <= ent[g][0] * 1.001:
+                        e += 1
+                    grp = ent[g:e]
+                    if len({o for _, o, _ in grp}) > 1 and any(k.split('|', 1)[1].startswith('I') for _, _, k in grp):
+                        direct = [x for x in grp if x[2].split('|', 1)[1] == 'D']
+                        keep = max(direct or grp, key=lambda x: (size[x[1]], x[1]))
+                        for s_, o, k in grp:
+                            if (o, k) != (keep[1], keep[2]) and o != keep[1]:
                                 held[o].pop(k, None)
+                    g = e
+                held = {o: h for o, h in held.items() if h}
                 sums = sorted(((sum(h.values()), o) for o, h in held.items() if h and sum(h.values()) > 0), reverse=True)
                 row = []
                 for sh, o in sums[:top]:
                     if o not in widx:
                         widx[o] = len(who)
-                        nm, rel, ttl = (owners.get(o) or ['', '', ''])[:3]
-                        who.append([int(o), person(nm), role(rel, ttl)])
+                        _, rel, ttl = (owners.get(o) or ['', '', ''])[:3]
+                        nm = names[o].most_common(1)[0][0] if names[o] else ''
+                        who.append([int(o), person(nm), role(rel, ttl), ''])
+                    k_, s_ = max(held[o].items(), key=lambda x: x[1])
+                    if s_ >= 0.5 * sh and via(k_):
+                        who[widx[o]][3] = via(k_)          # its largest holding another company's (the latest quarter's)
                     row.append([widx[o], int(round(sh)), int(round(sh * price))])
                 tops.append(row)
                 s_all = sum(s for s, _ in sums)
@@ -472,7 +510,7 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
             if not any(tot):
                 continue
             out = {'ticker': t, 'name': doc.get('name'), 'issuer': int(iss), 'source': 'SEC Forms 3, 4 and 5 (insider transactions data sets)',
-                   'generated_at': stamp, 'periods': P, 'fields': {'total': ['owners', 'shares', 'usd'], 'top': ['who', 'shares', 'usd'], 'who': ['cik', 'name', 'role']},
+                   'generated_at': stamp, 'periods': P, 'fields': {'total': ['owners', 'shares', 'usd'], 'top': ['who', 'shares', 'usd'], 'who': ['cik', 'name', 'role', 'via']},
                    'keep_days': keep_days, 'splits': {P[k]: n for k, n in sorted(cuts.items())}, 'total': tot, 'who': who, 'top': tops}
             (out_dir / f'{safe(t)}.json').write_text(json.dumps(out, separators=(',', ':')), encoding='utf-8')
             made += 1

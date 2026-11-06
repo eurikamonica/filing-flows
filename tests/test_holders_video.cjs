@@ -96,12 +96,14 @@ const build = (s) => S.build(Object.assign(S.parseState('k=holders'), s));
   files[B + 'status.json'] = { tickers: 3 };
   await assert.rejects(build({ t: 'AAPL', from: '2030-01-01' }), /no quarter on file/); n++;
   // insiders (Forms 3/4/5, i/<TICKER>.json): holders beside the 13F managers — in the race, as bands, in the table
-  files[B + 'i/AAPL.json'] = { ticker: 'AAPL', periods: P, who: [[1001, 'Jane Founder', 'CEO · director · 10% owner'], [1002, 'Sam Officer', 'CFO']],
+  files[B + 'i/AAPL.json'] = { ticker: 'AAPL', periods: P, who: [[1001, 'Jane Founder', 'CEO · director · 10% owner', ''], [1002, 'Sam Officer', 'CFO', 'Big Holding Co LLC']],
     top: P.map(() => [[0, 8e8, 1.5e11], [1, 1e6, 1.8e8]]), total: P.map(() => [2, 8.01e8, 1.5018e11]) };
   V = await build({ t: 'AAPL' });
   const jane = V.series.find((s) => s.key === 'i:1001');
   ok(jane && jane.label === 'Jane Founder' && /CEO · director · 10% owner \(insider: Forms 3\/4\/5\)/.test(jane.name), 'an insider in the race: ' + (jane && jane.name));
   near(jane.v[0], 1.5e11 / 3e12, 'her shares at the 13F price ÷ the market value');
+  const sam = V.series.find((s) => s.key === 'i:1002');
+  ok(sam && sam.label === 'Sam Officer (Big Holding)' && /CFO, through Big Holding Co LLC/.test(sam.name), 'a holding through a company: named with it: ' + (sam && [sam.label, sam.name]));
   ok(/13F holders and insiders/.test(V.sub) && [...V.notes].some((x) => /Insiders — officers, directors and 10% owners \(2 at most/.test(x)), 'said in the subtitle and the notes');
   V.style = 'bars'; V.endCard = true; S.finish(V, Object.assign(S.parseState('k=holders'), { t: 'AAPL' }));
   Rp = S.report(V);

@@ -107,7 +107,9 @@
     let insN = 0;
     if (ins && Array.isArray(ins.periods) && Array.isArray(ins.who)) {
       const at = new Map(ins.periods.map((p, k) => [p, k])), base0 = who.length;
-      ins.who.forEach(([cik, name, role]) => who.push(['i:' + cik, name + (role ? ' — ' + role : ''), name, [cik], role, true]));
+      // an owner whose largest holding is another company's ("by Daimler North America"): that company in its label
+      const short = (v) => String(v || '').split(' ').filter((w) => !/^(LLC|LP|L|P|INC|CORP|CORPORATION|CO|LTD|AG|NV|SA)$/i.test(w)).slice(0, 3).join(' ');
+      ins.who.forEach(([cik, name, role, via]) => who.push(['i:' + cik, name + (role ? ' — ' + role : '') + (via ? ', through ' + via : ''), name + (via ? ' (' + short(via) + ')' : ''), [cik], role, true]));
       P.forEach((p, j) => {
         const k = at.get(p);
         if (k == null) return;
@@ -189,7 +191,7 @@
     if (f.length > 1 && f[0] < 0.75 * Math.max(...f)) out.notes.add(`13F filers on file: ${f[0].toLocaleString('en-US')} in ${qLabel(P[0])}, ${f[f.length - 1].toLocaleString('en-US')} in ${qLabel(P[L])} — more managers crossed $100M over the years.`);
     if (hm === 'pct') out.notes.add(isFund ? `A holder's share of ${sym}: its reported 13F value ÷ the fund's net assets in its N-PORT report for the quarter.` : `A holder's share of ${subject}: its reported 13F value ÷ the company's market value at the quarter-end (the close × the shares outstanding then, every share class).`);
     out.notes.add('13F lists long positions in US-listed stocks and ETFs; options, short positions and holdings under $100M managers are not in it. A manager reports what it has discretion over, for its funds and its clients.');
-    if (withIns) out.notes.add(`Insiders — officers, directors and 10% owners (${insN.toLocaleString('en-US')} at most in a quarter) — from their own Forms 3, 4 and 5 (SEC's insider transactions data sets): the shares each held after their last report on or before the quarter-end, directly and through trusts or companies (options and units left out), at the quarter's 13F price; a holding not reported again for two years is left out. A block a 13F manager also reports counts once, in 13F (Berkshire's shares in Warren Buffett's own Form 4), and one family company's shares once.`);
+    if (withIns) out.notes.add(`Insiders — officers, directors and 10% owners (${insN.toLocaleString('en-US')} at most in a quarter) — from their own Forms 3, 4 and 5 (SEC's insider transactions data sets): the shares each held after their last report on or before the quarter-end, directly and through trusts or companies, restricted stock awarded and not yet vested included (options and units left out), adjusted for stock splits since, at the quarter's 13F price; a holding not reported again for two years is left out (five years for half a percent of the company or more). A block a 13F manager also reports counts once, in 13F (Berkshire's shares in Warren Buffett's own Form 4); one block several insiders report — a family company, a fund's partners — once, under the one who holds it directly or the largest, and a holding through another company is named with it.`);
     else if (st.hi === 'off' && hm !== 'share13') out.notes.add('Insiders left out (Forms 3/4/5): 13F managers only.');
     out.notes.add(`Each quarter names its 20 largest holders; the rest${style === 'stack' ? ' are in Other 13F holders' : ' are not drawn that quarter'}.`);
     return out;
