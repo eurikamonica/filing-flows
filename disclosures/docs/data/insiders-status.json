@@ -1,6 +1,6 @@
 {
   "status": "partial",
-  "failed_queue": 2,
+  "failed_queue": 3,
   "next_retry_at": "2026-11-06T03:20:21.948932+00:00",
   "error_samples": [
     {
@@ -16,15 +16,22 @@
       "last_attempt": "2026-11-05T03:20:21+00:00",
       "error": "Response exceeds configured size; not marked complete",
       "next_retry_at": "2026-11-06T03:20:21.948932+00:00"
+    },
+    {
+      "key": "feed",
+      "attempts": 1,
+      "last_attempt": "2026-11-06T03:15:54+00:00",
+      "error": "Network/timeout error from www.sec.gov",
+      "next_retry_at": "2026-11-06T03:30:54.242913+00:00"
     }
   ],
-  "read": 4,
+  "read": 0,
   "waiting": 2,
-  "errors": 0,
+  "errors": 1,
   "trades": 3351,
-  "last_attempt": "2026-11-06T02:50:46+00:00",
+  "last_attempt": "2026-11-06T03:13:20+00:00",
   "last_success": "2026-10-27T18:13:16+00:00",
-  "last_partial_success": "2026-11-06T02:50:48+00:00",
-  "updated_at": "2026-11-06T02:50:48+00:00",
+  "last_partial_success": "2026-11-06T03:15:54+00:00",
+  "updated_at": "2026-11-06T03:15:54+00:00",
   "latest_filing_date": "2026-11-05"
 }
