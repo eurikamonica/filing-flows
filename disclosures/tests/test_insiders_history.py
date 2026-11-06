@@ -155,8 +155,9 @@ class Insiders(unittest.TestCase):
         P = ['2025-06-30', '2025-09-30', '2025-12-31', '2027-12-31']
         (c / 'TSLA.json').write_text(json.dumps({'ticker': 'TSLA', 'name': 'Tesla, Inc.', 'periods': P,
             'total': [[100, 10_000_000, 3e9], [100, 10_000_000, 4e9], [100, 10_000_000, 4.5e9], [100, 1_000_000_000, 5e11]],   # the last: none of them half a percent
-            'who': [['c102909', 'Vanguard Group', 'Vanguard', [102909]], ['c999', 'Berkshire Hathaway', 'Berkshire', [999]]],
-            'top': [[[0, 500, 150000]], [[0, 500, 200000], [1, 300, 120000]], [[0, 500, 225000], [1, 300, 135000]], [[0, 500, 250000]]]}))
+            'who': [['c102909', 'Vanguard Group', 'Vanguard', [102909]], ['c999', 'Berkshire Hathaway', 'Berkshire', [999]], ['c5', 'A Fund', 'A Fund', [5]]],
+            # A Fund holds 60,000 shares at Q3 2025: the same number as two directors' own (kept: a holding of one's own)
+            'top': [[[0, 500, 150000]], [[0, 500, 200000], [1, 300, 120000], [2, 60000, 2.4e7]], [[0, 500, 225000], [1, 300, 135000]], [[0, 500, 250000]]]}))
         (c / 'BRK-B.json').write_text(json.dumps({'ticker': 'BRK-B', 'name': 'Berkshire Hathaway', 'periods': ['2025-09-30'],
             'total': [[50, 20000, 10000000]], 'who': [['c102909', 'Vanguard Group', 'Vanguard', [102909]]], 'top': [[[0, 9000, 4500000]]]}))
         after = [[0, 2500, 550000], [1, 1500, 330000], [2, 600, 132000]]
@@ -234,6 +235,8 @@ class Insiders(unittest.TestCase):
         self.assertEqual(I.holdings_at(ls, '2023-06-30', 730), {}, 'two years: gone')
         self.assertEqual(I.holdings_at(ls, '2023-06-30', 730, big=5_000_000), {'|D': (6_000_000, '2020-01-10', 0, '')}, 'a large holding: five years')
         self.assertEqual(I.holdings_at(ls, '2025-06-30', 730, big=5_000_000), {}, 'and not after')
+        self.assertEqual(I.holdings_at(ls, '2030-06-30', 730, big=5_000_000, control=5_500_000), {'|D': (6_000_000, '2020-01-10', 0, '')},
+                         "a 10% owner's control holding: until a report changes it")
         brk = json.loads((self.root / 'public' / 'i' / 'BRK-B.json').read_text())
         self.assertEqual(brk['top'][0], [[0, 15000, 15000 * 500]], 'class A as 1,500 class B, at the 13F price per class B share')
         self.assertEqual(brk['who'][0][1], 'Warren E Buffett')
