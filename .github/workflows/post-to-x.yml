@@ -116,8 +116,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # one relay at a time: skip if another watch run is already queued or running
-          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status queued --json databaseId --jq length)
-          m=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status in_progress --json databaseId --jq length)
-          if [ "${n:-0}" -gt 0 ] || [ "${m:-0}" -gt 1 ]; then echo "another watch run is already waiting"; exit 0; fi
-          gh workflow run post-to-x.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chained=true
+          # one relay at a time: skip if another watch run is already queued or running. GitHub's dispatch endpoint
+          # answers HTTP 500/502 now and then, which broke the relay until the late cron restarted it; so try up to
+          # three times, re-checking first (a failed answer can still have started the run).
+          for attempt in 1 2 3; do
+            n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status queued --json databaseId --jq length)
+            m=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status in_progress --json databaseId --jq length)
+            if [ "${n:-0}" -gt 0 ] || [ "${m:-0}" -gt 1 ]; then echo "another watch run is already waiting"; exit 0; fi
+            if gh workflow run post-to-x.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chained=true; then exit 0; fi
+            [ "$attempt" -lt 3 ] && { echo "::warning::starting the next watch run failed (attempt $attempt), retrying"; sleep $((attempt * 20)); }
+          done
+          exit 1
