@@ -43,7 +43,7 @@ TABLES = {
                       'VALU_OWND_FOLWNG_TRANS_FN', 'DIRECT_INDIRECT_OWNERSHIP', 'DIRECT_INDIRECT_OWNERSHIP_FN', 'NATURE_OF_OWNERSHIP', 'NATURE_OF_OWNERSHIP_FN'],
     'FOOTNOTES': ['ACCESSION_NUMBER', 'FOOTNOTE_ID', 'FOOTNOTE_TXT'],
 }
-TSLA, BRK, META = '0001318605', '0001067983', '0001326801'
+TSLA, BRK, META, SPLT = '0001318605', '0001067983', '0001326801', '0000000777'
 
 
 def row(table, **kv):
@@ -68,8 +68,8 @@ def make_set(path):
     musk = [('0001494730', 'Musk Elon', 'Director,Officer,TenPercentOwner', 'CEO')]
     # Musk: his trust's shares after two trades on one day (the later line counts), a direct award held, an RSU left out
     add('A1', '15-SEP-2025', '12-SEP-2025', TSLA, musk, [
-        ('NONDERIV_TRANS', dict(NONDERIV_TRANS_SK=10, SECURITY_TITLE='Common Stock', TRANS_DATE='12-SEP-2025', TRANS_CODE='P', SHRS_OWND_FOLWNG_TRANS='411000.0', DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='By Trust')),
-        ('NONDERIV_TRANS', dict(NONDERIV_TRANS_SK=11, SECURITY_TITLE='Common Stock', TRANS_DATE='12-SEP-2025', TRANS_CODE='P', SHRS_OWND_FOLWNG_TRANS='411200.0', DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='By Trust')),
+        ('NONDERIV_TRANS', dict(NONDERIV_TRANS_SK=10, SECURITY_TITLE='Common Stock', TRANS_DATE='12-SEP-2025', TRANS_CODE='P', TRANS_PRICEPERSHARE='379.2', SHRS_OWND_FOLWNG_TRANS='411000.0', DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='By Trust')),
+        ('NONDERIV_TRANS', dict(NONDERIV_TRANS_SK=11, SECURITY_TITLE='Common Stock', TRANS_DATE='12-SEP-2025', TRANS_CODE='P', TRANS_PRICEPERSHARE='381.5', SHRS_OWND_FOLWNG_TRANS='411200.0', DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='By Trust')),
         ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=5, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='96000.0', DIRECT_INDIRECT_OWNERSHIP='D')),
         ('DERIV_TRANS', dict(DERIV_TRANS_SK=7, SECURITY_TITLE='Restricted Stock Unit', TRANS_DATE='12-SEP-2025', SHRS_OWND_FOLWNG_TRANS='78458.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
     add('A2', '04-AUG-2025', '03-AUG-2025', TSLA, musk, [
@@ -97,6 +97,14 @@ def make_set(path):
     # Berkshire's own insiders: class A at 1,500 class B (as the 13F side counts it)
     add('K1', '01-SEP-2025', '29-AUG-2025', BRK, [('0000315090', 'BUFFETT WARREN E', 'Director,Officer,TenPercentOwner', 'Chair & CEO')], [
         ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Class A Common Stock', SHRS_OWND_FOLWNG_TRANS='10.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
+    # a stock split 5 for 1 in Q3 2020: a report before the quarter, one inside it at a pre-split price, one late in it
+    # with no price (after the split)
+    add('S1', '04-MAY-2020', '01-MAY-2020', SPLT, [('0000000801', 'Big Founder', 'Director,TenPercentOwner', '')], [
+        ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='100.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
+    add('S2', '17-AUG-2020', '15-AUG-2020', SPLT, [('0000000802', 'Quarter Mid', 'Officer', 'CTO')], [
+        ('NONDERIV_TRANS', dict(NONDERIV_TRANS_SK=1, SECURITY_TITLE='Common Stock', TRANS_DATE='15-AUG-2020', TRANS_CODE='S', TRANS_PRICEPERSHARE='900', SHRS_OWND_FOLWNG_TRANS='50.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
+    add('S3', '11-SEP-2020', '10-SEP-2020', SPLT, [('0000000803', 'Report Late', 'Director', '')], [
+        ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='70.0', DIRECT_INDIRECT_OWNERSHIP='D'))])
     with zipfile.ZipFile(path, 'w') as z:
         for name, head in TABLES.items():
             z.writestr(f'{name}.tsv', '\n'.join('\t'.join(r) for r in [head] + T[name]) + '\n')
@@ -116,7 +124,8 @@ class Insiders(unittest.TestCase):
         (self.hub / 'cache' / 'prices').mkdir(parents=True)
         (self.hub / 'cache' / 'prices' / 'sec-tickers.json').write_text(json.dumps({'rows': [
             {'ticker': 'TSLA', 'title': 'Tesla, Inc.', 'cik': 1318605}, {'ticker': 'BRK-B', 'title': 'BERKSHIRE HATHAWAY INC', 'cik': 1067983},
-            {'ticker': 'BRK-A', 'title': 'BERKSHIRE HATHAWAY INC', 'cik': 1067983}, {'ticker': 'META', 'title': 'Meta Platforms', 'cik': 1326801}]}))
+            {'ticker': 'BRK-A', 'title': 'BERKSHIRE HATHAWAY INC', 'cik': 1067983}, {'ticker': 'META', 'title': 'Meta Platforms', 'cik': 1326801},
+            {'ticker': 'SPLT', 'title': 'Split Co', 'cik': 777}]}))
         self.root = self.tmp / 'hh'
         c = self.root / 'public' / 'c'
         c.mkdir(parents=True)
@@ -127,6 +136,10 @@ class Insiders(unittest.TestCase):
             'top': [[[0, 500, 150000]], [[0, 500, 200000], [1, 300, 120000]], [[0, 500, 225000], [1, 300, 135000]], [[0, 500, 250000]]]}))
         (c / 'BRK-B.json').write_text(json.dumps({'ticker': 'BRK-B', 'name': 'Berkshire Hathaway', 'periods': ['2025-09-30'],
             'total': [[50, 2000, 1000000]], 'who': [['c102909', 'Vanguard Group', 'Vanguard', [102909]]], 'top': [[[0, 900, 450000]]]}))
+        after = [[0, 2500, 550000], [1, 1500, 330000], [2, 600, 132000]]
+        (c / 'SPLT.json').write_text(json.dumps({'ticker': 'SPLT', 'name': 'Split Co', 'periods': ['2020-06-30', '2020-09-30', '2020-12-31'],
+            'total': [[10, 1000, 1000000], [10, 5000, 1100000], [10, 5000, 1200000]], 'who': [['c1', 'A', 'A', [1]], ['c2', 'B', 'B', [2]], ['c3', 'C', 'C', [3]]],
+            'top': [[[0, 500, 500000], [1, 300, 300000], [2, 120, 120000]], after, after]}))
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -147,8 +160,8 @@ class Insiders(unittest.TestCase):
     def test_read_set(self):
         d = I.read_set(self.zip)
         musk = d['points']['1318605']['1494730']
-        self.assertEqual(musk['|I:by trust'], [['2025-09-12', '2025-09-15', 411200]], 'the last line of the day, one point a quarter')
-        self.assertEqual(musk['|D'], [['2025-09-12', '2025-09-15', 96000]])
+        self.assertEqual(musk['|I:by trust'], [['2025-09-12', '2025-09-15', 411200, 381.5]], 'the last line of the day, one point a quarter, the trade price')
+        self.assertEqual(musk['|D'], [['2025-09-12', '2025-09-15', 96000, 381.5]], "a holding: its filing's trade price")
         self.assertEqual(set(musk), {'|I:by trust', '|D'}, 'the RSU is not a share')
         self.assertIn('B|D', d['points']['1318605']['601'], 'Class B common stock in the derivative table')
         self.assertIn('|I:held by walton enterprises llc of which the reporting person is a managing member', d['points']['1318605']['501'])
@@ -158,7 +171,14 @@ class Insiders(unittest.TestCase):
         r = I.collect(self.root, 5, page_html=PAGE_HTML, fetch=self.fetch)
         self.assertEqual(r, {'read': ['2025q3_form345.zip'], 'left': 0})
         st = I.build(self.root, self.hub)
-        self.assertEqual(st['tickers'], 2)
+        self.assertEqual(st['tickers'], 3)
+        sp = json.loads((self.root / 'public' / 'i' / 'SPLT.json').read_text())
+        self.assertEqual(sp['splits'], {'2020-09-30': 5}, 'the split found from the 13F side')
+        got = lambda i: {sp['who'][w][1]: sh for w, sh, _ in sp['top'][i]}
+        self.assertEqual(got(0), {'Founder Big': 100})
+        self.assertEqual(got(1), {'Founder Big': 500, 'Mid Quarter': 250, 'Late Report': 70},
+                         'reported before the quarter: ×5; inside it at the old price: ×5; late in it with no price: as reported')
+        self.assertEqual(sp['top'][1][0][2], 500 * 220, 'at the new 13F price')
         doc = json.loads((self.root / 'public' / 'i' / 'TSLA.json').read_text())
         who = {w[0]: w for w in doc['who']}
         named = lambda i: [(who_[1], sh, usd) for who_, (w, sh, usd) in ((doc['who'][x[0]], x) for x in doc['top'][i])]

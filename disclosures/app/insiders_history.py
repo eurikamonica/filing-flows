@@ -20,6 +20,10 @@ every officer's, director's and 10% owner's shares at each quarter-end since 201
             an indirect holding several owners report (a family company) counts once, for the owner with the most
   value     the shares at the quarter's 13F price (the stock's 13F value ÷ its 13F shares that quarter; Berkshire's
             class A as 1,500 class B, as the 13F side counts them)
+  splits    a holding last reported before a stock split counts its shares as split since: a split is a quarter in
+            which the stock's largest 13F holders all hold n times the shares (n = 2, 3, 5, 10, 20 …, or 1/n) and its
+            13F price is about 1/n of the quarter before (Tesla's 5 for 1 of 2020, 3 for 1 of 2022); a report inside
+            that quarter is before it when its trade price is nearer the price of the quarter before
 
   cache/insiders/sets.json        the data sets read
   cache/insiders/<set>.json.gz    per data set: owners, and per issuer, owner and holding its last report a quarter
@@ -167,7 +171,7 @@ def read_set(path):
         for r in rows:
             if len(r) > ix['FOOTNOTE_TXT'] and r[ix['ACCESSION_NUMBER']] in sub:
                 footnotes[r[ix['ACCESSION_NUMBER']]][r[ix['FOOTNOTE_ID']].strip()] = r[ix['FOOTNOTE_TXT']][:400]
-    best = {}
+    best, prices = {}, defaultdict(list)
     for table, deriv, dated in (('NONDERIV_TRANS', False, True), ('NONDERIV_HOLDING', False, False),
                                 ('DERIV_TRANS', True, True), ('DERIV_HOLDING', True, False)):
         if table not in m:
@@ -191,14 +195,19 @@ def read_set(path):
             fn = r[ix['NATURE_OF_OWNERSHIP_FN']] if 'NATURE_OF_OWNERSHIP_FN' in ix and len(r) > ix['NATURE_OF_OWNERSHIP_FN'] else ''
             key = class_of(r[ix['SECURITY_TITLE']]) + '|' + nature(r[ix['DIRECT_INDIRECT_OWNERSHIP']], r[ix['NATURE_OF_OWNERSHIP']]
                                                                    if 'NATURE_OF_OWNERSHIP' in ix else '', fn, footnotes.get(acc, {}))
+            if table == 'NONDERIV_TRANS' and r[ix['TRANS_CODE']].strip().upper() in ('P', 'S'):
+                px = HH._num(r[ix['TRANS_PRICEPERSHARE']])
+                if px == px and px > 0:
+                    prices[acc].append(px)              # a trade in the market: the filing's price (splits)
             order = (d, filed, int(r[ix[sk]]) if sk and r[ix[sk]].strip().isdigit() else 0)
             k = (iss, first[acc], key, quarter_end(d))
             b = best.get(k)
             if b is None or order > b[0]:
-                best[k] = (order, sh)
+                best[k] = (order, sh, acc)
+    price_of = {a: sorted(v)[len(v) // 2] for a, v in prices.items()}
     points = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-    for (iss, own, key, _), ((d, filed, _), sh) in best.items():
-        points[str(iss)][str(own)][key].append([d, filed, int(round(sh))])
+    for (iss, own, key, _), ((d, filed, _), sh, acc) in best.items():
+        points[str(iss)][str(own)][key].append([d, filed, int(round(sh)), round(price_of.get(acc, 0), 4)])
     used = {o for per in points.values() for o in per}
     return {'owners': {o: v for o, v in owners.items() if o in used}, 'points': points}
 
@@ -304,18 +313,71 @@ def safe(t):
 
 
 def holdings_at(lines, q, keep_days):
-    """{key: shares} of one owner's holdings on quarter-end q: each one's latest report on or before q, if within
-    keep_days. lines: {key: (dates, rows)} sorted by (date, filed)."""
+    """{key: (shares, date, price)} of one owner's holdings on quarter-end q: each one's latest report on or before q,
+    if within keep_days (price: the report's trade price, 0 when it has none). lines: {key: (dates, rows)} sorted by
+    (date, filed)."""
     qd = dt.date.fromisoformat(q)
     out = {}
     for key, (dates, rows) in lines.items():
         i = bisect.bisect_right(dates, q) - 1
         if i < 0:
             continue
-        d, _, sh = rows[i]
+        d, sh, px = rows[i][0], rows[i][2], (rows[i][3] if len(rows[i]) > 3 else 0)
         if sh > 0 and (qd - dt.date.fromisoformat(d)).days <= keep_days:
-            out[key] = sh
+            out[key] = (sh, d, px or 0)
     return out
+
+
+STEPS = (1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50, 100)
+
+
+def splits(doc):
+    """{period index k: n} — the stock split n for 1 (or 1 for 1/n) between periods k-1 and k, from its 13F side: the
+    largest holders held in both all hold about n times the shares (their median within 8% of n) and the 13F price
+    moved by about 1/n (times a quarter's market move, between half and double)."""
+    import math
+    P, total, top = doc['periods'], doc['total'], doc['top']
+    out = {}
+    for k in range(1, len(P)):
+        a, b = total[k - 1], total[k]
+        if not a or not b or not a[1] or not b[1] or not a[2] or not b[2]:
+            continue
+        before = {w: sh for w, sh, _ in top[k - 1] if sh > 0}
+        ratios = sorted(sh / before[w] for w, sh, _ in top[k] if sh > 0 and w in before)
+        if len(ratios) < 3:
+            continue
+        med = ratios[len(ratios) // 2]
+        if 0.6 < med < 1.4:
+            continue
+        cands = [n for n in STEPS] + [1 / n for n in STEPS]
+        n = min(cands, key=lambda c: abs(math.log(med / c)))
+        price = (b[2] / b[1]) / (a[2] / a[1])
+        if abs(math.log(med / n)) <= math.log(1.08) and 0.5 <= price * n <= 2:
+            out[k] = n
+    return out
+
+
+def split_factor(i, d, px, P, cuts, price13):
+    """How many shares now for one reported on day d (at trade price px, 0 when none), at period i: the product of
+    the splits since — those of a quarter wholly after the report, and that of the report's own quarter when the
+    report came before it (its price nearer the quarter before; with no price, the first half of the quarter)."""
+    import math
+    f = 1.0
+    for k, n in cuts.items():
+        if k > i or d > P[k]:
+            continue
+        if d <= P[k - 1]:
+            f *= n
+            continue
+        a, b = price13[k - 1], price13[k]
+        if px and a and b:
+            pre = abs(math.log(px / a)) < abs(math.log(px / b))
+        else:
+            mid = dt.date.fromisoformat(P[k - 1]) + (dt.date.fromisoformat(P[k]) - dt.date.fromisoformat(P[k - 1])) / 2
+            pre = dt.date.fromisoformat(d) <= mid
+        if pre:
+            f *= n
+    return f
 
 
 def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
@@ -362,6 +424,8 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
             P, total, top13, who13 = doc['periods'], doc['total'], doc['top'], doc['who']
             ciks13 = {int(c) for w in who13 for c in (w[3] or [])}
             ratio = {'A': HH.CLASSES['BRK-A'][1]} if t == 'BRK-B' else {}
+            cuts = splits(doc)
+            price13 = [(x[2] / x[1]) if x and x[1] else None for x in total]
             who, widx, tops, tot = [], {}, [], []
             for i, q in enumerate(P):
                 if not total[i] or not total[i][1]:
@@ -375,7 +439,8 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
                 for o, ls in lines.items():
                     if int(o) in ciks13:
                         continue                   # a 13F filer itself: its shares are in its 13F
-                    h = {k: s * ratio.get(k.split('|', 1)[0], 1) for k, s in holdings_at(ls, q, keep_days).items()}
+                    h = {k: s * ratio.get(k.split('|', 1)[0], 1) * (split_factor(i, d, px, P, cuts, price13) if cuts else 1)
+                         for k, (s, d, px) in holdings_at(ls, q, keep_days).items()}
                     h = {k: s for k, s in h.items() if not same13(s)}
                     if h and not same13(sum(h.values())):
                         held[o] = h
@@ -408,7 +473,7 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
                 continue
             out = {'ticker': t, 'name': doc.get('name'), 'issuer': int(iss), 'source': 'SEC Forms 3, 4 and 5 (insider transactions data sets)',
                    'generated_at': stamp, 'periods': P, 'fields': {'total': ['owners', 'shares', 'usd'], 'top': ['who', 'shares', 'usd'], 'who': ['cik', 'name', 'role']},
-                   'keep_days': keep_days, 'total': tot, 'who': who, 'top': tops}
+                   'keep_days': keep_days, 'splits': {P[k]: n for k, n in sorted(cuts.items())}, 'total': tot, 'who': who, 'top': tops}
             (out_dir / f'{safe(t)}.json').write_text(json.dumps(out, separators=(',', ':')), encoding='utf-8')
             made += 1
     sp = root / 'cache' / 'insiders' / 'sets.json'
