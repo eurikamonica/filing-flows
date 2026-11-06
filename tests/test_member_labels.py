@@ -28,6 +28,8 @@ LB = _linkbase([
     ("kd_JapanMember", [("label", "Japan.")]),
     ("w_UsMember", [("terseLabel", "U.S.")]),
     ("aapl_IPhoneMember", [("terseLabel", "iPhone"), ("label", "iPhone [Member]")]),
+    ("irm_DataCenterMember", [("terseLabel", "Data center lease-based intangible assets"), ("verboseLabel", "Data Center"),
+                              ("label", "Data Center [Member]")]),
 ])
 
 
@@ -37,6 +39,7 @@ def test_a_revenue_member_is_not_named_after_a_cost_table():
     assert L["dal_PassengerAirTrafficMember"] == "Passenger Air Traffic"
     assert L["hgv_CostReimbursementsMember"] == "Cost reimbursements"          # every label names a cost: unchanged
     assert L["aapl_IPhoneMember"] == "iPhone"                                  # terse first, as before
+    assert L["irm_DataCenterMember"] == "Data Center"                         # not the intangible-assets table's label
 
 
 def test_no_documentation_sentences_or_xbrl_furniture():
@@ -105,3 +108,21 @@ def test_stored_cost_and_tag_names_are_read_again(tmp_path, monkeypatch):
     build.refresh_labels(store)
     assert [x["label"] for x in store.company(1964738)["quarters"]["2026-06-30"]["lines_struct"]["leaves"]] == ["Product", "Software and rentals"]
     assert [x["label"] for x in store.company(732834)["quarters"]["2026-09-30"]["lines_struct"]["leaves"]] == ["Oil sales", "Natural Gas and NGL Sales"]
+
+
+def test_a_stored_name_from_an_intangible_assets_table_is_read_again(tmp_path, monkeypatch):
+    """Iron Mountain's FY2025 10-K gives its data center revenue member the terse label of its lease-intangibles
+    table; its 10-Q names the same member "Data Center"."""
+    store = build.Store(str(tmp_path))
+    ls = {"axis": "ProductOrServiceAxis", "groups": [],
+          "leaves": [{"id": "irm:RecordsManagementMember", "label": "Records management"},
+                     {"id": "irm:DataCenterMember", "label": "Data center lease-based intangible assets"}]}
+    store.put(1020569, {"profile": {"name": "Iron Mountain"}, "lab_v": 2, "quarters": {"2026-09-30": {
+        "end": "2026-09-30", "form": "10-Q", "accn": "0001020569-26-000084", "lines_struct": ls, "notes": {}}}})
+    monkeypatch.setattr(build.dims, "find_files", lambda cik, accn: ("inst", "lab"))
+    monkeypatch.setattr(build.sec, "get", lambda url: _linkbase([("irm_DataCenterMember", [("terseLabel", "Data Center"),
+                                                                                           ("label", "Data Center [Member]")])]))
+    monkeypatch.setattr(build, "time_up", lambda *a, **k: False)
+    build.refresh_labels(store)
+    leaves = store.company(1020569)["quarters"]["2026-09-30"]["lines_struct"]["leaves"]
+    assert [x["label"] for x in leaves] == ["Records management", "Data Center"]
