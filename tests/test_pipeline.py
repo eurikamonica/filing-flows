@@ -1038,6 +1038,46 @@ def test_owner_lane_starts_what_the_owner_waits_for(monkeypatch):
     OL._yield.update(at=None, answer=False)
 
 
+def test_the_owner_lane_keeps_the_intraday_relay_going(monkeypatch):
+    """Weekdays from 9:10 to 4 pm New York the watch relay starts intraday.yml when no run of it is running or waiting
+    and none started in the last 15 minutes; it looks at most every two minutes; INTRADAY_RELAY=off stops it."""
+    import datetime as dt
+    from pipeline import owner_lane as OL
+
+    class GH:
+        def __init__(self, runs):
+            self.r, self.started, self.looks = runs, [], 0
+
+        def runs(self, wf, n=20):
+            self.looks += 1
+            return self.r
+
+        def start(self, wf, inputs):
+            self.started.append((wf, inputs))
+
+    monkeypatch.delenv("INTRADAY_RELAY", raising=False)
+    ny = lambda d, h, m: dt.datetime(2026, 11, d, h + 5, m, tzinfo=dt.timezone.utc)      # November: New York is UTC-5
+    assert [OL.intraday_window(ny(6, 9, 9)), OL.intraday_window(ny(6, 9, 10)), OL.intraday_window(ny(6, 15, 59)),
+            OL.intraday_window(ny(6, 16, 0)), OL.intraday_window(ny(7, 11, 0))] == [False, True, True, False, False]   # the 7th: Saturday
+    done = {"id": 1, "status": "completed", "created_at": "2026-11-06T13:00:00Z"}
+    gh, st = GH([done]), {}
+    now = ny(6, 9, 12)
+    assert OL.wake_intraday(gh, now, state=st, log=lambda *a: None)
+    assert gh.started == [("intraday.yml", {"hop": "0"})]
+    assert not OL.wake_intraday(gh, now + dt.timedelta(seconds=60), state=st, log=lambda *a: None) and gh.looks == 1   # every 2 minutes
+    busy = GH([{"id": 2, "status": "in_progress", "created_at": "2026-11-06T14:12:00Z"}, done])
+    assert not OL.wake_intraday(busy, ny(6, 10, 0), state={}, log=lambda *a: None) and busy.started == []
+    queued = GH([{"id": 3, "status": "pending", "created_at": "2026-11-06T14:55:00Z"}])
+    assert not OL.wake_intraday(queued, ny(6, 10, 0), state={}, log=lambda *a: None)
+    recent = GH([{"id": 4, "status": "completed", "created_at": "2026-11-06T14:50:00Z"}])      # 9:50: found no session, say
+    assert not OL.wake_intraday(recent, ny(6, 10, 0), state={}, log=lambda *a: None)
+    assert OL.wake_intraday(recent, ny(6, 10, 6), state={}, log=lambda *a: None)              # 16 minutes on: again
+    night = GH([done])
+    assert not OL.wake_intraday(night, ny(6, 17, 0), state={}, log=lambda *a: None) and night.looks == 0
+    monkeypatch.setenv("INTRADAY_RELAY", "off")
+    assert not OL.wake_intraday(GH([done]), ny(6, 11, 0), state={}, log=lambda *a: None)
+
+
 def test_owner_reports_go_first_and_are_never_held_back(tmp_path):
     """At the daily e-mail limit the owner's report still goes out, ahead of a reader who asked earlier."""
     import datetime as dt

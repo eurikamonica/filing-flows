@@ -11,6 +11,11 @@ also runs `wake` here, which looks at what the owner is waiting for and starts t
   requests lane  the owner's report e-mails and comparisons (send_requests that are not X posts, chart_requests) →
                  requests.yml, which serves the owner's first
 
+  intraday lane  not the owner's: on weekdays from 9:10 to 4 pm New York, the hub's live Move odds relay
+                 (intraday.yml) — started when no run of it is running or waiting, so it begins with the session and
+                 comes back within minutes if it stops (GitHub's schedule alone starts it late or not at all);
+                 the repository variable INTRADAY_RELAY=off stops it
+
 A lane starts nothing while a run of its workflow is waiting to start, or when a run started after the request (it
 claims the request itself). A regular scan already running when the owner asks wraps up early (should_yield, called by
 pipeline/build.py time_up), so the owner's short scan follows within minutes instead of after the 32-minute budget.
@@ -36,6 +41,10 @@ WAITING = ("queued", "pending", "waiting", "requested")   # a run that has not s
 RECENT_HOURS = 6              # older open requests are the schedules' business (a request that keeps failing, say)
 AGAIN_SECONDS = 90            # one start per lane at most this often (a new run takes a few seconds to show in the API)
 YIELD_EVERY = 60              # a running scan asks Supabase at most once a minute whether the owner is waiting
+INTRADAY = {"workflow": "intraday.yml", "inputs": {"hop": "0"}}
+INTRADAY_WINDOW = (9 * 60 + 10, 16 * 60)   # New York minutes: the relay starts 20 minutes before the open
+INTRADAY_EVERY = 120          # a look at its runs at most this often (the watch loop checks every 20 seconds)
+INTRADAY_GAP = 15 * 60        # no new run within 15 minutes of the last (a holiday or an early close: it found no session)
 API = "https://api.github.com"
 
 
@@ -149,6 +158,44 @@ def _state():
         return {}
 
 
+def _save(st):
+    try:
+        with open(_state_path(), "w") as f:
+            json.dump(st, f)
+    except OSError:
+        pass
+
+
+def intraday_window(now=None):
+    """Weekdays from 9:10 to 4 pm New York: when the hub's intraday relay (intraday.yml) should be running."""
+    from zoneinfo import ZoneInfo
+    t = (now or _now()).astimezone(ZoneInfo("America/New_York"))
+    return t.weekday() < 5 and INTRADAY_WINDOW[0] <= t.hour * 60 + t.minute < INTRADAY_WINDOW[1]
+
+
+def wake_intraday(gh, now=None, state=None, log=print):
+    """The intraday lane: in the window, start intraday.yml unless a run of it is running or waiting, or one was created
+    in the last 15 minutes. Returns True when it started one."""
+    now = now or _now()
+    if os.environ.get("INTRADAY_RELAY", "").strip().lower() == "off" or not intraday_window(now):
+        return False
+    st = _state() if state is None else state
+    last = st.get("intraday")
+    if last and (now - _ts(last)).total_seconds() < INTRADAY_EVERY:
+        return False
+    st["intraday"] = now.isoformat()
+    if state is None:
+        _save(st)
+    for r in gh.runs(INTRADAY["workflow"], 10):
+        if r.get("status") in WAITING or r.get("status") == "in_progress":
+            return False
+        if r.get("created_at") and (now - _ts(r["created_at"])).total_seconds() < INTRADAY_GAP:
+            return False
+    gh.start(INTRADAY["workflow"], INTRADAY["inputs"])
+    log("::notice::intraday lane: started intraday.yml (the hub's live Move odds)")
+    return True
+
+
 def wake(supa, gh, now=None, state=None, log=print):
     """Start the workflow each lane needs; returns the lanes started."""
     now = now or _now()
@@ -174,11 +221,7 @@ def wake(supa, gh, now=None, state=None, log=print):
         log(f"::notice::owner lane {lane}: started {cfg['workflow']} for {', '.join(x['what'] for x in items[:4])}"
             + (f" and {len(items) - 4} more" if len(items) > 4 else ""))
     if state is None and started:
-        try:
-            with open(_state_path(), "w") as f:
-                json.dump(st, f)
-        except OSError:
-            pass
+        _save(st)
     return started
 
 
@@ -232,6 +275,10 @@ def main():
             print("GITHUB_TOKEN / GITHUB_REPOSITORY not set: the owner lane cannot start runs.")
             sys.exit(1)
         gh = GitHub(token, repo, os.environ.get("GITHUB_REF_NAME") or "main")
+        try:
+            wake_intraday(gh)
+        except Exception as err:                   # never in the way of the owner's lanes
+            print(f"intraday lane: check skipped ({str(err)[:120]})")
         sys.exit(0 if wake(supa, gh) else 1)
     except SystemExit:
         raise
