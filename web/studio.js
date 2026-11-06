@@ -564,9 +564,9 @@
   /* ---------- building a video: the series on the grid, labels and formats ---------- */
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
-    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
+    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', az: '', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
-    goal: '', solve: 'rec', yrs: '', fi: '0', fsplit: 'line', frb: '0', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', sp: 'phone', spi: 'iPhone', spp: '999', spinf: 'pro', spir: '', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0', sphe: 'm', sphn: '1', spe: '', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '', hm: 'pct', hn: '10' };
+    goal: '', solve: 'rec', yrs: '', fi: '0', fsplit: 'line', frb: '0', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', sp: 'phone', spi: 'iPhone', spp: '999', spinf: 'pro', spir: '', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0', sphe: 'm', sphn: '1', spe: '', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '', hm: 'pct', hn: '10', hi: '' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
     ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'], ['holders', 'Major holders'],
     ['sankey', 'Earnings flow'], ['cash', 'Where the cash went'], ['snowball', 'Dividend snowball'], ['timing', 'Timing'], ['spend', 'Spend or invest']];
@@ -588,7 +588,7 @@
     pb: ['Price / book', 'x', ['m-cap', 'q-eq']], ps: ['Price / sales', 'x', ['m-cap', 'q-rev']], dv: ['Dollar volume traded', '$', ['m-dv']], ret: ['Total return', '%', ['m-px']],
   };
   const SECTORS = { technology: 'Technology', communication: 'Communication', 'consumer-disc': 'Consumer discretionary', 'consumer-staples': 'Consumer staples',
-    health: 'Health care', financials: 'Financials', 'real-estate': 'Real estate', energy: 'Energy', materials: 'Materials', industrials: 'Industrials', utilities: 'Utilities', other: 'Other' };
+    health: 'Health care', financials: 'Financials', 'real-estate': 'Real estate', energy: 'Energy', materials: 'Materials', industrials: 'Industrials', utilities: 'Utilities', etf: 'ETFs', other: 'Other' };
   // the theme's colours in order; past the tenth, the same again lighter (on a light theme darker), so the eleventh
   // series is not the first one's twin
   const palAt = (th, i) => {
@@ -597,7 +597,8 @@
     const n = parseInt(c.slice(1), 16), to = th.text === '#1d1d1b' ? 0 : 255, t = Math.min(0.6, 0.34 * k);
     return '#' + [n >> 16 & 255, n >> 8 & 255, n & 255].map((v) => Math.round(v + (to - v) * t).toString(16).padStart(2, '0')).join('');
   };
-  const secCol = (th, sec) => { const i = Object.keys(SECTORS).indexOf(sec); return i < 0 || sec === 'other' ? (th.text === '#1d1d1b' ? '#8d8a84' : '#a9b3c1') : i === 10 ? (th.text === '#1d1d1b' ? '#8a6a3a' : '#e3c79f') : th.pal[i % th.pal.length]; };
+  // utilities and ETFs (a 13F manager's ETF lines) past the theme's ten colours: their own, not a sector's twin
+  const secCol = (th, sec) => { const i = Object.keys(SECTORS).indexOf(sec), light = th.text === '#1d1d1b'; return i < 0 || sec === 'other' ? (light ? '#8d8a84' : '#a9b3c1') : sec === 'utilities' ? (light ? '#8a6a3a' : '#e3c79f') : sec === 'etf' ? (light ? '#4f6672' : '#e6e1d3') : th.pal[i % th.pal.length]; };
   const PANEL = new Map();
   const panel = (name) => { if (!PANEL.has(name)) PANEL.set(name, json(RANKP + name + '.json').then((d) => (d && Array.isArray(d.rows) ? d.rows : d))); return PANEL.get(name); };
   const at = (row, i) => (row && row.length > 1 && i >= row[0] && i < row[0] + row.length - 1 ? row[1 + i - row[0]] : null);
@@ -2230,16 +2231,22 @@
   }
   // a leaderboard: N slots, bars sliding as ranks change, coloured by sector, entering from below and leaving downwards
   function rankRace(ctx, V, f, b, S, th, F) {
-    const N = V.rankN, i0 = Math.floor(f), i1 = Math.min(V.grid.length - 1, i0 + 1), e = easeIO(f - i0);
-    const order = (i) => { const arr = V.series.map((s, k) => ({ k, v: s.v[i] })).filter((x) => fin(x.v)); arr.sort((a, c) => (V.order === 'abs' ? Math.abs(c.v) - Math.abs(a.v) : V.order === 'asc' ? a.v - c.v : c.v - a.v)); return new Map(arr.map((x, r) => [x.k, r])); };
-    const r0 = order(i0), r1 = order(i1);
-    const top = (m, i) => { let mx = 0; for (const [k, r] of m) if (r < N) mx = Math.max(mx, Math.abs(V.series[k].v[i])); return mx || 1; };
-    const vmax = lerp(top(r0, i0), top(r1, i1), e);
+    const N = V.rankN, i0 = Math.floor(f), i1 = Math.min(V.grid.length - 1, i0 + 1);
+    // keyframes: ten moments between two reports, every bar ranked by its value at each (the values move straight from one
+    // report to the next, as the bars' lengths do), and the bars slide from one moment's places to the next. The board
+    // stays full and the bars swap a few at a time, even when most of the top changes between two reports (a 13F of
+    // thousands of lines); a bar enters from just below the board and leaves to just below it
+    const K = 10, uK = Math.max(0, Math.min(1, f - i0)) * K, j = Math.min(K - 1, Math.floor(uK)), e = easeIO(uK - j);
+    const at = (s, u) => { const a = s.v[i0], c = s.v[i1]; return fin(a) && fin(c) ? a + (c - a) * u : fin(c) ? (u > 0 ? c : NaN) : fin(a) ? (u < 1 ? a : NaN) : NaN; };
+    const order = (u) => { const arr = V.series.map((s, k) => ({ k, v: at(s, u) })).filter((x) => fin(x.v)); arr.sort((a, c) => (V.order === 'abs' ? Math.abs(c.v) - Math.abs(a.v) : V.order === 'asc' ? a.v - c.v : c.v - a.v)); return new Map(arr.map((x, r) => [x.k, r])); };
+    const u0 = j / K, u1 = (j + 1) / K, r0 = order(u0), r1 = order(u1);
+    const top = (m, u) => { let mx = 0; for (const [k, r] of m) if (r < N) mx = Math.max(mx, Math.abs(at(V.series[k], u))); return mx || 1; };
+    const vmax = lerp(top(r0, u0), top(r1, u1), e);
     const legendH = 50 * S, footH = V.foot ? 30 * S : 0, area = b.h - legendH - footH, slot = area / N, bh = Math.min(slot * 0.76, 120 * S);
     const lab = 230 * S, room = Math.max(100 * S, b.w - lab - 250 * S), x0 = b.x + lab;
     const rows = [];
     V.series.forEach((s, k) => {
-      const a = r0.has(k) ? r0.get(k) : N + 1.5, c = r1.has(k) ? r1.get(k) : N + 1.5, r = lerp(a, c, e);
+      const off = N + 1.5, a = r0.has(k) ? Math.min(r0.get(k), off) : off, c = r1.has(k) ? Math.min(r1.get(k), off) : off, r = lerp(a, c, e);
       if (r > N + 0.6) return;
       let v = valAt(s.v, f); if (!fin(v)) v = fin(s.v[i1]) ? s.v[i1] : s.v[i0];
       if (fin(v)) rows.push({ s, k, r, v, c });
@@ -2441,7 +2448,7 @@
     const hiAbs = share ? 1 : Math.max(...V.stack.total.slice(0, Math.min(n, i0 + 2)).filter(fin)) * 1.08 || 1;
     const Y = (v) => b.y + b.h - v / hiAbs * b.h;
     ctx.lineWidth = 1.2 * S; ctx.font = F(500, 21); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    for (const v of share ? [0, 0.25, 0.5, 0.75, 1] : niceTicks(0, hiAbs, 5)) { const y = Y(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(share ? (100 * v).toFixed(0) + '%' : money(v), b.x - 12 * S, y); }
+    for (const v of share ? [0, 0.25, 0.5, 0.75, 1] : niceTicks(0, hiAbs, 5)) { const y = Y(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(share ? (100 * v).toFixed(0) + '%' : V.stack.pct ? (100 * v).toFixed(v < 0.1 ? 1 : 0) + '%' : money(v), b.x - 12 * S, y); }
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     for (let y = new Date(G[0]).getUTCFullYear() + 1; y <= new Date(G[n - 1]).getUTCFullYear(); y += Math.max(1, Math.ceil((new Date(G[n - 1]).getUTCFullYear() - new Date(G[0]).getUTCFullYear()) / 9))) { const x = X(Date.UTC(y, 0, 1)); ctx.fillStyle = th.axis; ctx.fillText(String(y), x, b.y + b.h + 10 * S); }
     const base = G.map(() => 0), heads = [];
@@ -3392,7 +3399,7 @@
         if (st.rm === 'ret') h += `<label for="st-win">Return over</label>${sel('st-win', [['1', '1 month'], ['3', '3 months'], ['6', '6 months'], ['12', '12 months'], ['36', '3 years'], ['ytd', 'Year to date']], st.win)}`;
         if (['om', 'nm', 'growth'].includes(st.rm)) h += `<label for="st-minrev">Minimum revenue a year ($B)</label><input class="input" id="st-minrev" inputmode="decimal" value="${esc(st.minrev)}">`;
       }
-      h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
+      h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS).filter(([k]) => k !== 'etf')), st.sec)}`;
       h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
       h += `<label for="st-capby">Measured</label>${sel('st-capby', [['then', 'At each step'], ['now', 'Today']], st.capby)}`;
@@ -3410,6 +3417,9 @@
       h += `<div class="st-help st-range" id="st-range" aria-live="polite"></div>`;
       if (st.style === 'changes') h += `<label for="st-ag">Group changes</label>${sel('st-ag', [['company','Company'],['sector','Sector']], st.ag)}`;
       h += `<label for="st-an">Top holdings shown</label>${sel('st-an', [['5', '5'], ['10', '10'], ['12', '12'], ['15', '15'], ['20', '20']], st.an)}`;
+      // the rest of the book as one band: drawn, left out (the largest on their own scale), or left out only when the
+      // largest never reach half of the book (a fund of thousands of lines, a market maker's 13F) — web/actual-weights.js
+      if (st.style === 'companies') h += `<label for="st-az">Everything else (“Other”)</label>${sel('st-az', [['', 'Auto: hidden when the top ones are under half'], ['full', 'Show: the whole book, 100%'], ['top', 'Hide: the top ones on their own scale']], st.az)}`;
       return h + '<div class="st-help">ETF NAV weights; 13F reported-value weights; officials show monthly transaction lower-bound shares, NOT holdings. Source dates are retained; official transaction charts use month-end buckets. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Index mode only: a start before the fund’s first report is reconstructed from the index’s members (labeled on the video); funds, managers and officials show their reports alone.</div>';
     }
     function holdingsSide() {
@@ -3435,7 +3445,9 @@
       let h = `<label for="st-t">Company or ETF (ticker)</label><input class="input" id="st-t" value="${esc(tickers(st)[0] || '')}" placeholder="AAPL, NVDA, SPY, QQQ" list="st-list" autocomplete="off" autocapitalize="characters" spellcheck="false"><datalist id="st-list"></datalist>`;
       h += `<div class="st-help st-range" id="st-range" aria-live="polite"></div>`;
       h += `<div class="st-row"><div><label for="st-hm">Measure</label>${sel('st-hm', [['pct', 'Share of the company or fund'], ['share13', 'Share of all 13F holdings'], ['usd', 'Value held']], st.hm)}</div><div><label for="st-hn">Holders shown</label>${sel('st-hn', [['5', '5'], ['8', '8'], ['10', '10'], ['15', '15'], ['20', '20']], st.hn)}</div></div>`;
-      return h + '<div class="st-help">Every 13F filed since 2013 (SEC\'s data sets): what each manager with $100M or more held at each quarter-end. Fund families count as one holder (Vanguard\'s and BlackRock\'s filers together). Share of the company: its reported value ÷ the market value then; of an ETF: ÷ the fund\'s net assets. Individuals, insiders and managers outside 13F are in “Not in 13F reports” on the areas.</div>';
+      // officers, directors and 10% owners (Elon Musk at Tesla) from their Forms 3/4/5, beside the 13F managers
+      if (st.hm !== 'share13') h += `<label for="st-hi">Insiders (Forms 3, 4, 5)</label>${sel('st-hi', [['', 'With them: officers, directors, 10% owners'], ['off', '13F managers only']], st.hi)}`;
+      return h + '<div class="st-help">Every 13F filed since 2013 (SEC\'s data sets): what each manager with $100M or more held at each quarter-end. Fund families count as one holder (Vanguard\'s and BlackRock\'s filers together). Insiders — officers, directors and 10% owners such as a founder — from their own Forms 3, 4 and 5: their shares at each quarter-end. Share of the company: the value held ÷ the market value then; of an ETF: ÷ the fund\'s net assets. Other individuals and managers outside 13F are in “Not reported” on the areas.</div>';
     }
     function moreSide(k) {
       const meas = Object.entries(RANK).filter(([kk]) => !['gp', 'oi', 'ni'].includes(kk)).map(([kk, v]) => [kk, v[0]]);
@@ -3453,7 +3465,7 @@
           + `<div class="st-help">The fund's latest reported holdings and their weights; earlier months move each holding with its own price, as if the fund had kept the same shares — not what it held then. <button type="button" class="pill" data-to-reports="1">What it reported, quarter by quarter</button></div>`;
         h += `<label for="st-sa">Show</label>${sel('st-sa', [['share', 'Each sector\'s share (100%)'], ['abs', 'Market value in dollars']], st.sa)}`;
       }
-      if (k !== 'sectors') h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
+      if (k !== 'sectors') h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS).filter(([k]) => k !== 'etf')), st.sec)}`;
       h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
       return h + `<div class="st-help">From the site's month-by-month data on every company it draws. Market values come from each 10-K and 10-Q cover page since 1993 (a company's former registrants' too: Exxon Mobil before ExxonMobil Holdings), so most large companies reach back to the mid-1990s; company figures (revenue, profit) start in 2009. Today's companies only: those delisted, merged or bankrupt are missing from earlier years.</div>`;
@@ -3733,11 +3745,16 @@
           if (!cik) { set(String(st.ac || '').trim() ? `No 13F manager the Hub follows is called “${esc(st.ac)}” — type its CIK (EDGAR's company search shows it).` : 'Type a manager’s name or CIK to see the quarters on file.'); return; }
           set(`Looking up CIK ${esc(cik)}…`);
           const cfg = await json(HUB + 'remote.json'), base = cfg && /^https:\/\//.test(cfg.base || '') && (cfg.prefixes || []).some((x) => 'shards/holdings/'.startsWith(x)) ? cfg.base : HUB;
-          const doc = await json(base + 'shards/holdings/' + cik + '.json');
-          if (!doc) { set(`No 13F manager with CIK ${esc(cik)} on file yet.`); return; }
-          const ps = (doc.snapshots || []).filter((x) => x.complete).map((x) => x.period).sort(), lo = ps[0] || '', hi = ps[ps.length - 1] || '';
-          const since = String(doc.since || ''), deep = since && since <= F13_0;
-          set(`<b>${esc(doc.label || doc.name || 'CIK ' + cik)}</b><br><b>On file:</b> ${ps.length ? `${ps.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}` : 'no complete quarter yet'}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter: 13F holdings are machine-readable from Q2 2013, and each quarter is filed within 45 days. ${deep ? 'This manager is read from then.' : `This manager is read from ${fmtD(since)} so far; the history back-fill deepens it.`}`, lo, hi);
+          // the Hub's quarters, and before them SEC's 13F data sets' (a manager of thousands of lines: holders_history.py)
+          const [doc0, hist] = await Promise.all([json(base + 'shards/holdings/' + cik + '.json'),
+            cfg && /^https:\/\//.test(cfg.holders || '') ? json(cfg.holders + 'm/' + cik + '.json') : null]);
+          if (!doc0 && !hist) { set(`No 13F manager with CIK ${esc(cik)} on file yet.`); return; }
+          const doc = doc0 || { name: hist.filer || hist.name, snapshots: [] };
+          const own = (doc.snapshots || []).filter((x) => x.complete).map((x) => x.period).sort();
+          const older = ((hist && hist.periods) || []).filter((p, i) => (hist.usd || [])[i] > 0 && (!own.length || p < own[0]));
+          const ps = older.concat(own), lo = ps[0] || '', hi = ps[ps.length - 1] || '';
+          const since = older.length ? older[0] : String(doc.since || ''), deep = since && since <= F13_0;
+          set(`<b>${esc(doc.label || doc.name || 'CIK ' + cik)}</b><br><b>On file:</b> ${ps.length ? `${ps.length} quarters, ${fmtD(lo)} → ${fmtD(hi)}` : 'no complete quarter yet'}${all(lo, hi)}<br><b>Max:</b> ${fmtD(F13_0)} → the latest quarter: 13F holdings are machine-readable from Q2 2013, and each quarter is filed within 45 days. ${older.length ? `${fmtD(older[0])} → ${fmtD(older[older.length - 1])}: SEC's 13F data sets (the 100 largest positions a quarter, the sectors over every line)${own.length ? `; from ${fmtD(own[0])}: each 13F as filed` : ''}.` : deep ? 'This manager is read from then.' : `This manager is read from ${fmtD(since)} so far; the history back-fill deepens it.`}`, lo, hi);
         } else if (st.aw === 'official') {
           const name = String(st.ap || '').trim(), slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
           if (!slug) { set('Type an official’s name to see the trades on file.'); return; }

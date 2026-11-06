@@ -5690,7 +5690,7 @@
       else if (h === 'owner-xreport') { await ownerPage(); const x = $('#xreport'); if (x) x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       else if ((m = /^unsubscribe-([0-9a-f-]{36})$/.exec(h))) await unsubscribePage(m[1]);
       // a Disclosures section (#signals, #smart, #etf/SPY …): the hub's pages, part of the site (web/hub-shell.js)
-      else if (window.FFHubShell && window.FFHubShell.owns(h)) await window.FFHubShell.show(h, { setNav });
+      else if (window.FFHubShell && window.FFHubShell.owns(h)) await window.FFHubShell.show(h, { setNav, here });
       else await home();
       initFollowButtons();
       initSendButtons();

@@ -975,6 +975,9 @@ function bindRotation(){
  if($('rrgtk')){$('rrgtk').onchange=e=>{state.rrgtk=e.target.value;render()};$('rrgtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rtk')){$('rtk').onchange=e=>{state.rtk=e.target.value;render()};$('rtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rplay'))$('rplay').onclick=rotToggle;
+ // the RRG's lines: tap to add or take one away, "All lines" to show every line again (rrg.js: state.rrgsolo, ids)
+ document.querySelectorAll('#workspace [data-rrgpick]').forEach(b=>b.onclick=()=>{rotStop();const id=b.dataset.rrgpick;let cur=String(state.rrgsolo||'').split(',').filter(Boolean);
+  cur=!id?[]:cur.includes(id)?cur.filter(x=>x!==id):cur.concat(id);state.rrgsolo=cur.join(',');render()});
  if($('rspeed'))$('rspeed').onchange=e=>{state.rspd=e.target.value;if(ROT.timer){rotStop();rotToggle()}};
  if($('rshape'))$('rshape').onchange=e=>{state.rshape=e.target.value};
  if($('rmp4'))$('rmp4').onclick=rotExport;

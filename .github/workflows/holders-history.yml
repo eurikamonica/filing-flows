@@ -1,9 +1,12 @@
-# Who held each stock and ETF, quarter by quarter, since 2013 (the video studio's "Major holders" video):
+# Who held each stock and ETF, quarter by quarter, since 2013 (the video studio's "Major holders" video), and each large
+# 13F manager's own quarters (public/m/<CIK>.json: the 13F holdings video of a manager before the site's own 13F files):
 # SEC's Form 13F data sets (one zip of every 13F filed in a quarter or three-month window) read into each CUSIP's
 # 13F holders, shares and value per quarter-end, the largest holders and fund families together, then one file per
 # ticker (disclosures/app/holders_history.py). The site's own 13F files keep the index giants only from Q4 2024.
 # First runs read the sets oldest first, ~40 minutes each, and start the next run themselves until all are read;
 # after that each run reads only a newly published set (and the sets of the quarters still open), then rebuilds.
+# The insiders beside them (officers, directors and 10% owners: Elon Musk at Tesla): SEC's Form 3/4/5 data sets since
+# 2010 read into each owner's holdings, then public/i/<TICKER>.json per ticker (disclosures/app/insiders_history.py).
 # Kept on the branch "holders-history" (one commit, force-pushed); the studio reads public/ from the repository's
 # raw files (stage-public.py writes the address into the Hub's data/remote.json as "holders").
 name: Holders history
@@ -27,7 +30,7 @@ concurrency:
 jobs:
   holders:
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    timeout-minutes: 120
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
     steps:
@@ -52,18 +55,41 @@ jobs:
             mkdir hh && git -C hh init --quiet -b holders-history && git -C hh remote add origin "$url"
           fi
           du -sh hh; ls hh/cache 2>/dev/null | head
+      - name: Sectors for the managers' books (the site's rank panel, ETF and company files)
+        # each 13F manager's quarter is also kept by sector (the 13F holdings video of a manager): ticker → sector from
+        # what the site publishes; a file that does not come leaves its tickers unclassified, never stops the run
+        run: |
+          mkdir -p sectors
+          for u in disclosures/data/market/history/rank/meta.json disclosures/data/etf/sectors.json data/index.json disclosures/data/etf/index.json; do
+            curl -sfL --retry 3 --max-time 120 -o "sectors/$(echo "$u" | tr '/' '_')" "${{ vars.SITE_URL || 'https://filing-flows.com' }}/$u" \
+              || echo "::warning::$u not read: its tickers stay unclassified"
+          done
+          ls -la sectors
       - name: Read the 13F data sets
         id: collect
         timeout-minutes: 60
-        run: python disclosures/app/holders_history.py collect --root hh --minutes "${{ inputs.minutes || '40' }}"
+        run: |
+          python disclosures/app/holders_history.py collect --root hh --minutes "${{ inputs.minutes || '40' }}" \
+            --hub disclosures/docs/data --sectors sectors/*.json
+      - name: Read the insider data sets (Forms 3, 4, 5)
+        # a failure here never holds back the 13F files: the insiders are read again on the next run
+        id: insiders
+        timeout-minutes: 40
+        continue-on-error: true
+        run: python disclosures/app/insiders_history.py collect --root hh --minutes 25
       - name: One file per ticker
         timeout-minutes: 12
-        run: python disclosures/app/holders_history.py build --root hh --hub disclosures/docs/data
+        run: python disclosures/app/holders_history.py build --root hh --hub disclosures/docs/data --sectors sectors/*.json
+      - name: Insiders per ticker
+        timeout-minutes: 20
+        continue-on-error: true
+        run: python disclosures/app/insiders_history.py build --root hh --hub disclosures/docs/data
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hh
           printf '%s\n' '# holders-history (data only)' '' 'Each quarter of SEC Form 13F data sets read into holders per CUSIP (cache/periods), the data sets read (cache/sets.json)' \
-            'and the files the video studio reads (public/: c/<TICKER>.json, index.json, status.json), kept by .github/workflows/holders-history.yml on main.' \
+            'and the files the video studio reads (public/: c/<TICKER>.json, m/<CIK>.json, i/<TICKER>.json for insiders from Forms 3/4/5 (cache/insiders), index.json, status.json),' \
+            'kept by .github/workflows/holders-history.yml on main.' \
             'Force-pushed as a single commit on every run.' > README.md
           git add -A
           git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "holders $(date -u +%Y-%m-%dT%H:%MZ)" || true
@@ -72,11 +98,11 @@ jobs:
           for i in 1 2 3; do git push -q --force origin fresh:holders-history && break; sleep $((i * 10)); done
           cat public/status.json
       - name: Start the next run of the relay
-        if: success() && steps.collect.outputs.left != '0' && steps.collect.outputs.left != ''
+        if: success() && ((steps.collect.outputs.left != '0' && steps.collect.outputs.left != '') || (steps.insiders.outputs.left != '0' && steps.insiders.outputs.left != ''))
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOP: ${{ inputs.hop || '0' }}
         run: |
           if [ "$HOP" -ge 12 ]; then echo "relay cap reached; the daily schedule goes on"; exit 0; fi
           gh workflow run holders-history.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f hop=$((HOP + 1)) -f minutes="${{ inputs.minutes || '40' }}"
-          echo "relay: hop $((HOP + 1)) started (${{ steps.collect.outputs.left }} data sets left)"
+          echo "relay: hop $((HOP + 1)) started (13F: ${{ steps.collect.outputs.left }}, insiders: ${{ steps.insiders.outputs.left }} data sets left)"
