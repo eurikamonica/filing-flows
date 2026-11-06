@@ -289,10 +289,17 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
    assert.ok(svg.includes('EWJ $')&&!svg.includes('EWZ $'),'one line alone: the other line is still drawn');
    assert.ok((svg.match(/rrgl-step/g)||[]).length>=5,'the solo line\'s path lacks a dot each week');
    assert.ok(svg.includes('+13w ')&&['+1w ','+2w ','+4w ','+8w '].some(t=>svg.includes(t)),'the solo line\'s path lacks its dated marks');}
-  assert.ok(html.includes('EWZ only')&&html.includes('· hidden'),'the Show control or the legend');
+  assert.ok(html.includes('data-rrgpick="EWZ"')&&html.includes('· hidden'),'the Show control or the legend');
   for(const id of ['rspeed','rshape','rmp4'])assert.ok(html.includes(`id="${id}"`),`the player lacks ${id}`);
   assert.ok(run(`window.FFShare.get('hub-rrg-2d').title`).includes(' · EWJ'),'the share title does not name the line shown alone');
   assert.ok(!/NaN|undefined|Infinity/.test(html),'one line alone shows NaN/undefined');
+  // several lines picked (comma-separated): each drawn, its chip on, named in the share title; none of them in focus
+  run(`state.rrgsolo='EWJ,EWZ,NOPE'`);html=run(`rrgView()`);
+  {const svg=html.slice(html.indexOf('<svg'),html.indexOf('</svg>'));
+   assert.ok(svg.includes('EWJ $')&&svg.includes('EWZ $'),'two lines picked: both drawn');}
+  assert.ok(/class="pill on"[^>]*data-rrgpick="EWJ"/.test(html)&&/class="pill on"[^>]*data-rrgpick="EWZ"/.test(html)&&!/class="pill on"[^>]*data-rrgpick=""/.test(html),'the picked chips on, All lines off');
+  assert.equal(run(`state.rrgsolo`),'EWJ,EWZ','a line not on the chart is dropped from the pick');
+  assert.ok(run(`window.FFShare.get('hub-rrg-2d').title`).includes(' · EWJ, EWZ'),'the share title names the lines picked');
   run(`state.rrgsolo='';state.rspd='2'`);
   assert.ok(run(`rotMs({ms:110})`)<=56&&run(`rotPlayer(['a','b'],{span:2})`).includes('value="2" selected'),'the speed');
   run(`state.rspd=''`);
