@@ -31,7 +31,10 @@ jobs:
           z = zipfile.ZipFile(io.BytesIO(b))
           for n in z.namelist(): print('member', n, z.getinfo(n).file_size)
           acc = set()
-          for n in z.namelist():
+          from collections import Counter
+          rel = Counter()
+          names = sorted(z.namelist(), key=lambda n: (not n.upper().endswith('SUBMISSION.TSV'), n))
+          for n in names:
               if not n.upper().endswith('.TSV'): continue
               with z.open(n) as f:
                   rd = csv.reader(io.TextIOWrapper(f, encoding='utf-8', errors='replace', newline=''), delimiter='\t', quoting=csv.QUOTE_NONE)
@@ -42,8 +45,12 @@ jobs:
                       if n.upper().endswith('SUBMISSION.TSV') and len(r) == len(head):
                           d = dict(zip(head, r))
                           if d.get('ISSUERCIK', '').lstrip('0') == '1318605': acc.add(d['ACCESSION_NUMBER'])
-                      if r and r[0] in acc and rows < 10**7:
+                      if n.upper().endswith('REPORTINGOWNER.TSV') and len(r) > 3: rel[r[3]] += 1
+                      if r and r[0] in acc and not n.upper().endswith('SUBMISSION.TSV') and not n.upper().endswith('FOOTNOTES.TSV'):
                           print('  TSLA', n.split('/')[-1], r[:40])
+                      if r and r[0] in acc and n.upper().endswith('FOOTNOTES.TSV'):
+                          print('  TSLA', n.split('/')[-1], r[0], r[1], r[2][:200])
                   print('   rows', rows)
           print('tesla filings', len(acc))
+          print('relationships', rel.most_common(25))
           PY
