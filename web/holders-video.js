@@ -6,9 +6,12 @@
  * market values, rank panel m-cap: the close as traded × the shares outstanding then, every share class), or ÷ an ETF's
  * net assets in its N-PORT report for that quarter (etf/weights/<SYM>.json, from Sep 2019). Without either, the share
  * of every share 13F managers reported (the institutions' holdings only, not the company).
+ * Insiders (st.hi, on unless 'off'): officers, directors and 10% owners — Elon Musk at Tesla — from their own Forms 3, 4
+ * and 5 (disclosures/app/insiders_history.py → i/<TICKER>.json beside c/): each one's shares at the quarter-end at the
+ * quarter's 13F price, a holder beside the 13F managers (not with the share of 13F holdings, which is 13F's alone).
  * Styles: a bar race of the largest holders, their lines, the whole ownership as areas (the largest, the other 13F
- * holders and what no 13F reports: individuals, insiders, managers under $100M, most of the world outside the US),
- * and the change from one quarter to the next in points.
+ * holders, the other insiders and what neither reports: other individuals, managers under $100M, most of the world
+ * outside the US), and the change from one quarter to the next in points.
  */
 (function (root) {
   'use strict';
@@ -66,7 +69,7 @@
       const st2 = await Promise.resolve(api.json(B + 'status.json')).catch(() => null);
       throw new Error(st2 ? `No 13F holders on file for ${sym} (13F covers US-listed stocks and ETFs held by managers of $100M or more)` : 'The 13F holders history is still being built — try again in a few hours');
     }
-    const P0 = doc.periods, who = doc.who || [];
+    const P0 = doc.periods, who = (doc.who || []).slice();
     const lo = st.from || '', hi = st.to || '';
     const idx = P0.map((p, i) => i).filter((i) => (!lo || P0[i] >= lo) && (!hi || P0[i] <= hi) && doc.total[i]);
     if (!idx.length) throw new Error(`${sym}: no quarter on file between ${lo || 'the start'} and ${hi || 'now'} (on file: ${qLabel(P0[0])} → ${qLabel(P0[P0.length - 1])})`);
@@ -92,11 +95,28 @@
     const val = (row, j) => (!row ? null : hm === 'pct' ? row[2] / denom[j] : hm === 'share13' ? (denom[j] > 0 ? row[1] / denom[j] : null) : row[2]);
     // each holder's value in each quarter (null: not among the largest that quarter)
     const ser = new Map();
-    use.forEach((i, j) => (doc.top[i] || []).forEach(([w, sh, usd]) => {
+    const put = (w, j, sh, usd) => {
       let s = ser.get(w);
       if (!s) { s = { w, v: P.map(() => null), sh: P.map(() => null), usd: P.map(() => null) }; ser.set(w, s); }
       s.v[j] = val([w, sh, usd], j); s.sh[j] = sh; s.usd[j] = usd;
-    }));
+    };
+    use.forEach((i, j) => (doc.top[i] || []).forEach(([w, sh, usd]) => put(w, j, sh, usd)));
+    // insiders (Forms 3/4/5): holders beside the 13F managers, by the same quarters; their keys 'i:<CIK>'
+    const ins = st.hi !== 'off' && hm !== 'share13' ? await Promise.resolve(api.json(B + 'i/' + encodeURIComponent(sym.replace(/[^A-Z0-9-]/g, '_')) + '.json')).catch(() => null) : null;
+    const insTot = P.map(() => 0);
+    let insN = 0;
+    if (ins && Array.isArray(ins.periods) && Array.isArray(ins.who)) {
+      const at = new Map(ins.periods.map((p, k) => [p, k])), base0 = who.length;
+      ins.who.forEach(([cik, name, role]) => who.push(['i:' + cik, name + (role ? ' — ' + role : ''), name, [cik], role, true]));
+      P.forEach((p, j) => {
+        const k = at.get(p);
+        if (k == null) return;
+        (ins.top[k] || []).forEach(([w, sh, usd]) => put(base0 + w, j, sh, usd));
+        const t = ins.total[k];
+        if (t) { insTot[j] = val([0, t[1], t[2]], j) || 0; insN = Math.max(insN, t[0]); }
+      });
+    }
+    const insider = (s) => !!(who[s.w] || [])[5];
     const n = Math.max(3, Math.min(20, +st.hn || 10));
     const peak = (s) => Math.max(...s.v.filter(fin).map(Math.abs), 0);
     const all = [...ser.values()].sort((a, b) => peak(b) - peak(a));
@@ -104,7 +124,7 @@
     const label = (s) => (who[s.w] || [])[2] || (who[s.w] || [])[1] || 'Holder';
     const nameOf = (s) => {
       const x = who[s.w] || [];
-      return (x[1] || '') + (x[0] && x[0].startsWith('f:') ? ' (its filers together)' : '');
+      return (x[1] || '') + (x[0] && x[0].startsWith('f:') ? ' (its filers together)' : x[5] ? ' (insider: Forms 3/4/5)' : '');
     };
     const company = (den && den.name) || doc.name || sym, isFund = den ? den.kind === 'fund' : !mv && !!na;
     const subject = isFund || !den ? sym : company.replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '').replace(/\.$/, ''), title = `Who owns ${subject}`;
@@ -113,25 +133,30 @@
     out.fmt = hm === 'usd' ? money : (v) => pct(v); out.metric = metric; out.noLegend = true;
     out.title = title;
     const span = `${qLabel(P[0])} → ${qLabel(P[L])}`, what = hm === 'pct' ? (isFund ? '13F value ÷ the fund\'s net assets' : '13F value ÷ market value') : hm === 'share13' ? 'of every share 13F managers reported' : 'reported 13F value';
-    out.sub = `${span} · the largest 13F holders, fund families together · ${what} · SEC Form 13F`;
+    const withIns = insN > 0;
+    out.sub = `${span} · the largest ${withIns ? '13F holders and insiders' : '13F holders'}, fund families together · ${what} · SEC Form 13F${withIns ? ', Forms 3/4/5' : ''}`;
     out.foot = `13F holdings at each quarter-end · ${hm === 'pct' ? what : hm === 'share13' ? 'share of the institutions\' 13F shares' : 'reported value'} · fund families together`;
     const style = st.style;
     if (style === 'stack') {
-      const top = all.slice(0, n), sum = P.map((_, j) => top.reduce((a, s) => a + (fin(s.v[j]) ? s.v[j] : 0), 0));
+      const top = all.slice(0, n), sumOf = (f) => P.map((_, j) => top.filter(f).reduce((a, s) => a + (fin(s.v[j]) ? s.v[j] : 0), 0));
+      const sum = sumOf((s) => !insider(s)), sumI = sumOf(insider);
       const inst = P.map((_, j) => val(tot[j], j));
       out.series = top.map((s) => ({ key: who[s.w][0], label: label(s), name: nameOf(s), pal: s.pal, v: s.v.map((x) => (fin(x) ? x : 0)) }));
       out.series.push({ key: 'other', label: 'Other 13F holders', name: 'every other 13F manager', sec: 'other', v: P.map((_, j) => Math.max(0, (inst[j] || 0) - sum[j])) });
+      const otherI = P.map((_, j) => Math.max(0, insTot[j] - sumI[j]));
+      if (withIns && otherI.some((x) => x > 1e-6)) out.series.push({ key: 'insiders', label: 'Other insiders', name: 'every other officer, director and 10% owner (Forms 3/4/5)', col: '#8a7a5c', v: otherI });
       if (hm === 'pct') {
         let over = 0;
-        const rest = P.map((_, j) => { const x = inst[j] || 0; over = Math.max(over, x); return Math.max(0, 1 - x); });
-        out.series.push({ key: 'rest', label: 'Not in 13F reports', name: 'individuals, insiders, smaller and non-US managers', col: '#5c6675', v: rest });
+        const both = P.map((_, j) => (inst[j] || 0) + insTot[j]);
+        const rest = both.map((x) => { over = Math.max(over, x); return Math.max(0, 1 - x); });
+        out.series.push({ key: 'rest', label: withIns ? 'Not reported' : 'Not in 13F reports', name: withIns ? 'other individuals, smaller and non-US managers' : 'individuals, insiders, smaller and non-US managers', col: '#5c6675', v: rest });
         if (over > 1.001) {
-          out.series.forEach((s) => { s.v = s.v.map((x, j) => (inst[j] > 1 ? x / inst[j] : x)); });
-          out.notes.add(`13F holdings add up to more than all of ${subject} in some quarters (up to ${pct(over)}: shares lent and borrowed are reported by both sides, and some managers report what they advise on): scaled to 100% there.`);
+          out.series.forEach((s) => { s.v = s.v.map((x, j) => (both[j] > 1 ? x / both[j] : x)); });
+          out.notes.add(`${withIns ? '13F holdings and insiders\' shares' : '13F holdings'} add up to more than all of ${subject} in some quarters (up to ${pct(over)}: shares lent and borrowed are reported by both sides, and some managers report what they advise on): scaled to 100% there.`);
         }
       }
-      out.kind = 'sectors'; out.stack = { share: hm !== 'usd', total: P.map((_, j) => (hm === 'usd' ? tot[j][2] : 1)) };
-      out.notes.add(hm === 'pct' ? 'Areas: the largest holders, every other 13F manager, and what no 13F reports — individuals and insiders, managers with less than $100M in 13F securities, and most managers outside the US.' : 'Areas: the largest holders and every other 13F manager.');
+      out.kind = 'sectors'; out.stack = { share: hm !== 'usd', total: P.map((_, j) => (hm === 'usd' ? tot[j][2] + (withIns ? (insTot[j] || 0) : 0) : 1)) };
+      out.notes.add(hm === 'pct' ? `Areas: the largest holders, every other 13F manager${withIns ? ', every other insider' : ''}, and what ${withIns ? 'neither reports — other individuals' : 'no 13F reports — individuals and insiders'}, managers with less than $100M in 13F securities, and most managers outside the US.` : `Areas: the largest holders${withIns ? ', every other insider' : ''} and every other 13F manager.`);
     } else if (style === 'line') {
       out.series = all.slice(0, n).map((s) => ({ key: who[s.w][0], label: label(s), name: nameOf(s), pal: s.pal, v: s.v }));
       out.palIdx = true;
@@ -164,6 +189,8 @@
     if (f.length > 1 && f[0] < 0.75 * Math.max(...f)) out.notes.add(`13F filers on file: ${f[0].toLocaleString('en-US')} in ${qLabel(P[0])}, ${f[f.length - 1].toLocaleString('en-US')} in ${qLabel(P[L])} — more managers crossed $100M over the years.`);
     if (hm === 'pct') out.notes.add(isFund ? `A holder's share of ${sym}: its reported 13F value ÷ the fund's net assets in its N-PORT report for the quarter.` : `A holder's share of ${subject}: its reported 13F value ÷ the company's market value at the quarter-end (the close × the shares outstanding then, every share class).`);
     out.notes.add('13F lists long positions in US-listed stocks and ETFs; options, short positions and holdings under $100M managers are not in it. A manager reports what it has discretion over, for its funds and its clients.');
+    if (withIns) out.notes.add(`Insiders — officers, directors and 10% owners (${insN.toLocaleString('en-US')} at most in a quarter) — from their own Forms 3, 4 and 5 (SEC's insider transactions data sets): the shares each held after their last report on or before the quarter-end, directly and through trusts or companies (options and units left out), at the quarter's 13F price; a holding not reported again for two years is left out. A block a 13F manager also reports counts once, in 13F (Berkshire's shares in Warren Buffett's own Form 4), and one family company's shares once.`);
+    else if (st.hi === 'off' && hm !== 'share13') out.notes.add('Insiders left out (Forms 3/4/5): 13F managers only.');
     out.notes.add(`Each quarter names its 20 largest holders; the rest${style === 'stack' ? ' are in Other 13F holders' : ' are not drawn that quarter'}.`);
     return out;
   }
@@ -176,11 +203,11 @@
       ['sh', 'Shares', 'Reported at ' + qLabel(H.last)], ['usd', 'Value', 'Reported 13F value at ' + qLabel(H.last)]];
     const rows = H.rows.map((r) => ({ k: r.pal, label: r.label, name: r.name, cells: {
       v0: cell(f(r.v0), r.q0 !== H.first ? 'from ' + qLabel(r.q0) : '', r.v0), v: cell(f(r.v), '', r.v), chg: cell(ch(r.v0, r.v), '', fin(r.v0) && fin(r.v) ? r.v - r.v0 : null),
-      sh: cell(count(r.sh), '', r.sh), usd: cell(money(r.usd), r.key.startsWith('f:') ? 'fund family' : '', r.usd) } }));
+      sh: cell(count(r.sh), '', r.sh), usd: cell(money(r.usd), r.key.startsWith('f:') ? 'fund family' : r.key.startsWith('i:') ? 'insider: Forms 3/4/5' : '', r.usd) } }));
     const I = H.inst;
     rows.push({ k: 0, label: 'Every 13F holder', strong: true, sec: 'other', cells: { v0: cell(f(I.v0), I.holders0.toLocaleString('en-US') + ' managers', I.v0), v: cell(f(I.v), I.holders.toLocaleString('en-US') + ' managers', I.v),
       chg: cell(ch(I.v0, I.v), '', fin(I.v0) && fin(I.v) ? I.v - I.v0 : null), sh: cell(''), usd: cell(money(I.usd), '', I.usd) } });
-    return { cols, rows, foot: 'From SEC Form 13F data sets: each manager\'s holdings at the quarter-end as it reported them; fund families together. ' + (hm === 'pct' ? (H.kind === 'fund' ? 'Share: 13F value ÷ the fund\'s net assets (N-PORT).' : 'Share: 13F value ÷ the company\'s market value at the quarter-end.') : hm === 'share13' ? 'Share: of every share 13F managers reported.' : '') };
+    return { cols, rows, foot: 'From SEC Form 13F data sets: each manager\'s holdings at the quarter-end as it reported them; fund families together. Insiders from their Forms 3, 4 and 5, at the quarter\'s 13F price. ' + (hm === 'pct' ? (H.kind === 'fund' ? 'Share: 13F value ÷ the fund\'s net assets (N-PORT).' : 'Share: 13F value ÷ the company\'s market value at the quarter-end.') : hm === 'share13' ? 'Share: of every share 13F managers reported.' : '') };
   }
   // the end card of the lines: each holder's share now and the change since the start
   function final(V) {

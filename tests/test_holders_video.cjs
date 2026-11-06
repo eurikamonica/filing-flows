@@ -95,6 +95,30 @@ const build = (s) => S.build(Object.assign(S.parseState('k=holders'), s));
   await assert.rejects(build({ t: 'NOPE' }), /still being built/); n++;
   files[B + 'status.json'] = { tickers: 3 };
   await assert.rejects(build({ t: 'AAPL', from: '2030-01-01' }), /no quarter on file/); n++;
+  // insiders (Forms 3/4/5, i/<TICKER>.json): holders beside the 13F managers — in the race, as bands, in the table
+  files[B + 'i/AAPL.json'] = { ticker: 'AAPL', periods: P, who: [[1001, 'Jane Founder', 'CEO · director · 10% owner'], [1002, 'Sam Officer', 'CFO']],
+    top: P.map(() => [[0, 8e8, 1.5e11], [1, 1e6, 1.8e8]]), total: P.map(() => [2, 8.01e8, 1.5018e11]) };
+  V = await build({ t: 'AAPL' });
+  const jane = V.series.find((s) => s.key === 'i:1001');
+  ok(jane && jane.label === 'Jane Founder' && /CEO · director · 10% owner \(insider: Forms 3\/4\/5\)/.test(jane.name), 'an insider in the race: ' + (jane && jane.name));
+  near(jane.v[0], 1.5e11 / 3e12, 'her shares at the 13F price ÷ the market value');
+  ok(/13F holders and insiders/.test(V.sub) && [...V.notes].some((x) => /Insiders — officers, directors and 10% owners \(2 at most/.test(x)), 'said in the subtitle and the notes');
+  V.style = 'bars'; V.endCard = true; S.finish(V, Object.assign(S.parseState('k=holders'), { t: 'AAPL' }));
+  Rp = S.report(V);
+  ok(Rp.rows.find((r) => r.label === 'Jane Founder').cells.usd[1] === 'insider: Forms 3/4/5', 'the table marks an insider');
+  V = await build({ t: 'AAPL', style: 'stack', hn: '3' });
+  ok(V.series.map((s) => s.key).join() === 'f:vanguard,f:blackrock,c1067983,other,insiders,rest', 'areas with the other insiders: ' + V.series.map((s) => s.key));
+  for (let j = 0; j < 4; j++) near(V.series.reduce((a, s) => a + s.v[j], 0), 1, 'with insiders, every quarter adds up to 100%');
+  near(V.series.find((s) => s.key === 'rest').v[0], 1 - 0.6 - 1.5018e11 / 3e12, 'not reported: 1 − 13F − insiders');
+  ok(V.series.find((s) => s.key === 'rest').label === 'Not reported', 'the rest renamed');
+  V = await build({ t: 'AAPL', style: 'stack', hn: '5' });
+  near(V.series.find((s) => s.key === 'i:1001').v[0], 0.05, 'the founder a band of her own');
+  near(V.series.find((s) => s.key === 'insiders').v[0], 1.8e8 / 3e12, 'the other insiders: the rest of them');
+  V = await build({ t: 'AAPL', hi: 'off' });
+  ok(!V.series.some((s) => s.key.startsWith('i:')) && [...V.notes].some((x) => /Insiders left out/.test(x)), 'insiders left out on request');
+  V = await build({ t: 'AAPL', hm: 'share13' });
+  ok(!V.series.some((s) => s.key.startsWith('i:')), 'not in the share of 13F holdings');
+  ok(S.parseState('k=holders&hi=off').hi === 'off', 'the address keeps the choice');
   // every style drawn, in every shape, along the way
   for (const style of ['bars', 'line', 'stack', 'changes']) {
     const W = await build({ t: 'AAPL', style });
