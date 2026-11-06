@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T02:32:12+00:00",
-  "generation": "e1de8bfed6ecd1bee2fa",
+  "generated_at": "2026-11-06T09:44:27+00:00",
+  "generation": "69b2e1d8d39ecc90fe2d",
   "companies": [
     {
       "accession": "0002161470-26-000002",
@@ -35,9 +35,9 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:21+00:00",
+      "last_attempt": "2026-11-06T09:43:47+00:00",
       "last_success": null,
-      "error": "503 Server Error: Service Unavailable for url: https://www.sec.gov/Archives/edgar/data/1665650/000191870426034699/0001918704-26-034699-index.html",
+      "error": "Matching primary document not found on SEC index",
       "classification": "unclassified",
       "filing_count": 3143,
       "parsed_periods": 0,
@@ -113,20 +113,20 @@
       "name": "GoPro, Inc.",
       "form": "424B3",
       "filed": "2026-11-05",
-      "accepted": null,
+      "accepted": "2026-11-05T21:12:54+00:00",
       "index_url": "https://www.sec.gov/Archives/edgar/data/1500435/000162828026071061/0001628280-26-071061-index.html",
-      "source_url": null,
-      "file_number": null,
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1500435/000162828026071061/gpro-posamno1yorkville424b.htm",
+      "file_number": "333-294507",
       "discovered_at": "2026-11-05T22:17:18+00:00",
-      "state": "queued",
-      "last_attempt": null,
-      "last_success": null,
-      "error": null,
-      "classification": "unclassified",
+      "state": "needs_review",
+      "last_attempt": "2026-11-06T09:43:57+00:00",
+      "last_success": "2026-11-06T09:43:58+00:00",
+      "error": "Missing or mixed reporting currencies",
+      "classification": "registration_unclassified",
       "filing_count": 32,
       "parsed_periods": 0,
       "analysis_accession": "0001628280-26-071061",
-      "lifecycle": null
+      "lifecycle": "EFFECT"
     },
     {
       "accession": "0001628280-26-071053",
@@ -134,16 +134,16 @@
       "name": "Enhanced Group Inc.",
       "form": "424B3",
       "filed": "2026-11-05",
-      "accepted": null,
+      "accepted": "2026-11-05T21:11:37+00:00",
       "index_url": "https://www.sec.gov/Archives/edgar/data/1956439/000162828026071053/0001628280-26-071053-index.html",
-      "source_url": null,
-      "file_number": null,
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1956439/000162828026071053/a424sticker333-295777x11526.htm",
+      "file_number": "333-295777",
       "discovered_at": "2026-11-05T22:17:18+00:00",
-      "state": "queued",
-      "last_attempt": null,
-      "last_success": null,
-      "error": null,
-      "classification": "unclassified",
+      "state": "needs_review",
+      "last_attempt": "2026-11-06T09:43:58+00:00",
+      "last_success": "2026-11-06T09:43:59+00:00",
+      "error": "Missing or mixed reporting currencies",
+      "classification": "registration_unclassified",
       "filing_count": 43,
       "parsed_periods": 0,
       "analysis_accession": "0001628280-26-071053",
@@ -942,7 +942,7 @@
       "last_success": null,
       "error": null,
       "classification": "unclassified",
-      "filing_count": 1,
+      "filing_count": 4,
       "parsed_periods": 0,
       "analysis_accession": "0001185185-26-005201",
       "lifecycle": null
@@ -1110,7 +1110,7 @@
       "last_success": null,
       "error": null,
       "classification": "unclassified",
-      "filing_count": 1,
+      "filing_count": 2,
       "parsed_periods": 0,
       "analysis_accession": "0001104659-26-123104",
       "lifecycle": null
@@ -9876,6 +9876,27 @@
       "exchange": "NYSE American"
     },
     {
+      "accession": "0001104659-26-116249",
+      "cik": 1509261,
+      "name": "Rezolute, Inc.",
+      "form": "DRS",
+      "filed": "2026-10-15",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1509261/000110465926116249/0001104659-26-116249-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-11-06T09:43:15+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified",
+      "filing_count": 7,
+      "parsed_periods": 0,
+      "analysis_accession": "0001104659-26-116249",
+      "lifecycle": null
+    },
+    {
       "accession": "0000051931-26-001036",
       "cik": 2078301,
       "name": "Capital Group KKR U.S. Equity (plus)",
@@ -15719,7 +15740,9 @@
       "filing_count": 1,
       "parsed_periods": 0,
       "analysis_accession": "0001213900-26-104919",
-      "lifecycle": null
+      "lifecycle": null,
+      "symbol": "YHTE",
+      "exchange": "Nasdaq Capital Market"
     },
     {
       "accession": "0001213900-26-104857",
@@ -15761,7 +15784,9 @@
       "filing_count": 5,
       "parsed_periods": 0,
       "analysis_accession": "0001213900-26-104820",
-      "lifecycle": null
+      "lifecycle": null,
+      "symbol": "EPOW",
+      "exchange": "Nasdaq Capital Market"
     },
     {
       "accession": "0001193125-26-409189",
@@ -15972,7 +15997,9 @@
       "filing_count": 9,
       "parsed_periods": 0,
       "analysis_accession": "0001493152-26-044771",
-      "lifecycle": null
+      "lifecycle": null,
+      "symbol": "IMMX",
+      "exchange": "Nasdaq Capital Market"
     },
     {
       "accession": "0001213900-26-104541",
@@ -89819,27 +89846,6 @@
       "lifecycle": null
     },
     {
-      "accession": "0001104659-25-038091",
-      "cik": 1509261,
-      "name": "Rezolute, Inc.",
-      "form": "424B5",
-      "filed": "2025-04-23",
-      "accepted": null,
-      "index_url": "https://www.sec.gov/Archives/edgar/data/1509261/000110465925038091/0001104659-25-038091-index.html",
-      "source_url": null,
-      "file_number": null,
-      "discovered_at": "2026-10-26T19:57:31+00:00",
-      "state": "queued",
-      "last_attempt": null,
-      "last_success": null,
-      "error": null,
-      "classification": "unclassified",
-      "filing_count": 6,
-      "parsed_periods": 0,
-      "analysis_accession": "0001104659-25-038091",
-      "lifecycle": null
-    },
-    {
       "accession": "0001829126-25-006005",
       "cik": 2059165,
       "name": "STARRY SEA ACQUISITION CORP",
@@ -121752,9 +121758,9 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:21+00:00",
+      "last_attempt": "2026-11-06T09:43:47+00:00",
       "last_success": null,
-      "error": "503 Server Error: Service Unavailable for url: https://www.sec.gov/Archives/edgar/data/1665650/000191870426034699/0001918704-26-034699-index.html",
+      "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
     },
     {
@@ -121769,7 +121775,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:32+00:00",
+      "last_attempt": "2026-11-06T09:43:48+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121786,7 +121792,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:32+00:00",
+      "last_attempt": "2026-11-06T09:43:48+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121803,7 +121809,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:32+00:00",
+      "last_attempt": "2026-11-06T09:43:49+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121820,7 +121826,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:33+00:00",
+      "last_attempt": "2026-11-06T09:43:49+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121837,7 +121843,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:33+00:00",
+      "last_attempt": "2026-11-06T09:43:50+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121854,7 +121860,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:34+00:00",
+      "last_attempt": "2026-11-06T09:43:50+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121871,7 +121877,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:34+00:00",
+      "last_attempt": "2026-11-06T09:43:51+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121888,7 +121894,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:35+00:00",
+      "last_attempt": "2026-11-06T09:43:51+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121905,7 +121911,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:35+00:00",
+      "last_attempt": "2026-11-06T09:43:52+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121922,7 +121928,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:36+00:00",
+      "last_attempt": "2026-11-06T09:43:52+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121939,7 +121945,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:36+00:00",
+      "last_attempt": "2026-11-06T09:43:53+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121956,7 +121962,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:37+00:00",
+      "last_attempt": "2026-11-06T09:43:53+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121973,7 +121979,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:37+00:00",
+      "last_attempt": "2026-11-06T09:43:54+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -121990,7 +121996,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:38+00:00",
+      "last_attempt": "2026-11-06T09:43:54+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -122007,7 +122013,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:38+00:00",
+      "last_attempt": "2026-11-06T09:43:55+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -122024,7 +122030,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:39+00:00",
+      "last_attempt": "2026-11-06T09:43:55+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -122041,7 +122047,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:39+00:00",
+      "last_attempt": "2026-11-06T09:43:56+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -122058,7 +122064,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:40+00:00",
+      "last_attempt": "2026-11-06T09:43:56+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -122075,7 +122081,7 @@
       "file_number": null,
       "discovered_at": "2026-11-05T16:40:58+00:00",
       "state": "download_failed",
-      "last_attempt": "2026-11-06T02:31:40+00:00",
+      "last_attempt": "2026-11-06T09:43:57+00:00",
       "last_success": null,
       "error": "Matching primary document not found on SEC index",
       "classification": "unclassified"
@@ -122205,16 +122211,16 @@
       "name": "GoPro, Inc.",
       "form": "424B3",
       "filed": "2026-11-05",
-      "accepted": null,
+      "accepted": "2026-11-05T21:12:54+00:00",
       "index_url": "https://www.sec.gov/Archives/edgar/data/1500435/000162828026071061/0001628280-26-071061-index.html",
-      "source_url": null,
-      "file_number": null,
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1500435/000162828026071061/gpro-posamno1yorkville424b.htm",
+      "file_number": "333-294507",
       "discovered_at": "2026-11-05T22:17:18+00:00",
-      "state": "queued",
-      "last_attempt": null,
-      "last_success": null,
-      "error": null,
-      "classification": "unclassified"
+      "state": "needs_review",
+      "last_attempt": "2026-11-06T09:43:57+00:00",
+      "last_success": "2026-11-06T09:43:58+00:00",
+      "error": "Missing or mixed reporting currencies",
+      "classification": "registration_unclassified"
     },
     {
       "accession": "0001628280-26-071053",
@@ -122222,16 +122228,16 @@
       "name": "Enhanced Group Inc.",
       "form": "424B3",
       "filed": "2026-11-05",
-      "accepted": null,
+      "accepted": "2026-11-05T21:11:37+00:00",
       "index_url": "https://www.sec.gov/Archives/edgar/data/1956439/000162828026071053/0001628280-26-071053-index.html",
-      "source_url": null,
-      "file_number": null,
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1956439/000162828026071053/a424sticker333-295777x11526.htm",
+      "file_number": "333-295777",
       "discovered_at": "2026-11-05T22:17:18+00:00",
-      "state": "queued",
-      "last_attempt": null,
-      "last_success": null,
-      "error": null,
-      "classification": "unclassified"
+      "state": "needs_review",
+      "last_attempt": "2026-11-06T09:43:58+00:00",
+      "last_success": "2026-11-06T09:43:59+00:00",
+      "error": "Missing or mixed reporting currencies",
+      "classification": "registration_unclassified"
     },
     {
       "accession": "0001628280-26-071051",
@@ -122239,16 +122245,16 @@
       "name": "Enhanced Group Inc.",
       "form": "424B3",
       "filed": "2026-11-05",
-      "accepted": null,
+      "accepted": "2026-11-05T21:11:00+00:00",
       "index_url": "https://www.sec.gov/Archives/edgar/data/1956439/000162828026071051/0001628280-26-071051-index.html",
-      "source_url": null,
-      "file_number": null,
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1956439/000162828026071051/a424sticker333-298547x11526.htm",
+      "file_number": "333-298547",
       "discovered_at": "2026-11-05T22:17:18+00:00",
-      "state": "queued",
-      "last_attempt": null,
-      "last_success": null,
-      "error": null,
-      "classification": "unclassified"
+      "state": "needs_review",
+      "last_attempt": "2026-11-06T09:43:59+00:00",
+      "last_success": "2026-11-06T09:44:00+00:00",
+      "error": "Missing or mixed reporting currencies",
+      "classification": "registration_unclassified"
     },
     {
       "accession": "0001628280-26-071048",
@@ -122256,16 +122262,16 @@
       "name": "GoPro, Inc.",
       "form": "424B3",
       "filed": "2026-11-05",
-      "accepted": null,
+      "accepted": "2026-11-05T21:10:38+00:00",
       "index_url": "https://www.sec.gov/Archives/edgar/data/1500435/000162828026071048/0001628280-26-071048-index.html",
-      "source_url": null,
-      "file_number": null,
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1500435/000162828026071048/gpro-posamno3farallon424b3.htm",
+      "file_number": "333-289946",
       "discovered_at": "2026-11-05T22:17:18+00:00",
-      "state": "queued",
-      "last_attempt": null,
-      "last_success": null,
-      "error": null,
-      "classification": "unclassified"
+      "state": "needs_review",
+      "last_attempt": "2026-11-06T09:44:00+00:00",
+      "last_success": "2026-11-06T09:44:01+00:00",
+      "error": "Missing or mixed reporting currencies",
+      "classification": "registration_unclassified"
     },
     {
       "accession": "0001628280-26-071045",
@@ -126825,23 +126831,23 @@
     }
   ],
   "status": {
-    "generated_at": "2026-11-06T02:32:12+00:00",
-    "last_attempt": "2026-11-06T02:30:32+00:00",
-    "last_discovery_completed": "2026-11-06T02:31:08+00:00",
-    "feed_last_success": "2026-11-05T08:30:26+00:00",
-    "feed_state": "partial_or_failed",
+    "generated_at": "2026-11-06T09:44:27+00:00",
+    "last_attempt": "2026-11-06T09:43:08+00:00",
+    "last_discovery_completed": "2026-11-06T09:43:16+00:00",
+    "feed_last_success": "2026-11-06T09:43:15+00:00",
+    "feed_state": "ok",
     "coverage_start": "2024-01-01",
     "quarters_total": 12,
     "quarters_completed": 12,
     "backfill_pending": [],
     "issuer_count": 5773,
-    "filing_count": 60949,
+    "filing_count": 60954,
     "states": {
       "document_only": 542,
       "download_failed": 333,
-      "needs_review": 2034,
+      "needs_review": 2038,
       "parsed": 41,
-      "queued": 57999
+      "queued": 58000
     },
     "target_interval_seconds": 300,
     "sources": [
@@ -126976,6 +126982,16 @@
         "error": null
       },
       {
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261105.idx",
+        "kind": "daily",
+        "period": "2026-11-05",
+        "last_attempt": "2026-11-06T09:43:15+00:00",
+        "last_success": "2026-11-06T09:43:15+00:00",
+        "state": "ok",
+        "count": 182,
+        "error": null
+      },
+      {
         "url": "https://www.sec.gov/Archives/edgar/full-index/2024/QTR1/master.idx",
         "kind": "quarter",
         "period": "2024-Q1",
@@ -127089,18 +127105,18 @@
         "url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR4/master.idx",
         "kind": "quarter",
         "period": "2026-Q4",
-        "last_attempt": "2026-11-06T02:31:08+00:00",
-        "last_success": "2026-11-06T02:31:08+00:00",
+        "last_attempt": "2026-11-06T09:43:16+00:00",
+        "last_success": "2026-11-06T09:43:16+00:00",
         "state": "ok",
-        "count": 2016,
+        "count": 2196,
         "error": null
       },
       {
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B1&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "424B1",
-        "last_attempt": "2026-11-06T02:30:42+00:00",
-        "last_success": "2026-11-06T02:30:42+00:00",
+        "last_attempt": "2026-11-06T09:43:10+00:00",
+        "last_success": "2026-11-06T09:43:10+00:00",
         "state": "ok",
         "count": 2,
         "error": null
@@ -127109,8 +127125,8 @@
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B3&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "424B3",
-        "last_attempt": "2026-11-06T02:30:43+00:00",
-        "last_success": "2026-11-06T02:30:43+00:00",
+        "last_attempt": "2026-11-06T09:43:10+00:00",
+        "last_success": "2026-11-06T09:43:10+00:00",
         "state": "ok",
         "count": 100,
         "error": null
@@ -127119,8 +127135,8 @@
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B3&company=&dateb=&owner=include&start=100&count=100&output=atom",
         "kind": "feed",
         "period": "424B3",
-        "last_attempt": "2026-11-06T02:30:43+00:00",
-        "last_success": "2026-11-06T02:30:43+00:00",
+        "last_attempt": "2026-11-06T09:43:11+00:00",
+        "last_success": "2026-11-06T09:43:11+00:00",
         "state": "ok",
         "count": 100,
         "error": null
@@ -127129,38 +127145,38 @@
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B3&company=&dateb=&owner=include&start=200&count=100&output=atom",
         "kind": "feed",
         "period": "424B3",
-        "last_attempt": "2026-11-06T02:30:44+00:00",
-        "last_success": "2026-11-06T02:30:44+00:00",
-        "state": "truncated",
-        "count": 100,
-        "error": "Page cap reached; quarterly/daily reconciliation required"
+        "last_attempt": "2026-11-06T09:43:11+00:00",
+        "last_success": "2026-11-06T09:43:11+00:00",
+        "state": "ok",
+        "count": 32,
+        "error": null
       },
       {
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B4&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "424B4",
-        "last_attempt": "2026-11-06T02:31:04+00:00",
-        "last_success": "2026-11-05T22:17:39+00:00",
-        "state": "failed",
-        "count": 0,
-        "error": "HTTPSConnectionPool(host='www.sec.gov', port=443): Read timed out. (read timeout=20)"
+        "last_attempt": "2026-11-06T09:43:12+00:00",
+        "last_success": "2026-11-06T09:43:12+00:00",
+        "state": "ok",
+        "count": 4,
+        "error": null
       },
       {
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=424B5&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "424B5",
-        "last_attempt": "2026-11-06T02:31:04+00:00",
-        "last_success": "2026-11-06T02:31:04+00:00",
+        "last_attempt": "2026-11-06T09:43:12+00:00",
+        "last_success": "2026-11-06T09:43:12+00:00",
         "state": "ok",
-        "count": 60,
+        "count": 44,
         "error": null
       },
       {
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=DRS&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "DRS",
-        "last_attempt": "2026-11-06T02:31:05+00:00",
-        "last_success": "2026-11-06T02:31:05+00:00",
+        "last_attempt": "2026-11-06T09:43:13+00:00",
+        "last_success": "2026-11-06T09:43:13+00:00",
         "state": "ok",
         "count": 0,
         "error": null
@@ -127169,8 +127185,8 @@
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=EFFECT&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "EFFECT",
-        "last_attempt": "2026-11-06T02:31:05+00:00",
-        "last_success": "2026-11-06T02:31:05+00:00",
+        "last_attempt": "2026-11-06T09:43:13+00:00",
+        "last_success": "2026-11-06T09:43:13+00:00",
         "state": "ok",
         "count": 100,
         "error": null
@@ -127179,8 +127195,8 @@
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=EFFECT&company=&dateb=&owner=include&start=100&count=100&output=atom",
         "kind": "feed",
         "period": "EFFECT",
-        "last_attempt": "2026-11-06T02:31:06+00:00",
-        "last_success": "2026-11-06T02:31:06+00:00",
+        "last_attempt": "2026-11-06T09:43:14+00:00",
+        "last_success": "2026-11-06T09:43:14+00:00",
         "state": "ok",
         "count": 100,
         "error": null
@@ -127189,8 +127205,8 @@
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=EFFECT&company=&dateb=&owner=include&start=200&count=100&output=atom",
         "kind": "feed",
         "period": "EFFECT",
-        "last_attempt": "2026-11-06T02:31:07+00:00",
-        "last_success": "2026-11-06T02:31:07+00:00",
+        "last_attempt": "2026-11-06T09:43:15+00:00",
+        "last_success": "2026-11-06T09:43:15+00:00",
         "state": "truncated",
         "count": 100,
         "error": "Page cap reached; quarterly/daily reconciliation required"
@@ -127199,45 +127215,45 @@
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=F-1&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "F-1",
-        "last_attempt": "2026-11-06T02:30:33+00:00",
-        "last_success": "2026-11-06T02:30:33+00:00",
+        "last_attempt": "2026-11-06T09:43:09+00:00",
+        "last_success": "2026-11-06T09:43:09+00:00",
         "state": "ok",
-        "count": 6,
+        "count": 2,
         "error": null
       },
       {
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=RW&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "RW",
-        "last_attempt": "2026-11-06T02:31:08+00:00",
-        "last_success": "2026-11-06T02:31:08+00:00",
+        "last_attempt": "2026-11-06T09:43:15+00:00",
+        "last_success": "2026-11-06T09:43:15+00:00",
         "state": "ok",
-        "count": 3,
+        "count": 2,
         "error": null
       },
       {
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=S-1&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "S-1",
-        "last_attempt": "2026-11-06T02:30:32+00:00",
-        "last_success": "2026-11-06T02:30:32+00:00",
+        "last_attempt": "2026-11-06T09:43:08+00:00",
+        "last_success": "2026-11-06T09:43:08+00:00",
         "state": "ok",
-        "count": 12,
+        "count": 11,
         "error": null
       },
       {
         "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=S-11&company=&dateb=&owner=include&start=0&count=100&output=atom",
         "kind": "feed",
         "period": "S-11",
-        "last_attempt": "2026-11-06T02:30:42+00:00",
-        "last_success": "2026-11-06T02:30:42+00:00",
+        "last_attempt": "2026-11-06T09:43:09+00:00",
+        "last_success": "2026-11-06T09:43:09+00:00",
         "state": "ok",
         "count": 1,
         "error": null
       }
     ],
     "scope": "US SEC public registration/prospectus market; registration forms are not all IPOs. Confidential drafts unavailable.",
-    "generation": "e1de8bfed6ecd1bee2fa"
+    "generation": "69b2e1d8d39ecc90fe2d"
   },
   "scope": "US SEC public registration/prospectus market; registration forms are not all IPOs. Confidential drafts unavailable."
 }
