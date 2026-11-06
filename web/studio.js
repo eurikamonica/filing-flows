@@ -564,7 +564,7 @@
   /* ---------- building a video: the series on the grid, labels and formats ---------- */
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
-    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
+    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', az: '', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
     goal: '', solve: 'rec', yrs: '', fi: '0', fsplit: 'line', frb: '0', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', sp: 'phone', spi: 'iPhone', spp: '999', spinf: 'pro', spir: '', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0', sphe: 'm', sphn: '1', spe: '', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '', hm: 'pct', hn: '10' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
@@ -3417,6 +3417,9 @@
       h += `<div class="st-help st-range" id="st-range" aria-live="polite"></div>`;
       if (st.style === 'changes') h += `<label for="st-ag">Group changes</label>${sel('st-ag', [['company','Company'],['sector','Sector']], st.ag)}`;
       h += `<label for="st-an">Top holdings shown</label>${sel('st-an', [['5', '5'], ['10', '10'], ['12', '12'], ['15', '15'], ['20', '20']], st.an)}`;
+      // the rest of the book as one band: drawn, left out (the largest on their own scale), or left out only when the
+      // largest never reach half of the book (a fund of thousands of lines, a market maker's 13F) — web/actual-weights.js
+      if (st.style === 'companies') h += `<label for="st-az">Everything else (“Other”)</label>${sel('st-az', [['', 'Auto: hidden when the top ones are under half'], ['full', 'Show: the whole book, 100%'], ['top', 'Hide: the top ones on their own scale']], st.az)}`;
       return h + '<div class="st-help">ETF NAV weights; 13F reported-value weights; officials show monthly transaction lower-bound shares, NOT holdings. Source dates are retained; official transaction charts use month-end buckets. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Index mode only: a start before the fund’s first report is reconstructed from the index’s members (labeled on the video); funds, managers and officials show their reports alone.</div>';
     }
     function holdingsSide() {

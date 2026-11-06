@@ -108,6 +108,16 @@ const out = () => ({ notes: new Set(), series: [] });
     options: [[0, 0], [0, 0]], sectors: [{}, {}], unit: 1e-5, names: {},
     top: [0, 100].map((d) => Array.from({ length: 100 }, (_, j) => ['T' + j, 300 + d - j])) };
   assert.match((await A.disclosedSource({ aw: '13f', ac: '777' }, api)).note, /100 largest positions \(a holding below a quarter's 100th — under 0\.20% to 0\.30% of its book — is drawn as 0 there\)/);
+  assert.match([...z.notes].join(' '), /hidden because the 12 largest never reach half of it; choose Everything else: Show/);
+  // Everything else: Hide — the largest on their own scale even when they are most of the book
+  const hide = out();
+  await A.build({ aw: '13f', ac: '1423053', style: 'companies', an: '3', az: 'top' }, hide, api);
+  assert.equal(hide.stack.share, false, 'az=top: on their own scale');
+  assert.ok(!hide.series.some((x) => x.key === 'other'));
+  assert.match([...hide.notes].join(' '), /\(Everything else: Hide\)/);
+  const auto = out();
+  await A.build({ aw: '13f', ac: '1423053', style: 'companies', an: '3' }, auto, api);
+  assert.equal(auto.stack.share, true, 'auto: the three largest are over half the book — the whole book drawn');
   const full = out();
   await A.build({ aw: '13f', ac: '888', style: 'companies', an: '12', az: 'full' }, full, api);
   assert.equal(full.stack.share, true, 'az=full: the whole book');

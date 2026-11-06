@@ -356,7 +356,9 @@
       keys = cand.slice().sort((a,b)=>peak(b)-peak(a)).slice(0,n);
       // a book of thousands of lines (a market maker's 13F): its largest are a sliver of the whole — drawn on their own
       // scale below, and chosen by their average weight (the steady holdings), not one quarter's spike
-      zoom = st.az !== 'full' && all.length >= 2 && Math.max(...tables.map(m=>keys.reduce((a,k)=>a+(m.get(k)||0),0))) < 0.5;
+      // az: '' (auto: when the largest never reach half of the book), 'full' (never: the whole book) or 'top' (always)
+      const under = Math.max(...tables.map(m=>keys.reduce((a,k)=>a+(m.get(k)||0),0))) < 0.5;
+      zoom = all.length >= 2 && (st.az === 'top' || (st.az !== 'full' && under));
       if (zoom) keys = cand.slice().sort((a,b)=>mean(b)-mean(a)).slice(0,n);
       tables.forEach(m=>{const rest=[...m].filter(([k])=>!keys.includes(k)).reduce((s,[,v])=>s+v,0); m.set('other',rest);});
       keys.push('other');
@@ -375,8 +377,9 @@
       if (zoom) {
         out.series = out.series.filter((x) => x.key !== 'other');
         out.stack = { share: false, pct: true, total: tops };
-        const last = tops.length - 1, drawn = keys.length - 1, lines = all[last].lines || all[last].positions.length;
-        out.notes.add(`The ${drawn} largest on average are ${percent(tops[last])} of the long equity book at ${to} (${percent(Math.max(...tops))} at most): drawn on their own scale, each still a share of the whole book; the other ${lines > drawn ? (lines - drawn).toLocaleString('en-US') + ' ' : ''}holdings (${percent(1 - tops[last])}) are left out of the picture. The bar race shows each quarter's own largest.`);
+        const last = tops.length - 1, drawn = keys.length - 1, lines = all[last].lines || 0;   // a fund's report as kept: its largest lines, not all — no count then
+        const book = external && /13F/.test(external.basis || '') ? 'the long equity book' : "the fund's net assets";
+        out.notes.add(`The ${drawn} largest on average are ${percent(tops[last])} of ${book} at ${to} (${percent(Math.max(...tops))} at most): drawn on their own scale, each still a share of the whole; ${lines > drawn ? 'the other ' + (lines - drawn).toLocaleString('en-US') + ' holdings' : 'the rest of the holdings'} (${percent(1 - tops[last])}) are left out of the picture${st.az === 'top' ? ' (Everything else: Hide)' : ` — hidden because the ${drawn} largest never reach half of it; choose Everything else: Show to draw them as one band`}. The bar race shows each quarter's own largest.`);
       } else out.notes.add('Other preserves the denominator: remaining companies, unmatched securities and unreported assets. Company bands are ticker/security level; share classes are not consolidated. Sector classifications may use current metadata.');
     } else {
       out.kind='rank'; out.rankN=n; out.order='desc';
