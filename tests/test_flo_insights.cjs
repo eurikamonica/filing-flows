@@ -61,7 +61,7 @@ const files = {
   'disclosures/data/research/paths/moves/index.json': { as_of: DAY(1), breadth: { down5: 0.15, up5: 0.04 }, fields: ['key', 'ticker', 'kind', 'cik', 'as_of', 'd0', 'move', 'pct', 'z', 'every', 'sim21'],
     rows: [['NVDA', 'NVDA', 'stock', 1, DAY(1), '2016-01-04', -0.042, 6.1, -2.0, 13, [347, 0.044, 0.58]], ['AAPL', 'AAPL', 'stock', 2, DAY(1), '2016-01-04', 0.03, 97, 1.8, 30, null]] },
   'disclosures/data/market/guidance-board.json': { rows: [{ t: 'NVDA', cik: 1, n: 26, rate: 0.92, beat: 15, miss: 2, raised: 0, lowered: 0 }], recent: [[DAY(1), 'AAPL', '2', 'raised', 'Apple raises outlook', 'https://x']] },
-  'disclosures/data/research/earnings/index.json': { fields: ['ticker', 'name', 'report_date', 'days_to', 'eps'], rows: [['AAPL', 'Apple', DAY(-1), 1, 1.98], ['NVDA', 'NVIDIA', DAY(-14), 14, 2.47]] },
+  'disclosures/data/research/earnings/index.json': { fields: ['ticker', 'name', 'report_date', 'days_to', 'eps'], rows: [['AAPL', 'Apple', DAY(0), 0, 1.98], ['NVDA', 'NVIDIA', DAY(-14), 14, 2.47]] },
   'data/c/2.json': { quarters: [{ label: 'Q3 FY26', headline: { revenue: 109, yoy: 16, om: 32.6, ni: 30 } }],
     quality: { cap: { q: [{ end: '2026-06-27', label: 'Q3 FY26', items: { ocf: 34, capex: -2 } }], ttm: { label: 'TTM', items: { ocf: 140, capex: -10 } } } } },
   'disclosures/data/market/officials-trades.json': { summary: { d90: [{ ticker: 'NVDA', buys: 3, sells: 6, people_buy: ['Jane Doe'] }] },
