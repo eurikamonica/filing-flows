@@ -3477,6 +3477,32 @@ def test_a_slipped_scale_loses_to_the_other_versions_of_the_figure():
     assert facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")["ni"] == 4.171e6
 
 
+def test_a_minority_interest_tagged_as_net_income_itself_is_dropped():
+    """Univest's Q2 2026 10-Q tags NetIncomeLossAttributableToNoncontrollingInterest with net income itself ($22.953M)
+    and no ProfitLoss; pre-tax $28.558M less $5.605M of tax is net income alone. Kept, the chart showed a $22.953M
+    minority interest, $45.9M "including minority interests" and pre-tax rebuilt as $51.5M (facts.odd_one_out)."""
+    from pipeline import facts, model
+    own = "0000102212-26-000037"
+    mk = lambda s, e, v: {"start": s, "end": e, "val": v, "filed": "2026-08-07", "form": "10-Q", "accn": own}
+    pre = "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+    g = {"Revenues": [mk("2026-04-01", "2026-06-30", 84.354e6)],
+         "NetIncomeLoss": [mk("2026-04-01", "2026-06-30", 22.953e6)],
+         "NetIncomeLossAttributableToNoncontrollingInterest": [mk("2026-04-01", "2026-06-30", 22.953e6)],
+         pre: [mk("2026-04-01", "2026-06-30", 28.558e6)],
+         "IncomeTaxExpenseBenefit": [mk("2026-04-01", "2026-06-30", 5.605e6)]}
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    r = facts.extract(facts.index_facts(raw, accn=own), "2026-06-30")
+    assert r["ni"] == 22.953e6 and r["nci"] is None and r["pretax"] == 28.558e6
+    N = model.normalize(r)
+    assert N["pl"] == 22.953e6 and N["nci"] == 0 and N["pretax"] == 28.558e6
+    # a real minority interest (pre-tax less tax is net income plus it) is kept
+    g["NetIncomeLossAttributableToNoncontrollingInterest"] = [mk("2026-04-01", "2026-06-30", 2e6)]
+    g[pre] = [mk("2026-04-01", "2026-06-30", 30.558e6)]
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    r = facts.extract(facts.index_facts(raw, accn=own), "2026-06-30")
+    assert r["nci"] == 2e6 and model.normalize(r)["pl"] == 24.953e6
+
+
 def test_fourth_quarter_kept_when_the_quarters_do_not_add_up_to_nine_months():
     """Smith Midland's FY2025 capex: $9.338M for the year, $5.382M for nine months, so $3.956M in the fourth quarter.
     The three quarters derived through the Q2 10-Q's slipped six-month figure ($5 thousand) add up to $7.9M: not

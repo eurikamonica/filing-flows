@@ -512,14 +512,24 @@ def odd_one_out(raw):
     """Net income to shareholders and the consolidated figure (ProfitLoss) should differ by the minority interests'
     share, and pre-tax earnings less tax is the consolidated figure. When the shareholders' figure fits pre-tax less
     tax and ProfitLoss does not (Smith Midland's 2024 10-Qs tag ProfitLoss with the sign flipped), the ProfitLoss tag
-    is the slip: without it the chart would show a minority interest that does not exist."""
-    pretax, tax, ni, pl = (raw.get(k) for k in ("pretax", "tax", "ni", "pl"))
-    if None in (pretax, tax, ni, pl) or raw.get("nci") is not None:
+    is the slip: without it the chart would show a minority interest that does not exist.
+    The same holds the other way round, with no ProfitLoss tag: when the shareholders' figure fits pre-tax less tax and
+    the shareholders' figure plus the minority interests' tag does not (Univest's 2025–2026 10-Qs tag the minority
+    interests' share with net income itself), the minority-interest tag is the slip: kept, the consolidated figure
+    doubles and pre-tax earnings are rebuilt from it."""
+    pretax, tax, ni, pl, nci = (raw.get(k) for k in ("pretax", "tax", "ni", "pl", "nci"))
+    if None in (pretax, tax, ni):
         return
     after_tax = pretax - tax
-    tol = 0.005 * max(abs(after_tax), abs(ni), abs(pl), 1)
-    if abs(after_tax - ni) <= tol < abs(after_tax - pl):
-        raw["pl"] = ni
+    if pl is not None and nci is None:
+        tol = 0.005 * max(abs(after_tax), abs(ni), abs(pl), 1)
+        if abs(after_tax - ni) <= tol < abs(after_tax - pl):
+            raw["pl"] = ni
+    elif pl is None and nci:
+        both = ni + nci
+        tol = 0.005 * max(abs(after_tax), abs(ni), abs(both), 1)
+        if abs(after_tax - ni) <= tol < abs(after_tax - both):
+            raw["nci"] = None
 
 
 # a fourth quarter is checked against the year less the three quarters before it: off by more than this share of the
