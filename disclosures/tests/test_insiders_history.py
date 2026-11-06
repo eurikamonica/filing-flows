@@ -88,6 +88,11 @@ def make_set(path):
         ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='200000.0', DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='See footnote (2)', NATURE_OF_OWNERSHIP_FN='F2')),
         ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=2, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='10.0', DIRECT_INDIRECT_OWNERSHIP='D'))],
         [('F2', fam)])
+    # one owner's block under two wordings in two reports (no words, then "By Limited Liability Company"): one holding
+    add('U1', '12-JUL-2025', '10-JUL-2025', TSLA, [('0000000931', 'DUP OWNER', 'Director', '')], [
+        ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='300000.0', DIRECT_INDIRECT_OWNERSHIP='I'))])
+    add('U2', '01-SEP-2025', '30-AUG-2025', TSLA, [('0000000931', 'DUP OWNER', 'Director', '')], [
+        ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='300000.0', DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='By Limited Liability Company'))])
     # a company's board member reporting the company's shares ("by Daimler North America"): named with it
     add('D1', '22-AUG-2025', '20-AUG-2025', TSLA, [('0000000901', 'KROEGER HARALD', 'Director', '')], [
         ('NONDERIV_HOLDING', dict(NONDERIV_HOLDING_SK=1, SECURITY_TITLE='Common Stock', SHRS_OWND_FOLWNG_TRANS='90000.0', DIRECT_INDIRECT_OWNERSHIP='I', NATURE_OF_OWNERSHIP='By Daimler North America Corporation'))])
@@ -214,10 +219,11 @@ class Insiders(unittest.TestCase):
         # 2025-06-30: only the officer's report of that day
         self.assertEqual(named(0), [('Gone Person', 40, 12000)])
         # 2025-09-30: Musk's trust and award; Buffett's Berkshire block and Berkshire itself left (13F); the family block once
-        self.assertEqual(named(1), [('Elon Musk', 507200, 507200 * 400), ('Rob Walton', 200010, 200010 * 400), ('Silver Lake Group, L.L.C.', 157000, 157000 * 400),
+        self.assertEqual(named(1), [('Elon Musk', 507200, 507200 * 400), ('Owner Dup', 300000, 300000 * 400), ('Rob Walton', 200010, 200010 * 400), ('Silver Lake Group, L.L.C.', 157000, 157000 * 400),
                                     ('Harald Kroeger', 90000, 90000 * 400), ('Two Same', 60000, 60000 * 400), ('One Same', 60000, 60000 * 400),
                                     ('Egon Durban', 5000, 5000 * 400), ('Mark Zuck', 50, 20000), ('Gone Person', 40, 16000)])
-        self.assertEqual(doc['total'][1], [9, 1079300, 1079300 * 400])
+        self.assertEqual(doc['total'][1], [10, 1379300, 1379300 * 400])
+        self.assertEqual(who[931][3], '', '"By Limited Liability Company" names no company')
         self.assertNotIn(922, who, 'a fund of a joint filing whose partner counts its shares')
         self.assertEqual(who[921][3], 'SL SPV-2, L.P. and Silver Lake Technology', "a holding through companies: named from the footnote's words")
         self.assertEqual(who[901][3], 'Daimler North America Corporation', "a company's shares: its name")
@@ -230,11 +236,11 @@ class Insiders(unittest.TestCase):
         # two years and more after the last reports: nobody (none of them half a percent of the stock)
         self.assertIsNone(doc['total'][3])
         self.assertEqual(doc['top'][3], [])
-        # a founder who seldom reports: half a percent of the stock or more counts for five years
+        # a holder who seldom reports: half a percent of the stock or more counts for three years
         ls = {'|D': (['2020-01-10'], [['2020-01-10', '2020-01-12', 6_000_000, 0]])}
-        self.assertEqual(I.holdings_at(ls, '2023-06-30', 730), {}, 'two years: gone')
-        self.assertEqual(I.holdings_at(ls, '2023-06-30', 730, big=5_000_000), {'|D': (6_000_000, '2020-01-10', 0, '')}, 'a large holding: five years')
-        self.assertEqual(I.holdings_at(ls, '2025-06-30', 730, big=5_000_000), {}, 'and not after')
+        self.assertEqual(I.holdings_at(ls, '2022-06-30', 730), {}, 'two years: gone')
+        self.assertEqual(I.holdings_at(ls, '2022-06-30', 730, big=5_000_000), {'|D': (6_000_000, '2020-01-10', 0, '')}, 'a large holding: three years')
+        self.assertEqual(I.holdings_at(ls, '2023-06-30', 730, big=5_000_000), {}, 'and not after')
         self.assertEqual(I.holdings_at(ls, '2030-06-30', 730, big=5_000_000, control=5_500_000), {'|D': (6_000_000, '2020-01-10', 0, '')},
                          "a 10% owner's control holding: until a report changes it")
         brk = json.loads((self.root / 'public' / 'i' / 'BRK-B.json').read_text())

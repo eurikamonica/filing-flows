@@ -15,8 +15,10 @@ every officer's, director's and 10% owner's shares at each quarter-end since 201
             last report in each calendar quarter.
   quarters  at each quarter-end: each holding's latest report on or before it, if within KEEP_DAYS — an insider who
             left stops reporting, and a trust wound up is not always reported at zero; a large holding (BIG of the stock's
-            13F shares or more) within KEEP_BIG_DAYS; a 10% owner's holding of CONTROL or more for as long as no report
-            changes it (a 10% owner reports every change: Larry Page, who has not traded since 2021)
+            13F shares or more) within KEEP_BIG_DAYS; a founder's — a person who is a director or officer and a 10% owner,
+            CONTROL of the stock or more — for as long as no report changes them (such an insider must report every
+            change: Larry Page, who has not traded since 2021), each holding reported with their latest within two years
+            of it (an old holding the founder no longer reports is not kept for ever)
   13F       counted once: an owner who files 13F (Berkshire in Occidental's Forms 4) and an indirect holding of the same
             shares as one of the stock's 13F holders that quarter, to 0.2% (Berkshire's shares in Warren Buffett's own
             Form 4) are left out — a holding of one's own is not a manager's, whatever its number
@@ -60,10 +62,10 @@ PAGE = 'https://www.sec.gov/data-research/sec-markets-data/insider-transactions-
 BASE = 'https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/'
 FIRST = (2010, 1)               # sets read from 2010: the reports up to three years before the first 13F quarter
 KEEP_DAYS = 730                 # a holding not reported again for two years is no longer counted
-KEEP_BIG_DAYS = 1826            # … five years for a holding of BIG of the stock or more
+KEEP_BIG_DAYS = 1096            # … three years for a holding of BIG of the stock or more
 BIG = 0.005                     # half a percent of the stock's 13F shares
-CONTROL = 0.05                  # a 10% owner's holding of this much of the stock's 13F shares or more: kept until reported
-                                # otherwise (a 10% owner reports every change; Larry Page has not traded since 2021)
+CONTROL = 0.05                  # a founder's holdings (a person, director or officer and 10% owner) of this much of the
+                                # stock's 13F shares or more: kept until reported otherwise (Larry Page: no trade since 2021)
 BLOCK = 50_000                  # the same shares reported by several owners: one block from this many shares
 CAP = 4                         # a holding of more than four times the stock's 13F shares is a slip of the pen
 PERSONAL = re.compile(r'trust|spouse|wife|husband|child|\bsons?\b|daughter|famil|\bira\b|401|grat|gift|estate|custod|foundation|'
@@ -387,6 +389,9 @@ def via(words):
     t = re.split(r'\s+(?:of which|for which|which|whose|and the reporting|the reporting|as\s)|[;()]', t, flags=re.I)[0].strip()
     ws = t.split()
     core = [w for w in ws if re.sub(r'[^a-z]', '', w.lower()) not in ('llc', 'lp', 'l', 'p', 'inc', 'corp', 'ltd', 'co', 'the', '')]
+    if len([w for w in core if re.sub(r'[^a-z]', '', w.lower()) not in ('limited', 'liability', 'company', 'partnership',
+                                                                         'corporation', 'trust', 'fund', 'entity', 'entities')]) < 1:
+        return ''                                  # "By Limited Liability Company": no company named
     if len(core) < 2 or re.match(r'(continued|see|footnote|these|those|such|shares|the shares|represents|includes|consists|'
                                  r'reporting|securities|common|held|owned|directly|indirectly|a |an |each|all|amount|number|on|'
                                  r'this|explanation)\b', t, re.I):
@@ -522,18 +527,29 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
                 blocks = [sh for _, sh, _ in top13[i] if sh > 0]
                 same13 = lambda s: any(abs(s - h) <= 0.002 * h for h in blocks)
                 big, cap, ctrl = BIG * total[i][1], CAP * total[i][1], CONTROL * total[i][1]
-                held, words = {}, {}
+                held, words, ages = {}, {}, {}
                 for o, ls in lines.items():
                     if int(o) in ciks13:
                         continue                   # a 13F filer itself: its shares are in its 13F
-                    hs = holdings_at(ls, q, keep_days, big, control=ctrl if 'TenPercent' in (owners.get(o) or ['', ''])[1] else None)
-                    h = {k: s * ratio.get(k.split('|', 1)[0], 1) * (split_factor(i, d, px, P, cuts, price13) if cuts else 1)
-                         for k, (s, d, px, _) in hs.items()}
+                    # each holding's latest report at any age, its shares as split since; then the ones still counted:
+                    # within two years, five for a large one, and every one of a 10% owner whose holdings together are
+                    # CONTROL of the stock or more (Larry Page's, unchanged since 2021, across a 20 for 1 split)
+                    hs = holdings_at(ls, q, 10 ** 6)
+                    adj = {k: (s * ratio.get(k.split('|', 1)[0], 1) * (split_factor(i, d, px, P, cuts, price13) if cuts else 1),
+                               (dt.date.fromisoformat(q) - dt.date.fromisoformat(d)).days) for k, (s, d, px, _) in hs.items()}
+                    rel = (owners.get(o) or ['', ''])[1]
+                    ctl = ('TenPercent' in rel and ('Director' in rel or 'Officer' in rel) and not ENTITY.search(name_of(o))
+                           and sum(v for v, _ in adj.values()) >= ctrl)
+                    newest = min((age for _, age in adj.values()), default=0)
+                    h = {k: v for k, (v, age) in adj.items()
+                         if (ctl and age - newest <= keep_days) or age <= keep_days or (v >= big and age <= KEEP_BIG_DAYS)}
+                    when = {k: adj[k][1] for k in h}
                     ind = lambda k: k.split('|', 1)[1].startswith('I')
                     h = {k: s for k, s in h.items() if s <= cap and not (ind(k) and same13(s))}   # a slip of the pen; 13F's own block
                     if h and not (all(ind(k) for k in h) and same13(sum(h.values()))):
                         held[o] = h
                         words[o] = {k: hs[k][3] for k in h}
+                        ages[o] = when
                 # joint filers: the one with the most counts in full, the others only an individual's own shares held
                 # directly (a fund's general partner and managing members report the fund's shares, each of them)
                 bygrp = defaultdict(list)
@@ -556,11 +572,16 @@ def build(root, hub, keep_days=KEEP_DAYS, top=TOP):
                     while e < len(ent) and ent[e][0] <= ent[g][0] * 1.001:
                         e += 1
                     grp = ent[g:e]
-                    if len({o for _, o, _ in grp}) > 1 and any(k.split('|', 1)[1].startswith('I') for _, _, k in grp):
+                    if len(grp) > 1 and any(k.split('|', 1)[1].startswith('I') for _, _, k in grp):
                         direct = [x for x in grp if x[2].split('|', 1)[1] == 'D']
                         keep = max(direct or grp, key=lambda x: (size[x[1]], x[1]))
                         for s_, o, k in grp:
-                            if (o, k) != (keep[1], keep[2]) and o != keep[1]:
+                            if (o, k) == (keep[1], keep[2]):
+                                continue
+                            # another owner's report of it; or the same owner's under another wording in another
+                            # report (Walton: "By Limited Liability Company", then no words at all) — not two holdings
+                            # of the same size in one report (two trusts for two children)
+                            if o != keep[1] or ages[o].get(k) != ages[o].get(keep[2]):
                                 held[o].pop(k, None)
                     g = e
                 held = {o: h for o, h in held.items() if h}
