@@ -395,11 +395,14 @@ DA_VERSION = 6           # bump when the way figures are read changes: stored fi
 #    (facts.version: Pixelworks' Q2 2025 revenue $8.3M, not the $0.2M a year later without the Shanghai business)
 REFRESH_FLAGS = ("rev_bank", "rev_tagged", "q4_fixed")    # what facts.extract adds beside the figures
 DA_PER_RUN = 120            # one SEC request each and a fraction of a second's reading: the budget (time_up) is the limit
-LINE_LABEL_VERSION = 2        # bump when revenue-line names are chosen differently (dims.parse_labels): names read again
+LINE_LABEL_VERSION = 3        # bump when revenue-line names are chosen differently (dims.parse_labels): names read again
                               # 2: a line named for its cost ("Cost of software and rentals") or a raw tag ("Clr_oilsales")
+                              # 3: a line named for an intangible-assets table (Iron Mountain: "Data center lease-based
+                              #    intangible assets" for its data center revenue)
 LABELS_PER_RUN = 60      # two SEC requests each (the filing's index and its label file)
 # a stored line name that may be a cost table's label, a documentation sentence or XBRL furniture (page audit, Nov 2026)
-LABEL_SUSPECT = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization)\b|"
+LABEL_SUSPECT = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization|"
+                           r"intangibles?)\b|"
                            r"stands for|element represents|\[(member|domain)\]|(?<=[a-z]{3})\.$|^[A-Za-z]{2,6}_", re.I)
 
 
