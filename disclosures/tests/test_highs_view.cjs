@@ -168,5 +168,47 @@ const clean = (h, m) => ok(!/NaN|undefined|Infinity|\[object/.test(h), m + ' sho
   clean(gh, 'the hub odds');
   ok(HV.lowBlock({ state: lowS, analogues: lowA }, 'X', 'stock', lowBase, 'companies', '52w', { params: { grid: GRID } }).indexOf('Has it worked?') < 0, 'an older file: no new sections, no errors');
   ok(HV.histChart([1, 2], [0], null, 'x') .includes('<rect') && HV.histChart([0, 0], [0], null, 'x') === '' && HV.histChart([1, 2, 3], [0], null, 'x') === '', 'a histogram needs counts for every band');
+  // where it stands: the close rebuilt from the daily log returns (basis points, dates from d0 by the gaps), the window,
+  // the levels and the marks of each regime; the chart at its width; the clip of a range
+  const rr = Array.from({ length: 400 }, (_, i) => (i < 300 ? 8 : -40));
+  const tdoc = { key: 'TST', ticker: 'TST', name: 'Test Inc.', kind: 'stock', d0: '2025-01-02', gaps: '1'.repeat(400), r: rr, last: 50 };
+  const P0 = HV.series(tdoc);
+  ok(P0.days.length === 401 && P0.days[1] === '2025-01-03' && Math.abs(P0.close[400] - 50) < 1e-9 && Math.abs(P0.close[300] / P0.close[0] - Math.exp(0.24)) < 1e-9, 'the close from the returns, ending at the last close');
+  ok(HV.series({ ...tdoc, r: [] }) === null && HV.series({ ...tdoc, last: null }) === null, 'no returns or no last close: none');
+  const top = Math.max(...P0.close), hS = { high: true, run_start: P0.days[250], ath: top, ath_date: P0.days[300], dd: 50 / top - 1, close: 50, date: P0.days[400] };
+  const Mh = HV.standModel(tdoc, 'highs', hS);
+  ok(Mh.from === 401 - 253 && Mh.lv[0].v === top && Math.abs(Mh.lv[1].v - 0.9 * top) < 1e-9 && Mh.shade.i0 === 250, 'at the highs: a year, the high and 10% under it, the run shaded');
+  ok(Mh.marks.length > 100 && Mh.marks.every((i) => i <= 300) && Mh.label[1] === 'from its high', 'the new all-time highs marked; the words for the last close');
+  const Mlong = HV.standModel(tdoc, 'highs', { ...hS, run_start: P0.days[40] });
+  ok(Mlong.from === 40 - 21, 'a long run: back to its start');
+  const lS = { low: 50, low_date: P0.days[400], since: P0.days[300], dist: 0, lows63: 30, close: 50, date: P0.days[400] };
+  const Ml = HV.standModel(tdoc, '52w', lS);
+  ok(Ml.lv.map((l) => +l.v.toFixed(2)).join() === '50,55,60' && Ml.shade.i0 === 300 && Ml.marks.length > 10 && Ml.marks.every((i) => i > 300) && Ml.label.join(' ') === 'a new 52-week low', 'at a low: the low, 10% and 20% above, the slide, the new lows');
+  const rS = { lo: 49, hi: 52, pos: 0.33, width: 0.06, since: P0.days[380], close: 50, date: P0.days[400] };
+  const Mr = HV.standModel(tdoc, 'narrow', rS);
+  ok(Mr.from === 401 - 127 && Mr.clip && Mr.shade.box.join() === '49,52' && Mr.lo < 49 && Mr.hi > 52, 'in a range: half a year, the range filling the middle, the earlier closes cut');
+  const sh = HV.standChart(Mh), sn = HV.standChart(Mh, 360), sr = HV.standChart(Mr);
+  ok(sh.includes('viewBox="0 0 720 280"') && sh.includes('all-time high $') && sh.includes('the pullback that ends a run') && (sh.match(/class="hv-hit"/g) || []).length === Math.ceil(253 / 5), 'the chart: the levels in words, a hover column a week');
+  ok(sh.includes('$50.00') && sh.includes('from its high') && /<title>[A-Z][a-z]{2} \d+, 20\d\d: \$\d/.test(sh), 'the last close in words; a week in a tooltip');
+  ok(sn.includes('viewBox="0 0 360 250"') && sn.includes('>high $') && !sn.includes('the pullback that ends a run'), 'on a phone: the chart at its width, the short words');
+  ok(sr.includes('clipPath') && sr.includes('earlier closes off the scale: as high as $') && sr.includes('top $52.00'), 'a range: clipped, said so');
+  clean(sh + sn + sr, 'the stand charts');
+  ok(HV.standBlock(Mh).includes('<h3>Where it stands</h3>') && HV.standBlock(Mlong).includes('the last year') && HV.standBlock(Mr).includes('the last six months'), 'its heading and words');
+  // the restyled charts: the median in the histogram, the median waits on the curves, the hover
+  const hh = HV.histChart(dist(10).fwd63, E.fwd63, dist(20).fwd63, '3 months on', '', 'fwd63', 0.03);
+  ok(hh.includes('median +3%') && /stroke-dasharray:4 3/.test(hh) && (hh.match(/<path d="M/g) || []).length >= 10 && hh.includes('of every day'), 'a histogram: the median dashed and said, rounded bars, every day outlined, its tooltips');
+  const kk = HV.kmChart([{ label: 'no 10% pullback yet', curve: curve(80), col: 'red' }, { dash: true, label: 'no 10% pullback yet', curve: curve(60), col: 'red', who: 'companies' }], GRID);
+  ok((kk.match(/<circle/g) || []).length === 1 && kk.includes('half the days by about 56 trading days') && kk.includes('63 trading days on (about 3 months)') && kk.includes('— every high day of companies'), 'the curves: the median wait marked, every week in a tooltip');
+  // the picture: its panels, rows, title and line (the drawing itself needs a browser)
+  const PA = { ...A, dist: { fwd21: dist(10).fwd21, fwd63: dist(10).fwd63, fwd252: dist(10).fwd252 }, fan };
+  const PX = { doc: { key: 'AAPL', ticker: 'AAPL', name: 'Apple Inc.', kind: 'stock' }, reg: 'highs', kind: 'highs', gk: 'companies', S: state, A: PA, own, base, G: { dist: dist(20), fan }, params: { grid: GRID, edges: E, fan_grid: GRID }, M: Mh };
+  ok(['now', 'odds', 'fan', 'fwd21', 'fwd63', 'fwd252', 'own'].every((k) => HV.canPic(PX, k)) && !HV.canPic(PX, 'mdd63') && !HV.canPic({ ...PX, M: null }, 'now'), 'the panels it can draw');
+  ok(JSON.stringify(HV.picRows(PX, ['now', 'odds', 'fwd63', 'fwd252'])) === '[["now"],["odds"],["fwd63","fwd252"]]' && JSON.stringify(HV.picRows(PX, ['fwd21', 'own', 'fan', 'mdd63'])) === '[["fan"],["fwd21","own"]]', 'the wide panels alone, the rest two to a row; what it cannot draw left out');
+  ok(HV.picTitle(PX) === 'AAPL 1.2% under its all-time high, 25 trading days into a run of highs' && HV.picTitle({ ...PX, S: { ...state, dd: 0 } }).startsWith('AAPL at an all-time high: 25 trading days into a run, 7 new highs'), 'the title');
+  ok(HV.picSub(PX).includes('closed $344.63 on Oct 30, 2026') && HV.picSub(PX).includes('what followed the 250 most similar high days of companies (139 assets)'), 'the line under it');
+  ok(HV.picTitle({ ...PX, reg: '52w', kind: 'lows', S: lowS }) === 'AAPL 14.2% above its 52-week low, 12 new lows in 63 days' && HV.picTitle({ ...PX, reg: 'narrow', kind: 'ranges', S: { width: 0.031, pos: 0.8 } }).includes('in a narrow range: 3.1% wide over 63 trading days, in the top third'), 'the title at a low and in a range');
+  const pb = HV.pngBar(PX);
+  ok(pb.includes('Picture to share (PNG):') && pb.includes('data-hvp="now" checked') && pb.includes('data-hvp="own"') && !pb.includes('data-hvp="own" checked') && !pb.includes('data-hvp="mdd63"') && pb.includes('Make the picture'), 'the bar: the panels it can draw, the default ones ticked');
+  ok(HV.pngBar({ ...PX, A: null, M: null, own: null }) === '', 'nothing to draw: no bar');
   console.log(`Highs view: ${n} checks passed`);
 })().catch((e) => { console.error(e); process.exit(1); });
