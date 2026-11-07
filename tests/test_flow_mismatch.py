@@ -52,6 +52,18 @@ def test_minority_interests_larger_than_pretax_earnings():
         _draw(raw)
 
 
+def test_small_pretax_gap_beside_a_tax_benefit():
+    # pre-tax + tax benefit 0.4-0.5% off net earnings (discontinued operations): inside model.normalize's tolerance,
+    # outside the chart's own check at net earnings, so the quarter was not drawn. Carrier Q1 2026 ($170M + $96M benefit
+    # - $27M minority = $239M against $238M), Bloomin' Brands Q1 2026 (minority interests), Interpace FY 2025 (none)
+    for raw in ({"revenue": 5341 * M, "costs_total": 5101 * M, "oi": 259 * M, "pretax": 170 * M, "tax": -96 * M,
+                 "pl": 265 * M, "ni": 238 * M, "nci": 27 * M, "ocf": 79 * M, "da": 315 * M, "sbc": 21 * M, "capex": 94 * M},
+                {"revenue": 1050 * M, "oi": 60 * M, "pretax": 46.691 * M, "tax": -10.291 * M, "pl": 57.236 * M,
+                 "ni": 55.654 * M, "nci": 1.582 * M},
+                {"revenue": 50 * M, "oi": 3 * M, "pretax": 1.535 * M, "tax": -21.217 * M, "ni": 22.657 * M}):
+        nodes, links, N = _draw(raw)
+        assert "pretax_fixed" in N["flags"] and nodes["net"]["v"] == N["ni"]
+
 def test_bank_revenue_from_its_two_parts():
     # Zions Q2 2026: "Revenues" $182M is its fee income, not its total (net interest income $677M + noninterest $460M)
     raw = facts.bank_revenue({"revenue": 182 * M, "nii": 677 * M, "nonii": 460 * M, "nonint_exp": 551 * M}, "Revenues")
