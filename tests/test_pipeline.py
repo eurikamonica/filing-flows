@@ -36,6 +36,24 @@ def test_intro_takes_item1_paragraphs():
     assert "last Saturday of September" in it
 
 
+def test_intro_ignores_item1_running_page_headers():
+    # Aflac / Edward Jones 10-Ks repeat "Item 1. Business" (or "..., continued") at the top of every page; the last
+    # of those used to be taken as the start, so the "own words" quote was the executive officers table footnote
+    filler = "Further detail on the business segments, products and distribution channels of the company over the year."
+    page = "<p><b>Item 1. Business</b></p><p>" + filler + "</p>"
+    doc = ("<html><body><div>Table of Contents</div><div>Item 1. Business</div><div>Item 1A. Risk Factors</div>"
+           "<p><b>Item 1. Business</b></p><p><b>ITEM 1. BUSINESS</b></p><p><b>OVERVIEW</b></p>"
+           "<p>Example Holdings was incorporated in 1973 and provides supplemental insurance to millions of "
+           "policyholders in Japan and the United States through its subsidiaries.</p>" + page * 4 +
+           "<p><b>Item 1. Business</b></p><p>(1) Unless specifically noted, the respective executive officer has held "
+           "the occupation set forth in the table for at least the last five years and serves until a successor.</p>"
+           "<p><b>Item 1A. Risk Factors</b></p><p>Risks.</p></body></html>")
+    assert text.intro(doc).startswith("Example Holdings was incorporated")
+    cont = doc.replace("<p><b>Item 1. Business</b></p><p>", "<p><b>Item 1. Business, continued</b></p><p>")
+    cont = cont.replace("ITEM 1. BUSINESS", "Item 1. Business")
+    assert text.intro(cont).startswith("Example Holdings was incorporated")
+
+
 def test_notes_match_heading_exactly():
     md = text.mdna(DOC)
     n = text.match_notes(md, ["Widgets"])

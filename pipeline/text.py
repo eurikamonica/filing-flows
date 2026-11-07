@@ -41,8 +41,17 @@ def paragraphs(html_text):
 
 
 def section(paras, start_pat, end_pat):
-    """Paragraphs between the last heading matching start_pat (skips the table of contents) and end_pat."""
+    """Paragraphs between the last heading matching start_pat (skips the table of contents) and end_pat.
+    A heading repeated at the top of every page ("Item 1. Business" on each page, Aflac; "Item 1. Business, continued",
+    Edward Jones) is a running header, not where the section starts: without this the last page of the section was
+    taken for its beginning (the executive officers table instead of the business description)."""
     starts = [i for i, p in enumerate(paras) if re.match(start_pat, p["text"], re.I)]
+    count = {}
+    for i in starts:
+        count[paras[i]["text"]] = count.get(paras[i]["text"], 0) + 1
+    real = [i for i in starts if count[paras[i]["text"]] <= 2
+            and not re.search(r"\(?\bcontinued\)?\s*$", paras[i]["text"], re.I)]
+    starts = real or starts
     if not starts:
         return []
     for s in reversed(starts):
