@@ -20,6 +20,9 @@ import re
 from . import social
 
 CASH_TARGET = "ocf"
+# the net-earnings node: "net", or "netinc" in the costs-and-expenses chart of an operating loss with net earnings
+# (pipeline/sankey.py), where it feeds the cash-flow bridge the same way
+NET_IDS = ("net", "netinc")
 
 
 def _pct(v, signed=True):
@@ -294,7 +297,7 @@ def spec(c, q, ins=None, top_sources=3, tiny=0.015):
     if CASH_TARGET in nodes:
         adj = {}
         for l in links:
-            if "net" not in (l["s"], l["t"]):
+            if l["s"] not in NET_IDS and l["t"] not in NET_IDS:
                 adj.setdefault(l["s"], set()).add(l["t"])
                 adj.setdefault(l["t"], set()).add(l["s"])
         drop, todo = set(), [CASH_TARGET]
@@ -303,7 +306,7 @@ def spec(c, q, ins=None, top_sources=3, tiny=0.015):
             if k not in drop:
                 drop.add(k)
                 todo += list(adj.get(k, ()))
-        drop |= {l["t"] for l in links if l["s"] == "net" and (nodes.get(l["t"], {}).get("color") == "noncash" or str(l["t"]).startswith("wc"))}
+        drop |= {l["t"] for l in links if l["s"] in NET_IDS and (nodes.get(l["t"], {}).get("color") == "noncash" or str(l["t"]).startswith("wc"))}
         links = [l for l in links if l["s"] not in drop and l["t"] not in drop]
     # 2. no cost breakdowns (SG&A, R&D … inside operating expenses): the parent line stays, whole
     links = [l for l in links if not str(l["t"]).startswith("I:")]
@@ -327,7 +330,7 @@ def spec(c, q, ins=None, top_sources=3, tiny=0.015):
                             + ([["mut", f"Y/Y {_pct(g)}"]] if g is not None else [])}
     # 4. tiny lines at either end (under 1.5% of revenue: minority interests, a small other income) go; the main
     #    results always stay
-    keep = {"revenue", "gp", "oi", "pretax", "net"}
+    keep = {"revenue", "gp", "oi", "pretax", *NET_IDS}
     for _ in range(3):
         outs, ins_ = {l["s"] for l in links}, {l["t"] for l in links}
         small = {l["t"] for l in links if l["t"] not in outs and l["t"] not in keep and abs(l["v"] or 0) < tiny * rev}
@@ -342,7 +345,7 @@ def spec(c, q, ins=None, top_sources=3, tiny=0.015):
         for x in list(nodes):
             into = [l for l in links if l["t"] == x]
             outs = [l for l in links if l["s"] == x]
-            if len(into) != 1 or not outs or x in ("revenue", "net"):
+            if len(into) != 1 or not outs or x in ("revenue", *NET_IDS):
                 continue
             p = into[0]["s"]
             if [l for l in links if l["s"] == p] != into or abs(into[0]["v"] - (nodes[x].get("v") or 0)) > 0.005 * abs(nodes[x].get("v") or 1) \
