@@ -108,3 +108,35 @@ def test_card_is_drawn_big():
     sw, sh = struct.unpack(">II", std[16:24])
     assert png.startswith(b"\x89PNG") and w >= 1600 and 1.0 <= w / h <= 2.0      # about 4:3 to 2:1, a phone shows it whole
     assert (sw, sh) != (w, h)                                                     # the site's chart is drawn as before
+
+
+def loss_layout_quarter():
+    """A coal miner's quarter in $M (Core Natural Resources, Q3 2026): an operating loss but net earnings thanks to a
+    tax benefit, so pipeline/sankey.py draws revenue → costs & expenses → operating costs / net earnings ("netinc"),
+    and the net earnings feed the cash-flow bridge."""
+    M = 1e6
+    n = lambda i, col, v, color: {"id": i, "col": col, "name": i, "v": v * M, "color": color}
+    nodes = [n("L:power", 0, 459, "rev"), n("L:met", 0, 420, "rev"), n("L:ind", 0, 253, "rev"), n("G:coal", 1, 1131, "rev"),
+             n("L:term", 1, 9, "rev"), n("revenue", 2, 1145, "rev"), n("taxben", 2, 13, "profit"), n("total", 3, 1158, "cost"),
+             n("opcosts", 4, 1138, "cost"), n("nonop_out", 4, 10, "cost"), n("netinc", 4, 9, "profit"),
+             n("I:cor", 5, 947, "cost"), n("I:other", 5, 191, "cost"), n("da", 6, 159, "profit"), n("wc_in", 6, 6, "profit"),
+             n("bridge", 7, 175, "profit"), n("ocf", 8, 175, "profit"), n("fcf", 9, 80, "profit"), n("capex", 9, 94, "cost")]
+    l = lambda s, t, v, color: {"s": s, "t": t, "v": v * M, "color": color}
+    links = [l("L:power", "G:coal", 459, "rev"), l("L:met", "G:coal", 420, "rev"), l("L:ind", "G:coal", 253, "rev"),
+             l("L:term", "revenue", 9, "rev"), l("G:coal", "revenue", 1131, "rev"), l("revenue", "total", 1145, "rev"),
+             l("taxben", "total", 13, "profit"), l("total", "opcosts", 1138, "cost"), l("total", "nonop_out", 10, "cost"),
+             l("total", "netinc", 9, "profit"), l("opcosts", "I:cor", 947, "cost"), l("opcosts", "I:other", 191, "cost"),
+             l("netinc", "bridge", 9, "profit"), l("da", "bridge", 159, "profit"), l("wc_in", "bridge", 6, "profit"),
+             l("bridge", "ocf", 175, "profit"), l("ocf", "capex", 94, "cost"), l("ocf", "fcf", 80, "profit")]
+    q = {"label": "Q3 2026", "end": "2026-09-30", "filed": "2026-11-05", "form": "10-Q", "nodes": nodes, "links": links,
+         "headline": {"revenue": 1145 * M, "ni": 9 * M, "oi": -2 * M, "ocf": 175 * M}}
+    return {"profile": {"name": "Core Natural Resources, Inc.", "tickers": ["CNR"], "cik": 1710366}, "quarters": [q]}, q
+
+
+def test_card_keeps_the_income_statement_when_net_earnings_is_netinc():
+    c, q = loss_layout_quarter()
+    sp = xcard.spec(c, q)
+    ids = {n["id"] for n in sp["nodes"]}
+    assert {"revenue", "total", "opcosts", "netinc"} <= ids                  # the card is not empty (it crashed web/sankey.js)
+    assert not {"bridge", "ocf", "da", "wc_in", "fcf", "capex"} & ids          # only the cash-flow bridge goes
+    assert any(l["s"] == "G:coal" and l["t"] == "revenue" for l in sp["links"])
