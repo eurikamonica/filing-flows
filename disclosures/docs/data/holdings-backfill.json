@@ -315226,6 +315226,84 @@
       "cache": "cache/holdings/2162251.json.gz",
       "shard": "shards/holdings/2162251.json",
       "backfill": true
+    },
+    "1875197": {
+      "cik": "1875197",
+      "name": "ACT Capital Partners, L.P.",
+      "label": "ACT Capital Partners, L.P.",
+      "since": "2025-01-01",
+      "as_of": null,
+      "notices": [],
+      "last_success": "2026-11-07T16:24:01+00:00",
+      "stale": false,
+      "period_count": 1,
+      "latest_period": "2026-09-30",
+      "position_count": 58,
+      "total_usd": 153960066,
+      "cache": "cache/holdings/1875197.json.gz",
+      "shard": "shards/holdings/1875197.json",
+      "backfill": true
+    },
+    "2157285": {
+      "cik": "2157285",
+      "name": "Rothwell Investment Advisors, LLC",
+      "label": "Rothwell Investment Advisors, LLC",
+      "since": "2025-01-01",
+      "as_of": null,
+      "notices": [],
+      "last_success": "2026-11-07T16:24:02+00:00",
+      "stale": false,
+      "period_count": 1,
+      "latest_period": "2026-09-30",
+      "position_count": 1140,
+      "total_usd": 186856386,
+      "cache": "cache/holdings/2157285.json.gz",
+      "shard": "shards/holdings/2157285.json",
+      "backfill": true
+    },
+    "2156899": {
+      "cik": "2156899",
+      "name": "St. Louis University",
+      "label": "St. Louis University",
+      "since": "2025-01-01",
+      "as_of": null,
+      "notices": [],
+      "last_success": "2026-11-07T16:24:03+00:00",
+      "stale": false,
+      "period_count": 1,
+      "latest_period": "2025-12-31",
+      "position_count": 3,
+      "total_usd": 239808032,
+      "cache": "cache/holdings/2156899.json.gz",
+      "shard": "shards/holdings/2156899.json",
+      "backfill": true
+    },
+    "1900264": {
+      "cik": "1900264",
+      "name": "XXVI Holdings Inc.",
+      "label": "XXVI Holdings Inc.",
+      "since": "2025-01-01",
+      "as_of": null,
+      "notices": [
+        {
+          "cik": "1900264",
+          "accession": "0001900264-26-000005",
+          "form": "13F-NT",
+          "filed": "2026-11-06",
+          "accepted": "2026-11-05T23:24:22.000Z",
+          "primary": "xslForm13F_X02/primary_doc.xml",
+          "url": "https://www.sec.gov/Archives/edgar/data/1900264/000190026426000005/0001900264-26-000005-index.html"
+        }
+      ],
+      "last_success": "2026-11-07T16:24:03+00:00",
+      "stale": false,
+      "period_count": 0,
+      "latest_period": null,
+      "position_count": 0,
+      "total_usd": null,
+      "cache": "cache/holdings/1900264.json.gz",
+      "shard": "shards/holdings/1900264.json",
+      "backfill": true
     }
   },
   "attempts": {
@@ -348367,11 +348445,11 @@
       "retry_after": null
     },
     "1569638": {
-      "last_attempt": "2026-11-05T09:31:44+00:00",
+      "last_attempt": "2026-11-07T16:24:03+00:00",
       "last_success": "2026-10-19T02:33:32+00:00",
       "error": "Value reconciliation failed: 1604786000 vs 2588000",
-      "fails": 3,
-      "retry_after": "2026-11-07T09:31:57+00:00"
+      "fails": 4,
+      "retry_after": "2026-11-11T16:24:14+00:00"
     },
     "1890698": {
       "last_attempt": "2026-11-05T00:20:20+00:00",
@@ -366779,11 +366857,11 @@
       "retry_after": null
     },
     "1800358": {
-      "last_attempt": "2026-11-05T09:43:39+00:00",
+      "last_attempt": "2026-11-07T16:24:14+00:00",
       "last_success": "2026-10-19T05:18:47+00:00",
       "error": "Value reconciliation failed: 234506000 vs 235000",
-      "fails": 3,
-      "retry_after": "2026-11-07T09:43:50+00:00"
+      "fails": 4,
+      "retry_after": "2026-11-11T16:24:25+00:00"
     },
     "1843492": {
       "last_attempt": "2026-11-05T04:31:58+00:00",
@@ -392261,19 +392339,37 @@
       "error": null,
       "fails": 0,
       "retry_after": null
+    },
+    "1875197": {
+      "last_attempt": "2026-11-07T16:24:01+00:00",
+      "last_success": "2026-11-07T16:24:01+00:00",
+      "error": null,
+      "fails": 0,
+      "retry_after": null
+    },
+    "2157285": {
+      "last_attempt": "2026-11-07T16:24:01+00:00",
+      "last_success": "2026-11-07T16:24:02+00:00",
+      "error": null,
+      "fails": 0,
+      "retry_after": null
+    },
+    "2156899": {
+      "last_attempt": "2026-11-07T16:24:02+00:00",
+      "last_success": "2026-11-07T16:24:03+00:00",
+      "error": null,
+      "fails": 0,
+      "retry_after": null
+    },
+    "1900264": {
+      "last_attempt": "2026-11-07T16:24:03+00:00",
+      "last_success": "2026-11-07T16:24:03+00:00",
+      "error": null,
+      "fails": 0,
+      "retry_after": null
     }
   },
   "runs": [
-    {
-      "at": "2026-11-04T11:55:53+00:00",
-      "minutes": 33.9,
-      "managers": 29,
-      "errors": 0,
-      "requests": 3386,
-      "megabytes": 106.3,
-      "remaining": 6335,
-      "blocked": null
-    },
     {
       "at": "2026-11-04T12:29:55+00:00",
       "minutes": 33.5,
@@ -392763,7 +392859,17 @@
       "megabytes": 8.8,
       "remaining": 0,
       "blocked": null
+    },
+    {
+      "at": "2026-11-07T16:24:25+00:00",
+      "minutes": 0.4,
+      "managers": 4,
+      "errors": 2,
+      "requests": 156,
+      "megabytes": 5.1,
+      "remaining": 2,
+      "blocked": null
     }
   ],
-  "updated_at": "2026-11-07T08:45:21+00:00"
+  "updated_at": "2026-11-07T16:24:25+00:00"
 }
