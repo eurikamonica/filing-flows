@@ -1,0 +1,309 @@
+{
+  "generated_at": "2026-11-07T15:41:57+00:00",
+  "resolved": 305,
+  "rows": [
+    {
+      "bucket": "≤ 6 hours",
+      "markets": 285,
+      "readings": 1249,
+      "mae": {
+        "price": 0.00381,
+        "ev": 0.02776,
+        "median": 0.01568,
+        "max_pain": 0.02785,
+        "combined": 0.00381
+      },
+      "inside80": {
+        "ladder": 0.8847,
+        "options": 0.95338,
+        "walls": 0.75266,
+        "combined": 0.80096
+      },
+      "brier": {
+        "ladder": 0.02009,
+        "options": 0.01729,
+        "markets_both": 207,
+        "ladder_all": 0.02412
+      },
+      "model": {
+        "w_ev": 0.0,
+        "w_mp": 0.0,
+        "rw": {
+          "ladder": 0.224,
+          "options": 1.0,
+          "walls": 0.1
+        },
+        "k": 0.395,
+        "basis": "backtest",
+        "n": 285
+      },
+      "oos": {
+        "train": 199,
+        "test": 86,
+        "mae": {
+          "price": 0.00324,
+          "ev": 0.03233,
+          "median": 0.02233,
+          "max_pain": 0.03969,
+          "combined": 0.00324
+        },
+        "inside80": 0.84574
+      }
+    },
+    {
+      "bucket": "6–24 hours",
+      "markets": 305,
+      "readings": 2920,
+      "mae": {
+        "price": 0.02029,
+        "ev": 0.04145,
+        "median": 0.02745,
+        "max_pain": 0.03824,
+        "combined": 0.02019
+      },
+      "inside80": {
+        "ladder": 0.78622,
+        "options": 0.72596,
+        "walls": 0.69568,
+        "combined": 0.80027
+      },
+      "brier": {
+        "ladder": 0.09454,
+        "options": 0.08955,
+        "markets_both": 227,
+        "ladder_all": 0.0976
+      },
+      "model": {
+        "w_ev": 0.0,
+        "w_mp": 0.1,
+        "rw": {
+          "ladder": 0.474,
+          "options": 1.0,
+          "walls": 0.374
+        },
+        "k": 0.806,
+        "basis": "backtest",
+        "n": 305
+      },
+      "oos": {
+        "train": 213,
+        "test": 92,
+        "mae": {
+          "price": 0.02715,
+          "ev": 0.05993,
+          "median": 0.03666,
+          "max_pain": 0.04978,
+          "combined": 0.02715
+        },
+        "inside80": 0.73913
+      }
+    },
+    {
+      "bucket": "1–3 days",
+      "markets": 285,
+      "readings": 2598,
+      "mae": {
+        "price": 0.03039,
+        "ev": 0.04418,
+        "median": 0.03394,
+        "max_pain": 0.0475,
+        "combined": 0.03039
+      },
+      "inside80": {
+        "ladder": 0.7531,
+        "options": 0.73675,
+        "walls": 0.67325,
+        "combined": 0.79988
+      },
+      "brier": {
+        "ladder": 0.12187,
+        "options": 0.11481,
+        "markets_both": 199,
+        "ladder_all": 0.12002
+      },
+      "model": {
+        "w_ev": 0.0,
+        "w_mp": 0.0,
+        "rw": {
+          "ladder": 0.615,
+          "options": 1.0,
+          "walls": 0.473
+        },
+        "k": 0.952,
+        "basis": "backtest",
+        "n": 285
+      },
+      "oos": {
+        "train": 199,
+        "test": 86,
+        "mae": {
+          "price": 0.04384,
+          "ev": 0.0616,
+          "median": 0.04559,
+          "max_pain": 0.06123,
+          "combined": 0.04384
+        },
+        "inside80": 0.63167
+      }
+    },
+    {
+      "bucket": "3–7 days",
+      "markets": 146,
+      "readings": 1528,
+      "mae": {
+        "price": 0.04794,
+        "ev": 0.09513,
+        "median": 0.075,
+        "max_pain": 0.07047,
+        "combined": 0.04794
+      },
+      "inside80": {
+        "ladder": 0.76611,
+        "options": 0.73569,
+        "walls": 0.46528,
+        "combined": 0.79991
+      },
+      "brier": {
+        "ladder": 0.14568,
+        "options": 0.12348,
+        "markets_both": 99,
+        "ladder_all": 0.14702
+      },
+      "model": {
+        "w_ev": 0.0,
+        "w_mp": 0.0,
+        "rw": {
+          "ladder": 0.452,
+          "options": 1.0,
+          "walls": 0.377
+        },
+        "k": 1.025,
+        "basis": "backtest",
+        "n": 146
+      },
+      "oos": {
+        "train": 102,
+        "test": 44,
+        "mae": {
+          "price": 0.06685,
+          "ev": 0.14095,
+          "median": 0.11593,
+          "max_pain": 0.09522,
+          "combined": 0.06685
+        },
+        "inside80": 0.69003
+      }
+    },
+    {
+      "bucket": "1–4 weeks",
+      "markets": 12,
+      "readings": 144,
+      "mae": {
+        "price": 0.07788,
+        "ev": 0.11817,
+        "median": 0.10067,
+        "max_pain": 0.10541,
+        "combined": 0.09757
+      },
+      "inside80": {
+        "ladder": 0.81061,
+        "options": 0.81061,
+        "walls": 0.44444,
+        "combined": 0.78472
+      },
+      "brier": {
+        "ladder": 0.11814,
+        "options": 0.09811,
+        "markets_both": 11,
+        "ladder_all": 0.11792
+      },
+      "model": {
+        "w_ev": 0.5,
+        "w_mp": 0.1,
+        "rw": {
+          "ladder": 1.0,
+          "options": 1.0,
+          "walls": 1.0
+        },
+        "k": 1.0,
+        "basis": "prior",
+        "n": 12
+      }
+    }
+  ],
+  "models": {
+    "≤ 6 hours": {
+      "w_ev": 0.0,
+      "w_mp": 0.0,
+      "rw": {
+        "ladder": 0.224,
+        "options": 1.0,
+        "walls": 0.1
+      },
+      "k": 0.395,
+      "basis": "backtest",
+      "n": 285
+    },
+    "6–24 hours": {
+      "w_ev": 0.0,
+      "w_mp": 0.1,
+      "rw": {
+        "ladder": 0.474,
+        "options": 1.0,
+        "walls": 0.374
+      },
+      "k": 0.806,
+      "basis": "backtest",
+      "n": 305
+    },
+    "1–3 days": {
+      "w_ev": 0.0,
+      "w_mp": 0.0,
+      "rw": {
+        "ladder": 0.615,
+        "options": 1.0,
+        "walls": 0.473
+      },
+      "k": 0.952,
+      "basis": "backtest",
+      "n": 285
+    },
+    "3–7 days": {
+      "w_ev": 0.0,
+      "w_mp": 0.0,
+      "rw": {
+        "ladder": 0.452,
+        "options": 1.0,
+        "walls": 0.377
+      },
+      "k": 1.025,
+      "basis": "backtest",
+      "n": 146
+    },
+    "1–4 weeks": {
+      "w_ev": 0.5,
+      "w_mp": 0.1,
+      "rw": {
+        "ladder": 1.0,
+        "options": 1.0,
+        "walls": 1.0
+      },
+      "k": 1.0,
+      "basis": "prior",
+      "n": 12
+    },
+    "> 4 weeks": {
+      "w_ev": 0.5,
+      "w_mp": 0.1,
+      "rw": {
+        "ladder": 1.0,
+        "options": 1.0,
+        "walls": 1.0
+      },
+      "k": 1.0,
+      "basis": "prior",
+      "n": 0
+    }
+  },
+  "note": "Hourly readings of every Polymarket / Kalshi closing-price ladder; the close from Yahoo Finance; options from CBOE delayed quotes. Errors are |forecast ÷ close − 1|, each ladder counted once (its readings at that horizon averaged). Brier: (P(close > K) − outcome)² over the ladder's strikes, on readings where the options had a view too."
+}
