@@ -333,7 +333,8 @@ def _close_parts(found, parts, section):
 
 
 def _units(table):
-    t = (table["before"] + " " + table["text"][:600]).lower()
+    # "(in&nbsp;thousands)" (LendingTree): a no-break space is still a space, or the units go unread
+    t = re.sub(r"\s+", " ", table["before"] + " " + table["text"][:600]).lower()
     m = re.search(r"in (?:(?:u\.?s\.? ?|usd |us\$ ?|\$ ?|€ ?|eur |£ ?|gbp |¥ ?|jpy |rmb ?|cny |nt\$ ?|twd |₩ ?|krw |₹ ?|inr |r\$ ?|"
                   r"brl |c\$ ?|cad |chf |sek |dkk |nok |hk\$ ?|hkd |s\$ ?|a\$ ?)(?:dollars? |euros? )?)?(thousands|millions|billions)", t) \
         or re.search(r"\(\s*(?:us\$|\$|€|eur|£|¥|rmb|nt\$|₩|₹|chf|sek|dkk|nok)\s*(?:in\s)?(thousands|millions|billions)", t)   # "(€ millions)"
