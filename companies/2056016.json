@@ -1,0 +1,172 @@
+{
+  "cik": 2056016,
+  "ticker": "RDSC",
+  "name": "Radiant Strategies Corp",
+  "sector": "industrials",
+  "industry": "Services-Management Consulting Services",
+  "sic": "8742",
+  "docs": {
+    "xbrl:0001493152-26-032759": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-07-10",
+      "report": "2026-04-30"
+    },
+    "xbrl:0001493152-26-040007": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-25",
+      "report": "2026-07-31"
+    }
+  },
+  "sic_description": "Services-Management Consulting Services",
+  "snapshot": {
+    "cash": 1396,
+    "operating_leases": 2347,
+    "equity": 7703,
+    "assets": 41060,
+    "liabilities": 33357,
+    "assets_current": 3825,
+    "liabilities_current": 31460,
+    "retained_earnings": -32110,
+    "operating_income": -33678,
+    "pretax_income": -33093,
+    "net_income": -32358,
+    "da": 6664,
+    "ocf": -22159,
+    "capex": 35695,
+    "revenue": 44533,
+    "shares": 25912500,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001493152-26-032759",
+  "xbrl_10-Q": "xbrl:0001493152-26-040007",
+  "events": [],
+  "fetched_at": "2026-10-26T04:57:43+00:00",
+  "signature": "0001493152-26-040007",
+  "hidden_leverage": {
+    "as_of": "2026-07-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2347.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2056016/000149315226040007/form10-q.htm",
+        "accession": "0001493152-26-040007",
+        "form": "10-Q",
+        "filed": "2026-08-25",
+        "as_of": "2026-07-31",
+        "evidence": [
+          {
+            "value_usd": 2347.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-040007",
+            "filed": "2026-08-25",
+            "form": "10-Q",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/2056016/000149315226040007/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-040007",
+      "form": "10-Q",
+      "filed": "2026-08-25",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2056016/000149315226040007/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-07-31",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "e transaction price. Such pricing assessments are made at contract inception and are not typically subject to variable consideration or significant financing components. In determining the timing and amount of revenue recognition, management exercises judgment to assess the natur",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2056016/000149315226040007/form10-q.htm",
+        "accession": "0001493152-26-040007",
+        "form": "10-Q",
+        "filed": "2026-08-25"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "Y | CURRENT LIABILITIES | Accrued expenses and other payables | 5,791 | 10,350 | Income tax payable | - | - | Deferred revenue | - | - | Lease liability | 450 | 458 | Amount due to a director | 25,219 | 26,865 | TOTAL CURRENT LIABILITIES | 31,460 | $ | 37,673 | NON-CURRENT LI",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2056016/000149315226040007/form10-q.htm",
+        "accession": "0001493152-26-040007",
+        "form": "10-Q",
+        "filed": "2026-08-25"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001493152-26-040007",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-040007",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "e transaction price. Such pricing assessments are made at contract inception and are not typically subject to variable consideration or significant financing components. In determining the timing and amount of revenue recognition, management exercises judgment to assess the natur",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2056016/000149315226040007/form10-q.htm",
+      "accession": "0001493152-26-040007",
+      "form": "10-Q",
+      "filed": "2026-08-25"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "Y | CURRENT LIABILITIES | Accrued expenses and other payables | 5,791 | 10,350 | Income tax payable | - | - | Deferred revenue | - | - | Lease liability | 450 | 458 | Amount due to a director | 25,219 | 26,865 | TOTAL CURRENT LIABILITIES | 31,460 | $ | 37,673 | NON-CURRENT LI",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2056016/000149315226040007/form10-q.htm",
+      "accession": "0001493152-26-040007",
+      "form": "10-Q",
+      "filed": "2026-08-25"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-040007"
+}

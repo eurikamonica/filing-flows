@@ -1,0 +1,407 @@
+{
+  "cik": 2067129,
+  "ticker": "NP",
+  "name": "Neptune Insurance Holdings Inc.",
+  "sector": "financials",
+  "industry": "Insurance Agents, Brokers & Service",
+  "sic": "6411",
+  "docs": {
+    "xbrl:0002067129-26-000007": {
+      "instruments": [
+        {
+          "name": "Incremental Term Loans",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "capacity": 10000000.0,
+          "floating": true
+        },
+        {
+          "name": "2024 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 0.0,
+          "floating": false
+        },
+        {
+          "name": "2025 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 0.0,
+          "spread_min": 0.0075,
+          "spread_max": 0.02,
+          "reference": "SOFR",
+          "floating": true
+        },
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 0.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001628280-26-049809": {
+      "instruments": [
+        {
+          "name": "2025 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 260000000.0,
+          "spread_min": 0.0075,
+          "spread_max": 0.02,
+          "rate_now": 0.059,
+          "drawn": 240000000.0,
+          "available": 20000000.0,
+          "reference": "SOFR",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-07-27",
+      "report": "2026-06-30"
+    },
+    "0001213900-25-109336:ea026353501ex10-8_neptune.htm": {
+      "kind": "agreement",
+      "date": "2025-11-12",
+      "agreement_kind": "amendment",
+      "dated": "2025-11-10",
+      "title": "The Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Holdings will not permit the Total Net Leverage Ratio, on the last day of any fiscal quarter of Holdings ending on or after March 31, 2025 (any such day, a “ Testing Date ”), to be greater than (i) 5.00 to 1.00 on each Testing Date occurring on or before September 30, 2025, (ii) 4.50 to 1.00 on each Testing Date occurring on or after December 31, 2025 but prior to September 30, 2026 and (iii) 4.00 to 1.00 on each Tes"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Holdings will not permit the Interest Coverage Ratio, for any period of four consecutive fiscal quarters ending on the last day of any fiscal quarter of Holdings ending on or after March 31, 2025, to be less than 2.00 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 3.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Acquisition, it shall deliver such quality of earnings report to the Administrative Agent; (e) [reserved]; (f) both before and immediately after giving effect (including giving effect on a pro forma basis) to such Acquisition and any Indebtedness incurred or assumed in connection therewith, (i) the Total Net Leverage Ratio is not greater than 3.75 to 1.00 and (ii) Holdings is in compliance with the financial covenant"
+        }
+      ]
+    },
+    "xbrl:0001628280-26-066930": {
+      "instruments": [
+        {
+          "name": "2025 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2026-09-30",
+          "capacity": 260000000.0,
+          "spread_min": 0.0075,
+          "spread_max": 0.02,
+          "rate_now": 0.061,
+          "drawn": 215000000.0,
+          "available": 45000000.0,
+          "reference": "SOFR",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-10-22",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "Insurance Agents, Brokers & Service",
+  "snapshot": {
+    "cash": 17429000,
+    "revolver_drawn": 215000000,
+    "equity": -211597000,
+    "assets": 103924000,
+    "liabilities": 315521000,
+    "assets_current": 91219000,
+    "liabilities_current": 100521000,
+    "retained_earnings": -473950000,
+    "interest_expense": 15193000,
+    "operating_income": 81295000,
+    "pretax_income": 67084000,
+    "net_income": 44744000,
+    "ocf": 82037000,
+    "revenue": 197001000,
+    "revolver_rate": 0.074,
+    "shares": 146110446,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd"
+  },
+  "history": [
+    {
+      "end": "2025-09-30",
+      "filed": "2025-11-12",
+      "total_debt": 262639000,
+      "cash": 46861000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 96185000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-12-31",
+      "filed": "2026-02-26",
+      "total_debt": 0,
+      "cash": null,
+      "investments": null,
+      "interest_expense": 18243000,
+      "operating_income": 70955000,
+      "da": null,
+      "ocf": 51670000,
+      "revenue": 159551000,
+      "shares": 104502838,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 17131000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0002067129-26-000007",
+  "xbrl_10-Q": "xbrl:0001628280-26-066930",
+  "events": [],
+  "fetched_at": "2026-10-26T01:35:05+00:00",
+  "signature": "0001628280-26-066930",
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ed entities or financial partnerships, including entities sometimes referred to as structured finance or special purpose entities, that were established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes. There have",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000162828026066930/np-20260930.htm",
+        "accession": "0001628280-26-066930",
+        "form": "10-Q",
+        "filed": "2026-10-22",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-066930",
+      "form": "10-Q",
+      "filed": "2026-10-22",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000162828026066930/np-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": 0.3374,
+      "receivables_growth": null,
+      "contract_assets_growth": 0.562,
+      "contract_liabilities_growth": 0.6038,
+      "dsri": null,
+      "ocf_to_net_income": 1.3811
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 159551000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        },
+        {
+          "value_usd": 119299000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        {
+          "value_usd": 4080000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        },
+        {
+          "value_usd": 2612000.0,
+          "tag": "us-gaap:ContractWithCustomerAssetNetCurrent",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        }
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 18941000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        },
+        {
+          "value_usd": 11810000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 51670000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        },
+        {
+          "value_usd": 49926000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 37413000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        },
+        {
+          "value_usd": 34592000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0002067129-26-000007",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000206712926000007/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "espectively, and differed from the U.S. federal statutory rate primarily due to state income taxes. Note 8. Related-Party Transactions Rent Expense In February 2021, the Company entered into a month-to-month operating lease agreement for office space for management and administra",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000162828026066930/np-20260930.htm",
+        "accession": "0001628280-26-066930",
+        "form": "10-Q",
+        "filed": "2026-10-22"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "ed entities or financial partnerships, including entities sometimes referred to as structured finance or special purpose entities, that were established for the purpose of facilitating off-balance sheet arrangements or other contractually narrow or limited purposes. There have",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000162828026066930/np-20260930.htm",
+      "accession": "0001628280-26-066930",
+      "form": "10-Q",
+      "filed": "2026-10-22",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001628280-26-066930",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001628280-26-066930",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "espectively, and differed from the U.S. federal statutory rate primarily due to state income taxes. Note 8. Related-Party Transactions Rent Expense In February 2021, the Company entered into a month-to-month operating lease agreement for office space for management and administra",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2067129/000162828026066930/np-20260930.htm",
+      "accession": "0001628280-26-066930",
+      "form": "10-Q",
+      "filed": "2026-10-22"
+    }
+  ],
+  "revenue_quality_text_source": "0001628280-26-066930"
+}

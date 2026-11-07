@@ -1,0 +1,279 @@
+{
+  "cik": 1884164,
+  "ticker": "KWIK",
+  "name": "KwikClick, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "docs": {
+    "xbrl:0001683168-26-002512": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-31",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001683168-26-006457": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "snapshot": {
+    "cash": 321139,
+    "operating_leases": 24719,
+    "equity": -3322953,
+    "assets": 926275,
+    "liabilities": 4249228,
+    "assets_current": 589729,
+    "liabilities_current": 4249228,
+    "retained_earnings": -13949098,
+    "interest_expense": 271735,
+    "interest_paid": 668,
+    "operating_income": -977930,
+    "pretax_income": -1250333,
+    "net_income": -1250333,
+    "da": 85733,
+    "ocf": 309255,
+    "revenue": 2496527,
+    "shares": 3892979,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseDebt (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001683168-26-002512",
+  "xbrl_10-Q": "xbrl:0001683168-26-006457",
+  "events": [],
+  "fetched_at": "2026-10-26T03:19:05+00:00",
+  "signature": "0001683168-26-006457",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 24719.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm",
+        "accession": "0001683168-26-006457",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 24719.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001683168-26-006457",
+            "filed": "2026-08-14",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001683168-26-006457",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 7.1812,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 1287477.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001683168-26-002512",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826002512/"
+        },
+        {
+          "value_usd": 157371.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001683168-26-002512",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826002512/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -202102.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001683168-26-002512",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826002512/"
+        },
+        {
+          "value_usd": -1232462.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001683168-26-002512",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826002512/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1316827.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001683168-26-002512",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826002512/"
+        },
+        {
+          "value_usd": -1956424.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001683168-26-002512",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826002512/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ed. Revenue under these arrangements is recognized monthly as earned during the period of the contract. | 9 | Contract Assets and Contract Liabilities The Company records any amounts due or payments received from customers prior to the Company fulfilling its performance ob",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm",
+        "accession": "0001683168-26-006457",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ing standards that are materially relevant to its condensed consolidated financial statements. | 11 | NOTE 3. RELATED PARTY TRANSACTIONS The Company’s related party notes payable consist of the following: Schedule of related party notes payable | June 30, 2026 | December 31, 202",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm",
+        "accession": "0001683168-26-006457",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "386,366 | $ | 438,594 | Accrued expenses | 377,606 | 192,963 | Operating lease liability | 24,719 | 41,067 | Deferred revenue | 31,443 | 111,330 | Related-party notes payable | 3,429,094 | 3,293,781 | Total current liabilities | 4,249,228 | 4,077,735 | Long-term liabilities:",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm",
+        "accession": "0001683168-26-006457",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001683168-26-006457",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001683168-26-006457",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "ed. Revenue under these arrangements is recognized monthly as earned during the period of the contract. | 9 | Contract Assets and Contract Liabilities The Company records any amounts due or payments received from customers prior to the Company fulfilling its performance ob",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm",
+      "accession": "0001683168-26-006457",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "ing standards that are materially relevant to its condensed consolidated financial statements. | 11 | NOTE 3. RELATED PARTY TRANSACTIONS The Company’s related party notes payable consist of the following: Schedule of related party notes payable | June 30, 2026 | December 31, 202",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm",
+      "accession": "0001683168-26-006457",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "386,366 | $ | 438,594 | Accrued expenses | 377,606 | 192,963 | Operating lease liability | 24,719 | 41,067 | Deferred revenue | 31,443 | 111,330 | Related-party notes payable | 3,429,094 | 3,293,781 | Total current liabilities | 4,249,228 | 4,077,735 | Long-term liabilities:",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1884164/000168316826006457/kwikclick_i10q-063026.htm",
+      "accession": "0001683168-26-006457",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    }
+  ],
+  "revenue_quality_text_source": "0001683168-26-006457"
+}

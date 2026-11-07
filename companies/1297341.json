@@ -1,0 +1,212 @@
+{
+  "cik": 1297341,
+  "ticker": "KFFB",
+  "name": "Kentucky First Federal Bancorp",
+  "sector": "financials",
+  "industry": "Savings Institution, Federally Chartered",
+  "sic": "6035",
+  "docs": {
+    "xbrl:0001213900-26-103633": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-09-28",
+      "report": "2026-06-30"
+    },
+    "0001144204-12-031441:v314142_424b3.htm": {
+      "kind": "424b",
+      "date": "2012-05-23",
+      "tranches": []
+    },
+    "0000950144-05-000306:x90780e424b3.htm": {
+      "kind": "424b",
+      "date": "2005-01-14",
+      "tranches": []
+    }
+  },
+  "sic_description": "Savings Institution, Federally Chartered",
+  "snapshot": {
+    "cash": 21296000,
+    "equity": 49658000,
+    "assets": 374541000,
+    "liabilities": 324883000,
+    "retained_earnings": 18735000,
+    "deposits": 273689000,
+    "pretax_income": 1848000,
+    "net_income": 1909000,
+    "da": 176000,
+    "ocf": 1062000,
+    "capex": 133000,
+    "deposit_interest": 8099000,
+    "stated_rate": 0.8,
+    "shares": 8086715,
+    "balance_date": "2026-03-31",
+    "latest_period": "2026-03-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-03-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-103633",
+      "form": "10-K",
+      "filed": "2026-09-28",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1297341/000121390026103633/ea0305657-10k_kentucky.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-03-31",
+    "metrics": {
+      "revenue_growth": -0.1176,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.234
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 15000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001213900-19-019268",
+          "filed": "2019-09-30",
+          "end": "2019-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1297341/000121390019019268/"
+        },
+        {
+          "value_usd": 17000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001213900-19-019268",
+          "filed": "2019-09-30",
+          "end": "2018-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1297341/000121390019019268/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1002000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-20-029256",
+          "filed": "2020-09-30",
+          "end": "2019-06-30",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1297341/000121390020029256/"
+        },
+        {
+          "value_usd": 1149000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-19-019268",
+          "filed": "2019-09-30",
+          "end": "2018-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1297341/000121390019019268/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 812000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-20-029256",
+          "filed": "2020-09-30",
+          "end": "2019-06-30",
+          "form": "10-K/A",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1297341/000121390020029256/"
+        },
+        {
+          "value_usd": 1323000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-19-019268",
+          "filed": "2019-09-30",
+          "end": "2018-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1297341/000121390019019268/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2019-06-30",
+      "2018-06-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001213900-26-103633",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001213900-26-103633",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001213900-26-103633",
+  "xbrl_10-K": "xbrl:0001213900-26-103633",
+  "events": [
+    {
+      "date": "2024-08-15",
+      "items": "1.01,9.01",
+      "acc": "0001213900-24-069269",
+      "doc": "ea0211484-8k_kentucky.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2012-10-01",
+      "items": "1.01,9.01",
+      "acc": "0001144204-12-053948",
+      "doc": "v324807_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2011-11-08",
+      "items": "1.01,9.01",
+      "acc": "0001144204-11-062075",
+      "doc": "v239330_8k.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "fetched_at": "2026-11-03T06:59:42+00:00",
+  "signature": "0001213900-26-114883",
+  "fdic": {
+    "matched": false
+  }
+}

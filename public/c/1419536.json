@@ -1,0 +1,248 @@
+{
+  "cik": 1419536,
+  "ticker": "CBNK",
+  "name": "Capital Bancorp Inc",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "sic_description": "National Commercial Banks",
+  "generated_at": "2026-11-07T08:52:45+00:00",
+  "fetched_at": "2026-11-07T02:00:49+00:00",
+  "price": 42.39,
+  "price_date": "2026-11-06",
+  "equity_vol": 0.229253,
+  "snapshot": {
+    "cash": 262032000,
+    "operating_leases": 7479000,
+    "equity": 431450000,
+    "assets": 3802553000,
+    "liabilities": 3371103000,
+    "retained_earnings": 325944000,
+    "deposits": 3319135000,
+    "interest_paid": 76373000,
+    "pretax_income": 71552000,
+    "net_income": 54427000,
+    "ocf": 78725000,
+    "deposit_interest": 73356000,
+    "stated_rate": 0.0377,
+    "shares": 16347193,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 262032000.0,
+    "net_debt": null,
+    "ebitda": 71552000.0,
+    "ebit": 71552000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.030796,
+    "fcf": 78725000.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 262032000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": 2062000.0,
+    "floating_share": null,
+    "plus100bp_interest": 20620.0,
+    "plus100bp_share_of_ebit": 0.000288,
+    "market_cap": 692957511.27,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 7479000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1419536/000141953626000186/cbnk-20260930.htm",
+        "accession": "0001419536-26-000186",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 7479000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001419536-26-000186",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1419536/000141953626000186/cbnk-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ts. The following table presents the maturities of our certificates of deposit, including brokered and customer deposits, as of September 30, 2026, excluding $65.4 million of certificates of deposits held for assumption for pending Chicago Branch Sale transaction. Thr",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1419536/000141953626000186/cbnk-20260930.htm",
+        "accession": "0001419536-26-000186",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001419536-26-000186",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1419536/000141953626000186/cbnk-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Certificates of Deposit",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "capacity": 465800000.0,
+      "floating": false
+    },
+    {
+      "name": "Junior subordinated debentures due June 15, 2036",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 2062000.0,
+      "coupon": 0.0585,
+      "spread": 0.0187,
+      "floating": true
+    },
+    {
+      "name": "FHLB fixed rate advance due October 16, 2025",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "coupon": 0.0,
+      "floating": false
+    },
+    {
+      "name": "FHLB daily rate advance due June 12, 2026",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "coupon": 0.0377,
+      "floating": false
+    },
+    {
+      "name": "Other subordinated notes due November 30, 2030",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "coupon": 0.0,
+      "spread": 0.049,
+      "floating": true
+    },
+    {
+      "name": "Other Borrowed Funds",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "coupon": 0.0585,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-30",
+      "items": "1.01",
+      "acc": "0001419536-26-000145",
+      "doc": "cbnk-20260929.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-01",
+      "items": "1.01,9.01",
+      "acc": "0001628280-24-014077",
+      "doc": "cbnk-20240327.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-12-04",
+      "items": "1.01",
+      "acc": "0001419536-20-000114",
+      "doc": "cbnk-20201130.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

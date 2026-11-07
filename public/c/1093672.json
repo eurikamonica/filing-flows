@@ -1,0 +1,205 @@
+{
+  "cik": 1093672,
+  "ticker": "PEBK",
+  "name": "PEOPLES BANCORP OF NORTH CAROLINA INC",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-11-07T08:52:43+00:00",
+  "fetched_at": "2026-11-03T21:49:38+00:00",
+  "price": 44.51,
+  "price_date": "2026-11-06",
+  "equity_vol": 0.206891,
+  "snapshot": {
+    "cash": 57150000,
+    "operating_leases": 3122000,
+    "equity": 157656000,
+    "assets": 1762190000,
+    "liabilities": 1604534000,
+    "retained_earnings": 146635000,
+    "deposits": 1567815000,
+    "time_deposits": 126943000,
+    "interest_expense": 23149000,
+    "interest_paid": 23304000,
+    "pretax_income": 28507000,
+    "net_income": 21992000,
+    "da": 2601000,
+    "ocf": 25544000,
+    "capex": 1479000,
+    "shares": 5461490,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 57150000.0,
+    "net_debt": null,
+    "ebitda": 54257000,
+    "ebit": 51656000,
+    "interest_expense": 23149000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 2.231457,
+    "ebitda_coverage": 2.343816,
+    "cash_coverage": 2.096121,
+    "fcf": 24065000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 57150000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 243090919.9,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 3122000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1093672/000165495426009449/pebk_10q.htm",
+        "accession": "0001654954-26-009449",
+        "form": "10-Q",
+        "filed": "2026-11-03",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 3122000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001654954-26-009449",
+            "filed": "2026-11-03",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1093672/000165495426009449/pebk_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "volved in extending loan facilities to customers. The Bank holds real estate, equipment, automobiles and customer deposits as collateral supporting those commitments for which collateral is deemed necessary. The Company maintains an allowance for off-balance sheet credit",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1093672/000165495426009449/pebk_10q.htm",
+        "accession": "0001654954-26-009449",
+        "form": "10-Q",
+        "filed": "2026-11-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001654954-26-009449",
+      "form": "10-Q",
+      "filed": "2026-11-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1093672/000165495426009449/pebk_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2021-08-20",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001654954-21-009273",
+      "doc": "pebk_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2015-02-09",
+      "items": "1.01",
+      "acc": "0001093672-15-000005",
+      "doc": "form8kforfeb92015.htm",
+      "desc": "FORM 8-K FOR FEB 9, 2015"
+    },
+    {
+      "date": "2012-06-29",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001093672-12-000030",
+      "doc": "form8kforjun272012.htm",
+      "desc": "FORM 8-K FOR JUNE 27, 2012"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

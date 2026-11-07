@@ -1,0 +1,206 @@
+{
+  "cik": 1696556,
+  "ticker": "OFRM",
+  "name": "Once Upon a Farm, PBC",
+  "sector": "consumer-staples",
+  "industry": "Food and Kindred Products",
+  "sic": "2000",
+  "docs": {
+    "xbrl:0001696556-26-000004": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-16",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001696556-26-000025": {
+      "instruments": [
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 65000000.0,
+          "drawn": 0.0,
+          "rate_now": 0.07,
+          "floating": true
+        },
+        {
+          "name": "Term Loan Facility",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "face": 30000000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Food and Kindred Products",
+  "snapshot": {
+    "total_debt": 17214000,
+    "cash": 10860000,
+    "convertible": 0,
+    "debt_fair_value": 51037000,
+    "revolver_drawn": 0,
+    "equity": 155282000,
+    "assets": 202629000,
+    "liabilities": 47347000,
+    "assets_current": 187114000,
+    "liabilities_current": 46680000,
+    "retained_earnings": -156498000,
+    "shares": 41990653,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "debt_fair_value": "DebtInstrumentFairValue",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2025-12-31",
+      "filed": "2026-08-06",
+      "total_debt": 17214000,
+      "cash": 10860000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 41990653,
+      "convertible": 0,
+      "equity": 155282000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001696556-26-000004",
+  "xbrl_10-Q": "xbrl:0001696556-26-000025",
+  "events": [
+    {
+      "date": "2026-05-06",
+      "items": "1.01,9.01",
+      "acc": "0001696556-26-000009",
+      "doc": "ofrm-20260505.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-09",
+      "items": "1.01,3.03,5.02,5.03,9.01",
+      "acc": "0001193125-26-042994",
+      "doc": "d53704d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:29:46+00:00",
+  "signature": "0001193125-26-425255",
+  "hidden_leverage": {
+    "as_of": "2025-12-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001696556-26-000025",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1696556/000169655626000025/ofrm-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2025-12-31",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments – Credit Losses (Topic 326):Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025-05”). ASU 2025-05 provides a practical expedient that all entities can use when estimating expected credit losses for current accounts rec",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1696556/000169655626000025/ofrm-20260630.htm",
+        "accession": "0001696556-26-000025",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "statements include, but are not limited to, net realizable value of inventory; revenue recognition, including variable consideration for sales promotions and discounts; the valuation of stock-based awards, including the valuation of common stock; useful lives and valuation of long-",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1696556/000169655626000025/ofrm-20260630.htm",
+        "accession": "0001696556-26-000025",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "on of stock-based compensation associated with accelerated vesting of the Spokesperson's (defined in Note 12, Related Party Transactions) stock options upon the closing of the IPO in February 2026. During the six months ended June 30, 2025, the Company recognized $ 1.9 million of stock",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1696556/000169655626000025/ofrm-20260630.htm",
+        "accession": "0001696556-26-000025",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001696556-26-000025",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001696556-26-000025",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": ", Financial Instruments – Credit Losses (Topic 326):Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025-05”). ASU 2025-05 provides a practical expedient that all entities can use when estimating expected credit losses for current accounts rec",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1696556/000169655626000025/ofrm-20260630.htm",
+      "accession": "0001696556-26-000025",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "statements include, but are not limited to, net realizable value of inventory; revenue recognition, including variable consideration for sales promotions and discounts; the valuation of stock-based awards, including the valuation of common stock; useful lives and valuation of long-",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1696556/000169655626000025/ofrm-20260630.htm",
+      "accession": "0001696556-26-000025",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "on of stock-based compensation associated with accelerated vesting of the Spokesperson's (defined in Note 12, Related Party Transactions) stock options upon the closing of the IPO in February 2026. During the six months ended June 30, 2025, the Company recognized $ 1.9 million of stock",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1696556/000169655626000025/ofrm-20260630.htm",
+      "accession": "0001696556-26-000025",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    }
+  ],
+  "revenue_quality_text_source": "0001696556-26-000025"
+}

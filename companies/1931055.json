@@ -1,0 +1,268 @@
+{
+  "cik": 1931055,
+  "ticker": "MDNC",
+  "name": "Medinotec Inc.",
+  "sector": "health",
+  "industry": "Surgical & Medical Instruments & Apparatus",
+  "sic": "3841",
+  "docs": {
+    "xbrl:0001663577-26-000175": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-05-28",
+      "report": "2026-02-28"
+    },
+    "xbrl:0001663577-26-000326": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-10-08",
+      "report": "2026-08-31"
+    }
+  },
+  "sic_description": "Surgical & Medical Instruments & Apparatus",
+  "snapshot": {
+    "cash": 2584106,
+    "operating_leases": 8829,
+    "equity": 5934044,
+    "assets": 6952807,
+    "liabilities": 1018763,
+    "assets_current": 6436639,
+    "liabilities_current": 955281,
+    "interest_expense": 30884,
+    "operating_income": 672085,
+    "pretax_income": 658335,
+    "net_income": 597032,
+    "da": 108976,
+    "ocf": 373899,
+    "capex": 1363,
+    "revenue": 10210830,
+    "debt_repaid": 982998,
+    "shares": 11755548,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (fiscal year)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001663577-26-000175",
+  "xbrl_10-Q": "xbrl:0001663577-26-000326",
+  "events": [],
+  "fetched_at": "2026-10-26T03:11:39+00:00",
+  "signature": "0001663577-26-000326",
+  "hidden_leverage": {
+    "as_of": "2026-08-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001663577-26-000326",
+      "form": "10-Q",
+      "filed": "2026-10-08",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000326/mdnc10q_083126.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-08-31",
+    "metrics": {
+      "revenue_growth": 0.0676,
+      "receivables_growth": -0.0995,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.8435,
+      "ocf_to_net_income": 1.1413
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 9729463.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001663577-26-000175",
+          "filed": "2026-05-28",
+          "end": "2026-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000175/"
+        },
+        {
+          "value_usd": 9113607.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001663577-26-000175",
+          "filed": "2026-05-28",
+          "end": "2025-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000175/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 2352474.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001663577-26-000175",
+          "filed": "2026-05-28",
+          "end": "2026-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000175/"
+        },
+        {
+          "value_usd": 2612440.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001663577-26-000175",
+          "filed": "2026-05-28",
+          "end": "2025-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000175/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 906798.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001663577-26-000175",
+          "filed": "2026-05-28",
+          "end": "2026-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000175/"
+        },
+        {
+          "value_usd": 877834.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001663577-26-000175",
+          "filed": "2026-05-28",
+          "end": "2025-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000175/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 794502.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001663577-26-000175",
+          "filed": "2026-05-28",
+          "end": "2026-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000175/"
+        },
+        {
+          "value_usd": 2159473.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001663577-26-000175",
+          "filed": "2026-05-28",
+          "end": "2025-02-28",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000175/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "between these geographic segments and by principal revenue stream. The Company does not generally recognize contract assets because customers are invoiced in connection with individual product orders and the Company’s right to consideration is not conditional on anything o",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000326/mdnc10q_083126.htm",
+        "accession": "0001663577-26-000326",
+        "form": "10-Q",
+        "filed": "2026-10-08"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "marily on the price specified in the applicable customer arrangement or price list. The Company considers any variable consideration, including expected returns, rebates, discounts or similar adjustments, when determining the transaction price. Such amounts have not historically be",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000326/mdnc10q_083126.htm",
+        "accession": "0001663577-26-000326",
+        "form": "10-Q",
+        "filed": "2026-10-08"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "l transfers. Amounts received from customers before control of the related products transfers are recorded as contract liabilities and recognized as revenue when the applicable performance obligation is satisfied. The Company did not have material contract asset or contract liabi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000326/mdnc10q_083126.htm",
+        "accession": "0001663577-26-000326",
+        "form": "10-Q",
+        "filed": "2026-10-08"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-02-28",
+      "2025-02-28"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001663577-26-000326",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001663577-26-000326",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "between these geographic segments and by principal revenue stream. The Company does not generally recognize contract assets because customers are invoiced in connection with individual product orders and the Company’s right to consideration is not conditional on anything o",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000326/mdnc10q_083126.htm",
+      "accession": "0001663577-26-000326",
+      "form": "10-Q",
+      "filed": "2026-10-08"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "marily on the price specified in the applicable customer arrangement or price list. The Company considers any variable consideration, including expected returns, rebates, discounts or similar adjustments, when determining the transaction price. Such amounts have not historically be",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000326/mdnc10q_083126.htm",
+      "accession": "0001663577-26-000326",
+      "form": "10-Q",
+      "filed": "2026-10-08"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "l transfers. Amounts received from customers before control of the related products transfers are recorded as contract liabilities and recognized as revenue when the applicable performance obligation is satisfied. The Company did not have material contract asset or contract liabi",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1931055/000166357726000326/mdnc10q_083126.htm",
+      "accession": "0001663577-26-000326",
+      "form": "10-Q",
+      "filed": "2026-10-08"
+    }
+  ],
+  "revenue_quality_text_source": "0001663577-26-000326"
+}

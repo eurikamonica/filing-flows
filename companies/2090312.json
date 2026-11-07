@@ -1,0 +1,220 @@
+{
+  "cik": 2090312,
+  "ticker": "MBGL",
+  "name": "Mobility Global Inc.",
+  "sector": "industrials",
+  "industry": "Services-Business Services, NEC",
+  "sic": "7389",
+  "docs": {
+    "xbrl:0002090312-26-000014": {
+      "instruments": [
+        {
+          "name": "Senior Notes",
+          "kind": "notes",
+          "as_of": "2026-05-29",
+          "face": 2000000000.0,
+          "floating": false
+        },
+        {
+          "name": "6.050% Senior notes due 2036",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "coupon": 0.0605,
+          "carrying": 700000000.0,
+          "maturity_year": 2036,
+          "floating": false
+        },
+        {
+          "name": "5.050% Senior notes due 2029",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "coupon": 0.0505,
+          "carrying": 650000000.0,
+          "maturity_year": 2029,
+          "floating": false
+        },
+        {
+          "name": "5.450% Senior notes due 2031",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "coupon": 0.0545,
+          "carrying": 650000000.0,
+          "maturity_year": 2031,
+          "floating": false
+        },
+        {
+          "name": "Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-05-06",
+          "capacity": 500000000.0,
+          "spread_min": 0.01,
+          "spread_max": 0.01625,
+          "reference": "Base Rate",
+          "floating": true
+        },
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "drawn": 0.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-07",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Business Services, NEC",
+  "snapshot": {
+    "total_debt": 1981000000,
+    "cash": 186000000,
+    "equity": 9835000000,
+    "assets": 13060000000,
+    "liabilities": 3225000000,
+    "assets_current": 466000000,
+    "liabilities_current": 248000000,
+    "shares": 294821320,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent"
+  },
+  "history": [
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-07",
+      "total_debt": 1981000000,
+      "cash": 186000000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 294821320,
+      "convertible": null,
+      "equity": 9835000000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0002090312-26-000014",
+  "events": [
+    {
+      "date": "2026-07-02",
+      "items": "1.01,2.01,5.01,5.02,5.03,8.01,9.01",
+      "acc": "0001104659-26-080006",
+      "doc": "tm2619098d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T22:59:34+00:00",
+  "signature": "0002090312-26-000029",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase",
+        "label": "Unconditional purchase obligations",
+        "class": "operating_commitment",
+        "amount_usd": 64000000.0,
+        "reported_total": true,
+        "schedule": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2090312/000209031226000014/mbgl-20260630.htm",
+        "accession": "0002090312-26-000014",
+        "form": "10-Q",
+        "filed": "2026-08-07",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 64000000.0,
+            "tag": "us-gaap:UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount",
+            "accession": "0002090312-26-000014",
+            "filed": "2026-08-07",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2090312/000209031226000014/mbgl-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002090312-26-000014",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2090312/000209031226000014/mbgl-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "en reflected in the financial statements had the Company historically operated independently of S&P Global. Related party transactions are discussed further in Note 9 — Related Party Transactions and Parent Company Investment . On June 26, 2026, in anticipation of the Separation,",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2090312/000209031226000014/mbgl-20260630.htm",
+        "accession": "0002090312-26-000014",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0002090312-26-000014",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0002090312-26-000014",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "en reflected in the financial statements had the Company historically operated independently of S&P Global. Related party transactions are discussed further in Note 9 — Related Party Transactions and Parent Company Investment . On June 26, 2026, in anticipation of the Separation,",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2090312/000209031226000014/mbgl-20260630.htm",
+      "accession": "0002090312-26-000014",
+      "form": "10-Q",
+      "filed": "2026-08-07"
+    }
+  ],
+  "revenue_quality_text_source": "0002090312-26-000014"
+}

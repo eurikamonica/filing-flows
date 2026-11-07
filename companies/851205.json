@@ -1,0 +1,288 @@
+{
+  "cik": 851205,
+  "ticker": "CGNX",
+  "name": "COGNEX CORP",
+  "sector": "industrials",
+  "industry": "Industrial Instruments For Measurement, Display, and Control",
+  "sic": "3823",
+  "docs": {
+    "xbrl:0000851205-26-000012": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-02-12",
+      "report": "2025-12-31"
+    },
+    "xbrl:0000851205-26-000065": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-07-05"
+    }
+  },
+  "sic_description": "Industrial Instruments For Measurement, Display, and Control",
+  "snapshot": {
+    "cash": 302521000,
+    "investments": 101849000,
+    "equity": 1629555000,
+    "assets": 2178650000,
+    "liabilities": 549095000,
+    "assets_current": 849880000,
+    "liabilities_current": 216031000,
+    "retained_earnings": 397135000,
+    "operating_income": 238431000,
+    "pretax_income": 257999000,
+    "net_income": 174788000,
+    "da": 18956000,
+    "ocf": 276633000,
+    "capex": 8337000,
+    "revenue": 1088930000,
+    "shares": 168223842,
+    "balance_date": "2026-07-05",
+    "latest_period": "2026-07-05"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0000851205-26-000012",
+  "xbrl_10-Q": "xbrl:0000851205-26-000065",
+  "events": [],
+  "fetched_at": "2026-10-25T23:10:20+00:00",
+  "signature": "0000851205-26-000071",
+  "hidden_leverage": {
+    "as_of": "2026-07-05",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "0,203 | Accrued expenses | 80,586 | 91,397 | Accrued income taxes | 9,126 | 9,141 | Deferred revenue and customer deposits | 48,978 | 21,094 | Operating lease liabilities | 12,281 | 11,716 | Total current liabilities | 216,031 | 183,551 | Non-current operating lease liabi",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000065/cgnx-20260705.htm",
+        "accession": "0000851205-26-000065",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000851205-26-000065",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000065/cgnx-20260705.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-05",
+    "metrics": {
+      "revenue_growth": 0.0873,
+      "receivables_growth": 0.0234,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.1574,
+      "dsri": 0.9412,
+      "ocf_to_net_income": 2.1453
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 994359000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        },
+        {
+          "value_usd": 914515000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 146713000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        },
+        {
+          "value_usd": 143359000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 21094000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        },
+        {
+          "value_usd": 25035000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 245514000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        },
+        {
+          "value_usd": 149081000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 114442000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        },
+        {
+          "value_usd": 106171000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000851205-26-000012",
+          "filed": "2026-02-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000012/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "$ 20,120,000 and $ 10,592,000 as of July 5, 2026 and December 31, 2025, respectively. Accounts Receivable, Contract Assets, and Contract Liabilities Accounts receivable represents amounts billed and currently due from customers which are reported at their net estimated",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000065/cgnx-20260705.htm",
+        "accession": "0000851205-26-000065",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "yable | $ | 65,060 | $ | 50,203 | Accrued expenses | 80,586 | 91,397 | Accrued income taxes | 9,126 | 9,141 | Deferred revenue and customer deposits | 48,978 | 21,094 | Operating lease liabilities | 12,281 | 11,716 | Total current liabilities | 216,031 | 183,551 | Non-current",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000065/cgnx-20260705.htm",
+        "accession": "0000851205-26-000065",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "0,203 | Accrued expenses | 80,586 | 91,397 | Accrued income taxes | 9,126 | 9,141 | Deferred revenue and customer deposits | 48,978 | 21,094 | Operating lease liabilities | 12,281 | 11,716 | Total current liabilities | 216,031 | 183,551 | Non-current operating lease liabi",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000065/cgnx-20260705.htm",
+      "accession": "0000851205-26-000065",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0000851205-26-000065",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0000851205-26-000065",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "$ 20,120,000 and $ 10,592,000 as of July 5, 2026 and December 31, 2025, respectively. Accounts Receivable, Contract Assets, and Contract Liabilities Accounts receivable represents amounts billed and currently due from customers which are reported at their net estimated",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000065/cgnx-20260705.htm",
+      "accession": "0000851205-26-000065",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "yable | $ | 65,060 | $ | 50,203 | Accrued expenses | 80,586 | 91,397 | Accrued income taxes | 9,126 | 9,141 | Deferred revenue and customer deposits | 48,978 | 21,094 | Operating lease liabilities | 12,281 | 11,716 | Total current liabilities | 216,031 | 183,551 | Non-current",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000065/cgnx-20260705.htm",
+      "accession": "0000851205-26-000065",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    }
+  ],
+  "revenue_quality_text_source": "0000851205-26-000065"
+}

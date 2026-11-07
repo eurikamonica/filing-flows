@@ -1,0 +1,347 @@
+{
+  "cik": 1403475,
+  "ticker": "BMRC",
+  "name": "Bank of Marin Bancorp",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-11-07T08:52:44+00:00",
+  "fetched_at": "2026-11-05T23:43:27+00:00",
+  "price": 28.58,
+  "price_date": "2026-11-06",
+  "equity_vol": 0.199121,
+  "snapshot": {
+    "total_debt": 44588000,
+    "cash": 265330000,
+    "finance_leases": 582000,
+    "operating_leases": 24738000,
+    "equity": 379376000,
+    "assets": 3866694000,
+    "liabilities": 3487318000,
+    "retained_earnings": 213729000,
+    "deposits": 3395222000,
+    "time_deposits": 142444000,
+    "interest_paid": 46341000,
+    "pretax_income": -19431000,
+    "net_income": -11851000,
+    "ocf": 43145000,
+    "capex": 868000,
+    "shares": 16213611,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "DebtAndCapitalLeaseObligations",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (four quarters)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 44588000,
+    "cash_and_investments": 265330000.0,
+    "net_debt": -220742000.0,
+    "ebitda": -19431000.0,
+    "ebit": -19431000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.931033,
+    "fcf": 42277000,
+    "fcf_to_debt": 0.94817,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 265330000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 463385002.38,
+    "debt_to_ev": 0.18376,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 24738000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1403475/000140347526000045/bmrc-20260930.htm",
+        "accession": "0001403475-26-000045",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 24738000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001403475-26-000045",
+            "filed": "2026-11-05",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1403475/000140347526000045/bmrc-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "(Topic 805) and Consolidation (Topic 810): D etermining the Accounting Acquirer in the Acquisition of a Variable Interest Entity , which revises current guidance for determining the accounting acquirer for a transaction effected primarily by exchanging equity interests in which",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1403475/000140347526000045/bmrc-20260930.htm",
+        "accession": "0001403475-26-000045",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "uncommenced_leases",
+        "label": "Uncommenced leases",
+        "excerpt": "ments as of September 30, 2026. The amounts presented below exclude future lease payments related to the uncommenced lease. The discount rates used to calculate the present value of lease liabilities were based on the collateralized FHLB borrowing rates that were commensu",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1403475/000140347526000045/bmrc-20260930.htm",
+        "accession": "0001403475-26-000045",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "to five years . The equipment finance leases do not contain renewal options, bargain purchase options or residual value guarantees. The following table shows the balances of operating and finance lease right-of-use assets and lease liabilities. Page-24 (in thousands) | Sept",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1403475/000140347526000045/bmrc-20260930.htm",
+        "accession": "0001403475-26-000045",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": ", repayment of borrowings, dividends to common stockholders, share repurchases and operating expenses. Customer deposits are a significant component of our daily liquidity position. The attraction and retention of deposits depend upon the variety and effectiveness of ou",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1403475/000140347526000045/bmrc-20260930.htm",
+        "accession": "0001403475-26-000045",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001403475-26-000045",
+      "form": "10-Q",
+      "filed": "2026-11-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1403475/000140347526000045/bmrc-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "2035 Notes",
+      "kind": "notes",
+      "as_of": "2025-11-19",
+      "face": 45000000.0,
+      "coupon": 0.0675,
+      "spread": 0.0335,
+      "floating": true
+    },
+    {
+      "name": "FRBSF advances - Discount Window",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0,
+      "floating": false
+    },
+    {
+      "name": "FHLB short-term borrowings",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Federal funds lines of credit",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "drawn": 0.0,
+      "rate_now": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Subordinated Notes",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0739,
+      "floating": false
+    },
+    {
+      "name": "FHLB fixed-rate advances",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "drawn": 0.0,
+      "rate_now": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "FRBSF short-term borrowings under the BTFP",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "drawn": 0.0,
+      "rate_now": 0.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-11-19",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001403475-25-000077",
+      "doc": "bmrc-20251119.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-30",
+      "items": "1.01,9.01",
+      "acc": "0001403475-24-000018",
+      "doc": "bmrc-20240426.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-04-26",
+      "items": "1.01,9.01",
+      "acc": "0001403475-23-000023",
+      "doc": "bmrc-20230425.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-01",
+      "items": "1.01,9.01",
+      "acc": "0001403475-22-000020",
+      "doc": "brmc-20220331.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-05-11",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001403475-21-000039",
+      "doc": "brmc-20210510.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-19",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001403475-21-000028",
+      "doc": "bmrc-20210416.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-08-02",
+      "items": "1.01,9.01",
+      "acc": "0001403475-17-000033",
+      "doc": "a8kagreementtomergeandplan.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-08-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001403475-17-000029",
+      "doc": "form8kbankofnapa.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-07-07",
+      "items": "1.01,3.03,8.01,9.01",
+      "acc": "0001104659-17-043964",
+      "doc": "a17-16983_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-06-22",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001403475-16-000079",
+      "doc": "rightsagreement8kdoc-june2.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,282 @@
+{
+  "cik": 1603015,
+  "ticker": "VIA",
+  "name": "Via Transportation, Inc.",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "docs": {
+    "xbrl:0001603015-26-000008": {
+      "instruments": [
+        {
+          "name": "Convertible Notes",
+          "kind": "convertible",
+          "as_of": "2025-02-28",
+          "face": 50000000.0,
+          "floating": false
+        },
+        {
+          "name": "Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "spread": 0.0175,
+          "available": 86200000.0,
+          "reference": "SOFR",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-06",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001603015-26-000026": {
+      "instruments": [
+        {
+          "name": "Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "spread": 0.0175,
+          "drawn": 0.0,
+          "available": 72000000.0,
+          "reference": "SOFR",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Prepackaged Software",
+  "snapshot": {
+    "cash": 335915000,
+    "operating_leases": 19126000,
+    "convertible": 0,
+    "revolver_drawn": 0,
+    "equity": 618309000,
+    "assets": 718349000,
+    "liabilities": 100040000,
+    "assets_current": 458206000,
+    "liabilities_current": 90796000,
+    "retained_earnings": -1231021000,
+    "interest_expense": 3029000,
+    "interest_paid": 1750000,
+    "operating_income": -88620000,
+    "pretax_income": -96929000,
+    "net_income": -98528000,
+    "da": 4000000,
+    "ocf": -40827000,
+    "capex": 1358000,
+    "revenue": 491703000,
+    "debt_issued": 0,
+    "converted_amount": 76172000,
+    "shares": 81257582,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromConvertibleDebt (FY + YTD − prior YTD)",
+    "converted_amount": "DebtConversionConvertedInstrumentAmount1 (fiscal year)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001603015-26-000008",
+  "xbrl_10-Q": "xbrl:0001603015-26-000026",
+  "events": [],
+  "fetched_at": "2026-10-26T01:23:25+00:00",
+  "signature": "0001603015-26-000027",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001603015-26-000026",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000026/via-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.2864,
+      "receivables_growth": 0.1059,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.1876,
+      "dsri": 0.8597,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 434337000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        },
+        {
+          "value_usd": 337630000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 81572000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        },
+        {
+          "value_usd": 73760000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 26893000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        },
+        {
+          "value_usd": 22644000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -30869000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        },
+        {
+          "value_usd": -69962000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -96361000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        },
+        {
+          "value_usd": -90281000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001603015-26-000008",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000008/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "rued expenses and other current liabilities | 23,859 | 24,886 | Operating lease liabilities | 9,829 | 9,749 | Deferred revenue | 22,810 | 26,893 | Insurance payables | 15,329 | 15,144 | Accrued compensation and benefits | 12,930 | 13,136 | Total current liabilities | 90,796 |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000026/via-20260630.htm",
+        "accession": "0001603015-26-000026",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001603015-26-000026",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001603015-26-000026",
+  "revenue_quality_text_leads": [
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "rued expenses and other current liabilities | 23,859 | 24,886 | Operating lease liabilities | 9,829 | 9,749 | Deferred revenue | 22,810 | 26,893 | Insurance payables | 15,329 | 15,144 | Accrued compensation and benefits | 12,930 | 13,136 | Total current liabilities | 90,796 |",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1603015/000160301526000026/via-20260630.htm",
+      "accession": "0001603015-26-000026",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    }
+  ],
+  "revenue_quality_text_source": "0001603015-26-000026"
+}

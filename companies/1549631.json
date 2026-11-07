@@ -1,0 +1,242 @@
+{
+  "cik": 1549631,
+  "ticker": "QURT",
+  "name": "Quarta-Rad, Inc.",
+  "sector": "industrials",
+  "industry": "Industrial Instruments For Measurement, Display, and Control",
+  "sic": "3823",
+  "docs": {
+    "xbrl:0001493152-26-014020": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-31",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001493152-26-038371": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Industrial Instruments For Measurement, Display, and Control",
+  "snapshot": {
+    "cash": 38528,
+    "investments": 2,
+    "equity": 3572,
+    "assets": 367030,
+    "assets_current": 54428,
+    "liabilities_current": 363458,
+    "retained_earnings": -567348,
+    "operating_income": -240074,
+    "pretax_income": -243488,
+    "net_income": -246388,
+    "da": 770,
+    "ocf": 8965,
+    "revenue": 234450,
+    "shares": 15899483,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001493152-26-014020",
+  "xbrl_10-Q": "xbrl:0001493152-26-038371",
+  "events": [
+    {
+      "date": "2020-12-22",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001493152-20-024126",
+      "doc": "form8-k.htm",
+      "desc": ""
+    }
+  ],
+  "fetched_at": "2026-10-26T04:55:35+00:00",
+  "signature": "0001493152-26-038371",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-038371",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226038371/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 1.2937,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 244955.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001493152-26-014020",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226014020/"
+        },
+        {
+          "value_usd": 106797.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001493152-26-014020",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226014020/"
+        }
+      ],
+      "receivables": [
+        null,
+        {
+          "value_usd": 6233.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-014020",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226014020/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 9888.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-014020",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226014020/"
+        },
+        {
+          "value_usd": -75124.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-014020",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226014020/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -256929.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-014020",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226014020/"
+        },
+        {
+          "value_usd": -216755.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-014020",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226014020/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "eserves. Actual claims for returns could be materially different from the estimates. There was no reserve for sales returns and allowances at June 30, 2026 and December 31, 2025, respectively. We recognize revenue when we satisfy a performance obligation in a contract by transferring c",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226038371/form10-q.htm",
+        "accession": "0001493152-26-038371",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "hs ended June 30, 2026 and 2025, respectively. The shares were fully vested as of January 31, 2026. NOTE 6– RELATED PARTY TRANSACTIONS In May 2022, the Company began using Star Systems Corporation (“STAR”), a Japanese entity owned by the Company’s majority shareholder, as an interm",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226038371/form10-q.htm",
+        "accession": "0001493152-26-038371",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001493152-26-038371",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-038371",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "eserves. Actual claims for returns could be materially different from the estimates. There was no reserve for sales returns and allowances at June 30, 2026 and December 31, 2025, respectively. We recognize revenue when we satisfy a performance obligation in a contract by transferring c",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226038371/form10-q.htm",
+      "accession": "0001493152-26-038371",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "hs ended June 30, 2026 and 2025, respectively. The shares were fully vested as of January 31, 2026. NOTE 6– RELATED PARTY TRANSACTIONS In May 2022, the Company began using Star Systems Corporation (“STAR”), a Japanese entity owned by the Company’s majority shareholder, as an interm",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1549631/000149315226038371/form10-q.htm",
+      "accession": "0001493152-26-038371",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-038371"
+}

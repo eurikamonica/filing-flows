@@ -1,0 +1,408 @@
+{
+  "cik": 1644378,
+  "ticker": "RMR",
+  "name": "RMR GROUP INC.",
+  "sector": "industrials",
+  "industry": "Services-Management Consulting Services",
+  "sic": "8742",
+  "docs": {
+    "xbrl:0001644378-25-000043": {
+      "instruments": [
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2025-09-30",
+          "capacity": 100000000.0,
+          "spread": 0.0225,
+          "floating": true
+        },
+        {
+          "name": "Mortgages",
+          "kind": "mortgage",
+          "as_of": "2025-08-31",
+          "face": 93200000.0,
+          "spread_min": 0.025,
+          "spread_max": 0.0255,
+          "floating": false
+        },
+        {
+          "name": "Two Mortgage Notes Payable",
+          "kind": "mortgage",
+          "as_of": "2025-09-30",
+          "carrying": 90739000.0,
+          "floating": false
+        },
+        {
+          "name": "Secured financing facility",
+          "kind": "other",
+          "as_of": "2025-09-30",
+          "face": 45070000.0,
+          "effective": 0.0703,
+          "spread_min": 0.0285,
+          "spread_max": 0.029,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2025-11-12",
+      "report": "2025-09-30"
+    },
+    "xbrl:0001644378-26-000020": {
+      "instruments": [
+        {
+          "name": "Mortgages",
+          "kind": "mortgage",
+          "as_of": "2026-06-30",
+          "face": 141493000.0,
+          "floating": false
+        },
+        {
+          "name": "Two Mortgage Notes Payable",
+          "kind": "mortgage",
+          "as_of": "2026-06-30",
+          "carrying": 93169000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-05",
+      "report": "2026-06-30"
+    },
+    "0001047469-19-003924:a2239169z424b5.htm": {
+      "kind": "424b",
+      "date": "2019-06-27",
+      "tranches": []
+    },
+    "0001047469-19-003664:a2238748z424b5.htm": {
+      "kind": "424b",
+      "date": "2019-06-17",
+      "tranches": []
+    },
+    "0001047469-15-008690:a2226616z424b3.htm": {
+      "kind": "424b",
+      "date": "2015-11-16",
+      "tranches": []
+    },
+    "0001104659-25-005461:tm254142d1_ex10-1.htm": {
+      "kind": "agreement",
+      "date": "2025-01-23",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-01-22",
+      "size": 100000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        2.25,
+        2.25
+      ],
+      "margin_text": " (a) for Adjusted Term SOFR Advances and Adjusted DSS Advances, two and twenty-five hundredths percent (2.25%) per annum and (b) for Base Rate Advances, one and twenty-five hundredths percent (1.25%) per annum. ",
+      "fee_pct": 0.5,
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Maintain as of each Test Date, a Leverage Ratio of not greater than 2.0:1.0."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Maintain as of each Test Date, an Interest Coverage Ratio of not less than 3.0:1.0."
+        }
+      ]
+    }
+  },
+  "sic_description": "Services-Management Consulting Services",
+  "snapshot": {
+    "total_debt": 138807000,
+    "cash": 58203000,
+    "revolver_drawn": 25000000,
+    "equity": 224186000,
+    "assets": 713576000,
+    "liabilities": 315014000,
+    "assets_current": 153299000,
+    "liabilities_current": 109855000,
+    "retained_earnings": 470216000,
+    "interest_expense": 10139000,
+    "interest_paid": 9036000,
+    "operating_income": 40715000,
+    "pretax_income": 53080000,
+    "net_income": 19808000,
+    "da": 17289000,
+    "ocf": 98565000,
+    "revenue": 638979000,
+    "shares": 16762000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2023-12-31",
+      "filed": "2024-02-07",
+      "total_debt": 4730000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 31413000,
+      "convertible": null,
+      "equity": 240967000,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-03-31",
+      "filed": "2024-05-07",
+      "total_debt": 4759000,
+      "cash": 192108000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 31422000,
+      "convertible": null,
+      "equity": 241501000,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-06-30",
+      "filed": "2024-08-01",
+      "total_debt": 4789000,
+      "cash": 207976000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 31431000,
+      "convertible": null,
+      "equity": 239407000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001644378-25-000043",
+  "xbrl_10-Q": "xbrl:0001644378-26-000020",
+  "events": [
+    {
+      "date": "2025-01-23",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-25-005461",
+      "doc": "tm254142d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-07-31",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-23-085604",
+      "doc": "tm2322395d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-06-14",
+      "items": "1.01,9.01",
+      "acc": "0001104659-19-035506",
+      "doc": "a19-11490_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-03",
+      "items": "1.01,9.01",
+      "acc": "0001104659-18-049499",
+      "doc": "a18-18220_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-01-18",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-18-002874",
+      "doc": "a18-3438_18k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:21:35+00:00",
+  "signature": "0001644378-26-000020",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "ancing Facility, Net In September 2024, we, through our Tremont managed vehicle, entered into a master repurchase agreement with UBS AG, or UBS, or our UBS Master Repurchase Agreement, for a facility with an aggregate maximum capacity of $ 200,000 , pursuant to which we co",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437826000020/rmr-20260630.htm",
+        "accession": "0001644378-26-000020",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001644378-26-000020",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437826000020/rmr-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0578,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 4.3047
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 182703000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001644378-25-000043",
+          "filed": "2025-11-12",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437825000043/"
+        },
+        {
+          "value_usd": 193920000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001644378-25-000043",
+          "filed": "2025-11-12",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437825000043/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 75746000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001644378-25-000043",
+          "filed": "2025-11-12",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437825000043/"
+        },
+        {
+          "value_usd": 61375000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001644378-25-000043",
+          "filed": "2025-11-12",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437825000043/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 17596000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001644378-25-000043",
+          "filed": "2025-11-12",
+          "end": "2025-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437825000043/"
+        },
+        {
+          "value_usd": 23130000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001644378-25-000043",
+          "filed": "2025-11-12",
+          "end": "2024-09-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437825000043/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-09-30",
+      "2024-09-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "ancing Facility, Net In September 2024, we, through our Tremont managed vehicle, entered into a master repurchase agreement with UBS AG, or UBS, or our UBS Master Repurchase Agreement, for a facility with an aggregate maximum capacity of $ 200,000 , pursuant to which we co",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1644378/000164437826000020/rmr-20260630.htm",
+      "accession": "0001644378-26-000020",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001644378-26-000020",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001644378-26-000020",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001644378-26-000020"
+}

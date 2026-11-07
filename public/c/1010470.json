@@ -1,0 +1,198 @@
+{
+  "cik": 1010470,
+  "ticker": "PROV",
+  "name": "PROVIDENT FINANCIAL HOLDINGS INC",
+  "sector": "financials",
+  "industry": "Savings Institution, Federally Chartered",
+  "sic": "6035",
+  "sic_description": "Savings Institution, Federally Chartered",
+  "generated_at": "2026-11-07T08:52:42+00:00",
+  "fetched_at": "2026-11-06T21:36:59+00:00",
+  "price": 18.02,
+  "price_date": "2026-11-06",
+  "equity_vol": 0.098076,
+  "snapshot": {
+    "total_debt": 172039000,
+    "cash": 53245000,
+    "finance_leases": 39000,
+    "operating_leases": 1949000,
+    "revolver_available": 464200000,
+    "equity": 125437000,
+    "assets": 1209940000,
+    "liabilities": 1084503000,
+    "retained_earnings": 216159000,
+    "deposits": 897728000,
+    "interest_paid": 19040000,
+    "pretax_income": 9079000,
+    "net_income": 6547000,
+    "da": 3926000,
+    "ocf": 10855000,
+    "capex": 513000,
+    "debt_repaid": 140029000,
+    "shares": 6111227,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "DebtAndCapitalLeaseObligations",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 172039000,
+    "cash_and_investments": 53245000.0,
+    "net_debt": 118794000.0,
+    "ebitda": 13005000.0,
+    "ebit": 9079000.0,
+    "interest_expense": null,
+    "leverage": 13.228681,
+    "net_leverage": 9.134487,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.570116,
+    "fcf": 10342000,
+    "fcf_to_debt": 0.060114,
+    "effective_rate": null,
+    "revolver_available": 464200000,
+    "liquidity": 517445000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 110124310.54,
+    "debt_to_ev": 0.75153,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1949000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1010470/000101047026000015/prov-20260930x10q.htm",
+        "accession": "0001010470-26-000015",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 1949000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001010470-26-000015",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1010470/000101047026000015/prov-20260930x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001010470-26-000015",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1010470/000101047026000015/prov-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Discount Window Facility",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "capacity": 175100000.0,
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Federal Funds Purchased",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "capacity": 50000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2012-01-12",
+      "items": "1.01,9.01",
+      "acc": "0000939057-12-000005",
+      "doc": "k811212.htm",
+      "desc": "PROVIDENT FINANCIAL HOLDINGS, INC. FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

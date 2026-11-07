@@ -1,0 +1,295 @@
+{
+  "cik": 352955,
+  "ticker": "CKX",
+  "name": "CKX LANDS, INC.",
+  "sector": "energy",
+  "industry": "Crude Petroleum & Natural Gas",
+  "sic": "1311",
+  "docs": {
+    "xbrl:0001437749-26-010434": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-31",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001437749-26-026519": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-07",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Crude Petroleum & Natural Gas",
+  "snapshot": {
+    "investments": 3015990,
+    "equity": 21622891,
+    "assets": 21874428,
+    "liabilities": 251537,
+    "assets_current": 17643653,
+    "liabilities_current": 141583,
+    "retained_earnings": 18809770,
+    "interest_paid": 0,
+    "operating_income": 3317557,
+    "pretax_income": 3758643,
+    "net_income": 2910836,
+    "da": 2503,
+    "ocf": -98621,
+    "revenue": 693398,
+    "shares": 2053129,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "investments": "MarketableSecuritiesCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001437749-26-010434",
+  "xbrl_10-Q": "xbrl:0001437749-26-026519",
+  "events": [
+    {
+      "date": "2025-08-15",
+      "items": "1.01,9.01",
+      "acc": "0001437749-25-027061",
+      "doc": "ckx20250814_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-07-17",
+      "items": "1.01",
+      "acc": "0001437749-17-012696",
+      "doc": "ckx20170716_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-07-15",
+      "items": "1.01",
+      "acc": "0001437749-16-035287",
+      "doc": "ckx20160715_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T04:53:45+00:00",
+  "signature": "0001437749-26-026519",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ements, financings, or other relationships with unconsolidated entities or other persons, also known as “special purpose entities” (SPEs). ITEM 3. NOT APPLICABLE ITEM 4. CONTROLS AND PROCEDURES Evaluation of Disclosure Controls and Procedures Pursuant to Rule 13a-15(b) an",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926026519/ckx20260630_10q.htm",
+        "accession": "0001437749-26-026519",
+        "form": "10-Q",
+        "filed": "2026-08-07",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-026519",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926026519/ckx20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.4487,
+      "receivables_growth": -0.4661,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.1813,
+      "dsri": 0.9684,
+      "ocf_to_net_income": 0.1527
+    },
+    "risk_flags": [
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": 0.1527,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 838543.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        },
+        {
+          "value_usd": 1521124.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 41705.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        },
+        {
+          "value_usd": 78119.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 173369.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        },
+        {
+          "value_usd": 211763.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 459630.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        },
+        {
+          "value_usd": 204761.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 3009972.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        },
+        {
+          "value_usd": 250224.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-010434",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926010434/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "quired. No interest or penalties have been levied against the Company and none are anticipated. 4 Note 6: | Related Party Transactions | The Company and Stream Wetlands Services, LLC (“Stream Wetlands”) were parties to an option to lease agreement dated April 17, 2017 (the “OTL”). Th",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926026519/ckx20260630_10q.htm",
+        "accession": "0001437749-26-026519",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "ements, financings, or other relationships with unconsolidated entities or other persons, also known as “special purpose entities” (SPEs). ITEM 3. NOT APPLICABLE ITEM 4. CONTROLS AND PROCEDURES Evaluation of Disclosure Controls and Procedures Pursuant to Rule 13a-15(b) an",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926026519/ckx20260630_10q.htm",
+      "accession": "0001437749-26-026519",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001437749-26-026519",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-026519",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "quired. No interest or penalties have been levied against the Company and none are anticipated. 4 Note 6: | Related Party Transactions | The Company and Stream Wetlands Services, LLC (“Stream Wetlands”) were parties to an option to lease agreement dated April 17, 2017 (the “OTL”). Th",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/352955/000143774926026519/ckx20260630_10q.htm",
+      "accession": "0001437749-26-026519",
+      "form": "10-Q",
+      "filed": "2026-08-07"
+    }
+  ],
+  "revenue_quality_text_source": "0001437749-26-026519"
+}

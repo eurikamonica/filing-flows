@@ -1,0 +1,369 @@
+{
+  "cik": 1628171,
+  "ticker": "RVMD",
+  "name": "Revolution Medicines, Inc.",
+  "sector": "health",
+  "industry": "Biological Products, (No Diagnostic Substances)",
+  "sic": "2836",
+  "docs": {
+    "xbrl:0001193125-26-071563": {
+      "instruments": [
+        {
+          "name": "Tranche One",
+          "kind": "other",
+          "as_of": "2025-06-30",
+          "capacity": 250000000.0,
+          "floating": false
+        },
+        {
+          "name": "Tranche Two",
+          "kind": "other",
+          "as_of": "2025-06-30",
+          "capacity": 250000000.0,
+          "floating": false
+        },
+        {
+          "name": "Tranche Three",
+          "kind": "other",
+          "as_of": "2025-06-30",
+          "capacity": 250000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-25",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001193125-26-447253": {
+      "instruments": [
+        {
+          "name": "Zero Point Five Percent Convertible Senior Notes Due Two Thousand Thirty Three",
+          "kind": "convertible",
+          "as_of": "2026-09-30",
+          "face": 500000000.0,
+          "coupon": 0.005,
+          "maturity": "2033-05-01",
+          "conv_price": 198.8,
+          "conv_ratio_max": 7.0422,
+          "face_max": 1000000.0,
+          "carrying": 487880000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-04",
+      "report": "2026-09-30"
+    },
+    "0001193125-26-155854:d106030dfwp.htm": {
+      "kind": "fwp",
+      "date": "2026-04-15",
+      "tranches": [
+        {
+          "title": "0.50% Convertible Senior Notes due 2033",
+          "floating": false,
+          "coupon": 0.5,
+          "principal": 500000000.0,
+          "currency": "USD",
+          "maturity": "2033-05-01",
+          "trade_date": "2026-04-15",
+          "convertible": true,
+          "conv_price": 198.8,
+          "conv_rate": 5.0302,
+          "conv_premium": 40.0,
+          "cusip": "76155X100"
+        }
+      ]
+    }
+  },
+  "sic_description": "Biological Products, (No Diagnostic Substances)",
+  "snapshot": {
+    "cash": 615908000,
+    "investments": 3035477000,
+    "operating_leases": 151223000,
+    "convertible": 487880000,
+    "equity": 2401503000,
+    "assets": 4303514000,
+    "liabilities": 1902011000,
+    "assets_current": 3976698000,
+    "liabilities_current": 475667000,
+    "retained_earnings": -4374746000,
+    "interest_expense": 81718000,
+    "operating_income": -1685129000,
+    "pretax_income": -1872889000,
+    "net_income": -1870235000,
+    "da": 9695000,
+    "ocf": -1431372000,
+    "capex": 9445000,
+    "revenue": 197559000,
+    "shares": 216292323,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleLongTermNotesPayable",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 151223000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526447253/rvmd-20260930.htm",
+        "accession": "0001193125-26-447253",
+        "form": "10-Q",
+        "filed": "2026-11-04",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 151223000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-447253",
+            "filed": "2026-11-04",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526447253/rvmd-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-447253",
+      "form": "10-Q",
+      "filed": "2026-11-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526447253/rvmd-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": null,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-071563",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526071563/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-071563",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526071563/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -897741000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-071563",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526071563/"
+        },
+        {
+          "value_usd": -557436000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-071563",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526071563/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1131301000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-071563",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526071563/"
+        },
+        {
+          "value_usd": -600093000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-26-071563",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526071563/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "g the reporting period. On an ongoing basis, management evaluates its estimates, including clinical accruals, variable consideration related to product revenue, including estimates of rebates, chargebacks, discounts, returns and other sales allowances, useful lives of property and",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526447253/rvmd-20260930.htm",
+        "accession": "0001193125-26-447253",
+        "form": "10-Q",
+        "filed": "2026-11-04"
+      },
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "ial as of September 30, 2026. The Company does not adjust its accounts receivable, net for the effects of a significant financing component at contract inception if it expects to collect the receivables in one year or less from the time of sale . Inventory The Company began capitalizi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526447253/rvmd-20260930.htm",
+        "accession": "0001193125-26-447253",
+        "form": "10-Q",
+        "filed": "2026-11-04"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001193125-26-447253",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001193125-26-447253",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "g the reporting period. On an ongoing basis, management evaluates its estimates, including clinical accruals, variable consideration related to product revenue, including estimates of rebates, chargebacks, discounts, returns and other sales allowances, useful lives of property and",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526447253/rvmd-20260930.htm",
+      "accession": "0001193125-26-447253",
+      "form": "10-Q",
+      "filed": "2026-11-04"
+    },
+    {
+      "key": "significant_financing",
+      "label": "Significant financing component",
+      "excerpt": "ial as of September 30, 2026. The Company does not adjust its accounts receivable, net for the effects of a significant financing component at contract inception if it expects to collect the receivables in one year or less from the time of sale . Inventory The Company began capitalizi",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1628171/000119312526447253/rvmd-20260930.htm",
+      "accession": "0001193125-26-447253",
+      "form": "10-Q",
+      "filed": "2026-11-04"
+    }
+  ],
+  "revenue_quality_text_source": "0001193125-26-447253",
+  "xbrl_10-K": "xbrl:0001193125-26-071563",
+  "xbrl_10-Q": "xbrl:0001193125-26-447253",
+  "events": [
+    {
+      "date": "2026-10-13",
+      "items": "2.03,8.01",
+      "acc": "0001628171-26-000004",
+      "doc": "rvmd-20261008.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-01",
+      "items": "1.01,2.03",
+      "acc": "0001193125-26-377362",
+      "doc": "rvmd-20260827.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-17",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-26-161800",
+      "doc": "d19920d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-06-24",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001193125-25-145242",
+      "doc": "d838043d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-08-01",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001193125-23-199907",
+      "doc": "d534121d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-04",
+      "items": "1.01,2.03",
+      "acc": "0001193125-21-320172",
+      "doc": "d252380d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-04-21",
+      "items": "1.01,2.03,8.01",
+      "acc": "0001193125-20-113615",
+      "doc": "d918224d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-11-05T00:56:52+00:00",
+  "signature": "0001193125-26-447253"
+}

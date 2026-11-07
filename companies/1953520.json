@@ -1,0 +1,197 @@
+{
+  "cik": 1953520,
+  "name": "Fidelity Core Real Estate Fund",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "docs": {
+    "xbrl:0001193125-26-346615": {
+      "instruments": [
+        {
+          "name": "Mortgages",
+          "kind": "mortgage",
+          "as_of": "2026-06-30",
+          "rate_now": 0.0528,
+          "carrying": 248956100.0,
+          "floating": false
+        },
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 50000000.0,
+          "drawn": 0.0,
+          "carrying": 0.0,
+          "reference": "Us Treasury Ust Interest Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-12",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Real Estate Investment Trusts",
+  "snapshot": {
+    "total_debt": 248956100,
+    "cash": 9461747,
+    "debt_fair_value": 26259726,
+    "equity": 323384511,
+    "assets": 626854411,
+    "liabilities": 289381510,
+    "retained_earnings": -62839211,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "rest_of_year": 0
+    },
+    "wavg_rate_all": 0.065,
+    "shares": 37635938,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "debt_fair_value": "DebtInstrumentFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "history": [
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-12",
+      "total_debt": 248956100,
+      "cash": 9461747,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 37635938,
+      "convertible": null,
+      "equity": 323384511,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0001193125-26-346615",
+  "events": [
+    {
+      "date": "2026-08-20",
+      "items": "1.01,5.03,8.01,9.01",
+      "acc": "0001193125-26-357818",
+      "doc": "ck0001953520-20260820.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T02:59:56+00:00",
+  "signature": "0001193125-26-415402",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ine whether it has a controlling financial interest. The Company first considers whether the entity is a variable interest entity (“VIE”), and if so, whether it is the primary beneficiary. The Company is the primary beneficiary of a VIE when it has both the power to direct the m",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1953520/000119312526346615/ck0001953520-20260630.htm",
+        "accession": "0001193125-26-346615",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-346615",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1953520/000119312526346615/ck0001953520-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "hin 180 days. (3) This revolving credit facility is from a related party lender, as discussed in “ Note 12. Related Party Transactions . ” (4) The term US 3M refers to the Three-Month Treasury Bill rate in effect on the last day of the prior quarter from the applicable Borrowing Da",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1953520/000119312526346615/ck0001953520-20260630.htm",
+        "accession": "0001193125-26-346615",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": ",873,858 | Management fee payable | 1,032,477 | 885,646 | Bi-lateral OTC swaps, at fair value | 174,049 | — | Deferred revenue | 1,285,598 | 911,686 | Accounts payable, accrued expenses, and other liabilities | 5,236,622 | 2,733,480 | Total liabilities | 289,381,510 | 177,398",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1953520/000119312526346615/ck0001953520-20260630.htm",
+        "accession": "0001193125-26-346615",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "ine whether it has a controlling financial interest. The Company first considers whether the entity is a variable interest entity (“VIE”), and if so, whether it is the primary beneficiary. The Company is the primary beneficiary of a VIE when it has both the power to direct the m",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1953520/000119312526346615/ck0001953520-20260630.htm",
+      "accession": "0001193125-26-346615",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001193125-26-346615",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001193125-26-346615",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "hin 180 days. (3) This revolving credit facility is from a related party lender, as discussed in “ Note 12. Related Party Transactions . ” (4) The term US 3M refers to the Three-Month Treasury Bill rate in effect on the last day of the prior quarter from the applicable Borrowing Da",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1953520/000119312526346615/ck0001953520-20260630.htm",
+      "accession": "0001193125-26-346615",
+      "form": "10-Q",
+      "filed": "2026-08-12"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": ",873,858 | Management fee payable | 1,032,477 | 885,646 | Bi-lateral OTC swaps, at fair value | 174,049 | — | Deferred revenue | 1,285,598 | 911,686 | Accounts payable, accrued expenses, and other liabilities | 5,236,622 | 2,733,480 | Total liabilities | 289,381,510 | 177,398",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1953520/000119312526346615/ck0001953520-20260630.htm",
+      "accession": "0001193125-26-346615",
+      "form": "10-Q",
+      "filed": "2026-08-12"
+    }
+  ],
+  "revenue_quality_text_source": "0001193125-26-346615"
+}

@@ -1,0 +1,130 @@
+{
+  "cik": 2138186,
+  "ticker": "NARA",
+  "name": "Narragansett Bancorp, Inc.",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "docs": {
+    "xbrl:0001193125-26-396522": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-09-21",
+      "report": "2026-06-30"
+    },
+    "0001193125-26-358289:d182171d424b3.htm": {
+      "kind": "424b",
+      "date": "2026-08-20",
+      "tranches": []
+    },
+    "0001193125-26-358277:d122170d424b3.htm": {
+      "kind": "424b",
+      "date": "2026-08-20",
+      "tranches": []
+    }
+  },
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "snapshot": {
+    "current_debt": 85000000,
+    "cash": 52748000,
+    "short_term_borrowings": 85000000,
+    "operating_leases": 9830000,
+    "equity": 189196000,
+    "assets": 2874485000,
+    "liabilities": 2685289000,
+    "retained_earnings": 194113000,
+    "shares": 0,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 9830000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2138186/000119312526396522/nara-20260630.htm",
+        "accession": "0001193125-26-396522",
+        "form": "10-Q",
+        "filed": "2026-09-21",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 9830000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-396522",
+            "filed": "2026-09-21",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2138186/000119312526396522/nara-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-396522",
+      "form": "10-Q",
+      "filed": "2026-09-21",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2138186/000119312526396522/nara-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001193125-26-396522",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001193125-26-396522",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001193125-26-396522",
+  "xbrl_10-Q": "xbrl:0001193125-26-396522",
+  "events": [
+    {
+      "date": "2026-08-17",
+      "items": "1.01,9.01",
+      "acc": "0001193125-26-353578",
+      "doc": "d157264d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-27T18:59:39+00:00",
+  "signature": "0001193125-26-433652",
+  "fdic": {
+    "matched": false
+  }
+}

@@ -1,0 +1,283 @@
+{
+  "cik": 916907,
+  "ticker": "SMBC",
+  "name": "SOUTHERN MISSOURI BANCORP, INC.",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "generated_at": "2026-11-07T08:52:53+00:00",
+  "fetched_at": "2026-11-07T02:01:10+00:00",
+  "price": 70.46,
+  "price_date": "2026-11-06",
+  "equity_vol": 0.169481,
+  "snapshot": {
+    "cash": 97134000,
+    "operating_leases": 6750000,
+    "revolver_drawn": 918400000,
+    "equity": 601148000,
+    "assets": 5309258000,
+    "liabilities": 4708110000,
+    "deposits": 4473964000,
+    "time_deposits": 1740167000,
+    "interest_paid": 7941000,
+    "pretax_income": 91229000,
+    "net_income": 75286000,
+    "ocf": 85046000,
+    "capex": 4269000,
+    "deposit_interest": 108447000,
+    "shares": 10927606,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 97134000.0,
+    "net_debt": null,
+    "ebitda": 91229000.0,
+    "ebit": 91229000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 11.709734,
+    "fcf": 80777000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 97134000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 769959118.76,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 6750000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/916907/000110465926123927/smbc-20260930x10q.htm",
+        "accession": "0001104659-26-123927",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 6750000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001104659-26-123927",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/916907/000110465926123927/smbc-20260930x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "owance period. The Company’s maximum exposure to loss related to its investments in these unconsolidated variable interest entities is limited to the carrying amount of the investments, net of any unfunded capital commitments and previously recorded tax credits which remain subjec",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/916907/000110465926123927/smbc-20260930x10q.htm",
+        "accession": "0001104659-26-123927",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "799,790 | 1,740,167 | TOTAL DEPOSITS | $ | 4,473,964 | $ | 4,407,846 | -32- Table of Contents Note 7: Repurchase Agreements Securities sold under agreements to repurchase totaled $ 25.0 million at September 30, 2026, an increase of $ 5.0 million from $ 20.0 million at Ju",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/916907/000110465926123927/smbc-20260930x10q.htm",
+        "accession": "0001104659-26-123927",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "tax_equity",
+        "label": "Tax equity financing",
+        "excerpt": "ember 30, 2026 and June 30, 2026, respectively. In accordance with ASU 2023-02, the Company accounts for tax equity investments using the proportional amortization method. For all legally binding unfunded equity commitments, the Company increases its recognized investment and",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/916907/000110465926123927/smbc-20260930x10q.htm",
+        "accession": "0001104659-26-123927",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-123927",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/916907/000110465926123927/smbc-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2022-09-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001558370-22-014518",
+      "doc": "smbc-20220920x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-06-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000927089-18-000256",
+      "doc": "smbc-8k0618gideon.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-08-21",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000927089-17-000284",
+      "doc": "smbc-8k082117.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K FOR AUGUST 17, 2017"
+    },
+    {
+      "date": "2017-06-09",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000927089-17-000226",
+      "doc": "smbc8k060917.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-01-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000927089-17-000017",
+      "doc": "smbc-8k011117.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-02-28",
+      "items": "1.01,7.01,9.01",
+      "acc": "0000927089-14-000054",
+      "doc": "smbc-8k022514.htm",
+      "desc": ""
+    },
+    {
+      "date": "2013-06-24",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000927089-13-000125",
+      "doc": "smbc-8k062113.htm",
+      "desc": ""
+    },
+    {
+      "date": "2011-11-18",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000927089-11-000263",
+      "doc": "smbc-8ka111811.htm",
+      "desc": ""
+    },
+    {
+      "date": "2011-11-17",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000927089-11-000261",
+      "doc": "smbc-8k111611.htm",
+      "desc": ""
+    },
+    {
+      "date": "2011-07-26",
+      "items": "1.01,3.02,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0000927089-11-000174",
+      "doc": "smbc-8ksblf.htm",
+      "desc": ""
+    },
+    {
+      "date": "2010-12-23",
+      "items": "1.01,2.01,8.01,9.01",
+      "acc": "0001188112-10-003433",
+      "doc": "t69459_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

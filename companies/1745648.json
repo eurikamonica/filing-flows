@@ -1,0 +1,203 @@
+{
+  "cik": 1745648,
+  "ticker": "APMD",
+  "name": "Apnimed, Inc.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "docs": {
+    "xbrl:0001193125-26-385356": {
+      "instruments": [
+        {
+          "name": "Convertible Notes Payable",
+          "kind": "convertible",
+          "as_of": "2026-03-31",
+          "coupon": 0.15,
+          "conv_price": 14.98,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-09-08",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Pharmaceutical Preparations",
+  "snapshot": {
+    "total_debt": 40267000,
+    "cash": 172804000,
+    "operating_leases": 750000,
+    "convertible": 39331000,
+    "equity": -176181000,
+    "assets": 195456000,
+    "liabilities": 125698000,
+    "assets_current": 184772000,
+    "liabilities_current": 35578000,
+    "retained_earnings": -203690000,
+    "if_converted_shares": 2950516,
+    "shares": 41630779,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleNotesPayable",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "history": [
+    {
+      "end": "2026-06-30",
+      "filed": "2026-09-08",
+      "total_debt": 40267000,
+      "cash": 172804000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 41630779,
+      "convertible": 39331000,
+      "equity": -176181000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0001193125-26-385356",
+  "events": [],
+  "fetched_at": "2026-10-26T02:59:21+00:00",
+  "signature": "0001193125-26-385356",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 750000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm",
+        "accession": "0001193125-26-385356",
+        "form": "10-Q",
+        "filed": "2026-09-08",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 750000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-385356",
+            "filed": "2026-09-08",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-385356",
+      "form": "10-Q",
+      "filed": "2026-09-08",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "sferring the promised goods or services in the contract. The consideration may include fixed consideration or variable consideration. At the inception of each agreement that includes variable consideration, the Company evaluates the amount of potential payment and the likelihood th",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm",
+        "accession": "0001193125-26-385356",
+        "form": "10-Q",
+        "filed": "2026-09-08"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "r changes in consideration which the Company expects to receive related to existing contracts are recorded as contract modifications. Contract modifications are recorded as a separate contract if the scope of the contract increases because of the addition of promised goods or servi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm",
+        "accession": "0001193125-26-385356",
+        "form": "10-Q",
+        "filed": "2026-09-08"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "expenses and other current liabilities | 9,184 | 11,026 | Operating lease liability | 265 | 250 | Short-term deferred revenue | 19,531 | 97,812 | Total current liabilities | 35,578 | 110,876 | LONG TERM LIABILITIES: | Operating lease liability, net of current | 485 | 623 | C",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm",
+        "accession": "0001193125-26-385356",
+        "form": "10-Q",
+        "filed": "2026-09-08"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001193125-26-385356",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001193125-26-385356",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "sferring the promised goods or services in the contract. The consideration may include fixed consideration or variable consideration. At the inception of each agreement that includes variable consideration, the Company evaluates the amount of potential payment and the likelihood th",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm",
+      "accession": "0001193125-26-385356",
+      "form": "10-Q",
+      "filed": "2026-09-08"
+    },
+    {
+      "key": "contract_modification",
+      "label": "Contract modifications",
+      "excerpt": "r changes in consideration which the Company expects to receive related to existing contracts are recorded as contract modifications. Contract modifications are recorded as a separate contract if the scope of the contract increases because of the addition of promised goods or servi",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm",
+      "accession": "0001193125-26-385356",
+      "form": "10-Q",
+      "filed": "2026-09-08"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "expenses and other current liabilities | 9,184 | 11,026 | Operating lease liability | 265 | 250 | Short-term deferred revenue | 19,531 | 97,812 | Total current liabilities | 35,578 | 110,876 | LONG TERM LIABILITIES: | Operating lease liability, net of current | 485 | 623 | C",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526385356/apmd-20260630.htm",
+      "accession": "0001193125-26-385356",
+      "form": "10-Q",
+      "filed": "2026-09-08"
+    }
+  ],
+  "revenue_quality_text_source": "0001193125-26-385356"
+}

@@ -1,0 +1,325 @@
+{
+  "cik": 1423869,
+  "ticker": "PCB",
+  "name": "PCB BANCORP",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0001423869-26-000006": {
+      "instruments": [
+        {
+          "name": "Federal Reserve Discount Window",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "available": 841600000.0,
+          "floating": false
+        },
+        {
+          "name": "Overnight Federal Funds Lines",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "capacity": 0.0,
+          "available": 65000000.0,
+          "floating": false
+        },
+        {
+          "name": "FHLB Advances",
+          "kind": "other",
+          "as_of": "2024-12-31",
+          "available": 50000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-16",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001423869-26-000027": {
+      "instruments": [
+        {
+          "name": "Overnight Federal Funds Lines",
+          "kind": "other",
+          "as_of": "2026-06-30",
+          "capacity": 55000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "cash": 265197000,
+    "short_term_borrowings": 10000000,
+    "operating_leases": 17701000,
+    "equity": 400463000,
+    "assets": 3470124000,
+    "liabilities": 3069661000,
+    "retained_earnings": 201214000,
+    "deposits": 2922659000,
+    "time_deposits": 1563692000,
+    "interest_paid": 94788000,
+    "pretax_income": 58587000,
+    "net_income": 41807000,
+    "da": 2132000,
+    "ocf": 41371000,
+    "capex": 509000,
+    "revenue": 3093000,
+    "deposit_interest": 90465000,
+    "shares": 14044602,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "OtherShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 17701000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000027/pcb-20260630.htm",
+        "accession": "0001423869-26-000027",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 17701000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001423869-26-000027",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000027/pcb-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "e-for-sale. Liquid liabilities may include core deposits, federal funds purchased, securities sold under repurchase agreements and other borrowings. Other sources of liquidity include the sale of loans, the ability to acquire additional national market non-core deposits, addi",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000027/pcb-20260630.htm",
+        "accession": "0001423869-26-000027",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "and investment securities portfolios, increases in debt financing and other borrowings, and increases in customer deposits. Integral to the Company’s liquidity management is the administration of borrowings. To the extent the Company is unable to obtain sufficient liqui",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000027/pcb-20260630.htm",
+        "accession": "0001423869-26-000027",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001423869-26-000027",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000027/pcb-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0451,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 0.7099
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2899000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001423869-26-000006",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000006/"
+        },
+        {
+          "value_usd": 2774000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001423869-26-000006",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000006/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 26589000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001423869-26-000006",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000006/"
+        },
+        {
+          "value_usd": 38985000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001423869-26-000006",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000006/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 37453000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001423869-26-000006",
+          "filed": "2026-03-16",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000006/"
+        },
+        {
+          "value_usd": 25810000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001423869-26-000006",
+          "filed": "2026-03-16",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000006/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "e-for-sale. Liquid liabilities may include core deposits, federal funds purchased, securities sold under repurchase agreements and other borrowings. Other sources of liquidity include the sale of loans, the ability to acquire additional national market non-core deposits, addi",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000027/pcb-20260630.htm",
+      "accession": "0001423869-26-000027",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "and investment securities portfolios, increases in debt financing and other borrowings, and increases in customer deposits. Integral to the Company’s liquidity management is the administration of borrowings. To the extent the Company is unable to obtain sufficient liqui",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1423869/000142386926000027/pcb-20260630.htm",
+      "accession": "0001423869-26-000027",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001423869-26-000027",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001423869-26-000027",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001423869-26-000027",
+  "xbrl_10-K": "xbrl:0001423869-26-000006",
+  "xbrl_10-Q": "xbrl:0001423869-26-000027",
+  "events": [
+    {
+      "date": "2022-05-24",
+      "items": "1.01,3.02,3.03,5.03,8.01,9.01",
+      "acc": "0001423869-22-000019",
+      "doc": "pcb-20220524.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-14",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-18-248450",
+      "doc": "d584590d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-10",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-18-244989",
+      "doc": "d609235d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-11-03T16:24:23+00:00",
+  "signature": "0001423869-26-000033",
+  "fdic": {
+    "matched": false
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "cik": 894501,
+  "ticker": "GRHI",
+  "name": "GOLD ROCK HOLDINGS, INC.",
+  "sector": "technology",
+  "industry": "Services-Computer Integrated Systems Design",
+  "sic": "7373",
+  "docs": {
+    "xbrl:0001091818-26-000026": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-27",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001091818-26-000111": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-10",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Computer Integrated Systems Design",
+  "snapshot": {
+    "cash": 99893,
+    "equity": 53793,
+    "assets": 199893,
+    "liabilities": 146100,
+    "assets_current": 152121,
+    "liabilities_current": 146100,
+    "retained_earnings": -1231192,
+    "net_income": -60692,
+    "ocf": -110151,
+    "revenue": 248200,
+    "shares": 238216969,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001091818-26-000026",
+  "xbrl_10-Q": "xbrl:0001091818-26-000111",
+  "events": [
+    {
+      "date": "2023-08-31",
+      "items": "1.01,9.01",
+      "acc": "0001091818-23-000159",
+      "doc": "ghri831238k.htm",
+      "desc": ""
+    }
+  ],
+  "fetched_at": "2026-10-26T04:53:42+00:00",
+  "signature": "0001091818-26-000111",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001091818-26-000111",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000111/grhi-30062026_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.5271,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 211500.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001091818-26-000026",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000026/"
+        },
+        {
+          "value_usd": 138500.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001091818-26-000026",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000026/"
+        }
+      ],
+      "receivables": [
+        null,
+        {
+          "value_usd": 44000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001091818-26-000026",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000026/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -57493.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001091818-26-000026",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000026/"
+        },
+        {
+          "value_usd": -216194.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001091818-26-000026",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000026/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -180564.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001091818-26-000026",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000026/"
+        },
+        {
+          "value_usd": -240694.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001091818-26-000026",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000026/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "dependent upon the Company’s ability to further implement its business plan and generate revenues. NOTE 5 – Related Party Transactions The Company has a consulting agreement with a majority shareholder/board of director. The agreement is for $ 1,000 monthly. Consulting expense for",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000111/grhi-30062026_10q.htm",
+        "accession": "0001091818-26-000111",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001091818-26-000111",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001091818-26-000111",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "dependent upon the Company’s ability to further implement its business plan and generate revenues. NOTE 5 – Related Party Transactions The Company has a consulting agreement with a majority shareholder/board of director. The agreement is for $ 1,000 monthly. Consulting expense for",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/894501/000109181826000111/grhi-30062026_10q.htm",
+      "accession": "0001091818-26-000111",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    }
+  ],
+  "revenue_quality_text_source": "0001091818-26-000111"
+}

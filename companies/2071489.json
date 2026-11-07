@@ -1,0 +1,226 @@
+{
+  "cik": 2071489,
+  "ticker": "YSGL",
+  "name": "Yellowstone Group Ltd.",
+  "sector": "industrials",
+  "industry": "Services-Management Consulting Services",
+  "sic": "8742",
+  "docs": {
+    "xbrl:0001493152-26-030051": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-06-25",
+      "report": "2026-03-31"
+    },
+    "xbrl:0001493152-26-036784": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-10",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Management Consulting Services",
+  "snapshot": {
+    "cash": 44126,
+    "equity": 19762,
+    "assets": 57362,
+    "liabilities": 37600,
+    "assets_current": 54617,
+    "liabilities_current": 37600,
+    "retained_earnings": -18238,
+    "operating_income": -16805,
+    "net_income": -16805,
+    "da": 2011,
+    "ocf": -6811,
+    "capex": 579,
+    "revenue": 43166,
+    "shares": 22400000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001493152-26-030051",
+  "xbrl_10-Q": "xbrl:0001493152-26-036784",
+  "events": [],
+  "fetched_at": "2026-10-26T04:58:01+00:00",
+  "signature": "0001493152-26-036784",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-036784",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226036784/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 5.2565,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 40667.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-030051",
+          "filed": "2026-06-25",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226030051/"
+        },
+        {
+          "value_usd": 6500.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-030051",
+          "filed": "2026-06-25",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226030051/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 10981.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-030051",
+          "filed": "2026-06-25",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226030051/"
+        },
+        {
+          "value_usd": 6455.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-030051",
+          "filed": "2026-06-25",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226030051/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -10827.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-030051",
+          "filed": "2026-06-25",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226030051/"
+        },
+        {
+          "value_usd": -2820.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-030051",
+          "filed": "2026-06-25",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226030051/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "in the context of the contract; | (iii) | measurement of the transaction price, including the constraint on variable consideration; | (iv) | allocation of the transaction price to the performance obligations; and | (v) | recognition of revenue when (or as) the Company satisfies",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226036784/form10-q.htm",
+        "accession": "0001493152-26-036784",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "expense for the three months ended June 30, 2026 and June 30, 2025 were $ 503 and $ 503 , respectively. 5. Related Party Transactions Parties are considered to be related if one party has the ability, directly or indirectly, to control the other party or exercise significant influ",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226036784/form10-q.htm",
+        "accession": "0001493152-26-036784",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001493152-26-036784",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-036784",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "in the context of the contract; | (iii) | measurement of the transaction price, including the constraint on variable consideration; | (iv) | allocation of the transaction price to the performance obligations; and | (v) | recognition of revenue when (or as) the Company satisfies",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226036784/form10-q.htm",
+      "accession": "0001493152-26-036784",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "expense for the three months ended June 30, 2026 and June 30, 2025 were $ 503 and $ 503 , respectively. 5. Related Party Transactions Parties are considered to be related if one party has the ability, directly or indirectly, to control the other party or exercise significant influ",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2071489/000149315226036784/form10-q.htm",
+      "accession": "0001493152-26-036784",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-036784"
+}

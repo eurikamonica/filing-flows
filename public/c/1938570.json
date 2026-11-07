@@ -1,0 +1,223 @@
+{
+  "cik": 1938570,
+  "ticker": null,
+  "name": "Blue Laser Fusion, Inc.",
+  "sector": "financials",
+  "industry": "Blank Checks",
+  "sic": "6770",
+  "sic_description": "Blank Checks",
+  "generated_at": "2026-11-07T08:52:49+00:00",
+  "fetched_at": "2026-11-04T02:25:04+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "current_debt": 2500,
+    "cash": 33022000,
+    "short_term_borrowings": 2500,
+    "operating_leases": 613000,
+    "equity": 33141000,
+    "assets": 35114000,
+    "liabilities": 1973000,
+    "assets_current": 33512000,
+    "liabilities_current": 1544000,
+    "retained_earnings": -27562000,
+    "interest_expense": 33000,
+    "operating_income": 1159851,
+    "net_income": 782851,
+    "ocf": 858698,
+    "fixed_share": 0.12,
+    "shares": 8234466,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "fixed_share": "LongTermDebtPercentageBearingFixedInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 33022000.0,
+    "net_debt": null,
+    "ebitda": 1159851.0,
+    "ebit": 1159851,
+    "interest_expense": 33000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 35.147,
+    "ebitda_coverage": 35.147,
+    "fcf": 858698.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 33022000.0,
+    "due_12m": 2500,
+    "due_24m": null,
+    "liquidity_to_due12": 13208.8,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": 100
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 613000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1938570/000119312526445630/d184666d10q.htm",
+        "accession": "0001193125-26-445630",
+        "form": "10-Q",
+        "filed": "2026-11-03",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 613000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-445630",
+            "filed": "2026-11-03",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1938570/000119312526445630/d184666d10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "irer in a transaction effected primarily by exchanging equity interests in which the legal acquiree is a variable interest entity that meets the definition of a business, rather than defaulting to the primary beneficiary of that entity. ASU 2025-03 is effective for annual repor",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1938570/000119312526445630/d184666d10q.htm",
+        "accession": "0001193125-26-445630",
+        "form": "10-Q",
+        "filed": "2026-11-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "hares ( 218,750 pre-Merger shares) from WUV at their original issue price of $ 0.0001 per share under a repurchase agreement dated April 17, 2026, and on September 4, 2026 the Company purchased a further 505,098 shares of Common Stock ( 800,000 pre-Merger shares) from WUV",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1938570/000119312526445630/d184666d10q.htm",
+        "accession": "0001193125-26-445630",
+        "form": "10-Q",
+        "filed": "2026-11-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-445630",
+      "form": "10-Q",
+      "filed": "2026-11-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1938570/000119312526445630/d184666d10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-09",
+      "items": "1.01,2.01,3.02,3.03,4.01,5.01,5.02,5.03,5.05,5.06,9.01",
+      "acc": "0001193125-26-385826",
+      "doc": "d162976d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-09-30",
+      40000,
+      4304,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      90000,
+      null,
+      33000,
+      -163149,
+      -163149,
+      0.36667
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

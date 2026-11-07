@@ -1,0 +1,218 @@
+{
+  "cik": 1114927,
+  "ticker": "FNRN",
+  "name": "FIRST NORTHERN COMMUNITY BANCORP",
+  "sector": "financials",
+  "industry": "Savings Institution, Federally Chartered",
+  "sic": "6035",
+  "sic_description": "Savings Institution, Federally Chartered",
+  "generated_at": "2026-11-07T08:52:43+00:00",
+  "fetched_at": "2026-11-06T21:36:48+00:00",
+  "price": 17.1,
+  "price_date": "2026-11-06",
+  "equity_vol": 0.248814,
+  "snapshot": {
+    "cash": 123178000,
+    "operating_leases": 9543000,
+    "equity": 207876000,
+    "assets": 1990705000,
+    "liabilities": 1782829000,
+    "retained_earnings": 108239000,
+    "deposits": 1760491000,
+    "interest_paid": 15731000,
+    "pretax_income": 30393000,
+    "net_income": 1707128,
+    "ocf": 19961000,
+    "capex": 2280000,
+    "shares": 16289307,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 123178000.0,
+    "net_debt": null,
+    "ebitda": 30393000.0,
+    "ebit": 30393000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.268896,
+    "fcf": 17681000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 123178000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 278547149.7,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 9543000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1114927/000143774926035477/fnrn20260930_10q.htm",
+        "accession": "0001437749-26-035477",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 9543000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-035477",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1114927/000143774926035477/fnrn20260930_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "payments that are adjusted periodically for inflation. The Company's lease agreements do not contain any residual value guarantees or restrictive covenants. The Company uses its FHLB advance fixed rates, which are its incremental borrowing rates for secured borrowings, as the di",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1114927/000143774926035477/fnrn20260930_10q.htm",
+        "accession": "0001437749-26-035477",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-035477",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1114927/000143774926035477/fnrn20260930_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2024-03-08",
+      "items": "1.01,5.02",
+      "acc": "0001114927-24-000026",
+      "doc": "form8_k.htm",
+      "desc": "KEVIN SPINK EMPLOYMENT AGREEMENT SIGNED MARCH 4, 2024"
+    },
+    {
+      "date": "2012-04-26",
+      "items": "1.01,5.02",
+      "acc": "0001114927-12-000009",
+      "doc": "form8_k.htm",
+      "desc": "FNCBANCORP FORM 8-K DATED APRIL 25, 2012"
+    },
+    {
+      "date": "2011-09-21",
+      "items": "1.01,1.02,3.02,5.03,5.07",
+      "acc": "0001114927-11-000036",
+      "doc": "form8_k.htm",
+      "desc": "FNCBANCORP FORM 8-K DATED SEPTEMBER 14, 2011"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2021-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

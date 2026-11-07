@@ -1,0 +1,215 @@
+{
+  "cik": 2031283,
+  "ticker": null,
+  "name": "Stone Point Credit Income Fund",
+  "sector": "other",
+  "industry": null,
+  "sic": "",
+  "sic_description": "",
+  "generated_at": "2026-11-07T08:52:49+00:00",
+  "fetched_at": "2026-11-03T16:25:31+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 45557268,
+    "revolver_capacity": 500000000,
+    "revolver_available": 107555801,
+    "revolver_drawn": 438540228,
+    "equity": 393040880,
+    "assets": 848014267,
+    "liabilities": 454973387,
+    "retained_earnings": -5506746,
+    "shares": 16171228,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 45557268.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 107555801,
+    "liquidity": 153113069.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 874810392.0,
+    "floating_share": null,
+    "plus100bp_interest": 8748103.92,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002031283-26-000012",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2031283/000203128326000012/spcif-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "or as) the entity satisfies a performance obligation. In determining the transaction price, the Fund includes variable consideration only to the extent that it is probable that a significant reversal in the amount of cumulative revenue recognized would not occur when the uncertaint",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2031283/000203128326000012/spcif-20260630.htm",
+        "accession": "0002031283-26-000012",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "would have a material effect on the accompanying consolidated financial statements. Note 3. Agreements and Related Party Transactions Investment Advisory Agreement Subject to the overall supervision of the Board and in accordance with the 1940 Act, the Adviser manages the Fund’s",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2031283/000203128326000012/spcif-20260630.htm",
+        "accession": "0002031283-26-000012",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "rate_now": 0.059,
+      "capacity": 700000000.0,
+      "carrying": 443083759.0,
+      "available": 256916241.0,
+      "drawn": 436270164.0,
+      "floating": false
+    },
+    {
+      "name": "Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 500000000.0,
+      "carrying": 443083759.0,
+      "available": 56916241.0,
+      "drawn": 438540228.0,
+      "spread": 0.022,
+      "floating": true
+    },
+    {
+      "name": "Truist Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 200000000.0,
+      "carrying": 0.0,
+      "available": 200000000.0,
+      "spread": 0.019,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-06-02",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-01",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/2031283/000110465926069414/tm2616626d1_ex10-2.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-26-086133",
+      "doc": "tm2621027d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-02",
+      "items": "1.01,9.01",
+      "acc": "0001104659-26-069414",
+      "doc": "tm2616626d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-01-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-005540",
+      "doc": "tm254158d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

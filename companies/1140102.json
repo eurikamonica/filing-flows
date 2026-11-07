@@ -1,0 +1,550 @@
+{
+  "cik": 1140102,
+  "ticker": "HQI",
+  "name": "HireQuest, Inc.",
+  "sector": "industrials",
+  "industry": "Services-Help Supply Services",
+  "sic": "7363",
+  "docs": {
+    "xbrl:0001437749-26-010435": {
+      "instruments": [
+        {
+          "name": "Bank of America",
+          "kind": "other",
+          "as_of": "2025-12-28",
+          "spread_min": 0.01,
+          "spread_max": 0.0175,
+          "rate_now": 0.037,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-31",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001437749-26-026819": {
+      "instruments": [
+        {
+          "name": "Bank of America",
+          "kind": "other",
+          "as_of": "2026-06-30",
+          "spread_min": 0.01,
+          "spread_max": 0.0175,
+          "rate_now": 0.047,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-11",
+      "report": "2026-06-30"
+    },
+    "0001654954-20-006833:hqi_424b3.htm": {
+      "kind": "424b",
+      "date": "2020-06-19",
+      "tranches": []
+    },
+    "0001437749-23-005093:ex_477334.htm": {
+      "kind": "agreement",
+      "date": "2023-03-01",
+      "agreement_kind": "credit_agreement",
+      "dated": "2023-02-28",
+      "title": "Bank Of America Loan Agreement",
+      "facility": "loan",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "This ratio will be calculated at the end of each reporting period for which the Bank requires financial statements, using the results of the twelve-month period ending with that reporting period. | 4. | Minimum Fixed Charge Coverage Ratio . | To maintain on a consolidated basis a Fixed Charge Coverage Ratio of at least 1.25:1.0."
+        }
+      ]
+    },
+    "0001654954-21-007582:revolvingcreditandtermloa.htm": {
+      "kind": "agreement",
+      "date": "2021-07-02",
+      "agreement_kind": "credit_agreement",
+      "dated": "2021-06-29",
+      "size": 60000000.0,
+      "title": "Revolving Credit And Term Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        2.0,
+        2.0
+      ],
+      "margin_text": ", as of any date, (a) with respect to interest on the Term Loan outstanding on such date, 1.0% per annum with respect to Base Rate Loans and 2.0% per annum with respect to LIBOR Index Rate Loans, (b) with respect to interest on the Tranche A-1 Loans outstanding on such date, a percentage per annum to be mutually agreed upon in writing by the Tranche A-1 Lenders and Borrower Representative, and (c) with respect to interest on all Tranche A Revolving Loans and Swingline Loans outstanding on such date or the Letter of Credit fee, as the case may be, the percentage per annum determined by referenc",
+      "fee_pct": 0.25,
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Loan Parties and their Subsidiaries will maintain, as of the end of each Fiscal Month for the period of twelve consecutive Fiscal Months ending on such date, commencing with the period ending on June 30, 2021, a Consolidated Fixed Charge Coverage Ratio of not less than 1.25:1.0."
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "The Loan Parties and their Subsidiaries will maintain, at all times, a Leverage Ratio of not more than 3.0:1.0."
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.15,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ness in connection therewith and the use of the proceeds thereof), (i) Excess Availability plus Qualified Cash, as of the date of such applicable transaction, is greater than or equal to the greater of (A) $6,000,000 and (B) 10% of the Aggregate Revolving Commitment Amount and (ii) the Consolidated Fixed Charge Coverage Ratio is not less than 1.15:1.00, calculated as of the most recently ended Fiscal Month for which"
+        }
+      ]
+    },
+    "0001144204-05-036323:v029661_ex10-1.txt": {
+      "kind": "agreement",
+      "date": "2005-11-16",
+      "agreement_kind": "other"
+    }
+  },
+  "sic_description": "Services-Help Supply Services",
+  "snapshot": {
+    "cash": 1640000,
+    "revolver_drawn": 0,
+    "equity": 68856000,
+    "assets": 93371000,
+    "liabilities": 24515000,
+    "assets_current": 55335000,
+    "liabilities_current": 20228000,
+    "retained_earnings": 31238000,
+    "deposits": 2287000,
+    "interest_expense": 131000,
+    "interest_paid": 104000,
+    "operating_income": 8576000,
+    "pretax_income": 9246000,
+    "net_income": 8159000,
+    "da": 3079000,
+    "ocf": 9485000,
+    "revenue": 30151000,
+    "debt_repaid": 0,
+    "effective_rate": 0.1,
+    "revolver_rate": 0.067,
+    "fixed_share": 0.06,
+    "shares": 13900000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "Cash",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd",
+    "fixed_share": "LongTermDebtPercentageBearingFixedInterestRate"
+  },
+  "history": [
+    {
+      "end": "2022-03-31",
+      "filed": "2022-05-10",
+      "total_debt": 3773000,
+      "cash": 1826000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 13786555,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-06-30",
+      "filed": "2022-08-09",
+      "total_debt": 3645000,
+      "cash": 1128000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 13814559,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001437749-26-010435",
+  "xbrl_10-Q": "xbrl:0001437749-26-026819",
+  "events": [
+    {
+      "date": "2025-12-01",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001437749-25-036541",
+      "doc": "hqi20251201_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-03-01",
+      "items": "1.01",
+      "acc": "0001437749-23-005093",
+      "doc": "hqi20230217_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-11-16",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001437749-22-027538",
+      "doc": "hqi20221116_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-07-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001654954-21-007582",
+      "doc": "a8-kbankline.htm",
+      "desc": "PRIMARY DOCUMENT"
+    },
+    {
+      "date": "2021-03-02",
+      "items": "1.01,2.01,8.01,9.01",
+      "acc": "0001654954-21-002240",
+      "doc": "hqi8-ksnelling.htm",
+      "desc": "PRIMARY DOCUMENT"
+    },
+    {
+      "date": "2021-02-16",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001654954-21-001663",
+      "doc": "hqi8-klink.htm",
+      "desc": "PRIMARY DOCUMENT"
+    },
+    {
+      "date": "2021-02-01",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001654954-21-000989",
+      "doc": "hqi8-ksnelling.htm",
+      "desc": "PRIMARY DOCUMENT"
+    },
+    {
+      "date": "2019-09-09",
+      "items": "1.01,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0001193805-19-000810",
+      "doc": "e618648_8k-cc.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-07-17",
+      "items": "1.01,2.01,2.03,3.02,5.01,5.02,5.03,8.01,9.01",
+      "acc": "0001193805-19-000640",
+      "doc": "e618556_8k-cc.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-04-09",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001654954-19-004200",
+      "doc": "ccni_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2018-04-18",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001654954-18-004075",
+      "doc": "ccni_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2016-06-07",
+      "items": "1.01,2.02,8.01,9.01",
+      "acc": "0001354488-16-007744",
+      "doc": "ccni_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2013-05-07",
+      "items": "1.01,2.03",
+      "acc": "0001354488-13-002412",
+      "doc": "ccni_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2012-01-09",
+      "items": "1.01,2.01,2.03,3.02,8.01,9.01",
+      "acc": "0001354488-12-000097",
+      "doc": "ccni_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-04-21",
+      "items": "1.01,3.02",
+      "acc": "0001144204-10-021392",
+      "doc": "v181751_8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2010-04-06",
+      "items": "2.04,3.02,7.01,8.01,9.01",
+      "acc": "0001144204-10-018575",
+      "doc": "v180133_8k.htm",
+      "desc": ""
+    }
+  ],
+  "fetched_at": "2026-10-26T03:03:23+00:00",
+  "signature": "0001437749-26-027666",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "company balances and transactions have been eliminated. U.S. GAAP requires the primary beneficiary of a variable interest entity (“VIE”) to consolidate that entity. To be the primary beneficiary of a VIE, an entity must have both the power to direct the activities that most sig",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+        "accession": "0001437749-26-026819",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "earnouts",
+        "label": "Contingent earn-outs",
+        "excerpt": "d debt (including seller financing), the issuance of equity in appropriate circumstances, and the use of earn-outs where efficient to protect the negotiated value and future cash flows. 18 Table of Contents Results of Operations Financial Summary The follo",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+        "accession": "0001437749-26-026819",
+        "form": "10-Q",
+        "filed": "2026-08-11",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-026819",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.1126,
+      "receivables_growth": -0.0724,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.0452,
+      "ocf_to_net_income": 1.903
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 28995000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-010435",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926010435/"
+        },
+        {
+          "value_usd": 32673000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-010435",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926010435/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 39281000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-010435",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926010435/"
+        },
+        {
+          "value_usd": 42348000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-010435",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926010435/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 12046000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-010435",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926010435/"
+        },
+        {
+          "value_usd": 12039000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-010435",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926010435/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 6330000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-010435",
+          "filed": "2026-03-31",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926010435/"
+        },
+        {
+          "value_usd": 3672000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-010435",
+          "filed": "2026-03-31",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926010435/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "as necessary, to reflect the impact of any significant intervening events. 9 Table of Contents Note 3 - Related Party Transactions Prior to entering into a new related party transaction that is disclosable pursuant to Item 404 of Regulation S-K, the Audit Committee reviews and",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+        "accession": "0001437749-26-026819",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "primarily of franchise agreements. In connection with these franchise agreements, we had previously recorded deferred revenue related to nonrefundable upfront franchise fees and capitalized contract costs (broker fees). Upon closing, we were no longer the franchisor for the",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+        "accession": "0001437749-26-026819",
+        "form": "10-Q",
+        "filed": "2026-08-11"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "company balances and transactions have been eliminated. U.S. GAAP requires the primary beneficiary of a variable interest entity (“VIE”) to consolidate that entity. To be the primary beneficiary of a VIE, an entity must have both the power to direct the activities that most sig",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+      "accession": "0001437749-26-026819",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "earnouts",
+      "label": "Contingent earn-outs",
+      "excerpt": "d debt (including seller financing), the issuance of equity in appropriate circumstances, and the use of earn-outs where efficient to protect the negotiated value and future cash flows. 18 Table of Contents Results of Operations Financial Summary The follo",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+      "accession": "0001437749-26-026819",
+      "form": "10-Q",
+      "filed": "2026-08-11",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001437749-26-026819",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-026819",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "as necessary, to reflect the impact of any significant intervening events. 9 Table of Contents Note 3 - Related Party Transactions Prior to entering into a new related party transaction that is disclosable pursuant to Item 404 of Regulation S-K, the Audit Committee reviews and",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+      "accession": "0001437749-26-026819",
+      "form": "10-Q",
+      "filed": "2026-08-11"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "primarily of franchise agreements. In connection with these franchise agreements, we had previously recorded deferred revenue related to nonrefundable upfront franchise fees and capitalized contract costs (broker fees). Upon closing, we were no longer the franchisor for the",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926026819/hqi20260630_10q.htm",
+      "accession": "0001437749-26-026819",
+      "form": "10-Q",
+      "filed": "2026-08-11"
+    }
+  ],
+  "revenue_quality_text_source": "0001437749-26-026819"
+}

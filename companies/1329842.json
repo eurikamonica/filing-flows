@@ -1,0 +1,792 @@
+{
+  "cik": 1329842,
+  "name": "Federal Home Loan Bank of New York",
+  "sector": "financials",
+  "industry": "Federal & Federally-Sponsored Credit Agencies",
+  "sic": "6111",
+  "docs": {
+    "xbrl:0001329842-26-000005": {
+      "instruments": [
+        {
+          "name": "Consolidated Obligation Discount Notes",
+          "kind": "notes",
+          "as_of": "2025-12-31",
+          "carrying": 76476004000.0,
+          "rate_now": 0.0376,
+          "floating": false
+        },
+        {
+          "name": "Consolidated Obligation Bonds",
+          "kind": "notes",
+          "as_of": "2025-12-31",
+          "carrying": 68408655000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-20",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001329842-26-000016": {
+      "instruments": [
+        {
+          "name": "Hedged Consolidated obligation bonds",
+          "kind": "notes",
+          "as_of": "2026-09-30",
+          "carrying": 105178595000.0,
+          "floating": false
+        },
+        {
+          "name": "Hedged Consolidated obligation discount notes",
+          "kind": "notes",
+          "as_of": "2026-09-30",
+          "carrying": 71736487000.0,
+          "rate_now": 0.0376,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-05",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "Federal & Federally-Sponsored Credit Agencies",
+  "snapshot": {
+    "cash": 76249000,
+    "investments": 30510000000,
+    "finance_leases": 1222000,
+    "operating_leases": 49901000,
+    "equity": 9380362000,
+    "assets": 188654715000,
+    "liabilities": 179274353000,
+    "retained_earnings": 2757917000,
+    "interest_paid": 3362367000,
+    "pretax_income": 662397000,
+    "net_income": 596103000,
+    "da": 19159000,
+    "ocf": 3053199000,
+    "shares": 71190608,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "investments": "ShortTermInvestments",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2012-06-30",
+      "filed": "2012-08-10",
+      "total_debt": 94295580000,
+      "cash": 913863000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 49214740,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2012-09-30",
+      "filed": "2012-11-09",
+      "total_debt": 98853659000,
+      "cash": 2900615000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47006007,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2013-03-31",
+      "filed": "2013-05-10",
+      "total_debt": 93569277000,
+      "cash": 4699867000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47672902,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 49901000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1329842/000132984226000016/fhlbny-20260930.htm",
+        "accession": "0001329842-26-000016",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 49901000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001329842-26-000016",
+            "filed": "2026-11-05",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1329842/000132984226000016/fhlbny-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001329842-26-000016",
+      "form": "10-Q",
+      "filed": "2026-11-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1329842/000132984226000016/fhlbny-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "| $ — | $ — | (a) For more information about bonds and discount notes transferred to other FHLBanks and other related party transactions, See Note 20 . Related Party Transactions. (b) Does not include payments to holders of mandatorily redeemable capital stock. Such payments are co",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1329842/000132984226000016/fhlbny-20260930.htm",
+        "accession": "0001329842-26-000016",
+        "form": "10-Q",
+        "filed": "2026-11-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001329842-26-000016",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001329842-26-000016",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "| $ — | $ — | (a) For more information about bonds and discount notes transferred to other FHLBanks and other related party transactions, See Note 20 . Related Party Transactions. (b) Does not include payments to holders of mandatorily redeemable capital stock. Such payments are co",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1329842/000132984226000016/fhlbny-20260930.htm",
+      "accession": "0001329842-26-000016",
+      "form": "10-Q",
+      "filed": "2026-11-05"
+    }
+  ],
+  "revenue_quality_text_source": "0001329842-26-000016",
+  "xbrl_10-K": "xbrl:0001329842-26-000005",
+  "xbrl_10-Q": "xbrl:0001329842-26-000016",
+  "events": [
+    {
+      "date": "2026-11-05",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-009561",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-11-03",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-009475",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-29",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-009237",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-27",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-009167",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-22",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-009115",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-20",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-009052",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-13",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008924",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-08",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008860",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-06",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008819",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-10-01",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008746",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-29",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008634",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-24",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008563",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-22",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008518",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-17",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008428",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-15",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008379",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-08",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008185",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-09-03",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-008112",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-08-27",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-007923",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-08-25",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-007851",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-08-20",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-007776",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-08-18",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-007730",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-08-06",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-007349",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-08-04",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-007260",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-07-28",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006959",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-07-23",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006823",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-07-21",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006778",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-07-16",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006697",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-07-14",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006653",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-07-09",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006563",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-30",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006366",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-25",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006201",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-23",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006136",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-18",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006079",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-16",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-006006",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-11",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-005890",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-09",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-005808",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-04",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-005692",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-02",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-005618",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-28",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-005470",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-26",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-005355",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-21",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-005217",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-19",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-005117",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-15",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-004951",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-12",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-004730",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-07",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-004545",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-05-05",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-004359",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-30",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-004130",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-28",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-004023",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-21",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-003774",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-14",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-003493",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-09",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-003376",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-07",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-003291",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-31",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-003066",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-26",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-002804",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-24",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-002663",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-19",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-002495",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-17",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-002319",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-12",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-002195",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-10",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-002104",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-05",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-001931",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-03",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-001814",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-26",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-001601",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-24",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-001500",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-19",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-001383",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-17",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-001309",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-12",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-001180",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-10",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-001093",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-05",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-000952",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-03",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-000885",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-29",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-000693",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-27",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-000627",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-22",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-000532",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-15",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-000383",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-13",
+      "items": "2.03",
+      "acc": "0001654954-26-000328",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-08",
+      "items": "2.03,9.01",
+      "acc": "0001654954-26-000194",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-29",
+      "items": "2.03,9.01",
+      "acc": "0001654954-25-014312",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-16",
+      "items": "2.03,9.01",
+      "acc": "0001654954-25-013996",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-11",
+      "items": "2.03,9.01",
+      "acc": "0001654954-25-013856",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-09",
+      "items": "2.03,9.01",
+      "acc": "0001654954-25-013784",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-04",
+      "items": "2.03,9.01",
+      "acc": "0001654954-25-013685",
+      "doc": "fhlbny_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-05T23:41:41+00:00",
+  "signature": "0001329842-26-000016",
+  "fdic": {
+    "matched": false
+  }
+}

@@ -1,0 +1,417 @@
+{
+  "cik": 1702750,
+  "ticker": "BY",
+  "name": "BYLINE BANCORP, INC.",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-11-07T08:52:47+00:00",
+  "fetched_at": "2026-11-07T02:00:26+00:00",
+  "price": 38.12,
+  "price_date": "2026-11-06",
+  "equity_vol": 0.186624,
+  "snapshot": {
+    "cash": 218675000,
+    "operating_leases": 9577000,
+    "revolver_drawn": 0,
+    "equity": 1275242000,
+    "assets": 9898780000,
+    "liabilities": 8623538000,
+    "retained_earnings": 748048000,
+    "deposits": 8039110000,
+    "interest_paid": 176544000,
+    "pretax_income": 205140000,
+    "net_income": 154116000,
+    "da": 4386000,
+    "ocf": 187719000,
+    "capex": 2774000,
+    "deposit_interest": 151338000,
+    "stated_rate": 0.0762,
+    "revolver_rate": 0.0738,
+    "shares": 44516392,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 218675000.0,
+    "net_debt": null,
+    "ebitda": 209526000.0,
+    "ebit": 205140000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.063299,
+    "fcf": 184945000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 15000000.0,
+    "liquidity": 233675000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 1696964863.04,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 9577000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1702750/000119312526451875/by-20260930.htm",
+        "accession": "0001193125-26-451875",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 9577000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-451875",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1702750/000119312526451875/by-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "y | September 30, 2026 | December 31, 2025 | Public fund deposits | $ | 488,342 | $ | 393,845 | Customer repurchase agreements | 89,246 | 75,681 | Letters of credit | 25,756 | 33,883 | Federal Reserve Bank | — | — | Total pledged securities | $ | 603,344 | $ | 503,409 | At Se",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1702750/000119312526451875/by-20260930.htm",
+        "accession": "0001193125-26-451875",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-451875",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1702750/000119312526451875/by-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-05-22",
+      "capacity": 15000000.0,
+      "floating": true
+    },
+    {
+      "name": "Fixed To Floating Subordinate Notes Mature On Fifteenth August Two Thousand Thirty Five",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2035-08-15",
+      "floating": true
+    },
+    {
+      "name": "Metropolitan Statutory Trust One",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2034-03-17",
+      "effective": 0.0703,
+      "spread": 0.0279,
+      "floating": true
+    },
+    {
+      "name": "First Evanston Bancorp Trust One",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2035-03-15",
+      "effective": 0.0594,
+      "spread": 0.0178,
+      "floating": true
+    },
+    {
+      "name": "Amerimark Capital Trust One",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2034-04-23",
+      "effective": 0.0676,
+      "spread": 0.0275,
+      "floating": true
+    },
+    {
+      "name": "Inland Bancorp Trust Two",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2035-09-15",
+      "effective": 0.0576,
+      "spread": 0.016,
+      "floating": true
+    },
+    {
+      "name": "Inland Bancorp Trust Three",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2036-12-15",
+      "effective": 0.0581,
+      "spread": 0.0165,
+      "floating": true
+    },
+    {
+      "name": "Inland Bancorp Trust Four",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2037-06-06",
+      "effective": 0.0573,
+      "spread": 0.0162,
+      "floating": true
+    },
+    {
+      "name": "Inland Bancorp Trust Five",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2037-09-15",
+      "effective": 0.0558,
+      "spread": 0.0142,
+      "floating": true
+    },
+    {
+      "name": "Fixed To Floating Subordinate Notes Mature On First July Two Thousand Thirty",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "maturity": "2030-07-01",
+      "coupon": 0.06,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [
+    {
+      "title": "6.000% Fixed-to-Floating Rate Subordinated Notes due 2030",
+      "floating": true,
+      "margin_bps": 588.0,
+      "reference": "SOFR",
+      "principal": 25000000.0,
+      "currency": "USD",
+      "maturity_year": 2030,
+      "price": 100.617,
+      "trade_date": "2020-07-30",
+      "ratings": "BBB- by Kroll Bond Rating Agency",
+      "convertible": false,
+      "cusip": "124411AA7",
+      "date": "2020-07-30",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1702750/000110465920088480/a20-25834_3fwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-05-22",
+      "agreement_kind": "amendment",
+      "dated": "2026-05-24",
+      "title": "Third Amendment To Second Amended And Restated Term Loan And Revolving Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1702750/000119312526236809/by-ex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-05-27",
+      "agreement_kind": "amendment",
+      "dated": "2025-05-25",
+      "title": "Second Amendment To Second Amended And Restated Term Loan And Revolving Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1702750/000095017025077412/by-ex10_1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-05-22",
+      "items": "2.03,9.01",
+      "acc": "0001193125-26-236809",
+      "doc": "by-20260522.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-07",
+      "items": "1.01,2.03,7.01",
+      "acc": "0000950170-25-105001",
+      "doc": "by-20250807.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-05-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-25-077412",
+      "doc": "by-20250521.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-24-066249",
+      "doc": "by-20240524.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-05-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-23-024533",
+      "doc": "by-20230526.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-10-14",
+      "items": "1.01,2.02,9.01",
+      "acc": "0000950170-22-019558",
+      "doc": "by-20221007.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-13",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-21-002098",
+      "doc": "by-20211008.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-10-15",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-20-046446",
+      "doc": "by-8k_20201009.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-03",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001104659-20-089644",
+      "doc": "tm2025834d4_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-06-26",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001104659-20-077463",
+      "doc": "tm2020006-5_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-06-15",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001564590-20-029361",
+      "doc": "by-8k_20200615.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-10-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-19-037041",
+      "doc": "by-8k_20191010.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-10-16",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-18-024335",
+      "doc": "by-8k_20181011.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-11-30",
+      "items": "1.01,9.01",
+      "acc": "0001193125-17-355887",
+      "doc": "d472054d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-07-17",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-17-229440",
+      "doc": "d412605d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}
