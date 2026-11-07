@@ -167,6 +167,21 @@ def test_cash_flow_table_in_millions_beside_a_statement_in_thousands():
     assert r["scale"] == 1e3 and r["cf"]["ocf"] == 43.5e6 and r["cf"]["capex"] == -2.4e6
 
 
+def test_cash_flow_units_written_with_a_no_break_space():
+    """LendingTree Q3 2026: the first table is a summary "(In millions)"; the cash-flow statement says
+    "(in&nbsp;thousands)". Operating cash flow is $76.4M, not $76.4B."""
+    assert release._units({"before": "", "text": "Nine Months Ended September 30, 2026 2025 (in\xa0thousands)"}) == 1e3
+    cf = ('<table><tr><td></td><td colspan="4">Nine Months Ended September 30,</td></tr><tr><td></td><td>2026</td><td>2025</td></tr>'
+          '<tr><td>(in&nbsp;thousands)</td></tr>'
+          + ROW.format("Net cash provided by operating activities", "76,448", "56,575", "")
+          + ROW.format("Capital expenditures", "(8,877)", "(9,423)", "") + '</table>')
+    html = _doc(_table([(l, a.replace(",", "")[:-3] + "." + a.replace(",", "")[-3], b.replace(",", "")[:-3] + "." + b.replace(",", "")[-3])
+                        for l, a, b in IS], "Summary Financial Metrics (In millions, except per share amounts)"),
+                "<p>CONSOLIDATED STATEMENTS OF CASH FLOWS</p>", cf)
+    r = release.parse(html, dt.date(2026, 11, 3))
+    assert r["scale"] == 1e6 and r["cf"]["ocf"] == 76448e3 and r["cf"]["capex"] == -8877e3
+
+
 def test_net_income_to_shareholders_from_the_summary_table():
     """Ryan Specialty: the income statement stops at net income ($88.0M); the release's summary table has "Net income
     attributable to Ryan Specialty Holdings, Inc." ($36.7M). The shareholders' figure comes from there."""
