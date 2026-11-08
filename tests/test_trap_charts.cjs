@@ -23,3 +23,17 @@ eq([m(0.2, 0), m(0.4, 0), m(0.8, 20), m(0.6, 10)], [-10, 0, 40, 20], 'G04 matrix
 eq(C.margin(30, -50, 1, 0, 40, 10), -20, 'negative FCF counts as zero inflow');
 eq(C.money(-1.5e9), '−$1.50B', 'money');
 console.log(n + ' trap chart checks passed');
+// roll-view: the words and the X card are built from the data alone (a DOM-free check of the pure functions)
+global.window = {}; require('../disclosures/docs/roll-view.js');
+const RV = global.window.RollView;
+const P = { kind: 'q', start: '2025-06-30', end: '2025-09-30', label: 'Q3', explained_share: 0.9, totals: {}, accounts: [
+  { k: 'ar', side: 'a', name: 'Receivables', open: 200e6, close: 230e6, delta: 30e6, flows: [['d_ar', 'Change in receivables (cash flow statement)', 30e6]], residual: 0, tags: ['AccountsReceivableNetCurrent'] },
+  { k: 'eq', side: 'e', name: 'Equity', open: 400e6, close: 460e6, delta: 60e6, flows: [['ni', 'Net income', 80e6], ['buyback', 'Share buybacks', -25e6], ['sbc', 'Share-based compensation', 5e6]], residual: 0, tags: [] },
+  { k: 'gw', side: 'a', name: 'Goodwill and intangibles', open: 100e6, close: 112e6, delta: 12e6, flows: [], residual: 12e6, tags: ['Goodwill'] }] };
+const w = RV.words(P, 3);
+eq(w.map((x) => x.k), ['eq', 'ar', 'gw'], 'largest movements first');
+eq(w[0].text, 'Equity up $60M: +$80M net income, −$25M buybacks, +$5M stock compensation.', 'flows in words, largest first');
+eq(w[2].text, 'Goodwill and intangibles up $12M: +$12M not explained by the statements.', 'a residual is said, not hidden');
+const svg = RV.card(P, { ticker: 'AAA', name: 'Alpha Inc.' });
+assert(/^<svg /.test(svg) && svg.includes('AAA Alpha Inc.') && svg.includes('filing-flows.com') && svg.includes('url(#xh)') && svg.includes('Not investment advice'), 'card'); n++;
+console.log(n + ' checks with the roll-view words and card');

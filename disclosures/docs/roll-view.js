@@ -104,6 +104,83 @@
     });
     return h + '</tbody></table></div><p class="muted sm">Columns are the cash-flow statement\'s lines (keys as in the data); a line that explains two accounts appears under both. Hover a key for its name.</p>';
   }
+
+  /* ---- in words: the three largest movements, each with what explains it (also the X card's text) ---- */
+  const SHORT = { ni: 'net income', sbc: 'stock compensation', buyback: 'buybacks', div: 'dividends', withhold: 'shares withheld', stock: 'shares issued', nci: 'minority flows',
+    ocf: 'operating cash flow', inv: 'investing', fin: 'financing', fx: 'currency', capex: 'capex', realestate: 'real estate', da: 'D&A', inv_other: 'securities and other investing', sales: 'asset sales',
+    acq: 'acquisitions', impair: 'impairments', gain_inv: 'investment gains', borrow: 'net borrowing', d_ar: 'the receivables line', d_orec: 'other receivables', d_casset: 'contract assets', d_inv: 'the inventories line',
+    d_ap: 'the payables line', d_accr: 'accrued liabilities', d_emp: 'employee liabilities', d_contract: 'deferred revenue', d_oliab: 'other liabilities', d_tax: 'taxes payable', d_onet: 'other operating capital', d_oassets: 'prepaid and other', dtax: 'deferred taxes' };
+  function words(p, n) {
+    const top = p.accounts.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).filter((a) => Math.abs(a.delta) >= 1e6).slice(0, n || 3);
+    return top.map((a) => {
+      const fl = a.flows.slice().sort((x, y) => Math.abs(y[2]) - Math.abs(x[2])).slice(0, 3).map((f) => `${sgn(f[2])} ${SHORT[f[0]] || f[1].toLowerCase()}`);
+      const res = Math.abs(a.residual) >= Math.max(1e6, Math.abs(a.delta) * 0.05) ? `${sgn(a.residual)} not explained by the statements` : '';
+      const parts = fl.concat(res ? [res] : []);
+      return { k: a.k, text: `${a.name} ${a.delta >= 0 ? 'up' : 'down'} ${big(Math.abs(a.delta))}` + (parts.length ? ': ' + parts.join(', ') : ': no statement line maps to it') + '.' };
+    });
+  }
+  /* ---- the X card: 1200×675, the six largest movements as bars and the words beside them ---- */
+  function card(p, meta) {
+    const W = 1200, H = 675, L = 40, top = 118, rows = p.accounts.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 6);
+    const barX = 250, barW = 400, rowH = 62, zero = barX + barW / 2, lo = barX, hi = barX + barW;
+    const one = (a) => { let pos = 0, neg = 0; a.flows.concat([[null, null, a.residual]]).forEach((f) => { if (f[2] >= 0) pos += f[2]; else neg -= f[2]; }); return Math.max(pos, neg, Math.abs(a.delta)); };
+    const scaleRows = rows.filter((a) => a.k !== 'cash' && a.k !== 'eq');
+    const mx = Math.max(...(scaleRows.length ? scaleRows : rows).map(one), 1), sx = (v) => zero + (v / mx) * (barW / 2), cl = (x) => Math.max(lo, Math.min(hi, x));
+    const ink = '#1d1d1b', mu = '#6b6a66', bg = '#fbfaf7';
+    const colors = { p: '#2e8b57', bridge: '#2a78d6', cap: '#d9822b', sec: '#d9822b' };
+    let o = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif">`;
+    o += `<defs><pattern id="xh" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${bg}"/><line x1="0" y1="0" x2="0" y2="7" stroke="${mu}" stroke-width="2.2"/></pattern></defs>`;
+    o += `<rect width="${W}" height="${H}" fill="${bg}"/>`;
+    o += `<text x="${L}" y="52" font-size="30" font-weight="700" fill="${ink}">${esc(meta.ticker || '')} ${esc(meta.name || '')}</text>`;
+    o += `<text x="${L}" y="82" font-size="19" fill="${mu}">Where the balance sheet moved · ${esc(p.start)} → ${esc(p.end)} · ${p.kind === 'q' ? 'one quarter\'s flows' : 'four quarters\' flows'}</text>`;
+    let clippedAny = false;
+    rows.forEach((a, i) => {
+      const y = top + i * rowH;
+      o += `<text x="${barX - 14}" y="${y + 26}" font-size="18" text-anchor="end" fill="${ink}">${esc(a.name.replace('Property, plant and equipment', 'PP&E').replace('Goodwill and intangibles', 'Goodwill & intangibles').replace('Cash and equivalents', 'Cash'))}</text>`;
+      o += `<text x="${barX - 14}" y="${y + 46}" font-size="13" text-anchor="end" fill="${mu}">${esc(big(a.open))} → ${esc(big(a.close))}</text>`;
+      let pos = 0, neg = 0;
+      const segs = a.flows.map((f) => [kindOf(f[0]), f[2], f[1]]).concat(Math.abs(a.residual) >= 0.5 ? [['res', a.residual, 'Not explained']] : []);
+      segs.forEach(([k, v, lab]) => {
+        let x0, x1; if (v >= 0) { x0 = sx(pos); pos += v; x1 = sx(pos); } else { x1 = sx(neg); neg += v; x0 = sx(neg); }
+        if (cl(x1) > cl(x0)) o += `<rect x="${cl(x0)}" y="${y + 10}" width="${Math.max(0.6, cl(x1) - cl(x0))}" height="28" fill="${k === 'res' ? 'url(#xh)' : colors[k]}" ${k === 'res' ? `stroke="${mu}" stroke-width="1"` : ''}/>`;
+      });
+      const clipped = sx(pos) > hi || sx(neg) < lo; clippedAny = clippedAny || clipped;
+      const xd = cl(sx(a.delta));
+      o += `<line x1="${xd}" x2="${xd}" y1="${y + 4}" y2="${y + 44}" stroke="${ink}" stroke-width="3"/>`;
+      // the value sits right of the bar (or left of a negative one), never over the words
+      o += `<text x="${hi + 12}" y="${y + 30}" font-size="17" font-weight="600" fill="${ink}">${esc(sgn(a.delta))}${clipped ? ' »' : ''}</text>`;
+    });
+    o += `<line x1="${zero}" x2="${zero}" y1="${top - 6}" y2="${top + rows.length * rowH}" stroke="#d8d6d0"/>`;
+    o += `<text x="${lo}" y="${top + rows.length * rowH + 18}" font-size="13" fill="${mu}">← decreases</text><text x="${hi}" y="${top + rows.length * rowH + 18}" font-size="13" text-anchor="end" fill="${mu}">increases →</text>`;
+    // the words
+    const tx = 790;
+    const wrap = (t, n) => { const out = []; let line = ''; t.split(' ').forEach((w) => { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; }); if (line.trim()) out.push(line.trim()); return out; };
+    let ty = top + 8;
+    words(p, 3).forEach((w) => {
+      const lines = wrap(w.text, 40);
+      lines.forEach((ln, j) => { o += `<text x="${tx}" y="${ty}" font-size="17" fill="${j === 0 ? ink : mu}" ${j === 0 ? 'font-weight="600"' : ''}>${esc(ln)}</text>`; ty += 24; });
+      ty += 12;
+    });
+    o += `<text x="${tx}" y="${ty + 6}" font-size="16" fill="${mu}">The two flow statements explain ${Math.round(100 * (p.explained_share || 0))}% of the movement;</text><text x="${tx}" y="${ty + 30}" font-size="16" fill="${mu}">the rest is in the notes.</text>`;
+    const legY = H - 72;
+    [['p', 'income statement / operating cash flow'], ['bridge', 'net income → OCF bridge'], ['cap', 'investing & financing'], ['res', 'not explained (hatched)']].forEach(([k, lab], i) => {
+      const x = L + i * 290;
+      o += `<rect x="${x}" y="${legY - 11}" width="14" height="14" fill="${k === 'res' ? 'url(#xh)' : colors[k]}" ${k === 'res' ? `stroke="${mu}"` : ''}/><text x="${x + 20}" y="${legY + 1}" font-size="14" fill="${mu}">${esc(lab)}</text>`;
+    });
+    o += `<text x="${L}" y="${H - 38}" font-size="13.5" fill="${mu}">Balances from the filings at both dates (the same XBRL tag at both); bars are the statement lines that touch the account, the tick is the actual change${clippedAny ? '; » = bar cut at the edge' : ''}.</text>`;
+    o += `<text x="${L}" y="${H - 18}" font-size="13.5" fill="${mu}">A residual is a question for the notes, not a finding. Not investment advice.</text>`;
+    o += `<text x="${W - L}" y="${H - 18}" font-size="16" font-weight="700" text-anchor="end" fill="${ink}">filing-flows.com</text></svg>`;
+    return o;
+  }
+  function download(svg, name) {
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), url = URL.createObjectURL(blob), img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = 2400; c.height = 1350;
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0, 2400, 1350); URL.revokeObjectURL(url);
+      c.toBlob((b) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }, 'image/png');
+    };
+    img.src = url;
+  }
   async function render(el, opt) {
     css();
     const site = opt.site != null ? opt.site : (opt.hub ? '' : '../');
@@ -130,6 +207,7 @@
 <div class="rv-bar"><span><button data-m="q" class="${state.mode === 'q' ? 'on' : ''}" ${(roll.q || []).length ? '' : 'disabled'}>Quarter on quarter</button> <button data-m="y" class="${state.mode === 'y' ? 'on' : ''}" ${(roll.y || []).length ? '' : 'disabled'}>Year on year</button></span>
 <label>Period <select id="rv-p">${L2.map((x, j) => `<option value="${j}" ${j === idx ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select></label>
 <span class="muted sm">Total assets ${esc(big(t.assets_open))} → ${esc(big(t.assets_close))} · liabilities ${esc(big(t.liab_open))} → ${esc(big(t.liab_close))} · equity ${esc(big(t.eq_open))} → ${esc(big(t.eq_close))} · ${share} of the movement explained by the statements${Math.abs(p.identity_gap || 0) > 1e6 ? ' · assets − liabilities − equity = ' + esc(big(p.identity_gap)) + ' (temporary equity or rounding)' : ''}</span></div>
+<div class="rv-card"><p><b>In words</b></p><ul style="margin:4px 0 6px;padding-left:18px">${words(p, 3).map((w) => `<li>${esc(w.text)}</li>`).join('')}</ul><p class="sm"><button id="rv-x">Download the X card (PNG, 1200×675)</button> <span class="muted">the six largest movements, the words beside them, the source line</span></p></div>
 <div class="rv-legend"><span><i style="background:${COL.p}"></i>${esc(KIND_NAME.p)}</span><span><i style="background:${COL.bridge}"></i>${esc(KIND_NAME.bridge)}</span><span><i style="background:${COL.cap}"></i>${esc(KIND_NAME.cap)}</span><span><i style="background:repeating-linear-gradient(45deg,${COL.res} 0 2px,transparent 2px 5px)"></i>${esc(KIND_NAME.res)}</span></div>
 <div class="rv-wrap">${strip(p)}</div>
 <p class="muted sm">Click an account for its bridge. Balances are the standard tags at each date, the same tag at both dates (a line tagged at one date only falls into "other"); "other assets" and "other liabilities" are what the tagged lines leave of the totals, so the totals always match the filing.</p>
@@ -138,9 +216,10 @@
 <p class="muted sm">How to read a residual: in receivables or payables it is usually acquisitions, currency or a reclassification between lines; in PP&E the amortisation of intangibles inside one D&A line; in equity other comprehensive income; in investments the securities bought and sold inside "other investing". A large residual is a question for the notes, not a finding. Not investment advice.</p></div>`;
       el.querySelectorAll('button[data-m]').forEach((b) => { b.onclick = () => { state.mode = b.dataset.m; state.i = -1; state.open = null; draw(); }; });
       el.querySelector('#rv-p').onchange = (e) => { state.i = +e.target.value; draw(); };
+      el.querySelector('#rv-x').onclick = () => download(card(p, { ticker: opt.ticker || c.ticker || (c.profile || {}).ticker, name: c.name || (c.profile || {}).name }), `${(opt.ticker || 'company')}-balance-sheet-${p.end}.png`);
       el.querySelectorAll('.rv-row').forEach((g) => { g.onclick = () => { state.open = g.dataset.k; el.querySelector('#rv-bridge').innerHTML = bridge(p.accounts.find((a) => a.k === state.open), p); }; });
     };
     draw();
   }
-  window.RollView = { render, strip, bridge, matrix };
+  window.RollView = { render, strip, bridge, matrix, words, card };
 })();
