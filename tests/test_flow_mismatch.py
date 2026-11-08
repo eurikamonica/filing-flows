@@ -93,3 +93,30 @@ def test_undrawn_companies_are_read_again_first(tmp_path, monkeypatch):
     except Exception:
         pass
     assert order[:1] == [36270]                    # undrawn and on the oldest reading: first, ahead of the larger company
+
+
+def test_quarters_stored_before_the_minority_interest_rule_are_read_again(tmp_path, monkeypatch):
+    # Univest Q2 2026: stored with reader v6, before facts.odd_one_out dropped a minority-interest tag that repeats net
+    # income itself; the page kept a $22.953M minority interest and pre-tax rebuilt as $51.5M until it was read again
+    own = "0000102212-26-000037"
+    mk = lambda v: [{"start": "2026-04-01", "end": "2026-06-30", "val": v, "filed": "2026-08-07", "form": "10-Q",
+                     "accn": own, "fy": 2026, "fp": "Q2"}]
+    g = {"Revenues": mk(84.354e6), "NetIncomeLoss": mk(22.953e6),
+         "NetIncomeLossAttributableToNoncontrollingInterest": mk(22.953e6),
+         "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": mk(28.558e6),
+         "IncomeTaxExpenseBenefit": mk(5.605e6)}
+    raw_facts = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    stored = {"revenue": 84.354e6, "ni": 22.953e6, "nci": 22.953e6, "pretax": 28.558e6, "tax": 5.605e6}
+    store = build.Store(str(tmp_path))
+    store.put(102212, {"profile": {"name": "Univest"}, "da_v": 6,
+                       "quarters": {"2026-06-30": {"end": "2026-06-30", "form": "10-Q", "accn": own, "raw": stored}}})
+    assert build.DA_VERSION > 6
+    monkeypatch.setattr(build, "companyfacts", lambda cik, accn=None: facts.index_facts(raw_facts, accn=accn))
+    monkeypatch.setattr(build, "time_up", lambda *a, **k: False)
+    monkeypatch.setattr(build, "set_quality", lambda c, fx: None)
+    build.refresh_da(store, limit=5)
+    c = store.company(102212)
+    r = c["quarters"]["2026-06-30"]["raw"]
+    assert c["da_v"] == build.DA_VERSION and r["nci"] is None
+    N = normalize(r)
+    assert N["nci"] == 0 and N["pretax"] == 28.558e6 and N["pl"] == 22.953e6
