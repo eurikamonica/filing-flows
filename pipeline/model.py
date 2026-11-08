@@ -45,7 +45,12 @@ def normalize(raw):
     if pretax is None:
         pretax, tax = pl, 0.0
     flags = []
-    if not _close(pretax - tax, pl, 0.005):          # inconsistent tags: trust net income and tax
+    # inconsistent tags (often discontinued operations): trust net income and tax. Within the chart's own conservation
+    # check at net earnings (sankey._check: 0.4% of the drawn figure, the shareholders' one when minority interests
+    # are carved out), or the quarter is not drawn at all: a 0.4-0.5% gap beside a tax benefit used to pass here and
+    # fail there (Carrier's Q1 2026: $170M + $96M benefit - $27M minority = $239M against $238M; Bloomin' Brands,
+    # Interpace)
+    if abs(pretax - tax - pl) > max(0.0035 * min(abs(pl), abs(ni)), 1):
         pretax = pl + tax
         flags.append("pretax_fixed")
     oi = raw.get("oi")
