@@ -180,6 +180,8 @@
   // what is still an English sentence once the pieces are taken out (one of these words) stays English, figures and all
   const STOP = /\b(?:the|a|an|and|or|of|to|in|on|at|by|for|with|from|into|was|were|is|are|be|been|has|have|had|it|its|this|that|these|those|than|then|while|but|not|no|yet|as|after|before|over|under|rose|fell|grew|each|every|which|who|what|when|how|there|here|their|they|we|you|your|our|can|will|would|should|could|do|does|did|The|An|This|That|These|It|Its|No|Not|Each|Every|Which|What|When|How|Where|Who|There|Here|Their|They|We|You|Your|Our)\b/;   // "May" is a month
 
+  // words that begin a phrase rather than name a line ("All 8 quarters", "Latest 32 quarters"): left to the pieces
+  const GENERIC = new Set(['All', 'Any', 'Every', 'Top', 'Last', 'Next', 'Latest', 'First', 'Over', 'Under', 'Since', 'From', 'To', 'Now', 'Then']);
   // one string: a phrase of the dictionary; else its parts ("A · B"), a phrase with its figure ("Assets €10.3B",
   // "Cash: €1.2B"); else, when short, pieces, periods, dates and figures
   function trCore(core) {
@@ -197,7 +199,7 @@
     if (/. ·$/.test(core)) return trCore(core.slice(0, -2)) + ' ·';
     // a phrase, then its figure or period: "Assets €10.3B", "Cash: €1.2B", "Operating income, Q4 FY25 → Q4 FY26"
     const m = core.match(/^([^\d:,]+?)(: |, | )((?:[−+-]?[^\s\d]{0,4}\d|Q[1-4]\b|H[12]\b|FY\d)[\s\S]*)$/);
-    if (m && EXACT.has(m[1])) return EXACT.get(m[1]) + (m[2] === ': ' && FR ? NB + ': ' : m[2]) + trCore(m[3]);
+    if (m && EXACT.has(m[1]) && !GENERIC.has(m[1])) return EXACT.get(m[1]) + (m[2] === ': ' && FR ? NB + ': ' : m[2]) + trCore(m[3]);
     if (core.length > 90) return core;
     let t = core, bare = core;
     for (const [re, to] of PIECES) { t = t.replace(re, to); bare = bare.replace(re, ' '); }

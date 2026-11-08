@@ -99,6 +99,8 @@ test('a button’s word can differ from the same word in a table', () => {
   assert.strictEqual(fr.FFT('Close'), 'Clôture');
   assert.strictEqual(fr.FFT('Close', true), 'Fermer');
   assert.strictEqual(es.FFT('Sort by Ticker'), 'Ordenar por Símbolo');
+  assert.strictEqual(fr.FFT('All 8 quarters'), 'Les 8 trimestres');           // "All" begins a phrase, it is not a line
+  assert.strictEqual(fr.FFT('Latest 32 quarters'), 'Les 32 derniers trimestres');
 });
 
 test('long generated text stays as written', () => {
