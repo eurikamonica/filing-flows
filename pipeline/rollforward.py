@@ -65,6 +65,35 @@ NOTES = {"ppe": "Depreciation and amortisation includes the amortisation of inta
          "eq": "Other comprehensive income (currency translation, unrealised gains) moves equity without passing through net income: it is in the residual.",
          "cash": "The cash flow statement's cash can include restricted cash the balance sheet shows elsewhere: a small residual is that difference."}
 
+CF_LABELS = {"capex": "Capital expenditure", "realestate": "Real estate bought", "acq": "Acquisitions", "sales": "Asset and business sales", "inv_other": "Other investing (securities, net)",
+             "buyback": "Share buybacks", "div": "Dividends", "withhold": "Shares withheld for taxes", "stock": "Shares issued", "borrow": "Net borrowing", "nci": "Minority-interest flows",
+             "fin_other": "Other financing", "fx": "Currency effect on cash"}
+INV_KEYS = ("capex", "realestate", "acq", "sales", "inv_other")
+FIN_KEYS = ("buyback", "div", "withhold", "stock", "borrow", "nci", "fin_other")
+
+
+def cash_flow(get):
+    """the period's cash flow statement as the detailed card draws it: net income, the non-cash and working-capital
+    items, OCF, the investing and financing lines, the currency effect, the change in cash; every figure a cash effect,
+    with the unexplained part of each section as its own line. get(kind, key) -> value or None."""
+    ni, ocf = get("p", "ni"), get("p", "ocf")
+    if ni is None or ocf is None:
+        return None
+    nc = [[k, lab, get("bridge", k)] for k, lab, *_ in W.NONCASH]
+    wc = [[k, lab, get("bridge", k)] for k, lab, *_ in W.WC]
+    nc = [x for x in nc if x[2] is not None and abs(x[2]) >= 0.5]
+    wc = [x for x in wc if x[2] is not None and abs(x[2]) >= 0.5]
+    op_other = ocf - ni - sum(x[2] for x in nc + wc)
+    inv = [[k, CF_LABELS[k], get("cap", k)] for k in INV_KEYS]
+    fin = [[k, CF_LABELS[k], get("cap", k)] for k in FIN_KEYS]
+    inv = [x for x in inv if x[2] is not None and abs(x[2]) >= 0.5]
+    fin = [x for x in fin if x[2] is not None and abs(x[2]) >= 0.5]
+    inv_t, fin_t, fx = get("sec", "inv"), get("sec", "fin"), get("cap", "fx")
+    return {"ni": ni, "noncash": nc, "wc": wc, "op_other": op_other, "ocf": ocf,
+            "inv": inv, "inv_total": inv_t, "inv_other_gap": (inv_t - sum(x[2] for x in inv)) if inv_t is not None else None,
+            "fin": fin, "fin_total": fin_t, "fin_other_gap": (fin_t - sum(x[2] for x in fin)) if fin_t is not None else None,
+            "fx": fx, "dcash": (ocf + (inv_t or 0) + (fin_t or 0) + (fx or 0)) if inv_t is not None and fin_t is not None else None}
+
 
 def _bal2(fx, ev, keys, start, end):
     """the sum of the reform lines' balances at both dates, one tag per group and only tags with a balance at BOTH
@@ -151,12 +180,14 @@ def _period(fx, ev, p, capq, start, end, label, kind, flows_of=None):
         accounts.append({"k": k, "side": side, "name": name, "open": oo, "close": cc, "delta": delta, "flows": fl, "explained": explained,
                          "residual": delta - explained, "tags": sorted(set(tags_c.get(k, []))), **({"note": NOTES[k]} if k in NOTES else {})})
         unexplained += abs(delta - explained)
+    get = (lambda fk, key: flows_of(fk, key)) if flows_of else (lambda fk, key: _flow(fk, key, p, capq, bridge))
+    cf = cash_flow(get)
     moved = sum(abs(a["delta"]) for a in accounts) or 1
     # the identity the two balance sheets obey, and the share of the movement the statements explain
     return {"kind": kind, "start": start, "end": end, "label": label, "accounts": accounts,
             "totals": {"assets_open": o["_assets"], "assets_close": c["_assets"], "liab_open": o["_liab"], "liab_close": c["_liab"], "eq_open": o["eq"], "eq_close": c["eq"]},
             "identity_gap": (c["_assets"] - c["_liab"] - c["eq"]), "explained_share": round(1 - unexplained / moved, 3) if moved else None,
-            "data_kind": "observed" if kind == "q" else "derived"}
+            "data_kind": "observed" if kind == "q" else "derived", **({"cf": cf} if cf else {})}
 
 
 def compute(fx, ev, q, cap):

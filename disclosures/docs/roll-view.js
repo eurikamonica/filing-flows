@@ -119,6 +119,7 @@
       return { k: a.k, text: `${a.name} ${a.delta >= 0 ? 'up' : 'down'} ${big(Math.abs(a.delta))}` + (parts.length ? ': ' + parts.join(', ') : ': no statement line maps to it') + '.' };
     });
   }
+  const wrapText = (t, n) => { const out = []; let line = ''; String(t).split(' ').forEach((w) => { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; }); if (line.trim()) out.push(line.trim()); return out; };
   /* ---- the X card: 1200×675, the six largest movements as bars and the words beside them ---- */
   function card(p, meta) {
     const W = 1200, H = 675, L = 40, top = 118, rows = p.accounts.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 6);
@@ -172,11 +173,106 @@
     o += `<text x="${W - L}" y="${H - 18}" font-size="16" font-weight="700" text-anchor="end" fill="${ink}">filing-flows.com</text></svg>`;
     return o;
   }
+
+  /* ---- the detailed card: the cash flow statement as a waterfall, every account, every movement in words ---- */
+  function cardDetailed(p, meta) {
+    const W = 1200, L = 40, ink = '#1d1d1b', mu = '#6b6a66', bg = '#fbfaf7', colors = { p: '#2e8b57', bridge: '#2a78d6', cap: '#d9822b', sec: '#d9822b', res: mu };
+    const cf = p.cf, cash = p.accounts.find((a) => a.k === 'cash');
+    let o = '', y = 0;
+    const text = (x, yy, t, size, fill, extra) => `<text x="${x}" y="${yy}" font-size="${size}" fill="${fill || ink}" ${extra || ''}>${esc(t)}</text>`;
+    // header
+    o += text(L, 52, `${meta.ticker || ''} ${meta.name || ''}`, 30, ink, 'font-weight="700"');
+    o += text(L, 82, `Balance sheet roll-forward in full · ${p.start} → ${p.end} · ${p.kind === 'q' ? "one quarter's flows" : "four quarters' flows (" + (p.quarters || []).join(', ') + ')'}`, 19, mu);
+    y = 120;
+    // 1. the cash flow statement, as a waterfall from net income to the change in cash
+    if (cf) {
+      o += text(L, y, '1 · The cash flow statement: from net income to the change in cash', 20, ink, 'font-weight="700"'); y += 14;
+      const rows = [['Net income', cf.ni, 'p', 'total']];
+      const nc = cf.noncash.slice().sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]));
+      nc.slice(0, 4).forEach((x) => rows.push([x[1], x[2], 'bridge']));
+      const ncRest = nc.slice(4).reduce((s2, x) => s2 + x[2], 0); if (Math.abs(ncRest) >= 0.5) rows.push(['Other non-cash items', ncRest, 'bridge']);
+      const wc = cf.wc.slice().sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]));
+      wc.slice(0, 5).forEach((x) => rows.push([x[1], x[2], 'bridge']));
+      const wcRest = wc.slice(5).reduce((s2, x) => s2 + x[2], 0); if (Math.abs(wcRest) >= 0.5) rows.push(['Other working capital', wcRest, 'bridge']);
+      if (Math.abs(cf.op_other) >= 0.5) rows.push(['Operating lines not itemised', cf.op_other, 'res']);
+      rows.push(['Operating cash flow', cf.ocf, 'p', 'total']);
+      cf.inv.forEach((x) => rows.push([x[1], x[2], 'cap']));
+      if (cf.inv_other_gap != null && Math.abs(cf.inv_other_gap) >= 0.5) rows.push(['Investing lines not itemised', cf.inv_other_gap, 'res']);
+      cf.fin.forEach((x) => rows.push([x[1], x[2], 'cap']));
+      if (cf.fin_other_gap != null && Math.abs(cf.fin_other_gap) >= 0.5) rows.push(['Financing lines not itemised', cf.fin_other_gap, 'res']);
+      if (cf.fx != null && Math.abs(cf.fx) >= 0.5) rows.push(['Currency effect on cash', cf.fx, 'cap']);
+      if (cf.dcash != null) rows.push(['Change in cash (the statement)', cf.dcash, 'p', 'total']);
+      if (cash) rows.push([`Cash on the balance sheet: ${big(cash.open)} → ${big(cash.close)}`, cash.delta, 'res', 'total']);
+      const run = []; let r = 0; rows.forEach((x) => { if (x[3] === 'total') { run.push([0, x[1]]); r = x[1]; } else { run.push([r, r + x[1]]); r += x[1]; } });
+      const lo = Math.min(0, ...run.flat()), hi = Math.max(0, ...run.flat()) || 1, bx = 380, bw = 560, sx = (v) => bx + (v - lo) / (hi - lo) * bw, rh = 27;
+      rows.forEach((x, i) => {
+        const yy = y + 22 + i * rh, [a, b] = run[i];
+        o += text(bx - 12, yy + 5, x[0], 14, x[3] === 'total' ? ink : mu, `text-anchor="end" ${x[3] === 'total' ? 'font-weight="600"' : ''}`);
+        const fill = x[3] === 'total' ? (x[2] === 'res' ? 'none' : '#4a4a46') : x[2] === 'res' ? 'url(#xh)' : colors[x[2]];
+        o += `<rect x="${Math.min(sx(a), sx(b))}" y="${yy - 9}" width="${Math.max(1, Math.abs(sx(b) - sx(a)))}" height="18" fill="${fill}" ${x[2] === 'res' ? `stroke="${mu}" stroke-dasharray="${x[3] === 'total' ? '4 3' : 'none'}"` : ''}/>`;
+        o += text(bx + bw + 12, yy + 5, x[3] === 'total' ? big(x[1]) : sgn(x[1]), 14, ink, x[3] === 'total' ? 'font-weight="600"' : '');
+      });
+      o += `<line x1="${sx(0)}" x2="${sx(0)}" y1="${y + 6}" y2="${y + 22 + rows.length * rh}" stroke="#d8d6d0"/>`;
+      y += 22 + rows.length * rh + 10;
+      wrapText('Totals (net income, operating cash flow, the change in cash) start from zero; the lines between them run on. Hatched: what the statement does not itemise. The last line is the balance sheet\'s own cash; a gap to the statement is restricted cash or a different cash definition.', 150).forEach((ln) => { o += text(L, y, ln, 12.5, mu); y += 17; });
+      y += 20;
+    }
+    // 2. every account
+    o += text(L, y, '2 · Every balance-sheet account: opening balance, what the statements explain, closing balance', 20, ink, 'font-weight="700"'); y += 16;
+    const A = p.accounts, barX = 300, barW = 520, zero = barX + barW / 2, lo2 = barX, hi2 = barX + barW, rowH = 50;
+    const one = (a) => { let pos = 0, neg = 0; a.flows.concat([[null, null, a.residual]]).forEach((f) => { if (f[2] >= 0) pos += f[2]; else neg -= f[2]; }); return Math.max(pos, neg, Math.abs(a.delta)); };
+    const sr = A.filter((a) => a.k !== 'cash' && a.k !== 'eq'), mx = Math.max(...(sr.length ? sr : A).map(one), 1), sx2 = (v) => zero + (v / mx) * (barW / 2), cl = (x) => Math.max(lo2, Math.min(hi2, x));
+    let side = '', clippedAny = false;
+    A.forEach((a, i) => {
+      const yy = y + i * rowH;
+      if (a.side !== side) { side = a.side; o += text(L, yy + 24, SIDE[side], 13, mu, 'font-weight="600"'); }
+      o += text(barX - 14, yy + 22, a.name, 16, ink, 'text-anchor="end"');
+      o += text(barX - 14, yy + 39, `${big(a.open)} → ${big(a.close)}`, 12, mu, 'text-anchor="end"');
+      let pos = 0, neg = 0;
+      a.flows.map((f) => [kindOf(f[0]), f[2]]).concat(Math.abs(a.residual) >= 0.5 ? [['res', a.residual]] : []).forEach(([k, v]) => {
+        let x0, x1; if (v >= 0) { x0 = sx2(pos); pos += v; x1 = sx2(pos); } else { x1 = sx2(neg); neg += v; x0 = sx2(neg); }
+        if (cl(x1) > cl(x0)) o += `<rect x="${cl(x0)}" y="${yy + 10}" width="${Math.max(0.6, cl(x1) - cl(x0))}" height="22" fill="${k === 'res' ? 'url(#xh)' : colors[k]}" ${k === 'res' ? `stroke="${mu}"` : ''}/>`;
+      });
+      const clipped = sx2(pos) > hi2 || sx2(neg) < lo2; clippedAny = clippedAny || clipped;
+      const xd = cl(sx2(a.delta));
+      o += `<line x1="${xd}" x2="${xd}" y1="${yy + 5}" y2="${yy + 37}" stroke="${ink}" stroke-width="3"/>`;
+      o += text(hi2 + 12, yy + 26, sgn(a.delta) + (clipped ? ' »' : ''), 15, ink, 'font-weight="600"');
+      o += text(hi2 + 100, yy + 26, Math.abs(a.residual) >= 0.5 ? `residual ${sgn(a.residual)}` : 'fully explained', 12.5, mu);
+    });
+    o += `<line x1="${zero}" x2="${zero}" y1="${y}" y2="${y + A.length * rowH}" stroke="#d8d6d0"/>`;
+    y += A.length * rowH + 8;
+    o += text(barX, y + 8, '← decreases', 12.5, mu); o += text(hi2, y + 8, 'increases →', 12.5, mu, 'text-anchor="end"');
+    y += 34;
+    // 3. in words
+    o += text(L, y, '3 · Each movement in words', 20, ink, 'font-weight="700"'); y += 10;
+    const wrap = wrapText;
+    const floor = Math.max(1e6, (p.totals.assets_close || 0) * 0.005);
+    words(p, 11).filter((w) => Math.abs(p.accounts.find((a) => a.k === w.k).delta) >= floor).forEach((w) => {
+      wrap(w.text, 118).forEach((ln, j) => { y += 22; o += text(L, y, ln, 15, j === 0 ? ink : mu); });
+      y += 6;
+    });
+    y += 26;
+    wrapText(`The two flow statements explain ${Math.round(100 * (p.explained_share || 0))}% of the movement across the accounts; the rest is in the notes (acquisitions, currency, fair value, other comprehensive income, reclassification).`, 135).forEach((ln) => { o += text(L, y, ln, 14, mu); y += 19; });
+    y += 26;
+    // legend + footer
+    [['p', 'income statement / operating cash flow'], ['bridge', 'net income → OCF bridge'], ['cap', 'investing & financing'], ['res', 'not explained / not itemised (hatched)']].forEach(([k, lab], i) => {
+      const x = L + i * 290;
+      o += `<rect x="${x}" y="${y - 11}" width="14" height="14" fill="${k === 'res' ? 'url(#xh)' : colors[k]}" ${k === 'res' ? `stroke="${mu}"` : ''}/>` + text(x + 20, y + 1, lab, 13.5, mu);
+    });
+    y += 26;
+    o += text(L, y, `Balances from the filings at both dates (the same XBRL tag at both)${clippedAny ? '; » = bar cut at the edge of the scale' : ''}.`, 13, mu);
+    y += 18;
+    o += text(L, y, 'A residual is a question for the notes, not a finding. Not investment advice.', 13, mu);
+    o += text(W - L, y, 'filing-flows.com', 16, ink, 'font-weight="700" text-anchor="end"');
+    const H = y + 28;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif"><defs><pattern id="xh" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${bg}"/><line x1="0" y1="0" x2="0" y2="7" stroke="${mu}" stroke-width="2.2"/></pattern></defs><rect width="${W}" height="${H}" fill="${bg}"/>${o}</svg>`;
+  }
   function download(svg, name) {
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), url = URL.createObjectURL(blob), img = new Image();
     img.onload = () => {
-      const c = document.createElement('canvas'); c.width = 2400; c.height = 1350;
-      const g = c.getContext('2d'); g.drawImage(img, 0, 0, 2400, 1350); URL.revokeObjectURL(url);
+      const m = svg.match(/viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/), w = m ? +m[1] : 1200, h = m ? +m[2] : 675;
+      const c = document.createElement('canvas'); c.width = 2 * w; c.height = 2 * h;
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0, 2 * w, 2 * h); URL.revokeObjectURL(url);
       c.toBlob((b) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }, 'image/png');
     };
     img.src = url;
@@ -207,7 +303,7 @@
 <div class="rv-bar"><span><button data-m="q" class="${state.mode === 'q' ? 'on' : ''}" ${(roll.q || []).length ? '' : 'disabled'}>Quarter on quarter</button> <button data-m="y" class="${state.mode === 'y' ? 'on' : ''}" ${(roll.y || []).length ? '' : 'disabled'}>Year on year</button></span>
 <label>Period <select id="rv-p">${L2.map((x, j) => `<option value="${j}" ${j === idx ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select></label>
 <span class="muted sm">Total assets ${esc(big(t.assets_open))} → ${esc(big(t.assets_close))} · liabilities ${esc(big(t.liab_open))} → ${esc(big(t.liab_close))} · equity ${esc(big(t.eq_open))} → ${esc(big(t.eq_close))} · ${share} of the movement explained by the statements${Math.abs(p.identity_gap || 0) > 1e6 ? ' · assets − liabilities − equity = ' + esc(big(p.identity_gap)) + ' (temporary equity or rounding)' : ''}</span></div>
-<div class="rv-card"><p><b>In words</b></p><ul style="margin:4px 0 6px;padding-left:18px">${words(p, 3).map((w) => `<li>${esc(w.text)}</li>`).join('')}</ul><p class="sm"><button id="rv-x">Download the X card (PNG, 1200×675)</button> <span class="muted">the six largest movements, the words beside them, the source line</span></p></div>
+<div class="rv-card"><p><b>In words</b></p><ul style="margin:4px 0 6px;padding-left:18px">${words(p, 3).map((w) => `<li>${esc(w.text)}</li>`).join('')}</ul><p class="sm"><button id="rv-x">Download the X card (PNG, 1200×675)</button> <button id="rv-xd">Download the detailed card (PNG, 1200 wide)</button> <span class="muted">the short card: the six largest movements and the words; the detailed one adds the cash flow statement as a waterfall, every account and every movement in words</span></p></div>
 <div class="rv-legend"><span><i style="background:${COL.p}"></i>${esc(KIND_NAME.p)}</span><span><i style="background:${COL.bridge}"></i>${esc(KIND_NAME.bridge)}</span><span><i style="background:${COL.cap}"></i>${esc(KIND_NAME.cap)}</span><span><i style="background:repeating-linear-gradient(45deg,${COL.res} 0 2px,transparent 2px 5px)"></i>${esc(KIND_NAME.res)}</span></div>
 <div class="rv-wrap">${strip(p)}</div>
 <p class="muted sm">Click an account for its bridge. Balances are the standard tags at each date, the same tag at both dates (a line tagged at one date only falls into "other"); "other assets" and "other liabilities" are what the tagged lines leave of the totals, so the totals always match the filing.</p>
@@ -216,10 +312,11 @@
 <p class="muted sm">How to read a residual: in receivables or payables it is usually acquisitions, currency or a reclassification between lines; in PP&E the amortisation of intangibles inside one D&A line; in equity other comprehensive income; in investments the securities bought and sold inside "other investing". A large residual is a question for the notes, not a finding. Not investment advice.</p></div>`;
       el.querySelectorAll('button[data-m]').forEach((b) => { b.onclick = () => { state.mode = b.dataset.m; state.i = -1; state.open = null; draw(); }; });
       el.querySelector('#rv-p').onchange = (e) => { state.i = +e.target.value; draw(); };
+      el.querySelector('#rv-xd').onclick = () => download(cardDetailed(p, { ticker: opt.ticker || c.ticker || (c.profile || {}).ticker, name: c.name || (c.profile || {}).name }), `${(opt.ticker || 'company')}-balance-sheet-detailed-${p.end}.png`);
       el.querySelector('#rv-x').onclick = () => download(card(p, { ticker: opt.ticker || c.ticker || (c.profile || {}).ticker, name: c.name || (c.profile || {}).name }), `${(opt.ticker || 'company')}-balance-sheet-${p.end}.png`);
       el.querySelectorAll('.rv-row').forEach((g) => { g.onclick = () => { state.open = g.dataset.k; el.querySelector('#rv-bridge').innerHTML = bridge(p.accounts.find((a) => a.k === state.open), p); }; });
     };
     draw();
   }
-  window.RollView = { render, strip, bridge, matrix, words, card };
+  window.RollView = { render, strip, bridge, matrix, words, card, cardDetailed };
 })();

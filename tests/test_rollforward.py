@@ -47,6 +47,11 @@ def test_articulation_exact():
     assert (a["oth_a"]["open"], a["oth_a"]["close"]) == (50, 60) and (a["oth_l"]["open"], a["oth_l"]["close"]) == (180, 185)
     assert p["identity_gap"] == 0 and p["totals"]["eq_close"] == 460 and p["data_kind"] == "observed"
     assert 0.9 <= p["explained_share"] <= 1 and all("Goodwill" in x for x in a["gw"]["tags"])
+    # the period's cash flow statement for the detailed card: NI → non-cash → working capital → OCF → sections → Δcash
+    cf = p["cf"]
+    assert cf["ni"] == 80 and cf["ocf"] == 90 and [x[0] for x in cf["noncash"]] == ["da", "sbc"] and [x[0] for x in cf["wc"]] == ["d_ar", "d_inv", "d_ap"]
+    assert cf["op_other"] == 90 - 80 - 30 - 5 + 30 + 10 - 15 and [x[0] for x in cf["inv"]] == ["capex"] and cf["inv_other_gap"] == 0
+    assert [x[0] for x in cf["fin"]] == ["buyback", "borrow"] and cf["fin_other_gap"] == 0 and cf["dcash"] == 35
 
 
 def test_one_date_tag_is_not_a_movement():

@@ -36,4 +36,8 @@ eq(w[0].text, 'Equity up $60M: +$80M net income, −$25M buybacks, +$5M stock co
 eq(w[2].text, 'Goodwill and intangibles up $12M: +$12M not explained by the statements.', 'a residual is said, not hidden');
 const svg = RV.card(P, { ticker: 'AAA', name: 'Alpha Inc.' });
 assert(/^<svg /.test(svg) && svg.includes('AAA Alpha Inc.') && svg.includes('filing-flows.com') && svg.includes('url(#xh)') && svg.includes('Not investment advice'), 'card'); n++;
-console.log(n + ' checks with the roll-view words and card');
+P.cf = { ni: 80e6, ocf: 90e6, noncash: [['da', 'Depreciation and amortization', 30e6]], wc: [['d_ar', 'Receivables', -30e6]], op_other: 10e6, inv: [['capex', 'Capital expenditure', -50e6]], inv_total: -50e6, inv_other_gap: 0, fin: [], fin_total: 0, fin_other_gap: 0, fx: null, dcash: 40e6 };
+P.accounts.push({ k: 'cash', side: 'a', name: 'Cash and equivalents', open: 100e6, close: 140e6, delta: 40e6, flows: [['ocf', 'Operating cash flow', 90e6], ['inv', 'Investing cash flow', -50e6]], residual: 0, tags: [] });
+const det = RV.cardDetailed(P, { ticker: 'AAA', name: 'Alpha Inc.' });
+assert(det.includes('1 · The cash flow statement') && det.includes('Operating lines not itemised') && det.includes('2 · Every balance-sheet account') && det.includes('3 · Each movement in words') && /viewBox="0 0 1200 \d+"/.test(det), 'detailed card'); n++;
+console.log(n + ' checks with the roll-view words and cards');
