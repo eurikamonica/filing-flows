@@ -380,7 +380,9 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 7           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+DA_VERSION = 8           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+# v8 (Nov 2026): a "Revenues" far below contract revenue is checked against the cost lines too when no costs subtotal
+# is tagged (facts.cost_lines: X4 Pharmaceuticals' Q1 2025 revenue read as $0.9M, not its $28.8M)
 # v7 (Nov 2026): a minority-interest tag that repeats net income itself is dropped (facts.odd_one_out: Univest's
 # Q4 2025-Q2 2026 quarters stored before it still showed net income twice and pre-tax earnings doubled)
 # v6 (Nov 2026): a bank's revenue from net interest + noninterest income when its "Revenues" tag is only the fee part

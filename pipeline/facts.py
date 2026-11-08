@@ -351,7 +351,7 @@ def _total_or_larger(facts, get, c, hit, end=None, annual=False):
     nper = facts.get("NonoperatingIncomeExpense")
     v = lambda k: _pick(facts, k, get)[0]                                                    # noqa: E731
     if closes_better(top[0], hit[0], v("costs_total"), v("oi"), v("pretax"), get(nper) if nper else None,
-                     gp=v("gp"), cor=v("cor"), opex=v("opex_total")):
+                     gp=v("gp"), cor=v("cor"), opex=v("opex_total"), parts=cost_lines(v)):
         return top
     if end and hit[0] < NEW_LINE * top[0] and not _reported_before(facts.get(hit[1]) or {}, end, annual):
         return top
@@ -372,12 +372,27 @@ def _reported_before(per, end, annual=False):
     return any(f.get("accn") not in own for (s, e), f in per.items() if e in ends)
 
 
-def closes_better(top, total, costs, oi=None, pre=None, non=None, gp=None, cor=None, opex=None):
+def cost_lines(v):
+    """Cost of revenue + R&D + SG&A (or selling and G&A apart) when at least two of them are tagged, else None: the
+    costs of a statement that tags no costs or operating-expense subtotal (X4 Pharmaceuticals). `v` reads one key."""
+    sga = v("sga")
+    if sga is None and (v("sm") is not None or v("ga") is not None):
+        sga = (v("sm") or 0) + (v("ga") or 0)
+    got = [x for x in (v("cor"), v("rd"), sga) if x is not None]
+    return sum(got) if len(got) >= 2 else None
+
+
+def closes_better(top, total, costs, oi=None, pre=None, non=None, gp=None, cor=None, opex=None, parts=None):
     """True when the larger revenue figure closes the income statement — revenue − costs and expenses = operating income
     (or with other income = pre-tax earnings), revenue − cost of revenue = gross profit, revenue − operating expenses
-    (and cost of revenue) = operating income — within 2%, and much better than the "Revenues" figure does."""
+    (and cost of revenue) = operating income, revenue − the cost lines (`parts`, cost_lines) = operating income —
+    within 2%, and much better than the "Revenues" figure does. X4 Pharmaceuticals' Q1 2025 "Revenues" ($0.9M, one
+    line) beside $28.8M of contract revenue: $28.8M − $4.7M cost of revenue − $18.5M R&D − $15.0M G&A = the −$9.4M
+    operating loss."""
     def gap(r):
         g = []
+        if parts is not None and oi is not None:
+            g.append(abs(r - parts - oi))
         if costs is not None and oi is not None:
             g.append(abs(r - costs - oi))
         if costs is not None and pre is not None:
