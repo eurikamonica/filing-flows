@@ -2531,6 +2531,18 @@ def test_reformulated_balance_sheet_reads_ifrs():
     for i in range(2):
         side = lambda s, c: sum(x["v"][i] or 0 for x in r["lines"] if x["side"] == s and x["cls"] == c)
         assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i] + r["totals"]["nci"][i]
+    # the same current borrowings tagged twice (ShorttermBorrowings and CurrentPortionOfLongtermBorrowings, equal at
+    # every year end, Novo Nordisk's 20-F): one line, and the current rest is not short by it
+    twice = dict(ifrs)
+    del twice["CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"]
+    twice["ShorttermBorrowings"] = b(3, 3)
+    fx2 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
+    l2 = {x["k"]: x for x in Q.compute(fx2)["reform"]["lines"]}
+    assert l2["std"]["v"] == [3, 3] and "ltdc" not in l2
+    assert l2["oth_cl"]["v"] == [40 - 20 - 3 - 2 - 4, 45 - 22 - 3 - 2 - 5]
+    twice["ShorttermBorrowings"] = b(3, 4)                                       # different amounts: both lines
+    fx3 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
+    assert {"std", "ltdc"} <= {x["k"] for x in Q.compute(fx3)["reform"]["lines"]}
 
 
 def test_foreign_filer_years_drawn_when_no_quarter_can_be():

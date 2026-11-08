@@ -217,6 +217,12 @@ def compute(fx, ev, ye, fye="1231"):
             lines.append(x)
     if "ltdc" in skipped:
         lines = [x for x in lines if x["k"] != "ltdc"]
+    # the same borrowings tagged twice: Novo Nordisk's 20-F tags its current borrowings as ShorttermBorrowings and as
+    # CurrentPortionOfLongtermBorrowings, equal at every year end. One line, so the rest is not short by it.
+    by = {x["k"]: x for x in lines}
+    if "std" in by and "ltdc" in by and any(v is not None for v in by["ltdc"]["v"]) \
+            and all(b is None or a == b for a, b in zip(by["std"]["v"], by["ltdc"]["v"])):
+        lines = [x for x in lines if x["k"] != "ltdc"]
 
     def current_part(x, i):
         return (x["cv"][i] or 0) if "cv" in x else (x["v"][i] or 0) if x.get("cur") else 0

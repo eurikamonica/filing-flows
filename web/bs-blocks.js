@@ -228,7 +228,11 @@
   function fit(text, px) {
     const n = Math.floor(px / FONT_W);
     if (n < 3) return '';
-    return text.length <= n ? text : `${text.slice(0, Math.max(1, n - 1)).trimEnd()}…`;
+    if (text.length <= n) return text;
+    let cut = text.slice(0, Math.max(1, n - 1));
+    const sp = cut.lastIndexOf(' ');
+    if (text[cut.length] !== ' ' && sp >= Math.min(6, n / 2)) cut = cut.slice(0, sp);   // whole words: "Not tagged…"
+    return `${cut.replace(/[\s,;:·&–-]+$/, '')}…`;
   }
   // consecutive blocks too thin to see on their own (same kind and section) become one "smaller lines" block
   function merge(list, scale, minH) {
@@ -284,14 +288,16 @@
     const room = w - 14, chars = Math.floor(room / FONT_W);
     if (room < 30) return '';
     const extra = share ? ` · ${share}` : '';
-    const nameFit = name.length <= chars ? name : chars >= 10 ? fit(name, room) : '';
+    const tinies = [].concat(tiny || []);                     // shorter names, longest first
+    const short = (n) => tinies.find((t) => t.length <= n);
+    const nameFit = name.length <= chars ? name : short(chars) || (chars >= 10 ? fit(name, room) : '');
     const withShare = (amount + extra).length <= chars;
     const am = withShare ? amount : amount.length <= chars ? amount : '';
     const amt = (yy, cls) => `<text class="bsb-t bsb-n ${cls || ''} ${ink}" x="${x + 8}" y="${yy}">${esc(am)}${withShare && extra ? `<tspan class="bsb-share">${esc(extra)}</tspan>` : ''}</text>`;
     if (h >= 33 && nameFit && am) return `<text class="bsb-t ${ink}" x="${x + 8}" y="${y + 16}">${esc(nameFit)}</text>${amt(y + 30)}`;
     if (h >= 13) {                             // one line: the name cut to what the amount leaves
       const left = chars - amount.length - 1;
-      const nm = name.length <= left ? name : tiny && tiny.length <= left ? tiny : left >= 10 ? fit(name, left * FONT_W) : '';
+      const nm = name.length <= left ? name : short(left) || (left >= 10 ? fit(name, left * FONT_W) : '');
       const yy = y + Math.min(h / 2 + 4, 17), sm = h < 17 ? 'bsb-sm' : '';
       if (nm) return `<text class="bsb-t ${sm} ${ink}" x="${x + 8}" y="${yy}">${esc(nm)} <tspan class="bsb-n">${esc(amount)}</tspan></text>`;
       return am ? amt(yy, sm) : '';
@@ -448,7 +454,7 @@
       items.push({ r, m: y.m, inc, total: inc.revenue });
       const idx = items.length - 1, { b, x, y: yy, w, h } = r, share = b.v / inc.revenue;
       const ink = b.kind === 'ni' || b.kind === 'c-cor' ? '' : 'bsb-onlight';     // the deep red and the green take white text
-      labels += labelSVG(x, yy, w, h, b.name, money(b.v), pct(share), ink, { 'is:below': 'Interest & tax', 'is:rest': 'Other costs', 'is:opex': 'Opex' }[b.k]);
+      labels += labelSVG(x, yy, w, h, b.name, money(b.v), pct(share), ink, { 'is:below': ['Interest & tax', 'Int. & tax'], 'is:rest': 'Other costs', 'is:opex': 'Opex' }[b.k]);
       svg += `<g class="bsb-b" data-b="${idx}" tabindex="0" role="img" aria-label="${esc(`${b.name}: ${money(b.v)}, ${pct(share, 1)} of revenue`)}"><rect class="bsb-is-${b.kind === 'ni' ? 'ni' : b.kind}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="4"/></g>`;
     });
     if (inc.loss) {                          // the costs pass revenue by the loss: hatched above the revenue line
