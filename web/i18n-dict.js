@@ -2218,6 +2218,14 @@
     ['SEC research', 'Recherche SEC', 'Investigación SEC'],
     ['Financial models', 'Modèles financiers', 'Modelos financieros'],
     ['Not investment advice', 'Pas un conseil en investissement', 'No es asesoramiento de inversión'],
+    ['Accelerated filer', 'Déclarant accéléré', 'Declarante acelerado'],
+    ['Non-accelerated filer', 'Déclarant non accéléré', 'Declarante no acelerado'],
+    ['Smaller reporting company', 'Petite société déclarante', 'Pequeña empresa declarante'],
+    ['Emerging growth company', 'Société en forte croissance (EGC)', 'Empresa emergente en crecimiento (EGC)'],
+    ['CIK', 'CIK', 'CIK'],
+    ['SIC', 'SIC', 'SIC'],
+    ['Preliminary · 8-K', 'Provisoire · 8-K', 'Provisional · 8-K'],
+    ['Read from the 8-K earnings release; replaced by the 10-Q/10-K when filed', 'Lu dans le communiqué de résultats 8-K ; remplacé par le 10-Q/10-K une fois déposé', 'Leído del comunicado de resultados 8-K; se sustituye por el 10-Q/10-K cuando se presenta'],
     // ---------------------------------------------------------------- the language switch
     ['Language', 'Langue', 'Idioma'],
   ];
