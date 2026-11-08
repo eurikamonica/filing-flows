@@ -135,7 +135,8 @@ def netted(period):
     if add:
         a = sum(p["v"] for p in add)
         out[0]["amount"] -= a
-        out[0]["label"] += ", net"
+        if not re.search(r"\bnet$", out[0]["label"], re.I):     # Mettler's own line already says ", net"
+            out[0]["label"] += ", net"
         out[0]["netted"] = a
         out[0]["netted_words"] = " and ".join(p["label"][:1].lower() + p["label"][1:] for p in add)
         if out[0]["amount"] <= 0:
