@@ -95,6 +95,12 @@ test('sentences: a template, else English as written (never half translated)', (
   assert.strictEqual(fr.FFT('€5.5B · 62% of Cloud and software revenue'), `5,5${NB}Md€ · 62${NNB}% de Cloud and software revenue`);
 });
 
+test('a button’s word can differ from the same word in a table', () => {
+  assert.strictEqual(fr.FFT('Close'), 'Clôture');
+  assert.strictEqual(fr.FFT('Close', true), 'Fermer');
+  assert.strictEqual(es.FFT('Sort by Ticker'), 'Ordenar por Símbolo');
+});
+
 test('long generated text stays as written', () => {
   const long = 'Revenue rose 13% to €10.3B as cloud grew; the operating margin widened by 2.1 points on lower restructuring costs.';
   assert.strictEqual(fr.FFT(long), long);

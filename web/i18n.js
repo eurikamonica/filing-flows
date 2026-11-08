@@ -82,6 +82,14 @@
     a.setAttribute('href', `${path}${path.includes('?') ? '&' : '?'}lang=${lang}${hash !== undefined ? '#' + hash : ''}`);
   }
 
+  // the phrases (web/i18n-dict.js) load only for a French or Spanish reader, and before the page's own scripts run (a
+  // script written while the page is read runs next): the charts are laid out in the reader's language from the start
+  const SRC = (document.currentScript && document.currentScript.src) || '';
+  const DICT = SRC ? SRC.replace(/i18n\.js(\?.*)?$/, 'i18n-dict.js') : '';
+  if (lang !== 'en' && !root.FFI18N && DICT && document.readyState === 'loading' && typeof document.write === 'function') {
+    document.write(`<script src="${DICT}"><\/script>`);
+  }
+
   if (lang === 'en') {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addSwitch); else addSwitch();
     root.FFT = (s) => s;
@@ -92,7 +100,15 @@
   // ------------------------------------------------------------------ the phrases
   const L = lang === 'fr' ? 1 : 2;
   const EXACT = new Map();
-  (root.FFI18N || []).forEach((row) => { if (row[L]) EXACT.set(norm(row[0]), row[L]); });
+  let PIECES = [], TEMPLATES = [], built = false;
+  function build() {                                      // the phrase tables, once the phrases have loaded
+    if (built || !root.FFI18N) return;
+    built = true;
+    root.FFI18N.forEach((row) => { if (row[L]) EXACT.set(norm(row[0]), row[L]); });
+    PIECES = (root.FFI18N_PIECES || []).map(([re, fr, es]) => [new RegExp(re, 'g'), lang === 'fr' ? fr : es]);
+    TEMPLATES = (root.FFI18N_TEMPLATES || []).map(([re, fr, es]) => [new RegExp(re), lang === 'fr' ? fr : es]);
+    cache.clear();
+  }
   function norm(s) { return String(s).replace(/\s+/g, ' ').replace(/&amp;/g, '&').trim(); }
 
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -158,9 +174,9 @@
   const PCT = /(\d)%/g;
 
   // pieces of short labels: "22% of revenue", "€0.80B · 27% of pre-tax", "+13% Q/Q", "−9% from high"
-  const PIECES = (root.FFI18N_PIECES || []).map(([re, fr, es]) => [new RegExp(re, 'g'), lang === 'fr' ? fr : es]);
+
   // sentences with a part that changes ("No 8-K from AAPL on file in the last four months."): the part is translated too
-  const TEMPLATES = (root.FFI18N_TEMPLATES || []).map(([re, fr, es]) => [new RegExp(re), lang === 'fr' ? fr : es]);
+
   // what is still an English sentence once the pieces are taken out (one of these words) stays English, figures and all
   const STOP = /\b(?:the|a|an|and|or|of|to|in|on|at|by|for|with|from|into|was|were|is|are|be|been|has|have|had|it|its|this|that|these|those|than|then|while|but|not|no|yet|as|after|before|over|under|rose|fell|grew|each|every|which|who|what|when|how|there|here|their|they|we|you|your|our|can|will|would|should|could|do|does|did|The|An|This|That|These|It|Its|No|Not|Each|Every|Which|What|When|How|Where|Who|There|Here|Their|They|We|You|Your|Our)\b/;   // "May" is a month
 
@@ -177,6 +193,8 @@
     }
     if (core.length > 160) return core;                        // long generated text: as written
     if (core.includes(' · ')) return core.split(' · ').map(trCore).join(' · ');
+    if (/^· ./.test(core)) return '· ' + trCore(core.slice(2));          // "· quarterly results release …" after a link
+    if (/. ·$/.test(core)) return trCore(core.slice(0, -2)) + ' ·';
     // a phrase, then its figure or period: "Assets €10.3B", "Cash: €1.2B", "Operating income, Q4 FY25 → Q4 FY26"
     const m = core.match(/^([^\d:,]+?)(: |, | )((?:[−+-]?[^\s\d]{0,4}\d|Q[1-4]\b|H[12]\b|FY\d)[\s\S]*)$/);
     if (m && EXACT.has(m[1])) return EXACT.get(m[1]) + (m[2] === ': ' && FR ? NB + ': ' : m[2]) + trCore(m[3]);
@@ -188,17 +206,22 @@
     return figures(t).replace(PCT, `$1${FR ? NNB : NB}%`);
   }
   const cache = new Map(), done = new Set();              // done: what this wrote (never translated twice)
-  function tr(s) {
+  // act: the text of a button that does something ("Close" there is "Fermer"; in a table, the price "Clôture")
+  function tr(s, act) {
+    if (!built) build();
     if (!s || !/[A-Za-z0-9]/.test(s) || done.has(s)) return s;
-    if (cache.has(s)) return cache.get(s);
+    const key = act ? '\u0001' + s : s;
+    if (cache.has(key)) return cache.get(key);
     const lead = s.match(/^\s*/)[0], tail = s.match(/\s*$/)[0], core = norm(s);
-    const out = trCore(core);
+    const out = (act && EXACT.get('act:' + core)) || trCore(core);
     const r = out === core ? s : lead + out + tail;
     if (cache.size > 40000) { cache.clear(); done.clear(); }
-    cache.set(s, r);
+    cache.set(key, r);
     if (r !== s) done.add(r);
     return r;
   }
+  const ACT = 'button:not(.th-sort), [role="button"], a.btn';
+  const acts = (el) => !!(el && el.closest && el.closest(ACT));
   tr.keep = (s) => { if (s) done.add(s); return s; };    // a piece of a translated text (a chart's wrapped line)
   root.FFT = tr;
 
@@ -209,14 +232,14 @@
   function doText(n) {
     const p = n.parentElement;
     if (skip(p)) return;
-    const v = n.nodeValue, t = tr(v);
+    const v = n.nodeValue, t = tr(v, acts(p));
     if (t !== v) n.nodeValue = t;
   }
   function doEl(el) {
     if (el.nodeType !== 1 || skip(el)) return;
     for (const a of ATTRS) {
       const v = el.getAttribute(a);
-      if (v) { const t = tr(v); if (t !== v) el.setAttribute(a, t); }
+      if (v) { const t = tr(v, acts(el)); if (t !== v) el.setAttribute(a, t); }
     }
     if (el.tagName === 'A') keepLang(el);
     const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
@@ -226,7 +249,7 @@
       else if (!skip(n)) {
         for (const a of ATTRS) {
           const v = n.getAttribute(a);
-          if (v) { const t = tr(v); if (t !== v) n.setAttribute(a, t); }
+          if (v) { const t = tr(v, acts(n)); if (t !== v) n.setAttribute(a, t); }
         }
         if (n.tagName === 'A') keepLang(n);
       }
@@ -250,6 +273,12 @@
   });
   function start() {
     addSwitch();
+    if (!root.FFI18N && DICT) {                          // the phrases did not load with the page: load them now
+      const sc = document.createElement('script');
+      sc.src = DICT;
+      sc.onload = () => { build(); doEl(document.body); };
+      document.head.appendChild(sc);
+    }
     doEl(document.body);
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
     document.title = tr(document.title);
