@@ -380,7 +380,9 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 7           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+DA_VERSION = 8           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+# v8 (Nov 2026): a ProfitLoss tag with the sign flipped is dropped when no pre-tax earnings or tax tell (facts.odd_one_out:
+# Riot's 2025 quarters showed a minority interest twice net income; Q2 2025 was not drawn)
 # v7 (Nov 2026): a minority-interest tag that repeats net income itself is dropped (facts.odd_one_out: Univest's
 # Q4 2025-Q2 2026 quarters stored before it still showed net income twice and pre-tax earnings doubled)
 # v6 (Nov 2026): a bank's revenue from net interest + noninterest income when its "Revenues" tag is only the fee part

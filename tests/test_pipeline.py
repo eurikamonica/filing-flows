@@ -3693,3 +3693,27 @@ def test_a_segment_aggregation_member_is_no_revenue_line():
     members["cvx:UpstreamMember"] = ("Upstream", 40.0); members["cvx:DownstreamMember"] = ("Downstream", 27.174)
     part = dims.best_partition(members, 68.174)
     assert sorted(l["label"] for l in part["leaves"]) == ["All Other", "Downstream", "Upstream"]
+
+
+def test_a_profit_loss_tag_mirroring_net_income_is_dropped():
+    """Riot Platforms' 2025 10-Qs tag ProfitLoss with the sign flipped (-$219.774M beside $219.454M of net income in
+    Q2 2025) and no pre-tax earnings or tax. Kept, the chart needed a -$439M minority interest and Q2 2025 failed
+    the flow check, so the quarter was not drawn (facts.odd_one_out)."""
+    from pipeline import facts, model
+    own = "0001167419-25-000099"
+    mk = lambda v: [{"start": "2025-04-01", "end": "2025-06-30", "val": v, "filed": "2025-07-31", "form": "10-Q",
+                     "accn": own}]
+    g = {"Revenues": mk(152.988e6), "CostsAndExpenses": mk(-63.158e6), "OperatingIncomeLoss": mk(216.146e6),
+         "NetIncomeLoss": mk(219.454e6), "ProfitLoss": mk(-219.774e6)}
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    r = facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")
+    assert r["ni"] == 219.454e6 and r["pl"] == 219.454e6
+    N = model.normalize(r)
+    assert N["nci"] == 0 and N["pl"] == 219.454e6
+    # a ProfitLoss of the same sign (a real minority interest) is kept, and so is a mirror pre-tax less tax can judge
+    g["ProfitLoss"] = mk(221e6)
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")["pl"] == 221e6
+    r = {"ni": 10.0e6, "pl": -10.0e6, "nci": None, "pretax": -8e6, "tax": 2e6}
+    facts.odd_one_out(r)
+    assert r["pl"] == -10.0e6
