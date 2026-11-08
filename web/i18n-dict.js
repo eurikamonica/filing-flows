@@ -2005,6 +2005,22 @@
     ['Tobacco Products', 'Produits du tabac', 'Productos del tabaco'],
     ['Prepared Fresh or Frozen Fish & Seafoods', 'Poissons et fruits de mer préparés, frais ou surgelés', 'Pescados y mariscos preparados, frescos o congelados'],
     ['Metal Shipping Barrels, Drums, Kegs & Pails', 'Fûts, barils, tonnelets et seaux métalliques', 'Barriles, bidones y cubos metálicos'],
+    ['Videos →', 'Vidéos →', 'Vídeos →'],
+    ['Chart any line, any company', 'Toute ligne, toute entreprise, en graphique', 'Cualquier línea, cualquier empresa, en gráfico'],
+    ['Every line of the companies\' earnings Sankeys, quarter by quarter, side by side. The address keeps your choice, so the chart can be shared.', 'Chaque ligne des Sankey de résultats des entreprises, trimestre par trimestre, côte à côte. L’adresse garde votre choix, pour que le graphique puisse être partagé.', 'Cada línea de los Sankey de resultados de las empresas, trimestre a trimestre, lado a lado. La dirección guarda tu elección, para que el gráfico se pueda compartir.'],
+    ['Lines', 'Lignes', 'Líneas'],
+    ['Bars', 'Barres', 'Barras'],
+    ['Copy link', 'Copier le lien', 'Copiar el enlace'],
+    ['Add', 'Ajouter', 'Añadir'],
+    ['Filter lines', 'Filtrer les lignes', 'Filtrar líneas'],
+    ['Pick at least one company and one line.', 'Choisissez au moins une entreprise et une ligne.', 'Elige al menos una empresa y una línea.'],
+    ['Add a company to see its lines.', 'Ajoutez une entreprise pour voir ses lignes.', 'Añade una empresa para ver sus líneas.'],
+    ['Quarterly values as reported (three-month periods); fiscal quarters are placed at their end dates. Read automatically from SEC filings — check the filing before relying on a figure.', 'Valeurs trimestrielles telles que publiées (périodes de trois mois) ; les trimestres fiscaux sont placés à leur date de clôture. Lu automatiquement dans les dépôts SEC — vérifiez le dépôt avant de vous fier à un chiffre.', 'Valores trimestrales tal como se publicaron (periodos de tres meses); los trimestres fiscales se sitúan en su fecha de cierre. Leído automáticamente de los informes a la SEC: comprueba el informe antes de fiarte de una cifra.'],
+    ['Company descriptions and node notes are quoted verbatim from the filings. Analysis paragraphs are produced by fixed rules from the reported numbers; no language model is involved. Not investment advice.', 'Les descriptions d’entreprises et les notes des nœuds sont citées mot pour mot des dépôts (en anglais). Les paragraphes d’analyse sont produits par des règles fixes à partir des chiffres publiés ; aucun modèle de langage n’intervient. Pas un conseil en investissement.', 'Las descripciones de las empresas y las notas de los nodos se citan textualmente de los informes (en inglés). Los párrafos de análisis se generan con reglas fijas a partir de las cifras publicadas; no interviene ningún modelo de lenguaje. No es asesoramiento de inversión.'],
+    ['Companies are grouped by the SIC code on their EDGAR profile. A sector or industry page adds up every company whose fiscal quarter ends in the same calendar quarter (the combined Sankey; the ten largest appear by name), with the industry’s growth distribution, lifecycle, estimated money flow (BEA input-output) and the customers and suppliers named in filings.', 'Les entreprises sont regroupées selon le code SIC de leur profil EDGAR. Une page de secteur ou d’industrie additionne toutes les entreprises dont le trimestre fiscal se termine dans le même trimestre civil (le Sankey combiné ; les dix plus grandes apparaissent par leur nom), avec la distribution de la croissance de l’industrie, son cycle de vie, les flux financiers estimés (entrées-sorties du BEA) et les clients et fournisseurs cités dans les dépôts.', 'Las empresas se agrupan por el código SIC de su perfil en EDGAR. Una página de sector o industria suma todas las empresas cuyo trimestre fiscal termina en el mismo trimestre natural (el Sankey combinado; las diez mayores aparecen por su nombre), con la distribución del crecimiento de la industria, su ciclo de vida, los flujos de dinero estimados (input-output del BEA) y los clientes y proveedores citados en los informes.'],
+    ['Find an industry, SIC code or sector', 'Trouver une industrie, un code SIC ou un secteur', 'Buscar una industria, código SIC o sector'],
+    ['median Y/Y', 'a/a médian', 'a/a mediana'],
+    ['SIC industries', 'industries SIC', 'industrias SIC'],
     // ---------------------------------------------------------------- the language switch
     ['Language', 'Langue', 'Idioma'],
   ];
@@ -2140,6 +2156,7 @@
     ['^(Q[1-4] \\d{4}) — quarter ended (\\S+) \\((\\d[\\d,]*) managers\\)$', '$1 — trimestre clos le $2 ($3 gérants)', '$1 — trimestre cerrado el $2 ($3 gestores)'],
     ['^(\\d+) or more$', '$1 ou plus', '$1 o más'],
     ['^((?:FY|Q[1-4] |H[12] )\\S+) beside it$', '$1 à côté', '$1 al lado'],
+    ['^(\\d[\\d,]*) SIC industries$', '$1 industries SIC', '$1 industrias SIC'],
   ];
 
 })(window);
