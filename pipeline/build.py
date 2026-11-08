@@ -1749,6 +1749,18 @@ def process_fpi_release(store, cik, accn, form, starred=False):
     # year about four (Sony's year-end release, whose header reads like a quarter's)
     ref = _annual_quarter_revenue(c, cik, sub)
     ratio = (rel["is"].get("revenue") or 0) / ref if ref else None
+    if ratio and not 1 / 30 <= ratio <= 30:
+        # a thousand times a quarter of the company's year: the units are off (HSBC's interim report prints $m figures
+        # under a "$bn" heading, and was sized against a quarter on file that was itself misread): read again in the
+        # units that fit the year, else left out
+        try:
+            rel2 = release.parse(doc, filed, None, ref)
+        except ValueError:
+            rel2 = None
+        r2v = ((rel2 or {}).get("is") or {}).get("revenue")
+        if not r2v or not 1 / 30 <= r2v / ref <= 30 or rel2.get("end") != rel.get("end"):
+            raise NotApplicable(f"the release's figures are {ratio:.3g} times a quarter of the 20-F year: the units are off")
+        rel, ratio = rel2, r2v / ref
     try:                                                 # the same revenue as the 20-F year ending that day: the year
         same = facts.extract(companyfacts(cik), end, annual=True).get("revenue") if fq0 == 4 else None
     except Exception:
@@ -1758,6 +1770,10 @@ def process_fpi_release(store, cik, accn, form, starred=False):
     grows = bool(near) and rev0 / near[-1]["raw"]["revenue"] < 1.6      # the quarter before says it is a quarter
     if (same and abs(rev0 / same - 1) < 0.03) or (ratio and ratio >= 3.4 and fq0 == 4 and not grows):
         raise NotApplicable("the release's statements are for the full year (the 20-F has it)")
+    if ratio and fq0 == 4 and 1.6 <= ratio <= 2.6 and not grows and rel["is_quarter"] is not True:
+        # a second half at the year end (Stellantis reports halves: its full-year release prints H2 and the year), not
+        # the fourth quarter
+        raise NotApplicable("the release's statements are the second half, not the fourth quarter")
     if ratio and ratio >= 2.6 and fq0 == 3 and not grows and rel["is_quarter"] is None:
         rel["is_quarter"] = False                        # nine months: kept as the year to date (below)
     elif ratio and ratio >= 2.6 and fq0 == 3 and not grows and rel["is_quarter"] is not False and not rel.get("py_col"):
@@ -2181,10 +2197,12 @@ def _superseded(accn, filed):
     return False
 
 
-FPI_READER = 2                  # bump when the 6-K reader changes: foreign filers' results releases are read again once
+FPI_READER = 3                  # bump when the 6-K reader changes: foreign filers' results releases are read again once
 # v2 (Nov 2026): European statements — expenses printed negative (the tax sign), "Q1–Q3" / "Jan-Sep" / "9M" year-to-date
 # columns, the year-ago column from the header's years, IFRS and bank line names, note references, the most complete
 # exhibit of a 6-K
+# v3: units checked against a quarter of the 20-F year (HSBC's interim report read a thousand times over), a second
+# half at the year end is not the fourth quarter (Stellantis), a release turned down on re-reading loses its old period
 
 
 def _reread_fpi(store, days=220):
@@ -2456,6 +2474,21 @@ def price_list(out):
     print(f"prices: {len(rows)} companies, as of {asof or 'an unstated session'}")
 
 
+def _drop_fpi_reading(store, cik, accn):
+    """A foreign filer's release that a re-read now turns down: the period it once gave is taken off (Stellantis' second
+    half once drawn as its fourth quarter). Periods derived from other releases stay."""
+    c = store.company(cik)
+    gone = []
+    for pool in ("quarters", "halves", "ytd"):
+        for end, q in list((c.get(pool) or {}).items()):
+            if q.get("accn") == accn and not q.get("derived"):
+                del c[pool][end]
+                gone.append(f"{pool} {end}")
+    if gone:
+        store.put(cik, c)
+    return gone
+
+
 def _process_one(store, st, accn, p, stars, now):
     """Process one pending filing and record the outcome in the state."""
     try:
@@ -2480,6 +2513,10 @@ def _process_one(store, st, accn, p, stars, now):
         st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"], "form": p["form"]}
         del st["pending"][accn]
         print(f"skip {p['form']:5} {p['cik']:>10} {accn} {e}")
+        if p.get("history") and str(p["form"]).startswith("6-K"):
+            gone = _drop_fpi_reading(store, p["cik"], accn)
+            if gone:
+                print(f"     taken off: {', '.join(gone)}")
     except sec.NotFound as e:
         st["seen"][accn] = {"t": now, "s": f"missing: {e}", "cik": p["cik"]}
         del st["pending"][accn]

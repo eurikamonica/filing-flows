@@ -7,6 +7,7 @@ reconcile (pre-tax earnings - tax = net earnings) before it is used. Anything th
 is rejected rather than guessed.
 """
 import datetime as dt
+import itertools
 import re
 
 from bs4 import BeautifulSoup
@@ -261,8 +262,28 @@ def _newest_first(table):
             break
         if not v:                                          # dates as column titles, "For the first quarter ended June
             cells = [c for c in r["cells"] if c]               # 30, 2025 | ... 2026" (Toyota); "Q4 2025 | Q1 2026" (ASML)
-            if cells and not re.search(r"\b20\d\d\b", cells[0]) and len(cells) >= 3:
+            if cells and not re.search(r"\b20\d\d\b", cells[0]) and not _yy_period(cells[0]) and len(cells) >= 3:
                 cells = cells[1:]                              # a caption first: "(Figures in millions of euros ...)"
+            if not any(re.search(r"\b20\d\d\b", c) for c in cells):
+                # two-figure years: "2Q25 | 2Q26 | Organic growth" (AB InBev prints last year's quarter first), the
+                # change columns after the periods left out of the order
+                lead = [c for c in itertools.takewhile(_yy_period, cells)]
+                rest = cells[len(lead):]
+                if len(lead) >= 2 and all(re.search(r"growth|change|organic|%|var|vs", c, re.I) for c in rest):
+                    keys = [_yy_period(c) * 10 + _cell_quarter(c) for c in lead]
+                    if keys[1] > keys[0]:
+                        n = len(keys)
+                        for r2 in table["rows"]:
+                            extra = len(r2["vals"]) - n            # change columns after the periods: "4.9%"
+                            if extra == 0 or extra == len(rest) or (extra > 0 and sum(1 for c in r2["cells"] if
+                                                                                          str(c).strip().endswith("%")) >= extra):
+                                r2["vals"] = list(reversed(r2["vals"][:n])) + r2["vals"][n:]
+                        table["years"] = [k // 10 for k in reversed(keys)]
+                        if all(_cell_quarter(c) for c in lead):
+                            table["qtrs"] = [_cell_quarter(c) for c in reversed(lead)]
+                        table["newest_last"] = True
+                    table["change_cols"] = len(rest)
+                    return table
             found = [re.findall(r"\b(20\d\d)\b", c) for c in cells]
             if len(cells) >= 2 and all(len(m) == 1 for m in found):
                 # the quarter within the year orders "Q2 2026 | Q3 2026" (one year, the newest last)
@@ -311,6 +332,12 @@ def _newest_first(table):
     if table.get("qtrs") and len(table["qtrs"]) == n:
         table["qtrs"] = [table["qtrs"][i] for i in order]
     return table
+
+
+def _yy_period(c):
+    """The year of a column title with a two-figure year ("2Q25", "Q3'26", "1H26", "FY25", "9M26"), else 0."""
+    m = re.fullmatch(r"(?:[1-4]\s?q|q\s?[1-4]|[12]\s?h|h\s?[12]|hy|[369]m|12m|fy)\s?['’]?\s?(\d\d)", (c or "").strip().lower())
+    return 2000 + int(m.group(1)) if m else 0
 
 
 def _cell_quarter(c):
@@ -386,6 +413,8 @@ def year_ago_col(table, n, year):
     2Q'26 | 9M'26 | 9M'25": Santander — the quarter before, not the year before)."""
     if table.get("py_hint") is not None and table["py_hint"] < n and (table.get("years") or [None])[0] == year:
         return table["py_hint"]
+    if table.get("change_cols") and table.get("years") and n == len(table["years"]) + table["change_cols"]:
+        n = len(table["years"])                            # "2Q26 | 2Q25 | Organic growth": a change column is no period
     per = _header_periods(table)
     if len(per) == n and n >= 2 and per[0][0] == year:     # one period title per column: the same quarter a year before
         return next((j for j in range(1, n) if per[j][0] == year - 1 and per[j][1:] == per[0][1:]), -1)
@@ -454,6 +483,9 @@ def _map_rows(table, keys, full=False):
     parts = None                                          # the lines under a "Revenues" heading with no total (Wix)
     for r in table["rows"]:
         lab = r["key"]
+        if not r["vals"] and found and sum(1 for c in r["cells"] if _yy_period(c) or YEAR_CELL.fullmatch(str(c).strip())) >= 2:
+            break                                          # the same lines again for other periods ("9M25 | 9M26" under the
+                                                           # quarter's block: AB InBev): the first block is the statement read
         if lab and not r["vals"]:
             section = lab
             parts = [] if ("revenue" in keys and PATTERNS["revenue"].search(lab) and "revenue" not in found) else \
@@ -511,9 +543,9 @@ def _units(table):
                        r"€|us\$|\$|£)\s*(thousand|million|billion)s?\b", t)
     if not m and re.search(r"\(\s*m\s*[$€£]?\s*\)|\bm[$€]\b|\(\s*m\s*\)", t):   # "(M$)" (TotalEnergies)
         return 1e6
-    if not m:                                                # "USD m", "€m", "CHF bn" (Novartis, UBS)
-        m2 = re.search(r"(?:^|[\s(])(?:usd|us\$|eur|chf|gbp|dkk|sek|nok|jpy|cny|rmb|cad|aud|\$|€|£)\s?(m|mn|bn)\b", t)
-        return {"m": 1e6, "mn": 1e6, "bn": 1e9}[m2.group(1)] if m2 else None
+    if not m:                                                # "USD m", "€m", "CHF bn" (Novartis, UBS), "USD Mio" (AB InBev)
+        m2 = re.search(r"(?:^|[\s(])(?:usd|us\$|eur|chf|gbp|dkk|sek|nok|jpy|cny|rmb|cad|aud|\$|€|£)\s?(m|mn|mio|mln|bn)\b", t)
+        return {"m": 1e6, "mn": 1e6, "mio": 1e6, "mln": 1e6, "bn": 1e9}[m2.group(1)] if m2 else None
     u = m.group(1)
     return {"thousand": 1e3, "million": 1e6, "billion": 1e9}[u[:-1] if u.endswith("s") else u]
 
@@ -827,7 +859,7 @@ def parse(html, filed, last_end=None, prior_revenue=None):
 
 
 COSTY = re.compile(r"\b(costs?|expenses?|purchases|charges?|depreciation|amortization|amortisation|impairments?|"
-                   r"write-?downs?|excise)\b")
+                   r"write-?downs?|excise|sg (and|&) a|sga|selling|administrative|distribution)\b")
 NOT_COSTY = re.compile(r"income|benefit|revenue|gain|profit|^(net )?sales|reversal|recover|net$|total operating expenses and income")
 
 

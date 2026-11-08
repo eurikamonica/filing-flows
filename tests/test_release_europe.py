@@ -185,3 +185,37 @@ def test_quarters_from_the_year_to_date():
     c["quarters"]["2026-06-30"] = _q("2026-06-30", 2, 2026, R(18.0e9, 7.9e9))
     build._derive_ytd_quarters(c)
     assert c["quarters"]["2026-06-30"]["raw"]["revenue"] == 18.0e9 and not c["quarters"]["2026-06-30"].get("derived")
+
+
+def test_a_release_turned_down_on_re_reading_loses_the_period_it_once_gave(tmp_path):
+    """Stellantis' full-year release printed the second half, once drawn as the fourth quarter: when the re-read turns it
+    down, that quarter goes; a quarter derived from other releases stays."""
+    store = build.Store(str(tmp_path))
+    c = {"profile": {"cik": 1605484}, "quarters": {
+        "2025-12-31": {"end": "2025-12-31", "accn": "A-H2", "form": "6-K", "raw": {"revenue": 63.5e9}},
+        "2026-03-31": {"end": "2026-03-31", "accn": "A-Q1", "form": "6-K", "raw": {"revenue": 38.1e9}},
+        "2026-06-30": {"end": "2026-06-30", "accn": "A-H2", "form": "6-K", "derived": "ytd", "raw": {"revenue": 43.5e9}}},
+        "halves": {"2025-12-31": {"end": "2025-12-31", "accn": "A-H2", "raw": {"revenue": 63.5e9}}}}
+    store.put(1605484, c)
+    gone = build._drop_fpi_reading(store, 1605484, "A-H2")
+    assert sorted(gone) == ["halves 2025-12-31", "quarters 2025-12-31"]
+    c2 = store.company(1605484)
+    assert sorted(c2["quarters"]) == ["2026-03-31", "2026-06-30"]           # the derived quarter stays
+    assert build._drop_fpi_reading(store, 1605484, "A-none") == []
+
+
+def test_two_figure_years_last_years_quarter_first_and_a_second_block_below():
+    # AB InBev: "in USD Mio | 3Q25 | 3Q26 | Organic growth", last year's quarter first, the nine months' lines again
+    # under "9M25 | 9M26" in the same table
+    html = _doc(_t([["in USD Mio", "3Q25", "3Q26", "Organic growth"]],
+                   [("Revenue", "15 133", "16 512", "4.9%"), ("Cost of sales", "(6 596)", "(7 210)", "(4.4)%"),
+                    ("Gross profit", "8 537", "9 302", "5.3%"), ("SG&amp;A", "(4 535)", "(4 979)", "(4.1)%"),
+                    ("Income tax expense", "(726)", "(952)", ""),
+                    ("Profit attributable to equity holders of AB InBev", "1 054", "1 597", "")])
+                + _t([["", "9M25", "9M26", "Organic growth"]],
+                     [("Revenue", "43 764", "48 439", "5.4%")]).replace("<table>", "").replace("</table>", ""),
+                intro="AB InBev reports Third Quarter 2026 Results, three months ended 30 September 2026")
+    html = html.replace("</table>", "", 1).replace("</body>", "</table></body>")   # both blocks in one table
+    r = release.parse(html, FILED)
+    assert r["is"]["revenue"] == 16512e6 and r["is"]["ni"] == 1597e6 and r["py_col"] == 1
+    assert r["scale"] == 1e6                                                       # "USD Mio"
