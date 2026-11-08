@@ -31,7 +31,7 @@ BRIDGE = {'da': 'Depreciation & amortization', 'sbc': 'Stock-based pay', 'dtax':
           'd_other': 'Other working capital', 'gain': 'Gains on sales', 'equity_inc': 'Equity-method income',
           # the rest of the bridge's items (pipeline/fsa.py NONCASH and WC): without a label the page showed the field name
           'gain_inv': 'Gains on investments', 'gain_dis': 'Gains on disposals', 'd_emp': 'Employee-related liabilities',
-          'd_casset': 'Contract assets', 'd_oassets': 'Prepaid and other assets', 'd_oliab': 'Other liabilities',
+          'd_casset': 'Contract assets', 'd_orec': 'Other receivables', 'd_oassets': 'Prepaid and other assets', 'd_oliab': 'Other liabilities',
           'd_tax': 'Income taxes payable', 'd_onet': 'Other operating capital'}
 
 

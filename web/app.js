@@ -1180,7 +1180,7 @@
   // five groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts'], ['x-composer']]],
-    ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-traps'], ['x-workforce']]],
+    ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['x-roll'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-traps'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-moves'], ['x-highs'], ['x-mahybrid'], ['x-opportunity'], ['x-odds']]],
     ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders'], ['invest', 'Investments']]],
@@ -1528,7 +1528,7 @@
   const BRIDGE = { da: 'Depreciation and amortization', sbc: 'Share-based compensation', dtax: 'Deferred income taxes',
     impair: 'Impairments', gain_inv: 'Gains on investments', gain_dis: 'Gains on disposals', other_nc: 'Other non-cash items',
     d_ar: 'Receivables', d_inv: 'Inventories', d_ap: 'Payables', d_accr: 'Accrued liabilities', d_emp: 'Employee-related liabilities',
-    d_contract: 'Deferred revenue', d_casset: 'Contract assets', d_oassets: 'Prepaid and other assets', d_oliab: 'Other liabilities',
+    d_contract: 'Deferred revenue', d_casset: 'Contract assets', d_orec: 'Other receivables', d_oassets: 'Prepaid and other assets', d_oliab: 'Other liabilities',
     d_tax: 'Income taxes payable', d_onet: 'Other operating capital' };
   const WC_KEYS = new Set(Object.keys(BRIDGE).filter((k) => k.startsWith('d_')));
   const days = (v) => (v == null ? '—' : `${Math.round(v)}`);
