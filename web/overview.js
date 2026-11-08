@@ -48,16 +48,19 @@
   function facts(ctx, F) {
     const { c, q, ticker, cik } = ctx;
     const h = (q && q.headline) || {}, tiles = [];
+    // the company's own figures in the page's currency (a foreign filer's euros, kronor, pounds: web/app.js CUR);
+    // prices, market value and holdings are US dollars
+    const own = (v) => money(v, ctx.cur || '$');
     const tile = (label, value, sub, href, tone, spark, warn) => tiles.push({ label, value, sub, href, tone, spark, warn });
     // latest quarter, each with its last seven quarters as a line
     const qq = (k) => (q && q.end ? prior(c, q, k, 91) : null);
-    if (fin(h.revenue)) tile(`${U.dec(q.label)} revenue`, money(h.revenue), [fin(h.yoy) ? `${h.yoy >= 0 ? '+' : '−'}${num(Math.abs(h.yoy), 0)}% Y/Y` : '', chg(h.revenue, qq('revenue')) ? `${chg(h.revenue, qq('revenue'))} Q/Q` : ''].filter(Boolean).join(' · '), null,
+    if (fin(h.revenue)) tile(`${U.dec(q.label)} revenue`, own(h.revenue), [fin(h.yoy) ? `${h.yoy >= 0 ? '+' : '−'}${num(Math.abs(h.yoy), 0)}% Y/Y` : '', chg(h.revenue, qq('revenue')) ? `${chg(h.revenue, qq('revenue'))} Q/Q` : ''].filter(Boolean).join(' · '), null,
       fin(h.yoy) ? (h.yoy >= 0 ? 'good' : 'bad') : '', { v: series(c, q, 'revenue'), role: 'rev' });
-    if (fin(h.ni)) tile('Net earnings', money(h.ni), fin(h.revenue) && h.revenue > 0 ? `${num(h.ni / h.revenue * 100, 0)}% of revenue${chg(h.ni, qq('ni')) ? ` · ${chg(h.ni, qq('ni'))} Q/Q` : ''}` : '', `#c-${cik}-cash`,
+    if (fin(h.ni)) tile('Net earnings', own(h.ni), fin(h.revenue) && h.revenue > 0 ? `${num(h.ni / h.revenue * 100, 0)}% of revenue${chg(h.ni, qq('ni')) ? ` · ${chg(h.ni, qq('ni'))} Q/Q` : ''}` : '', `#c-${cik}-cash`,
       h.ni >= 0 ? 'good' : 'bad', { v: series(c, q, 'ni'), role: 'profit' });
     if (fin(h.ocf)) {
       const conv = fin(h.ni) && h.ni > 0 ? h.ocf / h.ni : null;
-      tile('Operating cash flow', money(h.ocf), [chg(h.ocf, qq('ocf')) ? `${chg(h.ocf, qq('ocf'))} Q/Q` : '', conv != null ? `${num(conv * 100, 0)}% of net earnings` : ''].filter(Boolean).join(' · '), `#c-${cik}-cash`,
+      tile('Operating cash flow', own(h.ocf), [chg(h.ocf, qq('ocf')) ? `${chg(h.ocf, qq('ocf'))} Q/Q` : '', conv != null ? `${num(conv * 100, 0)}% of net earnings` : ''].filter(Boolean).join(' · '), `#c-${cik}-cash`,
         h.ocf >= 0 ? 'good' : 'bad', { v: series(c, q, 'ocf'), role: 'profit' }, conv != null && conv < 0.6);   // cash well below earnings: flagged
     }
     if (fin(h.om)) tile('Operating margin', `${num(h.om, 1)}%`, [pts(h.om, qq('om')) ? `${pts(h.om, qq('om'))} Q/Q` : '', q && q.end && pts(h.om, prior(c, q, 'om', 364)) ? `${pts(h.om, prior(c, q, 'om', 364))} Y/Y` : ''].filter(Boolean).join(' · '),
@@ -68,7 +71,10 @@
     const price = fin(a.price) ? +a.price : r52 ? r52.close : null;
     const sh = U.shares(c);
     if (fin(price)) {
-      const mcap = sh ? price * sh.v : null, rev4 = ttm(c, 'revenue'), ni4 = ttm(c, 'ni');
+      // P/S and P/E on dollars against dollars: a foreign filer's own-currency quarters are not divided into its
+      // dollar market value (its US-dollar charts are, when the page has them)
+      const usdQ = ctx.cur && ctx.cur !== '$' && !ctx.inUsd ? (c.usd ? { quarters: c.usd.quarters } : null) : c;
+      const mcap = sh ? price * sh.v : null, rev4 = usdQ ? ttm(usdQ, 'revenue') : null, ni4 = usdQ ? ttm(usdQ, 'ni') : null;
       const bits = [];
       if (fin(mcap)) bits.push(`market cap ≈ ${money(mcap)}`);
       if (fin(mcap) && fin(rev4) && rev4 > 0) bits.push(`P/S ${num(mcap / rev4, 1)}`);

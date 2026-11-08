@@ -29,8 +29,12 @@ from . import fsa as W
 from . import history as H
 from . import investments as IV
 from . import reform as RF
+from . import rollforward as RL
 
-VERSION = 12              # 12: the balance sheet's current and non-current sections, more standard lines (reform.py)
+VERSION = 15              # 15: the balance sheet rolled forward by quarter and by year (rollforward.py)
+                          # 14:             # 14: current borrowings tagged twice read as one line; right-of-use assets inside PP&E (reform.py, Novo Nordisk)
+                          # 13: IFRS balance sheets and cash flows (reform.py, capital.py; facts.py keeps ifrs-full balances)
+                          # 12: the balance sheet's current and non-current sections, more standard lines (reform.py)
                           # 11: ten fiscal years of cash flows for the video studio (capital.py "fy_old")
                           # 10: ten years of quarterly cash figures for the video studio (capital.py "hq")
                           # 9: the EPS bridge (diluted shares) in drivers.py
@@ -292,8 +296,9 @@ def compute(fx, fye="1231"):
     hist = H.compute(fx, ev, fye)
     drv = DR.compute(fx, ev, qe, ye, fye)
     ref = RF.compute(fx, ev, ye, fye)
+    roll = RL.compute(fx, ev, q, cap)
     return W.compact({"v": VERSION, "unit": "USD", "q": q, "fy": y, "reserves": reserves, "val": val, "cap": cap,
-                      "hist": hist, "drivers": drv, "reform": ref, "src": ev.out()})
+                      "hist": hist, "drivers": drv, "reform": ref, "roll": roll, "src": ev.out()})
 
 
 if __name__ == "__main__":

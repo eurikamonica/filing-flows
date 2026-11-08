@@ -28,20 +28,24 @@ KEEP_HQ_YEARS = 10       # quarters of the compact history (hq)
 HQ_KEYS = ["ocf", "capex", "buyback", "div"]
 
 OCF = F.CONCEPTS["ocf"]
-INV_TOTAL = ["NetCashProvidedByUsedInInvestingActivities", "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations"]
-FIN_TOTAL = ["NetCashProvidedByUsedInFinancingActivities", "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations"]
+INV_TOTAL = ["NetCashProvidedByUsedInInvestingActivities", "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations",
+             "CashFlowsFromUsedInInvestingActivities"]
+FIN_TOTAL = ["NetCashProvidedByUsedInFinancingActivities", "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations",
+             "CashFlowsFromUsedInFinancingActivities"]
 FX = ["EffectOfExchangeRateOnCashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
       "EffectOfExchangeRateOnCashAndCashEquivalents",
-      "EffectOfExchangeRateOnCashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsIncludingDisposalGroupAndDiscontinuedOperations"]
+      "EffectOfExchangeRateOnCashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsIncludingDisposalGroupAndDiscontinuedOperations",
+      "EffectOfExchangeRateChangesOnCashAndCashEquivalents"]
 DCASH = ["CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect",
          "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseExcludingExchangeRateEffect",
          "CashAndCashEquivalentsPeriodIncreaseDecrease", "CashPeriodIncreaseDecrease",
-         "CashAndCashEquivalentsPeriodIncreaseDecreaseExcludingExchangeRateEffect"]
+         "CashAndCashEquivalentsPeriodIncreaseDecreaseExcludingExchangeRateEffect", "IncreaseDecreaseInCashAndCashEquivalents"]
 EXCL_FX = {"CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseExcludingExchangeRateEffect",
            "CashAndCashEquivalentsPeriodIncreaseDecreaseExcludingExchangeRateEffect"}
 
 ACQ = ["PaymentsToAcquireBusinessesNetOfCashAcquired", "PaymentsToAcquireBusinessesGross",
-       "PaymentsToAcquireBusinessesAndInterestInAffiliates"]
+       "PaymentsToAcquireBusinessesAndInterestInAffiliates",
+       "CashFlowsUsedInObtainingControlOfSubsidiariesOrOtherBusinessesClassifiedAsInvestingActivities"]
 # asset and business sales: one tag per group
 SALES = [["ProceedsFromSalesOfBusinessAffiliateAndProductiveAssets"],         # both kinds in one figure: nothing else
          ["ProceedsFromSaleOfPropertyPlantAndEquipment", "ProceedsFromSaleOfProductiveAssets",
@@ -52,11 +56,13 @@ SALES = [["ProceedsFromSalesOfBusinessAffiliateAndProductiveAssets"],         # 
 SALES_TOTALS = {"ProceedsFromSalesOfBusinessAffiliateAndProductiveAssets"}
 # property bought by real-estate companies (their main investment; not in the capital expenditure tags)
 REALESTATE = ["PaymentsToAcquireRealEstate", "PaymentsToAcquireCommercialRealEstate", "PaymentsToAcquireRealEstateHeldForInvestment"]
-BUYBACK = ["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity"]
-DIVIDEND = ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends"]
+BUYBACK = ["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity", "PaymentsToAcquireOrRedeemEntitysShares"]
+DIVIDEND = ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends",
+            "DividendsPaidToEquityHoldersOfParentClassifiedAsFinancingActivities", "DividendsPaidClassifiedAsFinancingActivities", "DividendsPaid"]
 WITHHOLD = ["PaymentsRelatedToTaxWithholdingForShareBasedCompensation"]
 # shares issued: offerings, then employee plans; a total of all equity issued covers the employee group
-STOCK = [["ProceedsFromIssuanceOfCommonStock", "ProceedsFromIssuanceOrSaleOfEquity", "ProceedsFromIssuanceInitialPublicOffering"],
+STOCK = [["ProceedsFromIssuanceOfCommonStock", "ProceedsFromIssuanceOrSaleOfEquity", "ProceedsFromIssuanceInitialPublicOffering",
+          "ProceedsFromIssuingShares"],
          ["ProceedsFromStockOptionsExercised", "ProceedsFromIssuanceOfSharesUnderIncentiveAndShareBasedCompensationPlansIncludingStockOptions",
           "ProceedsFromIssuanceOfSharesUnderIncentiveAndShareBasedCompensationPlans", "ProceedsFromStockPlans"],
          ["ProceedsFromSaleOfTreasuryStock"],
@@ -67,19 +73,22 @@ DEBT_NET_ALL = ["ProceedsFromRepaymentsOfDebt", "ProceedsFromRepaymentsOfLongTer
 DEBT_IN = [["ProceedsFromIssuanceOfLongTermDebt", "ProceedsFromIssuanceOfDebt", "ProceedsFromDebtNetOfIssuanceCosts",
             "ProceedsFromIssuanceOfSeniorLongTermDebt", "ProceedsFromIssuanceOfUnsecuredDebt", "ProceedsFromIssuanceOfSecuredDebt",
             "ProceedsFromConvertibleDebt", "ProceedsFromIssuanceOfLongTermDebtAndCapitalSecuritiesNet", "ProceedsFromNotesPayable",
-            "ProceedsFromDebtMaturingInMoreThanThreeMonths"],
+            "ProceedsFromDebtMaturingInMoreThanThreeMonths", "ProceedsFromBorrowingsClassifiedAsFinancingActivities",
+            "ProceedsFromNoncurrentBorrowings"],
            ["ProceedsFromLongTermLinesOfCredit", "ProceedsFromLinesOfCredit"],
            ["ProceedsFromShortTermDebt", "ProceedsFromIssuanceOfCommercialPaper"],
            ["ProceedsFromShortTermDebtMaturingInMoreThanThreeMonths"],
            ["ProceedsFromOtherShortTermDebt"]]
 DEBT_OUT = [["RepaymentsOfLongTermDebt", "RepaymentsOfDebt", "RepaymentsOfSeniorDebt", "RepaymentsOfLongTermDebtAndCapitalSecurities",
              "RepaymentsOfUnsecuredDebt", "RepaymentsOfSecuredDebt", "RepaymentsOfConvertibleDebt", "RepaymentsOfNotesPayable",
-             "RepaymentsOfDebtAndCapitalLeaseObligations", "RepaymentsOfDebtMaturingInMoreThanThreeMonths"],
+             "RepaymentsOfDebtAndCapitalLeaseObligations", "RepaymentsOfDebtMaturingInMoreThanThreeMonths",
+             "RepaymentsOfBorrowingsClassifiedAsFinancingActivities", "RepaymentsOfNoncurrentBorrowings"],
             ["RepaymentsOfLinesOfCredit", "RepaymentsOfLongTermLinesOfCredit"],
             ["RepaymentsOfShortTermDebt", "RepaymentsOfCommercialPaper"],
             ["RepaymentsOfShortTermDebtMaturingInMoreThanThreeMonths"],
             ["RepaymentsOfOtherShortTermDebt"],
-            ["FinanceLeasePrincipalPayments", "RepaymentsOfLongTermCapitalLeaseObligations"]]
+            ["FinanceLeasePrincipalPayments", "RepaymentsOfLongTermCapitalLeaseObligations",
+             "PaymentsOfLeaseLiabilitiesClassifiedAsFinancingActivities"]]
 DEBT_ST_NET = [["ProceedsFromRepaymentsOfShortTermDebt", "ProceedsFromRepaymentsOfShortTermDebtMaturingInThreeMonthsOrLess"],
                ["ProceedsFromRepaymentsOfShortTermDebtMaturingInMoreThanThreeMonths"],
                ["ProceedsFromRepaymentsOfCommercialPaper"],

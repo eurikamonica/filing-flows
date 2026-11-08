@@ -111,6 +111,40 @@ test('the equity bridge adds up: opening equity + net income − payouts + share
   assert.equal(B.equityBridge(c, 0), null);
 });
 
+test('IFRS: only the profit for the year (ProfitLoss) is tagged — it is the net income, unless minorities share it', () => {
+  const I = JSON.parse(JSON.stringify(R));
+  I.flows = [{ end: '2025-12-31', revenue: 100, oi: 14, pl: 10, ev: { pl: [3, 'fy', [0]] } }];
+  const c = { quality: { reform: I, drivers: { fy: [{ end: '2025-12-31', cur: { revenue: 100, cor: 60, oi: 14 } }] } } };
+  const inc = B.incomeOf(c, '2025-12-31');
+  assert.equal(inc.ni, 10);
+  assert.equal(inc.basis, 'pl');
+  assert.equal(B.dupont(I, 1, inc).roe, 10 / 80);
+  const b = B.equityBridge(c, 1);
+  assert.equal(b.rows[0].key, 'ni');
+  assert.equal(b.rows[0].v, 10);
+  assert.deepEqual(b.rows[0].ev.ref, [3, 'fy', [0]]);
+  const M = JSON.parse(JSON.stringify(I));
+  M.totals.nci = [5, 5];                                     // a minority's share is inside the profit: not the owners'
+  const cm = { quality: { reform: M, drivers: c.quality.drivers } };
+  assert.ok(!B.equityBridge(cm, 1).rows.some((r) => r.key === 'ni'));
+  assert.equal(B.dupont(M, 1, B.incomeOf(cm, '2025-12-31')).roe, 10 / 85);   // profit for the year ÷ all equity
+});
+
+test('no “other” line to take a detail counted twice: the lease liabilities give it up before the debt does', () => {
+  // Novo Nordisk: IFRS 16 leases tagged on their own and inside borrowings too; the non-current rest is −5
+  const N = JSON.parse(JSON.stringify(R));
+  N.lines = N.lines.filter((x) => x.k !== 'oncl' && x.k !== 'olease');
+  N.lines.push(line('lease', 'l', 'fin', [9, 9], 0, { cv: [1, 1] }));
+  N.lines.find((x) => x.k === 'oth_ncl').v = [-5, -5];
+  const m = B.model(N, 1, {});
+  const l = Object.fromEntries(m.blocks.l.map((b) => [b.k, b]));
+  assert.equal(l.ltd.v, 50);                                 // the debt as filed
+  assert.equal(l.lease.v, 3);                                // 8 non-current − 5
+  assert.equal(l.lease.inside, true);
+  assert.equal(l['lease:c'].v, 1);                           // the current part is another section's
+  assert.deepEqual(m.notes.find((n) => n.cur === 0).took, [['lease', 5]]);
+});
+
 test('blocks too thin to see join one “smaller lines” block of their kind; a hatched rest never does', () => {
   const list = [{ k: 'a', side: 'a', cls: 'op', v: 1, cur: 1 }, { k: 'b', side: 'a', cls: 'op', v: 1, cur: 1 }, { k: 'c', side: 'a', cls: 'fin', v: 1, cur: 1 },
     { k: 'd', side: 'a', cls: 'op', v: 100, cur: 1 }, { k: 'e', side: 'a', cls: 'op', v: 1, cur: 1, derived: true }];

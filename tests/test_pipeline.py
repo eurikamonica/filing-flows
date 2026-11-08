@@ -2499,6 +2499,74 @@ def test_reformulated_balance_sheet_splits_the_rest_by_section():
         assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i]
 
 
+def test_reformulated_balance_sheet_reads_ifrs():
+    """An IFRS balance sheet (ifrs-full: a 20-F, a European annual report) reads into the same lines: the facts index
+    keeps its balances, borrowings and IFRS 16 lease liabilities are financing (the lease's current part in "cv"),
+    provisions operating, equity attributable to owners is shareholders' equity, and the rests by section add up."""
+    from pipeline import facts as F, quality as Q
+    b = lambda v0, v1: [{"end": "2024-12-31", "val": v0, "filed": "2025-03-01", "form": "20-F"},
+                        {"end": "2025-12-31", "val": v1, "filed": "2026-03-01", "form": "20-F"}]
+    fy = lambda v0, v1: [{"start": "2024-01-01", "end": "2024-12-31", "val": v0, "filed": "2025-03-01", "form": "20-F"},
+                         {"start": "2025-01-01", "end": "2025-12-31", "val": v1, "filed": "2026-03-01", "form": "20-F"}]
+    ifrs = {"Revenue": fy(90, 100), "ProfitLossAttributableToOwnersOfParent": fy(8, 10), "ProfitLoss": fy(9, 11),
+            "Assets": b(180, 200), "CurrentAssets": b(60, 80), "CashAndCashEquivalents": b(20, 30), "Inventories": b(25, 30),
+            "TradeAndOtherCurrentReceivables": b(10, 12), "PropertyPlantAndEquipment": b(70, 75), "RightofuseAssets": b(10, 9),
+            "Goodwill": b(30, 30), "EquityAndLiabilities": b(180, 200), "Liabilities": b(105, 112), "CurrentLiabilities": b(40, 45),
+            "TradeAndOtherCurrentPayables": b(20, 22), "CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings": b(8, 9),
+            "CurrentPortionOfLongtermBorrowings": b(3, 3), "CurrentLeaseLiabilities": b(2, 2), "NoncurrentLeaseLiabilities": b(8, 7),
+            "CurrentProvisions": b(4, 5), "NoncurrentProvisions": b(6, 6), "LongtermBorrowings": b(40, 40),
+            "EquityAttributableToOwnersOfParent": b(70, 82), "NoncontrollingInterests": b(5, 6), "Equity": b(75, 88)}
+    fx = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in ifrs.items()}}}, currency="EUR")
+    assert fx["__instants__"]["CurrentAssets"]["2025-12-31"]["val"] == 80          # IFRS balances are indexed
+    r = Q.compute(fx)["reform"]
+    line = {x["k"]: x for x in r["lines"]}
+    assert r["totals"]["cse"] == [70, 82] and r["totals"]["nci"] == [5, 6] and r["totals"]["ca"] == [60, 80]
+    assert line["cash"]["v"] == [20, 30] and line["inv"]["v"] == [25, 30] and line["ar"]["v"] == [10, 12]
+    assert line["std"]["v"] == [8, 9] and "ltdc" not in line                       # all current borrowings in one line
+    assert line["ltd"]["v"] == [40, 40] and line["ltd"]["cls"] == "fin"
+    assert line["lease"]["v"] == [10, 9] and line["lease"]["cv"] == [2, 2] and line["lease"]["cls"] == "fin"
+    assert line["prov"]["v"] == [10, 11] and line["prov"]["cv"] == [4, 5] and line["prov"]["cls"] == "op"
+    assert line["oth_ca"]["v"] == [60 - 55, 80 - 72]                               # current assets the lines leave
+    assert line["oth_ncl"]["v"] == [65 - 40 - 8 - 6, 67 - 40 - 7 - 6]
+    for i in range(2):
+        side = lambda s, c: sum(x["v"][i] or 0 for x in r["lines"] if x["side"] == s and x["cls"] == c)
+        assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i] + r["totals"]["nci"][i]
+    # the same current borrowings tagged twice (ShorttermBorrowings and CurrentPortionOfLongtermBorrowings, equal at
+    # every year end, Novo Nordisk's 20-F): one line, and the current rest is not short by it
+    twice = dict(ifrs)
+    del twice["CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"]
+    twice["ShorttermBorrowings"] = b(3, 3)
+    fx2 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
+    l2 = {x["k"]: x for x in Q.compute(fx2)["reform"]["lines"]}
+    assert l2["std"]["v"] == [3, 3] and "ltdc" not in l2
+    assert l2["oth_cl"]["v"] == [40 - 20 - 3 - 2 - 4, 45 - 22 - 3 - 2 - 5]
+    twice["ShorttermBorrowings"] = b(3, 4)                                       # different amounts: both lines
+    fx3 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
+    assert {"std", "ltdc"} <= {x["k"] for x in Q.compute(fx3)["reform"]["lines"]}
+    # PP&E tagged with the leased (right-of-use) assets inside it: no right-of-use line beside it
+    rou = dict(ifrs)
+    del rou["PropertyPlantAndEquipment"]
+    rou["PropertyPlantAndEquipmentIncludingRightofuseAssets"] = b(80, 84)
+    fx4 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in rou.items()}}}, currency="EUR")
+    l4 = {x["k"]: x for x in Q.compute(fx4)["reform"]["lines"]}
+    assert l4["ppe"]["v"] == [80, 84] and "rou" not in l4
+
+
+def test_foreign_filer_years_drawn_when_no_quarter_can_be():
+    """A foreign filer whose results releases gave no drawable quarter keeps its page: its 20-F years are its periods."""
+    from pipeline import build
+    c = {"profile": {"cik": 1, "name": "Euro Co", "tickers": ["EU"], "fye": "1231"}, "fpi": True, "currency": "EUR",
+         "years": {"2025-12-31": {"end": "2025-12-31"}, "2024-12-31": {"end": "2024-12-31"}}}
+    orig = build.year_payload
+    try:
+        build.year_payload = lambda c, y: {"end": y["end"], "label": "FY" + y["end"][:4], "period": "fy"}
+        out = build._year_periods(c, 1)
+    finally:
+        build.year_payload = orig
+    assert [p["label"] for p in out] == ["FY2024", "FY2025"]                    # oldest first, like quarters
+    assert "_N" not in out[0]
+
+
 def test_links_off_leaves_text_and_images_only():
     """config/x.json "links": false: no web address in any post; a label that only introduced one goes with it, the
     sentences around it stay, and a reply left empty is dropped. The images are untouched (Buffer gets the same
@@ -3693,6 +3761,24 @@ def test_a_segment_aggregation_member_is_no_revenue_line():
     members["cvx:UpstreamMember"] = ("Upstream", 40.0); members["cvx:DownstreamMember"] = ("Downstream", 27.174)
     part = dims.best_partition(members, 68.174)
     assert sorted(l["label"] for l in part["leaves"]) == ["All Other", "Downstream", "Upstream"]
+
+
+def test_non_operating_share_needs_pre_tax_earnings():
+    """Arcus Biosciences Q2 2025, Creatd FY2021: non-operating income exactly offset the operating loss, so pre-tax
+    earnings were 0 and the analysis divided by zero (the quarter's page was not drawn). A share of a loss says nothing."""
+    from pipeline import model, analysis
+
+    class F:
+        money = staticmethod(lambda x: f"${x / 1e6:.1f}M")
+        delta = staticmethod(lambda x: f"{x / 1e6:+.1f}M")
+    for pretax, nonop in ((0.0, 50e6), (-20e6, 30e6)):
+        raw = {"revenue": 100e6, "costs_total": 100e6 - pretax + nonop, "oi": pretax - nonop, "pretax": pretax, "tax": 0.0,
+               "pl": pretax, "ni": pretax, "ocf": None}
+        text = analysis.paragraphs(F(), "Q2 2025", model.normalize(raw), None, None)[1]
+        assert f"Non-operating items added ${nonop / 1e6:.1f}M, so the bottom line" in text and "of pre-tax" not in text
+    raw = {"revenue": 100e6, "costs_total": 90e6, "oi": 10e6, "pretax": 40e6, "tax": 0.0, "pl": 40e6, "ni": 40e6}
+    text = analysis.paragraphs(F(), "Q2 2025", model.normalize(raw), None, None)[1]
+    assert "Non-operating items added $30.0M, 75% of pre-tax earnings, so the bottom line" in text
 
 
 def test_a_profit_loss_tag_mirroring_net_income_is_dropped():

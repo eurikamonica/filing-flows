@@ -153,7 +153,7 @@ def index_facts(companyfacts, currency="USD", accn=None):
                 per = out.setdefault(concept, {})
                 for f in facts:
                     if "start" not in f:
-                        if concept in INSTANTS and taxonomy == "us-gaap":
+                        if concept in INSTANTS:                  # us-gaap, and ifrs-full balances (IFRS filers)
                             day = inst.setdefault(concept, {})
                             if f["end"] not in day or newer(f, day[f["end"]]):
                                 day[f["end"]] = f

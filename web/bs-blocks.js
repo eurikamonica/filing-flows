@@ -27,17 +27,25 @@
   // A detail counted twice comes out of its section's "other" lines, in this order (unclassified sides: any of them).
   const CONTAINERS = { a: { 1: ['oca'], 0: ['onca'] }, l: { 1: ['ocl', 'accr'], 0: ['oncl'] } };
   const UNCLASSIFIED = { a: ['onca', 'oca'], l: ['oncl', 'ocl', 'accr'] };
+  // then out of the lease liabilities, the line most often tagged on its own and inside another one too (IFRS 16
+  // leases inside borrowings: Novo Nordisk; finance leases inside debt), before the whole section shares the rest
+  const LEASES = { 1: ['lease:c', 'flease:c', 'olease:c'], 0: ['lease', 'flease', 'olease'] };
+  const LEASES_ANY = ['lease', 'flease', 'olease'];
   // short names for the labels inside the blocks (the tooltip has the full one)
   const SHORT = {
     cash: 'Cash', sti: 'Short-term investments', lti: 'Long-term investments', resale: 'Resale agreements', secs: 'Debt securities',
     eqsec: 'Equity securities', loans: 'Loans', ar: 'Receivables', orec: 'Other receivables', inv: 'Inventory', oca: 'Other current assets',
-    ppe: 'PP&E', rou: 'Leased assets', gw: 'Goodwill', intang: 'Intangibles', eqm: 'Equity stakes', dta: 'Deferred tax assets',
-    onca: 'Other non-current assets', deposits: 'Deposits', repo: 'Repo borrowing', ap: 'Payables', accr: 'Accrued liabilities', comp: 'Accrued pay',
-    defrev: 'Deferred revenue', taxp: 'Taxes payable', ocl: 'Other current liabilities', std: 'Short-term debt', ltdc: 'Debt due in a year',
+    ppe: 'PP&E', rou: 'Leased assets', gw: 'Goodwill', intang: 'Intangibles', eqm: 'Equity stakes', dta: 'Deferred tax',
+    onca: 'Other non-current', deposits: 'Deposits', repo: 'Repo borrowing', ap: 'Payables', accr: 'Accrued liabilities', comp: 'Accrued pay',
+    defrev: 'Deferred revenue', taxp: 'Taxes payable', ocl: 'Other current', std: 'Short-term debt', ltdc: 'Debt due in a year',
     ltd: 'Long-term debt', flease: 'Finance leases', olease: 'Operating leases', taxpn: 'Taxes payable, long-term', dtl: 'Deferred taxes',
-    pension: 'Pensions', defrevn: 'Deferred revenue, long-term', oncl: 'Other non-current liabilities',
+    pension: 'Pensions', defrevn: 'Deferred revenue, long-term', oncl: 'Other non-current',
     cse: "Shareholders' equity", nci: 'Minority interests', temp: 'Redeemable equity',
   };
+  // shorter still, for a one-line label that does not fit with its amount
+  const TINY = { sti: 'ST investments', lti: 'LT investments', accr: 'Accrued', comp: 'Accrued pay', defrev: 'Deferred rev.',
+    defrevn: 'Deferred rev., LT', taxpn: 'Taxes payable, LT', onca: 'Other LT assets', oncl: 'Other LT liab.', ocl: 'Other current',
+    oca: 'Other current', dtl: 'Deferred tax', resale: 'Resale agr.', eqsec: 'Equities', secs: 'Debt securities' };
   // a line with a part in each section (pipeline/reform.py "cv"): [name, short name] of its current part
   const PART = { olease: ['Operating lease liabilities, current', 'Leases, current'], flease: ['Finance lease liabilities, current', 'Finance leases, current'],
     ltd: ['Current portion of long-term debt', 'Debt due in a year'] };
@@ -79,12 +87,15 @@
       list.filter((d) => d.derived && d.v < 0).forEach((d) => {
         let need = -d.v;
         const took = [];
-        (m.classified[side] && d.cur != null ? CONTAINERS[side][d.cur] : UNCLASSIFIED[side]).forEach((k) => {
+        const byCur = m.classified[side] && d.cur != null;
+        const leases = side === 'l' ? (byCur ? LEASES[d.cur] : LEASES_ANY) : [];
+        (byCur ? CONTAINERS[side][d.cur] : UNCLASSIFIED[side]).concat(leases).forEach((k) => {
           const b = list.find((y) => y.k === k && !y.derived && (d.cur == null || y.cur === d.cur));
           if (!b || need <= 0 || b.v <= 0) return;
           const t = Math.min(need, b.v);
           b.v -= t;
           b.less = (b.less || 0) + t;
+          if (leases.includes(k)) b.inside = true;   // the lease is the detail: it is inside another line as well
           need -= t;
           took.push([b.k, t]);
         });
@@ -137,6 +148,17 @@
   }
 
   // ---------------------------------------------------------------- the income statement of the same year
+  // Net income for the shareholders; failing that (IFRS filers that tag only ProfitLoss, the profit for the year),
+  // the profit for the year, which also holds the minority interests' share ("pl": the ROE is then on all equity).
+  function profitOf(cur, f, flowsFirst) {
+    const src = flowsFirst ? [[f, true], [cur, false]] : [[cur, false], [f, true]];
+    for (const key of ['ni', 'pl']) {
+      for (const [o, isF] of src) if (fin(o[key])) return { ni: o[key], basis: key, ref: isF ? (o.ev || {})[key] : undefined };
+    }
+    return { ni: null, basis: null };
+  }
+  const nciAt = (R, j) => { const v = ((R.totals || {}).nci || [])[j]; return fin(v) ? v : 0; };
+
   function incomeOf(c, end) {
     const Q = c.quality || {}, R = Q.reform || {};
     const d = ((Q.drivers || {}).fy || []).find((x) => x.end === end);
@@ -145,7 +167,7 @@
     const cur = (d && d.cur) || {};
     const revenue = fin(cur.revenue) ? cur.revenue : f.revenue;
     if (!fin(revenue) || revenue <= 0) return null;
-    const ni = fin(cur.ni) ? cur.ni : f.ni, oi = fin(cur.oi) ? cur.oi : f.oi;
+    const { ni, basis } = profitOf(cur, f), oi = fin(cur.oi) ? cur.oi : f.oi;
     if (!fin(ni)) return null;
     const cor = fin(cur.cor) ? cur.cor : fin(cur.gp) ? revenue - cur.gp : (y.wc || {}).cor;
     const opex = fin(cor) && fin(oi) ? revenue - cor - oi : null, below = fin(oi) ? oi - ni : null;
@@ -159,7 +181,7 @@
     const ok = (parts) => parts.every(([, , v]) => fin(v) && v >= 0) && Math.abs(parts.reduce((s, [, , v]) => s + v, 0) - total) <= Math.max(1, total * 1e-6);
     const parts = (tries.find(ok) || [[['rev', 'Revenue', revenue]]]).filter(([, , v]) => v > 0);
     const wc = y.wc || {};
-    return { end, revenue, ni, oi, cor, loss, total, parts: parts.map(([k, name, v]) => ({ k, name, v })),
+    return { end, revenue, ni, basis, oi, cor, loss, total, parts: parts.map(([k, name, v]) => ({ k, name, v })),
       dso: wc.dso, dio: wc.has_inv === false ? null : wc.dio, dpo: wc.ap_proxy ? null : wc.dpo, ev: (d && d.ev && d.ev.cur) || f.ev || {} };
   }
 
@@ -167,7 +189,7 @@
   function dupont(R, i, inc) {
     if (!inc || i < 1) return null;
     const T = (k, j) => ((R.totals || {})[k] || [])[j];
-    const eq = (j) => (T('cse', j) || 0);
+    const eq = (j) => (T('cse', j) || 0) + (inc.basis === 'pl' ? nciAt(R, j) : 0);   // profit for the year: all equity
     const a0 = T('assets', i - 1), a1 = T('assets', i), e0 = eq(i - 1), e1 = eq(i);
     if (!fin(a0) || !fin(a1)) return null;
     const avgA = (a0 + a1) / 2, avgE = (e0 + e1) / 2;
@@ -187,7 +209,13 @@
     const sbcItem = ((y.bridge || {}).items || []).find((x) => x[0] === 'sbc');
     const rows = [];
     const add = (key, name, v, ev, note) => { if (fin(v) && v !== 0) rows.push({ key, name, v, ev, note }); };
-    add('ni', 'Net income (the income statement)', f.ni, { ref: (f.ev || {}).ni }, 'The year’s profit for the shareholders: what the income statement adds to equity.');
+    const d = ((Q.drivers || {}).fy || []).find((x) => x.end === end);
+    const p = profitOf((d && d.cur) || {}, f, true);
+    // the profit for the year bridges the shareholders' equity only when no minority holds a share of it
+    const ni = p.basis === 'pl' && (nciAt(R, i - 1) || nciAt(R, i)) ? null : p.ni;
+    add('ni', 'Net income (the income statement)', ni, { ref: p.ref }, p.basis === 'pl'
+      ? 'The year’s profit (IFRS: profit for the year; no minority interests): what the income statement adds to equity.'
+      : 'The year’s profit for the shareholders: what the income statement adds to equity.');
     add('div', 'Dividends', it.div, { list: (k && k.ev || {}).div }, 'Paid to shareholders in cash (cash-flow statement).');
     add('buyback', 'Buybacks', it.buyback, { list: (k && k.ev || {}).buyback }, 'Shares bought back in cash (cash-flow statement).');
     add('sbc', 'Share-based pay', sbcItem ? sbcItem[1] : null, { ref: sbcItem ? sbcItem[2] : null }, 'Expensed in the income statement without cash: the shares it promises are added to equity.');
@@ -202,12 +230,19 @@
   }
 
   // ---------------------------------------------------------------- drawing
+  // the French and Spanish versions (web/i18n.js): names and amounts are translated before they are fitted
+  const T = (s) => (root.FFT ? root.FFT(s) : s);
+  const KEEP = (s) => (root.FFT && root.FFT.keep ? root.FFT.keep(s) : s);
   const MIN_H = 7;                          // px: thinner blocks of one kind and section are drawn as one
   const FONT_W = 6.5;                        // average width of a 12px Plex Sans character, for fitting labels
   function fit(text, px) {
     const n = Math.floor(px / FONT_W);
     if (n < 3) return '';
-    return text.length <= n ? text : `${text.slice(0, Math.max(1, n - 1)).trimEnd()}…`;
+    if (text.length <= n) return text;
+    let cut = text.slice(0, Math.max(1, n - 1));
+    const sp = cut.lastIndexOf(' ');
+    if (text[cut.length] !== ' ' && sp >= Math.min(6, n / 2)) cut = cut.slice(0, sp);   // whole words: "Not tagged…"
+    return KEEP(`${cut.replace(/[\s,;:·&–-]+$/, '')}…`);
   }
   // consecutive blocks too thin to see on their own (same kind and section) become one "smaller lines" block
   function merge(list, scale, minH) {
@@ -241,58 +276,91 @@
       return r;
     });
   }
-  const DARK_TEXT = { ol: true };            // yellow takes near-black text (the palette's rule); every other fill white
+  // Each kind has two validated tones (dataviz validate_palette.js, both themes): lighter for the current section (due
+  // or used within a year, near-black text), deeper for the non-current one and for balance sheets without sections
+  // (white text). Equity is one deep green.
+  const tone = (b) => (b.cur === 1 ? 'c' : 'n');
+  const fillClass = (b) => { const k = kindOf(b); return k === 'eq' || k === 'deficit' ? `bsb-k-${k}` : `bsb-k-${k}-${tone(b)}`; };
   function blockSVG(r, idx, pid, money, total) {
     const { b, x, y, w, h } = r, kind = kindOf(b);
     const share = total ? b.v / total : null;
     const label = `${b.name}: ${money(b.v)}${share != null ? `, ${pct(share, 1)}` : ''}`;
     // a hatched rest: the pattern goes in the style attribute, which the kind's class colour cannot override
-    const fill = b.derived ? `fill:url(#${pid}-${kind})` : null;
-    const cls = kind === 'deficit' ? 'bsb-deficit' : b.derived ? 'bsb-x' : `bsb-k-${kind}`;
-    const ink = b.derived || kind === 'deficit' ? 'bsb-ink' : DARK_TEXT[kind] ? 'bsb-dk' : '';
-    const txt = labelSVG(x, y, w, h, b.short || b.name, money(b.v), share != null && share >= 0.01 ? ` · ${pct(share)}` : '', ink);
-    return `<g class="bsb-b" data-b="${idx}" tabindex="0" role="img" aria-label="${esc(label)}"><rect class="${cls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="3"${fill ? ` style="${fill}"` : ''}/>${txt}</g>`;
+    const fill = b.derived ? `fill:url(#${pid}-${kind}-${tone(b)})` : null;
+    const cls = kind === 'deficit' ? 'bsb-deficit' : b.derived ? 'bsb-x' : fillClass(b);
+    const ink = b.derived || kind === 'deficit' ? 'bsb-ink' : kind !== 'eq' && tone(b) === 'c' ? 'bsb-dk' : '';
+    const txt = labelSVG(x, y, w, h, b.short || b.name, money(b.v), share != null && share >= 0.01 ? pct(share) : '', ink, TINY[b.k]);
+    return `<g class="bsb-b" data-b="${idx}" tabindex="0" role="img" aria-label="${esc(label)}"><rect class="${cls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="4"${fill ? ` style="${fill}"` : ''}/>${txt}</g>`;
   }
-  // the label inside a block: the amount is never cut; a name shows when it fits (or keeps 9 characters before its "…")
-  function labelSVG(x, y, w, h, name, amount, extra, ink) {
-    const room = w - 12, chars = Math.floor(room / FONT_W);
+  // the label inside a block: the amount is never cut; a name shows when it fits (or keeps 9 characters before its "…");
+  // the share is quieter than the amount
+  function labelSVG(x, y, w, h, name0, amount0, share0, ink, tiny) {
+    const room = w - 14, chars = Math.floor(room / FONT_W);
     if (room < 30) return '';
-    const nameFit = name.length <= chars ? name : chars >= 10 ? fit(name, room) : '';
-    const am = (amount + extra).length <= chars ? amount + extra : amount.length <= chars ? amount : '';
-    const t = (yy, s, cls) => `<text class="bsb-t ${cls || ''} ${ink}" x="${x + 7}" y="${yy}">${esc(s)}</text>`;
-    if (h >= 33 && nameFit && am) return t(y + 16, nameFit) + t(y + 30, am, 'bsb-n');
+    const name = T(name0), amount = T(amount0), share = share0 ? T(share0) : share0;
+    const extra = share ? ` · ${share}` : '';
+    const tinies = [].concat(tiny || []).map(T);              // shorter names, longest first
+    const short = (n) => tinies.find((t) => t.length <= n);
+    const nameFit = name.length <= chars ? name : short(chars) || (chars >= 10 ? fit(name, room) : '');
+    const withShare = (amount + extra).length <= chars;
+    const am = withShare ? amount : amount.length <= chars ? amount : '';
+    const amt = (yy, cls) => `<text class="bsb-t bsb-n ${cls || ''} ${ink}" x="${x + 8}" y="${yy}">${esc(am)}${withShare && extra ? `<tspan class="bsb-share">${esc(extra)}</tspan>` : ''}</text>`;
+    if (h >= 33 && nameFit && am) return `<text class="bsb-t ${ink}" x="${x + 8}" y="${y + 16}">${esc(nameFit)}</text>${amt(y + 30)}`;
     if (h >= 13) {                             // one line: the name cut to what the amount leaves
       const left = chars - amount.length - 1;
-      const nm = name.length <= left ? name : left >= 10 ? fit(name, left * FONT_W) : '';
-      const one = nm ? `${nm} ${amount}` : am || '';
-      if (!one) return '';
-      return t(y + Math.min(h / 2 + 4, 16), one, h < 17 ? 'bsb-sm' : '');
+      const nm = name.length <= left ? name : short(left) || (left >= 10 ? fit(name, left * FONT_W) : '');
+      const yy = y + Math.min(h / 2 + 4, 17), sm = h < 17 ? 'bsb-sm' : '';
+      if (nm) return `<text class="bsb-t ${sm} ${ink}" x="${x + 8}" y="${yy}">${esc(nm)} <tspan class="bsb-n">${esc(amount)}</tspan></text>`;
+      return am ? amt(yy, sm) : '';
     }
     return '';
   }
   function hatches(pid) {
-    return `<defs>${['oa', 'fa', 'ol', 'fo'].map((k) => `<pattern id="${pid}-${k}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" class="bsb-w-${k}"/><line x1="0" y1="0" x2="0" y2="7" class="bsb-l-${k}"/></pattern>`).join('')}</defs>`;
+    const kinds = ['oa', 'fa', 'ol', 'fo'].flatMap((k) => [`${k}-c`, `${k}-n`]);
+    return `<defs>${kinds.map((k) => `<pattern id="${pid}-${k}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" class="bsb-w-${k}"/><line x1="0" y1="0" x2="0" y2="7" class="bsb-l-${k}"/></pattern>`).join('')}</defs>`;
+  }
+  const yearHead = (m) => `${m.label}${m.end ? ` · ${dateLabel(m.end)}` : ''}`;
+  function dateLabel(iso) {
+    const [y, mo, d] = String(iso).split('-').map(Number);
+    return y && mo ? `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][mo - 1]} ${d}, ${y}` : '';
   }
 
-  // the balance sheet: one year, or last year's beside it on the same scale
-  function blocksSVG(years, mode, W, money, pid) {
-    const n = years.length, side = n === 1 && W >= 640 ? 96 : 0;
-    const pairGap = n > 1 ? Math.max(30, Math.min(72, W * 0.07)) : 0, colGap = 6;
-    const colW = Math.min(200, (W - 2 * side - pairGap * (n - 1) - colGap * n) / (2 * n));
-    const plotH = Math.round(Math.max(250, Math.min(440, W * (W < 560 ? 0.95 : 0.52)))), top = 46, H = top + plotH + 8;
-    const maxT = Math.max(...years.map((y) => Math.max(y.m.sumA, y.m.sumL)));
+  // The balance sheet: one year; or last year's beside it on the same scale. With the equity bridge (and room for it)
+  // this year's columns face last year's — liabilities and equity inside, assets outside — and the year's net income
+  // and payouts step from last year's equity block to this year's between them.
+  const STEP_NAME = { ni: 'Net income', div: 'Dividends', buyback: 'Buybacks', sbc: 'Share-based pay', stock: 'Shares issued',
+    withhold: 'Tax on vesting', other: 'Other' };
+  function blocksSVG(years, mode, W, money, pid, B) {
+    const n = years.length, colGap = 6;
+    const steps = n > 1 && B && B.open > 0 && B.close > 0 ? B.rows : null;
+    const bridgeW = steps ? steps.length * 34 + 52 : 0;
+    const side = n === 1 && W >= 640 ? 96 : 0;
+    let pairGap = n > 1 ? (steps ? bridgeW : Math.max(30, Math.min(72, W * 0.07))) : 0;
+    let colW = Math.min(200, (W - 2 * side - pairGap * (n - 1) - colGap * n) / (2 * n));
+    const bridge = steps && colW >= 92;                      // too narrow: the pairs side by side, the bridge below only
+    if (!bridge && n > 1) {
+      pairGap = Math.max(30, Math.min(72, W * 0.07));
+      colW = Math.min(200, (W - pairGap - colGap * 2) / 4);
+    }
+    const plotH = Math.round(Math.max(250, Math.min(440, W * (W < 560 ? 0.95 : 0.5)))), top = 58, H = top + plotH + 10;
+    let peak = 0;
+    if (bridge) { let run = B.open; steps.forEach((r) => { run += r.v; peak = Math.max(peak, run, run - r.v); }); }
+    const maxT = Math.max(peak, ...years.map((y) => Math.max(y.m.sumA, y.m.sumL)));
     const scale = plotH / maxT, bottom = top + plotH;
     const x0 = (W - (2 * colW * n + colGap * n + pairGap * (n - 1))) / 2;
     const items = [];
     let svg = `<svg class="bsb-svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="group" aria-label="Balance sheet in blocks">${hatches(pid)}`;
+    const cols = [];
     years.forEach((y, j) => {
-      const xa = x0 + j * (2 * colW + colGap + pairGap), xl = xa + colW + colGap, ord = ordered(y.m, mode);
+      const xp = x0 + j * (2 * colW + colGap + pairGap), ord = ordered(y.m, mode);
+      const mirror = bridge && j === 1;                       // this year's claims face last year's
+      const xa = mirror ? xp + colW + colGap : xp, xl = mirror ? xp : xp + colW + colGap;
       const A = stack(merge(ord.a, scale, MIN_H), xa, colW, bottom, scale), L = stack(merge(ord.l, scale, MIN_H), xl, colW, bottom, scale);
-      const hA = y.m.sumA * scale, hL = y.m.sumL * scale;
-      const head = `${y.m.label}${y.prev ? ' (last year)' : ''}`;
-      svg += `<text class="bsb-yr" x="${xa + colW + colGap / 2}" y="${Math.min(bottom - hA, bottom - hL) - 26}" text-anchor="middle">${esc(head)}</text>`;
-      svg += `<text class="bsb-ch" x="${xa + colW / 2}" y="${bottom - hA - 8}" text-anchor="middle">${esc(colW >= 120 ? `Assets ${money(y.m.tot.assets)}` : colW >= 64 ? 'Assets' : 'A')}</text>`;
-      svg += `<text class="bsb-ch" x="${xl + colW / 2}" y="${bottom - hL - 8}" text-anchor="middle">${esc(colW >= 150 ? 'Liabilities + equity' : colW >= 64 ? 'Liab. + equity' : 'L+E')}</text>`;
+      cols.push({ A, L, xa, xl, m: y.m });
+      const hA = y.m.sumA * scale, hL = y.m.sumL * scale, topY = bottom - Math.max(hA, hL);
+      svg += `<text class="bsb-yr" x="${xp + colW + colGap / 2}" y="${topY - 30}" text-anchor="middle">${esc(y.m.label)}<tspan class="bsb-yd">${esc(y.m.end ? `  ${dateLabel(y.m.end)}` : '')}</tspan></text>`;
+      svg += `<text class="bsb-ch" x="${xa + colW / 2}" y="${bottom - hA - 9}" text-anchor="middle">${esc(colW >= 120 ? `Assets ${money(y.m.tot.assets)}` : colW >= 64 ? 'Assets' : 'A')}</text>`;
+      svg += `<text class="bsb-ch" x="${xl + colW / 2}" y="${bottom - hL - 9}" text-anchor="middle">${esc(colW >= 150 ? 'Liabilities + equity' : colW >= 64 ? 'Liab. + equity' : 'L+E')}</text>`;
       [[A, y.m.tot.assets || y.m.sumA, 'of assets'], [L, y.m.sumL, y.m.deficit ? 'of liabilities' : 'of liabilities and equity']].forEach(([col, total, of]) => col.forEach((r) => {
         items.push({ r, m: y.m, prev: y.prevM, total, of });
         svg += blockSVG(r, items.length - 1, pid, money, total);
@@ -300,13 +368,44 @@
       if (side && y.m.classified.a && mode !== 'opfin') svg += brackets(A, xa - 8, 'end', money, y.m, 'a');
       if (side && y.m.classified.l && mode !== 'opfin') svg += brackets(L, xl + colW + 8, 'start', money, y.m, 'l');
       if (side && mode === 'opfin') svg += kindBrackets(A, xa - 8, 'end', money) + kindBrackets(L, xl + colW + 8, 'start', money);
-      if (j < n - 1) {
-        const ax = xl + colW + pairGap / 2;
-        svg += `<path class="bsb-arrow" d="M${ax - 9},${bottom - 18} L${ax + 7},${bottom - 18} M${ax + 2},${bottom - 23} L${ax + 7},${bottom - 18} L${ax + 2},${bottom - 13}"/>`;
-      }
     });
+    if (bridge) svg += bridgeSVG(steps, B, cols, colW, scale, bottom, money, items);
+    else if (n > 1) {                                          // the pairs side by side: how much the assets grew
+      const a0 = years[0].m.tot.assets, a1 = years[1].m.tot.assets, ax = cols[0].xl + colW + pairGap / 2;
+      svg += `<path class="bsb-arrow" d="M${ax - 10},${bottom - 18} L${ax + 8},${bottom - 18} M${ax + 3},${bottom - 23} L${ax + 8},${bottom - 18} L${ax + 3},${bottom - 13}"/>`;
+      if (fin(a0) && a0 > 0 && fin(a1) && pairGap >= 44) svg += `<text class="bsb-sl bsb-sv" x="${ax}" y="${bottom - 30}" text-anchor="middle">${esc(`${a1 >= a0 ? '+' : '−'}${pct(Math.abs(a1 / a0 - 1))}`)}</text>`;
+    }
     svg += `<line class="bsb-base" x1="${x0 - 4}" x2="${W - x0 + 4}" y1="${bottom + 0.5}" y2="${bottom + 0.5}"/></svg>`;
-    return { svg, items, H };
+    return { svg, items, H, bridge };
+  }
+  // last year's shareholders' equity, the year's steps, this year's: a staircase on the balance sheet's own scale
+  function bridgeSVG(steps, B, cols, colW, scale, bottom, money, items) {
+    const lev = (v) => bottom - v * scale;
+    const from = cols[0].xl + colW, to = cols[1].xl, k = steps.length;
+    const sw = Math.min(26, (to - from - 36 - (k - 1) * 8) / k), gap = (to - from - 36 - k * sw) / Math.max(1, k - 1);
+    let x = from + 18, run = B.open, out = '';
+    out += `<line class="bsb-conn" x1="${from}" x2="${x}" y1="${lev(run)}" y2="${lev(run)}"/>`;
+    steps.forEach((r, n) => {
+      const a = run, z = run + r.v, yT = lev(Math.max(a, z)), h = Math.max(1.5, Math.abs(r.v) * scale);
+      const cls = r.gap ? `bsb-st-gap ${r.v < 0 ? 'minus' : 'plus'}` : r.key === 'ni' ? 'bsb-st-ni' : r.v < 0 ? 'bsb-st-minus' : 'bsb-st-plus';
+      items.push({ step: r, B, r: { b: { side: 'step' }, x, y: yT, w: sw, h } });
+      const name = T(STEP_NAME[r.key] || r.name), label = KEEP(`${name} ${r.v >= 0 ? '+' : '−'}${T(money(Math.abs(r.v)))}`), len = label.length * 6.2;
+      // the label turned on its side: inside a step tall enough, else above a rise or below a fall
+      const cx = x + sw / 2 + 4, roomUp = yT - 6 - len >= 24, roomDown = yT + h + 6 + len <= bottom - 4;
+      const up = (r.v >= 0 && roomUp) || (r.v < 0 && !roomDown && roomUp);
+      let t;
+      if (h >= len + 10) t = `<text class="bsb-sv-t bsb-in${r.key === 'ni' ? ' bsb-on-ni' : ''}" transform="rotate(-90 ${cx} ${yT + h / 2})" x="${cx}" y="${yT + h / 2}" text-anchor="middle">${esc(label)}</text>`;
+      else if (up) t = `<text class="bsb-sv-t" transform="rotate(-90 ${cx} ${yT - 6})" x="${cx}" y="${yT - 6}" text-anchor="start">${esc(label)}</text>`;
+      else t = `<text class="bsb-sv-t" transform="rotate(-90 ${cx} ${yT + h + 6})" x="${cx}" y="${yT + h + 6}" text-anchor="end">${esc(label)}</text>`;
+      out += `<g class="bsb-b bsb-step" data-b="${items.length - 1}" tabindex="0" role="img" aria-label="${esc(label)}"><rect class="${cls}" x="${x.toFixed(1)}" y="${yT.toFixed(1)}" width="${sw.toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>${t}</g>`;
+      run = z;
+      const nx = x + sw + (n < k - 1 ? gap : 18);
+      out += `<line class="bsb-conn" x1="${x + sw}" x2="${n < k - 1 ? nx : to}" y1="${lev(run)}" y2="${lev(run)}"/>`;
+      x = nx;
+    });
+    const mid = (from + to) / 2;
+    out += `<text class="bsb-yr" x="${mid}" y="16" text-anchor="middle">Equity bridge</text><text class="bsb-sl" x="${mid}" y="31" text-anchor="middle">${esc(`net income in, payouts out · ${money(B.open)} → ${money(B.close)}`)}</text>`;
+    return out;
   }
   // section labels beside a column: Current $X / Non-current $Y / Equity $Z
   function brackets(col, x, anchor, money, m, side) {
@@ -358,20 +457,20 @@
       items.push({ r, m: y.m, prev: y.prevM, total, of });
       svg += blockSVG(r, items.length - 1, pid, money, total);
     }));
-    // the income statement: costs (grey, quiet) above net income (the equity colour: it is what lands there)
+    // the income statement in the Sankeys' colours: costs in red above net income in the equity green (where it lands)
     const I = stack(inc.parts.map((p) => ({ k: `is:${p.k}`, side: 'is', kind: p.k === 'ni' ? 'ni' : `c-${p.k}`, v: p.v, name: p.name, short: p.name, cur: 1 })),
       xi, isW, bottom, scale).map((r) => ({ ...r, h: r.h }));
     let labels = '';
     I.forEach((r) => {
       items.push({ r, m: y.m, inc, total: inc.revenue });
       const idx = items.length - 1, { b, x, y: yy, w, h } = r, share = b.v / inc.revenue;
-      const ink = b.kind === 'ni' || b.kind === 'c-cor' ? '' : 'bsb-onlight';
-      labels += labelSVG(x, yy, w, h, b.name, money(b.v), ` · ${pct(share)}`, ink);
-      svg += `<g class="bsb-b" data-b="${idx}" tabindex="0" role="img" aria-label="${esc(`${b.name}: ${money(b.v)}, ${pct(share, 1)} of revenue`)}"><rect class="bsb-is-${b.kind === 'ni' ? 'ni' : b.kind}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="3"/></g>`;
+      const ink = b.kind === 'ni' || b.kind === 'c-cor' ? '' : 'bsb-onlight';     // the deep red and the green take white text
+      labels += labelSVG(x, yy, w, h, b.name, money(b.v), pct(share), ink, { 'is:below': ['Interest & tax', 'Int. & tax'], 'is:rest': 'Other costs', 'is:opex': 'Opex' }[b.k]);
+      svg += `<g class="bsb-b" data-b="${idx}" tabindex="0" role="img" aria-label="${esc(`${b.name}: ${money(b.v)}, ${pct(share, 1)} of revenue`)}"><rect class="bsb-is-${b.kind === 'ni' ? 'ni' : b.kind}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="4"/></g>`;
     });
     if (inc.loss) {                          // the costs pass revenue by the loss: hatched above the revenue line
       const yr = bottom - inc.revenue * scale, yt = bottom - hI;
-      svg += `<rect class="bsb-loss" x="${xi - 3}" y="${yt}" width="${isW + 6}" height="${Math.max(1, yr - yt)}" rx="3" style="fill:url(#${pid}-fo)"/><line class="bsb-revline" x1="${xi - 6}" x2="${xi + isW + 6}" y1="${yr}" y2="${yr}"/>
+      svg += `<rect class="bsb-loss" x="${xi - 3}" y="${yt}" width="${isW + 6}" height="${Math.max(1, yr - yt)}" rx="4" style="fill:url(#${pid}-fo-n)"/><line class="bsb-revline" x1="${xi - 6}" x2="${xi + isW + 6}" y1="${yr}" y2="${yr}"/>
         <text class="bsb-sl bsb-sv" x="${xi + isW + 8}" y="${yr + 4}">${esc(gap >= 120 ? `revenue ${money(inc.revenue)}` : 'revenue')}</text>`;
     }
     svg += labels;
@@ -385,9 +484,9 @@
     if (fin(inc.dso) && at(A, 'ar')) links.push({ a: at(A, 'ar'), b: rev, left: true, label: days(inc.dso, 'revenue'), title: 'Receivables ÷ revenue × days in the year: how long customers take to pay (DSO)' });
     if (fin(inc.dio) && at(A, 'inv') && cor) links.push({ a: at(A, 'inv'), b: cor, left: true, label: days(inc.dio, 'costs'), title: 'Inventory ÷ cost of revenue × days: how long goods wait to be sold (DIO)' });
     if (fin(inc.dpo) && at(L, 'ap') && cor) links.push({ a: at(L, 'ap'), b: cor, left: false, label: days(inc.dpo, 'costs'), title: 'Payables ÷ cost of revenue × days: how long the company takes to pay suppliers (DPO)' });
-    if (dp && fin(dp.roe) && at(L, 'cse') && ni) links.push({ a: at(L, 'cse'), b: ni, left: false, label: `ROE ${pct(dp.roe)}`, title: 'Net income ÷ average shareholders’ equity', strong: true });
+    if (dp && fin(dp.roe) && at(L, 'cse') && ni) links.push({ a: at(L, 'cse'), b: ni, left: false, label: `ROE ${pct(dp.roe)}`, title: inc.basis === 'pl' ? 'Profit for the year ÷ average equity (minority interests included)' : 'Net income ÷ average shareholders’ equity', strong: true });
     links.forEach((k) => {
-      const ya = k.a.y + Math.min(k.a.h / 2, 18), yb = k.b.h ? k.b.y + Math.min(k.b.h / 2, 18) : k.b.y + 3;
+      const ya = k.a.y + Math.min(k.a.h / 2, 18), yb = k.b.h ? k.b.y + Math.min(k.b.h / 2, 90) : k.b.y + 3;
       const xA = k.left ? k.a.x + k.a.w : k.a.x, xB = k.left ? k.b.x : k.b.x + k.b.w;
       const mx = (xA + xB) / 2;
       svg += `<g class="bsb-link${k.strong ? ' strong' : ''}"><title>${esc(k.title)}</title><path d="M${xA},${ya} C${mx},${ya} ${mx},${yb} ${xB},${yb}"/><circle cx="${xA}" cy="${ya}" r="3"/><circle cx="${xB}" cy="${yb}" r="3"/>
@@ -399,6 +498,10 @@
 
   // ---------------------------------------------------------------- the tooltip of a block
   function tipHTML(it, money) {
+    if (it.step) {
+      const r = it.step;
+      return `<b>${esc(r.name)}</b><span>${r.v >= 0 ? '+' : '−'}${esc(money(Math.abs(r.v)))} · ${esc(it.B.labels[1])}</span>${r.note ? `<span class="muted">${esc(r.note)}</span>` : ''}`;
+    }
     const b = it.r.b, kind = kindOf(b);
     if (b.side === 'is') {
       const inc = it.inc;
@@ -414,7 +517,8 @@
     else if (b.why) lines.push(`<span class="muted">${esc(b.why)}</span>`);
     if (b.whole) lines.push(`<span class="muted">Of ${esc(money(b.whole))} in all; the part due within a year is a block of its own among the current lines.</span>`);
     if ((b.gone || []).length) lines.push(`<span>Probably inside it: ${b.gone.map((g) => `${esc(g.name.toLowerCase())} (${esc(money(g.v))} in ${esc(b.prevLabel)})`).join(', ')} — tagged last year, without a standard tag this year.</span>`);
-    if (b.less) lines.push(`<span class="muted">${esc(money(b.less))} taken out: lines shown as blocks of their own are inside this one in the filing (${b.spread ? 'shared out over the section' : 'counted twice otherwise'}).</span>`);
+    if (b.less && b.inside) lines.push(`<span class="muted">${esc(money(b.less))} taken out: counted twice — lease liabilities are often inside another line of the filing as well (IFRS 16 leases inside borrowings, finance leases inside debt).</span>`);
+    else if (b.less) lines.push(`<span class="muted">${esc(money(b.less))} taken out: lines shown as blocks of their own are inside this one in the filing (${b.spread ? 'shared out over the section' : 'counted twice otherwise'}).</span>`);
     return lines.join('');
   }
 
@@ -434,6 +538,27 @@
     const oa = sum(m.blocks.a, (b) => b.cls !== 'fin'), fa = sum(m.blocks.a, (b) => b.cls === 'fin');
     const ol = sum(m.blocks.l, (b) => b.cls !== 'fin'), fo = sum(m.blocks.l, (b) => b.cls === 'fin');
     return { oa, fa, ol, fo, noa: oa - ol, nfo: fo - fa };
+  }
+  // the four numbers above the chart: size, funding, and cash against debt (or, operating / financing, NOA and NFO)
+  function kpis(m, prevM, mode, money) {
+    const T = m.tot, A = T.assets || m.sumA, o = netOps(m);
+    const tile = (label, value, note, cls) => `<div class="q-kpi"><small>${esc(label)}</small><strong class="${cls || ''}">${esc(value)}</strong><span>${esc(note || '')}</span></div>`;
+    const tiles = [];
+    const d = prevM && fin(prevM.tot.assets) && prevM.tot.assets > 0 && fin(T.assets) ? T.assets / prevM.tot.assets - 1 : null;
+    tiles.push(tile('Total assets', money(A), d == null ? m.label : `${d >= 0 ? '+' : '−'}${pct(Math.abs(d))} since ${prevM.label}`));
+    if (m.deficit) tiles.push(tile("Shareholders' equity", money(T.cse), 'liabilities are larger than the assets', 'q-warmtext'));
+    else {
+      const de = prevM && fin(prevM.tot.cse) && fin(T.cse) ? T.cse - prevM.tot.cse : null;
+      tiles.push(tile('Funded by equity', pct(T.eq / A), `liabilities ${pct((T.liab || 0) / A)}${de != null ? ` · equity ${de >= 0 ? '+' : '−'}${money(Math.abs(de))}` : ''}`));
+    }
+    if (mode === 'opfin') {
+      tiles.push(tile('Net operating assets', money(o.noa), `operating assets ${money(o.oa)} − liabilities ${money(o.ol)}`));
+      tiles.push(tile(o.nfo > 0 ? 'Net financial obligations' : 'Net financial assets', money(Math.abs(o.nfo)), `financial ${money(o.fa)} vs obligations ${money(o.fo)}`));
+    } else {
+      tiles.push(tile('Cash and investments', money(o.fa), `${pct(o.fa / A)} of the assets`));
+      tiles.push(tile('Debt and leases', money(o.fo), o.fa - o.fo >= 0 ? `net cash ${money(o.fa - o.fo)}` : `net debt ${money(o.fo - o.fa)}`));
+    }
+    return `<div class="q-kpis cq-kpis bsb-kpis">${tiles.join('')}</div>`;
   }
   function summary(m, prevM, money) {
     const T = m.tot, A = T.assets || m.sumA;
@@ -495,17 +620,21 @@
     function draw() {
       const cls = readCls(P.cik), m = model(R, st.i, cls), prevM = st.i > 0 ? model(R, st.i - 1, cls) : null;
       const inc = incomeOf(c, R.ends[st.i]), dp = dupont(R, st.i, inc), B = equityBridge(c, st.i);
-      const W = Math.max(300, Math.min(980, box.clientWidth || 720));
+      const W = Math.max(300, Math.min(1120, box.clientWidth || 720));
       width = box.clientWidth;
       const view = st.view === 'is' && inc ? 'is' : 'bs';
       const years = view === 'bs' && st.cmp && prevM ? [{ m: prevM, prev: true }, { m, prevM }] : [{ m, prevM }];
-      const out = view === 'is' ? incomeSVG({ m, prevM }, inc, dp, st.mode, W, money, pid) : blocksSVG(years, st.mode, W, money, pid);
+      const out = view === 'is' ? incomeSVG({ m, prevM }, inc, dp, st.mode, W, money, pid) : blocksSVG(years, st.mode, W, money, pid, B);
       items = out.items;
       const twice = m.notes.filter((x) => x.kind === 'twice');
       const untagged = m.blocks.a.concat(m.blocks.l).filter((b) => b.derived);
-      const legend = ['oa', 'fa', 'ol', 'fo', 'eq'].map((k) => `<span><i class="bsb-key bsb-key-${k}"></i>${KIND[k]}</span>`).join('') +
+      const sections = m.classified.a || m.classified.l;
+      const legend = ['oa', 'fa', 'ol', 'fo'].map((k) => `<span><i class="bsb-key bsb-key-${k}-c"></i><i class="bsb-key bsb-key-${k}-n"></i>${KIND[k]}</span>`).join('') +
+        '<span><i class="bsb-key bsb-key-eq"></i>Equity</span>' +
         (untagged.length ? '<span><i class="bsb-key bsb-key-x"></i>Not tagged separately</span>' : '') + (m.deficit ? '<span><i class="bsb-key bsb-key-d"></i>Negative equity</span>' : '') +
-        (view === 'is' ? '<span><i class="bsb-key bsb-key-c"></i>Costs, interest and tax</span>' : '');
+        (view === 'is' ? '<span><i class="bsb-key bsb-key-c"></i>Costs, interest and tax</span>' : '') +
+        (out.bridge ? '<span><i class="bsb-key bsb-key-eq"></i><i class="bsb-key bsb-key-minus"></i>Equity bridge: added, paid out</span>' : '') +
+        (sections ? '<span class="bsb-note">lighter: current (within a year) · deeper: non-current</span>' : '');
       box.innerHTML = `<div class="section-head"><h2 id="bsb-title">Balance sheet in blocks</h2>
           <span class="muted">What the company owns, and who funds it · each block’s height is its amount, one scale for every column · the balance sheet, XBRL</span></div>
         <div class="q-bar bsb-bar">
@@ -514,18 +643,18 @@
           <label class="q-pick">Fiscal year <select data-y>${R.ends.map((e, j) => `<option value="${j}" ${j === st.i ? 'selected' : ''}>${esc(R.labels[j])}</option>`).join('')}</select></label>
           ${view === 'bs' && prevM ? `<label class="q-pick bsb-cmp"><input type="checkbox" data-c ${st.cmp ? 'checked' : ''}> ${esc(prevM.label)} beside it</label>` : ''}
         </div>
-        <p class="q-sum">${esc(summary(m, prevM, money))}${st.mode === 'opfin' ? (() => { const o = netOps(m); return ` ${esc(`Net operating assets (operating assets ${money(o.oa)} − operating liabilities ${money(o.ol)}) are ${money(o.noa)}; ${o.nfo >= 0 ? `net financial obligations ${money(o.nfo)}` : `net financial assets ${money(-o.nfo)}`}.`)}`; })() : ''}</p>
+        ${kpis(m, prevM, st.mode, money)}
         ${view === 'is' && dp ? `<p class="bsb-dupont">${esc(`Revenue ÷ average assets ${dp.turnover.toFixed(2)}×`)} <span>×</span> ${esc(`net income ÷ revenue ${pct(dp.margin, 1)}`)} <span>×</span> ${esc(`average assets ÷ average equity ${dp.leverage != null ? dp.leverage.toFixed(2) + '×' : 'n/m'}`)} <span>=</span> <b>${esc(`ROE ${pct(dp.roe, 1)}`)}</b></p>` : ''}
         <div class="bsb-plot">${out.svg}<div class="bsb-tip" role="status" aria-live="polite" hidden></div></div>
         <div class="q-legend bsb-legend">${legend}</div>
         ${twice.length || untagged.length || (P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''))) ? `<p class="muted q-small">${[
           untagged.length ? `Hatched: what the tagged lines leave of ${untagged.map((b) => (b.cur === 1 ? 'current ' : b.cur === 0 ? 'non-current ' : '') + (b.side === 'a' ? 'assets' : 'liabilities')).join(' and ')} — lines the company tags its own way (${untagged.map((b) => money(b.v)).join(', ')}).` +
             untagged.filter((b) => (b.gone || []).length).map((b) => ` ${b.gone.map((g) => `${g.name} (${money(g.v)} in ${b.prevLabel})`).join(', ')} ${b.gone.length > 1 ? 'have' : 'has'} no standard tag in ${m.label}: probably inside the ${money(b.v)}${b.gone.some((g) => g.cls === 'fin') ? ' — move that line to financing in the workbench below to count it so' : ''}.`).join('') : '',
-          twice.length ? `Lines counted twice in the tags (${twice.map((x) => money(x.v)).join(', ')}) are taken out of the “other” lines that contain them, so each column adds up to the filing’s total.` : '',
+          twice.length ? `Lines counted twice in the tags (${twice.map((x) => money(x.v)).join(', ')}) are taken out of the “other” lines that contain them${twice.some((x) => x.took.some(([k]) => /lease/.test(k))) ? ', or out of the lease liabilities when those are inside another line as well' : ''}, so each column adds up to the filing’s total.` : '',
           P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || '')) ? 'Banks and insurers: deposits, loans and investments are the business itself, and much of the balance sheet is tagged their own way.' : '',
         ].filter(Boolean).join(' ')}</p>` : ''}
         ${B ? `<h3 class="cq-h3">Net income into equity, ${esc(B.labels[0])} → ${esc(B.labels[1])}</h3>
-          <p class="muted q-small">The bridge between the two statements: last year’s equity, plus the year’s net income from the income statement, less what was paid out, is this year’s equity.</p>
+          <p class="muted q-small">The bridge between the two statements${out.bridge ? ', line by line' : ''}: last year’s equity, plus the year’s net income from the income statement, less what was paid out, is this year’s equity. Each figure opens its tagged source.</p>
           ${bridgeHTML(B, money, evBtn)}
           <div class="q-legend"><span><i class="cq-bar plus nc"></i>Added to equity</span><span><i class="cq-bar minus nc"></i>Taken out</span><span><i class="cq-gap-key"></i>Not in a line of its own</span></div>` : ''}`;
       bind();
@@ -546,11 +675,15 @@
       tip.style.top = `${y}px`;
       box.querySelectorAll('.bsb-b.on').forEach((x2) => x2.classList.remove('on'));
       g.classList.add('on');
+      const svg = box.querySelector('.bsb-svg');
+      if (svg) svg.classList.add('focus');
     }
     function hide() {
       const tip = box.querySelector('.bsb-tip');
       if (tip) tip.hidden = true;
       box.querySelectorAll('.bsb-b.on').forEach((x) => x.classList.remove('on'));
+      const svg = box.querySelector('.bsb-svg');
+      if (svg) svg.classList.remove('focus');
     }
     function bind() {
       const save = () => savePrefs({ view: st.view, mode: st.mode, cmp: st.cmp });
