@@ -3693,3 +3693,21 @@ def test_a_segment_aggregation_member_is_no_revenue_line():
     members["cvx:UpstreamMember"] = ("Upstream", 40.0); members["cvx:DownstreamMember"] = ("Downstream", 27.174)
     part = dims.best_partition(members, 68.174)
     assert sorted(l["label"] for l in part["leaves"]) == ["All Other", "Downstream", "Upstream"]
+
+
+def test_non_operating_share_needs_pre_tax_earnings():
+    """Arcus Biosciences Q2 2025, Creatd FY2021: non-operating income exactly offset the operating loss, so pre-tax
+    earnings were 0 and the analysis divided by zero (the quarter's page was not drawn). A share of a loss says nothing."""
+    from pipeline import model, analysis
+
+    class F:
+        money = staticmethod(lambda x: f"${x / 1e6:.1f}M")
+        delta = staticmethod(lambda x: f"{x / 1e6:+.1f}M")
+    for pretax, nonop in ((0.0, 50e6), (-20e6, 30e6)):
+        raw = {"revenue": 100e6, "costs_total": 100e6 - pretax + nonop, "oi": pretax - nonop, "pretax": pretax, "tax": 0.0,
+               "pl": pretax, "ni": pretax, "ocf": None}
+        text = analysis.paragraphs(F(), "Q2 2025", model.normalize(raw), None, None)[1]
+        assert f"Non-operating items added ${nonop / 1e6:.1f}M, so the bottom line" in text and "of pre-tax" not in text
+    raw = {"revenue": 100e6, "costs_total": 90e6, "oi": 10e6, "pretax": 40e6, "tax": 0.0, "pl": 40e6, "ni": 40e6}
+    text = analysis.paragraphs(F(), "Q2 2025", model.normalize(raw), None, None)[1]
+    assert "Non-operating items added $30.0M, 75% of pre-tax earnings, so the bottom line" in text
