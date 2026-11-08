@@ -1760,6 +1760,13 @@ def test_company_reported_free_cash_flow():
                                                             {"key": "p", "label": "Proceeds from government incentives", "v": 336e6}]}}
     parts = reported.netted(mu["cur"])
     assert len(parts) == 1 and parts[0]["amount"] == 10774e6 and parts[0]["netted"] == 336e6
+    assert parts[0]["label"] == "Expenditures for PP&E, net"
+    # Mettler-Toledo: its capex line already ends in ", net"; netting an add-back must not make it "…, net, net"
+    mtd = {"ocf": 236366e3, "fcf": 228972e3, "parts": [
+        {"key": "r", "label": "Payments in respect of restructuring activities", "v": 16483e3},
+        {"key": "e", "label": "Purchase of property, plant and equipment, net", "v": -23877e3}]}
+    parts = reported.netted(mtd)
+    assert parts[0]["label"] == "Purchase of property, plant and equipment, net" and parts[0]["amount"] == 7394e3
     # names: principal payments are not capex; '(non-GAAP)' is not part of the name; another layout (five columns,
     # newest last, in thousands) is anchored by its operating cash flow
     nv = [{"label": "Purchases related to property and equipment and intangible assets"},
