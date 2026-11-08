@@ -114,7 +114,8 @@ LINES = [
 # a combined tag that already contains another line: that line is skipped
 COVERS = {"AccountsPayableAndAccruedLiabilitiesCurrent": {"accr"}, "AccountsPayableAndAccruedLiabilitiesCurrentAndNoncurrent": {"accr"},
           "DebtCurrent": {"ltdc"}, "CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings": {"ltdc"},
-          "LongTermDebtAndCapitalLeaseObligations": {"flease"}}
+          "LongTermDebtAndCapitalLeaseObligations": {"flease"},
+          "PropertyPlantAndEquipmentIncludingRightofuseAssets": {"rou"}}    # IFRS 16: the leased assets inside PP&E
 ALL_CURRENT_DEBT = {"DebtCurrent", "CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"}   # nothing else in that line
 # The current section of a classified balance sheet (the other lines are non-current). A line of two groups,
 # non-current then current, has a part in each: its current part is published as "cv".

@@ -30,7 +30,7 @@ from . import history as H
 from . import investments as IV
 from . import reform as RF
 
-VERSION = 14              # 14: current borrowings tagged twice read as one line (reform.py, Novo Nordisk)
+VERSION = 14              # 14: current borrowings tagged twice read as one line; right-of-use assets inside PP&E (reform.py, Novo Nordisk)
                           # 13: IFRS balance sheets and cash flows (reform.py, capital.py; facts.py keeps ifrs-full balances)
                           # 12: the balance sheet's current and non-current sections, more standard lines (reform.py)
                           # 11: ten fiscal years of cash flows for the video studio (capital.py "fy_old")

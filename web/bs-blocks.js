@@ -27,6 +27,10 @@
   // A detail counted twice comes out of its section's "other" lines, in this order (unclassified sides: any of them).
   const CONTAINERS = { a: { 1: ['oca'], 0: ['onca'] }, l: { 1: ['ocl', 'accr'], 0: ['oncl'] } };
   const UNCLASSIFIED = { a: ['onca', 'oca'], l: ['oncl', 'ocl', 'accr'] };
+  // then out of the lease liabilities, the line most often tagged on its own and inside another one too (IFRS 16
+  // leases inside borrowings: Novo Nordisk; finance leases inside debt), before the whole section shares the rest
+  const LEASES = { 1: ['lease:c', 'flease:c', 'olease:c'], 0: ['lease', 'flease', 'olease'] };
+  const LEASES_ANY = ['lease', 'flease', 'olease'];
   // short names for the labels inside the blocks (the tooltip has the full one)
   const SHORT = {
     cash: 'Cash', sti: 'Short-term investments', lti: 'Long-term investments', resale: 'Resale agreements', secs: 'Debt securities',
@@ -83,12 +87,15 @@
       list.filter((d) => d.derived && d.v < 0).forEach((d) => {
         let need = -d.v;
         const took = [];
-        (m.classified[side] && d.cur != null ? CONTAINERS[side][d.cur] : UNCLASSIFIED[side]).forEach((k) => {
+        const byCur = m.classified[side] && d.cur != null;
+        const leases = side === 'l' ? (byCur ? LEASES[d.cur] : LEASES_ANY) : [];
+        (byCur ? CONTAINERS[side][d.cur] : UNCLASSIFIED[side]).concat(leases).forEach((k) => {
           const b = list.find((y) => y.k === k && !y.derived && (d.cur == null || y.cur === d.cur));
           if (!b || need <= 0 || b.v <= 0) return;
           const t = Math.min(need, b.v);
           b.v -= t;
           b.less = (b.less || 0) + t;
+          if (leases.includes(k)) b.inside = true;   // the lease is the detail: it is inside another line as well
           need -= t;
           took.push([b.k, t]);
         });
@@ -506,7 +513,8 @@
     else if (b.why) lines.push(`<span class="muted">${esc(b.why)}</span>`);
     if (b.whole) lines.push(`<span class="muted">Of ${esc(money(b.whole))} in all; the part due within a year is a block of its own among the current lines.</span>`);
     if ((b.gone || []).length) lines.push(`<span>Probably inside it: ${b.gone.map((g) => `${esc(g.name.toLowerCase())} (${esc(money(g.v))} in ${esc(b.prevLabel)})`).join(', ')} — tagged last year, without a standard tag this year.</span>`);
-    if (b.less) lines.push(`<span class="muted">${esc(money(b.less))} taken out: lines shown as blocks of their own are inside this one in the filing (${b.spread ? 'shared out over the section' : 'counted twice otherwise'}).</span>`);
+    if (b.less && b.inside) lines.push(`<span class="muted">${esc(money(b.less))} taken out: counted twice — lease liabilities are often inside another line of the filing as well (IFRS 16 leases inside borrowings, finance leases inside debt).</span>`);
+    else if (b.less) lines.push(`<span class="muted">${esc(money(b.less))} taken out: lines shown as blocks of their own are inside this one in the filing (${b.spread ? 'shared out over the section' : 'counted twice otherwise'}).</span>`);
     return lines.join('');
   }
 
@@ -638,7 +646,7 @@
         ${twice.length || untagged.length || (P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''))) ? `<p class="muted q-small">${[
           untagged.length ? `Hatched: what the tagged lines leave of ${untagged.map((b) => (b.cur === 1 ? 'current ' : b.cur === 0 ? 'non-current ' : '') + (b.side === 'a' ? 'assets' : 'liabilities')).join(' and ')} — lines the company tags its own way (${untagged.map((b) => money(b.v)).join(', ')}).` +
             untagged.filter((b) => (b.gone || []).length).map((b) => ` ${b.gone.map((g) => `${g.name} (${money(g.v)} in ${b.prevLabel})`).join(', ')} ${b.gone.length > 1 ? 'have' : 'has'} no standard tag in ${m.label}: probably inside the ${money(b.v)}${b.gone.some((g) => g.cls === 'fin') ? ' — move that line to financing in the workbench below to count it so' : ''}.`).join('') : '',
-          twice.length ? `Lines counted twice in the tags (${twice.map((x) => money(x.v)).join(', ')}) are taken out of the “other” lines that contain them, so each column adds up to the filing’s total.` : '',
+          twice.length ? `Lines counted twice in the tags (${twice.map((x) => money(x.v)).join(', ')}) are taken out of the “other” lines that contain them${twice.some((x) => x.took.some(([k]) => /lease/.test(k))) ? ', or out of the lease liabilities when those are inside another line as well' : ''}, so each column adds up to the filing’s total.` : '',
           P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || '')) ? 'Banks and insurers: deposits, loans and investments are the business itself, and much of the balance sheet is tagged their own way.' : '',
         ].filter(Boolean).join(' ')}</p>` : ''}
         ${B ? `<h3 class="cq-h3">Net income into equity, ${esc(B.labels[0])} → ${esc(B.labels[1])}</h3>

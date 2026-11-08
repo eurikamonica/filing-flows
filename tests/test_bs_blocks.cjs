@@ -130,6 +130,21 @@ test('IFRS: only the profit for the year (ProfitLoss) is tagged — it is the ne
   assert.equal(B.dupont(M, 1, B.incomeOf(cm, '2025-12-31')).roe, 10 / 85);   // profit for the year ÷ all equity
 });
 
+test('no “other” line to take a detail counted twice: the lease liabilities give it up before the debt does', () => {
+  // Novo Nordisk: IFRS 16 leases tagged on their own and inside borrowings too; the non-current rest is −5
+  const N = JSON.parse(JSON.stringify(R));
+  N.lines = N.lines.filter((x) => x.k !== 'oncl' && x.k !== 'olease');
+  N.lines.push(line('lease', 'l', 'fin', [9, 9], 0, { cv: [1, 1] }));
+  N.lines.find((x) => x.k === 'oth_ncl').v = [-5, -5];
+  const m = B.model(N, 1, {});
+  const l = Object.fromEntries(m.blocks.l.map((b) => [b.k, b]));
+  assert.equal(l.ltd.v, 50);                                 // the debt as filed
+  assert.equal(l.lease.v, 3);                                // 8 non-current − 5
+  assert.equal(l.lease.inside, true);
+  assert.equal(l['lease:c'].v, 1);                           // the current part is another section's
+  assert.deepEqual(m.notes.find((n) => n.cur === 0).took, [['lease', 5]]);
+});
+
 test('blocks too thin to see join one “smaller lines” block of their kind; a hatched rest never does', () => {
   const list = [{ k: 'a', side: 'a', cls: 'op', v: 1, cur: 1 }, { k: 'b', side: 'a', cls: 'op', v: 1, cur: 1 }, { k: 'c', side: 'a', cls: 'fin', v: 1, cur: 1 },
     { k: 'd', side: 'a', cls: 'op', v: 100, cur: 1 }, { k: 'e', side: 'a', cls: 'op', v: 1, cur: 1, derived: true }];

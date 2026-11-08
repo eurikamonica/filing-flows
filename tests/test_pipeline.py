@@ -2543,6 +2543,13 @@ def test_reformulated_balance_sheet_reads_ifrs():
     twice["ShorttermBorrowings"] = b(3, 4)                                       # different amounts: both lines
     fx3 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
     assert {"std", "ltdc"} <= {x["k"] for x in Q.compute(fx3)["reform"]["lines"]}
+    # PP&E tagged with the leased (right-of-use) assets inside it: no right-of-use line beside it
+    rou = dict(ifrs)
+    del rou["PropertyPlantAndEquipment"]
+    rou["PropertyPlantAndEquipmentIncludingRightofuseAssets"] = b(80, 84)
+    fx4 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in rou.items()}}}, currency="EUR")
+    l4 = {x["k"]: x for x in Q.compute(fx4)["reform"]["lines"]}
+    assert l4["ppe"]["v"] == [80, 84] and "rou" not in l4
 
 
 def test_foreign_filer_years_drawn_when_no_quarter_can_be():
