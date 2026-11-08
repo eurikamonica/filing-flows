@@ -141,6 +141,17 @@
   }
 
   // ---------------------------------------------------------------- the income statement of the same year
+  // Net income for the shareholders; failing that (IFRS filers that tag only ProfitLoss, the profit for the year),
+  // the profit for the year, which also holds the minority interests' share ("pl": the ROE is then on all equity).
+  function profitOf(cur, f, flowsFirst) {
+    const src = flowsFirst ? [[f, true], [cur, false]] : [[cur, false], [f, true]];
+    for (const key of ['ni', 'pl']) {
+      for (const [o, isF] of src) if (fin(o[key])) return { ni: o[key], basis: key, ref: isF ? (o.ev || {})[key] : undefined };
+    }
+    return { ni: null, basis: null };
+  }
+  const nciAt = (R, j) => { const v = ((R.totals || {}).nci || [])[j]; return fin(v) ? v : 0; };
+
   function incomeOf(c, end) {
     const Q = c.quality || {}, R = Q.reform || {};
     const d = ((Q.drivers || {}).fy || []).find((x) => x.end === end);
@@ -149,7 +160,7 @@
     const cur = (d && d.cur) || {};
     const revenue = fin(cur.revenue) ? cur.revenue : f.revenue;
     if (!fin(revenue) || revenue <= 0) return null;
-    const ni = fin(cur.ni) ? cur.ni : f.ni, oi = fin(cur.oi) ? cur.oi : f.oi;
+    const { ni, basis } = profitOf(cur, f), oi = fin(cur.oi) ? cur.oi : f.oi;
     if (!fin(ni)) return null;
     const cor = fin(cur.cor) ? cur.cor : fin(cur.gp) ? revenue - cur.gp : (y.wc || {}).cor;
     const opex = fin(cor) && fin(oi) ? revenue - cor - oi : null, below = fin(oi) ? oi - ni : null;
@@ -163,7 +174,7 @@
     const ok = (parts) => parts.every(([, , v]) => fin(v) && v >= 0) && Math.abs(parts.reduce((s, [, , v]) => s + v, 0) - total) <= Math.max(1, total * 1e-6);
     const parts = (tries.find(ok) || [[['rev', 'Revenue', revenue]]]).filter(([, , v]) => v > 0);
     const wc = y.wc || {};
-    return { end, revenue, ni, oi, cor, loss, total, parts: parts.map(([k, name, v]) => ({ k, name, v })),
+    return { end, revenue, ni, basis, oi, cor, loss, total, parts: parts.map(([k, name, v]) => ({ k, name, v })),
       dso: wc.dso, dio: wc.has_inv === false ? null : wc.dio, dpo: wc.ap_proxy ? null : wc.dpo, ev: (d && d.ev && d.ev.cur) || f.ev || {} };
   }
 
@@ -171,7 +182,7 @@
   function dupont(R, i, inc) {
     if (!inc || i < 1) return null;
     const T = (k, j) => ((R.totals || {})[k] || [])[j];
-    const eq = (j) => (T('cse', j) || 0);
+    const eq = (j) => (T('cse', j) || 0) + (inc.basis === 'pl' ? nciAt(R, j) : 0);   // profit for the year: all equity
     const a0 = T('assets', i - 1), a1 = T('assets', i), e0 = eq(i - 1), e1 = eq(i);
     if (!fin(a0) || !fin(a1)) return null;
     const avgA = (a0 + a1) / 2, avgE = (e0 + e1) / 2;
@@ -191,7 +202,13 @@
     const sbcItem = ((y.bridge || {}).items || []).find((x) => x[0] === 'sbc');
     const rows = [];
     const add = (key, name, v, ev, note) => { if (fin(v) && v !== 0) rows.push({ key, name, v, ev, note }); };
-    add('ni', 'Net income (the income statement)', f.ni, { ref: (f.ev || {}).ni }, 'The year’s profit for the shareholders: what the income statement adds to equity.');
+    const d = ((Q.drivers || {}).fy || []).find((x) => x.end === end);
+    const p = profitOf((d && d.cur) || {}, f, true);
+    // the profit for the year bridges the shareholders' equity only when no minority holds a share of it
+    const ni = p.basis === 'pl' && (nciAt(R, i - 1) || nciAt(R, i)) ? null : p.ni;
+    add('ni', 'Net income (the income statement)', ni, { ref: p.ref }, p.basis === 'pl'
+      ? 'The year’s profit (IFRS: profit for the year; no minority interests): what the income statement adds to equity.'
+      : 'The year’s profit for the shareholders: what the income statement adds to equity.');
     add('div', 'Dividends', it.div, { list: (k && k.ev || {}).div }, 'Paid to shareholders in cash (cash-flow statement).');
     add('buyback', 'Buybacks', it.buyback, { list: (k && k.ev || {}).buyback }, 'Shares bought back in cash (cash-flow statement).');
     add('sbc', 'Share-based pay', sbcItem ? sbcItem[1] : null, { ref: sbcItem ? sbcItem[2] : null }, 'Expensed in the income statement without cash: the shares it promises are added to equity.');
@@ -450,7 +467,7 @@
     if (fin(inc.dso) && at(A, 'ar')) links.push({ a: at(A, 'ar'), b: rev, left: true, label: days(inc.dso, 'revenue'), title: 'Receivables ÷ revenue × days in the year: how long customers take to pay (DSO)' });
     if (fin(inc.dio) && at(A, 'inv') && cor) links.push({ a: at(A, 'inv'), b: cor, left: true, label: days(inc.dio, 'costs'), title: 'Inventory ÷ cost of revenue × days: how long goods wait to be sold (DIO)' });
     if (fin(inc.dpo) && at(L, 'ap') && cor) links.push({ a: at(L, 'ap'), b: cor, left: false, label: days(inc.dpo, 'costs'), title: 'Payables ÷ cost of revenue × days: how long the company takes to pay suppliers (DPO)' });
-    if (dp && fin(dp.roe) && at(L, 'cse') && ni) links.push({ a: at(L, 'cse'), b: ni, left: false, label: `ROE ${pct(dp.roe)}`, title: 'Net income ÷ average shareholders’ equity', strong: true });
+    if (dp && fin(dp.roe) && at(L, 'cse') && ni) links.push({ a: at(L, 'cse'), b: ni, left: false, label: `ROE ${pct(dp.roe)}`, title: inc.basis === 'pl' ? 'Profit for the year ÷ average equity (minority interests included)' : 'Net income ÷ average shareholders’ equity', strong: true });
     links.forEach((k) => {
       const ya = k.a.y + Math.min(k.a.h / 2, 18), yb = k.b.h ? k.b.y + Math.min(k.b.h / 2, 90) : k.b.y + 3;
       const xA = k.left ? k.a.x + k.a.w : k.a.x, xB = k.left ? k.b.x : k.b.x + k.b.w;

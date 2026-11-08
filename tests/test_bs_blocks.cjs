@@ -111,6 +111,25 @@ test('the equity bridge adds up: opening equity + net income − payouts + share
   assert.equal(B.equityBridge(c, 0), null);
 });
 
+test('IFRS: only the profit for the year (ProfitLoss) is tagged — it is the net income, unless minorities share it', () => {
+  const I = JSON.parse(JSON.stringify(R));
+  I.flows = [{ end: '2025-12-31', revenue: 100, oi: 14, pl: 10, ev: { pl: [3, 'fy', [0]] } }];
+  const c = { quality: { reform: I, drivers: { fy: [{ end: '2025-12-31', cur: { revenue: 100, cor: 60, oi: 14 } }] } } };
+  const inc = B.incomeOf(c, '2025-12-31');
+  assert.equal(inc.ni, 10);
+  assert.equal(inc.basis, 'pl');
+  assert.equal(B.dupont(I, 1, inc).roe, 10 / 80);
+  const b = B.equityBridge(c, 1);
+  assert.equal(b.rows[0].key, 'ni');
+  assert.equal(b.rows[0].v, 10);
+  assert.deepEqual(b.rows[0].ev.ref, [3, 'fy', [0]]);
+  const M = JSON.parse(JSON.stringify(I));
+  M.totals.nci = [5, 5];                                     // a minority's share is inside the profit: not the owners'
+  const cm = { quality: { reform: M, drivers: c.quality.drivers } };
+  assert.ok(!B.equityBridge(cm, 1).rows.some((r) => r.key === 'ni'));
+  assert.equal(B.dupont(M, 1, B.incomeOf(cm, '2025-12-31')).roe, 10 / 85);   // profit for the year ÷ all equity
+});
+
 test('blocks too thin to see join one “smaller lines” block of their kind; a hatched rest never does', () => {
   const list = [{ k: 'a', side: 'a', cls: 'op', v: 1, cur: 1 }, { k: 'b', side: 'a', cls: 'op', v: 1, cur: 1 }, { k: 'c', side: 'a', cls: 'fin', v: 1, cur: 1 },
     { k: 'd', side: 'a', cls: 'op', v: 100, cur: 1 }, { k: 'e', side: 'a', cls: 'op', v: 1, cur: 1, derived: true }];
