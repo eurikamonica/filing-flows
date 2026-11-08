@@ -12,8 +12,11 @@ net borrowing cost, financial leverage) — the company page's "Balance sheet" w
 Each balance-sheet line comes from a standard tag with a default class and the reason for it; the reader can move
 any line between operating and financing in the browser and every figure is recomputed there. What the tagged lines
 leave of total assets or total liabilities is a line of its own ("other, not tagged separately"), so the totals always
-match the filing and nothing is filled in. Each line carries an empty "suggest" for a classification read from the
-filing's notes later (the local model).
+match the filing and nothing is filled in. When the balance sheet tags its current assets (liabilities) at every year
+end, that rest is split into a current and a non-current line, and each line says which section it is in ("cur"; a
+lease line has a part in both, its current part in "cv") — the company page's balance sheet in blocks draws the
+sections. A negative rest means a line above is also inside another one (a detail from the notes counted twice). Each
+line carries an empty "suggest" for a classification read from the filing's notes later (the local model).
 """
 from . import facts as F
 from . import fsa as W
@@ -27,9 +30,23 @@ LINES = [
     ("sti", "a", "Short-term investments", "fin", "Securities held for the cash they will return: financial.",
      [["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent"]]),
     ("lti", "a", "Long-term investments", "fin", "Securities held for their return: financial. A stake in another business that is part of operations is operating.",
-     [["MarketableSecuritiesNoncurrent", "AvailableForSaleSecuritiesDebtSecuritiesNoncurrent", "LongTermInvestments"]]),
+     [["MarketableSecuritiesNoncurrent", "AvailableForSaleSecuritiesDebtSecuritiesNoncurrent", "LongTermInvestments",
+       "OtherLongTermInvestments", "EquitySecuritiesFVNINoncurrent", "EquitySecuritiesWithoutReadilyDeterminableFairValueAmount"]]),
+    ("resale", "a", "Resale agreements and securities borrowed", "fin", "Cash lent against securities: financial.",
+     [["SecuritiesPurchasedUnderAgreementsToResell", "FederalFundsSoldAndSecuritiesPurchasedUnderAgreementsToResell"], ["SecuritiesBorrowed"]]),
+    ("secs", "a", "Debt securities", "fin", "Bonds held for sale or to maturity: financial.",
+     [["AvailableForSaleSecuritiesDebtSecurities", "DebtSecuritiesAvailableForSaleExcludingAccruedInterest"],
+      ["HeldToMaturitySecurities", "DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLoss",
+       "DebtSecuritiesHeldToMaturityExcludingAccruedInterestAfterAllowanceForCreditLoss"]]),
+    ("eqsec", "a", "Equity securities", "fin", "Shares held for their return: financial.",
+     [["EquitySecuritiesFvNi", "MarketableSecuritiesEquitySecurities"]]),
+    ("loans", "a", "Loans, net of the allowance", "op", "Lending is a bank's business: operating.",
+     [["LoansAndLeasesReceivableNetReportedAmount", "FinancingReceivableExcludingAccruedInterestAfterAllowanceForCreditLoss",
+       "LoansAndLeasesReceivableNetOfDeferredIncome", "NotesReceivableNet"]]),
     ("ar", "a", "Receivables", "op", "Owed by customers for sales: operating.",
      [["AccountsReceivableNetCurrent", "ReceivablesNetCurrent", "AccountsReceivableNet"]]),
+    ("orec", "a", "Other receivables", "op", "Owed by suppliers and others, not by customers (vendor non-trade receivables): operating.",
+     [["NontradeReceivablesCurrent"]]),
     ("inv", "a", "Inventory", "op", "Goods held for sale: operating.", [["InventoryNet"]]),
     ("oca", "a", "Prepaid and other current assets", "op", "Prepayments and other operating items: operating.",
      [["PrepaidExpenseAndOtherAssetsCurrent", "OtherAssetsCurrent", "PrepaidExpenseCurrent"]]),
@@ -41,11 +58,17 @@ LINES = [
      [["IntangibleAssetsNetExcludingGoodwill", "FiniteLivedIntangibleAssetsNet"]]),
     ("eqm", "a", "Equity-method investments", "op", "Stakes in associated businesses, usually part of operations. Financial if held as an investment.", [["EquityMethodInvestments"]]),
     ("dta", "a", "Deferred tax assets", "op", "Taxes on operating income paid ahead: operating.", [["DeferredIncomeTaxAssetsNet", "DeferredTaxAssetsNetNoncurrent"]]),
-    ("onca", "a", "Other non-current assets", "op", "Other long-term operating items: operating.", [["OtherAssetsNoncurrent"]]),
+    ("onca", "a", "Other non-current assets", "op", "Other long-term operating items: operating.",
+     [["OtherAssetsNoncurrent", "DeferredIncomeTaxesAndOtherAssetsNoncurrent"]]),
+    ("deposits", "l", "Deposits", "op", "Customers' money a bank holds is its business: operating.", [["Deposits"]]),
+    ("repo", "l", "Repurchase agreements", "fin", "Cash borrowed against securities: financial.",
+     [["SecuritiesSoldUnderAgreementsToRepurchase", "FederalFundsPurchasedAndSecuritiesSoldUnderAgreementsToRepurchase"]]),
     ("ap", "l", "Accounts payable", "op", "Owed to suppliers for operations: operating.",
-     [["AccountsPayableCurrent", "AccountsPayableTradeCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent"]]),
-    ("accr", "l", "Accrued liabilities", "op", "Wages, services and other costs not yet paid: operating.",
-     [["AccruedLiabilitiesCurrent", "EmployeeRelatedLiabilitiesCurrent"]]),
+     [["AccountsPayableCurrent", "AccountsPayableTradeCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent",
+       "AccountsPayableAndAccruedLiabilitiesCurrentAndNoncurrent"]]),
+    ("accr", "l", "Accrued liabilities", "op", "Services and other costs not yet paid: operating.", [["AccruedLiabilitiesCurrent"]]),
+    ("comp", "l", "Accrued compensation", "op", "Wages, bonuses and benefits earned but not yet paid: operating.",
+     [["EmployeeRelatedLiabilitiesCurrent"]]),
     ("defrev", "l", "Deferred revenue", "op", "Customers' payments ahead of delivery: operating.",
      [["ContractWithCustomerLiabilityCurrent", "DeferredRevenueCurrent"]]),
     ("taxp", "l", "Income taxes payable", "op", "Taxes on operating income: operating.", [["AccruedIncomeTaxesCurrent", "TaxesPayableCurrent"]]),
@@ -62,21 +85,32 @@ LINES = [
      [["FinanceLeaseLiabilityNoncurrent"], ["FinanceLeaseLiabilityCurrent"]]),
     ("olease", "l", "Operating lease liabilities", "op", "Rent owed on leases used in the business: operating by default. Move it to financing to treat leases like debt (if the balance sheet has no lease line of its own, they sit inside other liabilities).",
      [["OperatingLeaseLiabilityNoncurrent"], ["OperatingLeaseLiabilityCurrent"]]),
+    ("taxpn", "l", "Income taxes payable, non-current", "op", "Taxes on operating income due after a year (often uncertain tax positions): operating.",
+     [["AccruedIncomeTaxesNoncurrent"]]),
     ("dtl", "l", "Deferred tax liabilities", "op", "Taxes on operating income deferred: operating.", [["DeferredIncomeTaxLiabilitiesNet", "DeferredTaxLiabilitiesNoncurrent"]]),
     ("pension", "l", "Pension and retiree benefits", "op", "Promised to employees for their work: operating (some analysts treat the unfunded part as debt).",
      [["DefinedBenefitPensionPlanLiabilitiesNoncurrent", "PensionAndOtherPostretirementDefinedBenefitPlansLiabilitiesNoncurrent"]]),
     ("defrevn", "l", "Deferred revenue, non-current", "op", "Customers' payments for later years: operating.",
      [["ContractWithCustomerLiabilityNoncurrent", "DeferredRevenueNoncurrent"]]),
-    ("oncl", "l", "Other non-current liabilities", "op", "Other long-term operating obligations: operating.", [["OtherLiabilitiesNoncurrent"]]),
+    ("oncl", "l", "Other non-current liabilities", "op", "Other long-term operating obligations: operating.",
+     [["OtherLiabilitiesNoncurrent", "DeferredIncomeTaxesAndOtherLiabilitiesNoncurrent"]]),
 ]
 # a combined tag that already contains another line: that line is skipped
-COVERS = {"AccountsPayableAndAccruedLiabilitiesCurrent": {"accr"}, "DebtCurrent": {"ltdc"},
-          "LongTermDebtAndCapitalLeaseObligations": {"flease"}}
+COVERS = {"AccountsPayableAndAccruedLiabilitiesCurrent": {"accr"}, "AccountsPayableAndAccruedLiabilitiesCurrentAndNoncurrent": {"accr"},
+          "DebtCurrent": {"ltdc"}, "LongTermDebtAndCapitalLeaseObligations": {"flease"}}
+# The current section of a classified balance sheet (the other lines are non-current). A line of two groups,
+# non-current then current, has a part in each: its current part is published as "cv".
+CURRENT = {"cash", "sti", "ar", "orec", "inv", "oca", "ap", "accr", "comp", "defrev", "taxp", "ocl", "std", "ltdc"}
+SPLIT = {"flease": (False, True), "olease": (False, True)}
+# Read only from a side without current and non-current sections (banks, insurers, brokers): on a classified balance
+# sheet these tags are details in the notes of the lines above, so they would count twice.
+UNCLASSIFIED = {"resale", "secs", "eqsec", "loans", "deposits", "repo"}
 TOTALS = {"assets": ["Assets"], "liab": ["Liabilities"], "le": ["LiabilitiesAndStockholdersEquity"],
+          "ca": ["AssetsCurrent"], "cl": ["LiabilitiesCurrent"],
           "cse": ["StockholdersEquity"], "nci": ["MinorityInterest"],
           "eq_all": ["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
           "temp": ["RedeemableNoncontrollingInterestEquityCarryingAmount", "TemporaryEquityCarryingAmountAttributableToParent"],
-          "ltd_all": ["LongTermDebt"]}
+          "ltd_all": ["LongTermDebt", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"]}
 INSTANT_CONCEPTS = {t for *_, gs in LINES for g in gs for t in g} | {t for v in TOTALS.values() for t in v}
 FLOWS = {"int_exp": ["InterestExpense", "InterestExpenseNonoperating", "InterestExpenseDebt", "InterestAndDebtExpense"],
          "int_inc": ["InvestmentIncomeInterest", "InterestIncomeOther", "InvestmentIncomeInterestAndDividend"]}
@@ -85,6 +119,16 @@ OTHER_A = ("oth_a", "a", "Other assets, not tagged separately", "op",
            "Total assets minus the lines above: assets the company tags its own way. Operating by default.")
 OTHER_L = ("oth_l", "l", "Other liabilities, not tagged separately", "op",
            "Total liabilities minus the lines above: liabilities the company tags its own way. Operating by default.")
+# what the lines leave of each section, when the balance sheet tags its current totals at every year end
+OTHER_SECTIONS = {
+    "a": [("oth_ca", "ca", "Other current assets, not tagged separately",
+           "Total current assets minus the current lines above: current assets the company tags its own way. Operating by default."),
+          ("oth_nca", "nca", "Other non-current assets, not tagged separately",
+           "Non-current assets (total assets − current assets) minus the non-current lines above: assets the company tags its own way. Operating by default.")],
+    "l": [("oth_cl", "cl", "Other current liabilities, not tagged separately",
+           "Total current liabilities minus the current lines above: current liabilities the company tags its own way. Operating by default."),
+          ("oth_ncl", "ncl", "Other non-current liabilities, not tagged separately",
+           "Non-current liabilities (total liabilities − current liabilities) minus the non-current lines above: liabilities the company tags its own way. Operating by default.")]}
 
 
 def _bal(fx, ev, tags, day):
@@ -112,17 +156,22 @@ def compute(fx, ev, ye, fye="1231"):
         if totals["liab"][i] is None and totals["le"][i] is not None:
             eq = totals["eq_all"][i] if totals["eq_all"][i] is not None else (totals["cse"][i] or 0) + (totals["nci"][i] or 0)
             totals["liab"][i] = totals["le"][i] - eq - (totals["temp"][i] or 0)
+    # a side is classified when its current total is tagged at every year end: then what the lines leave is split
+    # into its current and non-current part, and the lines of unclassified balance sheets are not read
+    classified = {"a": all(v is not None for v in totals["ca"]), "l": all(v is not None for v in totals["cl"])}
     skipped = set()
     for key, side, name, cls, why, groups in LINES:
-        if key in skipped:
+        if key in skipped or (key in UNCLASSIFIED and classified[side]):
             continue
-        vals, refs, tags = [], [], []
+        vals, refs, tags, cur = [], [], [], []
         for e in ends:
-            tot, rs, used = None, [], None
-            for g in groups:
+            tot, rs, used, cv = None, [], None, None
+            for gi, g in enumerate(groups):
                 v, r, c = _bal(fx, ev, g, e)
                 if v is not None:
                     tot = (tot or 0) + v
+                    if key in SPLIT and SPLIT[key][gi]:
+                        cv = (cv or 0) + v
                     rs.append(r)
                     used = c
                     skipped |= COVERS.get(c, set())
@@ -131,26 +180,51 @@ def compute(fx, ev, ye, fye="1231"):
             vals.append(tot)
             refs.append(rs)
             tags.append(used)
+            cur.append(cv)
         if key == "ltd" and all(v is None for v in vals):           # only the total with current maturities is tagged
-            vals, refs = [], []
+            vals, refs, cur = [], [], []
             for e in ends:
                 v, r, _ = _bal(fx, ev, TOTALS["ltd_all"], e)
                 vals.append(v)
                 refs.append([r] if r else [])
+                cur.append(_bal(fx, ev, ["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"], e)[0] if v is not None else None)
             name, why = "Long-term debt (incl. current portion)", "Bonds, notes and loans, current maturities included: financial."
             skipped.add("ltdc")
         if any(v for v in vals):
-            lines.append({"k": key, "side": side, "name": name, "cls": cls, "why": why, "v": vals, "ev": refs, "suggest": None})
+            x = {"k": key, "side": side, "name": name, "cls": cls, "why": why, "v": vals, "ev": refs, "suggest": None}
+            if classified[side]:
+                x["cur"] = 1 if key in CURRENT else 0
+                if any(cur):                    # a lease line's current part; the current maturities in the debt total
+                    x["cv"] = cur
+            lines.append(x)
     if "ltdc" in skipped:
         lines = [x for x in lines if x["k"] != "ltdc"]
-    for spec, tot in ((OTHER_A, "assets"), (OTHER_L, "liab")):
+
+    def current_part(x, i):
+        return (x["cv"][i] or 0) if "cv" in x else (x["v"][i] or 0) if x.get("cur") else 0
+
+    for spec, tot, sub in ((OTHER_A, "assets", "ca"), (OTHER_L, "liab", "cl")):
         key, side, name, cls, why = spec
-        rest = []
+        mine = [x for x in lines if x["side"] == side]
+        if not classified[side]:
+            rest = []
+            for i in range(len(ends)):
+                t = totals[tot][i]
+                rest.append(None if t is None else t - sum(x["v"][i] or 0 for x in mine))
+            lines.append({"k": key, "side": side, "name": name, "cls": cls, "why": why, "v": rest, "ev": [[] for _ in ends],
+                          "derived": tot, "suggest": None})
+            continue
+        (kc, dc, nc, wc), (kn, dn, nn, wn) = OTHER_SECTIONS[side]
+        rc, rn = [], []
         for i in range(len(ends)):
-            t = totals[tot][i]
-            rest.append(None if t is None else t - sum(x["v"][i] or 0 for x in lines if x["side"] == side))
-        lines.append({"k": key, "side": side, "name": name, "cls": cls, "why": why, "v": rest, "ev": [[] for _ in ends],
-                      "derived": tot, "suggest": None})
+            t, s = totals[tot][i], totals[sub][i]
+            cp = sum(current_part(x, i) for x in mine)
+            rc.append(s - cp)
+            rn.append(None if t is None else t - s - (sum(x["v"][i] or 0 for x in mine) - cp))
+        lines.append({"k": kc, "side": side, "name": nc, "cls": cls, "why": wc, "v": rc, "ev": [[] for _ in ends],
+                      "derived": dc, "cur": 1, "suggest": None})
+        lines.append({"k": kn, "side": side, "name": nn, "cls": cls, "why": wn, "v": rn, "ev": [[] for _ in ends],
+                      "derived": dn, "cur": 0, "suggest": None})
     flows = []
     for e in ends[1:]:
         row, refs = {}, {}

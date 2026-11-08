@@ -2457,6 +2457,39 @@ def test_reformulated_balance_sheet_balances_and_names_what_is_untagged():
         noa, nfo = side("a", "op") - side("l", "op"), side("l", "fin") - side("a", "fin")
         assert noa - nfo == r["totals"]["cse"][i] + r["totals"]["nci"][i]
     assert r["flows"][0]["int_exp"] == 2 and r["suggest"] is None
+    assert "cur" not in line["cash"] and line["oth_a"]["derived"] == "assets"   # no current totals: one rest per side
+
+
+def test_reformulated_balance_sheet_splits_the_rest_by_section():
+    """With current assets and current liabilities tagged at every year end, what the lines leave is split into a
+    current and a non-current line; a lease line has its current part in "cv"; leases that the filing keeps inside
+    other non-current liabilities make that section's rest negative; a bank's tag (deposits) on a classified balance
+    sheet is a detail from the notes and is not read; NOA − NFO = equity still holds."""
+    from pipeline import facts as F, quality as Q
+    b = lambda v0, v1: [(None, "2024-12-31", v0), (None, "2025-12-31", v1)]
+    fy = lambda v0, v1: [("2024-01-01", "2024-12-31", v0), ("2025-01-01", "2025-12-31", v1)]
+    fx = F.index_facts(_cf({
+        "NetIncomeLoss": fy(8, 10), "Revenues": fy(90, 100), "OperatingIncomeLoss": fy(12, 14),
+        "Assets": b(180, 200), "AssetsCurrent": b(60, 80), "CashAndCashEquivalentsAtCarryingValue": b(20, 30),
+        "AccountsReceivableNetCurrent": b(30, 40), "PropertyPlantAndEquipmentNet": b(100, 110),
+        "LiabilitiesAndStockholdersEquity": b(180, 200), "LiabilitiesCurrent": b(40, 45), "AccountsPayableCurrent": b(30, 35),
+        "OperatingLeaseLiabilityCurrent": b(2, 2), "OperatingLeaseLiabilityNoncurrent": b(10, 10),
+        "LongTermDebtNoncurrent": b(50, 50), "OtherLiabilitiesNoncurrent": b(25, 30), "Deposits": b(5, 5),
+        "StockholdersEquity": b(75, 85),
+    }))
+    r = Q.compute(fx)["reform"]
+    line = {x["k"]: x for x in r["lines"]}
+    assert r["totals"]["ca"] == [60, 80] and r["totals"]["cl"] == [40, 45] and r["totals"]["liab"] == [105, 115]
+    assert "oth_a" not in line and "deposits" not in line
+    assert line["oth_ca"]["v"] == [10, 10] and line["oth_ca"]["cur"] == 1 and line["oth_ca"]["derived"] == "ca"
+    assert line["oth_nca"]["v"] == [20, 10] and line["oth_nca"]["cur"] == 0
+    assert line["olease"]["v"] == [12, 12] and line["olease"]["cv"] == [2, 2] and line["olease"]["cur"] == 0
+    assert line["cash"]["cur"] == 1 and line["ppe"]["cur"] == 0 and "cv" not in line["ltd"]
+    assert line["oth_cl"]["v"] == [40 - 30 - 2, 45 - 35 - 2]                          # 8: current, not tagged
+    assert line["oth_ncl"]["v"] == [65 - 50 - 10 - 25, 70 - 50 - 10 - 30] == [-20, -20]  # leases counted twice
+    for i in range(2):
+        side = lambda s, c: sum(x["v"][i] or 0 for x in r["lines"] if x["side"] == s and x["cls"] == c)
+        assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i]
 
 
 def test_links_off_leaves_text_and_images_only():

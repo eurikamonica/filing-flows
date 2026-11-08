@@ -1339,7 +1339,10 @@
       cashSection(body, c);
     } else if (which === 'capital') { capitalSection(body, c, ticker); postBelow(body, 'capital', c, ticker, here); }
     else if (which === 'revisions') revisionsSection(body, c);
-    else if (which === 'bs') reformSection(body, c);
+    else if (which === 'bs') {                                 // the blocks (web/bs-blocks.js), then the workbench
+      if (window.FFBSBlocks) window.FFBSBlocks.mount(body, c, { money, evBtn });
+      reformSection(body, c);
+    }
     else valuationSection(body, c, ticker, here);
   }
 
@@ -2182,6 +2185,10 @@
   }
 
   // ---------- Balance sheet reformulated: operating vs financing, RNOA (pipeline/reform.py) ----------
+  // a derived line: what the tagged lines leave of a side, or of its current (cur 1) or non-current (cur 0) section
+  const RF_REST = { assets: { tot: 'assets', twice: 'Assets' }, liab: { tot: 'liab', twice: 'Liabilities' },
+    ca: { tot: 'assets', sec: 'ca', cur: 1, twice: 'Current assets' }, nca: { tot: 'assets', sec: 'ca', cur: 0, twice: 'Non-current assets' },
+    cl: { tot: 'liab', sec: 'cl', cur: 1, twice: 'Current liabilities' }, ncl: { tot: 'liab', sec: 'cl', cur: 0, twice: 'Non-current liabilities' } };
   function reformSection(body, c) {
     const R = (c.quality || {}).reform, P = c.profile || {};
     const box = document.createElement('section');
@@ -2196,7 +2203,10 @@
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(store) || '{}') || {}; } catch (e) { saved = {}; }
     const st = { i: R.ends.length - 1, tax: saved.tax != null ? saved.tax : R.tax_rate, cls: { ...(saved.cls || {}) } };
-    const save = () => { try { localStorage.setItem(store, JSON.stringify({ cls: st.cls, tax: st.tax })); } catch (e) { /* private window */ } };
+    const save = () => {
+      try { localStorage.setItem(store, JSON.stringify({ cls: st.cls, tax: st.tax })); } catch (e) { /* private window */ }
+      document.dispatchEvent(new CustomEvent('ff:reform', { detail: { cik: P.cik } }));   // the blocks above redraw
+    };
     const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
     const clsOf = (x) => st.cls[x.k] || x.cls;
     const T = (k, i) => ((R.totals || {})[k] || [])[i];
@@ -2226,13 +2236,20 @@
       const v = x.v[i], rs = (x.ev || [])[i] || [], per = R.labels[i];
       if (v == null) return '<span class="muted">—</span>';
       if (x.derived) {
-        const tot = x.derived === 'assets' ? T('assets', i) : T('liab', i);
-        const shown = R.lines.filter((y) => y.side === x.side && !y.derived).reduce((s, y) => s + (y.v[i] || 0), 0);
+        // what the lines leave: of the side (unclassified balance sheets) or of its current / non-current section
+        const D = RF_REST[x.derived], word = D.tot === 'assets' ? 'assets' : 'liabilities', whole = T(D.tot, i), sec = D.sec ? T(D.sec, i) : null;
+        const part = (y) => (y.cv ? (y.cv[i] || 0) : y.cur ? (y.v[i] || 0) : 0);
+        const mine = R.lines.filter((y) => y.side === x.side && !y.derived);
+        const all = mine.reduce((s, y) => s + (y.v[i] || 0), 0), cur = mine.reduce((s, y) => s + part(y), 0);
+        const ref = (k) => ((R.ev_totals || {})[k] || [])[i];
+        const inputs = [{ title: `Total ${word}`, value: money(whole), period: per, ref: ref(D.tot),
+          note: D.tot === 'liab' && !ref('liab') ? 'Not tagged: liabilities and equity minus equity.' : '' }];
+        if (D.sec) inputs.push({ title: `Current ${word}`, value: money(sec), period: per, ref: ref(D.sec) });
         return evBtn(money(v), { title: x.name, value: money(v), period: per, kind: 'Derived',
-          formula: `total ${x.derived === 'assets' ? 'assets' : 'liabilities'} ${money(tot)} − the lines above ${money(shown)}`,
-          note: v < 0 ? 'Negative: some lines above are already included in other lines of this balance sheet (taken twice), so this line takes them back out.' : x.why,
-          inputs: [{ title: x.derived === 'assets' ? 'Total assets' : 'Total liabilities', value: money(tot), period: per, ref: ((R.ev_totals || {})[x.derived === 'assets' ? 'assets' : 'liab'] || [])[i],
-            note: x.derived === 'liab' && !((R.ev_totals || {}).liab || [])[i] ? 'Not tagged: liabilities and equity minus equity.' : '' }] });
+          formula: D.cur == null ? `total ${word} ${money(whole)} − the lines above ${money(all)}`
+            : D.cur ? `current ${word} ${money(sec)} − the current lines above ${money(cur)}`
+            : `non-current ${word} ${money(whole - sec)} (total ${money(whole)} − current ${money(sec)}) − the non-current lines above ${money(all - cur)}`,
+          note: v < 0 ? 'Negative: some lines above are already included in other lines of this balance sheet (taken twice), so this line takes them back out.' : x.why, inputs });
       }
       if (rs.length === 1) return evBtn(money(v), { title: x.name, value: money(v), period: per, ref: rs[0] });
       return evBtn(money(v), { title: x.name, value: money(v), period: per, kind: 'Reported', formula: 'sum of the tagged lines', inputs: rs.map((r) => ({ title: x.name, value: '', period: per, ref: r })) });
@@ -2240,7 +2257,7 @@
     function sideHTML(side, i) {
       const L = R.lines.filter((x) => x.side === side && x.v[i] != null && (x.v[i] !== 0 || x.derived));
       const b = bal(i);
-      const name = (x) => (x.derived && x.v[i] < 0 ? (side === 'a' ? 'Assets counted twice above' : 'Liabilities counted twice above') : x.name);
+      const name = (x) => (x.derived && x.v[i] < 0 ? `${RF_REST[x.derived].twice} counted twice above` : x.name);
       return `<table class="ca-table rf-table"><thead><tr><th>${side === 'a' ? 'Assets' : 'Liabilities'}</th><th class="num">${t(R.labels[i])}</th><th>Class</th></tr></thead><tbody>
         ${L.map((x) => { const cl = clsOf(x), ed = st.cls[x.k] && st.cls[x.k] !== x.cls; return `<tr class="${ed ? 'rf-edited' : ''}">
           <td><span class="rf-name">${t(name(x))}</span><small class="rf-why">${t(x.why)}${x.suggest ? ` <b>Suggested from the notes: ${t(x.suggest.cls === 'fin' ? 'financing' : 'operating')}</b> — ${t(x.suggest.why || '')}` : ''}</small></td>
