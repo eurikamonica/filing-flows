@@ -2499,6 +2499,55 @@ def test_reformulated_balance_sheet_splits_the_rest_by_section():
         assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i]
 
 
+def test_reformulated_balance_sheet_reads_ifrs():
+    """An IFRS balance sheet (ifrs-full: a 20-F, a European annual report) reads into the same lines: the facts index
+    keeps its balances, borrowings and IFRS 16 lease liabilities are financing (the lease's current part in "cv"),
+    provisions operating, equity attributable to owners is shareholders' equity, and the rests by section add up."""
+    from pipeline import facts as F, quality as Q
+    b = lambda v0, v1: [{"end": "2024-12-31", "val": v0, "filed": "2025-03-01", "form": "20-F"},
+                        {"end": "2025-12-31", "val": v1, "filed": "2026-03-01", "form": "20-F"}]
+    fy = lambda v0, v1: [{"start": "2024-01-01", "end": "2024-12-31", "val": v0, "filed": "2025-03-01", "form": "20-F"},
+                         {"start": "2025-01-01", "end": "2025-12-31", "val": v1, "filed": "2026-03-01", "form": "20-F"}]
+    ifrs = {"Revenue": fy(90, 100), "ProfitLossAttributableToOwnersOfParent": fy(8, 10), "ProfitLoss": fy(9, 11),
+            "Assets": b(180, 200), "CurrentAssets": b(60, 80), "CashAndCashEquivalents": b(20, 30), "Inventories": b(25, 30),
+            "TradeAndOtherCurrentReceivables": b(10, 12), "PropertyPlantAndEquipment": b(70, 75), "RightofuseAssets": b(10, 9),
+            "Goodwill": b(30, 30), "EquityAndLiabilities": b(180, 200), "Liabilities": b(105, 112), "CurrentLiabilities": b(40, 45),
+            "TradeAndOtherCurrentPayables": b(20, 22), "CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings": b(8, 9),
+            "CurrentPortionOfLongtermBorrowings": b(3, 3), "CurrentLeaseLiabilities": b(2, 2), "NoncurrentLeaseLiabilities": b(8, 7),
+            "CurrentProvisions": b(4, 5), "NoncurrentProvisions": b(6, 6), "LongtermBorrowings": b(40, 40),
+            "EquityAttributableToOwnersOfParent": b(70, 82), "NoncontrollingInterests": b(5, 6), "Equity": b(75, 88)}
+    fx = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in ifrs.items()}}}, currency="EUR")
+    assert fx["__instants__"]["CurrentAssets"]["2025-12-31"]["val"] == 80          # IFRS balances are indexed
+    r = Q.compute(fx)["reform"]
+    line = {x["k"]: x for x in r["lines"]}
+    assert r["totals"]["cse"] == [70, 82] and r["totals"]["nci"] == [5, 6] and r["totals"]["ca"] == [60, 80]
+    assert line["cash"]["v"] == [20, 30] and line["inv"]["v"] == [25, 30] and line["ar"]["v"] == [10, 12]
+    assert line["std"]["v"] == [8, 9] and "ltdc" not in line                       # all current borrowings in one line
+    assert line["ltd"]["v"] == [40, 40] and line["ltd"]["cls"] == "fin"
+    assert line["lease"]["v"] == [10, 9] and line["lease"]["cv"] == [2, 2] and line["lease"]["cls"] == "fin"
+    assert line["prov"]["v"] == [10, 11] and line["prov"]["cv"] == [4, 5] and line["prov"]["cls"] == "op"
+    assert line["oth_ca"]["v"] == [60 - 55, 80 - 72]                               # current assets the lines leave
+    assert line["oth_ncl"]["v"] == [65 - 40 - 8 - 6, 67 - 40 - 7 - 6]
+    for i in range(2):
+        side = lambda s, c: sum(x["v"][i] or 0 for x in r["lines"] if x["side"] == s and x["cls"] == c)
+        assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i] + r["totals"]["nci"][i]
+
+
+def test_foreign_filer_years_drawn_when_no_quarter_can_be():
+    """A foreign filer whose results releases gave no drawable quarter keeps its page: its 20-F years are its periods."""
+    from pipeline import build
+    c = {"profile": {"cik": 1, "name": "Euro Co", "tickers": ["EU"], "fye": "1231"}, "fpi": True, "currency": "EUR",
+         "years": {"2025-12-31": {"end": "2025-12-31"}, "2024-12-31": {"end": "2024-12-31"}}}
+    orig = build.year_payload
+    try:
+        build.year_payload = lambda c, y: {"end": y["end"], "label": "FY" + y["end"][:4], "period": "fy"}
+        out = build._year_periods(c, 1)
+    finally:
+        build.year_payload = orig
+    assert [p["label"] for p in out] == ["FY2024", "FY2025"]                    # oldest first, like quarters
+    assert "_N" not in out[0]
+
+
 def test_links_off_leaves_text_and_images_only():
     """config/x.json "links": false: no web address in any post; a label that only introduced one goes with it, the
     sentences around it stay, and a reply left empty is dropped. The images are untouched (Buffer gets the same

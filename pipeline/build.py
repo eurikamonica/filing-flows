@@ -2709,6 +2709,11 @@ def _as_half(pl):
     return out
 
 
+def _year_periods(c, cik):
+    """A foreign filer's 20-F years as its periods, oldest first (render: when none of its quarters can be drawn)."""
+    return [dict(pl) for pl in reversed(_year_payloads(c, cik))]
+
+
 def _year_payloads(c, cik):
     years = []
     for y in sorted((c.get("years") or {}).values(), key=lambda y: y["end"], reverse=True):
@@ -2768,6 +2773,16 @@ def render(store, out, stars=frozenset()):
             undrawn.pop(str(cik), None)
         if halfly:
             payloads = [_as_half(pl) for pl in payloads]
+        yearly = False
+        if not payloads and c.get("fpi") and c.get("years"):
+            # a foreign filer none of whose results releases (6-K) could be drawn: its 20-F years are its periods, so
+            # the company stays on the site (ASML, Novo Nordisk, Ferrari read from the annual report's XBRL)
+            try:
+                payloads = _year_periods(c, cik)
+                yearly = bool(payloads)
+            except Exception as e:
+                print(f"  annual periods failed {cik}: {e}", file=sys.stderr)
+                payloads = []
         if not payloads:
             continue
         p = c["profile"]
@@ -2784,6 +2799,8 @@ def render(store, out, stars=frozenset()):
                     uq, uy = _payloads(u, cik), _year_payloads(u, cik)
                     if halfly:
                         uq = [_as_half(pl) for pl in uq]
+                    if yearly:                           # the dollar years as its periods too (copies: labelled once each)
+                        uq = [dict(pl) for pl in reversed(uy)]
                     for pl in uq:
                         pl["x_thread"] = []
                     _label_currency(uq + uy, cur, rates, fx_cache)
@@ -2794,6 +2811,8 @@ def render(store, out, stars=frozenset()):
             FX._cur[0] = cur
         group_src = payloads if cur == "USD" else (usd or {}).get("quarters") or []
         for pl in group_src:                                 # sector and industry totals add up dollars only
+            if not pl.get("_N"):                             # a year drawn as a period: not in the quarter's totals
+                continue
             Nc, Nq, Ny = pl["_N"]
             for key in (("sector", p["sector"]), ("industry", p["sic"] or "none")):
                 groups.setdefault(key, {}).setdefault(pl["cal"], []).append(
