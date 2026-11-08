@@ -1,71 +1,134 @@
-# Owner's debugging aid: download companies' SEC companyfacts (the XBRL facts every chart is read from) as a run
-# artifact, so a wrong figure can be traced to the tag and context it came from without a local SEC_USER_AGENT.
-#   gh api -X POST repos/<owner>/<repo>/actions/workflows/facts-probe.yml/dispatches -f ref=main -f 'inputs[ciks]=916365,1111711'
-#   gh run download <run id> -n facts
+# TEMPORARY probe branch (probe/eu-releases): European foreign filers' 6-K results releases since April 2026, saved
+# under the SEC_FIXTURES file names (sec._fixture_path) so the 6-K reader can be replayed offline, with what the reader
+# makes of each. Not for main.
 name: Facts probe
 
 on:
   workflow_dispatch:
     inputs:
       ciks:
-        description: "CIKs, comma-separated (at most 40)"
+        description: "CIKs, comma-separated"
         required: false
         default: ""
       urls:
-        description: "SEC URLs to download as they are (a filing index, an exhibit), comma-separated (at most 20)"
+        description: "unused here"
         required: false
         default: ""
 
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
     steps:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
+            pipeline/
             sec.py
+            requirements.txt
           sparse-checkout-cone-mode: false
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - run: pip install requests
+      - run: pip install -r requirements.txt
 
-      - name: Download companyfacts and documents
+      - name: Download results releases and read them
         env:
           CIKS: ${{ github.event.inputs.ciks }}
-          URLS: ${{ github.event.inputs.urls }}
         run: |
           mkdir -p facts
-          python - <<'EOF'
-          import gzip, json, os, re, sys
-          import sec
-          ciks = [c for c in os.environ["CIKS"].replace(" ", "").split(",") if c][:40]
-          for cik in ciks:
-              try:
-                  fx = sec.get_json(sec.companyfacts_url(cik))
-              except Exception as e:
-                  print(f"{cik}: {e}", file=sys.stderr)
-                  continue
-              with gzip.open(f"facts/{int(cik)}.json.gz", "wt") as f:
-                  json.dump(fx, f)
-              print(cik, len(fx.get("facts", {}).get("us-gaap", {})), "us-gaap concepts")
-          urls = [u for u in os.environ["URLS"].replace(" ", "").split(",") if u.startswith("https://www.sec.gov/")][:20]
-          for u in urls:
-              try:
-                  data = sec.get(u, binary=True)
-              except Exception as e:
-                  print(f"{u}: {e}", file=sys.stderr)
-                  continue
-              name = re.sub(r"[^A-Za-z0-9._-]+", "_", u.split("sec.gov/", 1)[1])[-150:]
-              with open(f"facts/{name}", "wb") as f:
+          python - <<'PY'
+          import datetime as dt, gzip, hashlib, json, os, re, sys, traceback
+          sys.path.insert(0, os.getcwd())
+          from pipeline import sec, build, release
+          OUT, SINCE, CAP = "facts", "2026-04-01", 900_000_000
+          used = [0]
+          def name_of(url):
+              n = re.sub(r"^https?://", "", url)
+              n = re.sub(r"[^A-Za-z0-9._-]+", "_", n)
+              return n[:120] + "_" + hashlib.sha1(url.encode()).hexdigest()[:16] if len(n) > 180 else n
+          def save(url, data):
+              data = data if isinstance(data, bytes) else data.encode("utf-8")
+              if used[0] + len(data) > CAP:
+                  return False
+              used[0] += len(data)
+              with open(os.path.join(OUT, name_of(url)), "wb") as f:
                   f.write(data)
-              print(u, len(data), "bytes")
-          EOF
+              return True
+          def b(v):
+              return None if v is None else round(v / 1e9, 4)
+          summary = []
+          for cik in [int(c) for c in os.environ["CIKS"].replace(" ", "").split(",") if c]:
+              try:
+                  su = sec.submissions_url(cik)
+                  raw = sec.get(su, binary=True)
+                  save(su, raw)
+                  sub = json.loads(raw)
+              except Exception as e:
+                  summary.append({"cik": cik, "error": f"submissions: {e}"})
+                  continue
+              try:
+                  cf = sec.get(sec.companyfacts_url(cik), binary=True)
+                  with gzip.open(os.path.join(OUT, f"cf_{cik}.json.gz"), "wb") as f:
+                      f.write(cf)
+              except Exception as e:
+                  summary.append({"cik": cik, "error": f"companyfacts: {e}"})
+              for r in build.recent_rows(sub):
+                  if r["form"] not in ("6-K", "6-K/A", "20-F", "40-F") or (r.get("filingDate") or "") < SINCE:
+                      continue
+                  accn, filed = r["accessionNumber"], r["filingDate"]
+                  rec = {"cik": cik, "name": sub.get("name"), "accn": accn, "form": r["form"], "filed": filed,
+                         "primary": r.get("primaryDocument"), "desc": r.get("primaryDocDescription"), "size": r.get("size"), "docs": []}
+                  summary.append(rec)
+                  if r["form"] in ("20-F", "40-F"):
+                      continue
+                  try:
+                      iu = sec.filing_index_url(cik, accn)
+                      ir = sec.get(iu, binary=True)
+                      save(iu, ir)
+                      idx = json.loads(ir)
+                  except Exception as e:
+                      rec["error"] = f"index: {e}"
+                      continue
+                  names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)
+                           and not build.NOT_EXHIBIT.search(i["name"]) and i["name"] != r.get("primaryDocument")]
+                  names.sort(key=lambda n: (not re.search(build.EXHIBIT_PATTERNS[0], n, re.I), not re.search(build.EXHIBIT_PATTERNS[1], n, re.I), n))
+                  press = [n for n in names if re.search(build.EXHIBIT_PATTERNS[1] + r"|press|release|result|earning", n, re.I)]
+                  names = (press or names)[:3]
+                  if r.get("primaryDocument"):
+                      names.append(r["primaryDocument"])
+                  for nm in names[:4]:
+                      url = sec.doc_url(cik, accn, nm)
+                      d = {"name": nm}
+                      rec["docs"].append(d)
+                      try:
+                          html = sec.get(url)
+                      except Exception as e:
+                          d["error"] = f"get: {e}"
+                          continue
+                      d["bytes"] = len(html)
+                      d["pre"] = bool(re.search(r"quarter|three months|results", html[:200000], re.I) or
+                                      ("ix:header" in html[:200000].lower() and re.search(r"quarter|three months|half[- ]year|interim", html[:4_000_000], re.I)))
+                      d["ix"] = "ix:nonfraction" in html[:5_000_000].lower()
+                      try:
+                          p = release.parse(html, dt.date.fromisoformat(filed))
+                          d["end"], d["isq"], d["cfq"], d["scale"] = p["end"], p["is_quarter"], p.get("cf_quarter"), p["scale"]
+                          d["is"] = {k: b(v) for k, v in p["is"].items()}
+                          d["labels"] = p["labels"]
+                          d["cf"] = {k: b(v) for k, v in (p.get("cf") or {}).items()}
+                      except Exception as e:
+                          d["parse_error"] = str(e)[:200]
+                      big = re.search(r"income statement|statement of (comprehensive )?income|statement of profit|before tax|"
+                                      r"net interest income|total income|profit for the period|net income|net profit", html[:6_000_000], re.I)
+                      if d["pre"] and ("is" in d or big) and len(html) < 9_000_000:
+                          d["saved"] = save(url, html)
+          json.dump(summary, open(os.path.join(OUT, "summary.json"), "w"), indent=1)
+          print("saved bytes", used[0], "filings", len(summary))
+          PY
 
       - uses: actions/upload-artifact@v4
         with:
