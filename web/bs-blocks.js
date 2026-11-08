@@ -230,6 +230,9 @@
   }
 
   // ---------------------------------------------------------------- drawing
+  // the French and Spanish versions (web/i18n.js): names and amounts are translated before they are fitted
+  const T = (s) => (root.FFT ? root.FFT(s) : s);
+  const KEEP = (s) => (root.FFT && root.FFT.keep ? root.FFT.keep(s) : s);
   const MIN_H = 7;                          // px: thinner blocks of one kind and section are drawn as one
   const FONT_W = 6.5;                        // average width of a 12px Plex Sans character, for fitting labels
   function fit(text, px) {
@@ -239,7 +242,7 @@
     let cut = text.slice(0, Math.max(1, n - 1));
     const sp = cut.lastIndexOf(' ');
     if (text[cut.length] !== ' ' && sp >= Math.min(6, n / 2)) cut = cut.slice(0, sp);   // whole words: "Not tagged…"
-    return `${cut.replace(/[\s,;:·&–-]+$/, '')}…`;
+    return KEEP(`${cut.replace(/[\s,;:·&–-]+$/, '')}…`);
   }
   // consecutive blocks too thin to see on their own (same kind and section) become one "smaller lines" block
   function merge(list, scale, minH) {
@@ -291,11 +294,12 @@
   }
   // the label inside a block: the amount is never cut; a name shows when it fits (or keeps 9 characters before its "…");
   // the share is quieter than the amount
-  function labelSVG(x, y, w, h, name, amount, share, ink, tiny) {
+  function labelSVG(x, y, w, h, name0, amount0, share0, ink, tiny) {
     const room = w - 14, chars = Math.floor(room / FONT_W);
     if (room < 30) return '';
+    const name = T(name0), amount = T(amount0), share = share0 ? T(share0) : share0;
     const extra = share ? ` · ${share}` : '';
-    const tinies = [].concat(tiny || []);                     // shorter names, longest first
+    const tinies = [].concat(tiny || []).map(T);              // shorter names, longest first
     const short = (n) => tinies.find((t) => t.length <= n);
     const nameFit = name.length <= chars ? name : short(chars) || (chars >= 10 ? fit(name, room) : '');
     const withShare = (amount + extra).length <= chars;
@@ -385,7 +389,7 @@
       const a = run, z = run + r.v, yT = lev(Math.max(a, z)), h = Math.max(1.5, Math.abs(r.v) * scale);
       const cls = r.gap ? `bsb-st-gap ${r.v < 0 ? 'minus' : 'plus'}` : r.key === 'ni' ? 'bsb-st-ni' : r.v < 0 ? 'bsb-st-minus' : 'bsb-st-plus';
       items.push({ step: r, B, r: { b: { side: 'step' }, x, y: yT, w: sw, h } });
-      const name = STEP_NAME[r.key] || r.name, label = `${name} ${r.v >= 0 ? '+' : '−'}${money(Math.abs(r.v))}`, len = label.length * 6.2;
+      const name = T(STEP_NAME[r.key] || r.name), label = KEEP(`${name} ${r.v >= 0 ? '+' : '−'}${T(money(Math.abs(r.v)))}`), len = label.length * 6.2;
       // the label turned on its side: inside a step tall enough, else above a rise or below a fall
       const cx = x + sw / 2 + 4, roomUp = yT - 6 - len >= 24, roomDown = yT + h + 6 + len <= bottom - 4;
       const up = (r.v >= 0 && roomUp) || (r.v < 0 && !roomDown && roomUp);

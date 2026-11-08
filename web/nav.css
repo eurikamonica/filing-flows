@@ -49,3 +49,27 @@
   .nav .nav-settings { display: block; text-align: left; padding: 12px 10px; font-weight: 500; color: var(--ink); border-top: 1px solid var(--line); border-radius: 0; margin-top: 6px; }
   .top .ff-appearance-button { display: none; }   /* in the menu instead (Settings & appearance) */
 }
+
+/* the language (web/i18n.js): one button beside the theme button, a globe and EN / FR / ES; it opens the three languages */
+.lang-pick { position: relative; flex: none; }
+.lang-btn { display: inline-flex; align-items: center; gap: 5px; height: 36px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--ink-2); font: 500 12px var(--mono, ui-monospace, monospace); letter-spacing: .02em; cursor: pointer; }
+.lang-btn:hover, .lang-btn[aria-expanded="true"] { color: var(--ink); border-color: var(--muted); }
+.lang-btn svg { opacity: .75; }
+.lang-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 45; min-width: 150px; padding: 4px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.lang-menu button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border: 0;
+  border-radius: 7px; background: none; color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.lang-menu button:hover, .lang-menu button:focus-visible { background: var(--surface-2); outline: none; }
+.lang-menu button.on { font-weight: 600; }
+.lang-menu .lang-code { font: 500 11px var(--mono, ui-monospace, monospace); color: var(--muted); }
+.lang-menu button.on .lang-code::before { content: "✓ "; color: var(--accent-ink, var(--ink)); }
+/* the small buttons at the right of the header, as one group (web/i18n.js): the header keeps one row on a 1440 px screen,
+   and on a narrower one the group moves to the next row whole, at the right */
+.top .top-tools { display: flex; align-items: center; gap: 10px; flex: none; margin-left: auto; }
+@media (min-width: 761px) { .top .search { flex-basis: 180px; } }
+@media (max-width: 760px) {
+  .top .top-tools { order: 3; gap: 8px; margin-left: 0; }
+  .top .lang-pick { order: 3; }
+  .lang-btn { padding: 0 8px; }
+}
