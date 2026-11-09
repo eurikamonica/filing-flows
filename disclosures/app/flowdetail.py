@@ -47,6 +47,9 @@ import xbrl_filing as X
 import notes as N
 
 VERSION = 4                  # 2: forward figures from the notes; 3: the ultra-detailed canvas (u); 4: made-up lines "#…", segment groups
+# the charts drawn from the reads (names, shares): a new one rebuilds every company from its reads on file, no filing read
+# again — 2: a second line of a main family named for itself, labels negated for the cash flow statement turned back
+SPEC = 2
 FOLD = 0.003                 # parts under 0.3% of revenue are summed into "Other …" (per junction and side)
 MAX_PARTS = 9                # at most this many parts per side of a junction; the smallest beyond it are summed too
 NOTE_DEPTH = 2               # a line split by a note, its parts by another note: this many levels at most
@@ -832,6 +835,49 @@ def tidy(label):
     return t or label
 
 
+# a line of a main family that is not the main line itself (two "Revenue" or two "Pre-tax earnings" on one chart): named
+# for what it is
+ALT_NAMES = {
+    'RevenueFromContractWithCustomerExcludingAssessedTax': 'Revenue from contracts with customers',
+    'RevenueFromContractWithCustomerIncludingAssessedTax': 'Revenue from contracts with customers',
+    'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments':
+        'Pre-tax earnings before equity method',
+    'IncomeLossFromContinuingOperations': 'Earnings from continuing operations',
+    'NetIncomeLossAvailableToCommonStockholdersBasic': 'Net earnings to common shareholders',
+}
+# a label negated for the cash flow statement ("Investment (gains) losses": gains subtracted from net income there)
+NEGATED = re.compile(r'\((gains?|income|earnings|profits?)\)(\s+)(loss(?:es)?|expenses?)\b', re.I)
+
+
+def plain_label(label, gain=False):
+    """A filing's label as the chart names the line: the taxonomy's own Title Case in sentence case, its punctuation kept
+    ("Equity Securities, FV-NI, Gain (Loss)" → "Equity securities gains (losses)"); on a line drawn as income or a gain,
+    a label negated for the cash flow statement turned back ("Investment (gains) losses" → "Investment gains (losses)")."""
+    t = label or ''
+    if gain:
+        t = NEGATED.sub(lambda x: f'{x.group(1)}{x.group(2)}({x.group(3)})', t)
+    ws = t.split()
+    core = [re.sub(r'^\W+|\W+$', '', w) for w in ws]
+    long = [c for c in core[1:] if len(c) >= 3 and c.lower() not in ('and', 'the', 'for', 'net', 'per')]
+    if long and all(c[0].isupper() for c in long):
+        t = ' '.join([ws[0]] + [re.sub(r'[A-Z][a-z]+', lambda x: x.group(0).lower(), w) if re.fullmatch(r'\W*[A-Z][a-z]+\W*', w) else w
+                                for w in ws[1:]])
+    t = re.sub(r'(?i),\s*FV-NI,\s*gain \(loss\)$', ' gains (losses)', t)
+    return t or label
+
+
+def ref_of(name, limit=40):
+    """A line's name in the share another line is given of it ("46% of pre-tax earnings before equity method"): the first
+    letter of a name in sentence case in lower case (a proper name kept: "55% of Data Center"; an acronym kept), cut at a
+    word after `limit` characters."""
+    first = (name.split() or [''])[0]
+    proper = sum(c.isupper() for c in first) >= 2 or re.search(r'(?<![\w-])[A-Z][a-z]', name[1:])
+    t = name[0].lower() + name[1:] if name[:1].isupper() and not proper else name
+    if len(t) > limit:
+        t = t[:limit - 2].rsplit(' ', 1)[0].rstrip(',;:-–') + ' …'
+    return t
+
+
 def _residuals(J, vals):
     """A part with no figure of its own in a junction whose total and other parts have one: what they leave."""
     for _ in range(4):
@@ -1012,6 +1058,7 @@ class Flows:
         self.ref = abs(ref_total or 0) or 1.0
         self.links, self.kind, self.parent, self.order, self.folded, self.decided = {}, {}, {}, [], {}, {}
         self.alias = {}
+        self.under = set()             # the lines revenue is split into, and their own parts (Data Center → Compute)
         self.jx = []                   # each junction's inflow and outflow nodes (the columns: inflows one before outflows)
 
     def v(self, k):
@@ -1031,6 +1078,16 @@ class Flows:
         root = F['root']
         self.rev = next((k for k in F['J'] if main_of(k) == 'revenue'), None) or \
             next((k for j in F['J'].values() for k, _ in j if main_of(k) == 'revenue'), None)
+        # the lines revenue goes into, however far down (gross profit … net income from continuing operations)
+        memo = {}
+
+        def has_rev(k, seen=frozenset()):
+            if k == self.rev:
+                return True
+            if k not in memo:
+                memo[k] = k in F['J'] and k not in seen and any(has_rev(x, seen | {k}) for x, _ in F['J'][k])
+            return memo[k]
+        self.after = {k for k in F['J'] if k != self.rev and has_rev(k)} if self.rev else set()
         self.order.append(root)
         self.kind[root] = 'src' if (self.v(root) or 0) >= 0 else 'use'
         self.junction(root, 1)
@@ -1054,6 +1111,8 @@ class Flows:
         if not raw or abs(tot - vX) > max(abs(vX) * 0.002, 0.6e6 * (len(raw) + 1) if self.ref >= 1e9 else 600.0 * (len(raw) + 1)):
             return
         kids = self.fold_of(X, raw, sigma)
+        if X == getattr(self, 'rev', None) or X in self.under:
+            self.under.update(k for k, _ in kids)
         terms = [(k, sigma * w * self.v(k), w) for k, w in kids]
         Xn = self.nid(X)
         aX = sigma * -vX
@@ -1086,7 +1145,9 @@ class Flows:
         if aX < 0 and main and main_of(X) != 'revenue':
             if abs(vX) <= abs(self.v(main) if main in self.vals else abs(vX)) + 1e-9 * self.ref:
                 self.parent.setdefault(Xn, main)
-            elif getattr(self, 'rev', None) and self.rev != Xn:
+            elif (chain or main_of(X) or X in self.under or X in getattr(self, 'after', ())) and getattr(self, 'rev', None) and self.rev != Xn:
+                # of revenue on the lines that follow it (pre-tax earnings, operating cash flow) and on the parts of revenue
+                # (Data Center): not on gains on investments, which are no part of it
                 self.parent.setdefault(Xn, self.rev)
         self.fill(ins, outs)
         self.jx.append(([k for k, _ in ins], [k for k, _ in outs]))
@@ -1266,16 +1327,24 @@ def spec_of(F, now, q=None, y=None, annual=False):
             return 'cost' if kind == 'use' else 'noncash'
         return 'profit' if kind == 'src' else 'cost'
     lab = F['labels']
-    ids, nodes, byk = {}, [], {}
+    ids, nodes, byk, disp = {}, [], {}, {}
     for k in keys:
         m = main_of(k)
         i = m if m and m not in ids.values() else ('o:' + k if '~' in k else 'k:' + k)
         ids[k] = i
+        own = bool(m) and i == m                     # the main line itself; another line of its family is named for itself
         if '~' in k:
             name = f'Other ({len(fl.folded.get(k, []))} items)'
         else:
-            name = NAMES.get(m) or lab.get(k) or local(k)
-            if not m and not parse_key(k)[1] and re.fullmatch(r'(?i)(?:total )?(?:net )?(?:revenues?|sales)', name.strip()):
+            if own and NAMES.get(m):
+                name = NAMES[m]
+            elif m and not own and ALT_NAMES.get(local(parse_key(k)[0])):
+                name = ALT_NAMES[local(parse_key(k)[0])]
+            elif parse_key(k)[1] or k.startswith(('#', 'seg>')):
+                name = lab.get(k) or local(k)            # a member's or a segment's own name, as the filing writes it
+            else:
+                name = plain_label(lab.get(k) or local(k), gain=fl.kind.get(k) == 'src' and not k.startswith('cf>'))
+            if not own and not parse_key(k)[1] and re.fullmatch(r'(?i)(?:total )?(?:net )?(?:revenues?|sales)', name.strip()):
                 # a part labelled like the total ("Revenue" beside premiums): named by what it is
                 name = 'Revenue from contracts with customers' if 'FromContractWithCustomer' in parse_key(k)[0] else 'Other revenue'
             if m == 'net' and parse_key(k)[0].endswith('ProfitLoss'):
@@ -1283,6 +1352,7 @@ def spec_of(F, now, q=None, y=None, annual=False):
             if m == 'cash_chg':
                 name = 'Added to cash' if (now.get(k) or 0) > 0 else 'Drawn from cash'
         short = name if len(name) <= 52 else name[:50].rsplit(' ', 1)[0].rstrip(',;:-–') + ' …'
+        disp[k] = name
         n = {'id': i, 'col': col.get(k, 0), 'color': color(k), 'name': esc(short), 'full': esc(name) if short != name else None,
              'pos': 'left' if not ins.get(k) else 'right' if not outs.get(k) else 'above' if fl.kind.get(k) == 'src' else 'below',
              'v': node_v(fl, k), 'q': node_v(fq, k), 'y': node_v(fy, k)}
@@ -1300,7 +1370,7 @@ def spec_of(F, now, q=None, y=None, annual=False):
         if p and p is not n:
             sh = share(n['v'], p['v'])
             if sh and n['v'] <= p['v'] * 1.0005:        # a part larger than its parent (other inflows joined): no share
-                val += f" · {sh} of {SHORT.get(p['id']) or esc(lab.get(pk, '') or '').lower()[:30]}"
+                val += f" · {sh} of {SHORT.get(p['id']) or esc(ref_of(disp.get(pk) or local(pk)))}"
         lines.append(['val', val])
         lines.append(['mut', f"Y/Y {pct_change(n['v'], n['y'])}" + ('' if annual else f" · Q/Q {pct_change(n['v'], n['q'])}")])
         if '~' in k:
@@ -1534,7 +1604,8 @@ def build_company(cik, ua, root, ticker=None, info=None, sic=None):
 
 def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, recheck_days=5):
     """The site's companies, largest first: a company is (re)built when the site shows a filing newer than the newest on
-    file, when never built or read with another version, or every few days — in that order. A new filing comes first: the
+    file, when never built or read with another version, when drawn by an older chart builder (SPEC: again from its reads on
+    file), or every few days — in that order; a ticker asked for first, and built again. A new filing comes first: the
     company page draws the detailed flow of the period it shows, so a quarter not read yet has none, and with ~1,100 small
     companies never built ahead of them Apple's 10-K and JPMorgan's 10-Q (Nov 3, 2026) waited for days.
     public/c/<TICKER>.json; state.json."""
@@ -1560,6 +1631,8 @@ def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, rechec
             return 0                                     # a newer filing than the one on file: the page's period
         if not s_.get('filed') or s_.get('v') != VERSION:
             return 1                                     # never built, or by an older reader: by size, largest first
+        if s_.get('spec') != SPEC:
+            return 2                                     # drawn by an older chart builder: again from the reads on file
         if not s_.get('checked') or (now - dt.datetime.fromisoformat(s_['checked'])).days >= recheck_days:
             return 3
         return None
@@ -1583,7 +1656,8 @@ def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, rechec
                           retry_after=(now + dt.timedelta(days=7)).isoformat(timespec='seconds'))
                 continue
             top = info['filings'][0]
-            if s_.get('accession') == top['accession'] and s_.get('v') == VERSION and (pub / 'c' / f'{t}.json').exists():
+            if s_.get('accession') == top['accession'] and s_.get('v') == VERSION and s_.get('spec') == SPEC and \
+                    (pub / 'c' / f'{t}.json').exists() and t.upper() not in want:   # a ticker asked for is built again
                 s_['checked'] = now.isoformat(timespec='seconds')
                 same += 1
                 continue
@@ -1596,7 +1670,7 @@ def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, rechec
                     signal.alarm(0)
             (pub / 'c' / f'{t}.json').write_text(dump(doc), encoding='utf-8')
             s_.clear()
-            s_.update(v=VERSION, accession=top['accession'], filed=top['filed'], checked=now.isoformat(timespec='seconds'),
+            s_.update(v=VERSION, spec=SPEC, accession=top['accession'], filed=top['filed'], checked=now.isoformat(timespec='seconds'),
                       row=[t, doc['name'], int(c['cik']), len(doc['quarters']), len(doc['years']),
                            doc['quarters'][0]['end'] if doc['quarters'] else None, top['filed']])
             done += 1

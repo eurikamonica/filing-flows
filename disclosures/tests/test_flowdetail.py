@@ -233,8 +233,8 @@ class CollectOrder(unittest.TestCase):
             {'ticker': 'OK', 'cik': 3, 'revenue': 7e10, 'filed': '2026-10-01'}]}))        # up to date, checked today
         now = dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
         (root / 'state.json').write_text(json.dumps({
-            'BIG': {'v': D.VERSION, 'accession': 'a1', 'filed': '2026-08-01', 'checked': now},
-            'OK': {'v': D.VERSION, 'accession': 'a3', 'filed': '2026-10-01', 'checked': now}}))
+            'BIG': {'v': D.VERSION, 'spec': D.SPEC, 'accession': 'a1', 'filed': '2026-08-01', 'checked': now},
+            'OK': {'v': D.VERSION, 'spec': D.SPEC, 'accession': 'a3', 'filed': '2026-10-01', 'checked': now}}))
         order = []
         saved = D.filings_of, D.build_company
         try:
@@ -244,3 +244,100 @@ class CollectOrder(unittest.TestCase):
         finally:
             D.filings_of, D.build_company = saved
         self.assertEqual(order, [1, 2])                  # the newer filing first, then the one never built; OK not read
+
+    def test_an_older_chart_builder_rebuilds_from_the_reads(self):
+        """A new SPEC (names, shares) rebuilds every company from its reads on file, after new filings and companies never
+        built; a ticker asked for is built again though nothing changed."""
+        import json, tempfile, datetime as dt
+        root = Path(tempfile.mkdtemp())
+        site = root / 'index.json'
+        site.write_text(json.dumps({'companies': [
+            {'ticker': 'OLD', 'cik': 1, 'revenue': 9e10, 'filed': '2026-10-01'},          # drawn by the older builder
+            {'ticker': 'NEW', 'cik': 2, 'revenue': 5e10, 'filed': '2026-11-01'},          # never built
+            {'ticker': 'OK', 'cik': 3, 'revenue': 7e10, 'filed': '2026-10-01'}]}))        # up to date
+        now = dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
+        (root / 'state.json').write_text(json.dumps({
+            'OLD': {'v': D.VERSION, 'spec': D.SPEC - 1, 'accession': 'n1', 'filed': '2026-10-01', 'checked': now},
+            'OK': {'v': D.VERSION, 'spec': D.SPEC, 'accession': 'n3', 'filed': '2026-10-01', 'checked': now}}))
+        (root / 'public' / 'c').mkdir(parents=True)
+        for t in ('OLD', 'OK'):
+            (root / 'public' / 'c' / f'{t}.json').write_text('{}')
+        built = []
+        saved = D.filings_of, D.build_company
+        try:
+            D.filings_of = lambda cik, ua: {'name': 'X', 'tickers': [], 'filings': [{'accession': f'n{cik}', 'filed': '2026-10-01'}]}
+            D.build_company = lambda cik, ua, root_, t, info, sic=None: built.append(t) or {'v': D.VERSION, 'name': t, 'quarters': [], 'years': []}
+            D.collect(root, site, 'ua', minutes=5)
+            self.assertEqual(built, ['NEW', 'OLD'])          # OLD from its reads, though its filing is the same; OK not built
+            self.assertEqual(json.loads((root / 'state.json').read_text())['OLD']['spec'], D.SPEC)
+            built.clear()
+            D.collect(root, site, 'ua', minutes=5, tickers='ok')
+            self.assertEqual(built, ['OK'])                  # asked for: built again
+        finally:
+            D.filings_of, D.build_company = saved
+
+
+class Names(unittest.TestCase):
+    """Berkshire Hathaway's Q3 2026 10-Q: revenue from contracts with customers beside other revenues under total revenues,
+    pre-tax earnings before equity method earnings, investment gains labelled as the cash flow statement negates them."""
+
+    def setUp(self):
+        J = {G + 'ProfitLoss': [(G + 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest', 1.0),
+                                (G + 'IncomeTaxExpenseBenefit', -1.0)],
+             G + 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest': [
+                 (G + 'IncomeLossFromEquityMethodInvestments', 1.0), (G + PBEM, 1.0)],
+             G + PBEM: [(G + 'Revenues', 1.0), (G + 'CostsAndExpenses', -1.0), (G + 'GainLossOnInvestments', 1.0)],
+             G + 'Revenues': [(G + 'RevenueFromContractWithCustomerExcludingAssessedTax', 1.0), (G + 'RevenueNotFromContractWithCustomer', 1.0)],
+             G + 'GainLossOnInvestments': [(G + 'EquitySecuritiesFvNiGainLoss', 1.0), (G + 'DebtSecuritiesAvailableForSaleRealizedLoss', -1.0)],
+             G + 'EquitySecuritiesFvNiGainLoss': [(G + 'EquitySecuritiesFvNiUnrealizedGainLoss', 1.0), (G + 'EquitySecuritiesFvNiRealizedGainLoss', 1.0)]}
+        labels = {G + 'Revenues': 'Total revenues', G + 'RevenueFromContractWithCustomerExcludingAssessedTax': 'Revenues',
+                  G + 'RevenueNotFromContractWithCustomer': 'Other revenues', G + 'CostsAndExpenses': 'Total costs and expenses',
+                  G + PBEM: 'Income (Loss) from Continuing Operations before Equity Method Investments, Income Taxes, Noncontrolling Interest',
+                  G + 'GainLossOnInvestments': 'Investment (gains) losses', G + 'EquitySecuritiesFvNiGainLoss': 'Equity Securities, FV-NI, Gain (Loss)',
+                  G + 'EquitySecuritiesFvNiUnrealizedGainLoss': 'Unrealized gains', G + 'EquitySecuritiesFvNiRealizedGainLoss': 'Realized gains',
+                  G + 'DebtSecuritiesAvailableForSaleRealizedLoss': 'Realized losses', G + 'IncomeLossFromEquityMethodInvestments': 'Equity method earnings',
+                  G + 'IncomeTaxExpenseBenefit': 'Income taxes', G + 'ProfitLoss': 'Net earnings',
+                  G + 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest': 'Earnings before income taxes'}
+        self.F = {'J': J, 'via': {}, 'labels': labels, 'root': G + 'ProfitLoss', 'cash_root': None, 'cash_ni': None}
+        v = {'Revenues': 105.6, 'RevenueFromContractWithCustomerExcludingAssessedTax': 74.3, 'RevenueNotFromContractWithCustomer': 31.3,
+             'CostsAndExpenses': 91.4, 'GainLossOnInvestments': 12.0, 'EquitySecuritiesFvNiGainLoss': 12.05,
+             'EquitySecuritiesFvNiUnrealizedGainLoss': 11.8, 'EquitySecuritiesFvNiRealizedGainLoss': 0.25,
+             'DebtSecuritiesAvailableForSaleRealizedLoss': 0.05, PBEM: 26.2, 'IncomeLossFromEquityMethodInvestments': 1.0,
+             'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest': 27.2,
+             'IncomeTaxExpenseBenefit': 5.0, 'ProfitLoss': 22.2}
+        self.now = {G + k: x * SCALE for k, x in v.items()}
+
+    def test_names_and_shares(self):
+        nodes, links = D.spec_of(self.F, self.now)
+        by = {n['id']: n for n in nodes}
+        k = lambda c: 'k:' + G + c
+        self.assertEqual(by['revenue']['name'], 'Revenue')
+        self.assertEqual(by[k('RevenueFromContractWithCustomerExcludingAssessedTax')]['name'], 'Revenue from contracts with customers')
+        self.assertEqual(by['pretax']['name'], 'Pre-tax earnings')
+        self.assertEqual(by[k(PBEM)]['name'], 'Pre-tax earnings before equity method')
+        gains = by[k('GainLossOnInvestments')]
+        self.assertEqual(gains['name'], 'Investment gains (losses)')           # not as the cash flow statement negates it
+        self.assertEqual(gains['lines'][1][1], '$12.0B · 46% of pre-tax earnings before equity method')
+        eq = by[k('EquitySecuritiesFvNiGainLoss')]
+        self.assertEqual(eq['name'], 'Equity securities gains (losses)')
+        self.assertNotIn(' of ', eq['lines'][1][1])                            # larger than the gains it adds to; no part of revenue
+        self.assertTrue(by[k('EquitySecuritiesFvNiUnrealizedGainLoss')]['lines'][1][1].endswith('98% of equity securities gains (losses)'))
+        self.assertEqual(by['pretax']['lines'][1][1], '$27.2B · 26% of revenue')   # a profit line after revenue: still a margin
+        self.assertIsNone(balanced(nodes, links))
+
+    def test_plain_label(self):
+        self.assertEqual(D.plain_label('Investment (gains) losses', gain=True), 'Investment gains (losses)')
+        self.assertEqual(D.plain_label('Investment (gains) losses'), 'Investment (gains) losses')    # a loss, or a cash flow line
+        self.assertEqual(D.plain_label('Other (Income) Expense, Net', gain=True), 'Other income (expense), net')
+        self.assertEqual(D.plain_label('Equity Securities, FV-NI, Gain (Loss)'), 'Equity securities gains (losses)')
+        self.assertEqual(D.plain_label('Gain (Loss) on Sale of U.S. Treasury Bills'), 'Gain (loss) on sale of U.S. treasury bills')   # as tidy()
+        self.assertEqual(D.plain_label('Interest expense'), 'Interest expense')
+        self.assertEqual(D.ref_of('Pre-tax earnings before equity method'), 'pre-tax earnings before equity method')
+        self.assertEqual(D.ref_of('EBITDA from the filing'), 'EBITDA from the filing')
+        self.assertEqual(D.ref_of('Data Center'), 'Data Center')                   # a member's own name
+        self.assertEqual(D.ref_of('U.S. revenue'), 'U.S. revenue')
+        self.assertEqual(D.ref_of('Income (loss) from continuing operations before equity method investments'),
+                         'income (loss) from continuing …')
+
+
+PBEM = 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'

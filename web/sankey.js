@@ -269,6 +269,18 @@
       n.outs.sort((a, b) => a.T.idx - b.T.idx);
       n.ins.sort((a, b) => a.S.idx - b.S.idx);
     });
+    // a merge reached from the column before by its source's first outflow, whose other outflows run below it (revenue →
+    // pre-tax earnings, then costs): the merge's other inflows join above that band, so they do not cross those outflows
+    // (gains on investments into pre-tax earnings, over revenue's part); by the source's last outflow (the others above):
+    // below it
+    nodes.forEach((n) => {
+      if (n.ins.length < 2) return;
+      const lead = n.ins.filter((l) => l.S.outs.length > 1 && n.col - l.S.col === 1 && (l.S.outs[0] === l || l.S.outs[l.S.outs.length - 1] === l))
+        .sort((a, b) => b.v - a.v)[0];
+      if (!lead) return;
+      const rest = n.ins.filter((l) => l !== lead);
+      n.ins = lead.S.outs[0] === lead ? rest.concat([lead]) : [lead].concat(rest);
+    });
     const maxV = Math.max(...nodes.map((n) => Math.abs(n.v || 0)));
     const XC = spec.xcard || null;                   // the X card: big headline and numbers, no notes (pipeline/xcard.py)
     const K = (XC ? XREV_PX : REV_PX) / maxV;
@@ -532,16 +544,39 @@
       return moved;
     }
 
+    // the bands at each bar in the order of their other ends, as the lines are placed (a small line moved out of a
+    // label's way joins on the side it went to, instead of crossing its neighbour's band); before the labels are placed
+    // against the bands
+    function orderBands() {
+      for (let pass = 0; pass < 4; pass++) {
+        let ch = false;
+        nodes.forEach((n) => {
+          const ins = n.ins.slice().sort((a, b) => (a.S.top + a.so + a.slot / 2) - (b.S.top + b.so + b.slot / 2));
+          const outs = n.outs.slice().sort((a, b) => (a.T.top + a.to + a.slot / 2) - (b.T.top + b.to + b.slot / 2));
+          if (ins.some((l, i) => l !== n.ins[i]) || outs.some((l, i) => l !== n.outs[i])) { n.ins = ins; n.outs = outs; ch = true; }
+        });
+        if (!ch) return;
+        nodes.forEach((n) => {
+          let o = 0;
+          n.outs.forEach((l) => { l.so = o; o += l.slot; });
+          o = 0;
+          n.ins.forEach((l) => { l.to = o; o += l.slot; });
+        });
+      }
+    }
+
     let issues = [];
     let xs = computeXs();
     for (let outer = 0; outer < 4; outer++) {
       nodes.forEach((n) => { n.x = xs[n.col]; });
       for (let round = 0; round < 10; round++) {
         resolveColumns();
+        orderBands();
         issues = placeLabels();
         if (!issues.length || spec.dense || !nudge(issues)) break;   // dense (the detailed flow): no nudging away
       }
       resolveColumns();
+      orderBands();
       issues = placeLabels();
       const nx = computeXs();
       if (nx.every((v, i) => Math.abs(v - xs[i]) < 1)) break;

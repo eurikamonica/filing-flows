@@ -2405,11 +2405,23 @@
     ['Crypto perpetuals: taker buy − sell (experiment)', 'Contrats perpétuels crypto : achats − ventes à l’initiative du preneur (expérience)', 'Perpetuos cripto: compras − ventas del tomador (experimento)'],
     ['Experiment: crypto exchanges’ stock perpetuals', 'Expérience : les contrats perpétuels sur actions des plateformes crypto', 'Experimento: los perpetuos sobre acciones de las plataformas cripto'],
     ['Loading the experiment’s numbers…', 'Chargement des chiffres de l’expérience…', 'Cargando las cifras del experimento…'],
+    ['Pre-tax earnings before equity method', 'Résultat avant impôt hors mise en équivalence', 'Beneficio antes de impuestos sin método de participación'],
+    ['Investment gains (losses)', 'Plus-values (moins-values) sur placements', 'Ganancias (pérdidas) de inversiones'],
+    ['Equity securities gains (losses)', 'Plus-values (moins-values) sur actions', 'Ganancias (pérdidas) en acciones'],
+    ['Earnings from continuing operations', 'Résultat des activités poursuivies', 'Beneficio de operaciones continuadas'],
+    ['Net earnings to common shareholders', 'Résultat net revenant aux actionnaires ordinaires', 'Beneficio neto para los accionistas ordinarios'],
+    ['Net earnings (incl. minority interests)', 'Résultat net (y c. minoritaires)', 'Beneficio neto (incl. minoritarios)'],
     // ---------------------------------------------------------------- the language switch
     ['Language', 'Langue', 'Idioma'],
   ];
   // parts of short labels, applied in order (regex source, French, Spanish)
   root.FFI18N_PIECES = [
+    // the detailed flow's shares of a second line of a family, before the shorter pieces they start with
+    ['\\bof revenue from contracts with customers\\b', 'des produits des contrats clients', 'de los ingresos de contratos con clientes'],
+    ['\\bof pre-tax earnings before equity method\\b', 'du résultat av. impôt hors mise en équivalence', 'del BAI sin método de participación'],
+    ['\\bof net earnings \\(incl\\. minority interests\\)', 'du résultat net y c. minoritaires', 'del beneficio neto incl. minoritarios'],
+    ['\\bof investment gains \\(losses\\)', 'des plus-values (moins-values) sur placements', 'de las ganancias (pérdidas) de inversiones'],
+    ['\\bof equity securities gains \\(losses\\)', 'des plus-values (moins-values) sur actions', 'de las ganancias (pérdidas) en acciones'],
     ['\\bof cost of revenue\\b', 'du coût des ventes', 'del coste de ventas'],
     ['\\bCost of revenue\\b', 'Coût des ventes', 'Coste de ventas'],
     ['\\bcost of revenue\\b', 'coût des ventes', 'coste de ventas'],
