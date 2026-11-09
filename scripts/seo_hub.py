@@ -343,7 +343,7 @@ def rotation(hub, L):
 
 MO_SECTOR = {'technology': 'Technology', 'communication': 'Communication services', 'consumer-disc': 'Consumer discretionary',
              'consumer-staples': 'Consumer staples', 'health': 'Health care', 'financials': 'Financials', 'real-estate': 'Real estate',
-             'energy': 'Energy', 'materials': 'Materials', 'industrials': 'Industrials', 'utilities': 'Utilities'}
+             'energy': 'Energy', 'materials': 'Materials', 'industrials': 'Industrials', 'utilities': 'Utilities', 'other': 'Other'}
 
 
 def momentum(hub, L):

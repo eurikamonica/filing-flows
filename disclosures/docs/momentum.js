@@ -13,7 +13,7 @@ const MO_SORT = [['comp', 'Composite score'], ['m12_1', '12-1 month return'], ['
   ['m1', 'Latest month'], ['vol', 'Volatility']];
 const MO_SECTOR = { technology: 'Technology', communication: 'Communication services', 'consumer-disc': 'Consumer discretionary',
   'consumer-staples': 'Consumer staples', health: 'Health care', financials: 'Financials', 'real-estate': 'Real estate', energy: 'Energy',
-  materials: 'Materials', industrials: 'Industrials', utilities: 'Utilities' };
+  materials: 'Materials', industrials: 'Industrials', utilities: 'Utilities', other: 'Other' };
 const MO_FIELDS = ['m12_1', 'm6_1', 'hi52', 'ra12', 'comp'];          // the ranked factors (app/momentum.py FIELDS)
 const moStore = {};
 const moHub = () => globalThis.FF_HUB_ROOT || '';
