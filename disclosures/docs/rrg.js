@@ -8,6 +8,8 @@
    rotates clockwise.
    Modes: 2-D (the standard chart); 3-D (time as depth: a rotation becomes a spiral, the slice at the front is the
    standard RRG of the date shown); 4-D (a third measure as depth and time played as the fourth dimension).
+   Money flow (rrg-flow.js, 2-D weekly and monthly): an arrow from each line's head for its big-money net buying (→) and
+   net money inflow (↑), and under the chart the money-flow quadrants of the same lines and frame, with their guide.
    Uses the helpers of market.js and rotation.js. */
 const RRG={cache:new Map(),grid:null};
 const RRG_COL=['#2a78d6','#eb6834','#1baf7a','#a24fd0','#c98a00','#d1397d','#3aa6b9','#7d8a1f','#b8522b','#5a6ad0','#8a8a84','#2f9e44'];
@@ -182,6 +184,10 @@ function rrgView(){
  const o={D,lines,Q,freq,n,dual,ix:state.rrgu==='indices'&&!Dy,tail:+state.rrgt,mode:state.rrgm,zk:state.rrgm==='3d'?'time':state.rrgm==='4d'?state.rrgz:null,firstK,lastK,
   P:{partial:new Set(),span:Math.min(Q.length-firstK,FQ.span),unit:PR.many,ms:FQ.ms,label:rrgDay}};
  o.dom=rrgDomain(o);
+ // money flow (rrg-flow.js): the 2-D chart, weekly or monthly — the lines' flow files load as they are needed
+ if(state.rrgm==='2d'&&!Dy&&typeof RRGFlow==='object'){
+  state.rrgmf=RRGFlow.MODES.some(m=>m[0]===state.rrgmf)?state.rrgmf:'arrows';state.rrgmw=RRGFlow.WINS.some(m=>m[0]===state.rrgmw)?state.rrgmw:'4';
+  const G=rrgGrid(D);o.flow=RRGFlow.prep(o,G,G[freq].idx.slice(0,Q.length),{mode:state.rrgmf,L:+state.rrgmw})}
  // the lines picked (state.rrgsolo: ids, comma-separated; none = every line): the others leave the chart. One line
  // alone (a stock, a sector ETF) is also the line in focus: the forecast path then shows its dates and ranges
  const pick=String(state.rrgsolo||'').split(',').filter((id,i,a)=>id&&a.indexOf(id)===i&&lines.some(l=>l.e.id===id));
@@ -195,7 +201,7 @@ function rrgView(){
  o.fz=!o.roll&&state.rrgm==='2d'&&typeof rrglFrozen==='function'?rrglFrozen(o):null;
  if(o.fz&&o.fz.F){o.P.span=o.fz.F.steps.length;o.P.from=o.fz.k0;o.P.to=o.fz.to;o.P.ms=FQ.ms*4}   // a frozen stretch plays at a reading pace
  if(o.roll){o.P.span=o.roll.W;o.P.ms=FQ.ms*3}                     // the window, at a pace to read each period's misses
- out=out.replace('__FP__',fpField+`<div class="field wide" style="flex-basis:100%"><label>Show <span class="muted">(tap to pick one or more)</span></label><div class="pills rrg-pick" role="group" aria-label="Lines shown" style="margin:2px 0 0"><button type="button" class="pill${pick.length?'':' on'}" data-rrgpick="" aria-pressed="${!pick.length}">All lines</button>${lines.map(l=>`<button type="button" class="pill${o.pick.has(l.e.id)?' on':''}" data-rrgpick="${esc(l.e.id)}" aria-pressed="${o.pick.has(l.e.id)}"><i class="mk-key" style="background:${l.col};margin-right:5px"></i>${esc(l.e.name)}</button>`).join('')}</div></div>`+(typeof rrglFreezeField==='function'?rrglFreezeField(o):''));
+ out=out.replace('__FP__',fpField+(o.flow?field('rrgmf','Money flow on the chart',RRGFlow.MODES,state.rrgmf)+field('rrgmw','Money flow over',RRGFlow.WINS,state.rrgmw):'')+`<div class="field wide" style="flex-basis:100%"><label>Show <span class="muted">(tap to pick one or more)</span></label><div class="pills rrg-pick" role="group" aria-label="Lines shown" style="margin:2px 0 0"><button type="button" class="pill${pick.length?'':' on'}" data-rrgpick="" aria-pressed="${!pick.length}">All lines</button>${lines.map(l=>`<button type="button" class="pill${o.pick.has(l.e.id)?' on':''}" data-rrgpick="${esc(l.e.id)}" aria-pressed="${o.pick.has(l.e.id)}"><i class="mk-key" style="background:${l.col};margin-right:5px"></i>${esc(l.e.name)}</button>`).join('')}</div></div>`+(typeof rrglFreezeField==='function'?rrglFreezeField(o):''));
  const head=state.rrgm==='2d'?'Relative Rotation Graph':state.rrgm==='3d'?'RRG in 3-D — time as depth':'RRG in 4-D — depth: '+RRG_ZINFO[o.zk].label+'; time played';
  out+=`<div class="panel"><h3>${esc(head)}</h3><p class="sub">→ JdK RS-Ratio (relative trend) · ↑ JdK RS-Momentum (its speed)${o.zk?' · ↗ '+esc(RRG_ZINFO[o.zk].label):''} · against ${o.ix?'the centre of the four (the centre against cash)':dual?'their industry without themselves (companies) · the industries against '+esc(D.benchmark||'SPY'):esc(D.benchmark||'SPY')} · ${esc(FQ.word)}, ${esc(n)}-${esc(PR.one)} window · tails ${esc(state.rrgt)} ${esc(PR.many)}. History since ${esc(rrgDay(Q[Math.max(0,firstK)]))}${Dy&&state.rrgu==='indices'?' · daily: the index ETFs against SPY (the centre model is weekly)':''}; drag the slider anywhere and press play.${state.rrgm==='2d'&&state.rrgfp?' Dashed: the forecast path — the median position each '+esc(PR.one)+' of every run of the line’s own and the benchmark’s moves in its last '+esc(fmt(PR.window))+' '+esc(PR.many)+', replayed through the formula, drawn smoothed over three '+esc(PR.many)+'; a small dot each '+esc(PR.one)+', larger ones at +'+PR.marks.join(' / +')+' '+esc(PR.many)+' with the date and the median replayed close (hover for the ranges and the quadrant shares). Each frame’s path uses only the '+esc(PR.many)+' before it; with one line in focus, “Freeze” keeps the path of the '+esc(PR.one)+' shown and scores it as the '+esc(PR.many)+' pass. Play, the speed and “Export MP4” write the same play as a video.':''}</p>`;
  const Qp=lastK>=0?Q.slice(0,lastK+1):Q;               // slider and play stop at the last close
@@ -205,12 +211,13 @@ function rrgView(){
  const rollT=o.roll?' · rolling frozen forecasts, +'+o.roll.H.join(' / +')+' '+PR.many:'';
  if(window.FFShare)out+=window.FFShare.bar({key:'hub-rrg-'+state.rrgm,title:head+picked+(soloL||fzL?' · '+(soloL||fzL).e.name+(rrgFull_((soloL||fzL).e)?' ('+rrgFull_((soloL||fzL).e)+')':''):'')+(o.fz?' · forecast frozen '+rrgDay(Q[o.fz.k0]):'')+rollT+' — '+rrgDay(Qp[Math.min(state.rf,Qp.length-1)]),subtitle:`→ RS-Ratio · ↑ RS-Momentum · against ${dual?'their industry (companies) / '+(D.benchmark||'SPY'):(D.benchmark||'SPY')} · ${FQ.word}, ${n}-${PR.one} window · ${shown.map(l=>l.e.name).slice(0,10).join(', ')}${shown.length>10?' …':''}`,
   source:(Dy?'Daily':'Weekly')+' closes (Yahoo Finance / Stooq), adjusted; RRG computed in the browser (Filing Flows).',post:()=>rrgHubPost(o,Math.min(state.rf,Qp.length-1),head)});
- if(state.rrgm==='2d'){ROT.ctx={Q:Qp,P:o.P,draw:f=>rrgFrame(o,f),key:'hub-rrg-2d',from:o.P.from,to:o.P.to};out+=`<div id="rot-plot" data-ffs-chart="hub-rrg-2d">${rrgFrame(o,state.rf)}</div>`}
+ if(state.rrgm==='2d'){ROT.ctx={Q:Qp,P:o.P,draw:f=>{rrgFlowDraw(o,f);return rrgFrame(o,f)},key:'hub-rrg-2d',from:o.P.from,to:o.P.to};out+=`<div id="rot-plot" data-ffs-chart="hub-rrg-2d">${rrgFrame(o,state.rf)}</div>`}
  else{ROT.ctx={Q:Qp,P:o.P,paint:f=>rrgPaint3d(o,f),key:'hub-rrg-'+state.rrgm};
   out+=`<div class="rot-3d-wrap"><canvas id="rot-3d" data-ffs-chart="hub-rrg-${state.rrgm}" class="rot-3d" role="img" aria-label="${esc(head)}; the table below lists every value"></canvas><div class="rot-3d-tools"><button class="action" id="rspin" type="button">${ROT.spin?'Stop turning':'Turn slowly'}</button><button class="action" id="rreset" type="button">Front view</button></div></div>`}
  out+=`<div class="mk-legend rrg-legend">${lines.map(l=>{const k0=l.calc.y.findIndex(v=>v!=null),late=k0<0||k0>state.rf,off=o.pick.size&&!o.pick.has(l.e.id);
-  return `<span${late||off?' class="muted"':''}><i class="mk-key" style="background:${l.col}${off?';opacity:.35':''}"></i>${esc(l.e.name)} <span class="muted">${esc(rrgFull_(l.e))}${late&&k0>=0?' · from '+esc(rrgDay(Q[k0])):''}${off?' · hidden':''}</span></span>`}).join('')}${RRG_Q.map(([k,name])=>`<span><i class="mk-key rrg-k-${k}"></i>${name}</span>`).join('')}</div>`;
+  return `<span${late||off?' class="muted"':''}><i class="mk-key" style="background:${l.col}${off?';opacity:.35':''}"></i>${esc(l.e.name)} <span class="muted">${esc(rrgFull_(l.e))}${late&&k0>=0?' · from '+esc(rrgDay(Q[k0])):''}${off?' · hidden':''}</span></span>`}).join('')}${RRG_Q.map(([k,name])=>`<span><i class="mk-key rrg-k-${k}"></i>${name}</span>`).join('')}${o.flow?RRGFlow.legend(o.flow):''}</div>`;
  if(waiting.length||missing.length)out+=`<p class="sub">${waiting.length?'Loading '+esc(waiting.map(e=>e.id).join(', '))+'… ':''}${missing.length?'Not on file yet: '+esc(missing.map(e=>e.id).join(', '))+' (the collector fetches the site’s companies largest first; the workflow’s “tickers” input fetches any ticker now).':''}</p>`;
+ if(o.flow)out+=RRGFlow.panel(o,o.flow,Math.min(state.rf,Qp.length-1),rrgFlowH());
  const ix=o.ix;                                       // the indices around their centre: their own model, not the SPY one
  out+='</div>'+(o.roll&&typeof rrglRollPanel==='function'?rrglRollPanel(o):'')+(o.fz&&typeof rrglFrozenPanel==='function'?rrglFrozenPanel(o):'')+(ix?(typeof rrgIndexPanel==='function'?rrgIndexPanel(o):''):(state.rrgm==='2d'&&W?rrgFcNote(o):'')+(state.rrgm==='2d'&&W&&typeof rrgOdds==='function'?rrgOdds(o):''))+rrgTable(o)+(state.rrgm==='2d'&&typeof rrglBacktestPanel==='function'?rrglBacktestPanel(o):'')+(state.rrgm==='2d'&&typeof rrglPanel==='function'?rrglPanel(o):'')+(!ix&&state.rrgm==='2d'&&W&&typeof rrgTransitions==='function'?rrgTransitions(o):'');
  out+=`<details><summary>How the RRG is computed</summary><p>RS = 100 × ${Dy?'daily':'weekly'} close ÷ ${esc(D.benchmark||'SPY')} (both adjusted for splits and dividends), smoothed over ${W?'4 weeks':Dy?'5 trading days':'2 months'}. RS-Ratio: how far RS stands above or below its own ${esc(n)}-${esc(PR.one)} trend (an exponential average); above 100 the line is outperforming its trend. RS-Momentum: how much that gap changed since the ${esc(PR.one)} before, smoothed the same way; above 100 the relative trend is gaining speed. Both are expressed in standard deviations of their own last ${W?'year or more':Dy?'252 trading days (126 at least)':'two years or more'} around 100, so a quiet ETF and a volatile stock read on the same scale. This is an open approximation of the JdK RS-Ratio and RS-Momentum used by StockCharts (their formula is not published), so levels differ from theirs while the quadrants and the clockwise rotation read the same. Monthly lines sample the last weekly close of each month; daily lines are the move-odds files (each asset's adjusted daily closes) on SPY's trading days, and the ETF groups the weekly history does not carry (countries, regions, bonds, commodities, industry ETFs) take the last daily close of each week on the weekly chart. Prices are adjusted closes (dividends reinvested), so older ones sit below what was quoted then. 3-D puts time in depth, so each line becomes a spiral and the front slice is the standard chart for the date shown; 4-D puts a third measure in depth and plays time.</p><p class="sub">${esc(D.note||'')}</p></details>`;
@@ -291,7 +298,13 @@ function rrgFrame(o,f){
  const oneLine=!!(o.solo||(state.rrgfp&&state.rrgfp!=='all'));
  const still=typeof ROT==='undefined'||oneLine||!(ROT.timer||ROT.exporting);
  marks+=rrgFcLayer(o,f,sx,sy)+(typeof rrgOddsLayer==='function'?rrgOddsLayer(o,f,sx,sy):'')+(typeof rrglLayer==='function'&&still?rrglLayer(o,f,sx,sy):'');
- return s+marks+labels+'</svg>';
+ const fl=o.flow&&typeof RRGFlow==='object'?RRGFlow.overlay(o,o.flow,f,sx,sy,rrgFlowH()):{under:'',over:''};   // money flow: rings under, arrows over
+ return s+fl.under+marks+fl.over+labels+'</svg>';
+}
+// rrg-flow.js draws with the RRG's own helpers
+function rrgFlowH(){return {size:rotSize,ticks:niceTicks,curve,tip,day:rrgDay,table,empty,rrgQuad,RRG_Q}}
+function rrgFlowDraw(o,f){                              // the money-flow quadrants follow the frame shown (play, slider)
+ const el=o.flow&&document.getElementById('rrgf-plot');if(el)el.innerHTML=RRGFlow.chart(o,o.flow,f,rrgFlowH());
 }
 function rrgTable(o){
  const f=state.rf,dir=a=>['→','↗','↑','↖','←','↙','↓','↘'][((Math.round(a/(Math.PI/4))%8)+8)%8];

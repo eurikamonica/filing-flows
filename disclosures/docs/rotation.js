@@ -968,7 +968,7 @@ function rotMAHybrid(el){                                 // ma-hybrid-view.js l
  document.head.appendChild(s);el.innerHTML=empty('Loading Moving averages+…');
 }
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgsolo','rrgroll','rrgrollw','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgsolo','rrgmf','rrgmw','rrgroll','rrgrollw','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
  {const dd=document.getElementById('rrgl-hist');if(dd)dd.ontoggle=()=>{if(state.rrglopen!==dd.open){state.rrglopen=dd.open;if(dd.open)render()}}}
  if($('rrglcsv'))$('rrglcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.csv)||[];downloadCSV();exported=keep};
  document.querySelectorAll('#workspace a[data-rview]').forEach(a=>a.onclick=e=>{e.preventDefault();rotStop();state.rview=a.dataset.rview;render();scrollTo({top:0,behavior:'smooth'})});
