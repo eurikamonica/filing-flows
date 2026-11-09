@@ -167,8 +167,42 @@ def index_facts(companyfacts, currency="USD", accn=None):
                         vers.setdefault(concept, {}).setdefault(key, []).append(f)
     for concept, keys in every.items():
         _scale_slips(out[concept], keys)
+        _period_slips(out[concept], keys, accn, before)
         _corrections(out[concept], keys)
     return out
+
+
+SLIP_DIGITS = 4                # a figure two periods share by a context slip, not by chance ($80,457K, not $2M)
+
+
+def _days(key):
+    return (d(key[1]) - d(key[0])).days
+
+
+def _period_slips(per, every, accn, before):
+    """A filing that tags another period with its own period's figure (Turtle Beach's Q3 2025 10-Q: April-June revenue
+    $80.5M, the July-September figure; its Q2 10-Q and the Q2 2026 10-Q say $56.8M) is a context slip, not a
+    restatement: the chart from that filing would compare the quarter with itself (Q/Q 0%). When the chart's own
+    filing gives a period and the one right after it, of the same length, the same figure, and the other filings'
+    version of the earlier one disagrees while nothing contradicts the later one, the earlier period takes the other
+    filings' version (facts.version without the chart's filing). Two periods the other filings also give the same
+    figure are left alone, and so are round figures (fewer than SLIP_DIGITS significant digits: $2M, $70M), which two
+    periods can share by chance."""
+    if not accn:
+        return
+    digits = lambda v: len(str(int(round(abs(v)))).rstrip("0"))
+    own = {k: f for k, f in per.items() if f.get("accn") == accn and f.get("val") and digits(f["val"]) >= SLIP_DIGITS}
+    others = lambda k: [f for f in every.get(k, ()) if f.get("accn") != accn and f.get("val") is not None]
+    for key, f in list(own.items()):
+        alt = others(key)
+        if not alt or all(_same(g["val"], f["val"]) for g in alt):
+            continue
+        for k2, f2 in own.items():
+            if f2["val"] != f["val"] or (d(k2[0]) - d(key[1])).days != 1 or abs(_days(k2) - _days(key)) > 7:
+                continue
+            if all(_same(g["val"], f2["val"]) for g in others(k2)):
+                per[key] = max(alt, key=lambda g: version(g, None, before))
+                break
 
 
 SLIP = 100                     # versions of one figure this far apart are not a restatement but a slip of the scale

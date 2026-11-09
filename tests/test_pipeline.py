@@ -3615,6 +3615,35 @@ def test_sliver_minority_share_after_a_real_one_is_drawn():
     assert by2["net"]["v"] == 919e6 and "nci" not in by2
 
 
+def test_a_quarter_tagged_with_the_next_quarters_figure_takes_its_own_filings():
+    """Turtle Beach's Q3 2025 10-Q tags April-June 2025 revenue as $80.457M, the July-September figure; its Q2 2025
+    10-Q and the Q2 2026 10-Q say $56.777M. The Q3 chart compared the quarter with itself ("Revenue was unchanged
+    versus Q2 2025", Q/Q 0%). The quarter before takes the other filings' version; the chart's own quarter, the
+    year-ago quarter, round figures two quarters share by chance and a restated comparative stay the filing's own."""
+    from pipeline import facts
+    q2, q3, q2n = "0001193125-25-175548", "0001193125-25-270035", "0001193125-26-338384"
+    mk = lambda s, e, v, filed, accn: {"start": s, "end": e, "val": v, "filed": filed, "form": "10-Q", "accn": accn}
+    rev = [mk("2025-04-01", "2025-06-30", 56.777e6, "2025-08-07", q2), mk("2024-04-01", "2024-06-30", 76.478e6, "2025-08-07", q2),
+           mk("2025-07-01", "2025-09-30", 80.457e6, "2025-11-06", q3), mk("2025-04-01", "2025-06-30", 80.457e6, "2025-11-06", q3),
+           mk("2024-07-01", "2024-09-30", 94.363e6, "2025-11-06", q3), mk("2025-04-01", "2025-06-30", 56.777e6, "2026-08-06", q2n)]
+    # round figures: $2M of amortization both quarters in the chart's filing, $3M in the quarter before's own
+    am = [mk("2025-04-01", "2025-06-30", 3e6, "2025-08-07", q2), mk("2025-04-01", "2025-06-30", 2e6, "2025-11-06", q3),
+          mk("2025-07-01", "2025-09-30", 2e6, "2025-11-06", q3)]
+    raw = {"facts": {"us-gaap": {"RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": rev}},
+                                 "AmortizationOfIntangibleAssets": {"units": {"USD": am}}}}}
+    fx = facts.index_facts(raw, accn=q3)
+    assert facts.extract(fx, "2025-06-30")["revenue"] == 56.777e6
+    assert facts.extract(fx, "2025-09-30")["revenue"] == 80.457e6 and facts.extract(fx, "2024-09-30")["revenue"] == 94.363e6
+    assert fx["AmortizationOfIntangibleAssets"][("2025-04-01", "2025-06-30")]["val"] == 2e6
+    # a quarter whose other filings agree with the shared figure is left alone
+    rev[0]["val"] = rev[5]["val"] = 80.457e6
+    assert facts.extract(facts.index_facts(raw, accn=q3), "2025-06-30")["revenue"] == 80.457e6
+    # a restated comparative (a figure of its own, not the next quarter's) stays the chart's own filing's
+    rev[0]["val"] = rev[5]["val"] = 56.777e6
+    rev[3]["val"] = 51.2e6
+    assert facts.extract(facts.index_facts(raw, accn=q3), "2025-06-30")["revenue"] == 51.2e6
+
+
 def test_a_slipped_scale_loses_to_the_other_versions_of_the_figure():
     """Smith Midland's Q2 2025 10-Q tags net income as $4,171 (it is $4,171 thousand, beside $26.2M of revenue); its
     Q3 2025 and Q2 2026 10-Qs tag the quarter's $4.171M. The chart from that 10-Q prefers its own filing's figures,
