@@ -144,10 +144,10 @@
 
   /* ---------- the page it is on: default questions and the greeting follow it ---------- */
   // company page tab → the topic it is about (#c-<cik>-x-options, #c-<cik>-debt …); the plain company page is its earnings
-  const TAB_TOPIC = { 'x-fairvalue': 'valuation', value: 'valuation', 'x-rotation': 'rotation', 'x-options': 'options', debt: 'credit', consensus: 'analysts', revisions: 'analysts', 'x-opportunity': 'opportunity',
+  const TAB_TOPIC = { 'x-fairvalue': 'valuation', value: 'valuation', 'x-rotation': 'rotation', 'x-momentum': 'rotation', 'x-options': 'options', debt: 'credit', consensus: 'analysts', revisions: 'analysts', 'x-opportunity': 'opportunity',
     eps: 'nextEarnings', holders: 'owners', 'x-insiders': 'insiders', 'x-events': 'events', cash: 'cashflow', capital: 'cashflow', dollar: 'cashflow', links: 'ties', 'x-moves': 'moves', 'x-investments': 'investments', 'x-filings': 'filings' };
   // disclosures-hub tab → topic
-  const HUB_TOPIC = { valuation: 'valuation', rotation: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'nextEarnings', quality: 'earnings', filings: 'earnings', opportunity: 'opportunity',
+  const HUB_TOPIC = { valuation: 'valuation', rotation: 'rotation', momentum: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'nextEarnings', quality: 'earnings', filings: 'earnings', opportunity: 'opportunity',
     insiders: 'insiders', trades: 'congress', congress: 'congress', holders: 'owners', smart: 'owners', events: 'events', shorts: 'shorts', moves: 'moves', guidance: 'guidanceRecord', investors: 'investments', notes: 'ties' };
   const TOPICS = ['filings', 'valuation', 'rotation', 'options', 'earnings', 'industry', 'credit', 'analysts', 'opportunity'];
   const byRevenue = (list, f) => list.filter(f).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 3);
@@ -302,7 +302,7 @@
       `假设 SPY 不动，下周收盘 ≥ <b>${usd(hi)}</b>（${spc(hi / A.close - 1)}）进入领先，低于 <b>${usd(lo)}</b>（${spc(lo / A.close - 1)}）落入落后。`));
     if (pv) p.push(L(lg, `Where lines in its spot stood 4 weeks later (${shown ? d.label : 'history only'}): ${odds}.`, `同位置的股票 4 周后的去向（${shown ? (d.label === 'calibrated' ? '已校准' : '实验性') : '仅历史'}）：${odds}。`));
     if (A.paths.length >= 30) p.push(L(lg, `Its own past runs replayed: ${usd(A.close * r10)}–${usd(A.close * r90)} in 4 weeks (80%).`, `用它自己的历史走势回放：4 周后 80% 区间 ${usd(A.close * r10)}–${usd(A.close * r90)}。`));
-    return { html: p.join(' '), facts, mood: q === 0 ? 'happy' : q === 2 ? 'worried' : 'talk', links: [[`${BASE}#c-${c.cik}-x-rotation`, L(lg, 'Rotation (RRG) page', 'RRG 轮动页')]] };
+    return { html: p.join(' '), facts, mood: q === 0 ? 'happy' : q === 2 ? 'worried' : 'talk', links: [[`${BASE}#c-${c.cik}-x-rotation`, L(lg, 'Rotation (RRG) page', 'RRG 轮动页')], [`${BASE}#c-${c.cik}-x-momentum`, L(lg, 'Momentum factors: absolute, relative, composite', '动量因子：绝对、相对、复合')]] };
   }
   async function industry(c, lg) {
     const base = HUB + 'market/history/';
