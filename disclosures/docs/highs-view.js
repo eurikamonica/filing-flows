@@ -1337,7 +1337,7 @@
       const r = [];
       for (let i = Math.max(1, a); i <= z && i < N; i++) r.push([i, P.close[i] / P.close[i - 1] - 1]);
       r.sort((x, y) => Math.abs(y[1]) - Math.abs(x[1]));
-      r.slice(0, n).forEach(([i, m]) => put(P.days[i], `${label}'s ${m >= 0 ? 'biggest rise' : 'biggest fall'}`));
+      r.slice(0, n).forEach(([i], k) => put(P.days[i], `${label}'s ${['biggest', '2nd biggest', '3rd biggest'][k]} move`));
     };
     if (kind === 'highs') {
       put(S.ath_date, fin(S.dd) && S.dd > -0.0005 ? 'the new all-time high' : 'the latest all-time high');
