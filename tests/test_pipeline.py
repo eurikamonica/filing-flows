@@ -3803,3 +3803,25 @@ def test_a_profit_loss_tag_mirroring_net_income_is_dropped():
     r = {"ni": 10.0e6, "pl": -10.0e6, "nci": None, "pretax": -8e6, "tax": 2e6}
     facts.odd_one_out(r)
     assert r["pl"] == -10.0e6
+
+
+def test_a_narrower_revenues_tag_is_checked_against_the_cost_lines():
+    """X4 Pharmaceuticals' Q1 2025 10-Q tags $0.9M (one line) as "Revenues" beside $28.8M of contract revenue and no
+    costs or operating-expense subtotal: the cost lines close the statement on $28.8M (facts.cost_lines), so the chart
+    showed $0.9M of revenue under $28.8M of revenue lines."""
+    from pipeline import facts
+    own = "0001628280-25-021358"
+    mk = lambda v: [{"start": "2025-01-01", "end": "2025-03-31", "val": v, "filed": "2025-05-01", "form": "10-Q",
+                     "accn": own}]
+    ago = [{"start": "2024-01-01", "end": "2024-03-31", "val": 0.8e6, "filed": "2024-05-01", "form": "10-Q",
+            "accn": "0001628280-24-000001"}]                      # X4 tagged that line "Revenues" a year earlier too
+    g = {"Revenues": mk(0.9e6) + ago, "RevenueFromContractWithCustomerExcludingAssessedTax": mk(28.807e6),
+         "CostOfRevenue": mk(4.716e6), "ResearchAndDevelopmentExpense": mk(18.513e6),
+         "GeneralAndAdministrativeExpense": mk(15.021e6), "OperatingIncomeLoss": mk(-9.443e6), "NetIncomeLoss": mk(0.282e6)}
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-03-31")["revenue"] == 28.807e6
+    # the "Revenues" figure that the cost lines close on is kept (a total below contract revenue by hedging losses)
+    g["OperatingIncomeLoss"] = mk(0.9e6 - 38.25e6)
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-03-31")["revenue"] == 0.9e6
+    assert facts.cost_lines({"cor": 1.0, "rd": None, "sga": None, "sm": None, "ga": None}.get) is None
