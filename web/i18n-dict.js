@@ -2399,6 +2399,9 @@
     ['Improving; big money buying ahead of the tape', 'Improving ; les gros investisseurs achètent avant le marché', 'Improving; el dinero grande compra antes que el mercado'],
     ['Improving without money behind it', 'Improving sans l’argent derrière', 'Improving sin el dinero detrás'],
     ['Improving on inflows while big money sells', 'Improving grâce aux entrées, alors que les gros investisseurs vendent', 'Improving con entradas mientras el dinero grande vende'],
+    ['Crypto perpetuals: taker buy − sell (experiment)', 'Contrats perpétuels crypto : achats − ventes à l’initiative du preneur (expérience)', 'Perpetuos cripto: compras − ventas del tomador (experimento)'],
+    ['Experiment: crypto exchanges’ stock perpetuals', 'Expérience : les contrats perpétuels sur actions des plateformes crypto', 'Experimento: los perpetuos sobre acciones de las plataformas cripto'],
+    ['Loading the experiment’s numbers…', 'Chargement des chiffres de l’expérience…', 'Cargando las cifras del experimento…'],
     // ---------------------------------------------------------------- the language switch
     ['Language', 'Langue', 'Idioma'],
   ];
@@ -2607,6 +2610,8 @@
     ['^each week ringed by its net money inflow \\(green in, red out\\) · the latest dot’s outline: big-money buying \\(green\\) or selling \\(red\\), (the week|\\d+ weeks)$', 'chaque semaine cerclée selon ses entrées nettes d’argent (vert : entrées, rouge : sorties) · le contour du dernier point : achats (vert) ou ventes (rouge) des gros investisseurs, $1', 'cada semana rodeada según sus entradas netas de dinero (verde: entradas, rojo: salidas) · el contorno del último punto: compras (verde) o ventas (rojo) del dinero grande, $1'],
     ['^Stocks: (\\d+) weeks on: beat SPY (\\d+)% of the time, median (\\S+); (\\d+) weeks on: beat SPY (\\d+)% of the time, median (\\S+) \\(([\\d,]+) stock-weeks\\)\\.$', 'Actions : $1 semaines plus tard, devant SPY $2 % du temps, médiane $3 ; $4 semaines plus tard, devant SPY $5 % du temps, médiane $6 ($7 semaines-actions).', 'Acciones: $1 semanas después, por delante de SPY el $2 % de las veces, mediana $3; $4 semanas después, por delante de SPY el $5 % de las veces, mediana $6 ($7 semanas-acción).'],
     ['^ETFs: (\\d+) weeks on: beat SPY (\\d+)% of the time, median (\\S+); (\\d+) weeks on: beat SPY (\\d+)% of the time, median (\\S+) \\(([\\d,]+) ETF-weeks\\)\\.$', 'ETF : $1 semaines plus tard, devant SPY $2 % du temps, médiane $3 ; $4 semaines plus tard, devant SPY $5 % du temps, médiane $6 ($7 semaines-ETF).', 'ETF: $1 semanas después, por delante de SPY el $2 % de las veces, mediana $3; $4 semanas después, por delante de SPY el $5 % de las veces, mediana $6 ($7 semanas-ETF).'],
+    ['^(\\S+) \\((\\S+) of (\\$[\\d.]+[KMBT]?)\\)$', '$1 ($2 de $3)', '$1 ($2 de $3)'],
+    ['^(\\S+%) of (\\$[\\d.]+[KMBT]?)$', '$1 de $2', '$1 de $2'],
   ];
 
 })(window);

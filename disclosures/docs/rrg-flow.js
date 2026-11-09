@@ -53,7 +53,7 @@
   // the file's weekly arrays (thousands of dollars; the short shares × 10,000) on the RRG's weekly grid
   function onGrid(d, G) {
     const off = Math.round((Date.parse(d.start + 'T00:00:00Z') - G.t0) / 6048e5), out = {};
-    for (const k of ['dv', 'mf', 'ox', 'r', 'b', 'dp']) {
+    for (const k of ['dv', 'mf', 'ox', 'r', 'b', 'dp', 'pb', 'ps']) {
       const a = d[k] || [], o = (out[k] = new Array(G.n).fill(null));
       for (let i = 0; i < a.length; i++) { const g = off + i; if (g >= 0 && g < G.n) o[g] = a[i]; }
     }
@@ -73,8 +73,12 @@
       if (A.dp[j] != null) { dp += A.dp[j]; nd++; }
     }
     const big = nx === L && so > 0;
+    // the experiment: taker buy and sell on crypto exchanges' perpetuals of the stock, every week of the window traded
+    let pb = 0, ps = 0, np = 0;
+    for (let j = gi - L + 1; j <= gi; j++) if (A.pb[j] != null && A.ps[j] != null && A.pb[j] + A.ps[j] > 0) { pb += A.pb[j]; ps += A.ps[j]; np++; }
     return { x: big ? 100 * sx / so : null, y: 100 * mf / dv, dp: big && nd === L ? dp * 1e3 : null, mf: mf * 1e3, dv: dv * 1e3, L,
-      r: A.r[gi] == null ? null : A.r[gi] / 1e4, b: A.b[gi] == null ? null : A.b[gi] / 1e4 };
+      r: A.r[gi] == null ? null : A.r[gi] / 1e4, b: A.b[gi] == null ? null : A.b[gi] / 1e4,
+      cp: np === L ? { buy: pb * 1e3, sell: ps * 1e3, net: (pb - ps) * 1e3, pct: 100 * (pb - ps) / (pb + ps) } : null };
   }
   const qtl = (a, p) => { if (!a.length) return null; const s = a.slice().sort((u, v) => u - v); return s[Math.min(s.length - 1, Math.floor(p * (s.length - 1)))]; };
   // fixed for the whole history, symmetric around 0, so play does not rescale
@@ -118,7 +122,8 @@
       [r.x == null ? '—' : r.dp == null ? `${pc(r.x)} of off-exchange volume` : `${usd(r.dp)} (${pc(r.x)} of off-exchange volume)`, `Big-money net buying, ${wk(r.L)}`],
       [`${usd(r.mf)} (${pc(r.y)} of turnover)`, `Net money inflow, ${wk(r.L)}`],
       ...(r.r != null && r.b != null ? [[`${(100 * r.r).toFixed(1)}% vs ${(100 * r.b).toFixed(1)}%`, 'Off-exchange short share this week vs its last 52']] : []),
-      [usd(r.dv).replace(/^\+/, ''), `Turnover, ${wk(r.L)}`]];
+      [usd(r.dv).replace(/^\+/, ''), `Turnover, ${wk(r.L)}`],
+      ...(r.cp ? [[`${usd(r.cp.net)} (${pc(r.cp.pct)} of ${usd(r.cp.buy + r.cp.sell).replace(/^\+/, '')})`, 'Crypto perpetuals: taker buy − sell (experiment)']] : [])];
   }
 
   // ---------------------------------------------------------------- on the RRG: arrows, or each week ringed
@@ -233,14 +238,26 @@
     }
     rows.sort((a, b) => (b.r.x == null ? -1e9 : b.r.x) - (a.r.x == null ? -1e9 : a.r.x));
     if (!rows.length) return '';
-    return H.table(['Line', 'Money flow', 'With the RRG', `Big-money net buying, ${wk(F.L)}`, `Net money inflow, ${wk(F.L)}`, 'Off-exchange short share: week · last 52'], rows.map(({ p, r, q, rq }) => [
+    const cp = rows.some(({ r }) => r.cp);              // the experiment's column, when a line has perpetuals
+    return H.table(['Line', 'Money flow', 'With the RRG', `Big-money net buying, ${wk(F.L)}`, `Net money inflow, ${wk(F.L)}`, 'Off-exchange short share: week · last 52', ...(cp ? ['Crypto perpetuals: taker buy − sell (experiment)'] : [])], rows.map(({ p, r, q, rq }) => [
       `<i class="mk-key" style="background:${p.l.col}"></i> <b>${esc(p.l.e.name)}</b>`,
       q == null ? '<span class="muted">—</span>' : `<span class="badge rrg-b-${FQ[q][3]}">${esc(FQ[q][1])}</span>`,
       rq == null ? '—' : `<span class="badge rrg-b-${H.RRG_Q[rq][0]}">${esc(H.RRG_Q[rq][1])}</span>${q == null ? '' : `<br><span class="rrgf-read">${esc(READ[rq][q])}</span>`}`,
       r.x == null ? '—' : r.dp == null ? `<span class="${r.x >= 0 ? 'positive' : 'negative'}">${esc(pc(r.x))}</span><br><span class="muted">of off-exchange volume</span>`
         : `<span class="${r.dp >= 0 ? 'positive' : 'negative'}">${esc(usd(r.dp))}</span><br><span class="muted">${esc(pc(r.x))} of off-exchange volume</span>`,
       `<span class="${r.y >= 0 ? 'positive' : 'negative'}">${esc(usd(r.mf))}</span><br><span class="muted">${esc(pc(r.y))} of turnover</span>`,
-      r.r != null && r.b != null ? `${(100 * r.r).toFixed(1)}% · ${(100 * r.b).toFixed(1)}%` : '—']));
+      r.r != null && r.b != null ? `${(100 * r.r).toFixed(1)}% · ${(100 * r.b).toFixed(1)}%` : '—',
+      ...(cp ? [r.cp ? `<span class="${r.cp.net >= 0 ? 'positive' : 'negative'}">${esc(usd(r.cp.net))}</span><br><span class="muted">${esc(pc(r.cp.pct))} of ${esc(usd(r.cp.buy + r.cp.sell).replace(/^\+/, ''))}</span>` : '<span class="muted">—</span>'] : [])]));
+  }
+  // what the experiment shows so far (index.json's perps.stats): words built from its numbers
+  function experiment() {
+    const m = index(), P = m.data && m.data.perps, S = P && P.stats;
+    let h = `<p>OKX and Bitget, two crypto exchanges, list perpetual futures on US stocks and ETFs and publish how much of each traded on the buyer’s initiative (a taker lifting the offer) and on the seller’s — the “active buy, active sell” split Chinese stock apps build their money-flow figures from. The column above adds up that split, taker buy − taker sell, over the same weeks; OKX gives about the last 100 days, Bitget 30 days and only for a few contracts, so the history grows a day at a time from August 2026. It is the flow of those exchanges’ own traders — offshore, leveraged, trading around the clock — not the stock market’s: for Nvidia about 1% of the stock’s own dollar volume, far less for most. Binance, the largest of these venues, does not serve US addresses.</p>`;
+    if (S && S.n) {
+      const rho = (k) => (S[k] && S[k].rho != null ? (S[k].rho > 0 ? '+' : S[k].rho < 0 ? '−' : '') + Math.abs(S[k].rho).toFixed(2) : '—');
+      h += `<p>So far — ${esc(String(S.tickers))} tickers, ${esc(S.from)} to ${esc(S.to)}, ${esc(Number(S.n).toLocaleString('en-US'))} ticker-weeks with $5M or more of perpetuals traded — the week’s net taker buying ranks with the stock’s return against SPY that same week at ${rho('rel')} (rank correlation), with its money flow at ${rho('y')} and with its big-money buying at ${rho('x')}; with the next week’s return against SPY at ${rho('next')}${S.ic ? ` (week by week ${S.ic.mean > 0 ? '+' : S.ic.mean < 0 ? '−' : ''}${Math.abs(S.ic.mean).toFixed(2)}, above zero in ${S.ic.positive} of ${S.ic.weeks} weeks)` : ''}; and with its own next week at ${rho('persist')}. It moves with the stock in the same week and keeps its direction for a while; it has not said anything about the next week. Too few weeks yet to rest anything on.</p>`;
+    } else if (m.loading) h += `<p class="sub">Loading the experiment’s numbers…</p>`;
+    return h;
   }
   // under the RRG: the quadrant chart, its notes, the guide and the table (or why there is nothing to draw)
   function panel(o, F, f, H) {
@@ -252,10 +269,11 @@
       + `<div class="mk-legend rrg-legend">${FQ.map(([k, name, , cls, what]) => `<span><i class="mk-key rrg-k-${cls}"></i>${esc(name)} <span class="muted">${esc(what)}</span></span>`).join('')}</div>`
       + table(o, F, f, H)
       + `<details open><summary>How to read the money-flow quadrants</summary>${guide(F)}</details>`
+      + (F.per.some((p) => p.R && p.R.some((r) => r && r.cp)) ? `<details><summary>Experiment: crypto exchanges’ stock perpetuals</summary>${experiment()}</details>` : '')
       + `<details><summary>How the money flows are estimated</summary><p>Big-money net buying: FINRA publishes, every trading day, how many shares of each stock traded off the exchanges (the trade reporting facilities, where dark pools and block trades report) and how many of those were short sales. A dealer that fills a client’s buy order from its own book reports a short sale, so the short share rises when buyers dominate off-exchange — the idea behind the “dark index” (DIX). Each line is read against itself: the week’s short share minus its average over the 52 weeks before (26 at least), doubled — the share of the off-exchange volume bought beyond the usual, averaged over the weeks chosen by their off-exchange shares; times the off-exchange dollars, the dollars. FINRA counts shares as traded, the daily bars are split-adjusted: splits are found where the two volumes step against each other and taken out of the dollars, and a symbol FINRA used for another security earlier (Meta’s before June 2022) is read only from its change. Net money inflow: Chaikin’s money flow, each day’s dollar volume × ((close − low) − (high − close)) ÷ (high − low), added up over the weeks chosen and divided by the dollars traded in them. Neither is a count of real orders: short sales also come from market making and hedging, and a close near the day’s high is not proof of buying. FINRA’s consolidated files begin on August 1, 2018, so the big-money figure starts in early 2019.</p></details>`;
   }
 
-  const api = { FQ, MODES, WINS, READ, S, fid, quad, onGrid, reading, domain, prep, overlay, legend, chart, guide, table, panel, usd, pc };
+  const api = { FQ, MODES, WINS, READ, S, fid, quad, onGrid, reading, domain, prep, overlay, legend, chart, guide, table, panel, experiment, usd, pc };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   root.RRGFlow = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -3,8 +3,9 @@
 # off-exchange trades (the consolidated file on cdn.finra.org, from 2018-08-01; each day fetched once, the first runs fill
 # the history) added up by week in cache/finra/, then public/ rebuilt by app/flows.py from it and research-paths' daily
 # bars: each ticker's weekly big-money net buying (the off-exchange short share against its own last 52 weeks) and net
-# money inflow (Chaikin's money flow), and what followed each quadrant. Kept on the branch "research-flows" (one commit,
-# force-pushed); scan.yml publishes public/ at disclosures/data/research/flows/.
+# money inflow (Chaikin's money flow), and what followed each quadrant. An experiment beside them (app/perps.py): the
+# taker buy and sell on OKX's and Bitget's perpetual futures of the same stocks, kept a day at a time. Kept on the branch
+# "research-flows" (one commit, force-pushed); scan.yml publishes public/ at disclosures/data/research/flows/.
 name: Research — money flows
 on:
   workflow_dispatch:
@@ -49,6 +50,10 @@ jobs:
       - name: FINRA's daily short sale volume (cache/finra/, each day once)
         timeout-minutes: 35
         run: python disclosures/app/flows.py collect --root flw --minutes "${{ inputs.minutes || '25' }}"
+      - name: Crypto exchanges' stock perpetuals (OKX, Bitget) — an experiment, its failures stop nothing
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python disclosures/app/perps.py collect --root flw --bars _paths/cache/ohlc
       - name: Build public/ (t/<TICKER>.json, index.json)
         timeout-minutes: 15
         run: python disclosures/app/flows.py build --root flw --bars _paths/cache/ohlc

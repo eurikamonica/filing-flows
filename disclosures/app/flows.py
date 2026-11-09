@@ -556,6 +556,12 @@ def build(root, bars, log=print):
         flows[t] = F
         if F['splits'] or F['cut']:
             splits[t] = {**{grid[i]: round(r, 4) for i, r in F['splits'].items()}, **({'from': grid[F['cut']]} if F['cut'] else {})}
+    try:                                               # the experiment beside it: crypto exchanges' stock perpetuals
+        import perps as PX
+        P = PX.weekly(root, grid)
+    except Exception as e:
+        log(f'perps: {e}')
+        PX, P = None, {}
     pub = root / 'public'
     (pub / 't').mkdir(parents=True, exist_ok=True)
     written = 0
@@ -566,6 +572,8 @@ def build(root, bars, log=print):
         doc = {'t': t, 'start': grid[i0], 'dv': [_k(v) for v in F['dv'][i0:]], 'mf': [_k(v) for v in F['mf'][i0:]],
                'ox': [_k(v) for v in F['ox'][i0:]], 'r': [_m(v) for v in F['r'][i0:]], 'b': [_m(v) for v in F['b'][i0:]],
                'dp': [_k(v) for v in F['dp'][i0:]]}
+        if t in P and any(P[t][0][i0:]):               # taker buy and sell on the perpetuals, thousands of dollars
+            doc['pb'], doc['ps'] = [_k(v) for v in P[t][0][i0:]], [_k(v) for v in P[t][1][i0:]]
         (pub / 't' / f'{t}.json').write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')
         written += 1
     for old in (pub / 't').glob('*.json'):
@@ -577,9 +585,12 @@ def build(root, bars, log=print):
     index = {'format': 1, 'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'start': grid[0],
              'weeks': grid[-1], 'tickers': sorted(flows), 'etfs': sorted(t for t in flows if t in etfs), 'quadrants': QUADS,
              'window': WINDOW, 'base_weeks': BASE_WEEKS, 'stats': stats, 'splits': splits,
+             'perps': {'tickers': sorted(t for t in P if t in flows), 'venues': ['OKX', 'Bitget'],
+                       'stats': PX.stats({t: v for t, v in P.items() if t in flows}, flows, grid) if PX and P else None},
              'units': {'dv': 'dollars, thousands', 'mf': 'dollars, thousands', 'dp': 'dollars, thousands',
                        'ox': 'off-exchange shares as traded, thousands',
-                       'r': 'short share of off-exchange volume × 10,000', 'b': 'its average over the 52 weeks before × 10,000'},
+                       'r': 'short share of off-exchange volume × 10,000', 'b': 'its average over the 52 weeks before × 10,000',
+                       'pb': 'crypto perpetuals, taker buy, dollars, thousands', 'ps': 'the same, taker sell'},
              'source': "FINRA's daily short sale volume (consolidated NMS, off-exchange trades) and daily bars (Yahoo / Stooq)"}
     (pub / 'index.json').write_text(json.dumps(index, separators=(',', ':')), encoding='utf-8')
     (pub / 'status.json').write_text(json.dumps({'generated_at': index['generated_at'], 'weeks': grid[-1], 'tickers': written,

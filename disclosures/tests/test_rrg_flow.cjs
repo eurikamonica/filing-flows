@@ -108,4 +108,30 @@ const sx = (v) => 300 + 20 * (v - 100), sy = (v) => 200 - 20 * (v - 100);
 }
 
 ok(F.usd(1.234e9) === '+$1.23B' && F.usd(-2.5e6) === '−$2.5M' && F.pc(-0.123, 2) === '−0.12%', 'dollars and percents');
+
+{ // the experiment: crypto exchanges' perpetuals of XLK from week 80 of its file — $6M taker buy and $4M sell a week
+  const pb = Array(K).fill(null), ps = Array(K).fill(null);
+  for (let i = 80; i < K; i++) { pb[i] = 6000; ps[i] = 4000; }
+  F.S.t.XLK = { data: { ...doc, pb, ps } };
+  F.S.idx.data.perps = { tickers: ['XLK'], venues: ['OKX', 'Bitget'], stats: { n: 456, tickers: 33, from: '2026-08-07', to: '2026-11-06',
+    rel: { rho: 0.349, n: 456 }, y: { rho: 0.136, n: 456 }, x: { rho: 0.208, n: 456 }, next: { rho: 0.046, n: 423 }, persist: { rho: 0.43, n: 421 },
+    ic: { mean: -0.018, weeks: 13, positive: 6 }, median_abs: 2.8 } };
+  const A3 = F.onGrid(F.S.t.XLK.data, G);
+  const r = F.reading(A3, off + 85, 4);
+  ok(r.cp && r.cp.net === 8e6 && Math.abs(r.cp.pct - 20) < 1e-9 && r.cp.buy === 24e6, 'four weeks of perpetuals: +$8M, 20% of $40M');
+  ok(F.reading(A3, off + 82, 4).cp === null, 'a window reaching before the first week traded: none');
+  const V2 = F.prep(o, G, G.w.idx, { mode: 'arrows', L: 4 }), f2 = off + 90;
+  const p2 = F.panel(o, V2, f2, H);
+  ok(/Crypto perpetuals: taker buy − sell \(experiment\)/.test(p2) && /\+\$8\.0M/.test(p2) && /\+20\.0% of \$40\.0M/.test(p2), 'the column: dollars and the share of what the perpetuals traded');
+  ok(/Experiment: crypto exchanges’ stock perpetuals/.test(p2), 'the experiment explained');
+  ok(/ranks with the stock’s return against SPY that same week at \+0\.35/.test(p2) && /next week’s return against SPY at \+0\.05 \(week by week −0\.02, above zero in 6 of 13 weeks\)/.test(p2), 'its numbers in words');
+  tips.length = 0;
+  F.overlay(o, V2, f2, sx, sy, H);
+  ok(tips.some((rows) => rows.some((x) => x[1] === 'Crypto perpetuals: taker buy − sell (experiment)' && x[0] === '+$8.0M (+20.0% of $40.0M)')), 'and in the tooltip');
+  const T = p2.slice(p2.indexOf('<table>'), p2.indexOf('</table>'));
+  ok((T.match(/<tr>/g) || []).length === 3 && /<span class="muted">—<\/span>/.test(T), 'a line without perpetuals: a dash');
+  delete F.S.t.XLK.data.pb;
+  const p3 = F.panel(o, F.prep(o, G, G.w.idx, { mode: 'arrows', L: 4 }), f2, H);
+  ok(!/Crypto perpetuals/.test(p3) && !/Experiment:/.test(p3), 'no perpetuals on the chart: no column, no experiment');
+}
 console.log(`rrg flow: ${n} checks passed`);
