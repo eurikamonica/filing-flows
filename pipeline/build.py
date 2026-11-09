@@ -2199,8 +2199,8 @@ def _superseded(accn, filed):
     return False
 
 
-FPI_READER = 4                  # bump when the 6-K reader changes: foreign filers' results releases are read again once
-FPI_FULL = 3                    # the last version that read every stored 6-K quarter again (later ones: the turned-down)
+FPI_READER = 5                  # bump when the 6-K reader changes: foreign filers' results releases are read again once
+FPI_FULL = 5                    # the last version that read every stored 6-K quarter again (later ones: the turned-down)
 # v2 (Nov 2026): European statements — expenses printed negative (the tax sign), "Q1–Q3" / "Jan-Sep" / "9M" year-to-date
 # columns, the year-ago column from the header's years, IFRS and bank line names, note references, the most complete
 # exhibit of a 6-K
@@ -2209,6 +2209,9 @@ FPI_FULL = 3                    # the last version that read every stored 6-K qu
 # v4: a release turned down for a reason the reader understood ("not a results release (…: revenue is a year to date,
 # not the quarter)", the units, the end date, …) is read again even when the company has periods drawn — AB InBev's
 # third quarter, which v3 reads; the stored quarters are not read again (v3 did)
+# v5: quarter titles before whole years ("Q3 2025 | Q4 2025 | FY 2024 | FY 2025") ordered block by block, so the current
+# quarter is the second column: ASML's fourth quarter of 2025 had been read as the third's figures again (€7.5B, not
+# €9.7B) — every stored quarter is read again
 
 
 def _reread_fpi(store, days=220):

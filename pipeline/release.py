@@ -287,11 +287,19 @@ def _newest_first(table):
             found = [re.findall(r"\b(20\d\d)\b", c) for c in cells]
             if len(cells) >= 2 and all(len(m) == 1 for m in found):
                 # the quarter within the year orders "Q2 2026 | Q3 2026" (one year, the newest last)
-                keys = [int(m[0]) * 10 + _cell_quarter(c) for m, c in zip(found, cells)]
-                years = keys if len(set(int(m[0]) for m in found)) < len(found) and all(_cell_quarter(c) for c in cells) \
-                    else [int(m[0]) for m in found]
-                if all(_cell_quarter(c) for c in cells):
-                    table["qtrs"] = [_cell_quarter(c) for c in cells]       # "Q4 2025 | Q1 2026" (ASML)
+                q = [_cell_quarter(c) for c in cells]
+                keys = [int(m[0]) * 10 + qq for m, qq in zip(found, q)]
+                lead = len(list(itertools.takewhile(bool, q)))
+                if all(q) and len(set(int(m[0]) for m in found)) < len(found):
+                    years = keys
+                elif 2 <= lead < len(cells) and len(set(int(m[0]) for m in found[:lead])) < lead and not any(q[lead:]):
+                    # quarters first, then whole years: "Q3 2025 | Q4 2025 | FY 2024 | FY 2025" (ASML's fourth quarter):
+                    # each block ordered on its own, the quarters by their quarter
+                    years = keys[:lead] + [int(m[0]) * 10 for m in found[lead:]]
+                else:
+                    years = [int(m[0]) for m in found]
+                if all(q):
+                    table["qtrs"] = q                                   # "Q4 2025 | Q1 2026" (ASML)
                 break
         if r["label"] and v and not all(1990 <= x <= 2100 and x == int(x) for x in v):
             return table                                   # numbers before any year row: leave the table as printed

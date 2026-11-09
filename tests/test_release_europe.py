@@ -222,23 +222,45 @@ def test_two_figure_years_last_years_quarter_first_and_a_second_block_below():
 
 
 def test_reader_v4_reads_again_what_it_judged_not_every_stored_quarter(tmp_path, monkeypatch):
-    """After v3 (every stored quarter read again), v4 reads again only the releases turned down for a reason the reader
-    understood — AB InBev's third quarter, judged a year to date — even when the company has periods drawn; a 6-K with
-    no statement stays turned down for such a company."""
+    """A reader change that only reads again the releases turned down for a reason the reader understood (v4: AB
+    InBev's third quarter, judged a year to date) even when the company has periods drawn — a 6-K with no statement stays
+    turned down for such a company; a change that reads every stored quarter again (v3, v5) takes those too."""
+    monkeypatch.setattr(build, "FPI_FULL", 3)
+    monkeypatch.setattr(build, "FPI_READER", 4)
     store = build.Store(str(tmp_path))
     now = build.dt.datetime.utcnow().isoformat()
     store.put(1668717, {"profile": {"cik": 1668717}, "quarters": {"2026-06-30": {"end": "2026-06-30", "accn": "Q2", "form": "6-K", "raw": {"revenue": 16.7e9}}}})
     st = store.state
     st["fpi"], st["fpi_reader"], st["pending"] = [1668717], 3, {}
+    judged = "skip: not a results release (d159047dex991.htm: revenue is a year to date, not the quarter)"
     st["seen"] = {
-        "Q3": {"cik": 1668717, "t": now, "form": "6-K", "s": "skip: not a results release (d159047dex991.htm: revenue is a year to date, not the quarter)"},
+        "Q3": {"cik": 1668717, "t": now, "form": "6-K", "s": judged},
         "DIV": {"cik": 1668717, "t": now, "form": "6-K", "s": "skip: not a results release (a1820c.htm: no statement of operations found)"},
         "Q2": {"cik": 1668717, "t": now, "form": "6-K", "s": "ok"},
     }
     build._reread_fpi(store)
-    assert set(st["pending"]) == {"Q3"} and "DIV" in st["seen"] and st["fpi_reader"] == build.FPI_READER
-    # from before v3: every stored quarter too
-    st["fpi_reader"], st["pending"] = 2, {}
-    st["seen"]["Q3"] = {"cik": 1668717, "t": now, "form": "6-K", "s": "skip: not a results release (d159047dex991.htm: revenue is a year to date, not the quarter)"}
+    assert set(st["pending"]) == {"Q3"} and "DIV" in st["seen"] and st["fpi_reader"] == 4
+    # a change that reads every stored quarter again
+    monkeypatch.setattr(build, "FPI_FULL", 5)
+    monkeypatch.setattr(build, "FPI_READER", 5)
+    st["fpi_reader"], st["pending"] = 4, {}
+    st["seen"]["Q3"] = {"cik": 1668717, "t": now, "form": "6-K", "s": judged}
     build._reread_fpi(store)
-    assert set(st["pending"]) == {"Q3", "Q2"}
+    assert set(st["pending"]) == {"Q3", "Q2"} and st["fpi_reader"] == 5
+
+
+def test_quarters_then_whole_years_the_newest_quarter_last():
+    # ASML's fourth quarter: "Q3 2025 | Q4 2025 | FY 2024 | FY 2025" under a caption — the quarter before first, so the
+    # current quarter is the second column (read once as the third quarter's figures again)
+    html = _doc(_t([["(Figures in millions of euros unless otherwise indicated)", "Q3 2025", "Q4 2025", "FY 2024", "FY 2025"]],
+                   [("Total net sales", "7,516", "9,718", "28,263", "32,667"), ("Gross profit", "3,880", "5,068", "14,492", "17,258"),
+                    ("Net income", "2,125", "2,840", "7,572", "9,609")]),
+                intro="ASML reports fourth quarter and full year 2025 results, quarter ended December 31, 2025")
+    r = release.parse(html, dt.date(2026, 1, 28))
+    assert r["is"]["revenue"] == 9718e6 and r["is"]["gp"] == 5068e6
+    assert r["py_col"] in (-1, None)                                  # the quarter before is no year-ago figure
+    # two quarters alone still read the newest: "Q4 2025 | Q1 2026"
+    html2 = _doc(_t([["(Figures in millions of euros)", "Q4 2025", "Q1 2026"]],
+                    [("Total net sales", "9,718", "8,767"), ("Gross profit", "5,068", "4,645"), ("Net income", "2,840", "2,757")]),
+                 intro="ASML reports first quarter 2026 results, quarter ended March 29, 2026")
+    assert release.parse(html2, dt.date(2026, 4, 15))["is"]["revenue"] == 8767e6
