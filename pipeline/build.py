@@ -2199,22 +2199,27 @@ def _superseded(accn, filed):
     return False
 
 
-FPI_READER = 3                  # bump when the 6-K reader changes: foreign filers' results releases are read again once
+FPI_READER = 4                  # bump when the 6-K reader changes: foreign filers' results releases are read again once
+FPI_FULL = 3                    # the last version that read every stored 6-K quarter again (later ones: the turned-down)
 # v2 (Nov 2026): European statements — expenses printed negative (the tax sign), "Q1–Q3" / "Jan-Sep" / "9M" year-to-date
 # columns, the year-ago column from the header's years, IFRS and bank line names, note references, the most complete
 # exhibit of a 6-K
 # v3: units checked against a quarter of the 20-F year (HSBC's interim report read a thousand times over), a second
 # half at the year end is not the fourth quarter (Stellantis), a release turned down on re-reading loses its old period
+# v4: a release turned down for a reason the reader understood ("not a results release (…: revenue is a year to date,
+# not the quarter)", the units, the end date, …) is read again even when the company has periods drawn — AB InBev's
+# third quarter, which v3 reads; the stored quarters are not read again (v3 did)
 
 
 def _reread_fpi(store, days=220):
     """Once per FPI_READER: every foreign filer's stored 6-K quarters and halves, and the 6-Ks of the last `days` the
     reader turned down, are read again (the newest first, like any pending filing)."""
     st = store.state
-    if st.get("fpi_reader", 1) >= FPI_READER:
+    ver = st.get("fpi_reader", 1)
+    if ver >= FPI_READER:
         return
     fpis, n = set(st.get("fpi", [])), 0
-    for cik in sorted(fpis):
+    for cik in sorted(fpis) if ver < FPI_FULL else []:
         c = store.company(cik)
         for pool in ("quarters", "halves"):
             for q in (c.get(pool) or {}).values():
@@ -2227,18 +2232,20 @@ def _reread_fpi(store, days=220):
     drawn = {}
     for accn, v in list(st["seen"].items()):
         s = str(v.get("s", ""))
-        # a release the reader understood and turned down (nine months, not a quarter, units, end date, ...), and, for a
-        # company with no period drawn yet (banks, Shell, AstraZeneca), one it found no statement in
+        # a release the reader understood and turned down (nine months, not a quarter, a year to date, the units, the end
+        # date, ...), and, for a company with no period drawn yet (banks, Shell, AstraZeneca), one it found no statement in
         if v.get("cik") not in fpis or v.get("t", "") < recent or not s.startswith("skip") or v.get("form") not in (None, "6-K"):
             continue
         if s.startswith("skip: not a results release"):
             if "(" not in s:
                 continue                                         # no statement at all: most 6-Ks
-            if v["cik"] not in drawn:
-                c0 = store.company(v["cik"])
-                drawn[v["cik"]] = bool(c0.get("quarters") or c0.get("halves"))
-            if drawn[v["cik"]]:
-                continue
+            if "no statement of operations found" in s:
+                if v["cik"] not in drawn:
+                    c0 = store.company(v["cik"])
+                    drawn[v["cik"]] = bool(c0.get("quarters") or c0.get("halves"))
+                if drawn[v["cik"]]:
+                    continue
+            # otherwise a statement the reader judged ("revenue is a year to date, not the quarter", ...): read again
         del st["seen"][accn]
         st["pending"][accn] = {"cik": v["cik"], "form": "6-K", "filed": v.get("t", "")[:10], "tries": 0, "items": None, "history": True}
         n += 1

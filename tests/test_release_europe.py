@@ -219,3 +219,26 @@ def test_two_figure_years_last_years_quarter_first_and_a_second_block_below():
     r = release.parse(html, FILED)
     assert r["is"]["revenue"] == 16512e6 and r["is"]["ni"] == 1597e6 and r["py_col"] == 1
     assert r["scale"] == 1e6                                                       # "USD Mio"
+
+
+def test_reader_v4_reads_again_what_it_judged_not_every_stored_quarter(tmp_path, monkeypatch):
+    """After v3 (every stored quarter read again), v4 reads again only the releases turned down for a reason the reader
+    understood — AB InBev's third quarter, judged a year to date — even when the company has periods drawn; a 6-K with
+    no statement stays turned down for such a company."""
+    store = build.Store(str(tmp_path))
+    now = build.dt.datetime.utcnow().isoformat()
+    store.put(1668717, {"profile": {"cik": 1668717}, "quarters": {"2026-06-30": {"end": "2026-06-30", "accn": "Q2", "form": "6-K", "raw": {"revenue": 16.7e9}}}})
+    st = store.state
+    st["fpi"], st["fpi_reader"], st["pending"] = [1668717], 3, {}
+    st["seen"] = {
+        "Q3": {"cik": 1668717, "t": now, "form": "6-K", "s": "skip: not a results release (d159047dex991.htm: revenue is a year to date, not the quarter)"},
+        "DIV": {"cik": 1668717, "t": now, "form": "6-K", "s": "skip: not a results release (a1820c.htm: no statement of operations found)"},
+        "Q2": {"cik": 1668717, "t": now, "form": "6-K", "s": "ok"},
+    }
+    build._reread_fpi(store)
+    assert set(st["pending"]) == {"Q3"} and "DIV" in st["seen"] and st["fpi_reader"] == build.FPI_READER
+    # from before v3: every stored quarter too
+    st["fpi_reader"], st["pending"] = 2, {}
+    st["seen"]["Q3"] = {"cik": 1668717, "t": now, "form": "6-K", "s": "skip: not a results release (d159047dex991.htm: revenue is a year to date, not the quarter)"}
+    build._reread_fpi(store)
+    assert set(st["pending"]) == {"Q3", "Q2"}

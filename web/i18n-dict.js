@@ -2447,6 +2447,7 @@
     ['^(\\d+) plans$', '$1 plans', '$1 planes'],
     ['^(\\d+) s \\(([\\d.]+) weeks a second\\)$', '$1 s ($2 semaines par seconde)', '$1 s ($2 semanas por segundo)'],
     ['^About ([\\d.]+) weeks a second\\.$', 'Environ $1 semaines par seconde.', 'Unas $1 semanas por segundo.'],
+    ['^(\\S+%) of the estimate$', '$1 de l’estimation', '$1 de la estimación'],
   ];
 
 })(window);
