@@ -210,5 +210,62 @@ const clean = (h, m) => ok(!/NaN|undefined|Infinity|\[object/.test(h), m + ' sho
   const pb = HV.pngBar(PX);
   ok(pb.includes('Picture to share (PNG):') && pb.includes('data-hvp="now" checked') && pb.includes('data-hvp="own"') && !pb.includes('data-hvp="own" checked') && !pb.includes('data-hvp="mdd63"') && pb.includes('Make the picture'), 'the bar: the panels it can draw, the default ones ticked');
   ok(HV.pngBar({ ...PX, A: null, M: null, own: null }) === '', 'nothing to draw: no bar');
+  // valuation beside the price (app/ratios.py → doc.ratios): the weeks, the rolling band, the words, the table, the chart
+  const wk = (d0, n, f) => Array.from({ length: n }, (_, i) => f(i));
+  const N0 = 600, pe = wk('2015-01-02', N0, (i) => +(15 + 10 * Math.sin(i / 60) + (i > 560 ? 12 : 0)).toFixed(2)), ind = wk('2015-01-02', N0, (i) => (i < 30 ? null : 20));
+  pe[200] = 400;                                            // a spike far past its usual range: off the top
+  const RT = { as_of: '2026-07-31', w: { d0: '2015-01-02', n: N0, pe, pe_ind: ind, ps: wk('2015-01-02', N0, (i) => 2 + i / 300) },
+    pe: { now: 37, date: '2026-07-31', from: '2015-01-02', days: 2900, hi: [400, '2018-11-02'], lo: [5.1, '2015-11-20'], q: [8, 12, 18, 24, 30], at_hi: false, at_lo: false, pct: 94.3, off_hi: -0.9075, y5: { from: '2021-08-02', q: [20, 26, 34], pct: 85.5, hi: [42, '2024-12-26'], lo: [20, '2023-01-05'] },
+      split: [{ k: 'run', from: '2026-05-01', price: 0.2, per: 0.1, ratio: 0.0909 }, { k: '1y', from: '2025-07-31', price: 0.2276, per: 0.2024, ratio: 0.0209 }],
+      ind: { level: 'industry group', key: 'SIC-357', name: 'Computer and office equipment', n: 24, mid: 26.7, p25: 21, p75: 33, rank: 66.7, rel: 1.39, rel_pct: 79.2, rel_mid: 1.04, rel_weeks: 500, top: [['CSCO', 30.8]] } },
+    ps: { now: 3.99, date: '2026-07-31', from: '2015-01-02', days: 2900, hi: [3.99, '2026-07-31'], lo: [2, '2015-01-02'], q: [2.2, 2.5, 3, 3.5, 3.8], at_hi: true, at_lo: false, pct: 100, y5: { from: '2021-08-02', q: [3, 3.5, 3.9], pct: 100 } },
+    more: { from: '2022-06-03', rows: [{ k: 'pb', label: 'P/B', now: 46.9, mid: 46, pct: 58.6, weeks: 232, peer: null }, { k: 'ev_ebitda', label: 'EV/EBITDA', now: 30.1, mid: 24.1, pct: 97, weeks: 232, peer: { mid: 16.6, p25: 8.9, p75: 27.4, n: 22, group: 'sic357' } }],
+      peer_pe: { mid: 24.4, p25: 14.5, p75: 38.9, n: 24, group: 'sic357', own: 38.1 } } };
+  const W0 = HV.rWeeks(RT);
+  ok(W0.n === N0 && W0.date(0) === '2015-01-02' && W0.date(1) === '2015-01-09' && HV.rWeeks({}) === null, 'the weeks: Fridays from d0');
+  const rbd = HV.rolling(Array.from({ length: 300 }, (_, i) => i));
+  ok(rbd.lo[102] === null && rbd.lo[103] !== null && Math.abs(rbd.lo[299] - (40 + 0.1 * 259)) < 1e-9 && Math.abs(rbd.hi[299] - (40 + 0.9 * 259)) < 1e-9, 'the rolling band: two years at least, the 10–90% of the five years before');
+  const vdoc = { ...tdoc, d0: '2015-01-02', gaps: '1'.repeat(2000), r: Array.from({ length: 2000 }, (_, i) => (i % 50 < 30 ? 15 : -10)), ratios: RT };
+  const aw = HV.athWeeks(HV.series(vdoc), W0);
+  ok(aw.size > 20 && [...aw].every((k) => k >= 0 && k < N0), 'the weeks with a new all-time high in price');
+  const vw = HV.ratioWords(RT, { ...state, dd: -0.02 }, 'highs', 'highs');
+  ok(vw.includes('<b>P/E 37.0</b> is <b>the 94th percentile</b> of the days since 2015 (the 86th percentile of the last five years), 91% under its own high of 400') && vw.includes('<b>P/S 3.99</b> is <b>at its all-time high</b>'), 'the words: where each ratio stands');
+  ok(vw.includes('Since this run began (May 1, 2026) the price rose <b>20.0%</b>: EPS +10.0% and the P/E +9.1% — both played a part'), 'the price split into earnings and the multiple');
+  ok(vw.includes('Against its industry group (Computer and office equipment, 24 other companies)') && vw.includes('median <b>1.04×</b> their median since 2015, <b>1.39×</b> now (the 79th percentile of its premium)'), 'against its industry');
+  ok(HV.ratioWords({ pe: { now: null, why: 'loss' } }, state, 'highs', 'highs').includes('P/E none today: the last four quarters lost money'), 'no P/E today, said why');
+  const vt = HV.ratioTable(RT);
+  ok(vt.includes('its all-time high') && vt.includes('top 1%') && vt.includes('Its industry group: Computer and office equipment') && vt.includes('above 67% of them') && vt.includes('1.39× their median, usually 1.04×'), 'the table');
+  const vc = HV.ratioChart(RT, 'pe', HV.series(vdoc), 900);
+  ok(vc.includes('↑ high 400') && /weeks above [\d.]+ drawn at the edge \(as high as 400\)/.test(vc) && vc.includes('stroke-dasharray:6 4') && vc.includes('a new all-time high in price that week'), 'the chart: the spike off the top and said, the industry dashed, the new price highs');
+  ok((vc.match(/class="hv-hit"/g) || []).length === Math.ceil(N0 / Math.ceil(N0 / 160)) && /<title>week of [A-Z][a-z]{2} \d+, 20\d\d: P\/E [\d.]+ · its industry group&#39;s median 20/.test(vc), 'a tooltip a column of weeks');
+  ok(HV.ratioChart(RT, 'pe', null, 360).includes('viewBox="0 0 360 256"') && HV.ratioChart({ ...RT, w: { ...RT.w, pe: pe.slice(0, 10), n: 10 } }, 'pe', null, 900) === '', 'on a phone; too few weeks: none');
+  const vb = HV.valBlock(vdoc, { ...state, dd: -0.02 }, 'highs', 'highs', 900);
+  ok(vb.includes('<h3>Valuation beside the price</h3>') && vb.includes('data-hvv="pe"') && vb.includes('data-hvvbox="ps" hidden') && vb.includes('<h4>More multiples</h4>') && vb.includes('(22 · SIC 357)'), 'the section: the ratio chips, a chart each, more multiples');
+  ok(HV.valBlock(tdoc, state, 'highs', 'highs', 900) === '', 'no ratios: no section');
+  clean(vw + vt + vc + vb, 'the valuation section');
+  const PXv = { ...PX, doc: { ...PX.doc, ...vdoc, kind: 'stock' } };
+  ok(HV.canPic(PXv, 'pe') && HV.canPic(PXv, 'ps') && !HV.canPic(PX, 'pe') && JSON.stringify(HV.picRows(PXv, ['now', 'pe', 'ps', 'fwd63'])) === '[["now"],["pe"],["ps"],["fwd63"]]', 'the picture: a P/E and a P/S panel, each wide');
+  // the key days and the news: the filings and headlines on the day they could move, how often the highs came on results
+  const days = HV.series(vdoc).days, ev = (d, hm, items, head) => [d, hm, '8-K', items, head, '', items.includes('2.02') ? ['earnings'] : [], '0000-' + d];
+  const resDays = [days[100], days[400], days[700], days[1000], days[1300], days[1600], days[1900]];
+  const NEWS = { events: [...resDays.map((d) => ev(d, '08:00', '2.02,9.01', 'Results')), ev(days[1999], '17:00', '5.02', 'A new CFO')].reverse(),
+    headlines: [[days[1990], days[1990], '10:00', 'Reuters', 'Test Inc. shares jump', 'https://example.com/a']], checked: [days[1990]] };
+  const byN = HV.newsOn(NEWS, days);
+  ok(byN.get(100).f.length === 1 && !byN.has(1999) && byN.get(1990).h[0][3] === 'Test Inc. shares jump' && byN.checked.has(days[1990]), 'the news on its trading day: after the close, the next (past the last day: none)');
+  const est = HV.eventStats(HV.series(vdoc), byN, NEWS, 'highs', 'highs');
+  ok(est && est.from === days[100] && est.n > 50 && est.eDays === 7 && est.on >= 0 && est.week >= est.on && Number.isFinite(est.base), 'how often the new highs came on a reporting day, from the first filing on file (newest first in the file)');
+  const kds = HV.keyDays(HV.series(vdoc), { ath_date: days[1990], high: true, run_start: days[1950], dd: 0 }, 'highs', 'highs', { last: [{ start: days[1500], peak: days[1520], days: 20, pullback: -0.12 }] });
+  ok(kds[0].what === 'the new all-time high' && kds.some((x) => x.what === "this run's first high") && kds.some((x) => x.what.startsWith("a run's peak (then −12.0%)")) && kds.every((x, i) => !i || kds[i - 1].i > x.i), 'the key days, newest first');
+  const nb = HV.newsBlock({ ...vdoc, cik: 1 }, { ath_date: days[1990], high: true, run_start: days[1950], dd: 0 }, 'highs', 'highs', NEWS);
+  ok(nb.includes('<h3>Its highs and the news</h3>') && nb.includes('Test Inc. shares jump') && nb.includes('new all-time highs</b> since') && nb.includes('came on a day it reported results'), 'the section: the stat, the days with their headlines');
+  ok(HV.newsBlock({ ...vdoc, kind: 'etf' }, { ath_date: days[1990], dd: 0 }, 'highs', 'highs', null).includes('The headlines'), 'a fund: headlines only');
+  clean(nb, 'the news section');
+  // the lists: P/S beside P/E, sorted by it
+  const DOC2 = JSON.parse(JSON.stringify(DOC));
+  DOC2.now[0].state = { ...DOC2.now[0].state, ps: 10.2, ps_all: 98.4, ps_5y: 94.6, ps_ind: 88.9, ps_ath: true, pe_ind: 66.7 };
+  const oPs = { state: { mvhs: 'ps_all' } };
+  const hh2 = HV.hub(DOC2, oPs);
+  ok(hh2.includes('<th>P/S</th>') && hh2.includes('10.2 <span class="hv-tag">own high</span>') && hh2.includes('98th own · 89th in industry') && oPs.exported[0].ps === 10.2 && oPs.exported[0].ps_pct_industry === 88.9 && oPs.exported[0].ps_at_own_high === true, 'the list: P/S, its percentiles, its own high; in the CSV');
+  ok(hh2.indexOf('AAPL') < hh2.indexOf('HALO'), 'sorted by P/S against its own');
   console.log(`Highs view: ${n} checks passed`);
 })().catch((e) => { console.error(e); process.exit(1); });

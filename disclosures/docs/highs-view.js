@@ -52,7 +52,11 @@
 .hv-hit rect{fill:transparent}.hv-hit:hover rect{fill:var(--ink,#222);fill-opacity:.05}.hv-hit .hv-x{stroke:var(--muted,#888);stroke-width:1;opacity:0}.hv-hit:hover .hv-x{opacity:.7}.hv-standbox{margin:2px 0 10px}.hv-stand{max-width:900px}
 .hv-png{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;margin:4px 0 12px;padding:8px 10px;border:1px dashed var(--line,#ddd);border-radius:10px;max-width:1000px}.hv-png-l{font-weight:600}
 .hv-png label{display:inline-flex;gap:4px;align-items:center;cursor:pointer}.hv-png-out img{display:block;max-width:min(100%,900px);height:auto;border:1px solid var(--line,#ddd);border-radius:10px;margin:6px 0}
-.hv-png-out .hv-png-acts{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}.hv-png-out a,.hv-png-out button{font:inherit;font-size:13px;padding:4px 12px;border-radius:8px;border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);cursor:pointer;text-decoration:none}.hv-dd{font-size:11.5px;margin-left:4px;font-variant-numeric:tabular-nums}.hv-t tr.hv-base td{background:var(--surface-2,#f3f2ee)}`;
+.hv-png-out .hv-png-acts{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}.hv-png-out a,.hv-png-out button{font:inherit;font-size:13px;padding:4px 12px;border-radius:8px;border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);cursor:pointer;text-decoration:none}.hv-dd{font-size:11.5px;margin-left:4px;font-variant-numeric:tabular-nums}.hv-t tr.hv-base td{background:var(--surface-2,#f3f2ee)}
+.hv-tag{display:inline-block;font-size:11px;font-weight:600;border:1px solid var(--q-warm,#d9822b);color:var(--q-warm,#b5651d);border-radius:999px;padding:0 7px;margin-left:2px;white-space:nowrap}.hv-t td .m{display:block;font-size:11.5px}.hv-t td .hv-meter{max-width:120px}
+.hv-vbox[hidden]{display:none}.hv-ratio{max-width:900px}.hv-news{margin:0 0 6px;font-size:12.5px;line-height:1.45}.hv-news:last-child{margin:0}.hv-news .m{display:inline}.hv-news a{color:inherit}.hv-news .q{color:var(--muted,#777);display:block}
+.hv-nchip{display:inline-block;font-size:11px;border:1px solid var(--line,#ddd);border-radius:999px;padding:0 7px;margin:0 4px 2px 0;color:var(--muted,#666)}.hv-nchip.hot{border-color:var(--q-warm,#d9822b);color:var(--q-warm,#b5651d)}.hv-nchip.src{border-color:var(--rot-1,#2a78d6);color:var(--rot-1,#2a78d6)}
+.hv-newsbox td:last-child{min-width:260px;max-width:560px;white-space:normal}.hv-after{color:var(--muted,#777)}.hv-after a{color:inherit}`;
     document.head.appendChild(s);
   }
   const tone = (v) => (!fin(v) ? '' : v > 0 ? 'hv-up' : v < 0 ? 'hv-down' : '');
@@ -296,7 +300,7 @@
     vol_pct: 'volatility (own percentile)', pe_pct: 'P/E (own percentile)', volu: 'volume vs its year' };
   function block(H, name, kind, base, groupKey, opts = {}) {
     const S = H.state || {}, A = H.analogues, O = H.own || {}, lvl = kind === 'index' || kind === 'industry';
-    let h = headline(name, S, kind) + tiles(S, kind) + (opts.stand || '');
+    let h = headline(name, S, kind) + tiles(S, kind) + (opts.stand || '') + (opts.val || '') + (opts.news || '');
     if (A && A.days) {
       h += `<h3>What followed the ${num(A.days)} most similar high days</h3><p class="hv-sub">High days of ${esc(GROUP[groupKey] || 'its kind')} (${num(A.assets)} assets, ${num(A.runs)} runs) nearest on ${esc(A.features.map((f) => FEAT[f] || f).join(', '))}: at most one per asset in any 21 days, none of its own from the last year. A pullback counts from the all-time high; the days are trading days.${base ? ' After the dot: every high day of the group, for comparison.' : ''}</p>`;
       h += facts(A, lvl);
@@ -492,12 +496,12 @@
   function hub(doc, o) {
     const st = o.state || {}, gs = Object.keys(doc.groups || {});
     const grp = gs.includes(st.mvhg) ? st.mvhg : gs[0] || 'companies', G = (doc.groups || {})[grp] || {};
-    const sorts = [['highs63', 'Most new highs in 63 days'], ['age', 'Oldest runs'], ['ext200', 'Furthest above the 200-day average'], ['pe_pct', 'Highest P/E against its own'], ['risk', 'Most likely to fall 10% within 3 months'], ['dd', 'Closest to the high']];
+    const sorts = [['highs63', 'Most new highs in 63 days'], ['age', 'Oldest runs'], ['ext200', 'Furthest above the 200-day average'], ['pe_pct', 'Highest P/E against its own'], ['ps_all', 'Highest P/S against its own'], ['ps_ind', 'Highest P/S against its industry'], ['risk', 'Most likely to fall 10% within 3 months'], ['dd', 'Closest to the high']];
     const sort = sorts.some((s) => s[0] === st.mvhs) ? st.mvhs : 'highs63';
     const field = o.field || ((id, lab, items, v) => `<label>${lab} <select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`);
     const now = (doc.now || []).filter((r) => r.group === grp);
     const risk = (r) => ((((r.analogues || {}).t10) || {}).p || {})['63'];
-    const key = { highs63: (r) => -(r.state.highs63 || 0), age: (r) => -(r.state.age || 0), ext200: (r) => -(r.state.ext200 || 0), pe_pct: (r) => -(r.state.pe_pct ?? -1), risk: (r) => -(risk(r) ?? -1), dd: (r) => -(r.state.dd ?? -1) }[sort];
+    const key = { highs63: (r) => -(r.state.highs63 || 0), age: (r) => -(r.state.age || 0), ext200: (r) => -(r.state.ext200 || 0), pe_pct: (r) => -(r.state.pe_pct ?? -1), ps_all: (r) => -(r.state.ps_all ?? -1), ps_ind: (r) => -(r.state.ps_ind ?? -1), risk: (r) => -(risk(r) ?? -1), dd: (r) => -(r.state.dd ?? -1) }[sort];
     now.sort((a, b) => key(a) - key(b) || String(a.key).localeCompare(String(b.key)));
     const B = G.base || {};
     let h = `<div class="hv"><p class="hv-sub">An asset runs at its highs when it closes within 5% of its all-time high with a new high in the last 21 trading days. Every such day since the data begins is counted (the S&amp;P 500 index since 1928, companies since their first day on file), with the state the asset was in — the run's age, new highs in the last quarter, how far above its 200-day average, momentum, volatility, P/E and volume — and what followed: the days to the first 5%, 10% and 20% pullback from the high, the rest of the run (to its last high before a 10% pullback) and the depth of the pullback that ended it. ${esc(doc.note || '')}</p>`;
@@ -506,14 +510,14 @@
     o.exported = now.map((r) => ({ key: r.key, name: r.name, date: r.state.date, close: r.state.close, from_high: r.state.dd, run_start: r.state.run_start, run_days: r.state.age, highs63: r.state.highs63,
       above_200d: r.state.ext200, above_200d_pct: r.state.ext_pct, momentum: r.state.mom, momentum_pct: r.state.mom_pct, momentum_vs_companies: r.state.mom_xs, volatility_pct: r.state.vol_pct, pe: r.state.pe, pe_pct: r.state.pe_pct,
       volume_ratio: r.state.volu, analog_days_to_10pct: ((r.analogues || {}).t10 || {}).median, analog_10pct_within_3m: risk(r), analog_10pct_within_12m: ((((r.analogues || {}).t10) || {}).p || {})['252'],
-      analog_days_to_peak: ((r.analogues || {}).run_left || {}).median, analog_pullback_median: ((r.analogues || {}).pullback || {}).p50 }));
+      analog_days_to_peak: ((r.analogues || {}).run_left || {}).median, analog_pullback_median: ((r.analogues || {}).pullback || {}).p50, ...valCsv(r.state) }));
     h += `<div class="section-head"><h3>At their highs now — ${num(now.length)} ${esc(GROUP[grp])}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
     const pct = (v, txt) => (fin(v) ? `<br><span class="m">${txt ? txt(v) : ord(v) + ' pct.'}</span>` : '');
-    h += now.length ? table(['Asset', 'From the high · run', 'Highs, 63 days', 'Above 200-day', 'Momentum (own · all companies)', 'Volatility pct.', 'P/E', 'Volume', 'Similar days: 10% pullback (median) · within 3 · 12 months', 'To the run’s peak · the pullback after'],
+    h += now.length ? table(['Asset', 'From the high · run', 'Highs, 63 days', 'Above 200-day', 'Momentum (own · all companies)', 'Volatility pct.', 'P/E', 'P/S', 'Volume', 'Similar days: 10% pullback (median) · within 3 · 12 months', 'To the run’s peak · the pullback after'],
       now.map((r) => { const S = r.state, A = r.analogues || {};
         return [`<button type="button" class="hv-k" data-hvk="${esc(r.key)}">${esc(r.key)}</button> <span class="m">${esc(String(r.name || '').slice(0, 30))}</span>`, `${S.dd === 0 ? 'at it' : sp(S.dd)}${S.run_start ? `<br><span class="m">${num(S.age)} d since ${esc(md(S.run_start))}</span>` : ''}`, num(S.highs63),
           `${sp(S.ext200, 0)}${pct(S.ext_pct)}`, `${sp(S.mom, 0)}${fin(S.mom_pct) || fin(S.mom_xs) ? `<br><span class="m">${ord(S.mom_pct)}${fin(S.mom_xs) ? ' · ' + ord(S.mom_xs) : ''}</span>` : ''}`, ord(S.vol_pct),
-          fin(S.pe) ? `${num(S.pe, 1)}${pct(S.pe_pct)}` : '—', fin(S.volu) ? num(S.volu, 2) + '×' : '—',
+          fin(S.pe) ? `${num(S.pe, 1)}${S.pe_ath ? ' <span class="hv-tag">own high</span>' : ''}${pct(S.pe_pct)}` : '—', psCell(S), fin(S.volu) ? num(S.volu, 2) + '×' : '—',
           `${td((A.t10 || {}).median)}<br><span class="m">${pc(((A.t10 || {}).p || {})['63'])} · ${pc(((A.t10 || {}).p || {})['252'])}</span>`,
           `${td((A.run_left || {}).median)}<br><span class="hv-down">${sp((A.pullback || {}).p50)}</span>`];
       }), [0]) : '<p class="hv-sub">None at their highs on the last day.</p>';
@@ -600,7 +604,7 @@
   const NOTE = 'Adjusted closes (dividends reinvested). P/E: price ÷ the last four first-filed quarterly diluted EPS (SEC), positive only. Companies are today\'s (survivors), which flatters what came after their lows. Days in a regime overlap (one slide gives many low days), so the episodes and assets are given beside them. History, not a forecast.';
   function lowBlock(B, name, kind, base, groupKey, reg, opts = {}) {
     const S = B.state || {}, A = B.analogues;
-    let h = lowHeadline(name, S, kind, reg) + lowTiles(S, kind, reg) + (opts.stand || '');
+    let h = lowHeadline(name, S, kind, reg) + lowTiles(S, kind, reg) + (opts.stand || '') + (opts.val || '') + (opts.news || '');
     if (A && A.days) {
       h += `<h3>What followed the ${num(A.days)} most similar days at ${A_N(reg)} low</h3><p class="hv-sub">Low days (within 15% of the ${SPAN[reg]} low with a new one in the last 63 trading days) of ${esc(GROUP[groupKey] || 'its kind')} (${num(A.assets)} assets, ${num(A.runs)} slides) nearest on ${esc((A.features || []).map((f) => LFEAT[f] || f).join(', '))}: at most one per asset in any 21 days, none of its own from the last year.${base ? ' After the dot: every low day of the group, for comparison.' : ''}</p>`;
       h += lowFacts(A, reg);
@@ -620,7 +624,7 @@
   }
   function rangeBlock(B, name, kind, base, groupKey, reg, opts = {}) {
     const S = B.state || {}, A = B.analogues;
-    let h = rangeHeadline(name, S, kind, reg) + rangeTiles(S, kind) + (opts.stand || '');
+    let h = rangeHeadline(name, S, kind, reg) + rangeTiles(S, kind) + (opts.stand || '') + (opts.val || '') + (opts.news || '');
     if (A && A.days) {
       h += `<h3>What followed the ${num(A.days)} most similar days in a ${reg} range</h3><p class="hv-sub">Days sideways over 63 trading days (the net move under a quarter of the range's width) with the width ${reg === 'narrow' ? 'in the bottom 15%' : 'in the top 30%'} of the asset's own, among ${esc(GROUP[groupKey] || 'its kind')} (${num(A.assets)} assets, ${num(A.runs)} ranges), nearest on ${esc((A.features || []).map((f) => RFEAT[f] || f).join(', '))}: at most one per asset in any 21 days, none of its own from the last year.${base ? ' After the dot: every such day of the group.' : ''}</p>`;
       h += rangeFacts(A);
@@ -669,15 +673,17 @@
   const capped = (head, rows, cls, what) => (rows.length <= LIST_CAP + 10 ? table(head, rows, cls)
     : table(head, rows.slice(0, LIST_CAP), cls) + `<details class="hv-more"><summary>The other ${num(rows.length - LIST_CAP)} ${esc(what)}</summary>${table(head, rows.slice(LIST_CAP), cls)}</details>`);
   const fieldOf = (o) => o.field || ((id, lab, items, v) => `<label>${lab} <select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`);
+  const psCell = (S) => (fin(S.ps) ? `${rnum(S.ps)}${S.ps_ath ? ' <span class="hv-tag">own high</span>' : S.ps_atl ? ' <span class="hv-tag">own low</span>' : ''}<br><span class="m">${fin(S.ps_all) ? ord(S.ps_all) + ' own' : ''}${fin(S.ps_ind) ? ` · ${ord(S.ps_ind)} in industry` : ''}</span>` : '—');
+  const valCsv = (S) => ({ ps: S.ps, ps_pct_own: S.ps_all, ps_pct_5y: S.ps_5y, ps_pct_industry: S.ps_ind, pe_pct_5y: S.pe_5y, pe_pct_industry: S.pe_ind, pe_at_own_high: !!S.pe_ath, ps_at_own_high: !!S.ps_ath });
   const assetCell = (r) => `<button type="button" class="hv-k" data-hvk="${esc(r.key)}">${esc(r.key)}</button> <span class="m">${esc(String(r.name || '').slice(0, 30))}</span>`;
   function lowsHub(doc, reg, o) {
     const R = ((doc.regimes || {})[reg]) || {}, st = o.state || {}, gs = Object.keys(R.groups || {});
     const grp = gs.includes(st.mvhg) ? st.mvhg : gs[0] || 'companies', G = (R.groups || {})[grp] || {}, B = G.base || {}, field = fieldOf(o);
     const sorts = [['dd_ath', 'Furthest under the all-time high'], ['dist', 'Closest to the low'], ['lows63', 'Most new lows in 63 days'], ['age', 'The longest slides'], ['mom_xs', 'Weakest momentum among companies'],
-      ['pe_pct', 'Cheapest P/E against its own'], ['r20', 'Most likely to rebound 20% within 3 months'], ['next', 'Least likely to make a new low within 3 months']];
+      ['pe_pct', 'Cheapest P/E against its own'], ['ps_all', 'Cheapest P/S against its own'], ['ps_ind', 'Cheapest P/S against its industry'], ['r20', 'Most likely to rebound 20% within 3 months'], ['next', 'Least likely to make a new low within 3 months']];
     const sort = sorts.some((s) => s[0] === st.mvhs) ? st.mvhs : 'dd_ath';
     const A_ = (r) => r.analogues || {};
-    const key = { dd_ath: (r) => r.state.dd_ath ?? 0, dist: (r) => r.state.dist ?? 9, lows63: (r) => -(r.state.lows63 || 0), age: (r) => -(r.state.age || 0), mom_xs: (r) => r.state.mom_xs ?? 999, pe_pct: (r) => r.state.pe_pct ?? 999,
+    const key = { dd_ath: (r) => r.state.dd_ath ?? 0, dist: (r) => r.state.dist ?? 9, lows63: (r) => -(r.state.lows63 || 0), age: (r) => -(r.state.age || 0), mom_xs: (r) => r.state.mom_xs ?? 999, pe_pct: (r) => r.state.pe_pct ?? 999, ps_all: (r) => r.state.ps_all ?? 999, ps_ind: (r) => r.state.ps_ind ?? 999,
       r20: (r) => -(p_(A_(r).r20, '63') ?? -1), next: (r) => p_(A_(r).next_low, '63') ?? 9 }[sort];
     const now = ((doc.now || {})[reg] || []).filter((r) => r.group === grp).sort((a, b) => key(a) - key(b) || String(a.key).localeCompare(String(b.key)));
     let h = `<div class="hv"><p class="hv-sub">An asset runs at its ${SPAN[reg]} low when it closes within 15% of that low with a new one in the last 63 trading days${reg === '3m' ? ' (the bottom of its recent range)' : ''}. Every such day since the data begins is counted with the state the asset was in — the slide's age (since its last ${reg === 'atl' ? 'all-time' : SPAN[reg]} high), new lows in the last quarter, how far under its all-time high and its 200-day average, momentum, volatility, P/E and volume — and what followed: the days to the next new low, to a 10% and a 20% rebound, the low before the rebound, how far the rebound went and the next 12 months. ${esc(doc.note || '')}</p>`;
@@ -686,13 +692,13 @@
     o.exported = now.map((r) => ({ key: r.key, name: r.name, date: r.state.date, close: r.state.close, above_low: r.state.dist, low: r.state.low, low_date: r.state.low_date, since_high: r.state.since, slide_days: r.state.age, lows63: r.state.lows63,
       under_ath: r.state.dd_ath, vs_200d: r.state.ext200, momentum: r.state.mom, momentum_pct: r.state.mom_pct, momentum_vs_companies: r.state.mom_xs, volatility_pct: r.state.vol_pct, pe: r.state.pe, pe_pct: r.state.pe_pct, volume_ratio: r.state.volu,
       analog_days_to_new_low: (A_(r).next_low || {}).median, analog_new_low_within_3m: p_(A_(r).next_low, '63'), analog_days_to_20pct_rebound: (A_(r).r20 || {}).median, analog_20pct_within_3m: p_(A_(r).r20, '63'),
-      analog_rebound_median: (A_(r).bounce || {}).p50, analog_12m_median: (A_(r).fwd252 || {}).p50, analog_12m_up: (A_(r).fwd252 || {}).up }));
+      analog_rebound_median: (A_(r).bounce || {}).p50, analog_12m_median: (A_(r).fwd252 || {}).p50, analog_12m_up: (A_(r).fwd252 || {}).up, ...valCsv(r.state) }));
     h += `<div class="section-head"><h3>At ${A_N(reg)} low now — ${num(now.length)} ${esc(GROUP[grp])}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
     const pct = (v) => (fin(v) ? `<br><span class="m">${ord(v)} pct.</span>` : '');
-    h += now.length ? capped(['Asset', 'Above the low · its day', 'Under its high · the slide', 'Lows, 63 days', 'Momentum (own · all companies)', 'P/E', 'Similar days: next new low (median) · within 3 months', '20% rebound (median) · the rebound', '12 months: median · up'],
+    h += now.length ? capped(['Asset', 'Above the low · its day', 'Under its high · the slide', 'Lows, 63 days', 'Momentum (own · all companies)', 'P/E', 'P/S', 'Similar days: next new low (median) · within 3 months', '20% rebound (median) · the rebound', '12 months: median · up'],
       now.map((r) => { const S = r.state, A = A_(r);
         return [assetCell(r), `${S.dist < 0.0005 ? 'at it' : sp(S.dist)}${S.low_date ? `<br><span class="m">${esc(md(S.low_date))}</span>` : ''}`, `${sp(S.dd_ath, 0)}<br><span class="m">${num(S.age)} d</span>`, num(S.lows63),
-          `${sp(S.mom, 0)}${fin(S.mom_pct) || fin(S.mom_xs) ? `<br><span class="m">${ord(S.mom_pct)}${fin(S.mom_xs) ? ' · ' + ord(S.mom_xs) : ''}</span>` : ''}`, fin(S.pe) ? `${num(S.pe, 1)}${pct(S.pe_pct)}` : '—',
+          `${sp(S.mom, 0)}${fin(S.mom_pct) || fin(S.mom_xs) ? `<br><span class="m">${ord(S.mom_pct)}${fin(S.mom_xs) ? ' · ' + ord(S.mom_xs) : ''}</span>` : ''}`, fin(S.pe) ? `${num(S.pe, 1)}${S.pe_atl ? ' <span class="hv-tag">own low</span>' : ''}${pct(S.pe_pct)}` : '—', psCell(S),
           `${(A.next_low || {}).median != null ? td(A.next_low.median) : A.next_low ? 'over a year' : '—'}<br><span class="m">${pc(p_(A.next_low, '63'))}</span>`, `${(A.r20 || {}).median != null ? td(A.r20.median) : '—'}<br><span class="hv-up">${sp((A.bounce || {}).p50)}</span>`,
           `<span class="${tone((A.fwd252 || {}).p50)}">${sp((A.fwd252 || {}).p50)}</span><br><span class="m">${pc((A.fwd252 || {}).up)}</span>`];
       }), [0], GROUP[grp]) : `<p class="hv-sub">None at ${A_N(reg)} low on the last day.</p>`;
@@ -716,11 +722,11 @@
     if (B.days) h += `<p class="hv-head">All ${esc(GROUP[grp])}: ${num(B.days)} days in a ${reg} range in ${num(B.runs)} ranges of ${num(B.assets)} assets. The breakout came a median <b>${(B.breakout || {}).median != null ? td(B.breakout.median) : 'over a year'}</b> later (${pc(p_(B.breakout, '21'))} within a month, ${pc(p_(B.breakout, '63'))} within 3); <b>${pc(B.up_first)} broke out up first</b>. 3 months after an up-breakout a median <span class="${tone((B.after63_up || {}).p50)}">${sp((B.after63_up || {}).p50)}</span>, after a down-breakout <span class="${tone((B.after63_down || {}).p50)}">${sp((B.after63_down || {}).p50)}</span>; false breakouts ${pc(B.failed_up)} up, ${pc(B.failed_down)} down.</p>`;
     o.exported = now.map((r) => ({ key: r.key, name: r.name, date: r.state.date, close: r.state.close, range_low: r.state.lo, range_high: r.state.hi, width: r.state.width, width_pct: r.state.width_pct, position: r.state.pos, days_in_range: r.state.age,
       under_ath: r.state.dd_ath, vs_200d: r.state.ext200, volatility_pct: r.state.vol_pct, pe: r.state.pe, pe_pct: r.state.pe_pct, volume_ratio: r.state.volu, analog_days_to_breakout: (A_(r).breakout || {}).median,
-      analog_breakout_within_3m: p_(A_(r).breakout, '63'), analog_up_first: A_(r).up_first, analog_3m_after_up: (A_(r).after63_up || {}).p50, analog_3m_after_down: (A_(r).after63_down || {}).p50, analog_12m_median: (A_(r).fwd252 || {}).p50 }));
+      analog_breakout_within_3m: p_(A_(r).breakout, '63'), analog_up_first: A_(r).up_first, analog_3m_after_up: (A_(r).after63_up || {}).p50, analog_3m_after_down: (A_(r).after63_down || {}).p50, analog_12m_median: (A_(r).fwd252 || {}).p50, ...valCsv(r.state) }));
     h += `<div class="section-head"><h3>In a ${reg} range now — ${num(now.length)} ${esc(GROUP[grp])}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
-    h += now.length ? capped(['Asset', 'Width · own pct.', 'The range', 'Where it sits', 'Days in it', 'Under its high', 'Similar days: breakout (median) · within 3 months', 'Up first', '3 months after up · down', '12 months: median · up'],
+    h += now.length ? capped(['Asset', 'Width · own pct.', 'The range', 'Where it sits', 'Days in it', 'Under its high', 'P/S', 'Similar days: breakout (median) · within 3 months', 'Up first', '3 months after up · down', '12 months: median · up'],
       now.map((r) => { const S = r.state, A = A_(r), lvl = r.kind === 'index' || r.kind === 'industry';
-        return [assetCell(r), `${pc(S.width, 1)}<br><span class="m">${ord(S.width_pct)}</span>`, `${money(S.lo, lvl)}–${money(S.hi, lvl)}`, fin(S.pos) ? pc(S.pos) : '—', num(S.age), fin(S.dd_ath) ? sp(S.dd_ath, 0) : '—',
+        return [assetCell(r), `${pc(S.width, 1)}<br><span class="m">${ord(S.width_pct)}</span>`, `${money(S.lo, lvl)}–${money(S.hi, lvl)}`, fin(S.pos) ? pc(S.pos) : '—', num(S.age), fin(S.dd_ath) ? sp(S.dd_ath, 0) : '—', psCell(S),
           `${(A.breakout || {}).median != null ? td(A.breakout.median) : A.breakout ? 'over a year' : '—'}<br><span class="m">${pc(p_(A.breakout, '63'))}</span>`, pc(A.up_first),
           `<span class="${tone((A.after63_up || {}).p50)}">${sp((A.after63_up || {}).p50)}</span> · <span class="${tone((A.after63_down || {}).p50)}">${sp((A.after63_down || {}).p50)}</span>`,
           `<span class="${tone((A.fwd252 || {}).p50)}">${sp((A.fwd252 || {}).p50)}</span><br><span class="m">${pc((A.fwd252 || {}).up)}</span>`];
@@ -753,11 +759,11 @@
   /* ---------- a picture to share: the chosen panels in one PNG, drawn as the Move odds picture is (cards on a light
      page, a title and a line on what was compared, the source and the site at the foot) ---------- */
   const PIC = {
-    highs: [['now', 'Where it stands'], ['odds', 'How long the run lasts'], ['fan', 'The next year'], ['fwd21', '1 month on'], ['fwd63', '3 months on'], ['fwd252', '12 months on'], ['mdd63', 'Largest fall in 3 months'], ['gain_left', 'Gain left to the peak'], ['own', 'Its own runs']],
-    lows: [['now', 'Where it stands'], ['odds', 'New low or rebound'], ['fan', 'The next year'], ['fwd21', '1 month on'], ['fwd63', '3 months on'], ['fwd252', '12 months on'], ['fall63', 'Lowest close in 3 months'], ['bounce', 'The rebound']],
-    ranges: [['now', 'Where it stands'], ['odds', 'When it breaks out'], ['fan', 'The next year'], ['fwd21', '1 month on'], ['fwd63', '3 months on'], ['fwd252', '12 months on'], ['fall63', 'Lowest close in 3 months'], ['rise63', 'Highest close in 3 months']],
+    highs: [['now', 'Where it stands'], ['pe', 'P/E history'], ['ps', 'P/S history'], ['odds', 'How long the run lasts'], ['fan', 'The next year'], ['fwd21', '1 month on'], ['fwd63', '3 months on'], ['fwd252', '12 months on'], ['mdd63', 'Largest fall in 3 months'], ['gain_left', 'Gain left to the peak'], ['own', 'Its own runs']],
+    lows: [['now', 'Where it stands'], ['pe', 'P/E history'], ['ps', 'P/S history'], ['odds', 'New low or rebound'], ['fan', 'The next year'], ['fwd21', '1 month on'], ['fwd63', '3 months on'], ['fwd252', '12 months on'], ['fall63', 'Lowest close in 3 months'], ['bounce', 'The rebound']],
+    ranges: [['now', 'Where it stands'], ['pe', 'P/E history'], ['ps', 'P/S history'], ['odds', 'When it breaks out'], ['fan', 'The next year'], ['fwd21', '1 month on'], ['fwd63', '3 months on'], ['fwd252', '12 months on'], ['fall63', 'Lowest close in 3 months'], ['rise63', 'Highest close in 3 months']],
   };
-  const PIC_WIDE = ['now', 'odds', 'fan'], PIC_DEFAULT = ['now', 'odds', 'fwd63', 'fwd252'], PICKS = {};
+  const PIC_WIDE = ['now', 'pe', 'ps', 'odds', 'fan'], PIC_DEFAULT = ['now', 'odds', 'fwd63', 'fwd252'], PICKS = {};
   const PCv = { bg: '#fcfcfb', card: '#ffffff', ink: '#1d1d1b', ink2: '#3d3c39', muted: '#6b6a66', line: '#e3e1dc', up: '#17734a', down: '#c0392b', warn: '#d9822b', accent: '#1f6f4a', grey: '#9a9893' };
   const PCOL = { ink: PCv.ink, up: PCv.up, down: PCv.down, accent: PCv.accent, muted: PCv.muted };
   function oddsLines(P) {
@@ -770,6 +776,7 @@
   function canPic(P, k) {
     const A = P.A || {}, E = (P.params || {}).edges || {};
     if (k === 'now') return !!P.M;
+    if (k === 'pe' || k === 'ps') { try { return !!ratioModel((P.doc || {}).ratios || {}, k, null); } catch (e) { return false; } }
     if (k === 'odds') return !!(A.days && oddsLines(P).some((l) => l.q && l.q.curve));
     if (k === 'fan') return !!(A.fan && A.fan.p50);
     if (k === 'own') return P.kind === 'highs' && !!(P.own && (P.own.last || []).length);
@@ -851,6 +858,56 @@
     x.fillStyle = PCv.ink; x.beginPath(); x.arc(xe, ye, 5, 0, 7); x.fill(); x.strokeStyle = PCv.card; x.lineWidth = 2; x.stroke();
     x.fillStyle = PCv.ink; x.font = pFont(16, 700); x.fillText(money(M.last, M.lvl), xe + 12, ly + 5);
     if (M.label) { x.font = pFont(13.5, 600); x.fillText(M.label[0], xe + 12, ly + 22); x.fillStyle = PCv.muted; x.font = pFont(13); x.fillText(M.label[1], xe + 12, ly + 38); }
+  }
+  function drawRatio(x, box, P, k) {
+    const R = P.doc.ratios, Q = ratioModel(R, k, series(P.doc));
+    if (!Q) return;
+    const { W, N, v, ind, b, roll, aw, lo, hi, log, last, wk } = Q, I = b.ind;
+    const now = fin(b.now) ? `now ${rnum(b.now)}: ${b.at_hi ? 'its all-time high' : b.at_lo ? 'its all-time low' : `the ${ord(b.pct)} percentile of its own`}` : 'none today';
+    const R0 = pCard(x, box.x, box.y, box.w, box.h, `${RLAB[k]} week by week since ${yr(W.date(0))} — ${now}`,
+      `${I ? `dashed: the median of its ${I.level} (${I.name}, ${num(I.n)} others) · ` : ''}grey: its 10–90% over the five years before · dotted: its median · green ticks: new all-time highs in price`);
+    const L = R0.x + 52, Rr = R0.x + R0.w - 128, T = R0.y + 8, yA = R0.y + R0.h - 24, B = yA - 12;
+    const sx = (i) => L + (i / Math.max(1, N - 1)) * (Rr - L), cl = (q) => Math.min(hi, Math.max(lo, q));
+    const sy = log ? (q) => T + ((Math.log(hi) - Math.log(cl(q))) / (Math.log(hi) - Math.log(lo))) * (B - T) : (q) => T + ((hi - cl(q)) / (hi - lo)) * (B - T);
+    for (const t of priceTicks(lo, hi, log)) { pHline(x, L, Rr, sy(t), PCv.line); x.fillStyle = PCv.muted; x.font = pFont(12); x.textAlign = 'right'; x.fillText(rnum(t), L - 8, sy(t) + 4); }
+    x.textAlign = 'center';
+    const yrs = [];
+    for (let i = 1; i < N; i++) if (yr(W.date(i)) !== yr(W.date(i - 1))) yrs.push(i);
+    const every = Math.max(1, Math.ceil(yrs.length / 10));
+    yrs.filter((_, j) => (yrs.length - 1 - j) % every === 0).forEach((i) => { x.fillStyle = PCv.muted; x.font = pFont(12); x.fillText(yr(W.date(i)), sx(i), yA + 18); });
+    x.textAlign = 'left';
+    x.save(); x.fillStyle = PCv.ink; x.globalAlpha = 0.07; x.beginPath();
+    let started = false;
+    const back = [];
+    for (let i = 0; i < N; i++) if (fin(roll.lo[i]) && fin(roll.hi[i])) { if (!started) { x.moveTo(sx(i), sy(roll.hi[i])); started = true; } else x.lineTo(sx(i), sy(roll.hi[i])); back.push(i); }
+    for (let j = back.length - 1; j >= 0; j--) x.lineTo(sx(back[j]), sy(roll.lo[back[j]]));
+    if (started) { x.closePath(); x.fill(); }
+    x.restore();
+    if (fin((b.q || [])[2])) pHline(x, L, Rr, sy(b.q[2]), PCv.grey, [2, 4], 1.2);
+    const seg = (a, col, lw, dash, keep) => { let pts = []; for (let i = 0; i < N; i++) { if (fin(a[i]) && a[i] > 0 && (keep || (a[i] >= lo && a[i] <= hi))) pts.push([sx(i), sy(a[i])]); else { pLine(x, pts, col, lw, dash); pts = []; } } pLine(x, pts, col, lw, dash); };
+    if (ind) seg(ind, '#2a78d6', 2, [6, 4], false);
+    seg(v, PCv.ink, 2, null, true);
+    x.save(); x.strokeStyle = PCv.up; x.lineWidth = 1.6; x.lineCap = 'round';
+    for (const i of aw) { x.beginPath(); x.moveTo(sx(i), yA - 8); x.lineTo(sx(i), yA - 2); x.stroke(); }
+    x.restore();
+    const dot = (d, val, text, below) => {
+      const i = wk(d), X = sx(i), Y = sy(val);
+      x.fillStyle = PCv.ink; x.beginPath(); x.arc(X, Y, 3.6, 0, 7); x.fill();
+      x.font = pFont(12.5, 600); const tw = x.measureText(text).width;
+      const tx = X > Rr - tw / 2 - 4 ? X - tw - 8 : X < L + tw / 2 + 4 ? X + 8 : X - tw / 2;
+      pLabel(x, text, tx, below ? Math.min(B - 2, Y + 17) : Math.max(T + 10, Y - 9), PCv.ink, pFont(12.5, 600));
+    };
+    const mon = (d) => `${MON[+d.slice(5, 7) - 1]} ${yr(d)}`;
+    if (b.hi && !b.at_hi && wk(b.hi[1]) < last - 2) dot(b.hi[1], b.hi[0], `${b.hi[0] > hi ? '↑ ' : ''}high ${rnum(b.hi[0])} · ${mon(b.hi[1])}`, false);
+    if (b.lo && !b.at_lo && wk(b.lo[1]) < last - 2) dot(b.lo[1], b.lo[0], `${b.lo[0] < lo ? '↓ ' : ''}low ${rnum(b.lo[0])} · ${mon(b.lo[1])}`, true);
+    if (last >= 0) {
+      const xe = sx(last), ye = sy(v[last]);
+      x.fillStyle = PCv.ink; x.beginPath(); x.arc(xe, ye, 5, 0, 7); x.fill(); x.strokeStyle = PCv.card; x.lineWidth = 2; x.stroke();
+      let ya = ye + 5, yb = ind && fin(ind[last]) && ind[last] >= lo && ind[last] <= hi ? sy(ind[last]) + 5 : null;
+      if (yb != null && Math.abs(ya - yb) < 18) { if (ya <= yb) { ya -= (18 - (yb - ya)) / 2; yb = ya + 18; } else { yb -= (18 - (ya - yb)) / 2; ya = yb + 18; } }
+      x.fillStyle = PCv.ink; x.font = pFont(16, 700); x.fillText(rnum(v[last]), xe + 12, Math.max(T + 10, Math.min(B, ya)));
+      if (yb != null) { x.fillStyle = PCv.muted; x.font = pFont(13); x.fillText(`industry ${rnum(ind[last])}`, xe + 12, Math.max(T + 10, Math.min(B, yb))); }
+    }
   }
   function drawOdds(x, box, P) {
     const A = P.A || {}, who = GROUP[P.gk] || 'its kind', lines = oddsLines(P).filter((l) => l.q && l.q.curve), grid = ((P.params || {}).grid) || Array.from({ length: 37 }, (_, i) => i * 7);
@@ -943,7 +1000,7 @@
     const rows = picRows(P, picks);
     if (!rows.length) return null;
     const Wd = 1200, M0 = 32, G = 22, full = Wd - 2 * M0, halfW = (full - G) / 2;
-    const PH = { now: 340, odds: 360, fan: 300, own: 270 }, ph = (row) => Math.max(...row.map((k) => PH[k] || 270));
+    const PH = { now: 340, pe: 330, ps: 330, odds: 360, fan: 300, own: 270 }, ph = (row) => Math.max(...row.map((k) => PH[k] || 270));
     const headH = 104, footH = 64, Hh = headH + rows.reduce((a, r) => a + ph(r) + G, 0) + footH;
     const c = document.createElement('canvas'), sc = 2; c.width = Wd * sc; c.height = Hh * sc;
     const x = c.getContext('2d'); x.scale(sc, sc);
@@ -956,6 +1013,7 @@
       row.forEach((k, i) => {
         const box = { x: M0 + i * (halfW + G), y, w: PIC_WIDE.includes(k) ? full : halfW, h };   // a lone histogram stays half wide
         if (k === 'now') drawStand(x, box, P);
+        else if (k === 'pe' || k === 'ps') drawRatio(x, box, P, k);
         else if (k === 'odds') drawOdds(x, box, P);
         else if (k === 'fan') drawFan(x, box, P);
         else if (k === 'own') drawOwn(x, box, P);
@@ -1016,6 +1074,352 @@
     return `<h3>Where it stands</h3><p class="hv-sub">The close over ${over}, adjusted for dividends and splits: ${what}. Hover for a week's close.</p>${standChart(M, width)}`;
   }
 
+  /* ---------- valuation beside the price (app/ratios.py → doc.ratios): P/E and P/S, point in time from first-filed
+     SEC figures, against their own history (all of it, the last five years, a rolling five-year band), their industry
+     and with the price split into the per-share figure and the multiple; P/B, EV/EBITDA and EV/Sales from the valuation
+     research. One chart a ratio: its weekly history, its industry's median, its rolling band, its own high and low and
+     the weeks the price made a new all-time high. ---------- */
+  const RLAB = { pe: 'P/E', ps: 'P/S' }, RPER = { pe: 'EPS', ps: 'revenue per share' }, RKEYS = ['pe', 'ps'];
+  const rnum = (v) => (fin(v) ? num(v, v >= 100 ? 0 : v >= 10 ? 1 : v >= 1 ? 2 : 3) : '—');
+  const yr = (d) => String(d || '').slice(0, 4);
+  const WHY = { loss: 'none today: the last four quarters lost money', high: 'above 300 today (earnings near zero)', low: 'under its floor today', none: 'no four consecutive quarters filed lately' };
+  function rWeeks(R) {
+    const w = (R || {}).w;
+    if (!w || !w.d0 || !(w.n > 0)) return null;
+    const t0 = Date.parse(w.d0 + 'T00:00:00Z');
+    return { n: w.n, t0, date: (i) => new Date(t0 + i * 6048e5).toISOString().slice(0, 10) };
+  }
+  /* the 10th and 90th percentile of the trailing five years (260 weeks, two years at least) at each week */
+  function rolling(v, win = 260, minN = 104) {
+    const lo = new Array(v.length).fill(null), hi = new Array(v.length).fill(null);
+    for (let i = 0; i < v.length; i++) {
+      const a = [];
+      for (let j = Math.max(0, i - win + 1); j <= i; j++) if (fin(v[j])) a.push(+v[j]);
+      if (a.length < minN) continue;
+      a.sort((x, y) => x - y);
+      const q = (p) => { const h = (a.length - 1) * p, f = Math.floor(h); return a[f] + (a[Math.min(a.length - 1, f + 1)] - a[f]) * (h - f); };
+      lo[i] = q(0.1); hi[i] = q(0.9);
+    }
+    return { lo, hi };
+  }
+  /* each week (of R.w) with a new all-time closing high (adjusted closes, from the move odds' returns) */
+  function athWeeks(P, W) {
+    const out = new Set();
+    if (!P || !W) return out;
+    const fri0 = Math.round(W.t0 / 864e5);
+    let mx = -Infinity;
+    for (let i = 0; i < P.days.length; i++) {
+      const c = P.close[i];
+      if (c >= mx * (1 - 1e-9)) {
+        const t = Math.round(Date.parse(P.days[i] + 'T00:00:00Z') / 864e5), fri = t + (4 - ((t + 3) % 7 + 7) % 7), k = Math.round((fri - fri0) / 7);
+        if (k >= 0 && k < W.n && i > 0) out.add(k);
+      }
+      if (c > mx) mx = c;
+    }
+    return out;
+  }
+  /* where a percentile of days stands, in words: the 94th percentile; above (under) 99% of them at the ends */
+  const pctW = (p) => (!fin(p) ? '—' : p > 99 ? `above ${num(p, 1)}%` : p < 1 ? `under ${num(100 - p, 1)}%` : `the ${ord(p)} percentile`);
+  const pctS = (p) => (!fin(p) ? '—' : p > 99 ? 'top 1%' : p < 1 ? 'bottom 1%' : ord(p) + ' pct.');
+  const posWords = (b) => (b.at_hi ? `<b>at its all-time high</b> (since ${yr(b.from)})` : b.at_lo ? `<b>at its all-time low</b> (since ${yr(b.from)})`
+    : `<b>${pctW(b.pct)}</b> of the days since ${yr(b.from)}${b.y5 && fin(b.y5.pct) ? ` (${pctW(b.y5.pct)} of the last five years)` : ''}`);
+  function ratioWords(R, S, kind, reg) {
+    const L = [], have = RKEYS.filter((k) => R[k]);
+    if (!have.length) return '';
+    const lead = kind === 'highs' ? (fin(S.dd) && S.dd > -0.0005 ? 'At a new all-time high in price' : `With the price ${sp(S.dd)} from its all-time high`)
+      : kind === 'lows' ? (fin(S.dist) && S.dist < 0.0005 ? `At a new ${SPAN[reg] || ''} low in price` : `Near its ${SPAN[reg] || ''} low in price (${sp(S.dist)} above it)`) : 'In a sideways range in price';
+    const parts = have.map((k) => {
+      const b = R[k];
+      if (b.now == null) return `${RLAB[k]} ${esc(WHY[b.why] || 'none today')}`;
+      let t = `<b>${RLAB[k]} ${rnum(b.now)}</b> is ${posWords(b)}`;
+      if (!b.at_hi && fin(b.off_hi) && b.hi) t += `, ${pc(-b.off_hi)} under its own high of ${rnum(b.hi[0])} (${esc(mdy(b.hi[1]))})`;
+      return t;
+    });
+    L.push(`${lead}: ${parts.join('; ')}.`);
+    const k = R.pe && (R.pe.split || []).length ? 'pe' : R.ps && (R.ps.split || []).length ? 'ps' : null;
+    if (k) {
+      const sps = R[k].split, x = sps.find((s) => s.k === 'run') || sps.find((s) => s.k === '1y') || sps[0];
+      const span = x.k === 'run' ? `Since this run began (${esc(mdy(x.from))})` : x.k === '1y' ? 'Over the last year' : x.k === '3y' ? 'Over the last three years' : 'Over the last five years';
+      const a = Math.log1p(x.per), m = Math.log1p(x.ratio), who = a * m >= 0 ? (Math.abs(a) >= 1.8 * Math.abs(m) ? `${RPER[k] === 'EPS' ? 'earnings' : 'sales'} did most of it` : Math.abs(m) >= 1.8 * Math.abs(a) ? 'the multiple did most of it' : 'both played a part')
+        : Math.sign(x.price) === Math.sign(a) ? `${RPER[k] === 'EPS' ? 'earnings' : 'sales'} won out over the multiple` : 'the multiple won out';
+      L.push(`${span} the price ${x.price >= 0 ? 'rose' : 'fell'} <b>${pc(Math.abs(x.price), 1)}</b>: ${RPER[k]} ${x.per >= 0 ? '+' : '−'}${pc(Math.abs(x.per), 1)} and the ${RLAB[k]} ${x.ratio >= 0 ? '+' : '−'}${pc(Math.abs(x.ratio), 1)} — ${who}.`);
+    }
+    const ki = RKEYS.find((kk) => R[kk] && R[kk].ind && R[kk].now != null);
+    if (ki) {
+      const I = R[ki].ind;
+      let t = `Against its ${esc(I.level)} (${esc(I.name)}, ${num(I.n)} other companies): ${RLAB[ki]} ${rnum(R[ki].now)} against a median of ${rnum(I.mid)}, ${I.rank >= 99.5 ? 'above all of them' : I.rank <= 0.5 ? 'under all of them' : `above ${pc((I.rank || 0) / 100)} of them`}`;
+      if (fin(I.rel_mid)) t += `; it has traded at a median <b>${num(I.rel_mid, 2)}×</b> their median since ${yr(R[ki].from)}, <b>${num(I.rel, 2)}×</b> now (the ${ord(I.rel_pct)} percentile of its premium)`;
+      L.push(t + '.');
+    }
+    return `<ul class="hv-facts">${L.map((x) => `<li>${x}</li>`).join('')}</ul>`;
+  }
+  function ratioTable(R) {
+    const rows = RKEYS.filter((k) => R[k]).map((k) => {
+      const b = R[k], I = b.ind, q = b.q || [], y5 = b.y5;
+      const now = b.now == null ? `<span class="m">${esc(WHY[b.why] || 'none today')}</span>` : `<b>${rnum(b.now)}</b>${b.at_hi ? ' <span class="hv-tag">its all-time high</span>' : b.at_lo ? ' <span class="hv-tag">its all-time low</span>' : ''}`;
+      return [`<b>${RLAB[k]}</b>`, now,
+        `${b.now == null ? '—' : b.at_hi ? 'its high' : b.at_lo ? 'its low' : pctS(b.pct)}${b.now == null ? '' : meter(b.pct)}<span class="m">since ${esc(yr(b.from))} · 10–90%: ${rnum(q[0])}–${rnum(q[4])}, median ${rnum(q[2])}</span>`,
+        `${b.hi ? `high ${rnum(b.hi[0])} <span class="m">${esc(mdy(b.hi[1]))}</span>` : ''}<br>${b.lo ? `low ${rnum(b.lo[0])} <span class="m">${esc(mdy(b.lo[1]))}</span>` : ''}`,
+        y5 ? `${b.now == null || !fin(y5.pct) ? '—' : pctS(y5.pct)}<br><span class="m">10–90%: ${rnum((y5.q || [])[0])}–${rnum((y5.q || [])[2])}</span>` : '—',
+        I ? `median ${rnum(I.mid)} <span class="m">(${num(I.n)} cos.)</span>${fin(I.rank) ? `<br>${I.rank >= 99.5 ? 'above all of them' : I.rank <= 0.5 ? 'under all of them' : `above ${pc(I.rank / 100)} of them`}` : ''}${fin(I.rel) ? `<br><span class="m">${num(I.rel, 2)}× their median${fin(I.rel_mid) ? `, usually ${num(I.rel_mid, 2)}×` : ''}</span>` : ''}` : '—'];
+    });
+    const ind = RKEYS.map((k) => R[k] && R[k].ind).find(Boolean);
+    return table(['Ratio', 'Now', 'Against its own history', 'Its own high · low', 'Last five years', `Its ${esc(ind ? ind.level : 'industry')}${ind ? `: ${esc(ind.name)}` : ''}`], rows, [0, 3]);
+  }
+  function moreTable(R) {
+    const M = R.more;
+    if (!M || !(M.rows || []).length) return '';
+    const grp = (p) => (p && p.group ? String(p.group).replace(/^sic/, 'SIC ') : '');
+    const rows = M.rows.map((r) => [`<b>${esc(r.label)}</b>`, rnum(r.now), fin(r.pct) ? `${ord(r.pct)} pct.<br><span class="m">median ${rnum(r.mid)}</span>` : '—',
+      r.peer ? `median ${rnum(r.peer.mid)} <span class="m">(${num(r.peer.n)} · ${esc(grp(r.peer))})</span><br><span class="m">25–75%: ${rnum(r.peer.p25)}–${rnum(r.peer.p75)}</span>` : '—']);
+    if (M.peer_pe) rows.push(['<b>P/E</b>', rnum(R.pe && R.pe.now != null ? R.pe.now : M.peer_pe.own), '<span class="m">see above</span>', `median ${rnum(M.peer_pe.mid)} <span class="m">(${num(M.peer_pe.n)} · ${esc(grp(M.peer_pe))})</span><br><span class="m">25–75%: ${rnum(M.peer_pe.p25)}–${rnum(M.peer_pe.p75)}</span>`]);
+    return `<h4>More multiples</h4><p class="hv-sub">From the valuation research: P/B and EV/EBITDA week by week since ${esc(mdy(M.from))} (each the trailing four quarters, counted 60 days after the quarter ends), and the medians of its SIC peers among every SEC filer (current figures).</p>`
+      + table(['Ratio', 'Now', `Since ${esc(mdy(M.from))}`, 'Its SIC peers (SEC filers)'], rows, [0]);
+  }
+  function ratioModel(R, k, P) {
+    const W = rWeeks(R), v = ((R || {}).w || {})[k], ind = (R.w || {})[k + '_ind'] || null, b = R[k];
+    if (!W || !v || !b || v.filter(fin).length < 20) return null;
+    const N = W.n, roll = rolling(v), aw = athWeeks(P, W);
+    // the scale: the 1st to 99th percentile of its weeks and of its industry's (a spike past them runs off the top,
+    // marked), with the band where it fits
+    const qs = (a, p) => { const x = a.filter((y) => fin(y) && y > 0).sort((m, n) => m - n); return x.length ? x[Math.min(x.length - 1, Math.max(0, Math.round(p * (x.length - 1))))] : null; };
+    let lo = Infinity, hi = -Infinity;
+    for (const a of [v, ind || [], roll.lo, roll.hi]) for (const x of a) if (fin(x) && x > 0) { lo = Math.min(lo, x); hi = Math.max(hi, x); }
+    const cap = Math.max(qs(v, 0.9) * 2.5, fin(b.now) ? b.now * 1.3 : 0), floor_ = Math.min(qs(v, 0.1) / 2.5, fin(b.now) ? b.now / 1.3 : Infinity);
+    if (hi > cap * 1.15) hi = cap;                                 // a spike well past its usual range runs off the top
+    if (lo < floor_ / 1.15) lo = floor_;
+    if (!(hi > lo)) return '';
+    const vmax = Math.max(...v.filter(fin)), vmin = Math.min(...v.filter(fin)), offTop = vmax > hi * 1.001, offBot = vmin < lo / 1.001;
+    const log = hi / lo > 3;
+    if (log) { lo /= 1.08; hi *= 1.08; } else { const pad = (hi - lo) * 0.08; lo = Math.max(0, lo - pad); hi += pad; }
+    let last = -1;
+    for (let i = 0; i < N; i++) if (fin(v[i])) last = i;
+    const wk = (d) => Math.max(0, Math.min(N - 1, Math.round((Date.parse(d + 'T00:00:00Z') - W.t0) / 6048e5)));
+    return { W, N, v, ind, b, k, roll, aw, lo, hi, log, vmax, vmin, offTop, offBot, last, wk };
+  }
+  function ratioChart(R, k, P, width) {
+    const Q = ratioModel(R, k, P);
+    if (!Q) return '';
+    const { W, N, v, ind, b, roll, aw, lo, hi, log, vmax, vmin, offTop, offBot, last, wk } = Q;
+    const Wd = Math.round(Math.max(320, Math.min(900, width || 720))), narrow = Wd < 560, H = narrow ? 256 : 296, L = narrow ? 40 : 48, Rr = narrow ? 70 : 112, T = 16, B = 32;
+    const f1 = (x) => x.toFixed(1), y0 = T, yA = H - B, y1 = yA - 12, xR = Wd - Rr;   // the plot; under it a strip for the price's new highs
+    const sx = (i) => L + (i / Math.max(1, N - 1)) * (xR - L);
+    const cl = (x) => Math.min(hi, Math.max(lo, x));
+    const sy = log ? (x) => T + ((Math.log(hi) - Math.log(cl(x))) / (Math.log(hi) - Math.log(lo))) * (y1 - T) : (x) => T + ((hi - cl(x)) / (hi - lo)) * (y1 - T);
+    let s = `<svg class="hv-chart hv-ratio" viewBox="0 0 ${Wd} ${H}" role="img" aria-label="${esc(RLAB[k])} week by week since ${esc(yr(W.date(0)))}, with its industry's median and its rolling five-year range">`;
+    for (const t of priceTicks(lo, hi, log)) s += `<line class="hv-g" x1="${L}" x2="${xR}" y1="${f1(sy(t))}" y2="${f1(sy(t))}"/><text x="${L - 6}" y="${f1(sy(t) + 4)}" text-anchor="end">${esc(rnum(t))}</text>`;
+    const yrs = [];
+    for (let i = 1; i < N; i++) if (yr(W.date(i)) !== yr(W.date(i - 1))) yrs.push(i);
+    const every = Math.max(1, Math.ceil(yrs.length / (narrow ? 4 : 8)));
+    yrs.filter((_, j) => (yrs.length - 1 - j) % every === 0).forEach((i) => { s += `<line class="hv-g" x1="${f1(sx(i))}" x2="${f1(sx(i))}" y1="${yA}" y2="${yA + 4}"/><text x="${f1(sx(i))}" y="${yA + 16}" text-anchor="middle">${esc(yr(W.date(i)))}</text>`; });
+    s += `<line class="hv-g" x1="${L}" x2="${xR}" y1="${yA}" y2="${yA}"/>`;
+    // the rolling band: the 10–90% of the five years before each week
+    const top = [], bot = [];
+    for (let i = 0; i < N; i++) if (fin(roll.lo[i]) && fin(roll.hi[i])) { top.push(`${f1(sx(i))},${f1(sy(roll.hi[i]))}`); bot.unshift(`${f1(sx(i))},${f1(sy(roll.lo[i]))}`); }
+    if (top.length > 1) s += `<polygon points="${top.concat(bot).join(' ')}" style="fill:var(--ink,#222);opacity:.07"/>`;
+    const q = b.q || [];
+    if (fin(q[2])) s += `<line x1="${L}" x2="${xR}" y1="${f1(sy(q[2]))}" y2="${f1(sy(q[2]))}" style="stroke:var(--muted,#888);stroke-width:1.2;stroke-dasharray:2 4"/>`;
+    // its own ratio held at the edge where it runs off the scale; the industry's simply leaves it
+    const path = (a, keep) => { let d = '', pen = false; for (let i = 0; i < N; i++) { if (fin(a[i]) && a[i] > 0 && (keep || (a[i] >= lo && a[i] <= hi))) { d += `${pen ? 'L' : 'M'}${f1(sx(i))},${f1(sy(a[i]))}`; pen = true; } else pen = false; } return d; };
+    if (ind) s += `<path d="${path(ind, false)}" style="fill:none;stroke:var(--rot-1,#2a78d6);stroke-width:2;stroke-dasharray:6 4;stroke-linejoin:round"/>`;
+    s += `<path d="${path(v, true)}" style="fill:none;stroke:var(--ink,#222);stroke-width:2;stroke-linejoin:round"/>`;
+    for (const i of aw) s += `<line x1="${f1(sx(i))}" x2="${f1(sx(i))}" y1="${yA - 8}" y2="${yA - 2}" style="stroke:var(--mk-profit,#17734a);stroke-width:1.6;stroke-linecap:round"/>`;
+    // its own high and low (the daily ones, at their week), now
+    const lab = (d, val, text, below) => {
+      const i = wk(d), x = sx(i), y = sy(val), anchor = x > xR - 90 ? 'end' : x < L + 70 ? 'start' : 'middle', tx = anchor === 'start' ? x + 7 : anchor === 'end' ? x - 7 : x;
+      const ty = anchor === 'middle' ? (below ? Math.min(y1 - 2, y + 16) : Math.max(y0 + 8, y - 8)) : Math.max(y0 + 8, Math.min(y1 - 2, y + 4));
+      return `<circle cx="${f1(x)}" cy="${f1(y)}" r="3.6" style="fill:var(--ink,#222);stroke:var(--bg,#f3f2ee);stroke-width:1.5"/><text class="hv-lv" x="${f1(tx)}" y="${f1(ty)}" text-anchor="${anchor}" style="fill:var(--ink,#222)">${esc(text)}</text>`;
+    };
+    const mon = (d) => `${MON[+d.slice(5, 7) - 1]} ${yr(d)}`;
+    if (b.hi && !b.at_hi && wk(b.hi[1]) < last - 2) s += lab(b.hi[1], b.hi[0], `${b.hi[0] > hi ? '↑ ' : ''}high ${rnum(b.hi[0])} · ${mon(b.hi[1])}`, false);
+    if (b.lo && !b.at_lo && wk(b.lo[1]) < last - 2) s += lab(b.lo[1], b.lo[0], `${b.lo[0] < lo ? '↓ ' : ''}low ${rnum(b.lo[0])} · ${mon(b.lo[1])}`, true);
+    if (last >= 0) {
+      const xe = sx(last), ye = sy(v[last]);
+      s += `<circle cx="${f1(xe)}" cy="${f1(ye)}" r="4.5" style="fill:var(--ink,#222);stroke:var(--bg,#f3f2ee);stroke-width:2"/>`;
+      const ie = ind && fin(ind[last]) && ind[last] >= lo && ind[last] <= hi ? sy(ind[last]) : null;
+      let ya = ye + 4, yb = ie != null ? ie + 4 : null;
+      if (yb != null && Math.abs(ya - yb) < 15) { if (ya <= yb) { ya -= (15 - (yb - ya)) / 2; yb = ya + 15; } else { yb -= (15 - (ya - yb)) / 2; ya = yb + 15; } }
+      s += `<text class="hv-lv hv-end" x="${f1(xe + 9)}" y="${f1(Math.max(y0 + 8, Math.min(y1 - 2, ya)))}">${esc(rnum(v[last]))}${b.at_hi ? ' · high' : b.at_lo ? ' · low' : ''}</text>`;
+      if (yb != null) s += `<text class="hv-lv" x="${f1(xe + 9)}" y="${f1(Math.max(y0 + 8, Math.min(y1 - 2, yb)))}" style="fill:var(--muted,#777);font-weight:500">${esc(narrow ? rnum(ind[last]) : 'industry ' + rnum(ind[last]))}</text>`;
+    }
+    const per = Math.max(1, Math.ceil(N / 160)), dx = (xR - L) / Math.max(1, N - 1);
+    for (let i = 0; i < N; i += per) {                           // hover: a column of weeks, its last week
+      const j = Math.min(N - 1, i + per - 1);
+      let any = false;
+      for (let t = i; t <= j; t++) if (aw.has(t)) any = true;
+      const parts = [`week of ${mdy(W.date(j))}: ${RLAB[k]} ${fin(v[j]) ? rnum(v[j]) : '—'}`];
+      if (ind && fin(ind[j])) parts.push(`its ${b.ind ? b.ind.level : 'industry'}'s median ${rnum(ind[j])}`);
+      if (fin(roll.lo[j])) parts.push(`its five years before: ${rnum(roll.lo[j])}–${rnum(roll.hi[j])}`);
+      if (any) parts.push('a new all-time high in price');
+      s += `<g class="hv-hit"><rect x="${f1(sx(i) - dx / 2)}" y="${y0}" width="${f1((j - i + 1) * dx)}" height="${y1 - y0}"/><line class="hv-x" x1="${f1(sx(j))}" x2="${f1(sx(j))}" y1="${y0}" y2="${y1}"/><title>${esc(parts.join(' · '))}</title></g>`;
+    }
+    s += '</svg>';
+    const keys = [`<span><i style="background:var(--ink,#222)"></i>${esc(RLAB[k])}, each week's last close</span>`];
+    if (ind) keys.push(`<span><i style="background:none;border-top:2px dashed var(--rot-1,#2a78d6);height:0;border-radius:0"></i>the median of its ${esc(b.ind ? b.ind.level : 'industry')} (${num(b.ind ? b.ind.n : 0)} other companies today)</span>`);
+    if (top.length > 1) keys.push(`<span><i style="background:var(--ink,#222);opacity:.18;height:9px"></i>its own 10–90% over the five years before each week</span>`);
+    if (fin(q[2])) keys.push(`<span><i style="background:none;border-top:2px dotted var(--muted,#888);height:0;border-radius:0"></i>its median since ${esc(yr(b.from))}</span>`);
+    if (aw.size) keys.push(`<span><i style="background:var(--mk-profit,#17734a);width:2px;height:9px;border-radius:1px"></i>a new all-time high in price that week</span>`);
+    if (offTop || offBot) keys.push(`<span>${offTop ? `weeks above ${esc(rnum(hi))}` : ''}${offTop && offBot ? ' and ' : ''}${offBot ? `under ${esc(rnum(lo))}` : ''} drawn at the edge (as ${offTop ? `high as ${esc(rnum(vmax))}` : ''}${offTop && offBot ? ', ' : ''}${offBot ? `low as ${esc(rnum(vmin))}` : ''})</span>`);
+    return `<div class="hv-standbox">${s}<div class="hv-key">${keys.join('')}</div></div>`;
+  }
+  function valBlock(doc, S, kind, reg, width) {
+    const R = doc && doc.ratios;
+    if (!R || !RKEYS.some((k) => R[k])) return '';
+    const P = series(doc), ks = RKEYS.filter((k) => R[k] && (R.w || {})[k]);
+    let h = `<h3>Valuation beside the price</h3>${ratioWords(R, S, kind, reg)}`;
+    if (ks.length) {
+      h += `<div class="hv-chips" role="tablist">${ks.map((k, i) => `<button type="button" class="hv-chip${i === 0 ? ' on' : ''}" data-hvv="${k}" role="tab" aria-selected="${i === 0}">${RLAB[k]}</button>`).join('')}</div>`;
+      h += ks.map((k, i) => `<div class="hv-vbox" data-hvvbox="${k}"${i ? ' hidden' : ''}>${ratioChart(R, k, P, width)}</div>`).join('');
+    }
+    h += ratioTable(R) + moreTable(R);
+    h += `<p class="hv-sub">P/E: the close ÷ the last four quarters' diluted EPS; P/S: the close ÷ the last four quarters' revenue per diluted share — each quarter as first filed with the SEC (10-Q, 10-K), counted from the day it was filed, so every day shows what was known then; closes split-adjusted, not dividend-adjusted. A P/E needs positive earnings and is kept from 1 to 300. Its industry: the other companies of the move odds in the same SIC industry, else its industry group, major group or sector (the first with 6 or more), today's companies (survivors). The rolling band is the 10–90% of its own ratio over the five years before each week. History, not a forecast.</p>`;
+    return h;
+  }
+  function bindVal(el) {
+    if (!el || !el.querySelectorAll) return;
+    el.querySelectorAll('[data-hvv]').forEach((btn) => {
+      btn.onclick = () => {
+        el.querySelectorAll('[data-hvv]').forEach((b) => { b.classList.toggle('on', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
+        el.querySelectorAll('[data-hvvbox]').forEach((x) => { x.hidden = x.dataset.hvvbox !== btn.dataset.hvv; });
+      };
+    });
+  }
+
+  /* ---------- the key days and what was behind them: the company's filings and the news headlines (app/move_news.py,
+     app/move_headlines.py → n/<KEY>.json), each put on the trading day it could move (filed before the 16:00 close:
+     that day, else the next); for a company, how often its new highs (or lows) came on the day it reported ---------- */
+  const ITEMW = { '1.01': 'material agreement', '1.02': 'agreement ended', '1.03': 'bankruptcy', '1.05': 'cybersecurity incident', '2.01': 'acquisition or sale completed',
+    '2.02': 'earnings', '2.03': 'new debt', '2.05': 'restructuring', '2.06': 'impairment', '3.01': 'listing notice', '3.02': 'unregistered share sale',
+    '4.01': 'auditor change', '4.02': 'restatement', '5.01': 'change in control', '5.02': 'executive or board change', '5.03': 'bylaws or fiscal year',
+    '5.07': 'shareholder vote', '7.01': 'Reg FD disclosure', '8.01': 'other events' };
+  const HOTW = new Set(['2.02', '1.05', '2.05', '2.06', '4.02', '3.01', '1.03', '5.01']);
+  const formW = (f) => (/^10-Q/.test(f) ? 'quarterly report (10-Q)' : /^10-K/.test(f) ? 'annual report (10-K)' : /^(20|40)-F/.test(f) ? 'annual report (' + f + ')'
+    : /^424B|^S-|^F-[134]/.test(f) ? 'offering prospectus (' + f + ')' : /13D/.test(f) ? 'a 5%+ stake (Schedule 13D)' : /^SC TO/.test(f) ? 'tender offer' : /^6-K/.test(f) ? 'foreign issuer report (6-K)' : f);
+  function newsOn(news, days) {
+    const by = new Map();
+    if (!news) return by;
+    const slot = (k) => { if (!by.has(k)) by.set(k, { f: [], h: [] }); return by.get(k); };
+    for (const e of news.events || []) {
+      let k = atDay(days, e[0]);
+      if (k < days.length && days[k] === e[0] && e[1] && e[1] >= '16:00') k++;
+      if (k < days.length) slot(k).f.push(e);
+    }
+    for (const e of news.headlines || []) {
+      const k = atDay(days, e[0]);
+      if (k >= days.length || days[k] !== e[0]) continue;
+      slot(k).h.push(e.slice(1));
+      if (!e[2] && k + 1 < days.length) slot(k + 1).h.push(e.slice(1));   // dated only: maybe after that close
+    }
+    by.checked = new Set(news.checked || []);
+    return by;
+  }
+  const isEarn = (e) => String(e[2] || '').startsWith('8-K') && String(e[3] || '').split(',').includes('2.02');
+  function filingsCell(list, cik) {
+    return (list || []).slice(0, 3).map(([d, hm, form, items, head, q, topics, acc, g]) => {
+      const its = String(items || '').split(',').filter((x) => x && x !== '9.01');
+      const chips = (String(form).startsWith('8-K') ? its.map((x) => `<span class="hv-nchip${HOTW.has(x) ? ' hot' : ''}">${esc(ITEMW[x] || 'Item ' + x)}</span>`) : [`<span class="hv-nchip">${esc(formW(form))}</span>`])
+        .concat((topics || []).filter((t) => t !== 'earnings' && !(g && t === 'guidance')).map((t) => `<span class="hv-nchip hot">${esc(String(t).replace(/_/g, ' '))}</span>`))
+        .concat(g ? [`<span class="hv-nchip hot">guidance ${esc(g)}</span>`] : []).join('');
+      const url = cik && acc ? `https://www.sec.gov/Archives/edgar/data/${+cik}/${String(acc).replace(/-/g, '')}/` : '';
+      return `<p class="hv-news">${chips}${head ? `<a href="${esc(url)}" target="_blank" rel="noopener"><b>${esc(head)}</b></a>` : url ? `<a href="${esc(url)}" target="_blank" rel="noopener">the filing ↗</a>` : ''}`
+        + ` <span class="m">${esc(md(d) + (hm ? ' ' + hm + ' ET' : ''))}</span>${q ? `<span class="q">${esc(q)}</span>` : ''}</p>`;
+    }).join('') + ((list || []).length > 3 ? `<span class="m">+${list.length - 3} more filings</span>` : '');
+  }
+  function headsCell(list) {
+    return (list || []).slice(0, 3).map(([d, hm, src, title, url]) => `<p class="hv-news"><span class="hv-nchip src">${esc(src || 'news')}</span><a href="${esc(url)}" target="_blank" rel="noopener nofollow">${esc(title)}</a> <span class="m">${esc(md(d) + (hm ? ' ' + hm + ' ET' : ''))}</span></p>`).join('')
+      + ((list || []).length > 3 ? `<span class="m">+${list.length - 3} more headlines</span>` : '');
+  }
+  /* the days to show, newest first: [{i, what}] */
+  function keyDays(P, S, kind, reg, own) {
+    const out = [], N = P.days.length, seen = new Set();
+    const put = (d, what) => { if (!d) return; const i = atDay(P.days, d); if (i < N && P.days[i] === d && !seen.has(i)) { seen.add(i); out.push({ i, what }); } };
+    const big = (a, z, n, label) => {                              // the largest one-day moves from day a to z
+      const r = [];
+      for (let i = Math.max(1, a); i <= z && i < N; i++) r.push([i, P.close[i] / P.close[i - 1] - 1]);
+      r.sort((x, y) => Math.abs(y[1]) - Math.abs(x[1]));
+      r.slice(0, n).forEach(([i], k) => put(P.days[i], `${label}'s ${['biggest', '2nd biggest', '3rd biggest'][k]} move`));
+    };
+    if (kind === 'highs') {
+      put(S.ath_date, fin(S.dd) && S.dd > -0.0005 ? 'the new all-time high' : 'the latest all-time high');
+      if (S.high && S.run_start) { put(S.run_start, "this run's first high"); const a = atDay(P.days, S.run_start); if (N - a >= 10) big(a + 1, N - 1, 2, 'the run'); }
+      for (const r of ((own || {}).last || []).slice().reverse()) {
+        put(r.peak, `a run's peak${fin(r.pullback) ? ` (then ${sp(r.pullback)})` : ''}`);
+        put(r.start, `a run's first high${fin(r.days) ? ` (${num(r.days)} days to its peak)` : ''}`);
+      }
+    } else if (kind === 'lows') {
+      put(S.low_date, `the ${SPAN[reg] || ''} low`);
+      if (S.since) { put(S.since, reg === 'atl' ? 'its all-time high: the slide began' : `its last ${SPAN[reg]} high: the slide began`); big(atDay(P.days, S.since) + 1, N - 1, 3, 'the slide'); }
+    } else {
+      if (S.since) { put(S.since, 'the range began'); big(atDay(P.days, S.since) + 1, N - 1, 2, 'the range'); }
+      put(P.days[N - 1], 'the last close');
+    }
+    return out.sort((a, b) => b.i - a.i);
+  }
+  /* how often the new highs (or lows) came on a day it reported: an 8-K with results (item 2.02) that could move that day */
+  function eventStats(P, by, news, kind, reg) {
+    const N = P.days.length, ev = (news && news.events) || [];
+    const first = ev.reduce((m, e) => (e[0] && (!m || e[0] < m) ? e[0] : m), null);
+    if (!first) return null;
+    const i0 = atDay(P.days, first), E = new Set();
+    for (const [k, x] of by) if (x.f.some(isEarn)) E.add(k);
+    if (!E.size) return null;
+    const marks = [], C = P.close;
+    if (kind === 'lows') {
+      const span = reg === 'atl' ? 0 : reg === '52w' ? 252 : 63;
+      let mn = Infinity;
+      for (let i = 0; i < N; i++) {
+        let lo = mn;
+        if (span) { lo = Infinity; for (let j = Math.max(0, i - span); j < i; j++) lo = Math.min(lo, C[j]); }
+        if (i >= Math.max(i0, span || 1) && C[i] <= lo * (1 + 1e-9)) marks.push(i);
+        mn = Math.min(mn, C[i]);
+      }
+    } else {
+      let mx = -Infinity;
+      for (let i = 0; i < N; i++) { if (i >= i0 && i > 0 && C[i] >= mx * (1 - 1e-9)) marks.push(i); mx = Math.max(mx, C[i]); }
+    }
+    if (marks.length < 5) return null;
+    let on = 0, week = 0;
+    const earnArr = [...E].sort((a, b) => a - b);
+    for (const i of marks) {
+      if (E.has(i)) on++;
+      if (earnArr.some((k) => i >= k && i - k <= 5)) week++;
+    }
+    const days = N - i0, eDays = earnArr.filter((k) => k >= i0).length;
+    const rate = (eDays && days > eDays && marks.length > on) ? (on / eDays) / ((marks.length - on) / (days - eDays)) : null;   // on a reporting day against any other
+    return { what: kind === 'lows' ? `new ${SPAN[reg]} lows` : 'new all-time highs', n: marks.length, on, week, eDays, days, from: P.days[i0], base: eDays / days, baseWeek: Math.min(1, (eDays * 6) / days), rate };
+  }
+  function newsBlock(doc, S, kind, reg, news) {
+    const P = series(doc);
+    if (!P) return '';
+    const own = kind === 'highs' ? (doc.highs || {}).own : null, list = keyDays(P, S, kind, reg, own);
+    if (!list.length) return '';
+    const by = newsOn(news, P.days), stock = doc.kind === 'stock';
+    let h = `<h3>${kind === 'highs' ? 'Its highs' : kind === 'lows' ? 'Its lows' : 'Its range'} and the news</h3>`;
+    const st = news && stock ? eventStats(P, by, news, kind, reg) : null;
+    if (st) {
+      const x = st.rate;
+      h += `<p class="hv-head" style="font-size:14.5px">Of its <b>${num(st.n)} ${esc(st.what)}</b> since ${esc(mdy(st.from))}, <b>${num(st.on)}</b> (${pc(st.on / st.n)}) came on a day it reported results (an 8-K with item 2.02 that day, or after the close the day before) and ${num(st.week)} (${pc(st.week / st.n)}) within the week after one; reporting days are ${pc(st.base, 1)} of its trading days and those weeks ${pc(st.baseWeek)}`
+        + `${fin(x) && st.on ? ` — a ${kind === 'lows' ? 'new low' : 'new high'} came <b>${num(x, 1)} times</b> as often on a reporting day as on any other` : ''}.</p>`;
+    }
+    h += `<p class="hv-sub">${stock ? 'What the company filed with the SEC that could have moved each day (8-K items with the press release\'s headline where it has been read, quarterly and annual reports, offerings) and the news headlines that named it (Google News\'s search: headline, source, time, a link)' : 'The news headlines that day (Google News\'s search)'}; the move is the day's close against the one before. Filings and headlines are gathered a batch at a time, these days among the first.</p>`;
+    const earn = [...by].filter(([, x]) => x.f.some(isEarn)).map(([k]) => k).sort((a, b) => a - b);
+    const rows = list.slice(0, 14).map(({ i, what }) => {
+      const x = by.get(i) || { f: [], h: [] }, mv = i > 0 ? P.close[i] / P.close[i - 1] - 1 : null;
+      let near = '';
+      if (stock && !x.f.some(isEarn)) {                            // the results it came after, within two weeks
+        const k = earn.filter((j) => j < i && i - j <= 10).pop();
+        if (k != null) {
+          const e = by.get(k).f.find(isEarn);
+          near = `<p class="hv-news hv-after">↳ ${num(i - k)} trading day${i - k === 1 ? '' : 's'} after its results (${esc(md(P.days[k]))}, ${sp(P.close[k] / P.close[k - 1] - 1)} that day)${e && e[4] ? `: <a href="${esc(doc.cik && e[7] ? `https://www.sec.gov/Archives/edgar/data/${+doc.cik}/${String(e[7]).replace(/-/g, '')}/` : '')}" target="_blank" rel="noopener">${esc(e[4])}</a>` : ''}${e && e[8] ? ` <span class="hv-nchip hot">guidance ${esc(e[8])}</span>` : ''}</p>`;
+        }
+      }
+      const none = !news ? (stock ? 'not gathered yet' : '—') : by.checked && by.checked.has(P.days[i]) ? (stock ? 'no filing or headline found' : 'no headline found') : stock ? (x.h.length ? '' : 'no filing that day (headlines not searched yet)') : 'headlines not searched yet';
+      const cell = (stock ? filingsCell(x.f, doc.cik) : '') + headsCell(x.h);
+      return [`${esc(mdy(P.days[i]))}<br><span class="m">${esc(what)}</span>`, `<span class="${tone(mv)}">${sp(mv)}</span>`, (cell || `<span class="m">${esc(none)}</span>`) + near];
+    });
+    return h + `<div class="hv-wrap hv-newsbox">${table(['Day', 'Move', stock ? 'What it filed · the headlines' : 'The headlines'], rows, [0, 2])}</div>`;
+  }
+
   async function render(el, ctx) {
     if (!el) return;
     css();
@@ -1033,8 +1437,9 @@
     if (!here()) return;
     if (!doc.highs && !doc.lows && !doc.ranges) { el.innerHTML = `<p class="hv-sub">${esc(doc.name || key)}: the highs, lows and ranges research is built with the move odds after the next US close.</p>`; return; }
     const reg = pickRegime(doc, ctx.regime), kind = kindOf(reg);
-    let all = null;
-    try { all = await get(`${hub_}data/research/paths/moves/${kind}.json`); } catch (e) { all = null; }
+    const wantNews = doc.kind === 'stock' || doc.key === 'SPY';
+    const [all, news] = await Promise.all([get(`${hub_}data/research/paths/moves/${kind}.json`).catch(() => null),
+      wantNews ? get(`${hub_}data/research/paths/moves/n/${encodeURIComponent(key)}.json`).catch(() => null) : Promise.resolve(null)]);
     if (!here()) return;
     const gk = { stock: 'companies', index: 'indices' }[doc.kind] || 'funds', name = doc.kind === 'stock' ? `${doc.ticker || key} (${doc.name || ''})` : doc.name || key;
     const grpOf = (x) => (x && x.groups && x.groups[gk] ? x.groups[gk] : null), grp = (x) => (grpOf(x) || {}).base || null;
@@ -1044,6 +1449,8 @@
     try { M = standModel(doc, reg, (blk || {}).state); } catch (e) { M = null; }
     const PX = { doc, reg, kind, gk, S: (blk || {}).state || {}, A: (blk || {}).analogues || null, own: kind === 'highs' ? (doc.highs || {}).own : null, base: kind === 'highs' ? grp(all) : grp(R_), G: o_.group, params: (all && all.params) || {}, M };
     o_.stand = standBlock(M, el.clientWidth || 0) + pngBar(PX);
+    try { o_.val = valBlock(doc, PX.S, kind, reg, el.clientWidth || 0); } catch (e) { o_.val = ''; }
+    try { o_.news = newsBlock(doc, PX.S, kind, reg, news); } catch (e) { o_.news = ''; }
     let body;
     if (kind === 'highs') body = block(doc.highs, name, doc.kind, grp(all), gk, o_);
     else if (kind === 'lows') body = lowBlock(doc.lows[reg], name, doc.kind, grp(R_), gk, reg, o_);
@@ -1053,10 +1460,12 @@
     el.innerHTML = `<div class="hv">${ctx.title === false ? '' : `<h3 style="margin-top:4px">${esc(title)}</h3>`}${chips(doc, reg)}${none}${body}</div>`;
     if (el.querySelectorAll) el.querySelectorAll('[data-hvr]').forEach((b) => { b.onclick = () => { if (typeof ctx.onRegime === 'function') ctx.onRegime(b.dataset.hvr); render(el, Object.assign({}, ctx, { regime: b.dataset.hvr })); }; });
     bindPng(el, PX, hub_);
+    bindVal(el);
   }
 
   const api = { render, hub, block, bucketTable, kmChart, facts, tiles, headline, css, lowsHub, rangesHub, lowBlock, rangeBlock, lowBucket, rangeBucket, regimesOf, pickRegime, REG,
-    histChart, fanChart, spreadBlock, condBlock, backtestBlock, calibChart, groupOdds, series, standModel, standChart, standBlock, picture, picRows, picTitle, picSub, canPic, pngBar, PIC };
+    histChart, fanChart, spreadBlock, condBlock, backtestBlock, calibChart, groupOdds, series, standModel, standChart, standBlock, picture, picRows, picTitle, picSub, canPic, pngBar, PIC,
+    valBlock, ratioWords, ratioTable, ratioChart, rolling, athWeeks, rWeeks, newsOn, keyDays, eventStats, newsBlock };
   if (typeof window !== 'undefined') window.HighsView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

@@ -169,6 +169,20 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   ok(html.includes('no filing that day (headlines not searched yet)') || html.includes('no filing or headline that day'), 'the empty cells say what was searched');
   const mk = V.casesSection(Rc, { w: 1, band: 50, set: 'sim', mode: 'latest' }, { kind: 'market', key: 'SPY' }, { headlines: news.headlines, checked: news.checked });
   ok(mk.includes('The headlines (that day') && mk.includes("the market's headlines"), 'the market: its headlines only');
+  // what was behind the days like it: the cases by their filings (results, another filing, none), the day looked at in its group
+  const csAll = V.cases(Rc, { w: 1, band: 50 }, 'sim');
+  const resJ = csAll.filter((_, i) => i % 3 === 0).map((x) => x.j), othJ = csAll.filter((_, i) => i % 3 === 1).map((x) => x.j);
+  const nw = { events: [...resJ.map((j) => [A.days[j], '08:00', '8-K', '2.02,9.01', 'Acme results', '', ['earnings'], 'a' + j]), ...othJ.map((j) => [A.days[j], '08:00', '8-K', '5.02', 'Acme CFO', '', [], 'b' + j]),
+    [A.days[Rc.t], '07:30', '8-K', '2.02', 'Acme results today', '', ['earnings'], 'now']].reverse(), headlines: [], checked: [] };
+  const X = V.eventSplit(Rc, { w: 1, band: 50, mode: 'latest' }, csAll, null, nw, V.newsIndex(nw, A.days));
+  const gn = Object.fromEntries(X.rows.map((r) => [r.g, r.n]));
+  ok(X.first === A.days[Math.min(...resJ, ...othJ, Rc.t)] && gn.res >= resJ.length - 1 && gn.oth >= othJ.length - 1 && X.n === csAll.filter((x) => A.days[x.j] >= X.first).length, 'the cases by their filings, since the first on file');
+  ok(X.now === 'res' && X.rows.every((r) => !r.E || r.E.mean.length > 21), 'the day looked at: with its results');
+  const eb = V.eventBlock(Rc, { w: 1, band: 50, mode: 'latest' }, { kind: 'stock', cik: 1 }, nw, csAll, null);
+  ok(eb.includes('What was behind the days like it') && eb.includes('With its results (8-K item 2.02)') && eb.includes('this day') && eb.includes('This day came with its results: the') && eb.includes('that also came with results were followed by'), 'the block: the groups, the day in its group');
+  ok(V.eventBlock(Rc, { w: 1, band: 50, mode: 'latest' }, { kind: 'market', key: 'SPY' }, nw, csAll, null) === '' && V.eventBlock(Rc, { w: 1, band: 50, mode: 'latest' }, { kind: 'stock' }, null, csAll, null) === '', 'a company with its filings only');
+  ok(V.casesSection(Rc, { w: 1, band: 50, set: 'sim', mode: 'latest' }, { kind: 'stock', cik: 1 }, nw).includes('What was behind the days like it'), 'in the cases section');
+  ok(!/NaN|undefined|Infinity/.test(eb), 'the block shows no NaN');
   ok(V.fb(2.5) === '2.5' && V.fb(0.25) === '0.25' && V.fb('1.30') === '1.3' && V.fb(5) === '5', 'band labels');
 }
 

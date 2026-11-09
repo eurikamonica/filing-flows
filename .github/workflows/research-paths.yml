@@ -77,16 +77,18 @@ jobs:
           ppl=""
           [ -d _research-people/public ] && ppl="--people _research-people/public"
           python disclosures/app/paths.py build --root pth --universe _research-valuation/public/index.json $ppl
-      - name: First-filed quarterly EPS (the P/E at the highs)
-        # the SEC GAAP EPS store the main site keeps (branch data, eps-gaap/<cik>.json; pipeline/eps_gaap.py): read only
+      - name: First-filed quarterly EPS and income statements (the P/E and P/S beside the price)
+        # the SEC GAAP EPS store the main site keeps (branch data, eps-gaap/<cik>.json; pipeline/eps_gaap.py) and its
+        # first-filed income statements (eps-fundamental/<cik>.json: revenue and diluted shares, for the P/S): read only
         if: ${{ !cancelled() }}
         continue-on-error: true
         timeout-minutes: 10
         run: |
           url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           git clone --quiet --depth 1 --filter=blob:none --sparse --branch data "$url" _eps_data
-          git -C _eps_data sparse-checkout set --no-cone /eps-gaap/
+          git -C _eps_data sparse-checkout set --no-cone /eps-gaap/ /eps-fundamental/
           ls _eps_data/eps-gaap | wc -l
+          ls _eps_data/eps-fundamental | wc -l
       - name: Move odds (public/moves/)
         # each asset's daily returns for the move odds (company pages and the hub's Move odds tab): runs even when the
         # path models' build above was skipped or failed, as it needs only the daily bars; with it the highs, the lows
@@ -95,7 +97,7 @@ jobs:
         if: ${{ !cancelled() }}
         continue-on-error: true
         timeout-minutes: 35
-        run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json --eps _eps_data/eps-gaap
+        run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json --eps _eps_data/eps-gaap --fund _eps_data/eps-fundamental
       - name: Move odds headlines (cache/headlines/)
         # the news headlines that name each company (app/move_headlines.py: Google News's search feed, headline, source,
         # time and link only): the last week, the last three years a month at a time, the days of its biggest moves; a

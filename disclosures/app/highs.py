@@ -188,6 +188,23 @@ def ttm_eps(days, recs):
     return out
 
 
+def raw_closes(days, closes, raw):
+    """The raw closes (split-adjusted, not dividend-adjusted: raw = (days, closes) of the bars on file) on the days of
+    the adjusted closes; before the first raw close, the adjusted ones joined to it there (scaled to meet it)."""
+    closes = np.asarray(closes, float)
+    dn = np.asarray(days, dtype='datetime64[D]')
+    rt, rv = np.asarray(raw[0], dtype='datetime64[D]'), np.array([np.nan if v is None else float(v) for v in raw[1]], float)
+    j = np.searchsorted(dn, rt)
+    ok = (j < len(dn)) & np.isfinite(rv) & (rv > 0)
+    ok[ok] = dn[j[ok]] == rt[ok]
+    rd = np.array(closes)
+    if ok.any():
+        rd[j[ok]] = rv[ok]
+        j0 = int(j[ok][0])                              # before the raw closes: the adjusted ones, joined there
+        rd[:j0] = closes[:j0] * (rd[j0] / closes[j0])
+    return rd
+
+
 def volume_ratio(days, vdays, vols):
     """Average volume over the last 91 calendar days ÷ the last 365 (daily or weekly volumes), on each day."""
     out = np.full(len(days), np.nan)
@@ -463,16 +480,7 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_path=None, verbose
         if recs:
             e = ttm_eps(days, fix_splits(recs))
             if key in raw:                                          # raw closes (split-adjusted, not dividend-adjusted)
-                dn = np.asarray(days, dtype='datetime64[D]')
-                rt, rv = np.asarray(raw[key][0], dtype='datetime64[D]'), np.array([np.nan if v is None else float(v) for v in raw[key][1]], float)
-                j = np.searchsorted(dn, rt)
-                ok = (j < len(dn)) & np.isfinite(rv) & (rv > 0)
-                ok[ok] = dn[j[ok]] == rt[ok]
-                rd = np.array(closes)
-                if ok.any():
-                    rd[j[ok]] = rv[ok]
-                    j0 = int(j[ok][0])                              # before the raw closes: the adjusted ones, joined there
-                    rd[:j0] = closes[:j0] * (rd[j0] / closes[j0])
+                rd = raw_closes(days, closes, raw[key])
         vr = volume_ratio(days, *volumes[key]) if key in volumes else None
         F = asset_frame(closes, raw=rd, eps=e, volu=vr)
         ai = len(meta)
