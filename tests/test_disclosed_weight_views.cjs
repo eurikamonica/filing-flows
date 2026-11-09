@@ -14,7 +14,10 @@ const api={hub:'/',rankMeta:async()=>({cos:[['AAPL','Apple','technology']]}),jso
  assert.equal(changes.fmt(-.3),'-30.00 pp');
  const mapi={...api,json:async u=>u.endsWith('/1067983.json')?{name:'Manager',snapshots:[{period:'2026-06-30',filed:'2026-08-14',complete:true,total_usd:100,positions_shard:'positions.json'}]}:[{ticker:'AAPL',value_usd:20,put_call:'NONE'},{ticker:'AAPL',value_usd:50,put_call:'CALL'},{value_usd:30}]};
  const mgr=out();await A.build({aw:'13f',style:'stack'},mgr,mapi);
- assert.equal(mgr.series.find(s=>s.key==='other').v[0],.8);
+ // the long equity book is 100%: the call (50 of the 100 reported) is left out; the line no ticker or CUSIP names stays in Other
+ assert.equal(mgr.series.find(s=>s.key==='other').v[0],.6);
+ assert.equal(mgr.series.find(s=>s.key==='technology').v[0],.4);
+ assert.match([...mgr.notes].join(' '),/options \(puts and calls[\s\S]*Options in its 2026-06-30 13F: puts \$0M and calls \$0M[^.]*50% of the reported/);
  assert.equal(mgr.evidence[0].filed,'2026-08-14');
  assert.match(mgr.metric,/13F/);assert(!mgr.sub.includes('fund NAV'));
  const offapi={...api,json:async()=>({trades:[{person:'Official',date:'2026-06-12',ticker:'AAPL',amount_min:1001,amount_max:15000,type:'buy'},{person:'Official',date:'2026-06-13',ticker:'MSFT',amount_min:1001,amount_max:50000,type:'sell'}]})};

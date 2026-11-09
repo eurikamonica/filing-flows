@@ -20,6 +20,9 @@ on:
       - 'web/quality-ipo.js'
       - 'web/quality-visuals.js'
       - 'web/quality-visuals.css'
+      - 'web/bs-blocks.js'
+      - 'web/bs-blocks.css'
+      - 'pipeline/reform.py'
       - 'web/ipo-market.js'
       - 'web/ipo-reader.js'
       - 'pipeline/ipo_market.py'
@@ -595,16 +598,24 @@ jobs:
       cancel-in-progress: false
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
+      page_url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     steps:
+      # the site's ~114,000 pages: Pages' "syncing files" sometimes outlasts 10 minutes (Nov 5, 6 and 7, 2026: "Timeout
+      # reached, aborting!", the deployment cancelled and the site an hour behind). deploy-pages@v4 caps its timeout
+      # at 10 minutes (a larger value only logs "timeout set to the maximum of 600000 milliseconds"), so a timed-out
+      # deployment is tried once more with the same artifact instead.
       - id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
         with:
-          # the site's ~114,000 pages: Pages' "syncing files" outlasted the default 10 minutes on Nov 5, 2026 (14:22 run:
-          # "Timeout reached, aborting!", the deployment cancelled and the site an hour behind)
-          timeout: 1800000
+          timeout: 600000
+      - id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: 600000
 
   # Your own server: rsync of the changed files, then one switch on the server (deploy-server.yml; does nothing
   # until the secrets DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS and DEPLOY_HOST exist).

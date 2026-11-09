@@ -4,6 +4,8 @@
    The move can be one day, a week or a month, measured as a % change, against the asset's own recent volatility, or
    beyond what the market's move implied (beta-adjusted); any past day or a "what if" move can be looked at instead, and
    older days can count less (each day's weight halving every 10, 5, 2 years or every year away from the day looked at).
+   Drops and rebounds, year by year: each calendar year's deepest drop from its high so far and the rebound after it, or
+   every day's (week's, month's) rise and fall added up.
    Shared by every company page of the Sankey site (views.json: window.MovesView.render(el, {cik, ticker, hub, here}))
    and the hub's Move odds tab (moves.js: MovesView.render(el, {key, hub})). Data: data/research/paths/moves/a/<KEY>.json
    (app/moves.py, branch research-paths): trading days and daily log returns; everything else is worked out here, with
@@ -1218,9 +1220,135 @@
     return h;
   }
 
+  /* ---------- drops and rebounds: each calendar year's deepest drop and the rebound after it, or its moves added up ---------- */
+  // per calendar year, from the last close of the year before (the first year on file: from its first close): the deepest
+  // drop from the highest close so far to a low (peak, trough: the days), the rebound from that low to the highest close
+  // after it in the year (rebAt), every w-day move of the year from its start (the last one shorter) added up — the rises
+  // and the falls, how many of each — and the year's change. part: a year the history covers in part (its first year on
+  // file, or one that has not ended on the last day)
+  function swingYears(A, w, c) {
+    c = c || cum(A.r);
+    const D = A.days, N = D.length - 1, lv = (j) => Math.exp(c[j]), out = [];
+    w = Math.max(1, w || 1);
+    let j = 0;
+    while (j <= N) {
+      const y = +D[j].slice(0, 4);
+      let k = j; while (k < N && +D[k + 1].slice(0, 4) === y) k++;
+      const b = j > 0 ? j - 1 : j, Y = { y, j0: j, j1: k, b, drop: 0, peak: b, trough: null, reb: 0, rebAt: null, rise: 0, fall: 0, up: 0, down: 0 };
+      let pk = b, tv = null;
+      for (let i = j > 0 ? j : j + 1; i <= k; i++) {
+        const v = lv(i);
+        if (v > lv(pk)) pk = i;
+        const d = 1 - v / lv(pk);
+        if (d > Y.drop + 1e-12) { Y.drop = d; Y.peak = pk; Y.trough = i; tv = v; Y.reb = 0; Y.rebAt = null; }
+        else if (tv != null && v / tv - 1 > Y.reb) { Y.reb = v / tv - 1; Y.rebAt = i; }
+      }
+      for (let s0 = b; s0 < k; s0 += w) { const r = lv(Math.min(s0 + w, k)) / lv(s0) - 1; if (r > 0) { Y.rise += r; Y.up++; } else if (r < 0) { Y.fall += r; Y.down++; } }
+      Y.ret = k > b ? lv(k) / lv(b) - 1 : null;
+      Y.part = j === 0 || D[k].slice(5) < '12-24';
+      out.push(Y);
+      j = k + 1;
+    }
+    return out;
+  }
+  const SWU = (w) => (w === 1 ? ['day', 'days'] : w === 5 ? ['week', 'weeks'] : ['month', 'months']);
+  // the full years' averages (every year when none is full)
+  function swingAvg(Y) {
+    const full = Y.filter((y) => !y.part), b = full.length ? full : Y, avg = (g) => b.reduce((a, y) => a + g(y), 0) / (b.length || 1);
+    return { n: b.length, full: full.length, drop: avg((y) => y.drop), reb: avg((y) => y.reb), rise: avg((y) => y.rise), fall: avg((y) => y.fall),
+      deep: b.reduce((m, y) => (y.drop > m.drop ? y : m), b[0]), big: b.reduce((m, y) => (y.reb > m.reb ? y : m), b[0]), y0: b[0] && b[0].y, y1: b.length ? b[b.length - 1].y : null };
+  }
+  function swingSvg(R, o, Y, cumM, w) {
+    const W = o.narrow ? 440 : 720, Hh = 260, L = 56, Rr = 30, T = 22, B = 24, n = Y.length, D = R.A.days;   // L: room for "+300 %" in French and Spanish
+    let dn = 0.05, up = 0.05;
+    for (const y of Y) { dn = Math.max(dn, cumM ? -y.fall : y.drop); up = Math.max(up, cumM ? y.rise : y.reb); }
+    const lo = -dn * 1.2, hi = up * 1.16, sy = (v) => T + (hi - v) / (hi - lo) * (Hh - T - B), slot = (W - L - Rr) / n, bw = Math.max(1.6, Math.min(slot * 0.68, 26));
+    const look = (R.t >= 0 ? R.t : D.length - 1), cur = Y.findIndex((y) => look >= y.j0 && look <= y.j1);
+    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${cumM ? 'Each year’s rising and falling moves added up' : 'Each year’s deepest drop and the rebound after it'}">`;
+    ticks(lo * 100, hi * 100, 5).forEach((v) => { g += `<line class="mv-g" x1="${L}" x2="${W - Rr}" y1="${sy(v / 100).toFixed(1)}" y2="${sy(v / 100).toFixed(1)}"${v === 0 ? ' style="stroke:var(--muted,#999)"' : ''}/><text class="mv-t" x="${L - 6}" y="${(sy(v / 100) + 4).toFixed(1)}" text-anchor="end">${esc(v === 0 ? '0' : sgn(v, 0))}</text>`; });
+    const gap = Math.ceil(38 / slot), lab = new Set(yearTicks(Y[0].y - 1, Y[n - 1].y, o.narrow ? 5 : 9).filter((v) => v === Y[n - 1].y || Y[n - 1].y - v >= gap)); lab.add(Y[n - 1].y);
+    Y.forEach((y, i) => {
+      const xc = L + (i + 0.5) * slot, dv = cumM ? y.fall : -y.drop, uv = cumM ? y.rise : y.reb, net = uv + dv, on = i === cur, op = on ? 1 : y.part ? 0.55 : 0.8;
+      const tip = `${y.y}${y.part ? ' (in part)' : ''} · ` + (cumM ? `rises ${sp(y.rise)} (${y.up} ${SWU(w)[y.up === 1 ? 0 : 1]}) · falls ${sp(y.fall)} (${y.down} ${SWU(w)[y.down === 1 ? 0 : 1]}) · net ${sgn(100 * (y.rise + y.fall), 1, ' pts')}`
+        : `${y.trough == null ? 'no drop' : `drop ${sp(-y.drop)} (${mdy(D[y.peak])} → ${mdy(D[y.trough])})`} · ${y.rebAt == null ? 'no rebound' : `rebound ${sp(y.reb)} (to ${mdy(D[y.rebAt])})`}`) + (fin(y.ret) ? ` · year ${sp(y.ret)}` : '');
+      g += `<g style="opacity:${op}"><title>${esc(tip)}</title>`
+        + `<rect x="${(xc - bw / 2).toFixed(1)}" y="${sy(0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, sy(dv) - sy(0)).toFixed(1)}" rx="${Math.min(3, bw / 3).toFixed(1)}" style="fill:${COL.down}"/>`
+        + `<rect x="${(xc - bw / 2).toFixed(1)}" y="${sy(uv).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, sy(0) - sy(uv)).toFixed(1)}" rx="${Math.min(3, bw / 3).toFixed(1)}" style="fill:${COL.up}"/>`;
+      const yn = sy(net), dw = Math.min(5, bw / 2 + 1);
+      g += `<line x1="${(xc - bw / 2 - 2).toFixed(1)}" x2="${(xc + bw / 2 + 2).toFixed(1)}" y1="${yn.toFixed(1)}" y2="${yn.toFixed(1)}" style="stroke:${COL.ink};stroke-width:1.6"/>`
+        + `<path d="M${xc.toFixed(1)},${(yn - dw).toFixed(1)}L${(xc + dw).toFixed(1)},${yn.toFixed(1)}L${xc.toFixed(1)},${(yn + dw).toFixed(1)}L${(xc - dw).toFixed(1)},${yn.toFixed(1)}Z" style="fill:${COL.ink}"/></g>`;
+      if (on) {                                          // the year looked at: its two figures, clear of the bars beside it
+        const xl = Math.min(Math.max(xc, L + 18), W - 20), nb = Y.slice(Math.max(0, i - 1), i + 2);
+        const ut = Math.max(...nb.map((z) => (cumM ? z.rise : z.reb))), db = Math.min(...nb.map((z) => (cumM ? z.fall : -z.drop)));
+        g += `<text class="mv-l" x="${xl.toFixed(1)}" y="${(sy(ut) - 6).toFixed(1)}" text-anchor="middle" style="fill:${COL.up};font-weight:600">${esc(sp(uv, 0))}</text><text class="mv-l" x="${xl.toFixed(1)}" y="${Math.min(sy(db) + 15, Hh - B + 2).toFixed(1)}" text-anchor="middle" style="fill:${COL.down};font-weight:600">${esc(sp(dv, 0))}</text>`;
+      }
+      if (lab.has(y.y)) g += `<text class="mv-t" x="${xc.toFixed(1)}" y="${Hh - 6}" text-anchor="middle">${y.y}</text>`;
+    });
+    return g + '</svg>';
+  }
+  // the studio's video of the same (the Sankey site's #studio, one level up from the hub)
+  function swingVideo(doc, o, Y) {
+    const t = doc.ticker || (doc.kind === 'market' ? 'SPY' : null);
+    if (!t || !/^[A-Z][A-Z0-9-]{0,7}$/.test(t)) return '';
+    const up = typeof location !== 'undefined' && /\/disclosures\//.test(location.pathname || '') ? '../' : '';
+    return `<a class="mv-pill" style="text-decoration:none" href="${up}#studio/k=swing&amp;t=${encodeURIComponent(t)}&amp;vm=${o.sw === 'cum' ? 'cum' : 'once'}">▶ Make it a video</a>`;
+  }
+  function swingSection(R, o, doc) {
+    if (R.volIdx || R.error) return '';
+    const cumM = o.sw === 'cum', w = o.measure === 'level' || o.measure === 'rv' ? 1 : (o.w || 1), u = SWU(w), D = R.A.days;
+    const c = R.c || (R.c = cum(R.A.r)), Y = swingYears(R.A, w, c);
+    if (Y.length < 2) return '';
+    const S = swingAvg(Y), name = esc(doc.ticker || doc.name), look = R.t >= 0 ? R.t : D.length - 1, cur = Y.find((y) => look >= y.j0 && look <= y.j1) || Y[Y.length - 1];
+    const span = S.full ? `${S.n} full years, ${S.y0}–${S.y1}` : `${S.n} years`;
+    const pill = (v, l) => `<button type="button" class="mv-pill${(cumM ? 'cum' : 'once') === v ? ' on' : ''}" data-mv="sw" data-v="${v}">${esc(l)}</button>`;
+    let h = `<h3>Drops and rebounds, year by year</h3>`;
+    h += cumM
+      ? `<p class="mv-head" style="font-size:16px">In an average year (${esc(span)}), ${name}'s rising ${u[1]} added up to <b class="mv-up">${sp(S.rise)}</b> and its falling ${u[1]} to <b class="mv-down">${sp(S.fall)}</b> — net ${sgn(100 * (S.rise + S.fall), 1, ' pts')}. ${cur.y}${cur.part ? ' so far' : ''}: <b class="mv-up">${sp(cur.rise)}</b> and <b class="mv-down">${sp(cur.fall)}</b>.</p>`
+      : `<p class="mv-head" style="font-size:16px">In an average year (${esc(span)}), ${name}'s deepest drop was <b class="mv-down">${sp(-S.drop)}</b> and the rebound after it <b class="mv-up">${sp(S.reb)}</b>; the deepest of all, ${sp(-S.deep.drop)} in ${S.deep.y}. ${cur.y}${cur.part ? ' so far' : ''}: ${cur.trough == null ? 'no drop' : `<b class="mv-down">${sp(-cur.drop)}</b> (${esc(mdy(D[cur.peak]))} → ${esc(mdy(D[cur.trough]))}), then <b class="mv-up">${sp(cur.reb)}</b>`}.</p>`;
+    h += `<p class="mv-sub">${cumM ? `Every ${u[0]}’s close-to-close move within the calendar year added up (a ${u[0]} as the Move above chooses; added, not compounded): the rises up, the falls down, the diamond at the rises less the falls.`
+      : 'The deepest fall within each calendar year from its highest close so far — the last close of the year before counts — to a low, and the rebound from that low to the highest close after it in the same year; the diamond is the rebound less the drop, in percentage points.'} Paler bars: a year on file in part. Hover a year for its days.</p>`;
+    h += `<div class="mv-bar"><div><label>Measure</label><div class="mv-pills">${pill('once', 'One swing: the deepest drop, then the rebound')}${pill('cum', `All of it: every ${u[0]}’s rise and fall added up`)}</div></div><div>${swingVideo(doc, o, Y)}</div></div>`;
+    h += swingSvg(R, o, Y, cumM, w) + `<div class="mv-legend"><span><b style="background:${COL.down}"></b>${cumM ? `falling ${u[1]} added up` : 'the deepest drop'}</span><span><b style="background:${COL.up}"></b>${cumM ? `rising ${u[1]} added up` : 'the rebound after it'}</span><span><b style="background:${COL.ink};transform:rotate(45deg);width:8px;height:8px"></b>${cumM ? 'rises − falls' : 'rebound − drop'}</span></div>`;
+    const rows = Y.slice().reverse().map((y) => (cumM
+      ? `<tr><td>${y.y}${y.part ? '*' : ''}</td><td class="n mv-up">${sp(y.rise)}</td><td class="n">${num(y.up)}</td><td class="n mv-down">${sp(y.fall)}</td><td class="n">${num(y.down)}</td><td class="n">${sgn(100 * (y.rise + y.fall), 1, ' pts')}</td><td class="n ${tone(y.ret)}">${sp(y.ret)}</td></tr>`
+      : `<tr><td>${y.y}${y.part ? '*' : ''}</td><td class="n mv-down">${y.trough == null ? '—' : sp(-y.drop)}</td><td>${y.trough == null ? '' : `${esc(mdy(D[y.peak]))} → ${esc(mdy(D[y.trough]))}`}</td><td class="n mv-up">${y.trough == null ? '—' : sp(y.reb)}</td><td>${y.rebAt == null ? '' : esc(mdy(D[y.rebAt]))}</td><td class="n">${sgn(100 * (y.reb - y.drop), 1, ' pts')}</td><td class="n ${tone(y.ret)}">${sp(y.ret)}</td></tr>`)).join('');
+    const avgRow = cumM ? `<tr class="grp"><td>Average of ${S.n}</td><td class="n">${sp(S.rise)}</td><td></td><td class="n">${sp(S.fall)}</td><td></td><td class="n">${sgn(100 * (S.rise + S.fall), 1, ' pts')}</td><td></td></tr>`
+      : `<tr class="grp"><td>Average of ${S.n}</td><td class="n">${sp(-S.drop)}</td><td></td><td class="n">${sp(S.reb)}</td><td></td><td class="n">${sgn(100 * (S.reb - S.drop), 1, ' pts')}</td><td></td></tr>`;
+    h += `<details class="mv-apx"><summary>Every year (${num(Y.length)})</summary><div class="mv-wrap"><table class="mv-tbl"><thead><tr><th>Year</th>${cumM
+      ? `<th class="n">Rising ${u[1]} added up</th><th class="n">How many</th><th class="n">Falling ${u[1]} added up</th><th class="n">How many</th><th class="n">Rises − falls</th>`
+      : '<th class="n">Deepest drop</th><th>From the high to the low</th><th class="n">Rebound after it</th><th>Rebound to</th><th class="n">Rebound − drop</th>'}<th class="n">The year</th></tr></thead><tbody>${avgRow}${rows}</tbody></table></div>`
+      + `<p class="mv-sub">* a year on file in part, left out of the average. Close to close, ${['index', 'volatility'].includes(doc.kind) ? 'price only' : 'adjusted for dividends and splits'}.</p></details>`;
+    return h;
+  }
+  function drawSwing(x, box, R, o, doc) {
+    const cumM = o.sw === 'cum', w = o.measure === 'level' || o.measure === 'rv' ? 1 : (o.w || 1), u = SWU(w), Y = swingYears(R.A, w, R.c || (R.c = cum(R.A.r)));
+    const S = swingAvg(Y);
+    const P = card(x, box.x, box.y, box.w, box.h, cumM ? `Every ${u[0]}'s rise and fall, added up each year` : 'Each year’s deepest drop, then the rebound',
+      cumM ? `red: falling ${u[1]} added up · green: rising ${u[1]} · ◆ rises − falls` : 'red: from the year’s high so far to its low · green: the rebound after it · ◆ rebound − drop');
+    if (Y.length < 2) return;
+    let dn = 0.05, up = 0.05;
+    for (const y of Y) { dn = Math.max(dn, cumM ? -y.fall : y.drop); up = Math.max(up, cumM ? y.rise : y.reb); }
+    const lo = -dn * 1.12, hi = up * 1.12, L = P.x + 42, Wd = P.w - 42, y0 = P.y + 26, y1 = P.y + P.h - 20, sy = (v) => y0 + (hi - v) / (hi - lo) * (y1 - y0);
+    const slot = Wd / Y.length, bw = Math.max(1.2, Math.min(slot * 0.68, 22));
+    x.font = pngFont(12); x.strokeStyle = PC.line; x.lineWidth = 1;
+    ticks(lo * 100, hi * 100, 4).forEach((v) => { x.beginPath(); x.moveTo(L, sy(v / 100)); x.lineTo(L + Wd, sy(v / 100)); x.stroke(); x.fillStyle = PC.muted; x.textAlign = 'right'; x.fillText(v === 0 ? '0' : sgn(v, 0), L - 6, sy(v / 100) + 4); });
+    const lab = new Set(yearTicks(Y[0].y - 1, Y[Y.length - 1].y, 8));
+    Y.forEach((y, i) => {
+      const xc = L + (i + 0.5) * slot, dv = cumM ? y.fall : -y.drop, uv = cumM ? y.rise : y.reb, yn = sy(uv + dv);
+      x.globalAlpha = y.part ? 0.5 : 0.9;
+      x.fillStyle = PC.down; x.fillRect(xc - bw / 2, sy(0), bw, Math.max(0, sy(dv) - sy(0)));
+      x.fillStyle = PC.up; x.fillRect(xc - bw / 2, sy(uv), bw, Math.max(0, sy(0) - sy(uv)));
+      x.globalAlpha = 1; x.strokeStyle = PC.ink; x.lineWidth = 1.4; x.beginPath(); x.moveTo(xc - bw / 2 - 2, yn); x.lineTo(xc + bw / 2 + 2, yn); x.stroke();
+      const dw = Math.min(4.5, bw / 2 + 1); x.fillStyle = PC.ink; x.beginPath(); x.moveTo(xc, yn - dw); x.lineTo(xc + dw, yn); x.lineTo(xc, yn + dw); x.lineTo(xc - dw, yn); x.closePath(); x.fill();
+      if (lab.has(y.y)) { x.fillStyle = PC.muted; x.textAlign = 'center'; x.fillText(String(y.y), xc, P.y + P.h - 2); }
+    });
+    x.textAlign = 'left';
+    label(x, cumM ? `average year: rises ${sp(S.rise)} · falls ${sp(S.fall)} · net ${sgn(100 * (S.rise + S.fall), 1, ' pts')}` : `average year: drop ${sp(-S.drop)} · rebound ${sp(S.reb)} · deepest ${sp(-S.deep.drop)} (${S.deep.y})`, P.x + P.w, P.y + 10, PC.ink2, pngFont(13, 650), 'right');
+  }
+
   /* ---------- a picture to share: the chosen panels in one PNG ---------- */
-  const PANELS = [['now', 'Now'], ['paths', 'Each case'], ['analog', 'Similar stretches'], ['sim', 'Simulation'], ['1', 'Next day'], ['5', '1 week'], ['10', '2 weeks'], ['21', '1 month'], ['63', '1 quarter'], ['back', 'Climb back'], ['high', 'New high'], ['vol', 'Volatility']];
-  const canDraw = (R, k) => ((k !== 'back' && k !== 'high') || !!R.rec) && (k !== 'vol' || !R.volIdx)
+  const PANELS = [['now', 'Now'], ['paths', 'Each case'], ['analog', 'Similar stretches'], ['sim', 'Simulation'], ['1', 'Next day'], ['5', '1 week'], ['10', '2 weeks'], ['21', '1 month'], ['63', '1 quarter'], ['back', 'Climb back'], ['high', 'New high'], ['vol', 'Volatility'], ['swing', 'Drops & rebounds']];
+  const canDraw = (R, k) => ((k !== 'back' && k !== 'high') || !!R.rec) && ((k !== 'vol' && k !== 'swing') || !R.volIdx)
     && (k !== 'analog' || !!(R.an && !R.an.error && R.an.items.length)) && (k !== 'sim' || !!(R.an && R.an.sim));
   const PC = { bg: '#fcfcfb', card: '#ffffff', ink: '#1d1d1b', ink2: '#3d3c39', muted: '#6b6a66', line: '#e3e1dc', up: '#17734a', down: '#c0392b', band: '#2a78d6', warn: '#d9822b', calm: '#5b7fa6', grey: '#9a9893' };
   // a Gaussian kernel density of sorted values over n points from lo to hi (Silverman's bandwidth); with weights wts
@@ -1512,6 +1640,7 @@
         else if (k === 'sim') drawSim(x, box, R, o, doc);
         else if (k === 'back' || k === 'high') drawRecovery(x, box, R, o, k, doc);
         else if (k === 'vol') drawVol(x, box, R, o, doc);
+        else if (k === 'swing') drawSwing(x, box, R, o, doc);
         else drawHorizon(x, box, R, o, +k, o.set === 'ext' ? 'ext' : 'sim');
       });
       y += ph + G;
@@ -1549,6 +1678,7 @@
     h += analogSection(R, st, doc);
     h += recoverySection(R, st, doc);
     h += volSection(R, st, doc);
+    h += swingSection(R, st, doc);
     h += `<h3>When ${st.measure === 'level' ? 'levels' : st.measure === 'rv' ? 'volatility' : 'moves'} like this happened</h3><p class="mv-sub">Every ${esc(what(st))} over time; the coloured dots are the days like this one (larger) and the days at least as ${R.side > 0 ? 'high' : 'low'}. Big moves come in clusters, in volatile years.</p>${timeSvg(R, st)}`;
     h += `<details class="mv-apx"><summary>How this is worked out</summary>`
       + `<p><b>The move.</b> The close-to-close change over one day, a week (5 trading days) or a month (21), on prices adjusted for dividends and splits (the indices: price only). Measured against its own volatility, it is divided by the standard deviation of the 63 daily returns before the move began (scaled to its length), so a 3% day counts for more in a calm stretch than in a wild one. Beyond the market, it is the move less beta times the S&P 500's move over the same days, beta from the year of daily returns before it.</p>`
@@ -1557,6 +1687,7 @@
       + `<p><b>Similar stretches.</b> The path of log closes over the last 1, 3 or 6 months or year is set against every stretch as long in the asset's history that ended, with the months after it, before that one began: the gap is the root mean square distance between the two paths from their first day (size and shape), or between the two paths each less its mean over its spread (shape only, so a calm year can match a wild one). The closest, no two overlapping, are the stretches like it; "r" is the correlation of the two paths. What to expect is their average path after (weighted when older days count less), against every stretch's.</p>`
       + `<p><b>The simulation.</b> ${num(SIMS)} paths over the months ahead, each built a week (five trading days in a row) at a time: for each week, one of the stretches like it is drawn at random (by weight, when older days count less) and then any week of the months after it. Their weeks are mixed into many more paths than the few analogs alone, and an odd week (a crash in one of them) spreads over every day ahead rather than falling on the day it came. The bands are the 25–75% and 5–95% of the paths at each day; a past day is simulated only from the stretches before it, and what happened is drawn in orange. Seeded, so the same day gives the same paths.</p>`
       + `<p><b>How long it took.</b> From each chosen day, the trading days until the close was back at the close before the move (for a rise: back down to it), and until it was back at the highest close on file up to that day. Days still waiting on the last day on file count for as long as they were watched (the Kaplan–Meier estimate), so recent days do not look like failures; "not back on file" counts them.</p>`
+      + `<p><b>Drops and rebounds.</b> Within each calendar year: the deepest fall from the highest close so far (the last close of the year before counts) to a low, and the rebound from that low to the highest close after it, still in the year; or, for all of it, every move of a day, a week or a month (as the Move above, in steps from the year's first close) added up, the rises and the falls apart. Percent changes of closes adjusted for dividends and splits (the indices: price only); averages over the full years only.</p>`
       + `<p><b>Older days counting less.</b> Markets change, so the recent past may say more. With a half-life of 5 years, a day 5 years from the one looked at counts half as much, 10 years a quarter, 20 years a sixteenth. Every number is then weighted: the percentile (the share of weight below the move), the days like it (within the band of weighted percentiles), the medians, shares and ranges of what followed, how long it took (a weighted Kaplan–Meier) and the volatility after. "Worth ≈" is how many days of full weight the weights add up to, (Σw)² / Σw²: the fewer, the noisier. The dashed lines and "unweighted" figures count every day the same.</p>`
       + `<p><b>Limits.</b> Each company's and ETF's daily history from its first trading day on file (1962 for the oldest), the S&P 500 index from 1928. Industry composites are equal-weighted and hold today's companies only, which flatters their past. History rhymes rather than repeats; this describes what followed, it does not forecast. Not investment advice.</p></details>`;
     return h;
@@ -1578,7 +1709,7 @@
       return;
     }
     const st = Object.assign({ key: home, bw: 'auto', bwn: 'auto', w: 1, measure: homeDoc.kind === 'volatility' ? 'level' : 'raw', mode: 'latest', date: '', whatif: '', band: 2.5, before: false,
-      h: 21, set: 'sim', rk: 'back', outcome: 'spx', vreg: 'any', hl: 0, alen: 63, afwd: 63, ak: 10, amatch: 'size', png: ['now', 'paths', '5', '21', '63', 'back'] }, opts.state || {});
+      h: 21, set: 'sim', rk: 'back', outcome: 'spx', vreg: 'any', hl: 0, alen: 63, afwd: 63, ak: 10, amatch: 'size', sw: 'once', png: ['now', 'paths', '5', '21', '63', 'back'] }, opts.state || {});
     const egOf = (m) => (m === 'vol' ? -3 : m === 'level' ? 30 : m === 'rv' ? 60 : -5);
     const docs = { [home]: homeDoc }, dec = {};
     const assets = [[home, homeDoc.kind === 'stock' ? homeDoc.ticker || home : homeDoc.name, homeDoc.kind === 'stock' ? 'this company' : homeDoc.kind]];
@@ -1661,7 +1792,7 @@
     await draw();
   }
 
-  const api = { bars, stepChoices, render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf,
+  const api = { bars, stepChoices, render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf, swingYears, swingAvg, swingSection, drawSwing,
     eventSplit, eventBlock, eventGroup };
   if (typeof window !== 'undefined') window.MovesView = api;
   if (typeof module !== 'undefined') module.exports = api;

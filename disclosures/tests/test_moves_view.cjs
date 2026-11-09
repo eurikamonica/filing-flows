@@ -138,7 +138,7 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   const vals = Float64Array.from({ length: 2000 }, () => normal()).sort();
   const D = V.kde(vals, -6, 6, 241);
   near(D.ys.reduce((a, y) => a + y, 0) * (12 / 240), 1, 'the density integrates to one', 0.01);
-  ok(V.PANELS.map((p) => p[0]).join() === 'now,paths,analog,sim,1,5,10,21,63,back,high,vol', 'the panels a picture can hold');
+  ok(V.PANELS.map((p) => p[0]).join() === 'now,paths,analog,sim,1,5,10,21,63,back,high,vol,swing', 'the panels a picture can hold');
   // each case and the expected path after it: one line per chosen day, the mean of the cases at each day after
   const cs = V.cases(R, { w: 1, band: 5 }, 'sim');
   let nSim = 0; for (let j = 0; j < R.sim.length; j++) if (R.sim[j]) nSim++;
@@ -388,5 +388,60 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   ok(c.length && c.length <= 6 && c.every((s) => 20 / s >= 10 && 20 / s <= 200), 'offered widths give 10–200 bars');
   ok(c.includes(1) && c.includes(0.5), 'round widths on a ±10% range');
   ok(V.stepChoices(5, 5).length === 0, 'no range: nothing offered');
+}
+{ // drops and rebounds, year by year: each year's deepest drop from its high so far (the year before's last close counts)
+  // and the rebound after it; every w-day move of the year added up; a year on file in part is left out of the average
+  const px = [['2023-12-28', 100], ['2023-12-29', 102], ['2024-01-02', 110], ['2024-01-03', 88], ['2024-01-04', 99], ['2024-06-03', 121],
+    ['2024-07-01', 100], ['2024-12-31', 105], ['2025-01-02', 84], ['2025-03-03', 63], ['2025-06-30', 70]];
+  const d = { key: 'X', ticker: 'X', name: 'X CORP', kind: 'stock', dates: px.map((p) => p[0]), r: px.slice(1).map((p, i) => Math.round(1e4 * Math.log(p[1] / px[i][1]))), links: {} };
+  const A = V.decode(d), D = A.days, at = (e) => D.indexOf(e), tol = 3e-4;
+  const Y = V.swingYears(A, 1);
+  ok(Y.map((y) => y.y).join() === '2023,2024,2025', 'one row per calendar year');
+  const [y3, y4, y5] = Y;
+  ok(y3.part && y3.trough == null && y3.drop === 0 && y3.reb === 0, 'the first year on file: in part, never below its high');
+  near(y3.rise, 0.02, 'its one rising day', tol); ok(y3.up === 1 && y3.down === 0, 'counted');
+  ok(!y4.part, '2024 a full year');
+  near(y4.drop, 0.2, '2024: 110 → 88 is the deepest drop', tol);
+  ok(y4.peak === at('2024-01-02') && y4.trough === at('2024-01-03'), 'from its high on Jan 2 to its low on Jan 3');
+  near(y4.reb, 121 / 88 - 1, 'the rebound to the highest close after the low (121), past the old high', tol);
+  ok(y4.rebAt === at('2024-06-03'), 'on Jun 3');
+  near(y4.ret, 105 / 102 - 1, "the year's change from the year before's last close", tol);
+  near(y4.rise, (110 / 102 - 1) + (99 / 88 - 1) + (121 / 99 - 1) + (105 / 100 - 1), 'rising days added up (not compounded)', tol);
+  near(y4.fall, (88 / 110 - 1) + (100 / 121 - 1), 'falling days added up', tol);
+  ok(y4.up === 4 && y4.down === 2, 'four rising days, two falling');
+  ok(y5.part, '2025 has not ended: in part');
+  near(y5.drop, 0.4, "2025: from the year before's last close (105) to 63", tol);
+  ok(y5.peak === at('2024-12-31') && y5.trough === at('2025-03-03'), "the high is the year before's last close");
+  near(y5.reb, 70 / 63 - 1, 'a deeper drop starts the rebound again', tol);
+  const W = V.swingYears(A, 5)[1];                       // 2024 in steps of 5 trading days from Dec 29: 102 → 100, then 100 → 105
+  near(W.rise, 0.05, 'weekly steps: the rise', tol); near(W.fall, 100 / 102 - 1, 'weekly steps: the fall', tol); ok(W.up === 1 && W.down === 1, 'two steps');
+  const S = V.swingAvg(Y);
+  ok(S.n === 1 && S.full === 1 && S.deep.y === 2024 && S.y0 === 2024 && S.y1 === 2024, 'the average: the full years only');
+  near(S.drop, 0.2, 'average drop', tol); near(S.reb, 121 / 88 - 1, 'average rebound', tol);
+  // the section on a page: the headline, the measure pills, the chart, every year, the video link
+  const R = { A, t: D.length - 1 }, o = { w: 1, measure: 'raw', mode: 'latest', sw: 'once' };
+  const h = V.swingSection(R, o, d);
+  ok(/Drops and rebounds, year by year/.test(h) && /deepest drop was <b class="mv-down">−20\.0%<\/b> and the rebound after it <b class="mv-up">\+37\.5%<\/b>/.test(h), 'the headline: the average year');
+  ok(/2025 so far: <b class="mv-down">−40\.0%<\/b> \(Dec 31, 2024 → Mar 3, 2025\), then <b class="mv-up">\+11\.1%<\/b>/.test(h), 'this year so far, with its days');
+  ok(/data-mv="sw" data-v="once"/.test(h) && /data-mv="sw" data-v="cum"/.test(h) && /mv-pill on" data-mv="sw" data-v="once"/.test(h), 'the two measures, one swing chosen');
+  ok((h.match(/<rect /g) || []).length === 6 && /<title>2024 · drop −20\.0% \(Jan 2, 2024 → Jan 3, 2024\) · rebound \+37\.5% \(to Jun 3, 2024\) · year \+[23]\.\d%<\/title>/.test(h), 'two bars a year, a tooltip with the days');
+  ok((h.match(/<tr><td>20\d\d/g) || []).length === 3 && /<td>2025\*<\/td>/.test(h) && /Average of 1<\/td>/.test(h), 'every year in the table, the part years starred');
+  ok(/href="#studio\/k=swing&amp;t=X&amp;vm=once"/.test(h), 'the same as a video in the studio');
+  const hc = V.swingSection(R, Object.assign({}, o, { sw: 'cum' }), d);
+  ok(/rising days added up to <b class="mv-up">\+47\.6%<\/b> and its falling days to <b class="mv-down">−37\.4%<\/b>/.test(hc), 'all of it: rises and falls added up');
+  ok(/mv-pill on" data-mv="sw" data-v="cum"/.test(hc) && /vm=cum/.test(hc), 'the measure carried to the video');
+  ok(/rising weeks/.test(V.swingSection(R, Object.assign({}, o, { sw: 'cum', w: 5 }), d)), 'a week as the Move chooses');
+  ok(/<title>2025 \(in part\) · rises \+11\.1% \(1 day\) · falls −45\.0% \(2 days\) · net −33\.9 pts · year −33\.3%<\/title>/.test(hc), 'the tooltip of a year in part: one day, two days');
+  ok(!/#studio/.test(V.swingSection(R, o, Object.assign({}, d, { kind: 'industry', ticker: null }))), 'no video of an industry composite');
+  ok(V.swingSection(Object.assign({}, R, { volIdx: true }), o, d) === '' && V.swingSection({ error: 'x' }, o, d) === '', 'not for a volatility index or an error');
+  ok(V.PANELS.some(([k]) => k === 'swing') && V.canDraw(R, 'swing') && !V.canDraw({ volIdx: true }, 'swing'), 'a panel of the picture');
+  // drawn on a canvas: a stand-in context records the calls
+  const calls = [];
+  const ctx = new Proxy({}, { get: (t, k) => (k in t ? t[k] : typeof k === 'string' && /^(fill|stroke|measure|move|line|arc|begin|close|rect|save|restore|set|clip|scale|translate)/.test(k)
+    ? (...a) => { calls.push([k, a]); return k === 'measureText' ? { width: String(a[0]).length * 7 } : undefined; } : undefined), set: (t, k, v) => { t[k] = v; return true; } });
+  V.drawSwing(ctx, { x: 0, y: 0, w: 560, h: 300 }, R, o, d);
+  const texts = calls.filter(([k]) => k === 'fillText').map(([, a]) => String(a[0]));
+  ok(texts.includes('Each year’s deepest drop, then the rebound') && texts.some((t) => /average year: drop −20\.0% · rebound \+37\.5% · deepest −20\.0% \(2024\)/.test(t)), 'the picture panel: title and the average year');
+  ok(calls.filter(([k]) => k === 'fillRect').length === 6, 'two bars a year in the picture');
 }
 console.log(`moves view: ${n} checks passed`);

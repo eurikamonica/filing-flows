@@ -36,6 +36,24 @@ def test_intro_takes_item1_paragraphs():
     assert "last Saturday of September" in it
 
 
+def test_intro_ignores_item1_running_page_headers():
+    # Aflac / Edward Jones 10-Ks repeat "Item 1. Business" (or "..., continued") at the top of every page; the last
+    # of those used to be taken as the start, so the "own words" quote was the executive officers table footnote
+    filler = "Further detail on the business segments, products and distribution channels of the company over the year."
+    page = "<p><b>Item 1. Business</b></p><p>" + filler + "</p>"
+    doc = ("<html><body><div>Table of Contents</div><div>Item 1. Business</div><div>Item 1A. Risk Factors</div>"
+           "<p><b>Item 1. Business</b></p><p><b>ITEM 1. BUSINESS</b></p><p><b>OVERVIEW</b></p>"
+           "<p>Example Holdings was incorporated in 1973 and provides supplemental insurance to millions of "
+           "policyholders in Japan and the United States through its subsidiaries.</p>" + page * 4 +
+           "<p><b>Item 1. Business</b></p><p>(1) Unless specifically noted, the respective executive officer has held "
+           "the occupation set forth in the table for at least the last five years and serves until a successor.</p>"
+           "<p><b>Item 1A. Risk Factors</b></p><p>Risks.</p></body></html>")
+    assert text.intro(doc).startswith("Example Holdings was incorporated")
+    cont = doc.replace("<p><b>Item 1. Business</b></p><p>", "<p><b>Item 1. Business, continued</b></p><p>")
+    cont = cont.replace("ITEM 1. BUSINESS", "Item 1. Business")
+    assert text.intro(cont).startswith("Example Holdings was incorporated")
+
+
 def test_notes_match_heading_exactly():
     md = text.mdna(DOC)
     n = text.match_notes(md, ["Widgets"])
@@ -1038,6 +1056,46 @@ def test_owner_lane_starts_what_the_owner_waits_for(monkeypatch):
     OL._yield.update(at=None, answer=False)
 
 
+def test_the_owner_lane_keeps_the_intraday_relay_going(monkeypatch):
+    """Weekdays from 9:10 to 4 pm New York the watch relay starts intraday.yml when no run of it is running or waiting
+    and none started in the last 15 minutes; it looks at most every two minutes; INTRADAY_RELAY=off stops it."""
+    import datetime as dt
+    from pipeline import owner_lane as OL
+
+    class GH:
+        def __init__(self, runs):
+            self.r, self.started, self.looks = runs, [], 0
+
+        def runs(self, wf, n=20):
+            self.looks += 1
+            return self.r
+
+        def start(self, wf, inputs):
+            self.started.append((wf, inputs))
+
+    monkeypatch.delenv("INTRADAY_RELAY", raising=False)
+    ny = lambda d, h, m: dt.datetime(2026, 11, d, h + 5, m, tzinfo=dt.timezone.utc)      # November: New York is UTC-5
+    assert [OL.intraday_window(ny(6, 9, 9)), OL.intraday_window(ny(6, 9, 10)), OL.intraday_window(ny(6, 15, 59)),
+            OL.intraday_window(ny(6, 16, 0)), OL.intraday_window(ny(7, 11, 0))] == [False, True, True, False, False]   # the 7th: Saturday
+    done = {"id": 1, "status": "completed", "created_at": "2026-11-06T13:00:00Z"}
+    gh, st = GH([done]), {}
+    now = ny(6, 9, 12)
+    assert OL.wake_intraday(gh, now, state=st, log=lambda *a: None)
+    assert gh.started == [("intraday.yml", {"hop": "0"})]
+    assert not OL.wake_intraday(gh, now + dt.timedelta(seconds=60), state=st, log=lambda *a: None) and gh.looks == 1   # every 2 minutes
+    busy = GH([{"id": 2, "status": "in_progress", "created_at": "2026-11-06T14:12:00Z"}, done])
+    assert not OL.wake_intraday(busy, ny(6, 10, 0), state={}, log=lambda *a: None) and busy.started == []
+    queued = GH([{"id": 3, "status": "pending", "created_at": "2026-11-06T14:55:00Z"}])
+    assert not OL.wake_intraday(queued, ny(6, 10, 0), state={}, log=lambda *a: None)
+    recent = GH([{"id": 4, "status": "completed", "created_at": "2026-11-06T14:50:00Z"}])      # 9:50: found no session, say
+    assert not OL.wake_intraday(recent, ny(6, 10, 0), state={}, log=lambda *a: None)
+    assert OL.wake_intraday(recent, ny(6, 10, 6), state={}, log=lambda *a: None)              # 16 minutes on: again
+    night = GH([done])
+    assert not OL.wake_intraday(night, ny(6, 17, 0), state={}, log=lambda *a: None) and night.looks == 0
+    monkeypatch.setenv("INTRADAY_RELAY", "off")
+    assert not OL.wake_intraday(GH([done]), ny(6, 11, 0), state={}, log=lambda *a: None)
+
+
 def test_owner_reports_go_first_and_are_never_held_back(tmp_path):
     """At the daily e-mail limit the owner's report still goes out, ahead of a reader who asked earlier."""
     import datetime as dt
@@ -1702,6 +1760,13 @@ def test_company_reported_free_cash_flow():
                                                             {"key": "p", "label": "Proceeds from government incentives", "v": 336e6}]}}
     parts = reported.netted(mu["cur"])
     assert len(parts) == 1 and parts[0]["amount"] == 10774e6 and parts[0]["netted"] == 336e6
+    assert parts[0]["label"] == "Expenditures for PP&E, net"
+    # Mettler-Toledo: its capex line already ends in ", net"; netting an add-back must not make it "…, net, net"
+    mtd = {"ocf": 236366e3, "fcf": 228972e3, "parts": [
+        {"key": "r", "label": "Payments in respect of restructuring activities", "v": 16483e3},
+        {"key": "e", "label": "Purchase of property, plant and equipment, net", "v": -23877e3}]}
+    parts = reported.netted(mtd)
+    assert parts[0]["label"] == "Purchase of property, plant and equipment, net" and parts[0]["amount"] == 7394e3
     # names: principal payments are not capex; '(non-GAAP)' is not part of the name; another layout (five columns,
     # newest last, in thousands) is anchored by its operating cash flow
     nv = [{"label": "Purchases related to property and equipment and intangible assets"},
@@ -2399,6 +2464,107 @@ def test_reformulated_balance_sheet_balances_and_names_what_is_untagged():
         noa, nfo = side("a", "op") - side("l", "op"), side("l", "fin") - side("a", "fin")
         assert noa - nfo == r["totals"]["cse"][i] + r["totals"]["nci"][i]
     assert r["flows"][0]["int_exp"] == 2 and r["suggest"] is None
+    assert "cur" not in line["cash"] and line["oth_a"]["derived"] == "assets"   # no current totals: one rest per side
+
+
+def test_reformulated_balance_sheet_splits_the_rest_by_section():
+    """With current assets and current liabilities tagged at every year end, what the lines leave is split into a
+    current and a non-current line; a lease line has its current part in "cv"; leases that the filing keeps inside
+    other non-current liabilities make that section's rest negative; a bank's tag (deposits) on a classified balance
+    sheet is a detail from the notes and is not read; NOA − NFO = equity still holds."""
+    from pipeline import facts as F, quality as Q
+    b = lambda v0, v1: [(None, "2024-12-31", v0), (None, "2025-12-31", v1)]
+    fy = lambda v0, v1: [("2024-01-01", "2024-12-31", v0), ("2025-01-01", "2025-12-31", v1)]
+    fx = F.index_facts(_cf({
+        "NetIncomeLoss": fy(8, 10), "Revenues": fy(90, 100), "OperatingIncomeLoss": fy(12, 14),
+        "Assets": b(180, 200), "AssetsCurrent": b(60, 80), "CashAndCashEquivalentsAtCarryingValue": b(20, 30),
+        "AccountsReceivableNetCurrent": b(30, 40), "PropertyPlantAndEquipmentNet": b(100, 110),
+        "LiabilitiesAndStockholdersEquity": b(180, 200), "LiabilitiesCurrent": b(40, 45), "AccountsPayableCurrent": b(30, 35),
+        "OperatingLeaseLiabilityCurrent": b(2, 2), "OperatingLeaseLiabilityNoncurrent": b(10, 10),
+        "LongTermDebtNoncurrent": b(50, 50), "OtherLiabilitiesNoncurrent": b(25, 30), "Deposits": b(5, 5),
+        "StockholdersEquity": b(75, 85),
+    }))
+    r = Q.compute(fx)["reform"]
+    line = {x["k"]: x for x in r["lines"]}
+    assert r["totals"]["ca"] == [60, 80] and r["totals"]["cl"] == [40, 45] and r["totals"]["liab"] == [105, 115]
+    assert "oth_a" not in line and "deposits" not in line
+    assert line["oth_ca"]["v"] == [10, 10] and line["oth_ca"]["cur"] == 1 and line["oth_ca"]["derived"] == "ca"
+    assert line["oth_nca"]["v"] == [20, 10] and line["oth_nca"]["cur"] == 0
+    assert line["olease"]["v"] == [12, 12] and line["olease"]["cv"] == [2, 2] and line["olease"]["cur"] == 0
+    assert line["cash"]["cur"] == 1 and line["ppe"]["cur"] == 0 and "cv" not in line["ltd"]
+    assert line["oth_cl"]["v"] == [40 - 30 - 2, 45 - 35 - 2]                          # 8: current, not tagged
+    assert line["oth_ncl"]["v"] == [65 - 50 - 10 - 25, 70 - 50 - 10 - 30] == [-20, -20]  # leases counted twice
+    for i in range(2):
+        side = lambda s, c: sum(x["v"][i] or 0 for x in r["lines"] if x["side"] == s and x["cls"] == c)
+        assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i]
+
+
+def test_reformulated_balance_sheet_reads_ifrs():
+    """An IFRS balance sheet (ifrs-full: a 20-F, a European annual report) reads into the same lines: the facts index
+    keeps its balances, borrowings and IFRS 16 lease liabilities are financing (the lease's current part in "cv"),
+    provisions operating, equity attributable to owners is shareholders' equity, and the rests by section add up."""
+    from pipeline import facts as F, quality as Q
+    b = lambda v0, v1: [{"end": "2024-12-31", "val": v0, "filed": "2025-03-01", "form": "20-F"},
+                        {"end": "2025-12-31", "val": v1, "filed": "2026-03-01", "form": "20-F"}]
+    fy = lambda v0, v1: [{"start": "2024-01-01", "end": "2024-12-31", "val": v0, "filed": "2025-03-01", "form": "20-F"},
+                         {"start": "2025-01-01", "end": "2025-12-31", "val": v1, "filed": "2026-03-01", "form": "20-F"}]
+    ifrs = {"Revenue": fy(90, 100), "ProfitLossAttributableToOwnersOfParent": fy(8, 10), "ProfitLoss": fy(9, 11),
+            "Assets": b(180, 200), "CurrentAssets": b(60, 80), "CashAndCashEquivalents": b(20, 30), "Inventories": b(25, 30),
+            "TradeAndOtherCurrentReceivables": b(10, 12), "PropertyPlantAndEquipment": b(70, 75), "RightofuseAssets": b(10, 9),
+            "Goodwill": b(30, 30), "EquityAndLiabilities": b(180, 200), "Liabilities": b(105, 112), "CurrentLiabilities": b(40, 45),
+            "TradeAndOtherCurrentPayables": b(20, 22), "CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings": b(8, 9),
+            "CurrentPortionOfLongtermBorrowings": b(3, 3), "CurrentLeaseLiabilities": b(2, 2), "NoncurrentLeaseLiabilities": b(8, 7),
+            "CurrentProvisions": b(4, 5), "NoncurrentProvisions": b(6, 6), "LongtermBorrowings": b(40, 40),
+            "EquityAttributableToOwnersOfParent": b(70, 82), "NoncontrollingInterests": b(5, 6), "Equity": b(75, 88)}
+    fx = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in ifrs.items()}}}, currency="EUR")
+    assert fx["__instants__"]["CurrentAssets"]["2025-12-31"]["val"] == 80          # IFRS balances are indexed
+    r = Q.compute(fx)["reform"]
+    line = {x["k"]: x for x in r["lines"]}
+    assert r["totals"]["cse"] == [70, 82] and r["totals"]["nci"] == [5, 6] and r["totals"]["ca"] == [60, 80]
+    assert line["cash"]["v"] == [20, 30] and line["inv"]["v"] == [25, 30] and line["ar"]["v"] == [10, 12]
+    assert line["std"]["v"] == [8, 9] and "ltdc" not in line                       # all current borrowings in one line
+    assert line["ltd"]["v"] == [40, 40] and line["ltd"]["cls"] == "fin"
+    assert line["lease"]["v"] == [10, 9] and line["lease"]["cv"] == [2, 2] and line["lease"]["cls"] == "fin"
+    assert line["prov"]["v"] == [10, 11] and line["prov"]["cv"] == [4, 5] and line["prov"]["cls"] == "op"
+    assert line["oth_ca"]["v"] == [60 - 55, 80 - 72]                               # current assets the lines leave
+    assert line["oth_ncl"]["v"] == [65 - 40 - 8 - 6, 67 - 40 - 7 - 6]
+    for i in range(2):
+        side = lambda s, c: sum(x["v"][i] or 0 for x in r["lines"] if x["side"] == s and x["cls"] == c)
+        assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i] + r["totals"]["nci"][i]
+    # the same current borrowings tagged twice (ShorttermBorrowings and CurrentPortionOfLongtermBorrowings, equal at
+    # every year end, Novo Nordisk's 20-F): one line, and the current rest is not short by it
+    twice = dict(ifrs)
+    del twice["CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"]
+    twice["ShorttermBorrowings"] = b(3, 3)
+    fx2 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
+    l2 = {x["k"]: x for x in Q.compute(fx2)["reform"]["lines"]}
+    assert l2["std"]["v"] == [3, 3] and "ltdc" not in l2
+    assert l2["oth_cl"]["v"] == [40 - 20 - 3 - 2 - 4, 45 - 22 - 3 - 2 - 5]
+    twice["ShorttermBorrowings"] = b(3, 4)                                       # different amounts: both lines
+    fx3 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
+    assert {"std", "ltdc"} <= {x["k"] for x in Q.compute(fx3)["reform"]["lines"]}
+    # PP&E tagged with the leased (right-of-use) assets inside it: no right-of-use line beside it
+    rou = dict(ifrs)
+    del rou["PropertyPlantAndEquipment"]
+    rou["PropertyPlantAndEquipmentIncludingRightofuseAssets"] = b(80, 84)
+    fx4 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in rou.items()}}}, currency="EUR")
+    l4 = {x["k"]: x for x in Q.compute(fx4)["reform"]["lines"]}
+    assert l4["ppe"]["v"] == [80, 84] and "rou" not in l4
+
+
+def test_foreign_filer_years_drawn_when_no_quarter_can_be():
+    """A foreign filer whose results releases gave no drawable quarter keeps its page: its 20-F years are its periods."""
+    from pipeline import build
+    c = {"profile": {"cik": 1, "name": "Euro Co", "tickers": ["EU"], "fye": "1231"}, "fpi": True, "currency": "EUR",
+         "years": {"2025-12-31": {"end": "2025-12-31"}, "2024-12-31": {"end": "2024-12-31"}}}
+    orig = build.year_payload
+    try:
+        build.year_payload = lambda c, y: {"end": y["end"], "label": "FY" + y["end"][:4], "period": "fy"}
+        out = build._year_periods(c, 1)
+    finally:
+        build.year_payload = orig
+    assert [p["label"] for p in out] == ["FY2024", "FY2025"]                    # oldest first, like quarters
+    assert "_N" not in out[0]
 
 
 def test_links_off_leaves_text_and_images_only():
@@ -3477,6 +3643,32 @@ def test_a_slipped_scale_loses_to_the_other_versions_of_the_figure():
     assert facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")["ni"] == 4.171e6
 
 
+def test_a_minority_interest_tagged_as_net_income_itself_is_dropped():
+    """Univest's Q2 2026 10-Q tags NetIncomeLossAttributableToNoncontrollingInterest with net income itself ($22.953M)
+    and no ProfitLoss; pre-tax $28.558M less $5.605M of tax is net income alone. Kept, the chart showed a $22.953M
+    minority interest, $45.9M "including minority interests" and pre-tax rebuilt as $51.5M (facts.odd_one_out)."""
+    from pipeline import facts, model
+    own = "0000102212-26-000037"
+    mk = lambda s, e, v: {"start": s, "end": e, "val": v, "filed": "2026-08-07", "form": "10-Q", "accn": own}
+    pre = "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+    g = {"Revenues": [mk("2026-04-01", "2026-06-30", 84.354e6)],
+         "NetIncomeLoss": [mk("2026-04-01", "2026-06-30", 22.953e6)],
+         "NetIncomeLossAttributableToNoncontrollingInterest": [mk("2026-04-01", "2026-06-30", 22.953e6)],
+         pre: [mk("2026-04-01", "2026-06-30", 28.558e6)],
+         "IncomeTaxExpenseBenefit": [mk("2026-04-01", "2026-06-30", 5.605e6)]}
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    r = facts.extract(facts.index_facts(raw, accn=own), "2026-06-30")
+    assert r["ni"] == 22.953e6 and r["nci"] is None and r["pretax"] == 28.558e6
+    N = model.normalize(r)
+    assert N["pl"] == 22.953e6 and N["nci"] == 0 and N["pretax"] == 28.558e6
+    # a real minority interest (pre-tax less tax is net income plus it) is kept
+    g["NetIncomeLossAttributableToNoncontrollingInterest"] = [mk("2026-04-01", "2026-06-30", 2e6)]
+    g[pre] = [mk("2026-04-01", "2026-06-30", 30.558e6)]
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    r = facts.extract(facts.index_facts(raw, accn=own), "2026-06-30")
+    assert r["nci"] == 2e6 and model.normalize(r)["pl"] == 24.953e6
+
+
 def test_fourth_quarter_kept_when_the_quarters_do_not_add_up_to_nine_months():
     """Smith Midland's FY2025 capex: $9.338M for the year, $5.382M for nine months, so $3.956M in the fourth quarter.
     The three quarters derived through the Q2 10-Q's slipped six-month figure ($5 thousand) add up to $7.9M: not
@@ -3569,3 +3761,67 @@ def test_a_segment_aggregation_member_is_no_revenue_line():
     members["cvx:UpstreamMember"] = ("Upstream", 40.0); members["cvx:DownstreamMember"] = ("Downstream", 27.174)
     part = dims.best_partition(members, 68.174)
     assert sorted(l["label"] for l in part["leaves"]) == ["All Other", "Downstream", "Upstream"]
+
+
+def test_non_operating_share_needs_pre_tax_earnings():
+    """Arcus Biosciences Q2 2025, Creatd FY2021: non-operating income exactly offset the operating loss, so pre-tax
+    earnings were 0 and the analysis divided by zero (the quarter's page was not drawn). A share of a loss says nothing."""
+    from pipeline import model, analysis
+
+    class F:
+        money = staticmethod(lambda x: f"${x / 1e6:.1f}M")
+        delta = staticmethod(lambda x: f"{x / 1e6:+.1f}M")
+    for pretax, nonop in ((0.0, 50e6), (-20e6, 30e6)):
+        raw = {"revenue": 100e6, "costs_total": 100e6 - pretax + nonop, "oi": pretax - nonop, "pretax": pretax, "tax": 0.0,
+               "pl": pretax, "ni": pretax, "ocf": None}
+        text = analysis.paragraphs(F(), "Q2 2025", model.normalize(raw), None, None)[1]
+        assert f"Non-operating items added ${nonop / 1e6:.1f}M, so the bottom line" in text and "of pre-tax" not in text
+    raw = {"revenue": 100e6, "costs_total": 90e6, "oi": 10e6, "pretax": 40e6, "tax": 0.0, "pl": 40e6, "ni": 40e6}
+    text = analysis.paragraphs(F(), "Q2 2025", model.normalize(raw), None, None)[1]
+    assert "Non-operating items added $30.0M, 75% of pre-tax earnings, so the bottom line" in text
+
+
+def test_a_profit_loss_tag_mirroring_net_income_is_dropped():
+    """Riot Platforms' 2025 10-Qs tag ProfitLoss with the sign flipped (-$219.774M beside $219.454M of net income in
+    Q2 2025) and no pre-tax earnings or tax. Kept, the chart needed a -$439M minority interest and Q2 2025 failed
+    the flow check, so the quarter was not drawn (facts.odd_one_out)."""
+    from pipeline import facts, model
+    own = "0001167419-25-000099"
+    mk = lambda v: [{"start": "2025-04-01", "end": "2025-06-30", "val": v, "filed": "2025-07-31", "form": "10-Q",
+                     "accn": own}]
+    g = {"Revenues": mk(152.988e6), "CostsAndExpenses": mk(-63.158e6), "OperatingIncomeLoss": mk(216.146e6),
+         "NetIncomeLoss": mk(219.454e6), "ProfitLoss": mk(-219.774e6)}
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    r = facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")
+    assert r["ni"] == 219.454e6 and r["pl"] == 219.454e6
+    N = model.normalize(r)
+    assert N["nci"] == 0 and N["pl"] == 219.454e6
+    # a ProfitLoss of the same sign (a real minority interest) is kept, and so is a mirror pre-tax less tax can judge
+    g["ProfitLoss"] = mk(221e6)
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")["pl"] == 221e6
+    r = {"ni": 10.0e6, "pl": -10.0e6, "nci": None, "pretax": -8e6, "tax": 2e6}
+    facts.odd_one_out(r)
+    assert r["pl"] == -10.0e6
+
+
+def test_a_narrower_revenues_tag_is_checked_against_the_cost_lines():
+    """X4 Pharmaceuticals' Q1 2025 10-Q tags $0.9M (one line) as "Revenues" beside $28.8M of contract revenue and no
+    costs or operating-expense subtotal: the cost lines close the statement on $28.8M (facts.cost_lines), so the chart
+    showed $0.9M of revenue under $28.8M of revenue lines."""
+    from pipeline import facts
+    own = "0001628280-25-021358"
+    mk = lambda v: [{"start": "2025-01-01", "end": "2025-03-31", "val": v, "filed": "2025-05-01", "form": "10-Q",
+                     "accn": own}]
+    ago = [{"start": "2024-01-01", "end": "2024-03-31", "val": 0.8e6, "filed": "2024-05-01", "form": "10-Q",
+            "accn": "0001628280-24-000001"}]                      # X4 tagged that line "Revenues" a year earlier too
+    g = {"Revenues": mk(0.9e6) + ago, "RevenueFromContractWithCustomerExcludingAssessedTax": mk(28.807e6),
+         "CostOfRevenue": mk(4.716e6), "ResearchAndDevelopmentExpense": mk(18.513e6),
+         "GeneralAndAdministrativeExpense": mk(15.021e6), "OperatingIncomeLoss": mk(-9.443e6), "NetIncomeLoss": mk(0.282e6)}
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-03-31")["revenue"] == 28.807e6
+    # the "Revenues" figure that the cost lines close on is kept (a total below contract revenue by hedging losses)
+    g["OperatingIncomeLoss"] = mk(0.9e6 - 38.25e6)
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-03-31")["revenue"] == 0.9e6
+    assert facts.cost_lines({"cor": 1.0, "rd": None, "sga": None, "sm": None, "ga": None}.get) is None

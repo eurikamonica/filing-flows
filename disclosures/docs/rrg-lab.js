@@ -806,7 +806,7 @@ function rrglLayer(o,f,sx,sy){
  let s='';const labels=[];
  for(const l of o.lines){
   if(one&&l.e.id!==mode)continue;
-  if(!one&&o.solo&&l.e.id!==o.solo)continue;
+  if(!one&&o.pick&&o.pick.size&&!o.pick.has(l.e.id))continue;
   const c=l.calc;if(!c||c.x[f]==null||c.y[f]==null||!c.c)continue;
   const F=rrglFc(o,l,f,typeof ROT!=='undefined'&&ROT.drag);if(!F)continue;
   const sm=RRGLab.smoothPath(F.steps),at=j=>sm[j-1]?[sx(sm[j-1][0]),sy(sm[j-1][1])]:null;   // step j on the drawn (smoothed) path

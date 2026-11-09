@@ -67,6 +67,9 @@ def engage_more():
 # the page's scripts, in load order (web/index.html): the chart, the valuation maths, the discovery & UX modules, the app
 SCRIPTS = ("nav.js", "sankey.js", "fsa.js", "chains.js", "gamma.js", "model.js", "network.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "studio.js", "editor.js", "eps-research.js", "local-model.js", "app.js")
 STYLES = ("styles.css", "nav.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css")
+# files a page script loads itself rather than through a tag of the page: i18n.js's French and Spanish dictionary
+# (loaded only when one of those languages is picked; left out of the site, French and Spanish stayed English)
+LOADED = ("i18n-dict.js",)
 
 
 def page_assets(html):
@@ -102,7 +105,8 @@ def main():
             scripts = re.findall(r"<script>.*?</script>", html, re.S)
             html = "\n".join(keep) + "\n" + shell + "\n".join(scripts) + "\n"
     else:
-        for name in styles + scripts + ["favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"]:
+        loaded = [n for n in LOADED if os.path.exists(os.path.join(WEB, n))]
+        for name in styles + scripts + loaded + ["favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"]:
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
         # the home page's one address for search engines (the app's #… routes all live on it)
         home = os.environ.get("SITE_URL") and setting("SITE_URL", url=True)

@@ -596,7 +596,8 @@ def event_pages(site, base, L, evs, ES=None):
     for r in evs:
         r['_slug'] = r.get('slug') or event_slug(r, L)
         by_co.setdefault(str(r.get('cik')), []).append(r)
-        k = (str(r.get('cik')), r.get('filed'), subject(r))   # by the words the title shows: "vote" and item 2.01 can both read "acquisition"
+        k = (nm(r.get('company')), r.get('filed'), subject(r))   # by the words the title shows: "vote" and item 2.01 can both read "acquisition",
+        # and two CIKs can carry one name (a company and the successor fund it merged into, the same day)
         same_day[k] = same_day.get(k, 0) + 1
         same_hl[k + (hl_of(r),)] = same_hl.get(k + (hl_of(r),), 0) + 1
         for t in r.get('topics') or ['other']:
@@ -610,7 +611,7 @@ def event_pages(site, base, L, evs, ES=None):
             kind = ITEMS.get(r.get('code')) or (ITEMS.get(its[0]) if its else '8-K')
             topic = TOPIC.get((r.get('topics') or [None])[0], kind)
             title = f"{name}{' (' + tk + ')' if tk else ''} 8-K, {fdate(r.get('filed'))}: {topic.lower() if topic != kind else kind.lower()}"
-            k = (str(r.get('cik')), r.get('filed'), subject(r))
+            k = (nm(r.get('company')), r.get('filed'), subject(r))
             if same_day.get(k, 0) > 1:                   # two filings that day on the same subject: tell them apart
                 hl = hl_of(r)                            # by the headline, or by the filing when the headlines are the same
                 title += f" — {hl}" if hl and same_hl.get(k + (hl,), 0) < 2 else f" (items {', '.join(its) or r.get('code') or ''}, {str(r.get('accession') or '')[-6:]})"

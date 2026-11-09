@@ -153,7 +153,7 @@ def index_facts(companyfacts, currency="USD", accn=None):
                 per = out.setdefault(concept, {})
                 for f in facts:
                     if "start" not in f:
-                        if concept in INSTANTS and taxonomy == "us-gaap":
+                        if concept in INSTANTS:                  # us-gaap, and ifrs-full balances (IFRS filers)
                             day = inst.setdefault(concept, {})
                             if f["end"] not in day or newer(f, day[f["end"]]):
                                 day[f["end"]] = f
@@ -351,7 +351,7 @@ def _total_or_larger(facts, get, c, hit, end=None, annual=False):
     nper = facts.get("NonoperatingIncomeExpense")
     v = lambda k: _pick(facts, k, get)[0]                                                    # noqa: E731
     if closes_better(top[0], hit[0], v("costs_total"), v("oi"), v("pretax"), get(nper) if nper else None,
-                     gp=v("gp"), cor=v("cor"), opex=v("opex_total")):
+                     gp=v("gp"), cor=v("cor"), opex=v("opex_total"), parts=cost_lines(v)):
         return top
     if end and hit[0] < NEW_LINE * top[0] and not _reported_before(facts.get(hit[1]) or {}, end, annual):
         return top
@@ -372,12 +372,27 @@ def _reported_before(per, end, annual=False):
     return any(f.get("accn") not in own for (s, e), f in per.items() if e in ends)
 
 
-def closes_better(top, total, costs, oi=None, pre=None, non=None, gp=None, cor=None, opex=None):
+def cost_lines(v):
+    """Cost of revenue + R&D + SG&A (or selling and G&A apart) when at least two of them are tagged, else None: the
+    costs of a statement that tags no costs or operating-expense subtotal (X4 Pharmaceuticals). `v` reads one key."""
+    sga = v("sga")
+    if sga is None and (v("sm") is not None or v("ga") is not None):
+        sga = (v("sm") or 0) + (v("ga") or 0)
+    got = [x for x in (v("cor"), v("rd"), sga) if x is not None]
+    return sum(got) if len(got) >= 2 else None
+
+
+def closes_better(top, total, costs, oi=None, pre=None, non=None, gp=None, cor=None, opex=None, parts=None):
     """True when the larger revenue figure closes the income statement — revenue − costs and expenses = operating income
     (or with other income = pre-tax earnings), revenue − cost of revenue = gross profit, revenue − operating expenses
-    (and cost of revenue) = operating income — within 2%, and much better than the "Revenues" figure does."""
+    (and cost of revenue) = operating income, revenue − the cost lines (`parts`, cost_lines) = operating income —
+    within 2%, and much better than the "Revenues" figure does. X4 Pharmaceuticals' Q1 2025 "Revenues" ($0.9M, one
+    line) beside $28.8M of contract revenue: $28.8M − $4.7M cost of revenue − $18.5M R&D − $15.0M G&A = the −$9.4M
+    operating loss."""
     def gap(r):
         g = []
+        if parts is not None and oi is not None:
+            g.append(abs(r - parts - oi))
         if costs is not None and oi is not None:
             g.append(abs(r - costs - oi))
         if costs is not None and pre is not None:
@@ -508,18 +523,38 @@ def extract(facts, end, annual=False):
     return bank_revenue(raw, source(facts, "revenue", end, annual))
 
 
+MIRROR = 0.05   # ProfitLoss within this share of minus net income: a flipped sign (Riot Q3 2025: 1.6% apart)
+
+
 def odd_one_out(raw):
     """Net income to shareholders and the consolidated figure (ProfitLoss) should differ by the minority interests'
     share, and pre-tax earnings less tax is the consolidated figure. When the shareholders' figure fits pre-tax less
     tax and ProfitLoss does not (Smith Midland's 2024 10-Qs tag ProfitLoss with the sign flipped), the ProfitLoss tag
-    is the slip: without it the chart would show a minority interest that does not exist."""
-    pretax, tax, ni, pl = (raw.get(k) for k in ("pretax", "tax", "ni", "pl"))
-    if None in (pretax, tax, ni, pl) or raw.get("nci") is not None:
+    is the slip: without it the chart would show a minority interest that does not exist.
+    The same holds the other way round, with no ProfitLoss tag: when the shareholders' figure fits pre-tax less tax and
+    the shareholders' figure plus the minority interests' tag does not (Univest's 2025–2026 10-Qs tag the minority
+    interests' share with net income itself), the minority-interest tag is the slip: kept, the consolidated figure
+    doubles and pre-tax earnings are rebuilt from it.
+    With no pre-tax earnings or tax to tell, a ProfitLoss tag that mirrors the shareholders' figure (opposite sign,
+    the same size) is the slip as well: a minority interest of twice the net result does not exist (Riot Platforms'
+    2025 10-Qs: ProfitLoss -$219.8M beside net income of $219.5M; the Q2 2025 chart was not drawn at all)."""
+    pretax, tax, ni, pl, nci = (raw.get(k) for k in ("pretax", "tax", "ni", "pl", "nci"))
+    if ni is not None and pl is not None and nci is None and (pretax is None or tax is None) \
+            and ni * pl < 0 and abs(ni + pl) <= MIRROR * max(abs(ni), abs(pl)):
+        raw["pl"] = ni
+        return
+    if None in (pretax, tax, ni):
         return
     after_tax = pretax - tax
-    tol = 0.005 * max(abs(after_tax), abs(ni), abs(pl), 1)
-    if abs(after_tax - ni) <= tol < abs(after_tax - pl):
-        raw["pl"] = ni
+    if pl is not None and nci is None:
+        tol = 0.005 * max(abs(after_tax), abs(ni), abs(pl), 1)
+        if abs(after_tax - ni) <= tol < abs(after_tax - pl):
+            raw["pl"] = ni
+    elif pl is None and nci:
+        both = ni + nci
+        tol = 0.005 * max(abs(after_tax), abs(ni), abs(both), 1)
+        if abs(after_tax - ni) <= tol < abs(after_tax - both):
+            raw["nci"] = None
 
 
 # a fourth quarter is checked against the year less the three quarters before it: off by more than this share of the

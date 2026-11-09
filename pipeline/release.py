@@ -7,6 +7,7 @@ reconcile (pre-tax earnings - tax = net earnings) before it is used. Anything th
 is rejected rather than guessed.
 """
 import datetime as dt
+import itertools
 import re
 
 from bs4 import BeautifulSoup
@@ -24,21 +25,28 @@ P = {
                r"|^(net )?sales and (other )?operating revenues?$|^(total )?revenues? from contracts with customers$"
                r"|^total net sales and revenues?$|^revenues? and other income$|^(net )?sales to third parties$|^(total )?sales revenues?$|^(group |total )?turnover$"
                r"|^(consolidated|group) (sales )?revenues?$",
-    "cor": r"^(total )?cost of (net )?(revenues?|sales|goods sold|products sold|products and services sold|net sales)(,? net)?$"
+    "cor": r"^(total )?costs? of (net )?(revenues?|sales|goods sold|products sold|products and services sold|net sales)(,? net)?$"
            r"|^cost of revenues?,? total$|^total cost of (revenues?|sales)$|^cost of goods and services sold$",
-    "gp": r"^(total )?gross (profit|margin)$",
+    "gp": r"^(total )?gross (profit|margin|income)$",                  # "Gross income" (Ericsson)
     "rd": r"^(research(,)? and development|research, development and engineering|technology and development|"
           r"product development|engineering, research and development|research and development (expenses?|costs))$",
-    "sm": r"^(sales and marketing|selling and marketing|marketing and sales|marketing|selling)( expenses?)?$",
-    "ga": r"^general and administrat(ive|ion)( expenses?| costs)?$",
-    "sga": r"^(selling|sales|marketing),? general,? and administrative( expenses?| costs)?$",
+    "sm": r"^(sales and marketing|selling and marketing|marketing and sales|marketing|selling)( expenses?)?$"
+          r"|^(selling|sales|marketing) and distribution( costs| expenses)?$|^distribution (costs|expenses)$",   # IFRS
+    "ga": r"^general and administrat(ive|ion)( expenses?| costs)?$|^administrative (expenses?|costs)$|^administration (expenses?|costs)$",
+    "sga": r"^(selling|sales|marketing),? general,? and administrat(ive|ion)( expenses?| costs)?$"
+           r"|^(selling|sales|marketing) and administrat(ive|ion)( expenses?| costs)?$",   # "Selling and administrative expenses" (Ericsson)
     "costs_total": r"^total (costs and expenses|operating costs and expenses|costs and operating expenses|cost and expenses)$",
     "opex_total": r"^total operating expenses$",
     "oi": r"^(total )?operating (income|profit|loss|earnings|income \(loss\)|\(loss\) income|loss \(income\)|\(loss\) profit|profit \(loss\))$"
-          r"|^(income|loss|earnings|income \(loss\)|\(loss\) income) from operations$|^operating profit \((ebit|loss)\)$",
+          r"|^(income|loss|earnings|income \(loss\)|\(loss\) income) from operations$|^operating profit \((ebit|loss)\)$"
+          # "Profit before interest and taxation" (BP), "Operating result" (Dutch and Nordic statements)
+          r"|^(profit|loss|profit \(loss\)|\(loss\) profit|income|earnings) before (net )?(interest|finance (costs|income and costs)) and tax(es|ation)?$"
+          r"|^operating result$|^(earnings|income|profit|result) before financial items and (income )?tax(es)?( \(ebit\))?$",   # Ericsson
     "pretax": r"^(net )?(income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\))( from continuing operations)?"
-              r"( before (provision for |benefit from )?(income )?taxes| before income tax (expense|provision|benefit)s?| before taxes on income)$"
-              r"|^(profit|loss|profit \(loss\)|\(loss\) profit|profit/\(loss\)|\(loss\)/profit) before (income )?tax(es|ation)?$"
+              r"( before (provision for |benefit from )?(income )?taxes| before income tax (expense|provision|benefit)s?| before taxes on income)"
+              r"( and (non-?controlling|minority) interests?)?$"          # STMicroelectronics: "... and noncontrolling interest"
+              r"|^(profit|loss|profit \(loss\)|\(loss\) profit|profit/\(loss\)|\(loss\)/profit|result) before (income )?tax(es|ation)?$"
+              r"|^(income|profit|result|earnings|loss|profit \(loss\)|income \(loss\)) after financial (items|net)$"   # Swedish (Ericsson)
               r"|^(net )?(income|earnings|income \(loss\)|\(loss\) income) before (income )?taxation$",
     "tax": r"^((\(provision\) benefit|provision \(benefit\)|\(provision for\) benefit from|provision for \(benefit from\)|"
            r"benefit from \(provision for\)|provision for|benefit from|\(benefit\) provision) (for )?income taxes"
@@ -46,7 +54,7 @@ P = {
            r"benefit \(expense\)|provision \(benefit\))|income taxes|income tax|income tax(es)? expenses|tax expenses?|income tax(es)? benefit \(expenses\)|taxes on income|tax benefit \(expenses?\))$"
            r"|^taxation( charge| expense| \(charge\) credit| charge \(credit\)| credit \(charge\))?$|^tax (charge|expense)( \(credit\))?$"
            r"|^total (income )?tax(ation|es)? (expense|charge|\(expense\) benefit|benefit \(expense\))$",
-    "pl": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\))$"
+    "pl": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\)|result)( for the (period|year|quarter))?$"
           r"|^net profit( \(loss\))?$|^(net )?profit( \(loss\))? for the (period|year|quarter)$"
           r"|^(net )?(profit|profit \(loss\)|\(loss\) profit|profit/\(loss\)|income|earnings) after (income )?tax(es|ation)?( for the (period|year|quarter))?$"
           r"|^net (income|earnings) for the (period|year|quarter)$"
@@ -56,7 +64,7 @@ P = {
                r"|^(net )?(profit|profit \(loss\)|\(loss\) profit)( after (income )?tax(ation)?)? from continuing operations$",
     # "attributable to" the company's owners, never to the minority ("nci", "the noncontrolling interest": Kinder Morgan,
     # Albany), nor a per-share row ("basic earnings per ordinary share": Pentair, nVent)
-    "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)) (attributable|applicable|available) (to|for) "
+    "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)|result|profit) (attributable|applicable|available) (to|for) "
           r"(?!(the |a |its )?(non-?controlling|minority|redeemable|nci\b))|^(net )?profit attributable to (the )?(owners|equity holders|shareholders)"
           r"|^attributable to (the )?(owners|equity holders|shareholders|stockholders)"
           r"|^attributable to (?!(the |a )?(non-?controlling|minority|nci\b))[a-z0-9 .&'’-]{0,40}(owners|shareholders|equity holders|stockholders)"
@@ -78,14 +86,24 @@ P = {
              r"|^payments? for (the )?(acquisition of |purchases? of )?property",
 }
 PATTERNS = {k: re.compile(v) for k, v in P.items()}
+# A bank's statement (it has a "Net interest income" row) calls its revenue "Total income" (ING, Barclays, Lloyds), "Total
+# operating income" (Nordea), "Gross income" (BBVA, Santander) or "Total net revenues" (Deutsche Bank): read only there,
+# where "operating income" is the revenue line and "gross income" no gross profit.
+BANK_REV = re.compile(r"^total (operating |net )?(income|revenues?)$|^gross income$|^net operating income$|^total income, net$"
+                      r"|^net revenues?$|^operating income$|^total operating revenues?$")
+NET_INTEREST = re.compile(r"^net interest (income|revenue)")
 COST_KEYS = ("cor", "rd", "sm", "ga", "sga", "da_op", "costs_total", "opex_total", "da", "sbc", "capex")
 IS_KEYS = ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "da_op", "costs_total", "opex_total", "oi", "pretax", "tax", "pl", "pl_cont",
            "ni", "nci")
 CF_KEYS = ("ocf", "da", "sbc", "capex")
-QTR_RE = re.compile(r"three months|quarter ended|quarters ended|thirteen weeks|fourteen weeks|1[34] weeks|"
-                    r"(first|second|third|fourth) (fiscal )?quarter|\bq[1-4]\b|\d(st|nd|rd|th) qtr")
-YTD_RE = re.compile(r"six months|nine months|twelve months|years? ended|fiscal (year )?20\d\d\b|full year|"
-                    r"2[67] weeks|39 weeks|40 weeks|5[23] weeks|year[- ]to[- ]date|\bytd\b")
+QTR_RE = re.compile(r"three[- ]months?|\b3[- ]months?\b|\bquarters?\b(?! ended (march|june|september|december) \d+, \d+ and)|quarter ended|quarters ended|thirteen weeks|fourteen weeks|1[34] weeks|"
+                    r"(first|second|third|fourth|1st|2nd|3rd|4th) (fiscal )?quarter|\bq[1-4]\b|\d(st|nd|rd|th) qtr|\b[1-4]q\s?['’]?\d\d\b|"
+                    r"\bq[1-4]['’]?\d\d\b")                       # "Q326" (Barclays), "Q3'26"
+# the year to date or a half: "Q1–Q3 2026" (SAP), "Jan-Sep" (Ericsson), "9M26" (TotalEnergies), "H1 2026", "nine-month period"
+YTD_RE = re.compile(r"(six|nine|twelve)[- ]months?|\b(6|9|12)[- ]months?\b|years? ended|fiscal (year )?20\d\d\b|full year|"
+                    r"2[67] weeks|39 weeks|40 weeks|5[23] weeks|year[- ]to[- ]date|\bytd\b|"
+                    r"\bq1\s*[-–—]\s*q[2-4]\b|\bjan(uary)?\s*[-–—]\s*(jun|june|sep|sept|september|dec|december)\b|"
+                    r"\b(9m|6m|12m|h1|h2|1h|2h)\s?['’]?(\d\d)?\b|first half|half[- ]year|\b1[-–]9\b")
 
 
 def _date(m):
@@ -95,6 +113,7 @@ def _date(m):
 def norm_label(s):
     s = s.lower().replace(" ", " ").replace("&", " and ").replace("’", "'")
     s = re.sub(r"\((\d{1,2}|[a-z]|[ivx]+)\)|\*+|†|‡", " ", s)            # footnote marks
+    s = re.sub(r"[\u00b9\u00b2\u00b3\u2070-\u209f]+", " ", s)          # superscript ones: "Net sales¹⁾" (Ericsson)
     s = re.sub(r"\((?:notes?|refer to note|see note)\s[^)]*\)|\s+notes?\s+\d+(?:\s*(?:,|and)\s*\d+)*$", " ", s)   # "(Notes 20, 31 and 37)" (TSMC)
     s = re.sub(r"[:$€£¥₩₹]", " ", s)
     s = re.sub(r"\s+/\s+", " ", s)                        # "net income / (loss)" (Nebius) = "net income (loss)"
@@ -124,6 +143,10 @@ def _number(cell):
     return None
 
 
+# a note reference: "9", "2.3", "4, 7", "2 a), 14", "3b" (IFRS statements print the notes beside each line)
+NOTE_REF = re.compile(r"\d{1,2}(\.\d{1,2})?\s*[a-z]?\)?(\s*(,|and|&)\s*\d{1,2}(\.\d{1,2})?\s*[a-z]?\)?)*")
+
+
 def read_tables(html):
     soup = BeautifulSoup(html, "lxml")
     for bad in soup.find_all(["script", "style"]):
@@ -138,10 +161,12 @@ def read_tables(html):
         # a "Note" column (IFRS statements: "Net sales to third parties | 9 | 13 113"): its references are not figures
         note_col = next((i for cs in all_cells[:15] for i, c in enumerate(cs) if re.fullmatch(r"notes?(\s*\(s\))?|note\s*no\.?", c or "", re.I)), None)
         for cells in all_cells:
-            if note_col is not None and note_col < len(cells) and re.fullmatch(r"\d{1,2}(\.\d{1,2})?(\s*,\s*\d{1,2})*", cells[note_col] or ""):
+            if note_col is not None and note_col < len(cells) and NOTE_REF.fullmatch(cells[note_col] or ""):
                 cells = cells[:note_col] + [""] + cells[note_col + 1:]
             label, vals, pcts = None, [], []
             for c in cells:
+                if label is None and c and NOTE_REF.fullmatch(c) and re.search(r"[a-z]\)|,", c):
+                    continue                              # a note reference in a column of its own ("2 a), 14"), no label
                 if not c or c in (")", "(", "%") or CUR_CELL.fullmatch(c):
                     if c == "%" and pcts:
                         pcts[-1] = True                   # "8.2" | "%": the percent sign in a cell of its own
@@ -236,14 +261,62 @@ def _newest_first(table):
             years = ys
             break
         if not v:                                          # dates as column titles, "For the first quarter ended June
-            dated = [re.findall(r"\b(20\d\d)\b", c) for c in r["cells"] if c]       # 30, 2025 | ... 2026" (Toyota)
-            dated = [int(m[0]) for m in dated if len(m) == 1]
-            if len(dated) >= 2 and len(dated) == len([c for c in r["cells"] if c]):
-                years = dated
+            cells = [c for c in r["cells"] if c]               # 30, 2025 | ... 2026" (Toyota); "Q4 2025 | Q1 2026" (ASML)
+            if cells and not re.search(r"\b20\d\d\b", cells[0]) and not _yy_period(cells[0]) and len(cells) >= 3:
+                cells = cells[1:]                              # a caption first: "(Figures in millions of euros ...)"
+            if not any(re.search(r"\b20\d\d\b", c) for c in cells):
+                # two-figure years: "2Q25 | 2Q26 | Organic growth" (AB InBev prints last year's quarter first), the
+                # change columns after the periods left out of the order
+                lead = [c for c in itertools.takewhile(_yy_period, cells)]
+                rest = cells[len(lead):]
+                if len(lead) >= 2 and all(re.search(r"growth|change|organic|%|var|vs", c, re.I) for c in rest):
+                    keys = [_yy_period(c) * 10 + _cell_quarter(c) for c in lead]
+                    if keys[1] > keys[0]:
+                        n = len(keys)
+                        for r2 in table["rows"]:
+                            extra = len(r2["vals"]) - n            # change columns after the periods: "4.9%"
+                            if extra == 0 or extra == len(rest) or (extra > 0 and sum(1 for c in r2["cells"] if
+                                                                                          str(c).strip().endswith("%")) >= extra):
+                                r2["vals"] = list(reversed(r2["vals"][:n])) + r2["vals"][n:]
+                        table["years"] = [k // 10 for k in reversed(keys)]
+                        if all(_cell_quarter(c) for c in lead):
+                            table["qtrs"] = [_cell_quarter(c) for c in reversed(lead)]
+                        table["newest_last"] = True
+                    table["change_cols"] = len(rest)
+                    return table
+            found = [re.findall(r"\b(20\d\d)\b", c) for c in cells]
+            if len(cells) >= 2 and all(len(m) == 1 for m in found):
+                # the quarter within the year orders "Q2 2026 | Q3 2026" (one year, the newest last)
+                q = [_cell_quarter(c) for c in cells]
+                keys = [int(m[0]) * 10 + qq for m, qq in zip(found, q)]
+                lead = len(list(itertools.takewhile(bool, q)))
+                if all(q) and len(set(int(m[0]) for m in found)) < len(found):
+                    years = keys
+                elif 2 <= lead < len(cells) and len(set(int(m[0]) for m in found[:lead])) < lead and not any(q[lead:]):
+                    # quarters first, then whole years: "Q3 2025 | Q4 2025 | FY 2024 | FY 2025" (ASML's fourth quarter):
+                    # each block ordered on its own, the quarters by their quarter
+                    years = keys[:lead] + [int(m[0]) * 10 for m in found[lead:]]
+                else:
+                    years = [int(m[0]) for m in found]
+                if all(q):
+                    table["qtrs"] = q                                   # "Q4 2025 | Q1 2026" (ASML)
                 break
         if r["label"] and v and not all(1990 <= x <= 2100 and x == int(x) for x in v):
             return table                                   # numbers before any year row: leave the table as printed
     else:
+        return table
+    table["years"] = [y // 10 if y > 9999 else y for y in years]
+    n = len(years)
+    if n >= 3 and years[-1] > max(years[:-1]) and years[-2] == years[-1] - 1 and years[0] <= years[1]:
+        # the current period alone in the last column, after last year's ("Year ended 31 December 2025 | Six months
+        # ended 30 June 2025 | 2026": RELX): it goes first, and the column just before it is the year-ago one
+        order = [n - 1] + list(range(n - 1))
+        for r in table["rows"]:
+            if len(r["vals"]) == n:
+                r["vals"] = [r["vals"][i] for i in order]
+        table["newest_last"] = True
+        table["years"] = [table["years"][i] for i in order]
+        table["py_hint"] = n - 1
         return table
     if years[1] <= years[0]:
         return table                                       # newest first (US style), or one year per period type
@@ -263,7 +336,133 @@ def _newest_first(table):
         if len(r["vals"]) == n:
             r["vals"] = [r["vals"][i] for i in order]
     table["newest_last"] = True
+    table["years"] = [years[i] // 10 if years[i] > 9999 else years[i] for i in order]
+    if table.get("qtrs") and len(table["qtrs"]) == n:
+        table["qtrs"] = [table["qtrs"][i] for i in order]
     return table
+
+
+def _yy_period(c):
+    """The year of a column title with a two-figure year ("2Q25", "Q3'26", "1H26", "FY25", "9M26"), else 0."""
+    m = re.fullmatch(r"(?:[1-4]\s?q|q\s?[1-4]|[12]\s?h|h\s?[12]|hy|[369]m|12m|fy)\s?['’]?\s?(\d\d)", (c or "").strip().lower())
+    return 2000 + int(m.group(1)) if m else 0
+
+
+def _cell_quarter(c):
+    """The quarter a column title names ("Q3 2026", "3Q26", "third quarter", "H1" = 2), else 0."""
+    c = (c or "").lower()
+    m = re.search(r"\bq([1-4])\b|\b([1-4])q|\b(first|second|third|fourth|1st|2nd|3rd|4th) quarter|\b(h[12]|[12]h)\b", c)
+    if not m:
+        return 0
+    if m.group(1) or m.group(2):
+        return int(m.group(1) or m.group(2))
+    if m.group(3):
+        return ORD[m.group(3)]
+    return 2 if "1" in m.group(4) else 4
+
+
+def _column_titles(table):
+    """The columns' titles when the header prints them over several rows ("Third | Third | Nine | Nine" above "quarter |
+    quarter | months | months" above "2026 | 2025 | 2026 | 2025": BP), one per figure column, else []."""
+    head = []
+    for r in table["rows"]:
+        if r["label"] and r["vals"] and not all(1990 <= abs(v) <= 2100 for v in r["vals"]):
+            break
+        cs = [c for c in r["cells"] if c and c.strip()]
+        if cs:
+            head.append(cs)
+    widths = [len(cs) for cs in head if len(cs) >= 2]
+    if not widths:
+        return []
+    n = max(set(widths), key=lambda w: (widths.count(w), w))
+    rows = []
+    for cs in head:
+        if len(cs) == n + 1 and not re.search(r"\d", cs[0]):
+            cs = cs[1:]                                    # a caption before the titles ("$ million")
+        if len(cs) == n:
+            rows.append(cs)
+    return [" ".join(r[i] for r in rows).strip().lower() for i in range(n)] if len(rows) >= 2 else []
+
+
+def first_is_quarter(table):
+    """Whether the table's first figure column is a quarter (True), a year to date or half (False) or unknown (None)."""
+    isq = _first_is_quarter(_header(table))
+    if isq is None:
+        titles = _column_titles(table)
+        if titles:
+            isq = _first_is_quarter(titles[0])
+    return isq
+
+
+YY = re.compile(r"(?:\b(?:q[1-4]|[1-4]q|h[12]|[12]h|9m|6m|12m|fy)\s?['’]?|['’])(\d\d)\b")
+
+
+PERIOD_TOK = re.compile(r"\b(?:q([1-4])\s?['’]?(\d\d|(?<=\s)20\d\d)|([1-4])q\s?['’]?(\d\d|(?<=\s)20\d\d)|(h[12]|[12]h|9m|6m|12m|fy)\s?['’]?(\d\d))\b", re.I)
+
+
+def _header_periods(table):
+    """The header's period titles in order, "Q326 Q226 Q126 Q425 Q325" (Barclays) → [(2026, 3, "q"), ...]."""
+    out = []
+    for m in PERIOD_TOK.finditer(_header(table)):
+        if m.group(1):
+            out.append((2000 + int(m.group(2)) % 100, int(m.group(1)), "q"))
+        elif m.group(3):
+            out.append((2000 + int(m.group(4)) % 100, int(m.group(3)), "q"))
+        else:
+            out.append((2000 + int(m.group(6)), None, m.group(5).lower()))
+    return out
+
+
+def year_ago_col(table, n, year):
+    """The index of the figure column for the same period a year earlier among n columns, from the header's years: the
+    first column of the year before in a header with one year per column ("3rd quarter 2026 | 2nd quarter 2026 | 3rd
+    quarter 2025": TotalEnergies) or per block of columns ("2026: Stellantis | Industrial | Financial services, 2025:
+    ..."). None when the header does not say; -1 when it says there is none ("Q4 2025 | Q1 2026": ASML; "3Q'26 |
+    2Q'26 | 9M'26 | 9M'25": Santander — the quarter before, not the year before)."""
+    if table.get("py_hint") is not None and table["py_hint"] < n and (table.get("years") or [None])[0] == year:
+        return table["py_hint"]
+    if table.get("change_cols") and table.get("years") and n == len(table["years"]) + table["change_cols"]:
+        n = len(table["years"])                            # "2Q26 | 2Q25 | Organic growth": a change column is no period
+    per = _header_periods(table)
+    if len(per) == n and n >= 2 and per[0][0] == year:     # one period title per column: the same quarter a year before
+        return next((j for j in range(1, n) if per[j][0] == year - 1 and per[j][1:] == per[0][1:]), -1)
+    if len(per) >= 2 and per[0][0] == year and per[0][2] == "q" and len(per) <= n:
+        # quarter titles over the first columns, the year to date after them ("Q3 2026 | Q2 2026 | Q3 2025 | 2026 | 2025"
+        # under "Quarters | Nine months": Shell)
+        return next((j for j in range(1, len(per)) if per[j][0] == year - 1 and per[j][1:] == per[0][1:]), -1)
+    q = table.get("qtrs")
+    if q and table.get("years") and len(q) == len(table["years"]) == n and table["years"][0] == year:
+        return next((j for j in range(1, n) if table["years"][j] == year - 1 and q[j] == q[0]), -1)
+    years = table.get("years")
+    if not years:
+        titles = _column_titles(table)
+        ys = []
+        for t in titles:
+            m = re.search(r"\b(20\d\d)\b", t) or YY.search(t)
+            ys.append(int(m.group(1)) % 100 + 2000 if m else None)
+        if len(ys) >= 2 and all(ys):
+            years = ys
+        else:                                              # "Q3'26 Q3'25 YoY change Q1-Q3'26 Q1-Q3'25" (Nokia)
+            ys = [int(m.group(1)) + 2000 for m in YY.finditer(_header(table))]
+            years = ys if len(ys) >= 2 else None
+    if not years or n < 2 or years[0] != year:
+        return None
+    if len(years) == n:
+        return next((j for j in range(1, n) if years[j] == year - 1), None)
+    if n % len(years) == 0 and len(years) >= 2:            # a block of columns per year, the same titles in each block
+        k = n // len(years)
+        j = next((i for i in range(1, len(years)) if years[i] == year - 1), None)
+        if j is None or k < 2:
+            return None
+        for r in table["rows"]:
+            if r["label"] and r["vals"] and not all(1990 <= abs(v) <= 2100 for v in r["vals"]):
+                break
+            cs = [c.strip().lower() for c in r["cells"] if c and c.strip()]
+            cs = cs[len(cs) - n:] if len(cs) in (n, n + 1) else None
+            if cs and all(cs[i] == cs[i % k] for i in range(n)) and not all(re.fullmatch(r"20\d\d", c) for c in cs):
+                return j * k                               # "Stellantis | Industrial | Financial services" per year
+        return None
+    return None
 
 
 def _header(table):
@@ -277,6 +476,7 @@ def _header(table):
 
 
 def _first_is_quarter(header_text):
+    header_text = header_text or ""
     q, y = QTR_RE.search(header_text), YTD_RE.search(header_text)
     if q and (not y or q.start() < y.start()):
         return True
@@ -287,9 +487,13 @@ def _first_is_quarter(header_text):
 
 def _map_rows(table, keys, full=False):
     found, section = {}, ""
+    bank = "revenue" in keys and any(NET_INTEREST.search(r["key"]) for r in table["rows"] if r["vals"])
     parts = None                                          # the lines under a "Revenues" heading with no total (Wix)
     for r in table["rows"]:
         lab = r["key"]
+        if not r["vals"] and found and sum(1 for c in r["cells"] if _yy_period(c) or YEAR_CELL.fullmatch(str(c).strip())) >= 2:
+            break                                          # the same lines again for other periods ("9M25 | 9M26" under the
+                                                           # quarter's block: AB InBev): the first block is the statement read
         if lab and not r["vals"]:
             section = lab
             parts = [] if ("revenue" in keys and PATTERNS["revenue"].search(lab) and "revenue" not in found) else \
@@ -308,7 +512,9 @@ def _map_rows(table, keys, full=False):
                      r"|per common share|per share|margin %|% of|percent|weighted|shares used|non-gaap|adjusted", lab):
             continue
         for k in keys:
-            if PATTERNS[k].search(lab):
+            if bank and k in ("gp", "oi") and BANK_REV.search(lab):
+                continue                                  # a bank's "Gross income", "Operating income": its revenue
+            if PATTERNS[k].search(lab) or (bank and k == "revenue" and BANK_REV.search(lab)):
                 v = r["vals"][0]
                 if k == "revenue":
                     prev = found.get(k)
@@ -333,7 +539,8 @@ def _close_parts(found, parts, section):
 
 
 def _units(table):
-    t = (table["before"] + " " + table["text"][:600]).lower()
+    # "(in&nbsp;thousands)" (LendingTree): a no-break space is still a space, or the units go unread
+    t = re.sub(r"\s+", " ", table["before"] + " " + table["text"][:600]).lower()
     m = re.search(r"in (?:(?:u\.?s\.? ?|usd |us\$ ?|\$ ?|€ ?|eur |£ ?|gbp |¥ ?|jpy |rmb ?|cny |nt\$ ?|twd |₩ ?|krw |₹ ?|inr |r\$ ?|"
                   r"brl |c\$ ?|cad |chf |sek |dkk |nok |hk\$ ?|hkd |s\$ ?|a\$ ?)(?:dollars? |euros? )?)?(thousands|millions|billions)", t) \
         or re.search(r"\(\s*(?:us\$|\$|€|eur|£|¥|rmb|nt\$|₩|₹|chf|sek|dkk|nok)\s*(?:in\s)?(thousands|millions|billions)", t)   # "(€ millions)"
@@ -344,14 +551,17 @@ def _units(table):
                        r"€|us\$|\$|£)\s*(thousand|million|billion)s?\b", t)
     if not m and re.search(r"\(\s*m\s*[$€£]?\s*\)|\bm[$€]\b|\(\s*m\s*\)", t):   # "(M$)" (TotalEnergies)
         return 1e6
-    if not m:                                                # "USD m", "€m", "CHF bn" (Novartis, UBS)
-        m2 = re.search(r"(?:^|[\s(])(?:usd|us\$|eur|chf|gbp|dkk|sek|nok|jpy|cny|rmb|cad|aud|\$|€|£)\s?(m|mn|bn)\b", t)
-        return {"m": 1e6, "mn": 1e6, "bn": 1e9}[m2.group(1)] if m2 else None
+    if not m:                                                # "USD m", "€m", "CHF bn" (Novartis, UBS), "USD Mio" (AB InBev)
+        m2 = re.search(r"(?:^|[\s(])(?:usd|us\$|eur|chf|gbp|dkk|sek|nok|jpy|cny|rmb|cad|aud|\$|€|£)\s?(m|mn|mio|mln|bn)\b", t)
+        return {"m": 1e6, "mn": 1e6, "mio": 1e6, "mln": 1e6, "bn": 1e9}[m2.group(1)] if m2 else None
     u = m.group(1)
     return {"thousand": 1e3, "million": 1e6, "billion": 1e9}[u[:-1] if u.endswith("s") else u]
 
 
-NONGAAP_RE = re.compile(r"non-gaap|non-ifrs|adjusted (ebitda|ebit|net|operating|earnings|eps|income|gross|free cash|diluted)|reconciliation")
+NONGAAP_RE = re.compile(r"non-gaap|non-ifrs|adjusted (ebitda|ebit|net|operating|earnings|eps|income|gross|free cash|diluted)|reconciliation"
+                        # European "core" and "business" measures: GSK's total-to-core results, Sanofi's business net income
+                        r"|core (results|operating (profit|income)|net income|earnings|eps)|adjusting items|business (net|operating) income"
+                        r"|alternative performance measures?")
 GAAP_TITLE = re.compile(r"(consolidated |condensed |interim )*(statements?|results) of (consolidated )?(operations|income|earnings|"
                         r"comprehensive (income|loss)|income \(loss\)|operations and comprehensive|cash flows)|income statements?")
 
@@ -450,11 +660,20 @@ def pick_tables(tables):
             continue
         m = _map_rows(t, IS_KEYS)
         score = sum(w for k, w in weights.items() if k in m)
+        if "revenue" in m and ("pl" in m or "ni" in m):
+            # the quarter's own table beats the year to date's (HSBC prints both: a nine-month statement and the
+            # quarter's summary; AstraZeneca, Lloyds and NatWest too)
+            q = first_is_quarter(t)
+            score += 2 if q is True else -2 if q is False else 0
         if "revenue" in m and ("pl" in m or "ni" in m) and (best_is is None or score > best_is[0]):
             best_is = (score, t, m)
         c = _map_rows(t, CF_KEYS)
-        if "ocf" in c and (best_cf is None or len(c) > len(best_cf[2])):
-            best_cf = (len(c), t, c)
+        # the cash-flow statement itself (with its investing and financing sections) beats a segment table that prints
+        # a segment's "cash flow from operating activities" (TotalEnergies' segment pages come first)
+        full_cf = bool(re.search(r"investing activities", t["text"], re.I) and re.search(r"financing activities", t["text"], re.I))
+        sc = len(c) + (3 if full_cf else 0)
+        if "ocf" in c and (best_cf is None or sc > best_cf[0]):
+            best_cf = (sc, t, c)
     if fallback and (not best_is or fallback[0] > best_is[0]):      # the full statement beats a highlights table
         best_is = fallback
     return best_is, best_cf
@@ -483,15 +702,55 @@ def header_end(header_text):
         return None
 
 
+QLABEL = [re.compile(r"\bq([1-4])\s*['’]?\s*(20\d\d|\d\d)\b", re.I), re.compile(r"\b([1-4])q\s*['’]?\s*(20\d\d|\d\d)\b", re.I),
+          re.compile(r"\b(first|second|third|fourth|1st|2nd|3rd|4th) quarter(?: of)?\s*(20\d\d)\b", re.I)]
+ORD = {"first": 1, "second": 2, "third": 3, "fourth": 4, "1st": 1, "2nd": 2, "3rd": 3, "4th": 4}
+
+
+def _quarter_label_end(text, filed):
+    """The latest calendar quarter the labels name ("Q1 2026", "Q3'26", "3Q 2026", "first quarter 2026") that fits the
+    filing date (a company whose fiscal year is not the calendar one gets a date that does not, and is not read this
+    way). The latest: a header printing the oldest period first ("Q2 2026 | Q3 2026") names the current one last."""
+    best = None
+    for rx in QLABEL:
+        for m in rx.finditer(text or ""):
+            n = ORD.get(m.group(1).lower()) or int(m.group(1))
+            y = int(m.group(2)) % 100 + 2000
+            d = dt.date(y, 3 * n, 30 if n in (2, 3) else 31)
+            if _plausible(d, filed) and (best is None or d > best):
+                best = d
+    return best
+
+
+def _last_quarter_end(filed):
+    """The latest calendar quarter end at least a week before the filing date."""
+    d = filed - dt.timedelta(days=7)
+    for back in range(0, 4):
+        y, m = d.year, ((d.month - 1) // 3) * 3 + 3 - 3 * back
+        while m <= 0:
+            m, y = m + 12, y - 1
+        qe = dt.date(y, m, 30 if m in (6, 9) else 31)
+        if qe <= d:
+            return qe
+    return None
+
+
 def period_end(html_text, t_is, filed):
-    """The quarter the release reports: from the statement header, else an '... ended <date>' phrase in the text."""
+    """The quarter the release reports: from the statement header (its date, else its quarter label: "first quarter
+    2026" above BP's columns), else an '... ended <date>' phrase in the text — the latest quarter end among them when
+    the text also names an earlier one (BP's first-quarter report also speaks of the year ended 31 December 2025)."""
     d = header_end(_header(t_is))
     if _plausible(d, filed):
         return d
+    last = _last_quarter_end(filed)
+    near = lambda x: last is not None and abs((x - last).days) <= 7     # a 52/53-week quarter ends near it (ASML)
+    us = eu = None
     for m in ENDED_RE.finditer(html_text):
         dm = DATE_RE.match(html_text, m.end())
         if dm and _plausible(_date(dm), filed):
-            return _date(dm)
+            us = us or _date(dm)
+            if near(_date(dm)):
+                return _date(dm)
     # European order, "1 January to 30 June 2026" / "period ended 30 June 2026" (Novo Nordisk, many 6-K filers)
     for m in EU_DATE_RE.finditer(html_text):
         try:
@@ -499,15 +758,20 @@ def period_end(html_text, t_is, filed):
         except ValueError:
             continue
         if _plausible(d, filed):
-            return d
+            eu = eu or d
+            if near(d):
+                return d
+    titles = _column_titles(t_is)
+    d = _quarter_label_end(_header(t_is) + " " + " ".join(titles), filed)
+    if d:                                                  # the statement's own quarter label ("first quarter 2026")
+        return d
+    if us or eu:
+        return us or eu
     # only a quarter label in the statement header, "Q2 2026": the calendar quarter, if it fits the filing date (a
     # company whose fiscal year is not the calendar one gets a date that does not, and is not read this way)
-    q = re.search(r"\bQ([1-4])\s*(20\d\d)\b", _header(t_is) + " " + html_text[:3000])
-    if q:
-        n, y = int(q.group(1)), int(q.group(2))
-        d = dt.date(y, 3 * n, 30 if n in (2, 3) else 31)
-        if _plausible(d, filed):
-            return d
+    d = _quarter_label_end(html_text[:3000], filed)          # "3Q 2026" on the cover (Santander)
+    if d:
+        return d
     # an inline-XBRL 6-K (Unilever): its hidden contexts carry the period, "2026-01-01 2026-06-30"
     ends = {}
     for m in re.finditer(r"\b(20\d\d-\d\d-\d\d) (20\d\d-\d\d-\d\d)\b", html_text[:20000]):
@@ -563,10 +827,15 @@ def parse(html, filed, last_end=None, prior_revenue=None):
                 span = min(span or dd, dd)
         except ValueError:
             pass
-    isq = _first_is_quarter(_header(t_is))
+    isq = first_is_quarter(t_is)
     if isq is None and span:
         isq = span <= 100
+    n_rev = len(full.get("revenue", (None, None, []))[2]) if "revenue" in full else 0
     out = {"end": end.isoformat(), "scale": scale, "is_quarter": isq, "span": span,
+           "py_col": year_ago_col(t_is, n_rev, end.year) if n_rev > 1 else None,
+           "neg_costs": cost_sign(t_is),
+           "equity_method": any(r["vals"] and re.search(r"associates|joint ventures?|equity[- ]method|equity-accounted|"
+                                                         r"accounted for using the equity", r["key"]) for r in t_is["rows"]),
            "is": {k: v * scale for k, v in m_is.items()}, "cf": {}, "cf_quarter": None,
            "labels": {k: x[1] for k, x in full.items()},
            "cols": {k: [v * scale for v in x[2]] for k, x in full.items()},       # every column, for sign checks
@@ -585,14 +854,40 @@ def parse(html, filed, last_end=None, prior_revenue=None):
                 and re.search(r"\d\.\d", t_cf["text"]) and (m_is.get("revenue") or 0) >= 1e4:
             s_cf = 1e6
         out["cf"] = {k: v * s_cf for k, v in m_cf.items()}
-        out["cf_quarter"] = _first_is_quarter(_header(t_cf))
+        out["cf_quarter"] = first_is_quarter(t_cf)
         cf_rows = _map_rows(t_cf, CF_KEYS, full=True)
         out["cf_cols"] = {k: [v * s_cf for v in x[2]] for k, x in cf_rows.items()}
+        n_ocf = len(cf_rows["ocf"][2]) if "ocf" in cf_rows else 0
+        out["cf_py_col"] = year_ago_col(t_cf, n_ocf, end.year) if n_ocf > 1 else None
         out["cf_labels"] = {k: x[1] for k, x in cf_rows.items()}
     rate = convenience_rate([t_is], "revenue")
     if rate:
         out["fx_official"] = {"usd": rate, "text": "the release's own US$ column beside its figures (revenue)"}
     return out
+
+
+COSTY = re.compile(r"\b(costs?|expenses?|purchases|charges?|depreciation|amortization|amortisation|impairments?|"
+                   r"write-?downs?|excise|sg (and|&) a|sga|selling|administrative|distribution)\b")
+NOT_COSTY = re.compile(r"income|benefit|revenue|gain|profit|^(net )?sales|reversal|recover|net$|total operating expenses and income")
+
+
+def cost_sign(table):
+    """How the statement prints its expenses: True when as negative figures ("(2,761)", "–2,761": IFRS statements, most
+    European releases), False when as positive ones (US style), None when it cannot tell. A tax line printed negative
+    is then an expense in the first case and a benefit in the second."""
+    neg = pos = 0
+    for r in table["rows"]:
+        k = r["key"]
+        if not k or not r["vals"] or r["pct"] or not COSTY.search(k) or NOT_COSTY.search(k) or PATTERNS["tax"].search(k):
+            continue
+        v = r["vals"][0]
+        if v < 0:
+            neg += 1
+        elif v > 0:
+            pos += 1
+    if neg + pos < 2:
+        return None
+    return True if neg >= 3 * pos else False if pos >= 3 * neg else None
 
 
 def _ni_from_elsewhere(tables, t_is, m_is, full):
@@ -661,8 +956,9 @@ def calibrate_tax(raw, cols, refs):
     return False
 
 
-def reconcile(raw, labels=None, tax_checked=False):
-    """Fix signs the way statements print them and check that the income statement adds up."""
+def reconcile(raw, labels=None, tax_checked=False, neg_costs=None, equity_method=False):
+    """Fix signs the way statements print them and check that the income statement adds up. neg_costs: the statement
+    prints its expenses as negative figures (cost_sign), so a negative tax line with no pre-tax line is an expense."""
     r = dict(raw)
     for k in COST_KEYS:
         if r.get(k) is not None:
@@ -699,11 +995,22 @@ def reconcile(raw, labels=None, tax_checked=False):
                 pl = net
                 break
         else:
-            raise ValueError("pre-tax earnings, tax and net income do not reconcile")
+            # the share of associates' results printed after the tax line (Philips: "Investments in associates, net of
+            # income taxes"): a small gap, taken into pre-tax earnings so the chart adds up
+            tol2 = max(abs(r["pretax"]), abs(ni)) * 0.06 + 1e5
+            net = nets[0]
+            hit = next((sg for sg in (1, -1) if equity_method and abs(r["pretax"] - sg * r["tax"] - net) <= tol2), None)
+            if not hit:
+                raise ValueError("pre-tax earnings, tax and net income do not reconcile")
+            r["tax"] = hit * r["tax"]
+            r["pretax"] = net + r["tax"]
+            pl = net
     elif r.get("tax") is not None and not tax_checked:
-        # no pre-tax line and no earlier column to compare: read the sign from the label
+        # no pre-tax line and no earlier column to compare: read the sign from the label, or from the way the statement
+        # prints its expenses ("Income tax expense (1,195)": Sanofi, TotalEnergies, Tenaris)
         lab = (labels or {}).get("tax", "")
-        if r["tax"] < 0 and re.search(r"\(provision|\(expense\)|benefit \((expense|provision)", lab):
+        if r["tax"] < 0 and (re.search(r"\(provision|\(expense\)|benefit \((expense|provision)", lab) or
+                             (neg_costs and not re.search(r"^(income )?tax(es)? benefit|^benefit|credit$", lab))):
             r["tax"] = -r["tax"]
     r["pl"], r["ni"] = pl, ni
     r["nci"] = (pl - ni) if pl is not None else None
@@ -725,13 +1032,29 @@ NOT_A_LINE = re.compile(r"per share|margin|%|income|expense|cost|profit|loss|eps
                         r"\btons\b|payable|receivable|goodwill|inventor(y|ies)|\bdebt\b|borrowings|\blease liabilit|"
                         r"deposits$|retained earnings|accrued|salaries|wages|occupancy|professional fees|\bratio\b|"
                         # and main's per-share and dividend rows
-                        r"per (\w+ )?(\w+ )?share|per ads|dividend|^basic$|^diluted$|weighted")
+                        r"per (\w+ )?(\w+ )?share|per ads|dividend|^basic$|^diluted$|weighted|"
+                        # a currency bridge is not a breakdown: Sanofi's "Sales at constant exchange rates" + "Effect of
+                        # exchange rates" add up to its sales
+                        r"constant (exchange rates?|currenc(y|ies))|exchange rates?|currency (impact|effect|translation)|"
+                        r"\bat cer\b|\bcer\b|like[- ]for[- ]like|organic|perimeter|scope (effect|change)|reported growth")
 SEG_CTX = re.compile(r"segment|business unit|business group|by product|product line|division|reportable|by market|end market", re.I)
 GEO_CTX = re.compile(r"geograph|region|country|by location|domestic|international", re.I)
 
 
 def _clean_label(s):
-    return re.sub(r"\s*\((\d{1,2}|[a-z])\)|[*†‡]", "", s).strip(" :")
+    """A line's name as the chart writes it: footnote marks gone ("(1)", "*", superscripts "¹⁾²⁾", a trailing footnote
+    number "IaaS 2", "Banking NII 1"), and the "thereof" / "of which" / dash a sub-line opens with ("Thereof Cloud ERP
+    Suite": SAP; "– Wealth": HSBC)."""
+    return display_label(re.sub(r"\s*\((\d{1,2}|[a-z])\)|[*†‡]", "", s).strip(" :"))
+
+
+def display_label(s):
+    s = re.sub(r"[\u00b9\u00b2\u00b3\u2070-\u209f]+\)?", "", s or "")
+    t = re.sub(r"^\s*(?:[–—•·\-]+\s*|(?:thereof|of which|o/w)\s*:?\s+)", "", s, flags=re.I)
+    t = re.sub(r"(?<=[A-Za-z)])\s+\d(?:\s*,\s*\d)*$", "", t).strip(" :")   # a trailing footnote number ("IaaS 2")
+    if t != s.strip(" :") and re.match(r"[a-z]+\b", t) and not re.match(r"[a-z]+[A-Z]", t):
+        t = t[:1].upper() + t[1:]                          # "of which: wealth" → "Wealth", never "iPhone" → "IPhone"
+    return t
 
 
 def _norm_line(s):

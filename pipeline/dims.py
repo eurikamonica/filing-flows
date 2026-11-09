@@ -26,7 +26,8 @@ def find_files(cik, accn):
     return url(inst), url(lab)
 
 
-NOT_A_NAME = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization)\b", re.I)
+NOT_A_NAME = re.compile(r"\b(costs?|expenses?|liabilit(y|ies)|payables?|receivables?|accrued|deferred|amortization|"
+                        r"intangibles?)\b", re.I)
 DOC_LIKE = re.compile(r"^(this|the) (member|element|axis|domain)\b|\bstands for\b|\belement represents\b", re.I)
 
 
@@ -38,7 +39,8 @@ def parse_labels(xml_text):
     documentation, a sentence ("This member stands for …"). A label that names a cost, an expense or a liability is
     passed over when another one does not: companies give a revenue member the terse label of a cost table it also
     appears in (Workday: professional services → "Costs of professional services"; Delta: passenger → "Air traffic
-    liability"; Xenia: rooms → "Rooms expenses"). When every label names one, the terse label stays, as before."""
+    liability"; Xenia: rooms → "Rooms expenses"; Iron Mountain: data center → "Data center lease-based intangible
+    assets"). When every label names one, the terse label stays, as before."""
     root = ET.fromstring(xml_text.encode() if isinstance(xml_text, str) else xml_text)
     xl = "{http://www.w3.org/1999/xlink}"
     loc, lab_by_res, arcs = {}, {}, []

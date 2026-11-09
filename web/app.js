@@ -271,7 +271,7 @@
           end: o.q.end, label: o.q.label, period: o.fy ? 'fy' : undefined, form: dp.form || o.q.form, filed: dp.filed, doc_url: dp.url,
           index_url: o.q.index_url, dense: true,
           title: `${name} ${lab} — detailed flow`,
-          subtitle: `${o.fy ? 'Fiscal year' : 'Quarter'} ended ${date(o.q.end)} · every line split as the ${dp.form || 'filing'} and its notes split it · GAAP${dp.has_y ? ` · Y/Y vs. ${yl}` : ''}${ql ? ` · Q/Q vs. ${ql}` : ''}`,
+          subtitle: `${o.fy ? 'Fiscal year' : 'Quarter'} ended ${date(o.q.end)} · every line split as the ${dp.form || 'filing'} and its notes split it · ${o.c && o.c.std === 'IFRS' ? 'IFRS' : 'GAAP'}${dp.has_y ? ` · Y/Y vs. ${yl}` : ''}${ql ? ` · Q/Q vs. ${ql}` : ''}`,
           footer: [`Source: SEC EDGAR XBRL (${dp.form || 'filing'}${dp.filed ? ` filed ${dp.filed}` : ''}). Each total and its parts are the company’s own calculation in its XBRL — the statements, then the notes that split a line further; revenue by the filing’s own members. Parts under 0.3% of revenue are summed as Other.`,
             o.fy ? 'Full-year figures as reported in the 10-K, against the year before.' : dp.cash ? 'Cash flows for a quarter: this year to date less the previous 10-Q’s (a fourth quarter: the year less nine months).' : 'The cash flow statement is not drawn for this period.'],
           compare: ql && (dp.bullets_q || []).length ? { vs: ql, title: `${name} ${lab} vs ${ql}: what changed (detailed)`, bullets: dp.bullets_q } : null,
@@ -979,7 +979,8 @@
     $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a> · <a href="#c-${cik}-invest">investments</a>`;
     const body = $('#body');
     if (window.FFCompanyDisclosures && !cmpId && !all) window.FFCompanyDisclosures.mount($('#ff-company-disclosures'), { cik: p.cik, here, compact: true });
-    if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
+    // the company's own figures in the page's currency (CUR); prices and holdings stay in US dollars
+    if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here, cur: CUR, inUsd });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
     if (cmpId) {
@@ -1179,7 +1180,7 @@
   // five groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts'], ['x-composer']]],
-    ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-traps'], ['x-workforce']]],
+    ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['x-roll'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-traps'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-moves'], ['x-highs'], ['x-mahybrid'], ['x-opportunity'], ['x-odds']]],
     ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders'], ['invest', 'Investments']]],
@@ -1217,7 +1218,8 @@
     const say = inUsd
       ? `In US dollars, converted from ${t(nm)} (${own})${fxq ? `: ${t(fxq.note)}${fxq.src === 'official' && fxq.text ? ` <span class="muted">— “${t(String(fxq.text).slice(0, 220))}”</span>` : ''}` : ''}. Each comparison period at its own rate, so changes include the currency’s move.`
       : `Amounts in ${t(nm)} (${own}), as the company reports them.${hasUsd ? ' The same charts in US dollars: at the company’s own convenience rate when its filing gives one, else the period’s average exchange rate.' : ' No exchange rate is available for a dollar version yet.'}`;
-    return `<div class="ccy-bar" role="group" aria-label="Currency">${btn('own', `${symOf(own).trim()} ${own}`, !inUsd)}${hasUsd ? btn('usd', 'US$', inUsd) : ''}<span class="muted">${say}</span></div>`;
+    const sym = symOf(own).trim();                       // "€ EUR", but "SEK" (no symbol of its own), never "SEK SEK"
+    return `<div class="ccy-bar" role="group" aria-label="Currency">${btn('own', sym && sym !== own ? `${sym} ${own}` : own, !inUsd)}${hasUsd ? btn('usd', 'US$', inUsd) : ''}<span class="muted">${say}</span></div>`;
   }
 
   // customers & suppliers (web/network.js), the growth model (web/model.js) and the chains the company is in
@@ -1339,7 +1341,10 @@
       cashSection(body, c);
     } else if (which === 'capital') { capitalSection(body, c, ticker); postBelow(body, 'capital', c, ticker, here); }
     else if (which === 'revisions') revisionsSection(body, c);
-    else if (which === 'bs') reformSection(body, c);
+    else if (which === 'bs') {                                 // the blocks (web/bs-blocks.js), then the workbench
+      if (window.FFBSBlocks) window.FFBSBlocks.mount(body, c, { money, evBtn });
+      reformSection(body, c);
+    }
     else valuationSection(body, c, ticker, here);
   }
 
@@ -1523,7 +1528,7 @@
   const BRIDGE = { da: 'Depreciation and amortization', sbc: 'Share-based compensation', dtax: 'Deferred income taxes',
     impair: 'Impairments', gain_inv: 'Gains on investments', gain_dis: 'Gains on disposals', other_nc: 'Other non-cash items',
     d_ar: 'Receivables', d_inv: 'Inventories', d_ap: 'Payables', d_accr: 'Accrued liabilities', d_emp: 'Employee-related liabilities',
-    d_contract: 'Deferred revenue', d_casset: 'Contract assets', d_oassets: 'Prepaid and other assets', d_oliab: 'Other liabilities',
+    d_contract: 'Deferred revenue', d_casset: 'Contract assets', d_orec: 'Other receivables', d_oassets: 'Prepaid and other assets', d_oliab: 'Other liabilities',
     d_tax: 'Income taxes payable', d_onet: 'Other operating capital' };
   const WC_KEYS = new Set(Object.keys(BRIDGE).filter((k) => k.startsWith('d_')));
   const days = (v) => (v == null ? '—' : `${Math.round(v)}`);
@@ -2182,6 +2187,10 @@
   }
 
   // ---------- Balance sheet reformulated: operating vs financing, RNOA (pipeline/reform.py) ----------
+  // a derived line: what the tagged lines leave of a side, or of its current (cur 1) or non-current (cur 0) section
+  const RF_REST = { assets: { tot: 'assets', twice: 'Assets' }, liab: { tot: 'liab', twice: 'Liabilities' },
+    ca: { tot: 'assets', sec: 'ca', cur: 1, twice: 'Current assets' }, nca: { tot: 'assets', sec: 'ca', cur: 0, twice: 'Non-current assets' },
+    cl: { tot: 'liab', sec: 'cl', cur: 1, twice: 'Current liabilities' }, ncl: { tot: 'liab', sec: 'cl', cur: 0, twice: 'Non-current liabilities' } };
   function reformSection(body, c) {
     const R = (c.quality || {}).reform, P = c.profile || {};
     const box = document.createElement('section');
@@ -2196,7 +2205,10 @@
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(store) || '{}') || {}; } catch (e) { saved = {}; }
     const st = { i: R.ends.length - 1, tax: saved.tax != null ? saved.tax : R.tax_rate, cls: { ...(saved.cls || {}) } };
-    const save = () => { try { localStorage.setItem(store, JSON.stringify({ cls: st.cls, tax: st.tax })); } catch (e) { /* private window */ } };
+    const save = () => {
+      try { localStorage.setItem(store, JSON.stringify({ cls: st.cls, tax: st.tax })); } catch (e) { /* private window */ }
+      document.dispatchEvent(new CustomEvent('ff:reform', { detail: { cik: P.cik } }));   // the blocks above redraw
+    };
     const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
     const clsOf = (x) => st.cls[x.k] || x.cls;
     const T = (k, i) => ((R.totals || {})[k] || [])[i];
@@ -2226,13 +2238,20 @@
       const v = x.v[i], rs = (x.ev || [])[i] || [], per = R.labels[i];
       if (v == null) return '<span class="muted">—</span>';
       if (x.derived) {
-        const tot = x.derived === 'assets' ? T('assets', i) : T('liab', i);
-        const shown = R.lines.filter((y) => y.side === x.side && !y.derived).reduce((s, y) => s + (y.v[i] || 0), 0);
+        // what the lines leave: of the side (unclassified balance sheets) or of its current / non-current section
+        const D = RF_REST[x.derived], word = D.tot === 'assets' ? 'assets' : 'liabilities', whole = T(D.tot, i), sec = D.sec ? T(D.sec, i) : null;
+        const part = (y) => (y.cv ? (y.cv[i] || 0) : y.cur ? (y.v[i] || 0) : 0);
+        const mine = R.lines.filter((y) => y.side === x.side && !y.derived);
+        const all = mine.reduce((s, y) => s + (y.v[i] || 0), 0), cur = mine.reduce((s, y) => s + part(y), 0);
+        const ref = (k) => ((R.ev_totals || {})[k] || [])[i];
+        const inputs = [{ title: `Total ${word}`, value: money(whole), period: per, ref: ref(D.tot),
+          note: D.tot === 'liab' && !ref('liab') ? 'Not tagged: liabilities and equity minus equity.' : '' }];
+        if (D.sec) inputs.push({ title: `Current ${word}`, value: money(sec), period: per, ref: ref(D.sec) });
         return evBtn(money(v), { title: x.name, value: money(v), period: per, kind: 'Derived',
-          formula: `total ${x.derived === 'assets' ? 'assets' : 'liabilities'} ${money(tot)} − the lines above ${money(shown)}`,
-          note: v < 0 ? 'Negative: some lines above are already included in other lines of this balance sheet (taken twice), so this line takes them back out.' : x.why,
-          inputs: [{ title: x.derived === 'assets' ? 'Total assets' : 'Total liabilities', value: money(tot), period: per, ref: ((R.ev_totals || {})[x.derived === 'assets' ? 'assets' : 'liab'] || [])[i],
-            note: x.derived === 'liab' && !((R.ev_totals || {}).liab || [])[i] ? 'Not tagged: liabilities and equity minus equity.' : '' }] });
+          formula: D.cur == null ? `total ${word} ${money(whole)} − the lines above ${money(all)}`
+            : D.cur ? `current ${word} ${money(sec)} − the current lines above ${money(cur)}`
+            : `non-current ${word} ${money(whole - sec)} (total ${money(whole)} − current ${money(sec)}) − the non-current lines above ${money(all - cur)}`,
+          note: v < 0 ? 'Negative: some lines above are already included in other lines of this balance sheet (taken twice), so this line takes them back out.' : x.why, inputs });
       }
       if (rs.length === 1) return evBtn(money(v), { title: x.name, value: money(v), period: per, ref: rs[0] });
       return evBtn(money(v), { title: x.name, value: money(v), period: per, kind: 'Reported', formula: 'sum of the tagged lines', inputs: rs.map((r) => ({ title: x.name, value: '', period: per, ref: r })) });
@@ -2240,7 +2259,7 @@
     function sideHTML(side, i) {
       const L = R.lines.filter((x) => x.side === side && x.v[i] != null && (x.v[i] !== 0 || x.derived));
       const b = bal(i);
-      const name = (x) => (x.derived && x.v[i] < 0 ? (side === 'a' ? 'Assets counted twice above' : 'Liabilities counted twice above') : x.name);
+      const name = (x) => (x.derived && x.v[i] < 0 ? `${RF_REST[x.derived].twice} counted twice above` : x.name);
       return `<table class="ca-table rf-table"><thead><tr><th>${side === 'a' ? 'Assets' : 'Liabilities'}</th><th class="num">${t(R.labels[i])}</th><th>Class</th></tr></thead><tbody>
         ${L.map((x) => { const cl = clsOf(x), ed = st.cls[x.k] && st.cls[x.k] !== x.cls; return `<tr class="${ed ? 'rf-edited' : ''}">
           <td><span class="rf-name">${t(name(x))}</span><small class="rf-why">${t(x.why)}${x.suggest ? ` <b>Suggested from the notes: ${t(x.suggest.cls === 'fin' ? 'financing' : 'operating')}</b> — ${t(x.suggest.why || '')}` : ''}</small></td>
@@ -5690,7 +5709,7 @@
       else if (h === 'owner-xreport') { await ownerPage(); const x = $('#xreport'); if (x) x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       else if ((m = /^unsubscribe-([0-9a-f-]{36})$/.exec(h))) await unsubscribePage(m[1]);
       // a Disclosures section (#signals, #smart, #etf/SPY …): the hub's pages, part of the site (web/hub-shell.js)
-      else if (window.FFHubShell && window.FFHubShell.owns(h)) await window.FFHubShell.show(h, { setNav });
+      else if (window.FFHubShell && window.FFHubShell.owns(h)) await window.FFHubShell.show(h, { setNav, here });
       else await home();
       initFollowButtons();
       initSendButtons();

@@ -3,8 +3,8 @@ of day, and what followed — to the close and over the next days.
 
 Every five minutes through the US session (the relay .github/workflows/intraday.yml) the Yahoo Finance chart API is read
 for each asset of the hub's "Market & sectors" (the indices, the market ETFs, the sectors, the styles): today's
-five-minute bars and the last price. Its history at each time of day comes from the hourly bars of the last two years
-(range 730d, interval 60m; cache/h60/<KEY>.json, refreshed once a day): for every full session, the price at the open
+five-minute bars and the last price. Its history at each time of day comes from the hourly bars Yahoo keeps (range
+730d, interval 60m: about three years; cache/h60/<KEY>.json, refreshed once a day): for every full session, the price at the open
 and at 10:30, 11:30 … 15:30 and 4 pm as a move from the previous session's 4 pm price. Now is read at the nearest of
 those marks:
 
@@ -19,7 +19,8 @@ those marks:
                every day's gap to its VWAP at that mark (from the hourly bars: highs, lows, closes, volumes), the 60 days
                nearest to today's gap — the share that closed above their VWAP, that came back to it before the close,
                the move to the close, the next days — and, for ten bands of the gap, the share above VWAP at the close
-               and the share that came back (the probability chart); an asset with no volume (some indices) has none
+               and the share that came back (the probability chart); an index (its volume is no trade's) or an asset with no
+               volume has none
 
 Each asset says whether its reading is from today's session (`today`: before the open Yahoo still shows the last
 close); `session.short` marks an early close, when the odds to 4 pm don't apply.
@@ -342,7 +343,7 @@ def scan(h, cache, now=None, fetch_history=True, log=print):
         a = {'key': key, 'name': name, 'kind': kind, 'symbol': ysym, 'price': _r(live['price'], 4), 'prev': _r(live['prev'], 4), 'move': _r(move, 5),
              'time': t_et.isoformat(), 'today': bool(on_day and mins >= 0), 'path': [[x, _r(p / live['prev'] - 1, 5)] for x, p in live['path']],
              'hi': _r(max(p for _, p in live['path']) / live['prev'] - 1) if live['path'] else None, 'lo': _r(min(p for _, p in live['path']) / live['prev'] - 1) if live['path'] else None}
-        if live['vwap_path']:                                          # today's VWAP from the five-minute bars (no volume: none)
+        if live['vwap_path'] and not ysym.startswith('^'):             # today's VWAP from the five-minute bars (an index's volume is no trade's: none)
             vw_now = live['vwap_path'][-1][1]
             a['vwap'] = _r(vw_now, 4)
             a['vs_vwap'] = _r(live['price'] / vw_now - 1)

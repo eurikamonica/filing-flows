@@ -18,7 +18,9 @@
   const pc = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const sp = (v, d = 2) => { if (!fin(v)) return '—'; const a = Math.abs(100 * v); return (Number(a.toFixed(d)) === 0 ? '' : v > 0 ? '+' : '−') + num(a, d) + '%'; };
   const tone = (v) => (!fin(v) ? '' : v > 0 ? 'iv-up' : v < 0 ? 'iv-down' : '');
-  const rank = (p) => { if (!fin(p)) return '—'; const x = p >= 50 ? 100 - p : +p; return `${p >= 50 ? 'top' : 'bottom'} ${x < 1 ? x.toFixed(2) : x.toFixed(1)}%`; };
+  const rank = (p) => (!fin(p) ? '—' : `${p >= 50 ? 'top' : 'bottom'} ${(p >= 50 ? 100 - p : +p).toFixed(1)}%`);
+  const edge = (p) => fin(p) && (p < 0.1 || p > 99.9);                  // beyond every day on file (a rank of 0.0 or 100.0)
+  const every = (v) => num(v, v < 10 ? 1 : 0);
   const money = (v) => (fin(v) ? num(v, v >= 1000 ? 0 : 2) : '—');
   const hm = (iso) => { const m = /T(\d{2}):(\d{2})/.exec(iso || ''); return m ? `${+m[1] > 12 ? +m[1] - 12 : +m[1]}:${m[2]} ${+m[1] >= 12 ? 'pm' : 'am'}` : ''; };
   const etHm = (iso) => { const t = Date.parse(iso); return Number.isFinite(t) ? hm(new Date(t).toLocaleString('sv-SE', { timeZone: 'America/New_York' }).replace(' ', 'T')) : ''; };
@@ -71,13 +73,14 @@
     return Date.parse(a.time) >= Date.parse(d.session.start);
   }
   /* 'live' while the session is on and the file is under 15 minutes old, 'stale' up to 90 minutes, 'down' after;
-     'closed' once that day's session is over (and the relay read the close); null with no reading of today */
+     'closed' once that session is over and the relay read its close — until the next session's file replaces it (four
+     days at most; the overnight update takes over sooner, by the slots' data-asof); null with no reading of the day */
   function status(d, now) {
     if (!d || !d.session || !d.assets) return null;
     if (!Object.values(d.assets).some((a) => isToday(a, d))) return null;
     now = now || Date.now();
     const gen = Date.parse(d.generated_at), start = Date.parse(d.session.start), end = Date.parse(d.session.end);
-    if (now >= end) return etDay(now) === d.session.date && gen >= end - 10 * 60000 ? 'closed' : null;
+    if (now >= end) return gen >= end - 10 * 60000 && now - end < 4 * 86400000 ? 'closed' : null;
     if (now < start) return null;
     const age = (now - gen) / 60000;
     return age <= 15 ? 'live' : age <= 90 ? 'stale' : 'down';
@@ -96,12 +99,12 @@
     let h = `<b class="${tone(a.move)}">${sp(a.move)}<span class="iv-at">${at}</span></b>${o && !(short && st === 'closed') ? meter(o.pct) : ''}`;
     if (st === 'closed') {
       const n1 = S && S.next && S.next['1'];
-      if (o && !short) h += `<i>${rank(o.pct)} day</i>`;
+      if (o && !short) h += `<i>${edge(o.pct) ? `the ${o.pct < 50 ? 'lowest' : 'highest'} of ${num(o.days)} days` : `${rank(o.pct)} day`}</i>`;
       if (n1 && fin(n1.p50) && !short) h += `<i>the day after days like it: <span class="${tone(n1.p50)}">${sp(n1.p50)}</span> · ${pc(n1.up)} rose</i>`;
       if (fin(a.vs_vwap)) h += `<i>vs VWAP <span class="${tone(a.vs_vwap)}">${sp(a.vs_vwap)}</span> at the close</i>`;
       return h;
     }
-    if (o) h += `<i>${rank(o.pct)} so far</i>`;
+    if (o) h += `<i>${edge(o.pct) ? `the ${o.pct < 50 ? 'lowest' : 'highest'} of ${num(o.days)} days by then` : `${rank(o.pct)} so far`}</i>`;
     if (S && S.rest && !short && o.j < 7) h += `<i>to 4 pm, ${num(S.n)} days like it:<br><span class="${tone(S.rest.p50)}">${sp(S.rest.p50)}</span> · ${pc(S.above)} higher</i>`;
     const VS = a.vwap_odds && a.vwap_odds.similar;
     if (fin(a.vs_vwap)) h += `<i>vs VWAP <span class="${tone(a.vs_vwap)}">${sp(a.vs_vwap)}</span>${VS && fin(VS.back) && !short ? `<br>${pc(VS.back)} came back to it` : ''}</i>`;
@@ -215,7 +218,7 @@
     if (short) return `<div class="iv-vw"><h4>Against VWAP</h4><p>${t}. Today's session closes early: the odds against VWAP of full days don't apply.</p></div>`;
     if (!V) return `<div class="iv-vw"><h4>Against VWAP</h4><p>${t}. Its history against VWAP is not on file yet.</p></div>`;
     const S = V.similar || {}, B = V.base || {}, by = markLabel(V.mark), n1 = (S.next || {})['1'] || {}, b1 = (B.next || {})['1'] || {}, gaps = S.gaps || [];
-    t += `: the <b>${rank(V.pct)}</b> of its ${num(V.days)} days by ${esc(by)}.`;
+    t += edge(V.pct) ? `: <b>the ${V.pct < 50 ? 'furthest below' : 'furthest above'}</b> of its ${num(V.days)} days by ${esc(by)}.` : `: the <b>${rank(V.pct)}</b> of its ${num(V.days)} days by ${esc(by)}.`;
     if (!closed && V.j < 7) t += ` The ${num(S.n)} days nearest to this gap by then (${sp(gaps[0])} to ${sp(gaps[1])}): <b>${pc(S.above)}</b> closed above their VWAP, <b>${pc(S.back)}</b> came back to it before the close, and they went a median <span class="${tone(S.rest && S.rest.p50)}">${sp(S.rest && S.rest.p50)}</span> to 4 pm (10–90%: ${sp(S.rest && S.rest.p10)} to ${sp(S.rest && S.rest.p90)}). Every day from ${esc(by)}: ${pc(B.above)} closed above VWAP, ${pc(B.back)} came back, a median ${sp(B.rest && B.rest.p50)}.`;
     t += ` The day after such days: a median <span class="${tone(n1.p50)}">${sp(n1.p50)}</span>, ${pc(n1.up)} rose (every day ${sp(b1.p50)}, ${pc(b1.up)}).`;
     const ch = closed ? '' : vwapChart(V);
@@ -233,19 +236,20 @@
     const o = a.odds, S = o && o.similar, B = (o && o.base) || {}, st = status(d), short = !!(d.session && d.session.short), closed = st === 'closed';
     const by = o ? markLabel(o.mark) : '', toClose = !!(S && S.rest && !short && o.j < 7 && !closed);
     const when = closed ? `closed at ${money(a.price)}, <b class="${tone(a.move)}">${sp(a.move)}</b> on the day` : `<b class="${tone(a.move)}">${sp(a.move)}</b> at ${esc(hm(a.time))} New York time${st === 'stale' ? ' (the feed is behind)' : ''}`;
-    let h = `<div class="iv-panel"><h3>${st === 'live' ? '<span class="iv-dot"></span>' : ''}${esc(a.name)} today: ${when}</h3>`;
+    const onDay = !closed || etDay(Date.now()) === (d.session || {}).date;
+    let h = `<div class="iv-panel"><h3>${st === 'live' ? '<span class="iv-dot"></span>' : ''}${esc(a.name)}${onDay ? ' today' : `, ${esc(day(d.session.date).replace(/, \d{4}$/, ''))}`}: ${when}</h3>`;
     h += `<p class="iv-sub">${money(a.price)}, the previous close ${money(a.prev)}; today's high ${sp(a.hi)}, low ${sp(a.lo)}. ${esc(d.source || '')}, read every five minutes${d.generated_at ? `, last at ${esc(etHm(d.generated_at))}` : ''}.${short ? ` Today's session closes early, at ${esc(etHm(d.session.end))}: the odds to 4 pm of full days don't apply.` : ''}</p>`;
     h += chart(a, toClose, width);
     if (!o) return h + `<p class="iv-sub">Its history at this time of day is not on file yet.</p>` + vwapSection(a, a.vwap_odds, st, short) + '</div>';
     const fall = o.pct < 50, cols = [];
-    cols.push(`<div><h4>${closed ? 'The day' : 'So far'}</h4><p>${sp(a.move)} ${closed ? 'on the day' : `by about ${esc(by)}`}: in the <b>${rank(o.pct)}</b> of its ${num(o.days)} days since ${esc(day(o.from))}${closed ? '' : ' at that time of day'}; a ${fall ? 'fall' : 'rise'} this far${closed ? '' : ' by then'} comes about once in ${num(o.every, 1)} days.</p>${distChart(o, d.edges, a.move)}${d.edges && d.edges.length > 1 ? `<p class="iv-sub">Every day's move by ${esc(by)} from the previous close, in bands of ${band(d.edges[1] - d.edges[0]).replace('+', '')}.</p>` : ''}</div>`);
+    cols.push(`<div><h4>${closed ? 'The day' : 'So far'}</h4><p>${sp(a.move)} ${closed ? 'on the day' : `by about ${esc(by)}`}: ${edge(o.pct) ? `<b>the ${fall ? 'lowest' : 'highest'}</b> of its ${num(o.days)} days since ${esc(day(o.from))}${closed ? '' : ' at that time of day'} — further than any day on file` : `in the <b>${rank(o.pct)}</b> of its ${num(o.days)} days since ${esc(day(o.from))}${closed ? '' : ' at that time of day'}; a ${fall ? 'fall' : 'rise'} this far${closed ? '' : ' by then'} comes about once in ${every(o.every)} days`}.</p>${distChart(o, d.edges, a.move)}${d.edges && d.edges.length > 1 ? `<p class="iv-sub">Every day's move by ${esc(by)} from the previous close, in bands of ${band(d.edges[1] - d.edges[0]).replace('+', '')}.</p>` : ''}</div>`);
     if (toClose) {
       const mb = S.moves_by_then || [], r = S.rest;
       cols.push(`<div><h4>To the close</h4><p>The ${num(S.n)} days nearest to this move by ${esc(by)} (${sp(mb[0])} to ${sp(mb[1])} by then) went a median <b class="${tone(r.p50)}">${sp(r.p50)}</b> further by 4 pm (10–90%: ${sp(r.p10)} to ${sp(r.p90)}); <b>${pc(S.above)}</b> closed above that price and ${pc(S.green)} above the previous close${S.close ? ` — a close near <b>${money(S.close[1])}</b> (10–90%: ${money(S.close[0])}–${money(S.close[2])})` : ''}. Every day from ${esc(by)}: a median ${sp(B.rest && B.rest.p50)}, ${pc(B.above)} higher.</p>${restChart(o)}</div>`);
     }
     if (S) cols.push(`<div><h4>The days after</h4>${daysTable(S, B)}<p class="iv-sub">From the 4 pm close of the ${num(S.n)} days most like today by ${esc(by)}, and of every day: the median move, the share that rose and, below, the range of eight in ten.</p></div>`);
     h += `<div class="iv-grid">${cols.join('')}</div>` + vwapSection(a, a.vwap_odds, st, short);
-    h += `<p class="iv-sub">From Yahoo's hourly bars of the last two years (${num(o.days)} full sessions; the price at a mark is the close of that hourly bar, the previous close the 4 pm price before); now is read at the nearest mark, ${esc(by)}. History, not a forecast.</p>`;
+    h += `<p class="iv-sub">From Yahoo's hourly bars since ${esc(day(o.from))} (${num(o.days)} full sessions; the price at a mark is the close of that hourly bar, the previous close the 4 pm price before); now is read at the nearest mark, ${esc(by)}. History, not a forecast.</p>`;
     return h + '</div>';
   }
   function banner(d, e, asof) {
@@ -253,7 +257,9 @@
     if (st === 'live') return `<span class="iv-dot"></span><b>Live</b>, ${at} New York time: each card leads with the move so far today, its rank among its own days at that time, where the ${num(d.k || 60)} days most like it went by 4 pm and the price against its VWAP (Yahoo Finance, every five minutes; some prices may be delayed). Its last line is the last close. Pick a card for the path, the spread and the days after.`;
     if (st === 'stale') return `The live feed is behind: the cards show its last reading, at ${at} New York time${e ? ` (${esc(e)})` : ''}.`;
     if (st === 'down') return `The live feed stopped at ${at} New York time: the cards show the last close.`;
-    if (st === 'closed' && asof && asof < d.session.date) return `Today's session is over: the cards lead with today's close from the live feed (Yahoo Finance) until tonight's update; the card's last line is the close before.`;
+    if (st === 'closed' && asof && asof < d.session.date) return etDay(Date.now()) === d.session.date
+      ? `Today's session is over: the cards lead with today's close from the live feed (Yahoo Finance) until tonight's update; the card's last line is the close before.`
+      : `The session of ${esc(day(d.session.date).replace(/, \d{4}$/, ''))} is over: the cards lead with its close from the live feed (Yahoo Finance) until the overnight update has it; the card's last line is the close before.`;
     return '';
   }
   /* the asset to paint into a slot, or null: shown while live, stale or closed; after the close only until the

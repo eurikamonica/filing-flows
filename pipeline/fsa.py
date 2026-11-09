@@ -62,6 +62,7 @@ WC = [
     ("d_emp", "Employee-related liabilities", +1, ["IncreaseDecreaseInEmployeeRelatedLiabilities"]),
     ("d_contract", "Deferred revenue", +1, ["IncreaseDecreaseInContractWithCustomerLiability", "IncreaseDecreaseInDeferredRevenue"]),
     ("d_casset", "Contract assets", -1, ["IncreaseDecreaseInContractWithCustomerAsset"]),
+    ("d_orec", "Other receivables", -1, ["IncreaseDecreaseInOtherReceivables"]),                 # Apple's vendor non-trade receivables
     ("d_oassets", "Prepaid and other assets", -1, ["IncreaseDecreaseInPrepaidDeferredExpenseAndOtherAssets",
                                                    "IncreaseDecreaseInOtherOperatingAssets", "IncreaseDecreaseInOtherCurrentAssets",
                                                    "IncreaseDecreaseInPrepaidExpense"]),

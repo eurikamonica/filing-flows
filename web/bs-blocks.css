@@ -1,0 +1,145 @@
+/* ---------- Balance sheet in blocks (company page → Balance sheet; web/bs-blocks.js) ----------
+   Hue is the kind (operating assets green-teal, financial assets blue, operating liabilities amber, financial
+   obligations violet, equity green); tone is the section: lighter for current lines (due or used within a year, dark
+   text), deeper for non-current ones (white text). Every step validated with the dataviz validator against the chart
+   surface in both themes (adjacent pairs, CVD and normal vision); the light tones sit near 2:1, so every block keeps its
+   label, its 2px gap and its tooltip. Costs beside them use the Sankeys' red, so debt is not red here. */
+.bsb {
+  --bsb-oa-c: #3ec48e; --bsb-oa-n: #008553;
+  --bsb-fa-c: #66b3ff; --bsb-fa-n: #2473d0;
+  --bsb-ol-c: #eba000; --bsb-ol-n: #a96200;
+  --bsb-fo-c: #aca4ff; --bsb-fo-n: #6f5fe6;
+  --bsb-eq: #218444; --bsb-eq-c: #65c27d;
+  --bsb-cost-1: #c84c35; --bsb-cost-2: #ef816b; --bsb-cost-3: #ffb5a6;
+  --bsb-out: #ef816b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .bsb {
+    --bsb-oa-c: #18ae79; --bsb-oa-n: #007747;
+    --bsb-fa-c: #4894f5; --bsb-fa-n: #035eb9;
+    --bsb-ol-c: #cc8200; --bsb-ol-n: #934c00;
+    --bsb-fo-c: #887cff; --bsb-fo-n: #5844c9;
+    --bsb-eq: #017435; --bsb-eq-c: #4daa67;
+    --bsb-cost-1: #c84c35; --bsb-cost-2: #9d3725; --bsb-cost-3: #733023;
+    --bsb-out: #c84c35;
+  }
+}
+:root[data-theme="dark"] .bsb {
+  --bsb-oa-c: #18ae79; --bsb-oa-n: #007747;
+  --bsb-fa-c: #4894f5; --bsb-fa-n: #035eb9;
+  --bsb-ol-c: #cc8200; --bsb-ol-n: #934c00;
+  --bsb-fo-c: #887cff; --bsb-fo-n: #5844c9;
+  --bsb-eq: #017435; --bsb-eq-c: #4daa67;
+  --bsb-cost-1: #c84c35; --bsb-cost-2: #9d3725; --bsb-cost-3: #733023;
+  --bsb-out: #c84c35;
+}
+
+.bsb-bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 2px 0 10px; }
+.bsb-bar .seg { flex-wrap: wrap; }
+.bsb-cmp { cursor: pointer; }
+.bsb-cmp input { margin: 0; accent-color: var(--accent); }
+.bsb-kpis { margin: 0 0 6px; }
+.bsb-kpis .q-kpi strong { font-variant-numeric: tabular-nums; }
+.bsb-plot { position: relative; margin: 6px 0 2px; }
+.bsb-svg { display: block; max-width: 100%; height: auto; overflow: visible; margin: 0 auto; }
+
+/* fills: kind × section */
+.bsb-k-oa-c { fill: var(--bsb-oa-c); } .bsb-k-oa-n { fill: var(--bsb-oa-n); }
+.bsb-k-fa-c { fill: var(--bsb-fa-c); } .bsb-k-fa-n { fill: var(--bsb-fa-n); }
+.bsb-k-ol-c { fill: var(--bsb-ol-c); } .bsb-k-ol-n { fill: var(--bsb-ol-n); }
+.bsb-k-fo-c { fill: var(--bsb-fo-c); } .bsb-k-fo-n { fill: var(--bsb-fo-n); }
+.bsb-k-eq { fill: var(--bsb-eq); }
+/* hatched rests: a wash of the tone with its own lines */
+.bsb-w-oa-c { fill: var(--bsb-oa-c); opacity: .22; } .bsb-l-oa-c { stroke: var(--bsb-oa-c); stroke-width: 2.4; }
+.bsb-w-oa-n { fill: var(--bsb-oa-n); opacity: .2; }  .bsb-l-oa-n { stroke: var(--bsb-oa-n); stroke-width: 2.4; }
+.bsb-w-fa-c { fill: var(--bsb-fa-c); opacity: .22; } .bsb-l-fa-c { stroke: var(--bsb-fa-c); stroke-width: 2.4; }
+.bsb-w-fa-n { fill: var(--bsb-fa-n); opacity: .2; }  .bsb-l-fa-n { stroke: var(--bsb-fa-n); stroke-width: 2.4; }
+.bsb-w-ol-c { fill: var(--bsb-ol-c); opacity: .26; } .bsb-l-ol-c { stroke: var(--bsb-ol-c); stroke-width: 2.4; }
+.bsb-w-ol-n { fill: var(--bsb-ol-n); opacity: .2; }  .bsb-l-ol-n { stroke: var(--bsb-ol-n); stroke-width: 2.4; }
+.bsb-w-fo-c { fill: var(--bsb-fo-c); opacity: .24; } .bsb-l-fo-c { stroke: var(--bsb-fo-c); stroke-width: 2.4; }
+.bsb-w-fo-n { fill: var(--bsb-fo-n); opacity: .2; }  .bsb-l-fo-n { stroke: var(--bsb-fo-n); stroke-width: 2.4; }
+.bsb-x { stroke: none; }
+.bsb-deficit { fill: transparent; stroke: var(--bsb-out); stroke-width: 1.5; stroke-dasharray: 5 3; }
+/* the income statement beside them, in the Sankeys' colours */
+.bsb-is-c-cor { fill: var(--bsb-cost-1); }
+.bsb-is-c-opex, .bsb-is-c-rev { fill: var(--bsb-cost-2); }
+.bsb-is-c-below, .bsb-is-c-rest { fill: var(--bsb-cost-3); }
+.bsb-is-ni { fill: var(--bsb-eq); }
+.bsb-loss { opacity: .95; }
+.bsb-revline { stroke: var(--ink-2); stroke-width: 1.5; }
+/* the equity bridge between two years */
+.bsb-st-ni { fill: var(--bsb-eq); }
+.bsb-st-plus { fill: var(--bsb-eq-c); }
+.bsb-st-minus { fill: var(--bsb-out); }
+.bsb-st-gap { fill: transparent; stroke-width: 1.2; stroke-dasharray: 3 2; }
+.bsb-st-gap.plus { stroke: var(--bsb-eq); }
+.bsb-st-gap.minus { stroke: var(--bsb-out); }
+.bsb-conn { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; opacity: .8; }
+.bsb-sv-t { font: 500 11.5px var(--sans); fill: var(--ink-2); font-variant-numeric: tabular-nums; pointer-events: none; }
+.bsb-sv-t.bsb-in.bsb-on-ni { fill: #fff; }
+
+/* text */
+.bsb-t { font: 600 12px var(--sans); fill: #fff; pointer-events: none; letter-spacing: .005em; }
+.bsb-t.bsb-n, .bsb-t .bsb-n { font-weight: 450; font-variant-numeric: tabular-nums; }
+.bsb-t .bsb-share { opacity: .78; font-weight: 400; }
+.bsb-t.bsb-sm { font-size: 11px; }
+.bsb-t.bsb-dk, .bsb-t.bsb-onlight { fill: #0b0b0b; }
+.bsb-t.bsb-ink { fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .bsb-t.bsb-onlight { fill: #fff; } }
+:root[data-theme="dark"] .bsb-t.bsb-onlight { fill: #fff; }
+.bsb-yr { font: 600 13.5px var(--sans); fill: var(--ink); }
+.bsb-yr .bsb-yd { font-weight: 400; fill: var(--muted); font-size: 12.5px; }
+.bsb-ch { font: 500 12px var(--sans); fill: var(--ink-2); }
+.bsb-sl { font: 12px var(--sans); fill: var(--muted); }
+.bsb-sl.bsb-sv { fill: var(--ink-2); font-weight: 500; font-variant-numeric: tabular-nums; }
+.bsb-brk { fill: none; stroke: var(--muted); stroke-width: 1; opacity: .6; }
+.bsb-base { stroke: var(--line); stroke-width: 1; }
+.bsb-arrow { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.bsb-link path { fill: none; stroke: var(--muted); stroke-width: 1.4; }
+.bsb-link circle { fill: var(--surface); stroke: var(--muted); stroke-width: 1.4; }
+.bsb-link.strong path { stroke: var(--bsb-eq); stroke-width: 2; }
+.bsb-link.strong circle { stroke: var(--bsb-eq); }
+.bsb-ll { font: 600 12px var(--sans); fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+
+/* hover and focus: the block in hand stays, the rest steps back */
+.bsb-b { outline: none; cursor: default; }
+.bsb-b rect { transition: opacity .15s ease; }
+.bsb-svg.focus .bsb-b:not(.on) rect { opacity: .42; }
+.bsb-svg.focus .bsb-b:not(.on) text { opacity: .55; }
+.bsb-b.on rect, .bsb-b:focus-visible rect { stroke: var(--ink); stroke-width: 1.5; }
+.bsb-tip { position: absolute; z-index: 6; display: grid; gap: 3px; padding: 9px 11px; font-size: 12.5px; line-height: 1.38;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); pointer-events: none; }
+.bsb-tip[hidden] { display: none; }
+.bsb-tip b { font-weight: 600; }
+.bsb-tip .muted { color: var(--muted); }
+
+/* legend */
+.bsb-legend { margin: 4px 0 6px; align-items: center; }
+.bsb-legend .bsb-note { font-style: normal; color: var(--muted); }
+.bsb-key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 3px; vertical-align: -1px; }
+.bsb-legend span .bsb-key:last-of-type { margin-right: 6px; }
+.bsb-key-oa-c { background: var(--bsb-oa-c); } .bsb-key-oa-n { background: var(--bsb-oa-n); }
+.bsb-key-fa-c { background: var(--bsb-fa-c); } .bsb-key-fa-n { background: var(--bsb-fa-n); }
+.bsb-key-ol-c { background: var(--bsb-ol-c); } .bsb-key-ol-n { background: var(--bsb-ol-n); }
+.bsb-key-fo-c { background: var(--bsb-fo-c); } .bsb-key-fo-n { background: var(--bsb-fo-n); }
+.bsb-key-eq { background: var(--bsb-eq); }
+.bsb-key-minus { background: var(--bsb-out); }
+.bsb-key-c { background: linear-gradient(180deg, var(--bsb-cost-1) 0 50%, var(--bsb-cost-2) 50% 100%); }
+.bsb-key-x { background: repeating-linear-gradient(45deg, var(--muted) 0 1.5px, transparent 1.5px 4px); }
+.bsb-key-d { border: 1.5px dashed var(--bsb-out); width: 9px; height: 9px; }
+.bsb-dupont { font-size: 13.5px; color: var(--ink-2); margin: 0 0 4px; }
+.bsb-dupont span { color: var(--muted); margin: 0 3px; }
+.bsb-dupont b { color: var(--ink); font-weight: 600; }
+.bsb .cq-h3 { margin-top: 18px; }
+.bsb .cq-bar.base.bsb-eq { background: var(--bsb-eq); }
+.bsb .cq-bar.nc.plus { background: var(--bsb-eq-c); }
+.bsb .cq-bar.nc.plus.bsb-ni { background: var(--bsb-eq); }
+.bsb .cq-bar.nc.minus { background: var(--bsb-out); }
+/* the equity bridge's amounts stay on one line (currencies with a code: "−DKK 157.0M") */
+.bsb-eqb .cq-row .num { white-space: nowrap; text-align: right; }
+@media (max-width: 700px) {
+  .bsb-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {               /* the bars go under the names there, the full width (styles.css .cq-row) */
+  .bsb-eqb .cq-row { grid-template-columns: minmax(0, 1fr) auto; }
+}

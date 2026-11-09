@@ -13,7 +13,9 @@ name: Post to X
 #
 # The owner lane rides on the same relay: every check also starts the workflow for the owner's other requests — a short
 # scan (scan.yml, fast) for the owner's companies and re-reads, "Send requested reports" for the owner's e-mails and
-# comparisons — so they are picked up within seconds too (pipeline/owner_lane.py; actions: write below).
+# comparisons — so they are picked up within seconds too (pipeline/owner_lane.py; actions: write below). On weekdays
+# from 9:10 to 4 pm New York it also keeps the hub's live Move odds relay (intraday.yml) running, which GitHub's
+# schedule alone starts late or not at all (INTRADAY_RELAY=off stops it).
 
 on:
   schedule:
@@ -58,6 +60,7 @@ jobs:
       TWEET_MODEL: ${{ vars.TWEET_MODEL }}
       LOCAL_MODEL: ${{ vars.LOCAL_MODEL || '1' }}            # free fallback after the API models (pipeline/local_model.py); 0 turns it off
       LOCAL_BASE_MODEL: ${{ vars.LOCAL_BASE_MODEL }}
+      INTRADAY_RELAY: ${{ vars.INTRADAY_RELAY }}                  # off: the owner lane leaves intraday.yml alone
       BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
       BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
       REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}          # Owner tools: Reddit question / list posts
@@ -116,8 +119,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # one relay at a time: skip if another watch run is already queued or running
-          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status queued --json databaseId --jq length)
-          m=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status in_progress --json databaseId --jq length)
-          if [ "${n:-0}" -gt 0 ] || [ "${m:-0}" -gt 1 ]; then echo "another watch run is already waiting"; exit 0; fi
-          gh workflow run post-to-x.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chained=true
+          # one relay at a time: skip if another watch run is already queued or running. GitHub's dispatch endpoint
+          # answers HTTP 500/502 now and then, which broke the relay until the late cron restarted it; so try up to
+          # three times, re-checking first (a failed answer can still have started the run).
+          for attempt in 1 2 3; do
+            n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status queued --json databaseId --jq length)
+            m=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status in_progress --json databaseId --jq length)
+            if [ "${n:-0}" -gt 0 ] || [ "${m:-0}" -gt 1 ]; then echo "another watch run is already waiting"; exit 0; fi
+            if gh workflow run post-to-x.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chained=true; then exit 0; fi
+            [ "$attempt" -lt 3 ] && { echo "::warning::starting the next watch run failed (attempt $attempt), retrying"; sleep $((attempt * 20)); }
+          done
+          exit 1

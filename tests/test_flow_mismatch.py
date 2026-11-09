@@ -52,6 +52,18 @@ def test_minority_interests_larger_than_pretax_earnings():
         _draw(raw)
 
 
+def test_small_pretax_gap_beside_a_tax_benefit():
+    # pre-tax + tax benefit 0.4-0.5% off net earnings (discontinued operations): inside model.normalize's tolerance,
+    # outside the chart's own check at net earnings, so the quarter was not drawn. Carrier Q1 2026 ($170M + $96M benefit
+    # - $27M minority = $239M against $238M), Bloomin' Brands Q1 2026 (minority interests), Interpace FY 2025 (none)
+    for raw in ({"revenue": 5341 * M, "costs_total": 5101 * M, "oi": 259 * M, "pretax": 170 * M, "tax": -96 * M,
+                 "pl": 265 * M, "ni": 238 * M, "nci": 27 * M, "ocf": 79 * M, "da": 315 * M, "sbc": 21 * M, "capex": 94 * M},
+                {"revenue": 1050 * M, "oi": 60 * M, "pretax": 46.691 * M, "tax": -10.291 * M, "pl": 57.236 * M,
+                 "ni": 55.654 * M, "nci": 1.582 * M},
+                {"revenue": 50 * M, "oi": 3 * M, "pretax": 1.535 * M, "tax": -21.217 * M, "ni": 22.657 * M}):
+        nodes, links, N = _draw(raw)
+        assert "pretax_fixed" in N["flags"] and nodes["net"]["v"] == N["ni"]
+
 def test_bank_revenue_from_its_two_parts():
     # Zions Q2 2026: "Revenues" $182M is its fee income, not its total (net interest income $677M + noninterest $460M)
     raw = facts.bank_revenue({"revenue": 182 * M, "nii": 677 * M, "nonii": 460 * M, "nonint_exp": 551 * M}, "Revenues")
@@ -81,3 +93,30 @@ def test_undrawn_companies_are_read_again_first(tmp_path, monkeypatch):
     except Exception:
         pass
     assert order[:1] == [36270]                    # undrawn and on the oldest reading: first, ahead of the larger company
+
+
+def test_quarters_stored_before_the_minority_interest_rule_are_read_again(tmp_path, monkeypatch):
+    # Univest Q2 2026: stored with reader v6, before facts.odd_one_out dropped a minority-interest tag that repeats net
+    # income itself; the page kept a $22.953M minority interest and pre-tax rebuilt as $51.5M until it was read again
+    own = "0000102212-26-000037"
+    mk = lambda v: [{"start": "2026-04-01", "end": "2026-06-30", "val": v, "filed": "2026-08-07", "form": "10-Q",
+                     "accn": own, "fy": 2026, "fp": "Q2"}]
+    g = {"Revenues": mk(84.354e6), "NetIncomeLoss": mk(22.953e6),
+         "NetIncomeLossAttributableToNoncontrollingInterest": mk(22.953e6),
+         "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": mk(28.558e6),
+         "IncomeTaxExpenseBenefit": mk(5.605e6)}
+    raw_facts = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    stored = {"revenue": 84.354e6, "ni": 22.953e6, "nci": 22.953e6, "pretax": 28.558e6, "tax": 5.605e6}
+    store = build.Store(str(tmp_path))
+    store.put(102212, {"profile": {"name": "Univest"}, "da_v": 6,
+                       "quarters": {"2026-06-30": {"end": "2026-06-30", "form": "10-Q", "accn": own, "raw": stored}}})
+    assert build.DA_VERSION > 6
+    monkeypatch.setattr(build, "companyfacts", lambda cik, accn=None: facts.index_facts(raw_facts, accn=accn))
+    monkeypatch.setattr(build, "time_up", lambda *a, **k: False)
+    monkeypatch.setattr(build, "set_quality", lambda c, fx: None)
+    build.refresh_da(store, limit=5)
+    c = store.company(102212)
+    r = c["quarters"]["2026-06-30"]["raw"]
+    assert c["da_v"] == build.DA_VERSION and r["nci"] is None
+    N = normalize(r)
+    assert N["nci"] == 0 and N["pretax"] == 28.558e6 and N["pl"] == 22.953e6

@@ -82,6 +82,14 @@
       runs.push([u.seg.rev, -1]);                    // revenue → the segments
       if (J[u.seg.src]) runs.push([u.seg.src, 1]);   // what makes up revenue → revenue
     }
+    if (o.focus === 'cash' && u.cash_root) {
+      // the cash flow statement on its own: net income is the source (its income-statement tree is left out), every
+      // cash junction keeps its parts; the canvas then has the statement's own shape, not a tail on the income statement
+      const keep = new Set();
+      const walk = (k) => { if (keep.has(k)) return; keep.add(k); if (k === u.cash_ni) return; (J[k] || []).forEach(([x]) => walk(x)); };
+      walk(u.cash_root);
+      Object.keys(J).forEach((k) => { if (!keep.has(k) || k === u.cash_ni) delete J[k]; });
+    }
     if (o.cash === 'uses' && u.cash_uses && u.cash_root) {
       // the statement's sections give way to the groups by use (operating cash flow keeps its own lines)
       const ocf = (J[u.cash_root] || []).map(([k]) => k).find((k) => mainOf(k) === 'ocf');
@@ -225,7 +233,7 @@
   }
 
   // ---------- one period → the spec web/sankey.js draws ----------
-  // opts: {revAxis, costs: 'accounts' | 'segments', cash: 'statement' | 'uses', opened: Set, closed: Set, annual}
+  // opts: {revAxis, costs: 'accounts' | 'segments', cash: 'statement' | 'uses', focus: 'all' | 'cash', opened: Set, closed: Set, annual}
   function build(u, opts) {
     const o = opts || {};
     const S = structure(u, o);
@@ -665,7 +673,7 @@
     const list = (o.fy ? o.doc.years : o.doc.quarters) || [];
     const near = (a, b) => a && b && Math.abs(Date.parse(a) - Date.parse(b)) <= 6 * 864e5;
     let idx = Math.max(0, list.findIndex((x) => near(x.end, o.end)));
-    const st = { revAxis: null, costs: 'accounts', cash: 'statement', opened: new Set(), closed: new Set(), all: false, cmp: '', guide: false, next: false, says: true, risks: true, est: true, case: 'mid' };
+    const st = { revAxis: null, costs: 'accounts', cash: 'statement', focus: 'all', opened: new Set(), closed: new Set(), all: false, cmp: '', guide: false, next: false, says: true, risks: true, est: true, case: 'mid' };
     let vb = null, scene = null, sel = null, src = null, srcP = null;
     const el = document.createElement('div');
     el.className = 'ffu';
@@ -676,6 +684,7 @@
         <label class="ffu-per">Period <select data-per>${list.map((x, i) => `<option value="${i}">${esc(o.labelOf(x.end, o.fy))}</option>`).join('')}</select></label>
         <span class="ffu-seg" data-g="rev"></span>
         <span class="ffu-seg" data-g="costs"><span>Costs</span><button type="button" data-costs="accounts">By account</button><button type="button" data-costs="segments">By segment</button></span>
+        <span class="ffu-seg" data-g="focus"><span>Show</span><button type="button" data-focus="all" title="The income statement with the cash flow statement to its right">Earnings + cash</button><button type="button" data-focus="cash" title="The cash flow statement on its own: net income as the source, every section's lines, by statement or by use">Cash flow only</button></span>
         <span class="ffu-seg" data-g="cash"><span>Cash</span><button type="button" data-cash="statement">As filed</button><button type="button" data-cash="uses">By use</button></span>
         <span class="ffu-seg"><button type="button" data-cmp="">Now</button><button type="button" data-cmp="q">vs prior quarter</button><button type="button" data-cmp="y">vs year ago</button></span>
         <button type="button" class="ffu-btn" data-guide title="This period against the guidance it was given (the cash lines too)">◆ vs guidance</button>
@@ -709,8 +718,8 @@
       const yl = o.labelOf(yAgo, o.fy);
       const v = views(p.u);
       Object.assign(spec, {
-        dense: true, title: `${name} ${lab} — ultra-detailed flow`,
-        subtitle: `${o.fy ? 'Fiscal year' : 'Quarter'} ended ${p.end} · ${st.costs === 'segments' && v.seg ? 'costs by segment (the segment note)' : 'costs by account'} · ${st.cash === 'uses' && v.cash ? 'cash by use' : 'cash as filed'} · GAAP · XBRL of the ${p.form || 'filing'} and its notes`,
+        dense: true, title: `${name} ${lab} — ${st.focus === 'cash' ? 'ultra-detailed cash flow' : 'ultra-detailed flow'}`,
+        subtitle: `${o.fy ? 'Fiscal year' : 'Quarter'} ended ${p.end} · ${st.focus === 'cash' ? 'the cash flow statement from net income' : st.costs === 'segments' && v.seg ? 'costs by segment (the segment note)' : 'costs by account'} · ${st.cash === 'uses' && v.cash ? 'cash by use' : 'cash as filed'} · GAAP · XBRL of the ${p.form || 'filing'} and its notes`,
         footer: ['Each total and its parts are the company’s own calculation in its XBRL — the statements, the notes that split a line further, revenue by the filing’s own members, each segment’s revenue, significant expenses and profit (ASU 2023-07). Parts under 0.1% of revenue are summed as Other.',
           'Lines marked + have parts not drawn; open them on the canvas.'],
         compare: prev ? { vs: prev, title: `${name} ${lab} vs ${prev}: what changed (ultra-detailed)`, bullets: movers(sp, 'q') } : null,
@@ -726,6 +735,10 @@
       rg.hidden = v.rev.length < 2;
       $('[data-g="costs"]').hidden = !v.seg;
       $('[data-g="cash"]').hidden = !v.cash;
+      $('[data-g="focus"]').hidden = !p.u.cash_root;
+      $$('[data-focus]').forEach((b) => b.classList.toggle('on', b.dataset.focus === (p.u.cash_root ? st.focus : 'all')));
+      $('[data-g="costs"]').hidden = !v.seg || st.focus === 'cash';
+      $('[data-g="rev"]').hidden = v.rev.length < 2 || st.focus === 'cash';
       const ax = st.revAxis && (p.u.alt || {})[st.revAxis] ? st.revAxis : p.u.axis;
       $$('[data-rev]').forEach((b) => b.classList.toggle('on', b.dataset.rev === ax));
       $$('[data-costs]').forEach((b) => b.classList.toggle('on', b.dataset.costs === (v.seg ? st.costs : 'accounts')));
@@ -922,6 +935,7 @@
       if (b.dataset.rev) { st.revAxis = b.dataset.rev; draw(); return; }
       if (b.dataset.costs) { st.costs = b.dataset.costs; draw(); return; }
       if (b.dataset.cash) { st.cash = b.dataset.cash; draw(); return; }
+      if (b.dataset.focus) { st.focus = b.dataset.focus; st.opened.clear(); st.closed.clear(); draw(); return; }
       if (b.dataset.cmp !== undefined && b.hasAttribute('data-cmp')) { st.cmp = b.dataset.cmp; draw(); return; }
       if (b.hasAttribute('data-guide')) { st.guide = !st.guide; st.next = false; draw(); return; }
       if (b.hasAttribute('data-next')) {
@@ -934,7 +948,7 @@
       if (b.hasAttribute('data-risks')) { st.risks = !st.risks; draw(); return; }
       if (b.hasAttribute('data-est')) { st.est = !st.est; draw(); return; }
       if (b.hasAttribute('data-all')) { st.all = !st.all; if (!st.all) st.opened.clear(); draw(); return; }
-      if (b.hasAttribute('data-std')) { Object.assign(st, { revAxis: null, costs: 'accounts', cash: 'statement', all: false }); st.opened.clear(); st.closed.clear(); draw(); return; }
+      if (b.hasAttribute('data-std')) { Object.assign(st, { revAxis: null, costs: 'accounts', cash: 'statement', focus: 'all', all: false }); st.opened.clear(); st.closed.clear(); draw(); return; }
       if (b.dataset.z) { zoom(b.dataset.z === 'in' ? 0.7 : b.dataset.z === 'out' ? 1 / 0.7 : 0); return; }
       if (b.hasAttribute('data-png')) { png(); return; }
       if (b.hasAttribute('data-close')) close();

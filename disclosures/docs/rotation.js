@@ -968,13 +968,16 @@ function rotMAHybrid(el){                                 // ma-hybrid-view.js l
  document.head.appendChild(s);el.innerHTML=empty('Loading Moving averages+…');
 }
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgsolo','rrgroll','rrgrollw','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','mcrel','mcspan','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb','rrgp','rrgh','rrgfp','rrgsolo','rrgmf','rrgmw','rrgroll','rrgrollw','rrgrh','rrsf','rrsg','rrsh'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
  {const dd=document.getElementById('rrgl-hist');if(dd)dd.ontoggle=()=>{if(state.rrglopen!==dd.open){state.rrglopen=dd.open;if(dd.open)render()}}}
  if($('rrglcsv'))$('rrglcsv').onclick=()=>{const keep=exported;exported=(typeof RRGL==='object'&&RRGL.csv)||[];downloadCSV();exported=keep};
  document.querySelectorAll('#workspace a[data-rview]').forEach(a=>a.onclick=e=>{e.preventDefault();rotStop();state.rview=a.dataset.rview;render();scrollTo({top:0,behavior:'smooth'})});
  if($('rrgtk')){$('rrgtk').onchange=e=>{state.rrgtk=e.target.value;render()};$('rrgtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rtk')){$('rtk').onchange=e=>{state.rtk=e.target.value;render()};$('rtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rplay'))$('rplay').onclick=rotToggle;
+ // the RRG's lines: tap to add or take one away, "All lines" to show every line again (rrg.js: state.rrgsolo, ids)
+ document.querySelectorAll('#workspace [data-rrgpick]').forEach(b=>b.onclick=()=>{rotStop();const id=b.dataset.rrgpick;let cur=String(state.rrgsolo||'').split(',').filter(Boolean);
+  cur=!id?[]:cur.includes(id)?cur.filter(x=>x!==id):cur.concat(id);state.rrgsolo=cur.join(',');render()});
  if($('rspeed'))$('rspeed').onchange=e=>{state.rspd=e.target.value;if(ROT.timer){rotStop();rotToggle()}};
  if($('rshape'))$('rshape').onchange=e=>{state.rshape=e.target.value};
  if($('rmp4'))$('rmp4').onclick=rotExport;
