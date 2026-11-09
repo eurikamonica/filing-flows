@@ -750,6 +750,62 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     const off = await B({ expr: mix, fi: '0' });
     ok(off.kind === 'formula' && !off.fx && Math.abs(off.series[0].v[0] - 100) < 1e-9, 'without the money the lines are drawn as they are');
   }
+  // always buying at all-time highs: a high set before the window still stands; the cash waits for a week above it
+  {
+    const N = 300, c = [], a = [];
+    for (let i = 0; i < N; i++) {
+      const p = i < 50 ? 50 + i * 50 / 49 : i < 150 ? 100 - 40 * Math.sin(Math.PI * (i - 50) / 100) : 101 + (i - 150) * 99 / 149;
+      c.push(p); a.push(p * (1 + 0.0002 * i));
+    }
+    files['disclosures/data/etf/px/HHH.json'] = { symbol: 'HHH', name: 'H Fund', d0: '2019-12-30', t: Array.from({ length: N }, (_, i) => 7 * i), c, a, div: [] };
+    const d0 = Date.UTC(2020, 0, 3), wk = (i) => d0 + i * W;
+    const H = S.highsOn({ px: { t: Array.from({ length: N }, (_, i) => wk(i)), c } }, S.weeklyGrid('2021-03-05', '2025-09-26'));
+    const i150 = H.isHigh.indexOf(true);
+    ok(i150 > 0 && Math.abs(H.since[0] - wk(49)) < 864e5 && H.hwm[0] === 100 && Math.abs(H.pr[i150] - 101) < 1e-9 && H.isHigh.slice(0, i150).every((x) => !x), 'the high of before the window stands until a week closes above it');
+    const st0 = Object.assign(S.parseState('k=ath'), { t: 'HHH', from: '2021-03-05', to: '2025-09-26', xa: '100', xu: 'm', xd: '20', xc: '0' });
+    ok(st0.style === 'line' && st0.xa === '100', 'the all-time-highs kind and its settings');
+    let V = await S.build(st0);
+    const L = V.grid.length - 1, [ath, every, dip] = V.series, first = ath.buys[0];
+    ok(V.kind === 'ath' && V.series.length === 3 && ath.key === 'ath' && every.key === 'every' && dip.key === 'dip', 'three plans: at highs, every month, after a 20% drop');
+    ok(V.series.every((s) => Math.abs(-s.flows.reduce((x, f) => x + f[1], 0) - V.contrib[L]) < 1e-6), 'every plan gets the same money');
+    ok(Math.abs(V.grid[first[0]] - wk(150)) < 864e5 && first[1] > 1500, 'the waiting cash is bought in the first week above the old high: ' + first[1]);
+    ok(ath.v.slice(0, first[0]).every((v, i) => Math.abs(v - V.contrib[i]) < 1e-6) && ath.wcash[first[0] - 1] > 0 && ath.wcash[first[0]] === 0, 'until then its value is the cash put in');
+    ok(ath.buys.every(([i]) => V.ath.isHigh[i]) && every.buys.length > ath.buys.length && every.wcash.every((x) => x === 0), 'it buys only at new highs; the other plan buys every month');
+    ok(dip.buys.every(([i]) => V.ath.pr[i] <= 0.8 * V.ath.hwm[i] + 1e-9) && dip.wcash[L] > 0, 'the dip plan buys only 20% below the high, and waits at the highs');
+    ok(V.ath.highs.length === L - first[0] + 1 && V.ath.longest && !V.ath.longest.open && Math.abs(V.ath.longest.from - V.grid[0]) < 864e5 && Math.abs(V.ath.longest.to - wk(150)) < 864e5, 'the longest wait: from the start to the first new high');
+    ok(V.ath.events.length >= 1 && V.ath.events[0].i === first[0] && Math.abs(V.ath.events[0].after - (wk(150) - wk(49))) < 864e5, 'the event: a new high after the old one had stood since week 49');
+    ok(ath.avg > every.avg && every.avg > 0, 'buying only at highs pays more a share: ' + ath.avg.toFixed(2) + ' vs ' + every.avg.toFixed(2));
+    ok(/^Only at all-time highs: \$100 a month into HHH$/.test(V.title) && /vs\. every month and after a 20% drop/.test(V.sub) && /earning nothing/.test(V.sub), 'title and subtitle: ' + V.title + ' | ' + V.sub);
+    V.style = 'line'; V.endCard = true; S.finish(V, st0);
+    ok(V.final.length === 3 && /%\/yr$/.test(V.final[0].label) && /^Only at all-time highs: \$[\d,]+ · every month: \$[\d,]+$/.test(V.endTitle) && /weeks closed at a new high · longest wait/.test(V.endSub) && /still waiting for a 20% drop/.test(V.final.find((r) => r.k === 2).sub), 'the end card: ' + V.endTitle + ' | ' + V.endSub);
+    const R = S.report(V);
+    ok(R.kind === 'ath' && R.rows.length === 3 && ['put', 'end', 'buys', 'wait', 'avg'].every((k) => R.cols.some((c) => c[0] === k)) && R.events.length >= 1 && R.years && R.years.plain, 'the report: plans, buys, cash waiting, the big buys, the money by year');
+    ok(R.years.rows.reduce((x, r) => x + r.v[0], 0) <= V.contrib[L] + 1e-6 && /a new all-time high/.test(R.foot) && /earns nothing/.test(R.foot), 'the money bought each year adds up to no more than the money put in');
+    const csv = S.csvOf(V, R).split('\n');
+    ok(csv[0].startsWith('date,HHH close as traded,all-time high so far,new all-time high,put in,Only at all-time highs value,Only at all-time highs cash waiting') && csv.length === V.grid.length + 2, 'the CSV: the price, its high and each plan week by week');
+    ok(/Every month/.test(S.reportText(R, '')) && /new high after/.test(S.reportText(R, '')), 'the report as text');
+    for (const style of ['line', 'bars', 'tiles']) { V.style = style; for (const ar of [[1920, 1080], [1080, 1920], [1080, 1080]]) for (const t of [0, 3, 8, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t); n++; }
+    // the waiting cash at the T-bill rate grows; dividends left out: the price alone
+    S.resetMacro();
+    const months = Array.from({ length: 96 }, (_, i) => i);
+    files['disclosures/data/market/history/macro.json'] = { levels: { start: '2019-01', cpi: months.map((_, i) => 250 * Math.pow(1.002, i)), bill3m: months.map(() => 4) } };
+    const Vi = await S.build(Object.assign({}, st0, { xd: '0', xc: '1' }));
+    ok(Vi.series.length === 2 && Vi.series[0].buys[0][1] > first[1] + 1 && /earning T-bill interest/.test(Vi.sub), 'cash at 4% a year buys more at the first new high: ' + Vi.series[0].buys[0][1].toFixed(2));
+    delete files['disclosures/data/market/history/macro.json']; S.resetMacro();
+    const Vp = await S.build(Object.assign({}, st0, { xd: '0', div: 'price' }));
+    const Lp = Vp.grid.length - 1, up = Vp.series[1].buys.reduce((x, [i, m]) => x + m / Vp.ath.pr[i], 0);
+    ok(Math.abs(Vp.series[1].v[Lp] - up * Vp.ath.pr[Lp]) < 1e-6 && /price only/.test(Vp.sub), 'price only: the shares bought times the last close');
+    // an index by name; a window starting at the first week on file; the address and the templates
+    files['disclosures/data/etf/px/QQQ.json'] = Object.assign({}, files['disclosures/data/etf/px/HHH.json'], { symbol: 'QQQ' });
+    const Vq = await S.build(Object.assign({}, st0, { t: 'QQQ', from: '2019-01-01' }));
+    ok(/into the Nasdaq-100$/.test(Vq.title) && /QQQ/.test(Vq.sub) && [...Vq.notes].some((x) => /prices on file begin/.test(x)) && [...Vq.notes].some((x) => /through QQQ, the fund that tracks it/.test(x)), 'an index through its fund: ' + Vq.title);
+    ok(Math.abs(Vq.grid[0] - wk(1)) < 864e5 && Vq.ath.isHigh[0] && Math.abs(Vq.ath.hwm[0] - c[1]) < 1e-9, 'the window starts a week after the first close on file, which sets the bar');
+    const back = S.parseState(S.serialize(Object.assign(S.parseState(''), { k: 'ath', t: 'SPY', xa: '250', xu: 'q', xd: '30', xc: '0' })).slice(7));
+    ok(back.k === 'ath' && back.xa === '250' && back.xu === 'q' && back.xd === '30' && back.xc === '0', 'the address keeps the all-time-highs settings');
+    ok(S.TEMPLATES.filter((t) => t.s.k === 'ath').length >= 3 && S.TEMPLATES.filter((t) => t.s.k === 'ath').every((t) => S.ATH_IDX[t.s.t] || /^[A-Z]+$/.test(t.s.t)), 'templates for stocks and indexes at all-time highs');
+    await assert.rejects(S.build(Object.assign({}, st0, { t: 'NOPE' })), /No weekly prices on file for NOPE/); n++;
+    ok(S.spanTxt(7.2 * 365.25 * 864e5) === '7.2 years' && S.spanTxt(9 * 30.44 * 864e5) === '9 months' && S.spanTxt(3 * W) === '3 weeks', 'a stretch of time in words');
+  }
   // the page loads the studio, the router and the menu know it
   const idx = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8'), app = fs.readFileSync(path.join(__dirname, '..', 'web', 'app.js'), 'utf8'), nav = fs.readFileSync(path.join(__dirname, '..', 'web', 'nav.js'), 'utf8');
   ok(idx.includes('<script src="studio.js"></script>') && app.includes('window.FFStudio.render') && nav.includes("'#studio'"), 'the studio is not wired into the page');
