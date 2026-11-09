@@ -117,9 +117,21 @@
      inflow and an outflow is money moved between accounts (capex: cash → PP&E); with inflows only it left the company
      (buybacks, dividends); with outflows only it came in (borrowing, operating cash flow). Conservation holds per
      account: open − out + in = close, the residual included. ---- */
-  const FLOW_COL = { p: ['#17734a', '#a8d1b9'], bridge: ['#5b7fa6', '#cdd8e6'], cap: ['#a0773f', '#ecd9b8'], sec: ['#a0773f', '#ecd9b8'], note: ['#6a4fd1', '#cfc4f2'], res: ['#8a8a86', 'url(#sk-h)'] };
+  // colours by what happened, in the site's palette: green = came in from operations or capital providers; red = paid out
+  // to them; slate = a non-cash accounting entry (D&A, OCI, leases, amortisation, deferred tax); sand = money moved between
+  // the company's own accounts (capex, acquisitions, securities, working capital); hatched = not explained; pale = kept
+  const MEANING_COL = { in: ['#17734a', '#a8d1b9'], out: ['#ea6a52', '#f6c3b8'], noncash: ['#5b7fa6', '#cdd8e6'], move: ['#a08a63', '#e9dcc4'], res: ['#8a8a86', 'url(#sk-h)'] };
+  const NONCASH_KEYS = new Set(['da', 'sbc', 'impair', 'gain_inv', 'gain_dis', 'other_nc', 'dtax', 'amort_int', 'oci', 'oci_afs', 'rou_add', 'frou_add', 'gw_acq', 'int_acq', 'gw_fx', 'stock_acq', 'fx']);
+  const EXTERNAL_KEYS = new Set(['ni', 'ocf', 'borrow', 'buyback', 'div', 'withhold', 'stock', 'nci', 'fin_other', 'fin_gap']);
+  // the meaning of one middle node: the key, and whether its net effect was into the company (+) or out of it (−)
+  function meaning(key, kind, net) {
+    if (kind === 'res' || key.startsWith('res:')) return 'res';
+    if (kind === 'note' || NONCASH_KEYS.has(key)) return 'noncash';
+    if (EXTERNAL_KEYS.has(key)) return net >= 0 ? 'in' : 'out';
+    return 'move';
+  }
   const KEPT = '#f2f1ec';
-  const SIDE_COL = { a: '#7a7974', l: '#c2410c', e: '#17734a' };
+  const SIDE_COL = { a: '#7a7974', l: '#ea6a52', e: '#17734a' };
   function cashItems(p, a, labels) {
     // the cash account by the statement's lines rather than its three sections, so capex can run cash → PP&E
     const cf = p.cf;
@@ -166,7 +178,7 @@
       m.y0.push((v < 0 ? L0[a.k].y + L0[a.k].h / 2 : R1[a.k].y + R1[a.k].h / 2));
     }));
     const nodes = Object.values(mid).map((m) => Object.assign(m, { hIn: m.ins.reduce((s2, x) => s2 + x.v, 0) * K, hOut: m.outs.reduce((s2, x) => s2 + x.v, 0) * K, yc: m.y0.reduce((s2, v) => s2 + v, 0) / m.y0.length }));
-    nodes.forEach((m) => { m.h = Math.max(m.hIn, m.hOut, 1.5); });
+    nodes.forEach((m) => { m.h = Math.max(m.hIn, m.hOut, 1.5); m.mean = meaning(m.key, m.kind, (m.hOut - m.hIn) / K + (m.key === 'ni' || m.key === 'ocf' ? 1 : 0)); });
     nodes.sort((a, b) => a.yc - b.yc);
     // place middle nodes near the accounts they touch, then push apart
     let yPrev = TOP - 4;
@@ -198,12 +210,12 @@
     // 2. out of the opening balances into the middle; 3. out of the middle into the closing balances
     const mcur = {}; nodes.forEach((m) => { mcur[m.key] = { i: m.y + (m.h - m.hIn) / 2, o: m.y + (m.h - m.hOut) / 2 }; });
     A.forEach((a) => items[a.k].filter((x) => x[2] < 0).sort((x, y) => x[2] - y[2]).forEach(([key, lab, v, kind]) => {
-      const m = mid[key], th = -v * K, fill = FLOW_COL[kind][1];
+      const m = mid[key], th = -v * K, fill = MEANING_COL[m.mean][1];
       o += band(xL + NW, cur[a.k].l, xM, mcur[key].i, th, fill, `${lab}: ${sgn(v)} out of ${a.name.toLowerCase()}`);
       cur[a.k].l += th; mcur[key].i += th;
     }));
     A.forEach((a) => items[a.k].filter((x) => x[2] > 0).sort((x, y) => y[2] - x[2]).forEach(([key, lab, v, kind]) => {
-      const m = mid[key], th = v * K, fill = FLOW_COL[kind][1];
+      const m = mid[key], th = v * K, fill = MEANING_COL[m.mean][1];
       o += band(xM + NW, mcur[key].o, xR, cur[a.k].r, th, fill, `${lab}: ${sgn(v)} into ${a.name.toLowerCase()}`);
       cur[a.k].r += th; mcur[key].o += th;
     }));
@@ -216,13 +228,13 @@
       o += `<rect x="${xR}" y="${r.y}" width="${NW}" height="${r.h}" fill="${col}"><title>${esc(a.name)} ${esc(p.end)}: ${esc(big(a.close))}</title></rect>`;
       const show = (h) => h >= 9, TA = Math.max(1, p.totals.assets_open || totO / 2), TB = Math.max(1, p.totals.assets_close || totC / 2);
       if (show(l.h) || Math.abs(a.open) >= 0.025 * TA) o += `<text x="${xL - 8}" y="${l.y + Math.max(l.h / 2, 5) + 4}" text-anchor="end" font-size="12.5" fill="#1d1d1b">${esc(a.name)} <tspan fill="#6b6a66">${esc(big(a.open))}</tspan></text>`;
-      if (show(r.h) || Math.abs(a.close) >= 0.025 * TB) o += `<text x="${xR + NW + 8}" y="${r.y + Math.max(r.h / 2, 5) + 4}" font-size="12.5" fill="#1d1d1b">${esc(big(a.close))} <tspan fill="#6b6a66">${esc(a.name)}</tspan> <tspan font-weight="600" fill="${a.delta >= 0 ? '#17734a' : '#c2410c'}">${esc(sgn(a.delta))}</tspan></text>`;
+      if (show(r.h) || Math.abs(a.close) >= 0.025 * TB) o += `<text x="${xR + NW + 8}" y="${r.y + Math.max(r.h / 2, 5) + 4}" font-size="12.5" fill="#1d1d1b">${esc(big(a.close))} <tspan fill="#6b6a66">${esc(a.name)}</tspan> <tspan font-weight="600" fill="#1d1d1b">${esc(sgn(a.delta))}</tspan></text>`;
     });
     let lastLabelY = -1e9;
     nodes.forEach((m) => {
-      const col = FLOW_COL[m.kind][0];
+      const col = MEANING_COL[m.mean][0];
       o += `<rect x="${xM}" y="${m.y}" width="${NW}" height="${m.h}" fill="${col}"><title>${esc(m.lab)}: in ${esc(big(m.hIn / K))}, out ${esc(big(m.hOut / K))}</title></rect>`;
-      const amt = Math.max(m.hIn, m.hOut) / K, dir = m.kind === 'res' ? (m.ins.length ? 'unexplained decrease' : 'unexplained increase') : m.ins.length && m.outs.length ? 'between accounts' : m.ins.length ? 'left the company' : 'came in';
+      const amt = Math.max(m.hIn, m.hOut) / K, dir = m.mean === 'res' ? (m.ins.length ? 'unexplained decrease' : 'unexplained increase') : m.mean === 'noncash' ? 'non-cash' : m.ins.length && m.outs.length ? 'between accounts' : m.ins.length ? 'paid out' : 'came in';
       const ly = Math.max(m.y + m.h / 2 + 4, lastLabelY + 13);
       if (m.h >= 6 && ly <= m.y + m.h + 9) {
         const lab = m.lab.length > 34 ? m.lab.slice(0, 33) + '…' : m.lab;
@@ -235,10 +247,10 @@
       + `<text x="${xL + NW}" y="40" text-anchor="end" font-size="11.5" fill="#6b6a66">assets ${esc(big(p.totals.assets_open))} · liabilities ${esc(big(p.totals.liab_open))} · equity ${esc(big(p.totals.eq_open))}</text><text x="${xR + NW}" y="40" font-size="11.5" fill="#6b6a66">assets ${esc(big(p.totals.assets_close))} · liabilities ${esc(big(p.totals.liab_close))} · equity ${esc(big(p.totals.eq_close))}</text>`;
     const legY = H - 44;
     let lx = 24, leg = '';
-    [['p', 'income statement / operating cash flow'], ['bridge', 'OCF bridge lines'], ['cap', 'investing & financing'], ['note', 'from the notes'], ['res', 'not explained'], ['kept', 'kept']].forEach(([k, lab]) => {
-      const fill = k === 'kept' ? KEPT : FLOW_COL[k][1];
+    [['in', 'came in (earnings, OCF, money raised)'], ['out', 'paid out (buybacks, dividends, repayments)'], ['noncash', 'non-cash (D&A, OCI, leases)'], ['move', 'moved between accounts (capex, deals, securities, WC)'], ['res', 'not explained'], ['kept', 'kept']].forEach(([k, lab]) => {
+      const fill = k === 'kept' ? KEPT : MEANING_COL[k][1];
       leg += `<rect x="${lx}" y="${legY - 10}" width="12" height="12" fill="${fill}" ${k === 'res' ? 'stroke="#8a8a86" stroke-width=".6"' : ''}/><text x="${lx + 16}" y="${legY}" font-size="11.5" fill="#6b6a66">${esc(lab)}</text>`;
-      lx += 16 + lab.length * 6.6 + 22;
+      lx += 16 + lab.length * 6.3 + 20;
     });
     const cap = `<text x="24" y="${H - 22}" font-size="11.5" fill="#6b6a66">Each account: opening − what left it + what came in = closing, the residual included. A middle node with bands on both sides moved money between accounts (capex: cash → PP&amp;E);</text>`
       + `<text x="24" y="${H - 8}" font-size="11.5" fill="#6b6a66">bands only from the left: it left the company (buybacks); only to the right: it came in (borrowing). ${p.kind === 'y' ? 'Four quarters’ flows added (derived). ' : ''}Not investment advice. filing-flows.com</text>`;
@@ -447,7 +459,7 @@
 <div class="rv-card"><p><b>In words</b></p><ul style="margin:4px 0 6px;padding-left:18px">${words(p, 3).map((w) => `<li>${esc(w.text)}</li>`).join('')}</ul><p class="sm"><button id="rv-x">Download the X card (PNG, 1200×675)</button> <button id="rv-xd">Download the detailed card (PNG, 1200 wide)</button> <span class="muted">the short card: the six largest movements and the words; the detailed one adds the cash flow statement as a waterfall, every account and every movement in words</span></p></div>
 <div class="rv-bar"><span><b>Stock → flows → stock</b></span><span><button data-d="0" class="${state.detail ? '' : 'on'}">Normal (${p.accounts.length} accounts)</button> <button data-d="1" class="${state.detail ? 'on' : ''}" ${(p.detail || []).length ? '' : 'disabled'}>Detailed (${(p.detail || []).length} lines)</button></span> <button id="rv-sk">Download this Sankey (PNG)</button></div>
 <div class="rv-wrap" id="rv-sankey">${sankey(p, state.detail && (p.detail || []).length ? p.detail : p.accounts, LABELS)}</div>
-<p class="muted sm">Left: every account at the start; right: at the end; middle: the statement lines (and the notes' lines, violet) that moved them. A pale band is what an account kept. A middle node with bands on both sides moved money between accounts (capex: cash → PP&E); bands only from the left: it left the company (buybacks); only to the right: it came in (borrowing). The detailed view splits the lines the statements can be mapped to (trade vs other receivables, PP&E vs lease assets, goodwill vs intangibles, accrued vs deferred revenue vs taxes); investments and debt stay merged because the statements do not split them.</p>
+<p class="muted sm">Left: every account at the start; right: at the end; middle: the lines that moved them, coloured by what happened: green came in (earnings, operating cash, money raised), red was paid out (buybacks, dividends, repayments), slate is a non-cash entry (D&A, OCI, leases, amortisation), sand moved between the company's own accounts (capex, deals, securities, working capital). A pale band is what an account kept. A middle node with bands on both sides moved money between accounts (capex: cash → PP&E); bands only from the left: it left the company (buybacks); only to the right: it came in (borrowing). The detailed view splits the lines the statements can be mapped to (trade vs other receivables, PP&E vs lease assets, goodwill vs intangibles, accrued vs deferred revenue vs taxes); investments and debt stay merged because the statements do not split them.</p>
 <div class="rv-legend"><span><i style="background:${COL.p}"></i>${esc(KIND_NAME.p)}</span><span><i style="background:${COL.note}"></i>${esc(KIND_NAME.note)}</span><span><i style="background:${COL.bridge}"></i>${esc(KIND_NAME.bridge)}</span><span><i style="background:${COL.cap}"></i>${esc(KIND_NAME.cap)}</span><span><i style="background:repeating-linear-gradient(45deg,${COL.res} 0 2px,transparent 2px 5px)"></i>${esc(KIND_NAME.res)}</span></div>
 <p><b>Every account on one scale</b></p><div class="rv-wrap">${strip(p)}</div>
 <p class="muted sm">Click an account for its bridge. Balances are the standard tags at each date, the same tag at both dates (a line tagged at one date only falls into "other"); "other assets" and "other liabilities" are what the tagged lines leave of the totals, so the totals always match the filing.</p>
