@@ -32,6 +32,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import math
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -412,7 +413,7 @@ def build(data, raws, assets, eps=None, fund=None, val_dir=None, names=None, run
         series, i_first = {}, nw
         for k, lab, _ in RATIOS:
             own = M[k][i]
-            if k not in blk:
+            if k not in blk or not np.isfinite(own).any():
                 continue
             i_first = min(i_first, int(np.argmax(np.isfinite(own))))
             for lev, gk, gname in _levels(a, names):
@@ -425,11 +426,9 @@ def build(data, raws, assets, eps=None, fund=None, val_dir=None, names=None, run
                 if fin.sum() < MIN_PEERS:
                     continue
                 cnt = np.isfinite(P).sum(0)
-                with np.errstate(invalid='ignore'):
-                    import warnings
-                    with warnings.catch_warnings():
-                        warnings.simplefilter('ignore', RuntimeWarning)
-                        med = np.nanmedian(P, axis=0)
+                with warnings.catch_warnings():                          # (weeks with no peer priced: NaN, said nothing)
+                    warnings.simplefilter('ignore', RuntimeWarning)
+                    med = np.nanmedian(P, axis=0)
                 med[cnt < MIN_PEERS] = np.nan
                 vals = at[fin]
                 ind = {'level': lev, 'key': gk, 'name': gname, 'n': int(fin.sum()), 'mid': sig(np.median(vals)),
