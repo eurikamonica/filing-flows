@@ -42,7 +42,8 @@ def test_articulation_exact():
     assert a["ppe"]["explained"] == 20 and a["ppe"]["residual"] == 0          # +50 capex − 30 D&A
     assert a["debt"]["explained"] == 20 and a["debt"]["residual"] == 0
     assert a["eq"]["explained"] == 60 and a["eq"]["residual"] == 0           # 80 + 5 − 25
-    assert [f[0] for f in a["eq"]["flows"]] == ["ni", "sbc", "buyback"]
+    assert [f[0] for f in a["eq"]["flows"]] == ["ni", "sbc", "buyback"] and r["labels"]["buyback"] == "Share buybacks" and r["labels"]["oci"]
+    assert {d["k"] for d in p["detail"]} >= {"cash", "ar", "inv", "ppe", "gw", "ap", "debt", "eq"} and next(d for d in p["detail"] if d["k"] == "ar")["parent"] == "ar"
     # the plugs: other assets = 1000 − (100+200+150+400+100) = 50 → 1100 − 1040 = 60; other liabilities 180 → 185
     assert (a["oth_a"]["open"], a["oth_a"]["close"]) == (50, 60) and (a["oth_l"]["open"], a["oth_l"]["close"]) == (180, 185)
     assert p["identity_gap"] == 0 and p["totals"]["eq_close"] == 460 and p["data_kind"] == "observed"
@@ -81,3 +82,24 @@ def test_year_on_year_adds_four_quarters():
     cap["q"][1]["items"].pop("buyback")
     a2 = by(RL.compute(fx, W.Evidence(fx), qs, cap)["y"][0])
     assert [f[0] for f in a2["eq"]["flows"]] == ["ni"]
+
+
+def test_notes_explain_and_overlap_is_folded():
+    """the notes: OCI explains equity, goodwill recognised replaces the cash paid for acquisitions, lease additions
+    explain PP&E and lease liabilities; a negative plug (two tagged lines overlapping) is folded into an 'other' line"""
+    bal = dict(BAL)
+    bal["OtherAssetsNoncurrent"] = {D0: 60, D1: 70}; bal["DeferredIncomeTaxAssetsNet"] = {D0: 20, D1: 20}   # 1000 − (100+200+150+400+100+60+20) = −30: overlap
+    fx = facts(bal)
+    fx["OtherComprehensiveIncomeLossNetOfTax"] = {(D0, D1): {"val": -7, "accn": "x", "form": "10-Q", "filed": D1}}
+    fx["GoodwillAcquiredDuringPeriod"] = {(D0, D1): {"val": 12, "accn": "x", "form": "10-Q", "filed": D1}}
+    cap = {"q": [{"end": D1, "items": {"ocf": 90, "capex": -50, "acq": -20, "borrow": 20, "buyback": -25}, "inv": -70, "fin": -5, "dcash": 15}]}
+    r = RL.compute(fx, W.Evidence(fx), [Q], cap)
+    p = r["q"][0]
+    a = by(p)
+    assert [n[0] for n in a["eq"]["notes"]] == ["oci"] and a["eq"]["from_notes"] == -7 and a["eq"]["residual"] == 460 - 400 - 60 + 7
+    assert [n[0] for n in a["gw"]["notes"]] == ["gw_acq"] and not any(f[0] == "acq" for f in a["gw"]["flows"]) and a["gw"]["residual"] == 0 - 12
+    assert a["oth_a"]["open"] == 50                                                      # merged: the untagged rest is positive
+    d = {x["k"]: x for x in p["detail"]}
+    assert d["onca"]["open"] == 60 - 30 and d["onca"]["close"] == 70 - 30 and d["oth_a"]["open"] == 0 and d["oth_a"]["close"] == 0   # detail: the overlap comes out of 'other non-current assets', the plug never below zero
+    assert d["dta"]["open"] == 20 and d["gw"]["notes"][0][0] == "gw_acq" and d["eq"]["notes"][0][0] == "oci"
+    assert sum(x["close"] for x in p["detail"] if x["side"] == "a") == 1100

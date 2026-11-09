@@ -41,3 +41,13 @@ P.accounts.push({ k: 'cash', side: 'a', name: 'Cash and equivalents', open: 100e
 const det = RV.cardDetailed(P, { ticker: 'AAA', name: 'Alpha Inc.' });
 assert(det.includes('1 · The cash flow statement') && det.includes('Operating lines not itemised') && det.includes('2 · Every balance-sheet account') && det.includes('3 · Each movement in words') && /viewBox="0 0 1200 \d+"/.test(det), 'detailed card'); n++;
 console.log(n + ' checks with the roll-view words and cards');
+// the three-column Sankey: conservation per account (open − out + in = close), the kept band, the middle nodes
+RV.setLabels({ d_ar: 'Change in receivables', ni: 'Net income', buyback: 'Share buybacks', sbc: 'Share-based compensation', ocf: 'Operating cash flow', inv: 'Investing', capex: 'Capital expenditure' });
+P.accounts.push({ k: 'ppe', side: 'a', name: 'PP&E', open: 400e6, close: 420e6, delta: 20e6, flows: [['capex', '', 50e6], ['da', '', -30e6]], residual: 0, tags: [] });
+P.cf.inv = [['capex', 'Capital expenditure', -50e6]];
+const sk = RV.sankey(P, P.accounts, {});
+assert(/^<svg /.test(sk) && sk.includes('Balance sheet 2025-06-30') && sk.includes('Balance sheet 2025-09-30'), 'sankey frame'); n++;
+assert(sk.includes('Capital expenditure: +$50M into pp&amp;e') && sk.includes('Capital expenditure: −$50M out of cash and equivalents'), 'capex runs cash → PP&E through one node'); n++;
+assert(sk.includes('Share buybacks: −$25M out of equity') && sk.includes('Equity: kept $375M'), 'equity keeps open − out: 400 − 25'); n++;
+assert(sk.includes('Not explained: goodwill and intangibles: +$12M into goodwill and intangibles'), 'the residual is a band of its own'); n++;
+console.log(n + ' checks with the roll-view Sankey');
