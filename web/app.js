@@ -1182,7 +1182,7 @@
     ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts'], ['x-composer']]],
     ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['x-roll'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-traps'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
-    ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-moves'], ['x-highs'], ['x-mahybrid'], ['x-opportunity'], ['x-odds']]],
+    ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-momentum'], ['x-options'], ['x-paths'], ['x-moves'], ['x-highs'], ['x-mahybrid'], ['x-opportunity'], ['x-odds']]],
     ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders'], ['invest', 'Investments']]],
     ['Relationships & model', [['links', 'Customers, suppliers & model'], ['shock', 'Shock panel'], ['x-outside']]],
   ];

@@ -19,6 +19,8 @@
              rotation-long.json       the momentum clock's variables (app/rotation.py) for 70 quarters (since 2009Q2, so
                                       the arrows and charts start in 2010)
              rotation-long-monthly.json  … and month by month since 2008, from the weekly closes
+             momentum/<TICKER>.json   a company's momentum percentiles month by month among the site's companies, and
+             momentum-latest.json     every company's momentum factors and percentiles at the latest week (app/momentum.py)
              rank/                    the video studio's leaderboards (rank_panel): every company's month-end total-return
                                       close, monthly dollar volume and market value, and quarterly revenue, gross profit,
                                       operating income, net income and equity from the SEC frames
@@ -714,6 +716,16 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
     (pub / 'rrg.json').write_text(json.dumps(rrg, separators=(',', ':')), encoding='utf-8')
     out = {'tickers_published': written, 'series': len(ser), 'weeks': len(weeks), 'industries': len(ind_rows),
            'with_dividends': len(extra)}
+    try:                                           # momentum factors: the companies' monthly percentiles and the latest week (app/momentum.py)
+        import momentum as MO
+        fc = {t: (f, c) for t, (f, c, _) in series.items()}
+        sector_etf = {sec: t for t, sec, _ in SECTOR_ETFS}
+        stocks = [t for t in fc if t in meta]
+        out['momentum'] = MO.build(pub, fc, weeks, stocks, bench=fc.get(BENCH),
+                                   sector_of={t: sector_etf.get((meta.get(t) or {}).get('s')) for t in stocks},
+                                   name='momentum', meta={t: {'n': (meta.get(t) or {}).get('n'), 's': (meta.get(t) or {}).get('s')} for t in stocks})[0]
+    except Exception as exc:                       # never lose the rest of the build to it
+        out['momentum'] = {'error': str(exc)[:300]}
     try:                                           # the studio's leaderboards (rank_panel.py)
         import rank_panel
         out['rank'] = rank_panel.build(pub / 'rank', companies, docs, frames_root=root, today=today, names=names)

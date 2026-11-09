@@ -13,6 +13,7 @@ script, with its own analysis, charts and links to every company's pages — and
     disclosures/8-k-events/     8-K items by kind, with an event page each (below)
     disclosures/short-interest/ FINRA short interest: rises, falls, days to cover
     disclosures/sector-rotation/ sectors' growth, margins and relative strength (the RRG's inputs)
+    disclosures/momentum/       momentum stocks and ETFs: the composite score, 12-1, relative to SPY and the sector
     disclosures/options/        implied volatility, put/call, max pain, gamma walls
     disclosures/guidance-track-record/ who meets the guidance it gives
     disclosures/cross-holdings/ who owns whom: institutions and companies holding each other
@@ -338,6 +339,65 @@ def rotation(hub, L):
             [L(c.get('t'), f"{c.get('t')} · {nm(c.get('n'))}", c.get('cik')), e((sec.get(c.get('s')) or {}).get('name') or c.get('s'))] + [num((last(c['p']) or [None] * len(f))[idx[k]], 1) for k in keys]
             for c in cos[:30]])
     return ('sector-rotation', 'rotation', f"Sector rotation {q}: relative strength, momentum, growth and margins", 'Sector rotation (RRG)', lead, body)
+
+
+MO_SECTOR = {'technology': 'Technology', 'communication': 'Communication services', 'consumer-disc': 'Consumer discretionary',
+             'consumer-staples': 'Consumer staples', 'health': 'Health care', 'financials': 'Financials', 'real-estate': 'Real estate',
+             'energy': 'Energy', 'materials': 'Materials', 'industrials': 'Industrials', 'utilities': 'Utilities'}
+
+
+def momentum(hub, L):
+    """the momentum leaderboards (app/momentum.py: market/history/momentum-latest.json for the companies, etf/
+    momentum-latest.json for the ETFs): the breadth, the sectors by their median composite, the strongest and weakest"""
+    d = read(os.path.join(hub, 'market', 'history', 'momentum-latest.json')) or {}
+    cols, rows = d.get('cols') or [], d.get('rows') or {}
+    if len(rows) < 20 or 'comp' not in cols:
+        return None
+    ix = {k: i for i, k in enumerate(cols)}
+    g = lambda r, k: r[ix[k]] if k in ix and ix[k] < len(r) else None
+    sig = lambda v: '—' if v is None else f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(v):.2f}σ"
+    pc = lambda v: '—' if v is None else f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(100 * v):.1f}%"
+    share = lambda k, f: (lambda xs: sum(1 for v in xs if f(v)) / len(xs) if xs else None)([g(r, k) for r in rows.values() if g(r, k) is not None])
+    cos = sorted(((t, r) for t, r in rows.items() if g(r, 'comp') is not None), key=lambda tr: -g(tr[1], 'comp'))
+    if len(cos) < 20:
+        return None
+    up, ahead, strong = share('m12_1', lambda v: v > 0), share('rel_b', lambda v: v > 0), share('comp', lambda v: v > 1)
+    week = d.get('week')
+    lead = (f"The momentum of the {num(len(rows))} companies on the site, week of {e(fdate(week))}: {up or 0:.0%} have a positive 12-month "
+            f"return (skipping the latest month), {ahead or 0:.0%} are ahead of the S&P 500 (SPY) over it and {strong or 0:.0%} are in a strong "
+            f"uptrend. The composite score averages the 3-, 6- and 12-month trends, each in units of the stock’s own volatility, so a calm "
+            f"and a volatile stock read on one scale. Strongest now: {', '.join(e(t) for t, _ in cos[:3])}.")
+    body = SV.diverging([(t, g(r, 'comp')) for t, r in cos[:10] + cos[-10:]], lambda v: f"{v:+.1f}σ", 'Composite momentum: the strongest and the weakest', n=20,
+                        note='The composite score: above +1σ a strong uptrend on all three horizons, below −1σ a strong downtrend.')
+    by = {}
+    for t, r in cos:
+        by.setdefault(g(r, 's') or '', []).append(g(r, 'comp'))
+    med = lambda xs: (sorted(xs)[(len(xs) - 1) // 2] + sorted(xs)[len(xs) // 2]) / 2
+    secs = sorted(((k, med(v), len(v)) for k, v in by.items() if k and len(v) >= 3), key=lambda x: -x[1])
+    if secs:
+        body += '<h2>Sectors by momentum</h2>' + table(['Sector', 'Companies', 'Median composite', 'Strongest'], [
+            [e(MO_SECTOR.get(k, k)), num(n), sig(m), ' · '.join(L(t, t) for t, _ in [x for x in cos if g(x[1], 's') == k][:3])] for k, m, n in secs])
+    hd = ['Company', 'Sector', 'Composite', 'Rank', '12-1', '6-1', 'vs SPY', 'vs sector ETF', 'From 52-week high']
+    row = lambda t, r: [L(t, f"{t} · {nm(g(r, 'n'))}"), e(MO_SECTOR.get(g(r, 's'), g(r, 's') or '—')), sig(g(r, 'comp')), num(g(r, 'p_comp')),
+                        pc(g(r, 'm12_1')), pc(g(r, 'm6_1')), pc(g(r, 'rel_b')), pc(g(r, 'rel_s')), pc(g(r, 'hi52'))]
+    body += '<h2>Strongest momentum</h2>' + table(hd, [row(t, r) for t, r in cos[:30]])
+    body += '<h2>Weakest momentum</h2>' + table(hd, [row(t, r) for t, r in cos[::-1][:15]])
+    de = read(os.path.join(hub, 'etf', 'momentum-latest.json')) or {}
+    ec, er = de.get('cols') or [], de.get('rows') or {}
+    if er and 'comp' in ec:
+        jx = {k: i for i, k in enumerate(ec)}
+        h = lambda r, k: r[jx[k]] if k in jx and jx[k] < len(r) else None
+        etfs = sorted(((t, r) for t, r in er.items() if h(r, 'comp') is not None and (h(r, 'aum') or 0) >= 1e8), key=lambda tr: -h(tr[1], 'comp'))
+        if etfs:
+            body += ('<h2>ETFs with the strongest momentum</h2><p class="muted">Net assets of $100 million or more; leveraged, inverse and cash-like funds left out.</p>'
+                     + table(['ETF', 'Asset class', 'Composite', 'Rank in class', '12-1', 'vs SPY', 'Net assets'], [
+                         [f"<a href='../../#momentum/{e(t)}'><b>{e(t)}</b></a> {e(nm(h(r, 'n')))}", e(h(r, 'ac') or '—'), sig(h(r, 'comp')), num(h(r, 'p_comp_group')),
+                          pc(h(r, 'm12_1')), pc(h(r, 'rel_b')), money(h(r, 'aum'))] for t, r in etfs[:25]]))
+    body += ("<p class='muted'>12-1: the return from 12 months to 1 month ago (Jegadeesh &amp; Titman); vs SPY and vs sector ETF: the same less the "
+             "benchmark’s; the composite score: the mean over 13, 26 and 52 weeks of the return skipping the latest month, divided by its own "
+             "standard deviation (volatility-scaled time-series momentum, Moskowitz, Ooi &amp; Pedersen); rank: its percentile among the "
+             "companies. Weekly total-return closes; today’s companies only. A reading of a factor, not a forecast.</p>")
+    return ('momentum', 'momentum', f"Momentum stocks and ETFs, week of {fdate(week)}: 12-1, relative and composite momentum", 'Momentum: stocks and ETFs', lead, body)
 
 
 def options(hub, L):
@@ -722,7 +782,7 @@ def write(site, base, store=None, today=None):
     L = Links(site)
     evs = archive(site, store, L)
     made = []
-    for fn in (signals, smart, insiders, congress, stakes, form144, lambda h, l: events_view(h, l, evs), shorts, rotation, options, guidance, cross, investors):
+    for fn in (signals, smart, insiders, congress, stakes, form144, lambda h, l: events_view(h, l, evs), shorts, rotation, momentum, options, guidance, cross, investors):
         try:
             r = fn(hub, L)
         except Exception as err:  # noqa: BLE001

@@ -195,6 +195,13 @@ class CollectAndBuild(unittest.TestCase):
         self.assertEqual(out['industries'], len(ind['rows']))
         aaa = json.loads((pub / 't' / 'AAA.json').read_text())
         self.assertEqual((aaa['n'], aaa['s']), ('AAA Corp', 'technology'))
+        self.assertNotIn('error', out['momentum'])                            # momentum factors (app/momentum.py)
+        mo = json.loads((pub / 'momentum-latest.json').read_text())
+        row = dict(zip(mo['cols'], mo['rows']['AAA']))
+        last = (dt.date.fromisoformat(rrg['bench']['start']) + dt.timedelta(weeks=len(rrg['bench']['c']) - 1)).isoformat()
+        self.assertEqual((row['n'], row['s'], mo['week']), ('AAA Corp', 'technology', last))   # the last week with closes
+        self.assertIsNotNone(row['m12_1'])
+        self.assertIsNotNone(row['rel_s'])                                    # against XLK, its sector's ETF
         self.assertEqual(aaa['d'], [])                                        # fetched with events: no dividends paid
         self.assertEqual(len(aaa['p']), len(aaa['c']))                        # the close as traded, week by week
         self.assertGreater(aaa['p'][5], aaa['c'][5])                          # (the fake's adjusted close is 2% lower)

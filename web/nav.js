@@ -66,6 +66,7 @@
       ['odds', '#odds', 'Odds', 'Rotation forecasts and how they did'],
       ['mmodels', '#mmodels', 'Market models', 'The market’s valuation gauges'],
       ['opportunity', '#opportunity', 'Opportunity', 'Stocks and ETFs off their usual range'],
+      ['momentum', '#momentum', 'Momentum', 'Stocks, ETFs and sectors ranked by absolute, relative and composite momentum'],
       ['strategies', '#strategies', 'Strategies', 'Rules tested on the site’s data'],
       ['shorts', '#shorts', 'Short interest', 'FINRA short positions, twice a month'],
       ['cot', '#cot', 'COT', 'Futures positions by trader type'],

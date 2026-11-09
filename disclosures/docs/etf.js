@@ -37,7 +37,7 @@ function etfTagField(data,rows){
  const opts=groups.map(g=>{const ids=Object.keys(names).filter(id=>names[id][1]===g&&cnt[id]);return ids.length?`<optgroup label="${esc(g)}">${ids.map(id=>`<option value="${esc(id)}" ${state.etag===id?'selected':''}>${esc(names[id][0])} (${fmt(cnt[id])})</option>`).join('')}</optgroup>`:''}).join('');
  return `<div class="field"><label for="etag">Tag</label><select id="etag"><option value="">Any tag</option>${opts}</select></div>`;
 }
-const ETF_SORT=[['aum','Largest'],['flows_3m','Biggest inflows, 3 months'],['flows_3m_low','Biggest outflows, 3 months'],['expense','Cheapest'],['r1y','Best 1-year return'],['holders13f','Most 13F holders'],['lt_target','Analysts\' upside of the holdings'],['officials_1y','Most officials\' trades']];
+const ETF_SORT=[['aum','Largest'],['flows_3m','Biggest inflows, 3 months'],['flows_3m_low','Biggest outflows, 3 months'],['expense','Cheapest'],['r1y','Best 1-year return'],['mom_comp','Strongest momentum (composite)'],['mom_comp_low','Weakest momentum (composite)'],['holders13f','Most 13F holders'],['lt_target','Analysts\' upside of the holdings'],['officials_1y','Most officials\' trades']];
 const ETF_PARTY=[['aps','Authorized participants'],['custodians','Custodians'],['lending','Securities-lending agents'],['advisers','Advisers'],['subadvisers','Sub-advisers'],['auditors','Auditors'],['distributors','Distributors'],['administrators','Administrators'],['transfer','Transfer agents']];
 const ASSET_NAMES={EC:'Common equity',EP:'Preferred equity',DBT:'Debt',  'ABS-MBS':'Mortgage-backed','ABS-O':'Other asset-backed','ABS-CBDO':'CDO / CLO','ABS-APCP':'Asset-backed CP',STIV:'Short-term vehicles',RA:'Repos',LON:'Loans',DCO:'Commodity derivatives',DCR:'Credit derivatives',DE:'Equity derivatives',DFE:'FX derivatives',DIR:'Rate derivatives',DO:'Other derivatives',COMM:'Commodities',RE:'Real estate',SN:'Structured notes',OTHER:'Other'};
 const etfMoney=v=>v==null||!Number.isFinite(+v)?'—':(v<0?'−':'')+'$'+(Math.abs(v)>=1e12?fmt(Math.abs(v)/1e12,2)+'T':compact(Math.abs(v)));
@@ -89,10 +89,10 @@ function etfScreen(){
  const tot=rows.reduce((a,r)=>a+(r.aum||0),0),f3=rows.reduce((a,r)=>a+(r.flows_3m||0),0);
  let out=`<div class="section-head"><h3>${fmt(rows.length)} ETFs · ${etfMoney(tot)} in assets · ${etfMoney(f3)} net flows over the last 3 reported months</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=`<p class="sub">Click a ticker for everything about the ETF. Flows: sales + reinvestments − redemptions from the ETF's N-PORT reports. Tracking difference: the N-CEN figure, the fund's return less its index's over its fiscal year after fees (percentage points). "Holdings' upside": the analysts' price-target return of the companies inside, at their weights. Tags: passive or active from the fund's N-CEN (or its prospectus), the leverage multiple from the prospectus objective (else the name), income from the 12-month yield and the distributions of the last year, region from the countries in the portfolio — click one to filter.</p>`;
- out+=table(['ETF','Asset class','Expense','Assets','Flows, 3 months','1 year','Volatility','Holdings · top 10','Tracking diff.','13F holders','Officials, 1 year',"Holdings' upside"],rows.slice(0,1500).map(r=>[
+ out+=table(['ETF','Asset class','Expense','Assets','Flows, 3 months','1 year','Momentum','Volatility','Holdings · top 10','Tracking diff.','13F holders','Officials, 1 year',"Holdings' upside"],rows.slice(0,1500).map(r=>[
   `${etfTk(r.symbol)} <span class="muted">${esc((r.name||'').slice(0,46))}</span>${r.issuer?`<br><span class="muted">${esc(r.issuer)}${r.strategy?' · '+esc(r.strategy):''}</span>`:''}${etfRowTags(r,R.data.tag_names)}${r.objective&&(q||state.eobj)?`<br><span class="muted etf-obj" title="${esc(r.objective)}">${esc(r.objective.slice(0,120))}${r.objective.length>120?'…':''}</span>`:''}`,
   `${esc(r.asset_class||'—')}${r.category?`<br><span class="muted">${esc(r.category)}</span>`:''}`,etfPct(r.expense),etfMoney(r.aum),
-  r.flows_3m==null?'—':`<span class="${r.flows_3m>0?'positive':r.flows_3m<0?'negative':''}">${etfMoney(r.flows_3m)}</span>`,etfSpct(r.r1y),r.vol==null?'—':etfPct(r.vol,1),
+  r.flows_3m==null?'—':`<span class="${r.flows_3m>0?'positive':r.flows_3m<0?'negative':''}">${etfMoney(r.flows_3m)}</span>`,etfSpct(r.r1y),r.mom_comp==null?'—':`<span class="${r.mom_comp>0?'positive':r.mom_comp<0?'negative':''}" title="Composite momentum score: the 3-, 6- and 12-month trends in units of the ETF's own volatility">${r.mom_comp>0?'+':r.mom_comp<0?'−':''}${Math.abs(r.mom_comp).toFixed(2)}σ</span>${r.mom_pct!=null?`<br><span class="muted">rank ${r.mom_pct}${r.mom_grp_pct!=null?` · ${r.mom_grp_pct} in class`:''}</span>`:''}`,r.vol==null?'—':etfPct(r.vol,1),
   r.n_holdings==null?'—':`${fmt(r.n_holdings)} · ${etfPct(r.top10,0)}`,r.track_diff==null?'—':fmt(r.track_diff,2),
   r.holders13f==null?'—':`${fmt(r.holders13f)}${r.holders13f_chg?` <span class="muted">${r.holders13f_chg>0?'+':''}${fmt(r.holders13f_chg)}</span>`:''}`,r.officials_1y?fmt(r.officials_1y):'—',etfSpct(r.lt_target)]));
  return out;
@@ -245,6 +245,7 @@ function etfOne(){
  if(d.short)out+=`<p class="sub"><b>Short interest</b> (FINRA, ${esc(d.short.settlement||'')}): ${fmt(d.short.short)} shares, ${d.short.change_pct!=null?(d.short.change_pct>0?'+':'')+fmt(d.short.change_pct,1)+'% since the previous report':''}, ${fmt(d.short.dtc,1)} days to cover.</p>`;
  if(d.npx)out+=`<p class="sub"><b>Proxy votes</b>: the trust files N-PX (${fmt(d.npx.filing_count)} on file, latest ${esc(d.npx.latest_filing||'')}) — every vote is in the N-PX tab.</p>`;
  out+=`</div>`;
+ out+=`<div class="panel"><div id="etf-mom" data-t="${esc(sym)}"></div><p class="sub"><a href="#momentum/etfs">Every ETF ranked by momentum →</a></p></div>`;   // momentum factors (momentum-view.js)
  out+=`<div class="panel"><div id="etf-opp" data-t="${esc(sym)}"></div></div>`;   // the odds (opportunity-view.js)
  return out;
 }
@@ -292,6 +293,8 @@ function bindEtf(){
   render();scrollTo({top:0,behavior:'smooth'})});
  for(const k of ['eq','esym','ea','eb','ehold'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-etf]').forEach(b=>b.onclick=()=>{state.eview='one';state.esym=b.dataset.etf;render();scrollTo({top:0,behavior:'smooth'})});
+ const mom=$('etf-mom');
+ if(mom&&window.MomentumView&&mom.dataset.drawn!==mom.dataset.t){mom.dataset.drawn=mom.dataset.t;const t=mom.dataset.t;MomentumView.render(mom,{ticker:t,hub:(globalThis.FF_HUB_ROOT||''),here:()=>state.tab==='etf'&&state.eview==='one'&&String(state.esym||'').trim().toUpperCase()===t})}
  const opp=$('etf-opp');
  if(opp&&window.OpportunityView&&opp.dataset.drawn!==opp.dataset.t){opp.dataset.drawn=opp.dataset.t;OpportunityView.render(opp,{ticker:opp.dataset.t,kind:'etfs',hub:(globalThis.FF_HUB_ROOT||'')})}
  document.querySelectorAll('#workspace [data-cco]').forEach(b=>b.onclick=()=>{state.tab='consensus';state.cview='company';state.cq=b.dataset.cco;syncPills();try{history.replaceState(null,'','#consensus')}catch(e){}render();scrollTo({top:0,behavior:'smooth'})});

@@ -19,7 +19,9 @@
                    calendar-year returns, the benchmark index, the objective, the strategy and the principal risks.
     market     Yahoo Finance: ten years of weekly closes and volume, NAV, net assets, yield, category, family.
     uit        the few unit-investment-trust ETFs that file no N-PORT (SPY, DIA, MDY): the sponsor's daily holdings file.
-  build      public/: index.json (the screener; each ETF's tags — etf_tags.py — and the leverage multiple), e/<SYMBOL>.json (one ETF), by/<TICKER>.json (the ETFs that hold a
+  build      public/: index.json (the screener; each ETF's tags — etf_tags.py — the leverage multiple and the momentum
+             columns), momentum/<SYMBOL>.json and momentum-latest.json (momentum factors and their ranks among the ETFs that
+             are neither leveraged, inverse nor cash-like, and inside the asset class: app/momentum.py), e/<SYMBOL>.json (one ETF), by/<TICKER>.json (the ETFs that hold a
              company), parties.json (authorized participants, custodians, lending agents, advisers, auditors across
              all ETFs), status.json — joined with the Hub's 13F holders, officials' trades, short interest, N-PX filers,
              and the companies inside seen through the consensus, 13F flows, officials, insiders and debt data.
@@ -1263,6 +1265,11 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
     def pk(name, crd=None):
         return (name or '').strip(), (crd or '').lstrip('0')
     index_rows = []
+    # momentum (app/momentum.py): each ETF's weekly total-return closes moved to their Friday, ranked after the loop
+    import momentum as MO
+    MOM_CASH_VOL = 0.03                               # cash-like: under 3% a year of volatility (app/opportunity.py CASH_VOL)
+    mom_grid = MO.friday_grid(dt.date(2004, 1, 2), dt.date.today())
+    mom_series, mom_meta = {}, {}
     for e in etfs:
         sym = e['symbol']
         s = e.get('series')
@@ -1342,6 +1349,11 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         row['lev'] = L['x'] if L['dir'] else None
         row['under'] = under
         index_rows.append(row)
+        f0, cl = MO.on_grid([[w[0], w[2]] for w in (mk.get('weekly') or []) if w and len(w) > 2 and w[2]], mom_grid)
+        if f0 is not None and len(cl) >= 60:
+            mom_series[sym] = (f0, cl)
+            mom_meta[sym] = {'n': e.get('name'), 'ac': ac, 'aum': aum, 'dv': st.get('dollar_vol'), 'lev': bool(e['leveraged'] or e['inverse']),
+                             'cash': st.get('vol1y') is not None and st['vol1y'] < MOM_CASH_VOL}
         # parties
         a_ = aum or 0
         for a in active_aps:
@@ -1390,6 +1402,22 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         wj(pub / 'by' / f'{t.replace("/", "-")}.json', _clean({'ticker': t, 'etfs': len(lst), 'usd': tot, 'name': (cons_rows.get(t) or {}).get('name'),
                                                                      'rows': [[x[0], names.get(x[0]), x[1], x[2], aum_of.get(x[0])] for x in lst[:400]],
                                                                      'flows': implied_flows(lst, fl_of)}))
+    # momentum factors and their ranks: every ETF that is neither leveraged nor inverse nor cash-like, against all of them
+    # and inside its asset class (public/momentum/<SYMBOL>.json month by month, public/momentum-latest.json); the
+    # screener's columns. Cash-like funds (under 3% a year of volatility, as app/opportunity.py): their trend is their yield
+    mom_latest, mom_summary = {}, None
+    try:
+        uni = [s_ for s_, m_ in mom_meta.items() if not m_['lev'] and not m_['cash']]
+        mom_summary, mom_latest = MO.build(pub, mom_series, mom_grid, uni, bench=mom_series.get('SPY'), groups={s_: mom_meta[s_]['ac'] for s_ in uni},
+                                           name='momentum', start='2008-01-01', meta={s_: {k: v for k, v in mom_meta[s_].items() if k not in ('lev', 'cash')} for s_ in uni})
+        mom_summary['left_out'] = {'leveraged_or_inverse': sum(1 for m_ in mom_meta.values() if m_['lev']),
+                                   'cash_like': sum(1 for m_ in mom_meta.values() if m_['cash'] and not m_['lev'])}
+    except Exception as exc:                          # never lose the screener to it
+        print(f'::warning::etf momentum: {str(exc)[:200]}')
+    for r in index_rows:
+        m_ = mom_latest.get(r['symbol']) or {}
+        r['mom_12_1'], r['mom_comp'], r['mom_pct'], r['mom_grp_pct'] = m_.get('m12_1'), m_.get('comp'), m_.get('p_comp'), m_.get('p_comp_group')
+    del mom_series
     fields = list(index_rows[0].keys()) if index_rows else []
     used = sorted({t for r in index_rows for t in r.get('tags') or []}, key=lambda t: (TG.GROUPS.index(TG.TAGS[t][1]) if t in TG.TAGS and TG.TAGS[t][1] in TG.GROUPS else 99, t))
     wj(pub / 'index.json', _clean({'generated_at': now(), 'fields': fields, 'rows': [[r[k] for k in fields] for r in index_rows],
@@ -1429,7 +1457,7 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         print('index members skipped:', type(exc).__name__, exc, flush=True)
     status = {'built_at': now(), 'members': members, 'etfs': len(index_rows), 'with_series': sum(1 for e in etfs if e.get('series')), 'ncen': len(ncen), 'prospectus': len(rr),
               'nport_funds': len(hist), 'holdings': len(holds), 'holdings_source': hd.get('source'), 'companies_held': len(by), 'actual_weights': actual_status, 'market': st.get('market_summary'),
-              'datasets': {k: v for k, v in (st.get('datasets') or {}).items()}, 'periods13f': periods13}
+              'datasets': {k: v for k, v in (st.get('datasets') or {}).items()}, 'periods13f': periods13, 'momentum': mom_summary}
     write_json(pub / 'status.json', status)
     if verbose:
         print(f'etf build: {len(index_rows)} ETFs, {len(ncen)} N-CEN, {len(rr)} prospectus, {len(holds)} portfolios, {len(by)} companies held', flush=True)
