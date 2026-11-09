@@ -806,6 +806,38 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     await assert.rejects(S.build(Object.assign({}, st0, { t: 'NOPE' })), /No weekly prices on file for NOPE/); n++;
     ok(S.spanTxt(7.2 * 365.25 * 864e5) === '7.2 years' && S.spanTxt(9 * 30.44 * 864e5) === '9 months' && S.spanTxt(3 * W) === '3 weeks', 'a stretch of time in words');
   }
+  // drops and rebounds: each year's deepest drop from the high so far and the rebound after it, or its weeks added up
+  {
+    const Fr = (d) => Date.parse(d + 'T00:00:00Z');
+    const G = ['2021-01-01', '2021-01-08', '2021-01-15', '2021-01-22', '2021-01-29', '2022-01-07', '2022-01-14'].map(Fr);
+    const Wy = S.swingYears(G, [110, 90, 80, 100, 120, 60, 66], 100), [A, B] = Wy.years, near = (x, y) => Math.abs(x - y) < 1e-9;
+    ok(Wy.years.length === 2 && A.y === 2021 && B.y === 2022, 'a slot a calendar year');
+    ok(near(A.drop, 1 - 80 / 110) && A.peakI === 0 && A.troughI === 2 && near(A.reb, 0.5) && A.rebI === 4, 'the deepest drop from the high so far, then the rebound to the highest close after it');
+    ok(near(A.rise, 0.1 + 0.25 + 0.2) && near(A.fall, 90 / 110 - 1 + 80 / 90 - 1) && A.upW === 3 && A.downW === 2 && near(A.ret, 0.2), 'every rising and falling week added up; the year from the close before it');
+    ok(near(B.drop, 0.5) && B.peakI === 4 && B.troughI === 5 && near(B.reb, 0.1), 'the last close of the year before counts as the high');
+    ok(near(Wy.live[1].drop, 1 - 90 / 110) && Wy.live[1].reb === 0 && near(Wy.live[4].reb, 0.5) && Wy.live[3].rebI === 3, 'the year as it stood each week');
+    const S2 = S.swingYears(G.slice(0, 3), [100, 120, 90], null);
+    ok(S2.years[0].base === null && S2.years[0].part && near(S2.years[0].drop, 0.25) && S2.years[0].upW === 1 && S2.years[0].ret === null, 'without a close before, the first week sets the bar');
+    // the video from a file: both measures, every shape and style
+    for (const vm of ['once', 'cum']) {
+      const st = Object.assign(S.parseState('k=swing'), { t: 'HHH', from: '2020-01-01', vm });
+      const V = await S.build(st);
+      const Y = V.swing.years, full = Y.filter((y) => !y.part);
+      ok(V.kind === 'swing' && Y.length === 6 && Y[0].y === 2020 && full.length >= 4 && st.style === 'swing', vm + ': six years, the full ones counted');
+      ok(Y.every((y) => y.drop >= 0 && y.drop < 1 && y.reb >= 0 && y.rise >= 0 && y.fall <= 0) && Y.every((y) => { const l = V.swing.live[y.i1]; return near(l.drop, y.drop) && near(l.reb, y.reb) && near(l.rise, y.rise); }), vm + ': the year’s last week holds its final figures');
+      ok(Y[1].drop > 0.35 && Y[1].troughI != null, vm + ': the dip of the second year: ' + Y[1].drop.toFixed(3));
+      V.style = 'swing'; V.endCard = true; S.finish(V, st);
+      ok(V.final.length === 6 && (vm === 'once' ? /an average drop of −[\d.]+% in a year, then \+[\d.]+%$/.test(V.endTitle) : /up and −[\d.]+% down in an average year$/.test(V.endTitle)) && V.caption.length > 40, vm + ': the end card: ' + V.endTitle);
+      const R = S.report(V);
+      ok(R.kind === 'swing' && R.rows.length === Y.length + 1 && /^Average of \d+ full years$/.test(R.rows[R.rows.length - 1].label) && R.cols.length === 4 && /Weekly closes/.test(R.foot), vm + ': the report, year by year with the average');
+      ok(S.csvOf(V, R).split('\n')[0].startsWith(',' + (vm === 'once' ? 'Deepest drop' : 'Rising weeks added up')), vm + ': the CSV');
+      for (const style of ['swing', 'ybars']) { V.style = style; for (const ar of [[1920, 1080], [1080, 1920], [1080, 1080]]) for (const t of [0, 4, 9, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'clean', dur: 12 }, t); n++; }
+    }
+    const back = S.parseState(S.serialize(Object.assign(S.parseState(''), { k: 'swing', t: 'QQQ', vm: 'cum', style: 'ybars' })).slice(7));
+    ok(back.k === 'swing' && back.vm === 'cum' && back.style === 'ybars', 'the address keeps the measure and the style');
+    ok(S.TEMPLATES.filter((t) => t.s.k === 'swing').length >= 2 && S.TEMPLATES.some((t) => t.s.k === 'swing' && t.s.vm === 'cum'), 'templates for both measures');
+    await assert.rejects(S.build(Object.assign(S.parseState('k=swing'), { t: 'NOPE' })), /No weekly prices on file for NOPE/); n++;
+  }
   // the page loads the studio, the router and the menu know it
   const idx = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8'), app = fs.readFileSync(path.join(__dirname, '..', 'web', 'app.js'), 'utf8'), nav = fs.readFileSync(path.join(__dirname, '..', 'web', 'nav.js'), 'utf8');
   ok(idx.includes('<script src="studio.js"></script>') && app.includes('window.FFStudio.render') && nav.includes("'#studio'"), 'the studio is not wired into the page');
