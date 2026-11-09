@@ -27,6 +27,10 @@
   // A detail counted twice comes out of its section's "other" lines, in this order (unclassified sides: any of them).
   const CONTAINERS = { a: { 1: ['oca'], 0: ['onca'] }, l: { 1: ['ocl', 'accr'], 0: ['oncl'] } };
   const UNCLASSIFIED = { a: ['onca', 'oca'], l: ['oncl', 'ocl', 'accr'] };
+  // then out of the lease liabilities, the line most often tagged on its own and inside another one too (IFRS 16
+  // leases inside borrowings: Novo Nordisk; finance leases inside debt), before the whole section shares the rest
+  const LEASES = { 1: ['lease:c', 'flease:c', 'olease:c'], 0: ['lease', 'flease', 'olease'] };
+  const LEASES_ANY = ['lease', 'flease', 'olease'];
   // short names for the labels inside the blocks (the tooltip has the full one)
   const SHORT = {
     cash: 'Cash', sti: 'Short-term investments', lti: 'Long-term investments', resale: 'Resale agreements', secs: 'Debt securities',
@@ -83,12 +87,15 @@
       list.filter((d) => d.derived && d.v < 0).forEach((d) => {
         let need = -d.v;
         const took = [];
-        (m.classified[side] && d.cur != null ? CONTAINERS[side][d.cur] : UNCLASSIFIED[side]).forEach((k) => {
+        const byCur = m.classified[side] && d.cur != null;
+        const leases = side === 'l' ? (byCur ? LEASES[d.cur] : LEASES_ANY) : [];
+        (byCur ? CONTAINERS[side][d.cur] : UNCLASSIFIED[side]).concat(leases).forEach((k) => {
           const b = list.find((y) => y.k === k && !y.derived && (d.cur == null || y.cur === d.cur));
           if (!b || need <= 0 || b.v <= 0) return;
           const t = Math.min(need, b.v);
           b.v -= t;
           b.less = (b.less || 0) + t;
+          if (leases.includes(k)) b.inside = true;   // the lease is the detail: it is inside another line as well
           need -= t;
           took.push([b.k, t]);
         });
@@ -141,6 +148,17 @@
   }
 
   // ---------------------------------------------------------------- the income statement of the same year
+  // Net income for the shareholders; failing that (IFRS filers that tag only ProfitLoss, the profit for the year),
+  // the profit for the year, which also holds the minority interests' share ("pl": the ROE is then on all equity).
+  function profitOf(cur, f, flowsFirst) {
+    const src = flowsFirst ? [[f, true], [cur, false]] : [[cur, false], [f, true]];
+    for (const key of ['ni', 'pl']) {
+      for (const [o, isF] of src) if (fin(o[key])) return { ni: o[key], basis: key, ref: isF ? (o.ev || {})[key] : undefined };
+    }
+    return { ni: null, basis: null };
+  }
+  const nciAt = (R, j) => { const v = ((R.totals || {}).nci || [])[j]; return fin(v) ? v : 0; };
+
   function incomeOf(c, end) {
     const Q = c.quality || {}, R = Q.reform || {};
     const d = ((Q.drivers || {}).fy || []).find((x) => x.end === end);
@@ -149,7 +167,7 @@
     const cur = (d && d.cur) || {};
     const revenue = fin(cur.revenue) ? cur.revenue : f.revenue;
     if (!fin(revenue) || revenue <= 0) return null;
-    const ni = fin(cur.ni) ? cur.ni : f.ni, oi = fin(cur.oi) ? cur.oi : f.oi;
+    const { ni, basis } = profitOf(cur, f), oi = fin(cur.oi) ? cur.oi : f.oi;
     if (!fin(ni)) return null;
     const cor = fin(cur.cor) ? cur.cor : fin(cur.gp) ? revenue - cur.gp : (y.wc || {}).cor;
     const opex = fin(cor) && fin(oi) ? revenue - cor - oi : null, below = fin(oi) ? oi - ni : null;
@@ -163,7 +181,7 @@
     const ok = (parts) => parts.every(([, , v]) => fin(v) && v >= 0) && Math.abs(parts.reduce((s, [, , v]) => s + v, 0) - total) <= Math.max(1, total * 1e-6);
     const parts = (tries.find(ok) || [[['rev', 'Revenue', revenue]]]).filter(([, , v]) => v > 0);
     const wc = y.wc || {};
-    return { end, revenue, ni, oi, cor, loss, total, parts: parts.map(([k, name, v]) => ({ k, name, v })),
+    return { end, revenue, ni, basis, oi, cor, loss, total, parts: parts.map(([k, name, v]) => ({ k, name, v })),
       dso: wc.dso, dio: wc.has_inv === false ? null : wc.dio, dpo: wc.ap_proxy ? null : wc.dpo, ev: (d && d.ev && d.ev.cur) || f.ev || {} };
   }
 
@@ -171,7 +189,7 @@
   function dupont(R, i, inc) {
     if (!inc || i < 1) return null;
     const T = (k, j) => ((R.totals || {})[k] || [])[j];
-    const eq = (j) => (T('cse', j) || 0);
+    const eq = (j) => (T('cse', j) || 0) + (inc.basis === 'pl' ? nciAt(R, j) : 0);   // profit for the year: all equity
     const a0 = T('assets', i - 1), a1 = T('assets', i), e0 = eq(i - 1), e1 = eq(i);
     if (!fin(a0) || !fin(a1)) return null;
     const avgA = (a0 + a1) / 2, avgE = (e0 + e1) / 2;
@@ -191,7 +209,13 @@
     const sbcItem = ((y.bridge || {}).items || []).find((x) => x[0] === 'sbc');
     const rows = [];
     const add = (key, name, v, ev, note) => { if (fin(v) && v !== 0) rows.push({ key, name, v, ev, note }); };
-    add('ni', 'Net income (the income statement)', f.ni, { ref: (f.ev || {}).ni }, 'The year’s profit for the shareholders: what the income statement adds to equity.');
+    const d = ((Q.drivers || {}).fy || []).find((x) => x.end === end);
+    const p = profitOf((d && d.cur) || {}, f, true);
+    // the profit for the year bridges the shareholders' equity only when no minority holds a share of it
+    const ni = p.basis === 'pl' && (nciAt(R, i - 1) || nciAt(R, i)) ? null : p.ni;
+    add('ni', 'Net income (the income statement)', ni, { ref: p.ref }, p.basis === 'pl'
+      ? 'The year’s profit (IFRS: profit for the year; no minority interests): what the income statement adds to equity.'
+      : 'The year’s profit for the shareholders: what the income statement adds to equity.');
     add('div', 'Dividends', it.div, { list: (k && k.ev || {}).div }, 'Paid to shareholders in cash (cash-flow statement).');
     add('buyback', 'Buybacks', it.buyback, { list: (k && k.ev || {}).buyback }, 'Shares bought back in cash (cash-flow statement).');
     add('sbc', 'Share-based pay', sbcItem ? sbcItem[1] : null, { ref: sbcItem ? sbcItem[2] : null }, 'Expensed in the income statement without cash: the shares it promises are added to equity.');
@@ -206,12 +230,19 @@
   }
 
   // ---------------------------------------------------------------- drawing
+  // the French and Spanish versions (web/i18n.js): names and amounts are translated before they are fitted
+  const T = (s) => (root.FFT ? root.FFT(s) : s);
+  const KEEP = (s) => (root.FFT && root.FFT.keep ? root.FFT.keep(s) : s);
   const MIN_H = 7;                          // px: thinner blocks of one kind and section are drawn as one
   const FONT_W = 6.5;                        // average width of a 12px Plex Sans character, for fitting labels
   function fit(text, px) {
     const n = Math.floor(px / FONT_W);
     if (n < 3) return '';
-    return text.length <= n ? text : `${text.slice(0, Math.max(1, n - 1)).trimEnd()}…`;
+    if (text.length <= n) return text;
+    let cut = text.slice(0, Math.max(1, n - 1));
+    const sp = cut.lastIndexOf(' ');
+    if (text[cut.length] !== ' ' && sp >= Math.min(6, n / 2)) cut = cut.slice(0, sp);   // whole words: "Not tagged…"
+    return KEEP(`${cut.replace(/[\s,;:·&–-]+$/, '')}…`);
   }
   // consecutive blocks too thin to see on their own (same kind and section) become one "smaller lines" block
   function merge(list, scale, minH) {
@@ -263,18 +294,21 @@
   }
   // the label inside a block: the amount is never cut; a name shows when it fits (or keeps 9 characters before its "…");
   // the share is quieter than the amount
-  function labelSVG(x, y, w, h, name, amount, share, ink, tiny) {
+  function labelSVG(x, y, w, h, name0, amount0, share0, ink, tiny) {
     const room = w - 14, chars = Math.floor(room / FONT_W);
     if (room < 30) return '';
+    const name = T(name0), amount = T(amount0), share = share0 ? T(share0) : share0;
     const extra = share ? ` · ${share}` : '';
-    const nameFit = name.length <= chars ? name : chars >= 10 ? fit(name, room) : '';
+    const tinies = [].concat(tiny || []).map(T);              // shorter names, longest first
+    const short = (n) => tinies.find((t) => t.length <= n);
+    const nameFit = name.length <= chars ? name : short(chars) || (chars >= 10 ? fit(name, room) : '');
     const withShare = (amount + extra).length <= chars;
     const am = withShare ? amount : amount.length <= chars ? amount : '';
     const amt = (yy, cls) => `<text class="bsb-t bsb-n ${cls || ''} ${ink}" x="${x + 8}" y="${yy}">${esc(am)}${withShare && extra ? `<tspan class="bsb-share">${esc(extra)}</tspan>` : ''}</text>`;
     if (h >= 33 && nameFit && am) return `<text class="bsb-t ${ink}" x="${x + 8}" y="${y + 16}">${esc(nameFit)}</text>${amt(y + 30)}`;
     if (h >= 13) {                             // one line: the name cut to what the amount leaves
       const left = chars - amount.length - 1;
-      const nm = name.length <= left ? name : tiny && tiny.length <= left ? tiny : left >= 10 ? fit(name, left * FONT_W) : '';
+      const nm = name.length <= left ? name : short(left) || (left >= 10 ? fit(name, left * FONT_W) : '');
       const yy = y + Math.min(h / 2 + 4, 17), sm = h < 17 ? 'bsb-sm' : '';
       if (nm) return `<text class="bsb-t ${sm} ${ink}" x="${x + 8}" y="${yy}">${esc(nm)} <tspan class="bsb-n">${esc(amount)}</tspan></text>`;
       return am ? amt(yy, sm) : '';
@@ -355,7 +389,7 @@
       const a = run, z = run + r.v, yT = lev(Math.max(a, z)), h = Math.max(1.5, Math.abs(r.v) * scale);
       const cls = r.gap ? `bsb-st-gap ${r.v < 0 ? 'minus' : 'plus'}` : r.key === 'ni' ? 'bsb-st-ni' : r.v < 0 ? 'bsb-st-minus' : 'bsb-st-plus';
       items.push({ step: r, B, r: { b: { side: 'step' }, x, y: yT, w: sw, h } });
-      const name = STEP_NAME[r.key] || r.name, label = `${name} ${r.v >= 0 ? '+' : '−'}${money(Math.abs(r.v))}`, len = label.length * 6.2;
+      const name = T(STEP_NAME[r.key] || r.name), label = KEEP(`${name} ${r.v >= 0 ? '+' : '−'}${T(money(Math.abs(r.v)))}`), len = label.length * 6.2;
       // the label turned on its side: inside a step tall enough, else above a rise or below a fall
       const cx = x + sw / 2 + 4, roomUp = yT - 6 - len >= 24, roomDown = yT + h + 6 + len <= bottom - 4;
       const up = (r.v >= 0 && roomUp) || (r.v < 0 && !roomDown && roomUp);
@@ -431,7 +465,7 @@
       items.push({ r, m: y.m, inc, total: inc.revenue });
       const idx = items.length - 1, { b, x, y: yy, w, h } = r, share = b.v / inc.revenue;
       const ink = b.kind === 'ni' || b.kind === 'c-cor' ? '' : 'bsb-onlight';     // the deep red and the green take white text
-      labels += labelSVG(x, yy, w, h, b.name, money(b.v), pct(share), ink, { 'is:below': 'Interest & tax', 'is:rest': 'Other costs', 'is:opex': 'Opex' }[b.k]);
+      labels += labelSVG(x, yy, w, h, b.name, money(b.v), pct(share), ink, { 'is:below': ['Interest & tax', 'Int. & tax'], 'is:rest': 'Other costs', 'is:opex': 'Opex' }[b.k]);
       svg += `<g class="bsb-b" data-b="${idx}" tabindex="0" role="img" aria-label="${esc(`${b.name}: ${money(b.v)}, ${pct(share, 1)} of revenue`)}"><rect class="bsb-is-${b.kind === 'ni' ? 'ni' : b.kind}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="4"/></g>`;
     });
     if (inc.loss) {                          // the costs pass revenue by the loss: hatched above the revenue line
@@ -450,7 +484,7 @@
     if (fin(inc.dso) && at(A, 'ar')) links.push({ a: at(A, 'ar'), b: rev, left: true, label: days(inc.dso, 'revenue'), title: 'Receivables ÷ revenue × days in the year: how long customers take to pay (DSO)' });
     if (fin(inc.dio) && at(A, 'inv') && cor) links.push({ a: at(A, 'inv'), b: cor, left: true, label: days(inc.dio, 'costs'), title: 'Inventory ÷ cost of revenue × days: how long goods wait to be sold (DIO)' });
     if (fin(inc.dpo) && at(L, 'ap') && cor) links.push({ a: at(L, 'ap'), b: cor, left: false, label: days(inc.dpo, 'costs'), title: 'Payables ÷ cost of revenue × days: how long the company takes to pay suppliers (DPO)' });
-    if (dp && fin(dp.roe) && at(L, 'cse') && ni) links.push({ a: at(L, 'cse'), b: ni, left: false, label: `ROE ${pct(dp.roe)}`, title: 'Net income ÷ average shareholders’ equity', strong: true });
+    if (dp && fin(dp.roe) && at(L, 'cse') && ni) links.push({ a: at(L, 'cse'), b: ni, left: false, label: `ROE ${pct(dp.roe)}`, title: inc.basis === 'pl' ? 'Profit for the year ÷ average equity (minority interests included)' : 'Net income ÷ average shareholders’ equity', strong: true });
     links.forEach((k) => {
       const ya = k.a.y + Math.min(k.a.h / 2, 18), yb = k.b.h ? k.b.y + Math.min(k.b.h / 2, 90) : k.b.y + 3;
       const xA = k.left ? k.a.x + k.a.w : k.a.x, xB = k.left ? k.b.x : k.b.x + k.b.w;
@@ -483,7 +517,8 @@
     else if (b.why) lines.push(`<span class="muted">${esc(b.why)}</span>`);
     if (b.whole) lines.push(`<span class="muted">Of ${esc(money(b.whole))} in all; the part due within a year is a block of its own among the current lines.</span>`);
     if ((b.gone || []).length) lines.push(`<span>Probably inside it: ${b.gone.map((g) => `${esc(g.name.toLowerCase())} (${esc(money(g.v))} in ${esc(b.prevLabel)})`).join(', ')} — tagged last year, without a standard tag this year.</span>`);
-    if (b.less) lines.push(`<span class="muted">${esc(money(b.less))} taken out: lines shown as blocks of their own are inside this one in the filing (${b.spread ? 'shared out over the section' : 'counted twice otherwise'}).</span>`);
+    if (b.less && b.inside) lines.push(`<span class="muted">${esc(money(b.less))} taken out: counted twice — lease liabilities are often inside another line of the filing as well (IFRS 16 leases inside borrowings, finance leases inside debt).</span>`);
+    else if (b.less) lines.push(`<span class="muted">${esc(money(b.less))} taken out: lines shown as blocks of their own are inside this one in the filing (${b.spread ? 'shared out over the section' : 'counted twice otherwise'}).</span>`);
     return lines.join('');
   }
 
@@ -615,7 +650,7 @@
         ${twice.length || untagged.length || (P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''))) ? `<p class="muted q-small">${[
           untagged.length ? `Hatched: what the tagged lines leave of ${untagged.map((b) => (b.cur === 1 ? 'current ' : b.cur === 0 ? 'non-current ' : '') + (b.side === 'a' ? 'assets' : 'liabilities')).join(' and ')} — lines the company tags its own way (${untagged.map((b) => money(b.v)).join(', ')}).` +
             untagged.filter((b) => (b.gone || []).length).map((b) => ` ${b.gone.map((g) => `${g.name} (${money(g.v)} in ${b.prevLabel})`).join(', ')} ${b.gone.length > 1 ? 'have' : 'has'} no standard tag in ${m.label}: probably inside the ${money(b.v)}${b.gone.some((g) => g.cls === 'fin') ? ' — move that line to financing in the workbench below to count it so' : ''}.`).join('') : '',
-          twice.length ? `Lines counted twice in the tags (${twice.map((x) => money(x.v)).join(', ')}) are taken out of the “other” lines that contain them, so each column adds up to the filing’s total.` : '',
+          twice.length ? `Lines counted twice in the tags (${twice.map((x) => money(x.v)).join(', ')}) are taken out of the “other” lines that contain them${twice.some((x) => x.took.some(([k]) => /lease/.test(k))) ? ', or out of the lease liabilities when those are inside another line as well' : ''}, so each column adds up to the filing’s total.` : '',
           P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || '')) ? 'Banks and insurers: deposits, loans and investments are the business itself, and much of the balance sheet is tagged their own way.' : '',
         ].filter(Boolean).join(' ')}</p>` : ''}
         ${B ? `<h3 class="cq-h3">Net income into equity, ${esc(B.labels[0])} → ${esc(B.labels[1])}</h3>

@@ -114,7 +114,8 @@ LINES = [
 # a combined tag that already contains another line: that line is skipped
 COVERS = {"AccountsPayableAndAccruedLiabilitiesCurrent": {"accr"}, "AccountsPayableAndAccruedLiabilitiesCurrentAndNoncurrent": {"accr"},
           "DebtCurrent": {"ltdc"}, "CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings": {"ltdc"},
-          "LongTermDebtAndCapitalLeaseObligations": {"flease"}}
+          "LongTermDebtAndCapitalLeaseObligations": {"flease"},
+          "PropertyPlantAndEquipmentIncludingRightofuseAssets": {"rou"}}    # IFRS 16: the leased assets inside PP&E
 ALL_CURRENT_DEBT = {"DebtCurrent", "CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"}   # nothing else in that line
 # The current section of a classified balance sheet (the other lines are non-current). A line of two groups,
 # non-current then current, has a part in each: its current part is published as "cv".
@@ -216,6 +217,12 @@ def compute(fx, ev, ye, fye="1231"):
                     x["cv"] = cur
             lines.append(x)
     if "ltdc" in skipped:
+        lines = [x for x in lines if x["k"] != "ltdc"]
+    # the same borrowings tagged twice: Novo Nordisk's 20-F tags its current borrowings as ShorttermBorrowings and as
+    # CurrentPortionOfLongtermBorrowings, equal at every year end. One line, so the rest is not short by it.
+    by = {x["k"]: x for x in lines}
+    if "std" in by and "ltdc" in by and any(v is not None for v in by["ltdc"]["v"]) \
+            and all(b is None or a == b for a, b in zip(by["std"]["v"], by["ltdc"]["v"])):
         lines = [x for x in lines if x["k"] != "ltdc"]
 
     def current_part(x, i):

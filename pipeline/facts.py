@@ -523,6 +523,9 @@ def extract(facts, end, annual=False):
     return bank_revenue(raw, source(facts, "revenue", end, annual))
 
 
+MIRROR = 0.05   # ProfitLoss within this share of minus net income: a flipped sign (Riot Q3 2025: 1.6% apart)
+
+
 def odd_one_out(raw):
     """Net income to shareholders and the consolidated figure (ProfitLoss) should differ by the minority interests'
     share, and pre-tax earnings less tax is the consolidated figure. When the shareholders' figure fits pre-tax less
@@ -531,8 +534,15 @@ def odd_one_out(raw):
     The same holds the other way round, with no ProfitLoss tag: when the shareholders' figure fits pre-tax less tax and
     the shareholders' figure plus the minority interests' tag does not (Univest's 2025–2026 10-Qs tag the minority
     interests' share with net income itself), the minority-interest tag is the slip: kept, the consolidated figure
-    doubles and pre-tax earnings are rebuilt from it."""
+    doubles and pre-tax earnings are rebuilt from it.
+    With no pre-tax earnings or tax to tell, a ProfitLoss tag that mirrors the shareholders' figure (opposite sign,
+    the same size) is the slip as well: a minority interest of twice the net result does not exist (Riot Platforms'
+    2025 10-Qs: ProfitLoss -$219.8M beside net income of $219.5M; the Q2 2025 chart was not drawn at all)."""
     pretax, tax, ni, pl, nci = (raw.get(k) for k in ("pretax", "tax", "ni", "pl", "nci"))
+    if ni is not None and pl is not None and nci is None and (pretax is None or tax is None) \
+            and ni * pl < 0 and abs(ni + pl) <= MIRROR * max(abs(ni), abs(pl)):
+        raw["pl"] = ni
+        return
     if None in (pretax, tax, ni):
         return
     after_tax = pretax - tax

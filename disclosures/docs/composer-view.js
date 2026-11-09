@@ -100,7 +100,7 @@
     for (let t = 0; t < max; t += 350) {
       const sig = [...el.querySelectorAll('svg,canvas')].map((x) => { const r = x.getBoundingClientRect(); return Math.round(r.width) + 'x' + Math.round(r.height); }).join(',') + '|' + el.textContent.length;
       same = sig === last ? same + 1 : 0;
-      if (same >= 2 && !/^(Loading|Reading|Looking)/.test(el.textContent.trim())) return;
+      if (same >= 2 && !/^(Loading|Reading|Looking|Chargement|Cargando)/.test(el.textContent.trim())) return;   // the French and Spanish pages say it too
       last = sig;
       await wait(350);
     }
@@ -116,7 +116,7 @@
   function captionOf(chart, root, h) {
     const after = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
     return [...root.querySelectorAll('p')].filter((p) => (!h || after(h, p)) && after(p, chart) && !p.contains(chart) && !p.closest('label,button,details'))
-      .slice(h ? 0 : -1).map((p) => clean(p.textContent)).filter((t) => t.length > 12 && !/^(Loading|Reading)/.test(t)).join(' ').slice(0, 900);
+      .slice(h ? 0 : -1).map((p) => clean(p.textContent)).filter((t) => t.length > 12 && !/^(Loading|Reading|Chargement|Cargando)/.test(t)).join(' ').slice(0, 900);
   }
   // the charts a view drew: <svg> / <canvas> at least 260 × 110 on the page, not inside another one
   function chartsIn(root, src) {

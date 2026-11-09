@@ -271,7 +271,7 @@
           end: o.q.end, label: o.q.label, period: o.fy ? 'fy' : undefined, form: dp.form || o.q.form, filed: dp.filed, doc_url: dp.url,
           index_url: o.q.index_url, dense: true,
           title: `${name} ${lab} — detailed flow`,
-          subtitle: `${o.fy ? 'Fiscal year' : 'Quarter'} ended ${date(o.q.end)} · every line split as the ${dp.form || 'filing'} and its notes split it · GAAP${dp.has_y ? ` · Y/Y vs. ${yl}` : ''}${ql ? ` · Q/Q vs. ${ql}` : ''}`,
+          subtitle: `${o.fy ? 'Fiscal year' : 'Quarter'} ended ${date(o.q.end)} · every line split as the ${dp.form || 'filing'} and its notes split it · ${o.c && o.c.std === 'IFRS' ? 'IFRS' : 'GAAP'}${dp.has_y ? ` · Y/Y vs. ${yl}` : ''}${ql ? ` · Q/Q vs. ${ql}` : ''}`,
           footer: [`Source: SEC EDGAR XBRL (${dp.form || 'filing'}${dp.filed ? ` filed ${dp.filed}` : ''}). Each total and its parts are the company’s own calculation in its XBRL — the statements, then the notes that split a line further; revenue by the filing’s own members. Parts under 0.3% of revenue are summed as Other.`,
             o.fy ? 'Full-year figures as reported in the 10-K, against the year before.' : dp.cash ? 'Cash flows for a quarter: this year to date less the previous 10-Q’s (a fourth quarter: the year less nine months).' : 'The cash flow statement is not drawn for this period.'],
           compare: ql && (dp.bullets_q || []).length ? { vs: ql, title: `${name} ${lab} vs ${ql}: what changed (detailed)`, bullets: dp.bullets_q } : null,
@@ -979,7 +979,8 @@
     $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a> · <a href="#c-${cik}-invest">investments</a>`;
     const body = $('#body');
     if (window.FFCompanyDisclosures && !cmpId && !all) window.FFCompanyDisclosures.mount($('#ff-company-disclosures'), { cik: p.cik, here, compact: true });
-    if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
+    // the company's own figures in the page's currency (CUR); prices and holdings stay in US dollars
+    if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here, cur: CUR, inUsd });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
     if (cmpId) {
@@ -1179,7 +1180,7 @@
   // five groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts'], ['x-composer']]],
-    ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-traps'], ['x-workforce']]],
+    ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['x-roll'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-traps'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-moves'], ['x-highs'], ['x-mahybrid'], ['x-opportunity'], ['x-odds']]],
     ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders'], ['invest', 'Investments']]],
@@ -1217,7 +1218,8 @@
     const say = inUsd
       ? `In US dollars, converted from ${t(nm)} (${own})${fxq ? `: ${t(fxq.note)}${fxq.src === 'official' && fxq.text ? ` <span class="muted">— “${t(String(fxq.text).slice(0, 220))}”</span>` : ''}` : ''}. Each comparison period at its own rate, so changes include the currency’s move.`
       : `Amounts in ${t(nm)} (${own}), as the company reports them.${hasUsd ? ' The same charts in US dollars: at the company’s own convenience rate when its filing gives one, else the period’s average exchange rate.' : ' No exchange rate is available for a dollar version yet.'}`;
-    return `<div class="ccy-bar" role="group" aria-label="Currency">${btn('own', `${symOf(own).trim()} ${own}`, !inUsd)}${hasUsd ? btn('usd', 'US$', inUsd) : ''}<span class="muted">${say}</span></div>`;
+    const sym = symOf(own).trim();                       // "€ EUR", but "SEK" (no symbol of its own), never "SEK SEK"
+    return `<div class="ccy-bar" role="group" aria-label="Currency">${btn('own', sym && sym !== own ? `${sym} ${own}` : own, !inUsd)}${hasUsd ? btn('usd', 'US$', inUsd) : ''}<span class="muted">${say}</span></div>`;
   }
 
   // customers & suppliers (web/network.js), the growth model (web/model.js) and the chains the company is in
@@ -1526,7 +1528,7 @@
   const BRIDGE = { da: 'Depreciation and amortization', sbc: 'Share-based compensation', dtax: 'Deferred income taxes',
     impair: 'Impairments', gain_inv: 'Gains on investments', gain_dis: 'Gains on disposals', other_nc: 'Other non-cash items',
     d_ar: 'Receivables', d_inv: 'Inventories', d_ap: 'Payables', d_accr: 'Accrued liabilities', d_emp: 'Employee-related liabilities',
-    d_contract: 'Deferred revenue', d_casset: 'Contract assets', d_oassets: 'Prepaid and other assets', d_oliab: 'Other liabilities',
+    d_contract: 'Deferred revenue', d_casset: 'Contract assets', d_orec: 'Other receivables', d_oassets: 'Prepaid and other assets', d_oliab: 'Other liabilities',
     d_tax: 'Income taxes payable', d_onet: 'Other operating capital' };
   const WC_KEYS = new Set(Object.keys(BRIDGE).filter((k) => k.startsWith('d_')));
   const days = (v) => (v == null ? '—' : `${Math.round(v)}`);

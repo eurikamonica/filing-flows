@@ -135,7 +135,7 @@ def companyfacts(cik, accn=None):
             except Exception as e:
                 print(f"  EPS series not kept for {cik}: {e}", file=sys.stderr)
         cur = primary_currency(raw) or "USD"            # a foreign filer's figures in the currency it reports in
-        _cf[cik] = {"raw": raw, "cur": cur, "index": {}}
+        _cf[cik] = {"raw": raw, "cur": cur, "index": {}, "std": accounting_standard(raw)}
         _cur.setdefault(cik, cur)
     c = _cf[cik]
     if accn and accn not in c.setdefault("inst", set()):
@@ -380,9 +380,11 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 8           # bump when the way figures are read changes: stored figures are read again (refresh_da)
-# v8 (Nov 2026): a "Revenues" far below contract revenue is checked against the cost lines too when no costs subtotal
+DA_VERSION = 9           # bump when the way figures are read changes: stored figures are read again (refresh_da)
+# v9 (Nov 2026): a "Revenues" far below contract revenue is checked against the cost lines too when no costs subtotal
 # is tagged (facts.cost_lines: X4 Pharmaceuticals' Q1 2025 revenue read as $0.9M, not its $28.8M)
+# v8 (Nov 2026): a ProfitLoss tag with the sign flipped is dropped when no pre-tax earnings or tax tell (facts.odd_one_out:
+# Riot's 2025 quarters showed a minority interest twice net income; Q2 2025 was not drawn)
 # v7 (Nov 2026): a minority-interest tag that repeats net income itself is dropped (facts.odd_one_out: Univest's
 # Q4 2025-Q2 2026 quarters stored before it still showed net income twice and pre-tax earnings doubled)
 # v6 (Nov 2026): a bank's revenue from net interest + noninterest income when its "Revenues" tag is only the fee part
@@ -577,6 +579,7 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
             if int(cik) in undrawn:
                 c["da_undrawn"] = undrawn[int(cik)]            # read again for this quarter: not again until a newer one
             set_quality(c, companyfacts(cik))
+            _set_std(c, cik)
             store.put(cik, c)
             n += 1
         except Exception as e:
@@ -656,6 +659,7 @@ def refresh_quality(store, limit=QUALITY_PER_RUN):
         try:
             c = store.company(cik)
             set_quality(c, companyfacts(cik))
+            _set_std(c, cik)
             store.put(cik, c)
             n += 1
         except Exception as e:
@@ -1427,6 +1431,21 @@ def primary_currency(fx_raw):
     return max(count, key=count.get) if count else None
 
 
+def accounting_standard(fx_raw):
+    """ "IFRS" when most of a company's XBRL facts are ifrs-full ones (a foreign filer reporting under IFRS), else "GAAP"."""
+    n = {tax: sum(len(fs) for body in (fx_raw.get("facts", {}).get(tax) or {}).values() for fs in (body.get("units") or {}).values())
+         for tax in ("us-gaap", "ifrs-full")}
+    return "IFRS" if n["ifrs-full"] > n["us-gaap"] else "GAAP"
+
+
+def _set_std(c, cik):
+    """c["std"] ("IFRS" or "GAAP") for a foreign filer, from the company facts already downloaded this run (never a
+    download of its own); a domestic filer's charts say GAAP without it."""
+    std = (_cf.get(cik) or {}).get("std")
+    if std and (c.get("fpi") or std == "IFRS"):
+        c["std"] = std
+
+
 def is_foreign(sub):
     forms = {r.get("form") for r in recent_rows(sub)}
     return bool(forms & FOREIGN_FORMS) and not forms & DRAWABLE_FORMS
@@ -1448,15 +1467,32 @@ def _note_fpi(store, cik):
         store.state["fpi"] = sorted(lst | {cik})
 
 
-def _column(rel, j):
-    """The release's j-th column (0 = the current period) as raw values: income statement and cash flow."""
+def _py_index(rel):
+    """The release's year-ago column: the header's (release.year_ago_col), else the first column after the current one
+    whose revenue can be a year-ago quarter's — not a "% of revenue" column (Ferrari's interim report: 2026 | % | 2025
+    | %). None when there is none (-1: the header shows the quarter before, not the year before)."""
+    rev = (rel.get("cols") or {}).get("revenue") or []
+    pct = 100 * (rel.get("scale") or 1)
+    figure = lambda j: 0 < j < len(rev) and rev[0] and rev[j] and abs(rev[j] - pct) > 1e-6
+    j = rel.get("py_col")
+    if j == -1:
+        return None
+    if j is not None:                                    # the header says which: trusted (Nebius grew fivefold)
+        return j if figure(j) else None
+    return next((j for j in range(1, len(rev)) if figure(j) and 0.2 <= rev[j] / rev[0] <= 5), None)
+
+
+def _column(rel, j, jcf=None):
+    """The release's j-th column (0 = the current period) as raw values: income statement and cash flow (its own
+    column jcf when the cash-flow table is laid out differently)."""
     out = {}
+    jcf = j if jcf is None else jcf
     for k, col in (rel.get("cols") or {}).items():
         if len(col) > j:
             out[k] = abs(col[j]) if k in release.COST_KEYS else col[j]
     for k, col in (rel.get("cf_cols") or {}).items():
-        if len(col) > j and k not in out:
-            out[k] = abs(col[j]) if k in release.COST_KEYS else col[j]
+        if len(col) > jcf and k not in out:
+            out[k] = abs(col[jcf]) if k in release.COST_KEYS else col[jcf]
     return out
 
 
@@ -1556,6 +1592,53 @@ def _derive_h2(c):
                 h["q1_end"], h["raw_q1"] = q1["end"], q1["raw"]
 
 
+def _derive_ytd_quarters(c):
+    """Quarters from the year to date: the second is the first half less the first quarter, the third the nine months
+    less the first half (or less the first two quarters) — for companies that print only the year to date for some
+    quarters (HSBC and Lloyds' first halves, NatWest's nine months). A quarter read from its own release is never
+    replaced. The year-ago quarter: the stored one, else the year-ago columns' difference. Returns the ends made."""
+    Q, Y, made = c.setdefault("quarters", {}), c.get("ytd") or {}, []
+    num = lambda v: isinstance(v, (int, float))
+    for end, y in sorted(Y.items()):
+        fq, fy = y.get("fq"), y.get("fy")
+        if fq not in (2, 3) or (end in Q and not Q[end].get("derived")):
+            continue
+        base = base_py = None
+        prev_ytd = next((x for x in Y.values() if x.get("fy") == fy and x.get("fq") == fq - 1), None)
+        qs = sorted((q for q in Q.values() if q.get("fy") == fy and (q.get("fq") or 0) < fq and q.get("raw")), key=lambda q: q["end"])
+        if prev_ytd:
+            base, base_py = prev_ytd.get("raw"), prev_ytd.get("raw_py")
+        elif len(qs) == fq - 1:
+            base = {k: (sum(q["raw"][k] for q in qs) if all(num(q["raw"].get(k)) for q in qs) else None) for k in facts.CONCEPTS}
+            if all(q.get("raw_py") for q in qs):
+                base_py = {k: (sum(q["raw_py"][k] for q in qs) if all(num(q["raw_py"].get(k)) for q in qs) else None)
+                           for k in facts.CONCEPTS}
+        if not base:
+            continue
+        diff = lambda a, b: {k: (a[k] - b[k] if num(a.get(k)) and num(b.get(k)) else None) for k in facts.CONCEPTS}
+        raw = diff(y["raw"], base)
+        rev, tot = raw.get("revenue"), y["raw"].get("revenue")
+        if not num(rev) or rev <= 0 or not tot or not 0.15 <= rev / tot <= 0.75 or (raw.get("ni") is None and raw.get("pl") is None):
+            continue                                     # not one quarter's worth: two statements that do not match
+        e0 = dt.date.fromisoformat(end)
+        stored_py = next((q for q in Q.values() if abs((dt.date.fromisoformat(q["end"]) - (e0 - dt.timedelta(days=365))).days) <= 10
+                          and q.get("raw")), None)
+        raw_py, py_end = (stored_py["raw"], stored_py["end"]) if stored_py else (None, None)
+        if not raw_py and y.get("raw_py") and base_py:
+            raw_py, py_end = diff(y["raw_py"], base_py), y.get("py_end")
+            if not num(raw_py.get("revenue")) or raw_py["revenue"] <= 0:
+                raw_py = py_end = None
+        q1 = qs[-1] if qs and 60 <= (e0 - dt.date.fromisoformat(qs[-1]["end"])).days <= 120 else None
+        label, lfq, lfy = facts.fiscal_label(end, c["profile"]["fye"])
+        Q[end] = {"end": end, "label": label, "fq": lfq, "fy": lfy, "cal": facts.calendar_quarter(end), "form": "6-K",
+                  "derived": "ytd", "accn": y.get("accn"), "filed": y.get("filed"), "doc_url": y.get("doc_url"),
+                  "index_url": y.get("index_url"), "raw": raw, "q1_end": q1 and q1["end"], "raw_q1": q1 and q1["raw"],
+                  "py_end": py_end, "raw_py": raw_py, "ytd_cf": None, "lines_struct": None, "lines": None, "notes": {},
+                  "src": None, **({"fx_official": y["fx_official"]} if y.get("fx_official") else {})}
+        made.append(end)
+    return made
+
+
 def _annual_quarter_revenue(c, cik=None, sub=None):
     """A quarter's size from the latest 20-F year: a fourth of its revenue (the year on file, else the 20-F's XBRL)."""
     ys = sorted((c.get("years") or {}).items())
@@ -1583,11 +1666,13 @@ def process_fpi_release(store, cik, accn, form, starred=False):
     if not row:
         raise Pending("filing not yet in submissions")
     c = _fpi_profile(store.company(cik), sub)
-    if "currency" not in c:                              # releases are read before the 20-F (newest first): ask XBRL now
+    if "currency" not in c or "std" not in c:            # releases are read before the 20-F (newest first): ask XBRL now
         try:
-            c["currency"] = primary_currency(sec.get_json(sec.companyfacts_url(cik)))
+            companyfacts(cik)                            # one download a run, kept for the 20-F and the checks below
+            c.setdefault("currency", primary_currency(_cf[cik]["raw"]))
+            _set_std(c, cik)
         except sec.NotFound:
-            c["currency"] = None
+            c.setdefault("currency", None)
     cur = c.get("currency") or "USD"
     filed = dt.date.fromisoformat(row["filingDate"])
     idx = sec.get_json(sec.filing_index_url(cik, accn))
@@ -1600,7 +1685,7 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         names.append(row["primaryDocument"])             # some put the release in the 6-K itself (Check Point)
     prior = sorted((q for q in c.get("quarters", {}).values() if q.get("raw")), key=lambda q: q["end"])
     have = c.get("quarters", {})
-    rel = doc = ex_url = None
+    rel = doc = ex_url = best = None
     errors = []
     for name in names[:4]:
         url = sec.doc_url(cik, accn, name)
@@ -1639,8 +1724,14 @@ def process_fpi_release(store, cik, accn, form, starred=False):
                         r = r2
                 except (ValueError, sec.NotFound):
                     pass
-            rel, doc, ex_url = r, html, url
-            break
+            # a highlights table alone (Novartis' key figures: sales, operating income, net income) when another
+            # exhibit of the same 6-K may print the full statement (its interim report): the most complete one
+            sc = sum(1 for k in ("revenue", "cor", "gp", "oi", "pretax", "tax", "pl", "ni") if (r.get("is") or {}).get(k) is not None)
+            if best is None or sc > best[0]:
+                best = (sc, r, html, url)
+            if sc >= 5 or ("pretax" in (r.get("is") or {}) and "tax" in (r.get("is") or {})):
+                break
+            continue
         except ValueError as e:
             errors.append(f"{name}: {e}")
             if "ix:nonfraction" in html[:5_000_000].lower():
@@ -1650,16 +1741,30 @@ def process_fpi_release(store, cik, accn, form, starred=False):
                     break
                 except (ValueError, sec.NotFound) as e2:
                     errors.append(f"{name} (inline XBRL): {e2}")
+    if not rel and best:
+        _, rel, doc, ex_url = best
     if not rel:
         raise NotApplicable("not a results release" + (f" ({errors[0]})" if errors else "") + "".join(f"; {x}" for x in errors if "inline XBRL" in x)[:300])
     end = rel["end"]
     e0 = dt.date.fromisoformat(end)
-    half = False
+    half = nine = False
     fq0 = facts.fiscal_label(end, c["profile"]["fye"])[1]
     # how long the period is, checked against a quarter of the 20-F year: a first half is about two quarters, a full
     # year about four (Sony's year-end release, whose header reads like a quarter's)
     ref = _annual_quarter_revenue(c, cik, sub)
     ratio = (rel["is"].get("revenue") or 0) / ref if ref else None
+    if ratio and not 1 / 30 <= ratio <= 30:
+        # a thousand times a quarter of the company's year: the units are off (HSBC's interim report prints $m figures
+        # under a "$bn" heading, and was sized against a quarter on file that was itself misread): read again in the
+        # units that fit the year, else left out
+        try:
+            rel2 = release.parse(doc, filed, None, ref)
+        except ValueError:
+            rel2 = None
+        r2v = ((rel2 or {}).get("is") or {}).get("revenue")
+        if not r2v or not 1 / 30 <= r2v / ref <= 30 or rel2.get("end") != rel.get("end"):
+            raise NotApplicable(f"the release's figures are {ratio:.3g} times a quarter of the 20-F year: the units are off")
+        rel, ratio = rel2, r2v / ref
     try:                                                 # the same revenue as the 20-F year ending that day: the year
         same = facts.extract(companyfacts(cik), end, annual=True).get("revenue") if fq0 == 4 else None
     except Exception:
@@ -1669,7 +1774,13 @@ def process_fpi_release(store, cik, accn, form, starred=False):
     grows = bool(near) and rev0 / near[-1]["raw"]["revenue"] < 1.6      # the quarter before says it is a quarter
     if (same and abs(rev0 / same - 1) < 0.03) or (ratio and ratio >= 3.4 and fq0 == 4 and not grows):
         raise NotApplicable("the release's statements are for the full year (the 20-F has it)")
-    if ratio and ratio >= 2.6 and fq0 == 3 and not grows and rel["is_quarter"] is not False:
+    if ratio and fq0 == 4 and 1.6 <= ratio <= 2.6 and not grows and rel["is_quarter"] is not True:
+        # a second half at the year end (Stellantis reports halves: its full-year release prints H2 and the year), not
+        # the fourth quarter
+        raise NotApplicable("the release's statements are the second half, not the fourth quarter")
+    if ratio and ratio >= 2.6 and fq0 == 3 and not grows and rel["is_quarter"] is None:
+        rel["is_quarter"] = False                        # nine months: kept as the year to date (below)
+    elif ratio and ratio >= 2.6 and fq0 == 3 and not grows and rel["is_quarter"] is not False and not rel.get("py_col"):
         raise NotApplicable("the release's statements are nine months, not the quarter")
     hdr0 = _rel_header(rel)
     if ratio and fq0 == 2 and 1.6 <= ratio <= 2.6 and not grows and \
@@ -1684,12 +1795,22 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             half = True
             prior = sorted((q for q in c.get("halves", {}).values() if q.get("raw")), key=lambda q: q["end"])
             have = c.get("halves", {})
+        elif fq0 == 3:
+            # nine months (HSBC, Lloyds, NatWest print the year to date): kept, and its third quarter is the nine months
+            # less the first half when that is on file (_derive_ytd_quarters)
+            nine = True
+            have = c.get("ytd", {})
         else:
             raise NotApplicable("the release's statements are not for a quarter")
     lo, hi = (150, 215) if half else (60, 120)
     old = have.get(end)                                 # the same quarter in two 6-Ks (press release, then the interim
-    if old and old.get("form") == "6-K" and old.get("accn") != accn and (old.get("filed") or "") <= row["filingDate"]:
-        raise NotApplicable(f"quarter already read from the results release of {old.get('filed')}")   # statements)
+    # statements): the first one read, unless it was derived from the year to date or the later one is more complete
+    # (Fresenius: the press release without the tax line, the interim report with it)
+    full = lambda r: r.get("pretax") is not None and r.get("tax") is not None
+    if old and old.get("form") == "6-K" and old.get("accn") != accn and not old.get("derived") and (
+            ((old.get("filed") or "") <= row["filingDate"] and not (full(rel["is"]) and not full(old.get("raw") or {})))
+            or (full(old.get("raw") or {}) and not full(rel["is"]))):
+        raise NotApplicable(f"quarter already read from the results release of {old.get('filed')}")
     label, fq, fy = facts.fiscal_label(end, c["profile"]["fye"])
     if half:
         label = label.replace("Q2", "H1", 1)
@@ -1698,7 +1819,7 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         raw.update({k: (abs(v) if k in release.COST_KEYS else v) for k, v in rel["is"].items()})
         back = [q for q in prior if lo <= (e0 - dt.date.fromisoformat(q["end"])).days <= hi]
         prev = back[-1] if back else None
-        if half:                                         # six months of cash flow: the half's own
+        if half or nine:                                 # six or nine months of cash flow: the period's own
             cash = {k: (abs(v) if k in release.COST_KEYS else v) for k, v in (rel.get("cf") or {}).items()}
             ytd = cash or None
         else:
@@ -1706,7 +1827,7 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         raw.update(cash)
         if raw.get("da") is None and raw.get("da_op"):
             raw["da"] = raw["da_op"]                     # D&A printed as an operating cost line (Nebius) is the bridge's
-        raw = release.reconcile(raw, rel["labels"])
+        raw = release.reconcile(raw, rel["labels"], neg_costs=rel.get("neg_costs"), equity_method=rel.get("equity_method"))
     except ValueError as e:
         raise NotApplicable(f"results release not readable: {e}")
     disc = raw.pop("disc", None)
@@ -1724,22 +1845,40 @@ def process_fpi_release(store, cik, accn, form, starred=False):
                 raw_py, py_end = py, rel["py_end"]
         except ValueError:
             raw_py = py_end = None
-    elif rel["tables"] and str(e0.year - 1) in _rel_header(rel) and len(rel["cols"].get("revenue") or []) > 1:
+    elif rel["tables"] and _py_index(rel) and (
+            rel.get("py_col") or re.search(rf"\b{e0.year - 1}\b|['’]{(e0.year - 1) % 100:02d}\b|\b[1-4]q{(e0.year - 1) % 100:02d}\b", _rel_header(rel))):
         try:
             py = {k: None for k in facts.CONCEPTS}
-            py.update(_column(rel, 1))
-            if rel.get("cf_quarter") is not True and fq != 1 and not half:
+            # the year-ago column: from the header's years ("3rd quarter 2026 | 2nd quarter 2026 | 3rd quarter 2025":
+            # TotalEnergies; a block of columns per year: Stellantis), else the first column of figures that can be one
+            cj = rel.get("cf_py_col")
+            py.update(_column(rel, _py_index(rel), cj if cj and cj > 0 else 1))
+            if rel.get("cf_quarter") is not True and fq != 1 and not half and not nine:
                 for k in release.CF_KEYS:
                     py[k] = None                          # a year-to-date column, not the year-ago quarter
             if py.get("da") is None and py.get("da_op"):
                 py["da"] = py["da_op"]
-            py = release.reconcile(py, rel["labels"])
+            py = release.reconcile(py, rel["labels"], neg_costs=rel.get("neg_costs"), equity_method=rel.get("equity_method"))
             py.pop("disc", None)
             if normalize(py):
                 raw_py, py_end = py, (e0.replace(year=e0.year - 1) if not (e0.month == 2 and e0.day == 29) else e0 - dt.timedelta(days=365)).isoformat()
         except ValueError:
             raw_py = py_end = None
     py_col = (raw_py, py_end) if raw_py else None         # the release's own year-ago column (restated, when it was)
+    off = rel.get("fx_official") or FX.official_rate(doc, cur) if cur != "USD" else None
+    if half or nine:                                     # the year to date, for the quarters it gives (_derive_ytd_quarters)
+        c.setdefault("ytd", {})[end] = {
+            "end": end, "fq": fq, "fy": fy, "raw": raw, "raw_py": py_col[0] if py_col else None,
+            "py_end": py_col[1] if py_col else None, "accn": accn, "filed": row.get("filingDate"), "doc_url": ex_url,
+            "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", **({"fx_official": off} if off else {})}
+        c["ytd"] = dict(sorted(c["ytd"].items())[-8:])
+    if nine:
+        made = _derive_ytd_quarters(c)
+        store.put(cik, c)
+        _note_fpi(store, cik)
+        if end in made:
+            return end
+        raise NotApplicable("nine months: the third quarter is drawn once the first half is on file")
     stored_py = next((q for q in prior if abs((dt.date.fromisoformat(q["end"]) - (e0 - dt.timedelta(days=365))).days) <= 10), None)
     if stored_py and not (half and py_col):             # the year-ago release on file: its figures as reported then
         raw_py, py_end = stored_py["raw"], stored_py["end"]   # (a half keeps its report's own, restated, column)
@@ -1770,19 +1909,26 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         "capex_src": ({"label": (rel.get("cf_labels") or {}).get("capex"), "how": "release"}
                       if raw.get("capex") is not None else None),
         "src": sources.from_release(rel, raw),
-        **({"fx_official": off} if cur != "USD" and (off := rel.get("fx_official") or FX.official_rate(doc, cur)) else {}),
+        **({"fx_official": off} if off else {}),
     }
     for k, q in pool.items():                           # a later release read before this one: its period-before is this
         if q.get("form") in ("6-K", "20-F") and not q.get("raw_q1") and lo <= (dt.date.fromisoformat(k) - e0).days <= hi:
             q["q1_end"], q["raw_q1"] = end, raw
+        # its cash flows were the year to date with nothing to take them from (releases are read newest first): its
+        # quarter's own are its year to date minus this one's (SAP, Fresenius: nine months − six months)
+        if not half and ytd and q.get("form") == "6-K" and q.get("ytd_cf") and q.get("fy") == fy and q.get("fq") == fq + 1 \
+                and (q.get("raw") or {}).get("ocf") is None and q["ytd_cf"].get("ocf") is not None and ytd.get("ocf") is not None:
+            for kk, v in q["ytd_cf"].items():
+                if ytd.get(kk) is not None and v is not None:
+                    q["raw"][kk] = v - ytd[kk]
         if q.get("form") in ("6-K", "20-F") and 350 <= (dt.date.fromisoformat(k) - e0).days <= 380:
             q["py_end"], q["raw_py"] = end, raw
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
+    _derive_ytd_quarters(c)                              # a first quarter or a half read after the year to date after it
     if half:
         _derive_h2(c)
         c["halves"] = dict(sorted(c["halves"].items())[-keep:])
-    else:
-        c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
+    c["quarters"] = dict(sorted(c.get("quarters", {}).items())[-keep:])
     store.put(cik, c)
     _note_fpi(store, cik)
     return end
@@ -1800,6 +1946,7 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
     c = _fpi_profile(store.company(cik), sub)
     c["currency"] = cur
     fx = companyfacts(cik, accn)
+    _set_std(c, cik)
     doc_url = sec.doc_url(cik, accn, row["primaryDocument"]) if row.get("primaryDocument") else None
     year = annual_entry(c, fx, None, cik, accn, form, row, end, doc_url, {})
     if not year and doc_url and not facts.extract(fx, end, annual=True).get("revenue"):
@@ -2054,6 +2201,53 @@ def _superseded(accn, filed):
     return False
 
 
+FPI_READER = 3                  # bump when the 6-K reader changes: foreign filers' results releases are read again once
+# v2 (Nov 2026): European statements — expenses printed negative (the tax sign), "Q1–Q3" / "Jan-Sep" / "9M" year-to-date
+# columns, the year-ago column from the header's years, IFRS and bank line names, note references, the most complete
+# exhibit of a 6-K
+# v3: units checked against a quarter of the 20-F year (HSBC's interim report read a thousand times over), a second
+# half at the year end is not the fourth quarter (Stellantis), a release turned down on re-reading loses its old period
+
+
+def _reread_fpi(store, days=220):
+    """Once per FPI_READER: every foreign filer's stored 6-K quarters and halves, and the 6-Ks of the last `days` the
+    reader turned down, are read again (the newest first, like any pending filing)."""
+    st = store.state
+    if st.get("fpi_reader", 1) >= FPI_READER:
+        return
+    fpis, n = set(st.get("fpi", [])), 0
+    for cik in sorted(fpis):
+        c = store.company(cik)
+        for pool in ("quarters", "halves"):
+            for q in (c.get(pool) or {}).values():
+                a = q.get("accn")
+                if q.get("form") == "6-K" and a and a not in st["pending"]:
+                    st["seen"].pop(a, None)
+                    st["pending"][a] = {"cik": cik, "form": "6-K", "filed": q.get("filed") or "", "tries": 0, "items": None, "history": True}
+                    n += 1
+    recent = (dt.datetime.utcnow() - dt.timedelta(days=days)).isoformat()
+    drawn = {}
+    for accn, v in list(st["seen"].items()):
+        s = str(v.get("s", ""))
+        # a release the reader understood and turned down (nine months, not a quarter, units, end date, ...), and, for a
+        # company with no period drawn yet (banks, Shell, AstraZeneca), one it found no statement in
+        if v.get("cik") not in fpis or v.get("t", "") < recent or not s.startswith("skip") or v.get("form") not in (None, "6-K"):
+            continue
+        if s.startswith("skip: not a results release"):
+            if "(" not in s:
+                continue                                         # no statement at all: most 6-Ks
+            if v["cik"] not in drawn:
+                c0 = store.company(v["cik"])
+                drawn[v["cik"]] = bool(c0.get("quarters") or c0.get("halves"))
+            if drawn[v["cik"]]:
+                continue
+        del st["seen"][accn]
+        st["pending"][accn] = {"cik": v["cik"], "form": "6-K", "filed": v.get("t", "")[:10], "tries": 0, "items": None, "history": True}
+        n += 1
+    st["fpi_reader"] = FPI_READER
+    print(f"re-reading {n} foreign filers' results releases with reader v{FPI_READER}")
+
+
 def _reread_releases(store):
     st = store.state
     if st.get("release_reader", 1) >= RELEASE_READER:
@@ -2124,6 +2318,7 @@ def run(args):
             st["pending"][f["accn"]] = {"cik": f["cik"], "form": f["form"], "filed": f["filed"], "tries": 0,
                                         "items": f.get("items")}
     _reread_releases(store)
+    _reread_fpi(store)
     asked = set(getattr(args, "build_ciks", None) or [])
     unbuildable = {}
     for cik in sorted(asked):                                  # companies readers asked for (site search)
@@ -2283,6 +2478,21 @@ def price_list(out):
     print(f"prices: {len(rows)} companies, as of {asof or 'an unstated session'}")
 
 
+def _drop_fpi_reading(store, cik, accn):
+    """A foreign filer's release that a re-read now turns down: the period it once gave is taken off (Stellantis' second
+    half once drawn as its fourth quarter). Periods derived from other releases stay."""
+    c = store.company(cik)
+    gone = []
+    for pool in ("quarters", "halves", "ytd"):
+        for end, q in list((c.get(pool) or {}).items()):
+            if q.get("accn") == accn and not q.get("derived"):
+                del c[pool][end]
+                gone.append(f"{pool} {end}")
+    if gone:
+        store.put(cik, c)
+    return gone
+
+
 def _process_one(store, st, accn, p, stars, now):
     """Process one pending filing and record the outcome in the state."""
     try:
@@ -2307,6 +2517,10 @@ def _process_one(store, st, accn, p, stars, now):
         st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"], "form": p["form"]}
         del st["pending"][accn]
         print(f"skip {p['form']:5} {p['cik']:>10} {accn} {e}")
+        if p.get("history") and str(p["form"]).startswith("6-K"):
+            gone = _drop_fpi_reading(store, p["cik"], accn)
+            if gone:
+                print(f"     taken off: {', '.join(gone)}")
     except sec.NotFound as e:
         st["seen"][accn] = {"t": now, "s": f"missing: {e}", "cik": p["cik"]}
         del st["pending"][accn]
@@ -2334,14 +2548,30 @@ FCF_DEF = (" Free cash flow = operating cash flow − capital expenditures (gros
            "company’s own (adjusted) free cash flow may net asset sales or incentives and differ.")
 
 
-FPI_NOTE = ("Source: the company's quarterly results release (Form 6-K exhibit, filed {filed}), read from its tables. A foreign "
-            "private issuer files no 10-Q: its quarters are published this way, and its full years in the 20-F (XBRL). "
+FPI_NOTE = ("Source: the company's results release (Form 6-K exhibit, filed {filed}), read from its tables. A foreign "
+            "private issuer files no 10-Q: its quarters (or halves) are published this way, and its full years in the 20-F (XBRL). "
             "Percentages show each item’s share of the node it splits from or flows into. n/m = not meaningful (a comparison "
             "period was ≤ 0 or changed sign).")
 
 
+def _std(c):
+    """The accounting standard a chart's figures follow: IFRS for a foreign filer that reports under it (c["std"],
+    set from its XBRL by _set_std), else GAAP."""
+    return "IFRS" if (c or {}).get("std") == "IFRS" else "GAAP"
+
+
+def _std_footer(lines, c):
+    if _std(c) != "IFRS":
+        return lines
+    return [x.replace("GAAP: the statement lines as reported", "IFRS: the statement lines as reported") if isinstance(x, str) else x
+            for x in lines]
+
+
 def _footer(q, kind, Nc):
     lines = [(RELEASE_NOTE if q["form"] == "8-K" else FPI_NOTE if q["form"] == "6-K" else SOURCE_NOTE).format(form=q["form"], filed=q["filed"])]
+    if q.get("derived") == "ytd":
+        lines.append("This quarter is derived: the release's year-to-date statement (the first half or nine months) less "
+                     "the quarters before it in the same year.")
     if q.get("ocr"):                                     # the release is pictures of its pages (pipeline/ocr.py)
         lines[0] = lines[0].replace("read from its tables", "read from the pictures of its statements (OCR; the figures add "
                                     "up and match the quarters already filed)")
@@ -2492,7 +2722,7 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     if q["raw"].get("rev_reported") is not None:
         Nc["rev_calc"] = q["raw"]["rev_reported"]
     apply_reported(q, Nc, Ny, draw=draw_company)
-    ls = None if sliver_lines(q, Nc["R"]) else clean_lines(q.get("lines_struct"))
+    ls = None if sliver_lines(q, Nc["R"]) else clean_lines(q.get("lines_struct"), q.get("form") in ("6-K", "8-K"))
     lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)
     if lines_q1 and ls and not all(l["id"] in lines_q1 for l in ls["leaves"]):
         lines_q1 = None
@@ -2535,10 +2765,10 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
         **({"label_was": q["label_was"]} if q.get("label_was") else {}),
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,
         "title": f"{name} {q['label']} earnings &amp; cash flow",
-        "subtitle": (f"Quarter ended {_date(q['end'])} · GAAP · Y/Y vs. {_short(q.get('py_end'))} "
+        "subtitle": (f"Quarter ended {_date(q['end'])} · {_std(c)} · Y/Y vs. {_short(q.get('py_end'))} "
                      f"· Q/Q vs. {_short(q.get('q1_end'))}" + (" · preliminary, from the earnings release" if q["form"] == "8-K"
                                                                else " · from the 6-K results release" if q["form"] == "6-K" else "")),
-        "footer": _footer(q, kind, Nc), "nodes": nodes, "links": links,
+        "footer": _std_footer(_footer(q, kind, Nc), c), "nodes": nodes, "links": links,
         "checks": checks.checks(q, c, Nc, Nq, Ny),
         "analysis": analysis.paragraphs(f, q["label"], Nc, Nq, Ny, ls, (q.get("lines"), lines_q1, q.get("lines_py")),
                                         py_label=py_label),
@@ -2549,14 +2779,16 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
     }
 
 
-def clean_lines(ls):
+def clean_lines(ls, from_release=False):
     """A stored breakdown with its labels cleaned of XBRL leftovers (dims.clean_label: "[Member]", a documentation
-    sentence in a label's place): charts stored before the labels were cleaned draw clean."""
+    sentence in a label's place): charts stored before the labels were cleaned draw clean. A release's lines also lose
+    their footnote marks and "thereof" (release.display_label: "Thereof Cloud ERP Suite 2" → "Cloud ERP Suite")."""
     if not ls:
         return ls
     out = dict(ls)
+    fix = (lambda t: release.display_label(t)) if from_release else (lambda t: t)
     for key in ("leaves", "groups"):
-        out[key] = [dict(l, label=dims.clean_label(l.get("label") or "", l.get("id") or "")) for l in ls.get(key) or []]
+        out[key] = [dict(l, label=fix(dims.clean_label(l.get("label") or "", l.get("id") or ""))) for l in ls.get(key) or []]
     return out
 
 
@@ -2634,8 +2866,8 @@ def year_payload(c, y):
         **({"label_was": y["label_was"]} if y.get("label_was") else {}),
         "doc_url": y.get("doc_url"), "index_url": y.get("index_url"), "kind": kind,
         "title": f"{name} {y['label']} earnings &amp; cash flow",
-        "subtitle": f"Fiscal year ended {_date(y['end'])} · GAAP · Y/Y vs. {_short(y.get('py_end'))}",
-        "footer": foot, "nodes": nodes, "links": links,
+        "subtitle": f"Fiscal year ended {_date(y['end'])} · {_std(c)} · Y/Y vs. {_short(y.get('py_end'))}",
+        "footer": _std_footer(foot, c), "nodes": nodes, "links": links,
         **({"fcf_note": note} if (note := _formula_note("annual", nodes, Nc)) else {}),
         "checks": checks.checks(y, c, Nc, None, Ny, annual=True),
         "analysis": [_yearly(x) for x in analysis.paragraphs(f, y["label"], Nc, None, Ny, ls,
@@ -2700,6 +2932,9 @@ def _as_half(pl):
                          ("this quarter", "this half"), ("the quarter", "the half"), ("This quarter", "This half"),
                          ("The quarter", "The half"), ("quarter before", "half before"), ("previous quarter", "previous half")):
                 x = x.replace(a, b)
+            # the halves' own names: the year-ago half is "H1 FY26", not its quarter's "Q2 FY26" (National Grid)
+            x = re.sub(r"\bQ2 (FY\d\d|\d{4})\b", r"H1 \1", x)
+            x = re.sub(r"\bQ4 (FY\d\d|\d{4})\b", r"H2 \1", x)
             return x
         if isinstance(x, list):
             return [fix(v) for v in x]
@@ -2835,6 +3070,7 @@ def render(store, out, stars=frozenset()):
             "profile": p, "intro": c.get("intro"), "starred": cik in stars, "quarters": payloads[::-1],
             "years": years, "periods": periods_payload(c),
             **({"currency": cur} if cur != "USD" else {}),
+            **({"std": "IFRS"} if c.get("std") == "IFRS" else {}),
             **({"usd": {"quarters": usd["quarters"][::-1], "years": usd["years"]}} if usd else {}),
             **({"quality": c["quality"]} if (c.get("quality") or {}).get("q") or (c.get("quality") or {}).get("fy") else {})})
         # earlier filings of the last ten days (an 8-K release before its 10-Q), for the daily report of their day

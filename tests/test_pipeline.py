@@ -2531,6 +2531,25 @@ def test_reformulated_balance_sheet_reads_ifrs():
     for i in range(2):
         side = lambda s, c: sum(x["v"][i] or 0 for x in r["lines"] if x["side"] == s and x["cls"] == c)
         assert side("a", "op") - side("l", "op") - (side("l", "fin") - side("a", "fin")) == r["totals"]["cse"][i] + r["totals"]["nci"][i]
+    # the same current borrowings tagged twice (ShorttermBorrowings and CurrentPortionOfLongtermBorrowings, equal at
+    # every year end, Novo Nordisk's 20-F): one line, and the current rest is not short by it
+    twice = dict(ifrs)
+    del twice["CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"]
+    twice["ShorttermBorrowings"] = b(3, 3)
+    fx2 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
+    l2 = {x["k"]: x for x in Q.compute(fx2)["reform"]["lines"]}
+    assert l2["std"]["v"] == [3, 3] and "ltdc" not in l2
+    assert l2["oth_cl"]["v"] == [40 - 20 - 3 - 2 - 4, 45 - 22 - 3 - 2 - 5]
+    twice["ShorttermBorrowings"] = b(3, 4)                                       # different amounts: both lines
+    fx3 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in twice.items()}}}, currency="EUR")
+    assert {"std", "ltdc"} <= {x["k"] for x in Q.compute(fx3)["reform"]["lines"]}
+    # PP&E tagged with the leased (right-of-use) assets inside it: no right-of-use line beside it
+    rou = dict(ifrs)
+    del rou["PropertyPlantAndEquipment"]
+    rou["PropertyPlantAndEquipmentIncludingRightofuseAssets"] = b(80, 84)
+    fx4 = F.index_facts({"facts": {"ifrs-full": {k: {"units": {"EUR": v}} for k, v in rou.items()}}}, currency="EUR")
+    l4 = {x["k"]: x for x in Q.compute(fx4)["reform"]["lines"]}
+    assert l4["ppe"]["v"] == [80, 84] and "rou" not in l4
 
 
 def test_foreign_filer_years_drawn_when_no_quarter_can_be():
@@ -3742,6 +3761,48 @@ def test_a_segment_aggregation_member_is_no_revenue_line():
     members["cvx:UpstreamMember"] = ("Upstream", 40.0); members["cvx:DownstreamMember"] = ("Downstream", 27.174)
     part = dims.best_partition(members, 68.174)
     assert sorted(l["label"] for l in part["leaves"]) == ["All Other", "Downstream", "Upstream"]
+
+
+def test_non_operating_share_needs_pre_tax_earnings():
+    """Arcus Biosciences Q2 2025, Creatd FY2021: non-operating income exactly offset the operating loss, so pre-tax
+    earnings were 0 and the analysis divided by zero (the quarter's page was not drawn). A share of a loss says nothing."""
+    from pipeline import model, analysis
+
+    class F:
+        money = staticmethod(lambda x: f"${x / 1e6:.1f}M")
+        delta = staticmethod(lambda x: f"{x / 1e6:+.1f}M")
+    for pretax, nonop in ((0.0, 50e6), (-20e6, 30e6)):
+        raw = {"revenue": 100e6, "costs_total": 100e6 - pretax + nonop, "oi": pretax - nonop, "pretax": pretax, "tax": 0.0,
+               "pl": pretax, "ni": pretax, "ocf": None}
+        text = analysis.paragraphs(F(), "Q2 2025", model.normalize(raw), None, None)[1]
+        assert f"Non-operating items added ${nonop / 1e6:.1f}M, so the bottom line" in text and "of pre-tax" not in text
+    raw = {"revenue": 100e6, "costs_total": 90e6, "oi": 10e6, "pretax": 40e6, "tax": 0.0, "pl": 40e6, "ni": 40e6}
+    text = analysis.paragraphs(F(), "Q2 2025", model.normalize(raw), None, None)[1]
+    assert "Non-operating items added $30.0M, 75% of pre-tax earnings, so the bottom line" in text
+
+
+def test_a_profit_loss_tag_mirroring_net_income_is_dropped():
+    """Riot Platforms' 2025 10-Qs tag ProfitLoss with the sign flipped (-$219.774M beside $219.454M of net income in
+    Q2 2025) and no pre-tax earnings or tax. Kept, the chart needed a -$439M minority interest and Q2 2025 failed
+    the flow check, so the quarter was not drawn (facts.odd_one_out)."""
+    from pipeline import facts, model
+    own = "0001167419-25-000099"
+    mk = lambda v: [{"start": "2025-04-01", "end": "2025-06-30", "val": v, "filed": "2025-07-31", "form": "10-Q",
+                     "accn": own}]
+    g = {"Revenues": mk(152.988e6), "CostsAndExpenses": mk(-63.158e6), "OperatingIncomeLoss": mk(216.146e6),
+         "NetIncomeLoss": mk(219.454e6), "ProfitLoss": mk(-219.774e6)}
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    r = facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")
+    assert r["ni"] == 219.454e6 and r["pl"] == 219.454e6
+    N = model.normalize(r)
+    assert N["nci"] == 0 and N["pl"] == 219.454e6
+    # a ProfitLoss of the same sign (a real minority interest) is kept, and so is a mirror pre-tax less tax can judge
+    g["ProfitLoss"] = mk(221e6)
+    raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    assert facts.extract(facts.index_facts(raw, accn=own), "2025-06-30")["pl"] == 221e6
+    r = {"ni": 10.0e6, "pl": -10.0e6, "nci": None, "pretax": -8e6, "tax": 2e6}
+    facts.odd_one_out(r)
+    assert r["pl"] == -10.0e6
 
 
 def test_a_narrower_revenues_tag_is_checked_against_the_cost_lines():

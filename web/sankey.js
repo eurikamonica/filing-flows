@@ -63,7 +63,12 @@
   const NOTE_PAD = 16;    // room after a name for the note marker
 
   const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
-  const dec = (s) => String(s == null ? '' : s).replace(/&(amp|lt|gt|quot|#39);/g, (m) => ENT[m]);
+  // the French and Spanish versions (web/i18n.js): every text is translated before it is measured, so the layout fits
+  // the words drawn (on screen and in every export)
+  const T = (s) => (global.FFT ? global.FFT(s) : s);
+  const KEEP = (s) => (global.FFT && global.FFT.keep ? global.FFT.keep(s) : s);
+  const decRaw = (s) => String(s == null ? '' : s).replace(/&(amp|lt|gt|quot|#39);/g, (m) => ENT[m]);   // Sankey.dec: decoding only
+  const dec = (s) => T(decRaw(s));                                                                       // a text this draws
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // the guidance comparison: dense dots in the guidance violet (the colour of guided lines in the guidance view)
   const DOT = '#4b34b8', DOT_GAP = 3.8, DOT_R = 1.2;
@@ -119,22 +124,23 @@
   }
 
   let mctx = null;
-  function measure(text, size, weight) {
+  function measureRaw(text, size, weight) {
     if (!mctx) mctx = document.createElement('canvas').getContext('2d');
     mctx.font = `${weight} ${size}px ${FONT}`;
     return mctx.measureText(text).width;
   }
+  const measure = (text, size, weight) => measureRaw(T(text), size, weight);
 
   function wrap(text, size, weight, maxW) {
-    const words = text.split(/\s+/);
+    const words = T(text).split(/\s+/);
     const out = [];
     let cur = '';
     for (const w of words) {
       const t = cur ? cur + ' ' + w : w;
-      if (cur && measure(t, size, weight) > maxW) { out.push(cur); cur = w; } else cur = t;
+      if (cur && measureRaw(t, size, weight) > maxW) { out.push(cur); cur = w; } else cur = t;
     }
     if (cur) out.push(cur);
-    return out;
+    return out.map(KEEP);
   }
 
   function labelBlock(n, mode, guide) {
@@ -1037,7 +1043,7 @@
         out.push(`<circle${s.marker ? ' class="note-mark"' : ''} cx="${s.cx.toFixed(2)}" cy="${s.cy.toFixed(2)}" r="${s.r}" fill="${s.fill}"/>`);
       } else if (s.t === 'text') {
         out.push(`<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-size="${s.size}" font-weight="${s.weight}" fill="${s.fill}"` +
-          `${s.anchor !== 'start' ? ` text-anchor="${s.anchor}"` : ''}${s.spacing ? ` letter-spacing="${s.spacing}"` : ''}>${esc(s.text)}</text>`);
+          `${s.anchor !== 'start' ? ` text-anchor="${s.anchor}"` : ''}${s.spacing ? ` letter-spacing="${s.spacing}"` : ''}>${esc(T(s.text))}</text>`);
       }
     });
     close();
@@ -1116,7 +1122,7 @@
         ctx.textAlign = s.anchor === 'end' ? 'right' : s.anchor === 'middle' ? 'center' : 'left';
         ctx.textBaseline = 'alphabetic';
         if (s.spacing && 'letterSpacing' in ctx) ctx.letterSpacing = `${s.spacing}px`;
-        ctx.fillText(s.text, s.x, s.y);
+        ctx.fillText(T(s.text), s.x, s.y);
         if (s.spacing && 'letterSpacing' in ctx) ctx.letterSpacing = '0px';
       }
     });
@@ -1163,5 +1169,5 @@
     return new Blob([pdf], { type: 'application/pdf' });
   }
 
-  global.Sankey = { layout, history, toSVG, toCanvas, exportScene, PALETTE, dec, esc, brand: BRAND };
+  global.Sankey = { layout, history, toSVG, toCanvas, exportScene, PALETTE, dec: decRaw, esc, brand: BRAND };
 })(window);

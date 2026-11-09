@@ -146,8 +146,9 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
             else:
                 s += f" Net interest and other expense of {f.money(-Nc['nonop'])} was the main reason."
     if abs(Nc["nonop"]) > 0.2 * max(abs(Nc["pretax"]), 1) and Nc["nonop"] > 0:
-        s += (f" Non-operating items added {f.money(Nc['nonop'])}, "
-              f"{Nc['nonop'] / Nc['pretax'] * 100:.0f}% of pre-tax earnings, so the bottom line overstates operating performance.")
+        share = (f"{Nc['nonop'] / Nc['pretax'] * 100:.0f}% of pre-tax earnings, " if Nc["pretax"] > 0 else "")
+        s += (f" Non-operating items added {f.money(Nc['nonop'])}, "   # a share only of a profit (Arcus: pre-tax 0)
+              f"{share}so the bottom line overstates operating performance.")
     out.append(s.strip())
 
     # 3. cash
