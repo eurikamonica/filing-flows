@@ -105,7 +105,7 @@ class Extract(unittest.TestCase):
                     {'symbol': 'AAA', 'series': 'S000500', 'act': '40', 'cik': 777}, {'symbol': 'BBB', 'series': 'S000501', 'act': '40', 'cik': 777}]
             self.assertEqual(E.trust_ciks(etfs), {884394: 'cik884394'})        # AAA and BBB share a registrant: no trust
             cons = {'NVDA': {'sector': 'technology'}, 'AAPL': {'sector': 'technology'}}
-            q, _ = E.history_by_symbol(root, etfs, {}, {}, {}, {}, cons, {'NVDA', 'AAPL'}, lambda k: k if k in cons else None)
+            q = E.history_by_symbol(root, etfs, {}, {}, {}, {}, cons, {'NVDA', 'AAPL'}, lambda k: k if k in cons else None)[0]
             self.assertEqual([x['date'] for x in q['SPY']], ['2025-12-31', '2026-03-31'])
             self.assertEqual(dict(q['SPY'][1]['positions']), {'NVDA': 0.075, 'AAPL': 0.07})
             self.assertNotIn('AAA', q)                                        # no series-keyed quarter and no CIK key for them
@@ -147,7 +147,8 @@ class History(unittest.TestCase):
 
     def test_classifier_names_and_sectors(self):
         etfs = [{'symbol': 'IVV', 'series': 'S1'}, {'symbol': 'XLF', 'series': 'S9'}]
-        holds = {'S9': {'weights': [['316773100', 0.02, 1], ['JPM', 0.1, 1]]}}                  # the financials sector ETF
+        holds = {'S9': {'weights': [['316773100', 0.02, 1], ['JPM', 0.1, 1]]},                 # the financials sector ETF
+                 'S8': {'top': [['LINDE PLC', 'LINDE PLC', 'N/A', 'IE00B4BNMY34', None, 1, 0.01, 'EC', 'CORP', 'IE', 'Long']]}}
         cusip_t = {'02079K305': 'GOOGL', '02079K107': 'GOOG', '316773100': 'FITB'}
         t_cusip = {t: c for c, t in cusip_t.items()}
         cons = {'GOOGL': {'sector': 'technology'}, 'JPM': {'sector': 'financials'}}
@@ -166,7 +167,8 @@ class History(unittest.TestCase):
             set_file(root / 'cache' / 'nport_weights' / '2026q1_nport.json.gz', K, {
                 'S1': {'2026-03-31': {'acc': 'x', 'filed': '2026-05-01', 'na': 1, 'n': 5, 'eq': 0.5, 'k': [0, 1, 2, 3, 4], 'v': [200000, 100000, 100000, 50000, 50000]}}})
             E.save_gz(root / 'cache' / 'nport_weights' / '2026q1_nport.ids.json.gz', {'ids': {'IE00B4BNMY34': 'LIN'}})
-            q, sector_of = E.history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons, {'LIN', 'GOOG', 'FITB', 'OKTA'}, key_ticker)
+            cl = E.make_classifier(root, etfs, holds, uit, cusip_t, t_cusip, cons, {'LIN', 'GOOG', 'FITB', 'OKTA'}, key_ticker, {'LIN': 'Linde plc'})
+            q, sector_of, labels = E.history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons, {'LIN', 'GOOG', 'FITB', 'OKTA'}, key_ticker, classifier=cl)
         snap = q['IVV'][0]
         self.assertEqual(dict(snap['positions']), {'GOOG': 0.2, 'FITB': 0.1, 'LIN': 0.15, 'OKTA': 0.05})   # the ISIN via another fund
         self.assertEqual(sector_of('GOOG'), 'technology')        # the issuer's other share class (02079K…)
@@ -174,6 +176,56 @@ class History(unittest.TestCase):
         self.assertEqual(sector_of('OKTA'), 'technology')        # GICS of the MidCap sponsor file
         self.assertEqual(snap['sector_weights'], {'technology': 0.25, 'financials': 0.1, 'other': 0.15})  # LIN: no sector known
         self.assertEqual((snap['partial'], snap['date_basis'], snap['source']), (True, 'reported', 'SEC N-PORT (quarter-end)'))
+        self.assertEqual(labels, {})                             # no foreign security without a US listing here
+
+    def test_foreign_securities(self):
+        """A foreign line: its local ticker is no US company's ('MC' is LVMH in Paris, Moelis here; 'SAN' Sanofi's and
+        Santander's); the same company's US listing by its name (Sanofi → SNY), else a '~' key with its name; the
+        sector from the global sector funds (an ISIN here, its CINS there), else a word of its name; 'N.A' tickers never
+        a key; a fund's ETF lines are ETFs."""
+        lvmh, sanofi, schn, hdfc, tte = 'FR0000121014', 'FR0000120578', 'FR0000121972', 'INE040A01034', 'FR0000120271'
+        row = lambda name, cusip, isin, tick, w: [name, name, cusip, isin, tick, 1, w, 'EC', 'CORP', isin[:2], 'Long']
+        etfs = [{'symbol': s_, 'series': s_} for s_ in ('EWQ', 'RXI', 'EXI', 'VXUS', 'AOR', 'IXJ')]
+        holds = {
+            'EWQ': {'top': [row('TOTALENERGIES SE', 'N/A', tte, 'N.A', 0.08), row('SCHNEIDER ELECTRIC SE', 'N/A', schn, 'N.A', 0.07),
+                            row('LVMH MOET HENNESSY LOUIS VUITTON SE', 'N/A', lvmh, 'MC', 0.06), row('SANOFI SA', 'N/A', sanofi, 'N.A', 0.05)],
+                    'weights': [['N.A', 0.08, 1], ['N.A', 0.07, 1], ['MC', 0.06, 1], ['N.A', 0.05, 1], ['N.A', 0.01, 1]]},
+            'RXI': {'top': [row('LVMH Moet Hennessy Louis Vuitton SE', 'N/A', lvmh, 'N.A', 0.05)], 'weights': [['N.A', 0.05, 1]]},
+            'EXI': {'top': [row('Schneider Electric S.E.', 'N/A', schn, 'N.A', 0.04)], 'weights': [['N.A', 0.04, 1]]},
+            'IXJ': {'top': [row('Sanofi', 'N/A', sanofi, 'N.A', 0.03)], 'weights': [['N.A', 0.03, 1]]},
+            'VXUS': {'top': [row('Schneider Electric SE', 'F86921107', schn, None, 0.01)], 'weights': [['F86921107', 0.01, 1]]}}
+        cons = {'MC': {'sector': 'financials', 'name': 'Moelis & Co'}, 'TTE': {'sector': 'energy', 'name': 'TotalEnergies SE'}}
+        us_names = {'MC': 'Moelis & Co', 'SAN': 'Banco Santander, S.A.', 'SNY': 'Sanofi', 'TTE': 'TotalEnergies SE', 'AGG': 'iShares Core US Aggregate'}
+        etfs.append({'symbol': 'AGG', 'series': 'X'})
+        key_ticker = lambda k: E.norm_t(k) if E.norm_t(k) in cons else (E.norm_t(k) if k.isalpha() and len(k) <= 5 else None)
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / 'cache' / 'nport_weights').mkdir(parents=True)
+            E.save_gz(root / 'cache' / 'nport_weights' / '2026q1_nport.ids.json.gz', {'ids': {lvmh: 'MC', sanofi: 'SAN', tte: 'TTE'}})
+            ticker, classify, labels = E.make_classifier(root, etfs, holds, {}, {}, {}, cons, set(us_names), key_ticker, us_names, repair=True)
+        f_lvmh, f_schn = E.foreign_key(lvmh), E.foreign_key(schn)
+        self.assertEqual(classify(lvmh), (f_lvmh, 'consumer-disc'))          # not Moelis: its own key, RXI's sector
+        self.assertEqual(labels[f_lvmh], ['LVMH Moet Hennessy Louis Vuitton', 'consumer-disc'])
+        self.assertEqual(classify(sanofi), ('SNY', 'health'))                # not Santander: Sanofi's US listing, IXJ's sector
+        self.assertEqual(classify(tte), ('TTE', 'energy'))                   # the local ticker is the US one: the same company
+        self.assertEqual(classify('F86921107'), (f_schn, 'industrials'))     # a CINS: as the ISIN of the same line
+        self.assertEqual(classify('MC'), ('MC', 'financials'))               # a US fund's MC is Moelis still
+        self.assertEqual(classify('AGG'), ('AGG', 'etf'))
+        self.assertTrue(E.is_foreign(lvmh) and E.is_foreign('F86921107') and not E.is_foreign('037833100') and not E.is_foreign('US0378331005'))
+        self.assertEqual(E.norm_name('ASML HOLDING NV COMMON STOCK EUR 0.09'), 'asml')
+        self.assertEqual(E.norm_name('Agnico Eagle Mines Ltd./Mines Agnico Eagle Ltee'), 'agnico eagle mines')
+        self.assertEqual(E.norm_name('TORONTO DOMINION BANK (THE)'), 'toronto dominion bank')
+        self.assertEqual(E.short_name("L'AIR LIQUIDE SA"), "L'Air Liquide")
+        # the latest holdings: placeholders never a key; a foreign line's local ticker gives way to its ISIN; the flag
+        self.assertEqual([w[0] for w in holds['EWQ']['weights']], [tte, schn, lvmh, sanofi])   # the fifth 'N.A' line: dropped
+        self.assertEqual([x[11] for x in holds['EWQ']['top']], [0, 0, 0, 0])
+        self.assertEqual(holds['VXUS']['weights'][0][0], schn)                  # the ISIN of the line rather than its CINS
+        # a word of the name when no sector fund holds it
+        holds2 = {'INDA': {'top': [row('HDFC BANK LTD', 'N/A', hdfc, 'N.A', 0.06)], 'weights': [['N.A', 0.06, 1]]}}
+        with tempfile.TemporaryDirectory() as d:
+            t2, c2, l2 = E.make_classifier(Path(d), [], holds2, {}, {}, {}, {}, set(), key_ticker, {}, repair=True)
+        self.assertEqual(c2(hdfc), (E.foreign_key(hdfc), 'financials'))
+        self.assertEqual(l2[E.foreign_key(hdfc)][0], 'HDFC Bank')
 
 
 class Publish(unittest.TestCase):
@@ -191,6 +243,34 @@ class Publish(unittest.TestCase):
         self.assertEqual(b['sectors'], ['technology', 'energy', 'other'])
         self.assertEqual(b['sw'], [[50000, 0, 49000], [40000, 10000, 0]])
         self.assertEqual((b['acc'], b['n'], b['unit']), (['x1', 'x2'], [500, 498], 1e-5))
+
+    def test_foreign_names_and_broken_snapshots(self):
+        snaps = [{'date': '2025-12-31', 'accession': 'x1', 'positions': [['~ABCDEF', 0.3], ['TTE', 0.2]], 'sector_weights': {'industrials': 0.3, 'energy': 0.2},
+                  'equity_weight_covered': 0.99, 'n': 50, 'net_assets': 1e9, 'partial': True},
+                 {'date': '2026-03-31', 'accession': 'x2', 'positions': [['~ABCDEF', 0.35], ['TTE', 0.1]], 'sector_weights': {'industrials': 0.35},
+                  'equity_weight_covered': 0.98, 'n': 50, 'net_assets': 1e9, 'partial': True}]
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / 'etf'
+            pub = root / 'public'
+            (pub / 'e').mkdir(parents=True)
+            (root / 'cache' / 'actual_weights').mkdir(parents=True)
+            # a snapshot kept before: every foreign line under one 'N-A' — not a portfolio, dropped
+            (root / 'cache' / 'actual_weights' / 'EWQ.json').write_text(json.dumps({'symbol': 'EWQ', 'snapshots': [
+                {'date': '2026-01-31', 'positions': [['N-A', 0.9], ['TTE', 0.08]]},
+                {'date': '2025-11-28', 'positions': [['TTE', 0.08], ['F86921107', 0.07]]}]}))
+            (pub / 'e' / 'EWQ.json').write_text(json.dumps({'name': 'EWQ', 'holdings': {'date': '2026-04-30', 'acc': 'a9'},
+                                                            'weights': [['FR0000121972', 0.08, 1], ['TTE', 0.07, 1], ['N.A', 0.01, 1]]}))
+            key_of = {'FR0000121972': '~ABCDEF', 'F86921107': '~ABCDEF', 'TTE': 'TTE'}.get
+            labels = {'~ABCDEF': ['Schneider Electric', 'industrials']}
+            sector_of = lambda t: {'TTE': 'energy'}.get(t) or (labels.get(t) or [None, None])[1]
+            A.capture(root, pub, [{'symbol': 'EWQ', 'aum': 9}], quarterly={'EWQ': snaps}, sector_of=sector_of, key_of=key_of, labels=labels)
+            out = json.loads((pub / 'weights' / 'EWQ.json').read_text())
+        self.assertEqual([x['date'] for x in out['snapshots']], ['2025-11-28', '2026-04-30'])     # the 'N-A' one dropped
+        self.assertEqual(out['snapshots'][0]['positions'], [['TTE', 0.08], ['~ABCDEF', 0.07]])   # the CINS keyed again
+        self.assertEqual(out['snapshots'][1]['positions'], [['~ABCDEF', 0.08], ['TTE', 0.07]])
+        self.assertEqual(out['snapshots'][1]['sector_weights'], {'industrials': 0.08, 'energy': 0.07})
+        self.assertEqual(out['quarterly']['names'], ['~ABCDEF', 'TTE'])
+        self.assertEqual((out['labels'], out['secs']), ({'~ABCDEF': 'Schneider Electric'}, {'~ABCDEF': 'industrials'}))
 
     def test_capture_publishes_every_etf_with_two_quarters(self):
         with tempfile.TemporaryDirectory() as d:

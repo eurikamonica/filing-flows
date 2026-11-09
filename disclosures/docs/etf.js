@@ -150,6 +150,8 @@ function etfBars(items,{fmtV=etfMoney,label='',h=170}={}){         // [[label, v
   s+=`<rect x="${X(i)-bw/2}" y="${y}" width="${bw}" height="${hh}" rx="3" fill="${v>=0?'var(--mk-profit)':'var(--mk-cost)'}"><title>${esc(x[2]||x[0])}: ${fmtV(v)}</title></rect><text class="axis" x="${X(i)}" y="${H-8}" text-anchor="middle">${esc(x[0])}</text>`});
  return s+'</svg>';
 }
+const ETF_SECTOR_NAMES={technology:'Technology',communication:'Communication','consumer-disc':'Consumer discretionary','consumer-staples':'Consumer staples',health:'Health care',
+ financials:'Financials','real-estate':'Real estate',energy:'Energy',materials:'Materials',industrials:'Industrials',utilities:'Utilities',etf:'ETFs',other:'Other'};
 function etfMix(obj,names,{n=10}={}){                               // horizontal shares, one hue
  const e=Object.entries(obj||{}).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,n);
  if(!e.length)return '<p class="sub">Not on file.</p>';
@@ -157,6 +159,11 @@ function etfMix(obj,names,{n=10}={}){                               // horizonta
  return `<div class="etf-mix">${e.map(([k,v])=>`<div><span>${esc((names&&names[k])||k)}</span><i><b style="width:${(v/m*100).toFixed(1)}%"></b></i><em>${etfPct(v,1)}</em></div>`).join('')}</div>`;
 }
 function etfCards(cards){return `<div class="etf-cards">${cards.map(([l,v,n])=>`<div><small>${esc(l)}</small><strong>${v}</strong>${n?`<span class="muted">${n}</span>`:''}</div>`).join('')}</div>`}
+// a holding's ticker: a link to the company only for a US security — a foreign line's local ticker ('MC' is LVMH's in
+// Paris, Moelis's here) is shown as written; the placeholders funds write ('N/A', 'N.A') as nothing
+function etfTick(x){const t=String(x[4]||'').trim();if(!t||/^(N[\/.]?A\.?|NONE|-+)$/i.test(t))return esc(x[2]&&!/^N\/?A$/i.test(x[2])?x[2]:x[3]||'');
+ const foreign=x.length>11?x[11]===0:!!(x[3]&&/^[A-Z]{2}/.test(x[3])&&!/^US/.test(x[3]));   // [11]: the build's word (repair_keys)
+ return foreign?`<span title="${esc(x[3]||'')}">${esc(t)}</span>`:`<button class="text-button" data-cco="${esc(t)}">${esc(t)}</button>`}
 function etfOne(){
  const sym=String(state.esym||'').trim().toUpperCase();
  if(!sym)return empty('Type a ticker (or click one in the screener).');
@@ -201,8 +208,8 @@ function etfOne(){
  }
  // holdings
  if(d.holdings){
-  out+=`<div class="panel"><h3>Portfolio <span class="muted">${h.source?esc(h.source):'N-PORT'} as of ${esc(h.date||'')} · ${fmt(h.n)} positions</span></h3><div class="etf-two"><div><b>By asset type</b>${etfMix(h.mix,ASSET_NAMES)}</div><div><b>By country</b>${etfMix(h.countries)}</div>${lt&&lt.sectors&&Object.keys(lt.sectors).length?`<div><b>By sector (companies on Filing Flows)</b>${etfMix(lt.sectors)}</div>`:''}</div>`;
-  out+=etfTbl(['Holding','Ticker','Weight','Value','Type','Country'],(h.top||[]).slice(0,30).map(x=>[esc(x[0])+(x[1]&&x[1]!==x[0]?`<br><span class="muted">${esc(x[1])}</span>`:''),x[4]?`<button class="text-button" data-cco="${esc(x[4])}">${esc(x[4])}</button>`:esc(x[2]||''),etfPct(x[6],2),etfMoney(x[5]),esc(ASSET_NAMES[x[7]]||x[7]||''),esc(x[9]||'')]),[2,3]);
+  out+=`<div class="panel"><h3>Portfolio <span class="muted">${h.source?esc(h.source):'N-PORT'} as of ${esc(h.date||'')} · ${fmt(h.n)} positions</span></h3><div class="etf-two"><div><b>By asset type</b>${etfMix(h.mix,ASSET_NAMES)}</div><div><b>By country</b>${etfMix(h.countries)}</div>${lt&&lt.sectors&&Object.keys(lt.sectors).length?`<div><b>By sector</b> <span class="muted">(the companies the Hub knows the sector of, foreign ones too)</span>${etfMix(lt.sectors,ETF_SECTOR_NAMES)}</div>`:''}</div>`;
+  out+=etfTbl(['Holding','Ticker','Weight','Value','Type','Country'],(h.top||[]).slice(0,30).map(x=>[esc(x[0])+(x[1]&&x[1]!==x[0]?`<br><span class="muted">${esc(x[1])}</span>`:''),etfTick(x),etfPct(x[6],2),etfMoney(x[5]),esc(ASSET_NAMES[x[7]]||x[7]||''),esc(x[9]||'')]),[2,3]);
   if(h.derivatives)out+=`<p class="sub">Derivatives: ${etfPct(h.derivatives,1)} of net assets (gross, by reported value). ${h.on_loan?`Securities on loan: ${etfMoney(h.on_loan)}.`:''}</p>`;
   out+=`</div>`;
  }

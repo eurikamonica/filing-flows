@@ -21,27 +21,34 @@ MAX_SNAPSHOTS = 60
 MAX_POSITIONS = 600
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 TICKER = re.compile(r"^[A-Z][A-Z0-9-]{0,9}$")
+KEY = re.compile(r"^(~[0-9A-Z]{6}|[A-Z][A-Z0-9-]{0,9})$")        # a position: a ticker, or '~' and six characters (a
+#                                                                  foreign security with no US listing: etf.foreign_key)
+PLACEHOLDER = {"N-A", "N-A-", "NA", "NONE", "NULL", "UNKNOWN"}   # what funds write for no ticker ('N.A' for every foreign line)
+BROKEN = 0.05                     # a kept snapshot with more of its weight on placeholders than this is dropped: unreadable
 
 
-def compact_positions(weights):
-    """NAV weights, not percentages, not market-cap weights; preserve omissions."""
+def compact_positions(weights, key_of=None):
+    """NAV weights, not percentages, not market-cap weights; preserve omissions. key_of: a line's key (a ticker, CUSIP or
+    ISIN) → its position key (a ticker or a '~' key), None to leave the line out (etf.py: what make_classifier says)."""
     totals = {}
     for row in weights or []:
         if not isinstance(row, (list, tuple)) or len(row) < 2:
             continue
-        symbol = str(row[0] or "").strip().upper().replace(".", "-")
+        raw = str(row[0] or "").strip().upper()
+        symbol = key_of(raw) if key_of else raw.replace(".", "-")
+        symbol = str(symbol or "")
         try:
             weight = float(row[1])
         except (TypeError, ValueError, OverflowError):
             continue
-        if not TICKER.fullmatch(symbol) or not math.isfinite(weight) or weight <= 0:
+        if symbol in PLACEHOLDER or not KEY.fullmatch(symbol) or not math.isfinite(weight) or weight <= 0:
             continue
         totals[symbol] = totals.get(symbol, 0.0) + weight
     return [[key, round(w, 8)] for key, w in
             sorted(totals.items(), key=lambda x: -x[1])[:MAX_POSITIONS] if w > 0]
 
 
-def take_snapshot(doc):
+def take_snapshot(doc, key_of=None):
     """One immutable source-date portfolio; no historical extrapolation."""
     hold = doc.get("holdings") or {}
     date = str(hold.get("date") or "")[:10]
@@ -51,7 +58,7 @@ def take_snapshot(doc):
         dt.date.fromisoformat(date)
     except ValueError:
         return None
-    positions = compact_positions(doc.get("weights"))
+    positions = compact_positions(doc.get("weights"), key_of)
     if len(positions) < 2:
         return None
     source = hold.get("source") or ("SEC N-PORT" if hold.get("acc") else "fund holdings disclosure")
@@ -59,6 +66,22 @@ def take_snapshot(doc):
     return {"date": date, "date_basis": basis, "source": source, "accession": hold.get("acc"),
             "positions": positions, "sectors": hold.get("sector_map") or {},
             "equity_weight_covered": round(sum(w for _, w in positions), 6)}
+
+
+def clean_snapshot(snap, key_of=None):
+    """A kept snapshot read back: its lines keyed again (key_of), the placeholders out; None when they held more than
+    BROKEN of its weight (the lines of every foreign security added up under one 'N.A' — not a portfolio)."""
+    if not isinstance(snap, dict) or not snap.get("positions"):
+        return None
+    total = sum(float(w) for _, w in snap["positions"] if isinstance(w, (int, float)) and w > 0)
+    lost = sum(float(w) for t, w in snap["positions"] if str(t).upper() in PLACEHOLDER and isinstance(w, (int, float)) and w > 0)
+    if total <= 0 or lost > BROKEN * total:
+        return None
+    positions = compact_positions(snap["positions"], key_of)
+    if len(positions) < 2:
+        return None
+    return {**snap, "positions": positions, "equity_weight_covered": round(sum(w for _, w in positions), 6)
+            if not snap.get("equity_weight_covered") or lost else snap["equity_weight_covered"]}
 
 
 def merge_snapshots(old, new):
@@ -113,7 +136,7 @@ def quarterly_block(snaps):
             "sw": [[round((x.get("sector_weights") or {}).get(k, 0.0) * 1e5) for k in keys] for x in snaps]}
 
 
-def capture(root, pub, index_rows, quarterly=None, sector_of=None):
+def capture(root, pub, index_rows, quarterly=None, sector_of=None, key_of=None, labels=None):
     """Persist dated snapshots on the ETF data branch, publish read-only JSON.
 
     The highest-AUM ETFs and reference index trackers accrue history; all other
@@ -121,7 +144,9 @@ def capture(root, pub, index_rows, quarterly=None, sector_of=None):
     Data branch cache is persistent across builds (see etf.yml).
     quarterly: {symbol: [snapshot …]} — every ETF's quarter-end N-PORT portfolios
     (etf.history_by_symbol), published with the kept snapshots; sector_of: ticker →
-    sector key, for the published snapshots' sector weights.
+    sector key, for the published snapshots' sector weights; key_of: a holding's key →
+    its position key (compact_positions); labels: {'~' key: [name, sector]} — the
+    names and sectors of the foreign securities in a file go with it ('labels', 'secs').
     """
     root, pub = Path(root), Path(pub)
     cache = root / "cache" / "actual_weights"
@@ -141,10 +166,10 @@ def capture(root, pub, index_rows, quarterly=None, sector_of=None):
             continue
         try:
             doc = json.loads(details.read_text(encoding="utf-8"))
-            snap = take_snapshot(doc)
+            snap = take_snapshot(doc, key_of)
             path = cache / (symbol + ".json")
             old = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-            history = merge_snapshots(old.get("snapshots"), snap)
+            history = merge_snapshots([x for x in (clean_snapshot(y, key_of) for y in old.get("snapshots") or []) if x], snap)
             if not history:
                 continue
             record = {"symbol": symbol, "name": doc.get("name") or symbol, "snapshots": history,
@@ -165,6 +190,11 @@ def capture(root, pub, index_rows, quarterly=None, sector_of=None):
                 with_quarters += 1
             if not out["snapshots"] and not block:
                 continue
+            tilde = sorted({t for x in out["snapshots"] for t, _ in x.get("positions") or [] if t.startswith("~")}
+                           | {t for t in (block or {}).get("names") or [] if t.startswith("~")})
+            if tilde and labels:
+                out["labels"] = {t: labels[t][0] for t in tilde if t in labels and labels[t][0]}
+                out["secs"] = {t: labels[t][1] for t in tilde if t in labels and labels[t][1]}
             (dest / (symbol + ".json")).write_text(json.dumps(out, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
             written += 1
         except (OSError, ValueError, TypeError, KeyError) as exc:

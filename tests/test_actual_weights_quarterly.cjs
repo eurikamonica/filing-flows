@@ -53,6 +53,15 @@ const block = {
   await A.build({ aw: 'etf', ah: 'IVV', style: 'changes', ag: 'sector', an: '12' }, ch, api);
   near(ch.series.find((s) => s.key === 'energy').v[0], 0.1, 'sector change in points');
 
+  // a foreign security with no US listing ('~' key, app/etf.py foreign_key): its name and sector come with the file
+  const fblock = { ...block, names: ['~ABCDEF', 'TTE'], w: [[30000, 20000], [35000, 10000]], sectors: ['industrials', 'energy', 'other'], sw: [[30000, 20000, 49000], [35000, 10000, 53000]] };
+  const fapi = { ...api, json: async (u) => (u.endsWith('/weights/EWQ.json') ? { quarterly: fblock, snapshots: [], labels: { '~ABCDEF': 'Schneider Electric' }, secs: { '~ABCDEF': 'industrials' } } : null) };
+  const fc = out();
+  await A.build({ aw: 'etf', ah: 'EWQ', style: 'companies', an: '12' }, fc, fapi);
+  const sch = fc.series.find((s) => s.key === '~ABCDEF');
+  eq([sch && sch.label, sch && sch.name, sch && sch.sec], ['Schneider Electric', 'Schneider Electric', 'industrials'], 'a foreign security: its name and sector');
+  near(sch.v[1], 0.35, 'its weight');
+
   // a report whose equity lines add to a little over its net assets: scaled for the 100% chart, with a note
   const over = { ...block, sw: [[50000, 0, 50030], [40000, 10000, 48000]] };
   const oapi = { ...api, json: async (u) => (u.endsWith('/weights/IVV.json') ? { quarterly: over, snapshots: [] } : null) };

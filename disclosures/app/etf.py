@@ -30,9 +30,11 @@
     python app/etf.py build   --root etf --hub disclosures/docs/data --consensus cons/public --debt debt/public --site-index site/index.json
 """
 import argparse
+import base64
 import csv
 import datetime as dt
 import gzip
+import hashlib
 import heapq
 import html
 import io
@@ -42,6 +44,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 import urllib.parse
 import urllib.request
 import zipfile
@@ -1058,14 +1061,127 @@ SECTOR_ETFS = {'XLK': 'technology', 'VGT': 'technology', 'XLF': 'financials', 'V
 GICS_KEY = {'information technology': 'technology', 'communication services': 'communication', 'consumer discretionary': 'consumer-disc',
             'consumer staples': 'consumer-staples', 'health care': 'health', 'financials': 'financials', 'real estate': 'real-estate',
             'energy': 'energy', 'materials': 'materials', 'industrials': 'industrials', 'utilities': 'utilities'}
+# GICS sector funds beyond the US market: the iShares Global sector series (the S&P Global 1200), global and international
+# real estate, European financials, the gold, silver and metal miners (GICS: materials) and two MSCI China sector funds.
+# Their foreign holdings (ISINs) take the fund's sector; read after the US funds, so a company both hold keeps the US one.
+GLOBAL_SECTOR_ETFS = {'IXN': 'technology', 'IXG': 'financials', 'IXJ': 'health', 'RXI': 'consumer-disc', 'KXI': 'consumer-staples',
+                      'IXC': 'energy', 'EXI': 'industrials', 'MXI': 'materials', 'JXI': 'utilities', 'IXP': 'communication',
+                      'REET': 'real-estate', 'RWO': 'real-estate', 'VNQI': 'real-estate', 'RWX': 'real-estate', 'IFGL': 'real-estate',
+                      'HAUZ': 'real-estate', 'EUFN': 'financials', 'PBEU': 'financials', 'GDX': 'materials', 'GDXJ': 'materials',
+                      'RING': 'materials', 'GOAU': 'materials', 'SIL': 'materials', 'SLVP': 'materials', 'PICK': 'materials',
+                      'COPX': 'materials', 'KURE': 'health', 'CHIQ': 'consumer-disc'}
+NO_TICKER = {'N/A', 'N.A', 'N.A.', 'N-A', 'NA', 'NONE', 'NULL', 'UNKNOWN', '-', '--', '0'}
+# the legal forms and filler words dropped from the end of an issuer's name before two names are compared
+LEGAL = set(('sa se ag nv plc ltd limited inc incorporated corp corporation co company cos group grp holdings holding hldgs '
+             'spa sab cv de ab publ asa as oyj kgaa gmbh bhd berhad tbk pcl pjsc jsc ojsc lp llc adr ads ord shs reg kk nl bv '
+             'srl sarl sad sca ltda mfg new').split())
+# words of a security's title rather than its issuer's name ('NESTLE SA-REG COMMON STOCK CHF 1'), dropped at the end too
+SHARE_WORDS = set(('common stock stocks share shares ordinary ord reg registered class cl pref preferred npv par value sponsored spon '
+                   'depositary receipt receipts unit units equity non voting nvdr foreign rights chf eur usd gbp jpy hkd sek nok '
+                   'dkk cad aud krw twd inr cny brl zar mxn a b c').split())
+# the sector a word of a foreign issuer's name gives when nothing else does (high-precision words only: banks are
+# financials, 'oil' before 'motor' — Motor Oil Hellas is energy)
+NAME_SECTOR = [(r'\b(oil|petroleum|petroleo|petrobras|petrochina|gazprom|lukoil|refining)\b', 'energy'),
+               (r'\b(bank|banca|banco|banque|bancorp|unibanco|insurance|assurance|assicurazioni|versicherung|reinsurance|'
+                r'seguros?|seguridade|finance|financial|securities|investment|investor)\b', 'financials'),
+               (r'\b(pharma|pharmaceutical|pharmaceuticals|hospital|hospitals|healthcare|biotech)\b', 'health'),
+               (r'\b(telecom|telekom|telecommunication|telecommunications|telefonica|airtel|mobile|wireless)\b', 'communication'),
+               (r'\b(reit|properties|property|real estate)\b', 'real-estate'),
+               (r'\b(mining|mines|steel|cement|chemical|chemicals|plastics|gold fields|copper|pulp|paper)\b', 'materials'),
+               (r'\b(energetica|electric power|electricity|power grid|utilities|saneamento|water supply)\b', 'utilities'),
+               (r'\b(semiconductor|semiconductors|software|infotech|consultancy services)\b', 'technology'),
+               (r'\b(food|foods|beverage|beverages|brewery|breweries|tobacco|dairy|supermarkets?)\b', 'consumer-staples'),
+               (r'\b(airlines|airways|airport|airports|shipping|logistics|railway|railways|construction|engineering)\b', 'industrials'),
+               (r'\b(motor|motors|automobile|automobiles|hotels?|resorts?|casino)\b', 'consumer-disc')]
 
 
-def history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker):
-    """({ETF symbol: [quarterly snapshot …]}, ticker → sector key) from cache/nport_weights (quarterly_history), each holding
-    named by ticker and sector: the ticker the fund gives, the CUSIP / ISIN map, or the ticker other funds give for it; the
-    sector from the consensus data, else the issuer's other share class (its CUSIP's first six characters), else the sector
-    ETFs that hold it, else the GICS sector of a sponsor's holdings file."""
-    files = sorted(p for p in (Path(root) / 'cache' / 'nport_weights').glob('*_nport.json.gz'))
+def _tick(s):
+    """A ticker as a fund reported it, or None for the placeholders ('N/A', 'N.A', '-')."""
+    s = (s or '').strip().upper()
+    return s if s and s not in NO_TICKER and re.search(r'[A-Z1-9]', s) else None
+
+
+def norm_name(s):
+    """An issuer's name for matching: ASCII lower case, letters and digits, a part in brackets or after a slash out
+    ('SAP SE /EUR/', 'Agnico Eagle Mines Ltd./Mines Agnico Eagle Ltee', 'TORONTO DOMINION BANK (THE)'), 'the' and the
+    legal forms dropped at the ends ('TOTALENERGIES SE' and 'TotalEnergies SE' → 'totalenergies'; 'ASML HOLDING NV' →
+    'asml')."""
+    s = unicodedata.normalize('NFKD', s or '').encode('ascii', 'ignore').decode().lower().replace('&', ' and ')
+    s = re.sub(r'\([^)]*\)', ' ', s)
+    s = s.split('/')[0] if s.split('/')[0].strip() else s
+    w = re.sub(r"[^a-z0-9 ]+", ' ', s.replace("'", '').replace('.', '')).split()
+    while w and (w[-1] in LEGAL or w[-1] in SHARE_WORDS or w[-1] == 'and' or w[-1].isdigit()):
+        w.pop()
+    while w and w[0] == 'the':
+        w.pop(0)
+    return ' '.join(w)
+
+
+def short_name(s, n=32):
+    """An issuer's name to show: the legal form dropped, capitals only for the short or vowel-less words of an
+    all-capitals name ('LVMH MOET HENNESSY LOUIS VUITTON SE' → 'LVMH Moet Hennessy Louis Vuitton')."""
+    w = (s or '').replace(',', ' ').split()
+    while w and re.sub(r'[^a-z]', '', w[-1].lower()) in LEGAL:
+        w.pop()
+    if w and all(x == x.upper() for x in w):
+        w = [x if len(x) <= 3 or not re.search(r'[AEIOUY]', x) else x[:1] + x[1:].lower() for x in w]
+        w = [re.sub(r"(?<=['-])([a-z])", lambda m: m.group(1).upper(), x) for x in w]
+    out = ' '.join(w)
+    return out if len(out) <= n else out[:n - 1].rstrip() + '…'
+
+
+def is_foreign(k):
+    """An ISIN of a security issued outside the US, or a CINS (a CUSIP for a foreign issuer: a letter first, Samsung's
+    Y74718100) — its local ticker is no guide to a US company. A CINS of a company listed here (Accenture's G1151C101)
+    is named by the CUSIP map before this is asked."""
+    k = k or ''
+    return (len(k) == 12 and k[:2].isalpha() and k[:2] != 'US' and k[2:].isalnum()) or bool(re.fullmatch(r'[A-Z][0-9A-Z]{7}[0-9]', k))
+
+
+def foreign_key(k):
+    """The key of a foreign security no US listing names: '~' and six characters of a hash of its ISIN (the holdings
+    videos read '~' keys with their names, as they do a 13F issuer no ticker names)."""
+    return '~' + base64.b32encode(hashlib.sha1(k.encode()).digest()).decode()[:6]
+
+
+def holding_names(holds):
+    """{CUSIP or ISIN: issuer name} from the funds' largest lines (nport_holdings 'top'): the name most of them write."""
+    cnt = defaultdict(Counter)
+    for h in (holds or {}).values():
+        for x in (h or {}).get('top') or []:
+            if len(x) > 3 and x[0]:
+                for i in (x[2], x[3]):
+                    i = _ident(i)
+                    if i:
+                        cnt[i][x[0]] += 1
+    return {i: c.most_common(1)[0][0] for i, c in cnt.items()}
+
+
+def holding_aliases(holds):
+    """{CUSIP or ISIN: {every name a fund gives it, normalised (norm_name)}} — the issuer's name and the security's
+    title, as each fund writes them."""
+    out = defaultdict(set)
+    for h in (holds or {}).values():
+        for x in (h or {}).get('top') or []:
+            if len(x) > 3:
+                ns = {norm_name(n) for n in (x[0], x[1]) if n} - {''}
+                for i in (x[2], x[3]):
+                    i = _ident(i)
+                    if i and ns:
+                        out[i] |= ns
+    return out
+
+
+def make_classifier(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker, us_names=None, repair=False):
+    """(ticker, classify, labels): what a holding key (a ticker, CUSIP or ISIN) is. ticker(k): the US ticker, or for a
+    foreign security with no US listing of its own a '~' key (foreign_key); classify(k) → (that, the site's sector key or
+    None); labels: {'~' key: [name, sector]}. A US security by the ticker the fund gives, the CUSIP / ISIN map or the
+    ticker other funds give for it. A foreign one (is_foreign): the US ticker only when that company's name is the
+    issuer's (TotalEnergies → TTE; the local ticker 'MC' of LVMH is Moelis's in the US, 'SAN' of Sanofi Santander's),
+    else its own key. The sector: the consensus data, else the issuer's other share class (its CUSIP's first six
+    characters), else the sector ETFs that hold it — the US ones, then the global ones (GLOBAL_SECTOR_ETFS) — else the
+    GICS sector of a sponsor's holdings file. us_names: {US ticker: company name} (the SEC's list); repair: set the latest
+    holdings' keys right first (repair_keys), so the sector funds' foreign lines are known by their ISINs."""
     ids = {}
     for p in sorted((Path(root) / 'cache' / 'nport_weights').glob('*_nport.ids.json.gz')):
         ids.update((load_gz(p, {}) or {}).get('ids') or {})
@@ -1080,46 +1196,179 @@ def history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock
         sc = (cons_rows.get(dash(t)) or {}).get('sector')
         if sc and sc != 'other' and len(c) == 9:
             issuer.setdefault(c[:6], sc)
+    names, aliases = holding_names(holds), holding_aliases(holds)
+    alt = {}                                              # a CINS → the ISIN the same line gives (one security, two ids)
+    for h in (holds or {}).values():
+        for x in (h or {}).get('top') or []:
+            if len(x) > 3 and _ident(x[2]) and _ident(x[3]) and is_foreign(_ident(x[3])) and _ident(x[2]) != _ident(x[3]):
+                alt.setdefault(_ident(x[2]), _ident(x[3]))
+    tick_isin = defaultdict(set)                          # a ticker funds write for a foreign security → its ISIN (OTC
+    for h in (holds or {}).values():                      # symbols such as Vanguard's ASMLF, NVSEF; local tickers)
+        for x in (h or {}).get('top') or []:
+            if len(x) > 4 and _tick(x[4]) and _ident(x[3]) and is_foreign(_ident(x[3])):
+                tick_isin[dash(norm_t(x[4]))].add(_ident(x[3]))
+    us_name = {dash(str(t).upper()): n for t, n in (us_names or {}).items() if t and n}
+    for t, r in cons_rows.items():
+        if r.get('name'):
+            us_name.setdefault(dash(t), r['name'])
+    by_name = defaultdict(set)                            # a company's name → its US tickers (one company only)
+    for t, n in us_name.items():
+        nn = norm_name(n)
+        if nn:
+            by_name[nn].add(t)
+    rank = lambda t: (t not in cons_rows, '-' in t, len(t), t)
+    one = {nn: min(ts, key=rank) for nn, ts in by_name.items()}
     sym_series = {e['symbol']: e.get('series') for e in etfs if e.get('series')}
-    sym_keys = {sym: [series] for sym, series in sym_series.items()}
-    trusts = trust_ciks(etfs)
-    for e in etfs:                                        # a trust's reports sit under its CIK (trust_ciks): some quarters
-        if str(e.get('cik') or '').isdigit() and int(e['cik']) in trusts and e.get('symbol'):   # under a series id, some not
-            sym_keys.setdefault(e['symbol'], []).append(trusts[int(e['cik'])])
-    member = {}
-    for sym, sc in SECTOR_ETFS.items():
+    etf_syms = {e['symbol'].replace('.', '-') for e in etfs if e.get('symbol')}
+    member, labels, memo, tsec = {}, {}, {}, {}        # tsec: a US listing's sector found through its foreign security
+    member_name, origin = {}, {}                          # origin: a '~' key → the ISIN (or CUSIP) it stands for
+
+    def same(t, k):                                       # the US ticker t is the issuer of k's company
+        a = norm_name(us_name.get(dash(t)))
+        return bool(a) and a in aliases.get(k, ())
+
+    def listing(k):                                       # the same company's US listing, by one of its names
+        ts = {one[n] for n in aliases.get(k, ()) if n in one}
+        return ts.pop() if len(ts) == 1 else None
+
+    def ticker(k):
+        if not k or not _tick(k):
+            return None
+        d = dash(norm_t(k))
+        if d not in cons_rows and d not in us_name and len(tick_isin.get(d) or ()) == 1:
+            return ticker(next(iter(tick_isin[d])))       # an OTC or local symbol of a foreign security: as its ISIN
+        t = key_ticker(k) or (cmap.get(k) if k in cmap else None)
+        if not t and len(k) == 12 and k[:2] == 'US':
+            t = cmap.get(k[2:11])
+        if not t and alt.get(k) and alt[k] != k:
+            return ticker(alt[k])                         # a CINS: as the ISIN of the same line
+        if not t and is_foreign(k):
+            v = norm_t(ids[k]) if ids.get(k) else None
+            if v and same(v, k):
+                return dash(key_ticker(v) or v)
+            t = listing(k)
+            if t:
+                return t
+            f = foreign_key(k)
+            origin.setdefault(f, k)
+            if f not in labels:
+                labels[f] = [short_name(names.get(k)) or (v or k), None]
+            return f
+        if not t and ids.get(k):
+            v = norm_t(ids[k])
+            t = key_ticker(v) if (dash(v) in stock_syms or dash(v) in cons_rows) else None
+        if not t and len(k) in (9, 12) and _ident(k) and names.get(k):
+            t = listing(k)                                # a security no ticker names (a Canadian CUSIP): by its name
+            if not t:
+                t = foreign_key(k)
+                origin.setdefault(t, k)
+                labels.setdefault(t, [short_name(names.get(k)) or k, None])
+                return t
+        return dash(t)
+
+    if repair:                                            # the latest holdings' keys first: the sector funds' foreign lines
+        repair_keys(holds, ticker)                        # are ISINs only then
+    for sym, sc in list(SECTOR_ETFS.items()) + list(GLOBAL_SECTOR_ETFS.items()):
         for k, w, v in ((holds.get(sym_series.get(sym)) or {}).get('weights') or []):
+            if not _tick(k):
+                continue
             member.setdefault(k, sc)
-            t = dash(key_ticker(k))
+            t = ticker(k) if is_foreign(k) else dash(key_ticker(k))
             if t:
                 member.setdefault(t, sc)
+            for n in aliases.get(k, ()):                  # by name too: one company is an ISIN in one fund, a CINS in another
+                member_name.setdefault(n, sc)
     for u in uit.values():
         for r in u.get('rows') or []:
             sc = GICS_KEY.get(str(r[4] if len(r) > 4 else '').lower())
             if sc and r[1]:
                 member.setdefault(dash(str(r[1]).upper()), sc)
 
-    def ticker(k):
-        t = key_ticker(k) or (cmap.get(k) if k in cmap else None)
-        if not t and len(k) == 12 and k[:2] == 'US':
-            t = cmap.get(k[2:11])
-        if not t and ids.get(k):
-            v = norm_t(ids[k])
-            t = key_ticker(v) if (dash(v) in stock_syms or dash(v) in cons_rows) else None
-        return dash(t)
+    def by_alias(k):                                      # a sector fund holds a security of the same name: its sector
+        ss = {member_name[n] for n in aliases.get(k, ()) if n in member_name}
+        if len(ss) == 1:
+            return ss.pop()
+        n = norm_name(names.get(k))                       # else a word of its name (NAME_SECTOR), the first that fits
+        return next((sc for pat, sc in NAME_SECTOR if re.search(pat, n)), None) if n else None
 
     def classify(k):
+        if k in memo:
+            return memo[k]
+        memo[k] = out = _classify(k)
+        return out
+
+    def _classify(k):
         t = ticker(k)
+        if t and t in etf_syms and t not in cons_rows:
+            return t, 'etf'                               # a fund of funds' ETF lines: their own area ('etf': ETFs)
+        if t and t.startswith('~'):
+            o = origin.get(t, k)                          # the security itself, whichever key a fund wrote for it
+            sc = member.get(o) or by_alias(o)
+            if sc and labels.get(t) and not labels[t][1]:
+                labels[t][1] = sc
+            return t, sc
         sc = (cons_rows.get(t) or {}).get('sector') if t else None
         sc = sc if sc != 'other' else None               # the consensus data's "other": try the fallbacks
         if not sc:
             c = k if len(k) == 9 and re.fullmatch(r'[0-9A-Z]{8}[0-9]', k) else k[2:11] if len(k) == 12 and k[:2] == 'US' else t_cusip.get(t) if t else None
             sc = issuer.get(c[:6]) if c else None
-        sc = sc or member.get(t) or member.get(k)
-        return t, (sc if sc and sc != 'other' else None)
+        sc = sc or member.get(t) or member.get(k) or tsec.get(t) or (by_alias(k) if is_foreign(k) or (t and t not in cons_rows) else None)
+        sc = sc if sc and sc != 'other' else None
+        if sc and t and is_foreign(k):
+            tsec.setdefault(t, sc)
+        return t, sc
 
-    sector_of = lambda t: classify(t)[1]
+    classify.sector = lambda t: (labels.get(t) or [None, None])[1] if t and t.startswith('~') else (classify(t)[1] or tsec.get(t))
+    return ticker, classify, labels
+
+
+def repair_keys(holds, ticker):
+    """The latest holdings' keys (nport_holdings 'weights') set right from the largest lines ('top', the same lines in
+    the same order): a placeholder ticker ('N.A', which iShares writes for every foreign line) or a foreign security's
+    local ticker that is some US company's ('MC': LVMH, not Moelis) gives way to the ISIN; the remaining lines with a
+    placeholder are dropped (one 'N.A' would add up every foreign line into one). Each of those largest lines gets [11]:
+    1 when its ticker names the company's US listing, 0 when it does not. ticker: make_classifier's."""
+    fixed = 0
+    for h in (holds or {}).values():
+        W = (h or {}).get('weights') or []
+        j = 0
+        for x in (h or {}).get('top') or []:
+            if j >= len(W):
+                break
+            if not (len(x) > 10 and x[7] in EQUITY and (x[4] or x[2] or x[3]) and (x[10] or 'Long') == 'Long'):
+                continue
+            if abs((W[j][1] or 0) - (x[6] or 0)) > 2e-6:     # not the same line: leave the rest as it is
+                break
+            isin, tk = _ident(x[3]), _tick(x[4])
+            key = tk or _ident(x[2]) or isin
+            if isin and is_foreign(isin) and (not tk or ticker(isin) != (tk.replace('.', '-'))):
+                key = isin
+            if len(x) == 11:                             # [11]: 1 when the ticker is the company's US one (the ETF page links it)
+                x.append(0 if key == isin and is_foreign(isin or '') else 1)
+            if key and key != W[j][0]:
+                W[j] = [key] + list(W[j][1:])
+                fixed += 1
+            j += 1
+        if any(not _tick(w[0]) for w in W):
+            h['weights'] = [w for w in W if _tick(w[0])]
+    return fixed
+
+
+def history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker, classifier=None):
+    """({ETF symbol: [quarterly snapshot …]}, ticker → sector key, labels) from cache/nport_weights (quarterly_history),
+    each holding named and given a sector by make_classifier (a foreign security with no US listing by its '~' key, whose
+    name and sector are in labels)."""
+    files = sorted(p for p in (Path(root) / 'cache' / 'nport_weights').glob('*_nport.json.gz'))
+    _, classify, labels = classifier or make_classifier(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker)
+    sym_series = {e['symbol']: e.get('series') for e in etfs if e.get('series')}
+    sym_keys = {sym: [series] for sym, series in sym_series.items()}
+    trusts = trust_ciks(etfs)
+    for e in etfs:                                        # a trust's reports sit under its CIK (trust_ciks): some quarters
+        if str(e.get('cik') or '').isdigit() and int(e['cik']) in trusts and e.get('symbol'):   # under a series id, some not
+            sym_keys.setdefault(e['symbol'], []).append(trusts[int(e['cik'])])
+
     hist = quarterly_history(files, classify) if files else {}
+    sector_of = classify.sector
     out = {}
     for sym, keys in sym_keys.items():
         by_date = {}
@@ -1132,7 +1381,7 @@ def history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock
                   'n': x['n'], 'net_assets': x['net_assets'], 'partial': True} for _, x in sorted(by_date.items())]
         if snaps:
             out[sym] = snaps
-    return out, sector_of
+    return out, sector_of, labels
 
 
 def build(root, hub=None, cons=None, debt=None, verbose=True):
@@ -1202,6 +1451,13 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
             return cusip_t[k[2:11]]
         return k if re.fullmatch(r'[A-Z][A-Z.]{0,5}', k) else None
 
+    # what each holding is (make_classifier): the latest holdings' keys set right first (repair_keys), then the
+    # sectors of foreign securities and the US listings of the same companies
+    us_names = {str(d_.get('ticker') or '').upper(): d_.get('name') for d_ in (dict(zip(_G, r)) for r in (_src.get('cos') or {}).get('data') or [])
+                if d_.get('exchange') and d_['exchange'] != 'OTC'}          # listed on an exchange: an OTC symbol names nothing better
+    classifier = make_classifier(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker, us_names, repair=True)
+    hticker, hclassify, _ = classifier
+
     def look_through(ws):
         """The companies inside, at their weights, through the Hub's other data."""
         tot = cov = 0.0
@@ -1209,13 +1465,14 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         sect = defaultdict(float)
         rows = []
         for k, w, v in ws:
-            t = key_ticker(k)
             tot += w
+            ct, sc = hclassify(k)                      # the sector of every line, foreign ones too
+            if sc:
+                sect[sc] += w
+            t = key_ticker(k) or (ct if ct and not ct.startswith('~') else None)
             if not t:
                 continue
             c = cons_rows.get(t)
-            if c and c.get('sector'):
-                sect[c['sector']] += w
             if c:
                 cov += w
                 if c.get('target_mean') and c.get('price'):
@@ -1429,12 +1686,21 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
     actual_status = {}
     try:
         import actual_weights
-        quarterly, sector_of = {}, None
+        quarterly, sector_of, qlabels = {}, None, {}
         try:                                              # every ETF's quarter-end portfolios from the N-PORT sets (videos)
-            quarterly, sector_of = history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker)
+            quarterly, sector_of, qlabels = history_by_symbol(root, etfs, holds, uit, cusip_t, t_cusip, cons_rows, stock_syms, key_ticker,
+                                                              classifier=classifier)
         except Exception as exc:
             print('quarterly holdings history skipped:', type(exc).__name__, exc, flush=True)
-        actual_status = actual_weights.capture(root, pub, index_rows, quarterly=quarterly, sector_of=sector_of)
+
+        def key_of(k):                                    # a snapshot's line: a ticker as given, else what make_classifier says
+            k = (k or '').strip().upper()
+            if not _tick(k):
+                return None
+            if re.fullmatch(r'[A-Z][A-Z.\-]{0,6}', k):
+                return k.replace('.', '-')
+            return hticker(k)
+        actual_status = actual_weights.capture(root, pub, index_rows, quarterly=quarterly, sector_of=sector_of, key_of=key_of, labels=qlabels)
         if sector_of:                                     # the sector of every company ETFs hold (the videos' sector areas)
             secs = {}
             for t in list(by) + [p[0] for q in quarterly.values() for x in q for p in x['positions']]:
@@ -1444,7 +1710,7 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                     if sc:
                         secs[t] = sc
             wj(pub / 'sectors.json', {'generated_at': now(), 'sectors': dict(sorted(secs.items())),
-                                      'note': 'The site\'s sector of each company ETFs hold: the consensus data, else the issuer\'s other share class, else the sector ETFs (Select Sector SPDRs, Vanguard sector funds) that hold it.'})
+                                      'note': 'The site\'s sector of each company ETFs hold: the consensus data, else the issuer\'s other share class, else the sector ETFs that hold it (Select Sector SPDRs, Vanguard sector funds, then the global sector funds: iShares Global sector series, global real estate, miners).'})
     except Exception as exc:
         actual_status = {'error': str(exc)[:200]}
         print('actual weights skipped:', type(exc).__name__, exc, flush=True)

@@ -287,6 +287,8 @@
     const [meta, extra] = await Promise.all([api.rankMeta().catch(() => null), Promise.resolve(api.json(api.hub + 'etf/sectors.json')).catch(() => null)]);
     const co = new Map(((meta && meta.cos) || []).map((r) => [symbol(r[0]), { name: r[1], sec: r[2] }]));
     const xsec = (extra && extra.sectors) || {};          // the ETF build's sector of every company ETFs hold (app/etf.py)
+    // a foreign security with no US listing ('~' key: app/etf.py foreign_key): its name and sector come with the file
+    const hlab = (!external && history && history.labels) || {}, hsec = (!external && history && history.secs) || {};
     const sources = [...new Set(all.map((x) => x.source))].join('; ');
     const from = all[0].date, to = all[all.length - 1].date;
     const label = external ? external.basis : indexed ? 'Index-tracker holdings proxy' : 'Actual fund disclosures';
@@ -318,6 +320,7 @@
       else out.notes.add(ref[0] + ' index methodology: ' + ref[2] + '. Tracker positions are a disclosed proxy.');
     }
     if (all.length > 1) out.notes.add('Frames interpolate VISUALLY between actual snapshots; no holdings are asserted for interim dates.');
+    if (Object.keys(hlab).length) out.notes.add('Foreign companies with no US listing are named as the fund describes them; their sector is the one of the global sector funds that hold them (iShares Global sector series, global real estate, miners), else a word of the name (a bank is Financials). A company also listed in the US goes by its US ticker.');
     if (all.some((s) => s.partial)) out.notes.add('Quarter-end snapshots come from the fund\'s public N-PORT reports (SEC data sets since 2019): the largest names, the same in every quarter, and sector weights over every long equity line.');
     // a reported sector first (a sponsor's file; '-' and blanks are no sector), then the site's companies, then the ETF build's map
     const etfs = (external && external.etfs) || null;     // a 13F manager's ETF lines: a band of their own
@@ -326,6 +329,7 @@
       if (reported !== 'other') return reported;
       const known = toSector((co.get(ticker) || {}).sec);
       if (known !== 'other') return known;
+      if (hsec[ticker]) return toSector(hsec[ticker]);
       const held = toSector(xsec[ticker]);
       return held !== 'other' || !etfs || !etfs.has(ticker) ? held : 'etf';
     };
@@ -363,7 +367,7 @@
       tables.forEach(m=>{const rest=[...m].filter(([k])=>!keys.includes(k)).reduce((s,[,v])=>s+v,0); m.set('other',rest);});
       keys.push('other');
     }
-    const lab = (external && external.labels) || {};      // a 13F issuer no ticker names: its name
+    const lab = (external && external.labels) || hlab;    // a 13F issuer no ticker names, a foreign security: its name
     out.series = keys.map(k=>({key:k,label:k==='other'?(sector?'Other / unclassified':'All other holdings'):sector?(SEC[k]||k):(lab[k]||k),
       name:sector?(SEC[k]||k):(lab[k]||(co.get(k)||{}).name||k), sec:sector?k:secFor(all[all.length-1],k),
       v:tables.map(m=>m.get(k)||0)}));
