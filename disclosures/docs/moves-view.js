@@ -804,6 +804,60 @@
     }
     return h + '</tbody></table></div>';
   }
+  /* what was behind the days like it: each case by what the company filed that could move it (that day before the
+     16:00 close, or after the close the day before) — its results (an 8-K with item 2.02), another filing, none — and
+     what followed each group; the day looked at, in its group. Only the cases since the first filing on file. */
+  const EVG = [['res', 'With its results (8-K item 2.02)'], ['oth', 'With another filing, no results'], ['none', 'With no filing']];
+  const isResults = (e) => String(e[2] || '').startsWith('8-K') && String(e[3] || '').split(',').includes('2.02');
+  const eventGroup = (x) => (!x || !x.f || !x.f.length ? 'none' : x.f.some(isResults) ? 'res' : 'oth');
+  function eventSplit(R, o, cs, cw, news, by) {
+    const ev = (news && news.events) || [];
+    const first = ev.reduce((m, e) => (e[0] && (!m || e[0] < m) ? e[0] : m), null);
+    if (!first || cs.length < 6) return null;
+    const G = { res: [], oth: [], none: [] }, Wt = { res: [], oth: [], none: [] };
+    let before = 0;
+    cs.forEach((x, i) => {
+      if (R.A.days[x.j] < first) { before++; return; }
+      const g = eventGroup(by.get(x.j));
+      G[g].push(x); Wt[g].push(cw ? cw[i] : 1);
+    });
+    const n = G.res.length + G.oth.length + G.none.length;
+    if (n < 6 || !(G.res.length + G.oth.length)) return null;
+    const rows = EVG.filter(([g]) => G[g].length).map(([g, lab]) => {
+      const c = G[g], E = c.length >= 3 ? expectedOf(c, cw ? Wt[g] : null) : null;
+      return { g, lab, n: c.length, E, up: c.length >= 3 ? upShare(c, cw ? Wt[g] : null, 21) : null };
+    });
+    return { rows, n, before, first, now: R.t >= 0 && o.mode !== 'whatif' && R.A.days[R.t] >= first ? eventGroup(by.get(R.t)) : null };
+  }
+  function eventTable(X) {
+    const cols = PATH_MARKS.filter(([hz]) => hz !== 10);
+    let h = `<div class="mv-cases" style="max-height:none"><table class="mv-tbl"><thead><tr><th>The days like it</th><th class="n">Days</th>${cols.map(([, l]) => `<th class="n">${esc(l)} on</th>`).join('')}<th class="n">Up after a month</th></tr></thead><tbody>`;
+    for (const r of X.rows) {
+      h += `<tr${X.now === r.g ? ' class="now"' : ''}><td>${esc(r.lab)}${X.now === r.g ? ' <span class="mv-chip hot">this day</span>' : ''}</td><td class="n">${num(r.n)} <span class="mv-sub" style="display:inline">(${share(r.n / X.n)})</span></td>`
+        + cols.map(([hz]) => { const v = r.E && hz < r.E.mean.length ? r.E.mean[hz] : null; return `<td class="n ${tone(v)}">${fin(v) ? sp(v) : '—'}</td>`; }).join('')
+        + `<td class="n">${r.up == null ? '—' : share(r.up)}</td></tr>`;
+    }
+    return h + '</tbody></table></div>';
+  }
+  function eventBlock(R, o, doc, news, cs, cw) {
+    if (doc.kind !== 'stock' || !news) return '';
+    const X = eventSplit(R, o, cs, cw, news, newsIndex(news, R.A.days));
+    if (!X) return '';
+    const res = X.rows.find((r) => r.g === 'res'), rest = X.rows.filter((r) => r.g !== 'res');
+    let h = `<h4 style="margin:14px 0 4px">What was behind the days like it</h4><p class="mv-sub">The ${num(X.n)} of them since ${esc(mdy(X.first))} (the company's filings on file${X.before ? `; ${num(X.before)} earlier ones left out` : ''}), by what it filed that could move the day — that day before the 16:00 close, or after the close the day before — and the average path after each group. A move on results is the market reading new numbers; one with no filing is news, the sector or the market.</p>`;
+    h += eventTable(X);
+    if (X.now) {
+      const mine = X.rows.find((r) => r.g === X.now), m = mine && mine.E && mine.E.mean.length > 21 ? mine.E.mean[21] : null;
+      const others = X.rows.filter((r) => r.g !== X.now && r.E && r.E.mean.length > 21);
+      const what = { res: 'came with its results', oth: 'came with a filing (not its results)', none: 'came with no filing' }[X.now];
+      const alike = { res: 'that also came with results', oth: 'that also came with a filing', none: 'with no filing either' }[X.now];
+      h += `<p class="mv-head" style="font-size:15px">This day ${what}: ${mine && mine.n >= 3 && fin(m) ? `the ${num(mine.n)} days like it ${alike} were followed by <b class="${tone(m)}">${sp(m)}</b> a month later on average (${share(mine.up)} up)` : `too few of the days like it did (${num(mine ? mine.n : 0)}) to say what followed them`}`
+        + `${others.length && mine && mine.n >= 3 ? `; the others: ${others.map((r) => `${esc(r.lab.toLowerCase().replace(/^with /, ''))} ${sp(r.E.mean[21])}`).join(', ')}` : ''}.</p>`;
+    } else if (res && res.E && rest.some((r) => r.E)) {
+      h += `<p class="mv-sub">On results the average month after was ${sp(res.E.mean.length > 21 ? res.E.mean[21] : null)}; without, ${rest.filter((r) => r.E && r.E.mean.length > 21).map((r) => `${sp(r.E.mean[21])} (${esc(r.lab.toLowerCase().replace(/^with /, ''))})`).join(', ')}.</p>`;
+    }
+    return h;
+  }
   function casesSection(R, o, doc, news) {
     const which = o.set === 'ext' ? 'ext' : 'sim';
     const cs = cases(R, o, which), cw = caseW(R, cs), E = expectedOf(cs, cw);
@@ -816,7 +870,10 @@
         + ` <span class="mv-sub" style="display:inline">(${share(upShare(cs, cw, 21))} up after a month${R.hl ? ', older days counting less' : ''})</span></p>`;
     }
     h += pathsSvg(R, o, cs, E);
+    let evb = '';
+    try { evb = eventBlock(R, o, doc, news, cs, cw); } catch (e) { evb = ''; }
     h += `<div class="mv-legend"><span><b style="background:none;border-top:2px dashed ${COL.up};height:0;width:14px;border-radius:0"></b><b style="background:none;border-top:2px dashed ${COL.down};height:0;width:14px;border-radius:0"></b>each case</span><span><b style="background:${COL.band}"></b>expected (average)</span><span><b style="background:none;border-top:2px dotted ${COL.ink};height:0;width:14px;border-radius:0"></b>median</span><span><b style="background:${COL.band};opacity:.25"></b>middle half</span>${R.t >= 0 && o.mode !== 'whatif' ? `<span><b style="background:${COL.warn}"></b>this day</span>` : ''}</div>`;
+    h += evb;
     h += `<p class="mv-sub">${doc.kind === 'stock' ? 'Each case with what the company filed with the SEC that could have moved it — 8-K items (the press release\'s headline and key sentences, read for the days of its biggest moves), quarterly and annual reports, offerings and stakes — and the news headlines that named it that day or the day before (Google News\'s search: the headline, its source and time, a link to read it; the automatic “fund X bought shares” notes left out). Filings and headlines are gathered a batch at a time, the largest companies and most extreme days first; a day may show its filing before its headlines.' : news && news.headlines ? 'Each case with the market\'s headlines that day or the day before (Google News\'s search: the headline, its source and time, a link), the most extreme days first.' : 'Company filings and headlines are shown for a company: switch to “this company” above.'}</p>`;
     return h + casesTable(R, o, cs, news, doc);
   }
@@ -1604,7 +1661,8 @@
     await draw();
   }
 
-  const api = { bars, stepChoices, render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf };
+  const api = { bars, stepChoices, render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf,
+    eventSplit, eventBlock, eventGroup };
   if (typeof window !== 'undefined') window.MovesView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

@@ -416,7 +416,7 @@ FIELDS = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members
           'rv21', 'rvpct', 'level', 'lpct', 'out5', 'out21', 'group']
 
 
-def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
+def build(root, universe_path, val_dir=None, limit=0, eps_dir=None, fund_dir=None):
     """Write public/moves/ from the bars on file; returns the status."""
     t0 = time.monotonic()
     root = Path(root)
@@ -445,7 +445,7 @@ def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
         code, ind = sic_of(val_dir, c.get('cik')) if val_dir and c.get('cik') else (None, None)
         sics[c['t']] = (code, ind)
         assets.append({'key': c['t'], 'ticker': c['t'], 'name': c.get('name'), 'kind': 'stock', 'sector': c.get('sector'), 'cik': c.get('cik'),
-                       'sic': code, 'mcap': c.get('mcap')})
+                       'sic': code, 'industry': ind, 'mcap': c.get('mcap')})
     data, extra = {}, {}
     for a in assets:
         bars = P.load(root, a['key'])
@@ -492,27 +492,45 @@ def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
     hblocks, hstat, eps = {}, None, {}
     vols = {k: (v[0], v[1]) for k, v in extra.items()}                 # volume and raw closes (for P/E)
     raws = {k: (v[0], v[2]) for k, v in extra.items()}
+    hdoc = None
     try:                                                                # at the highs (app/highs.py): runs and pullbacks
         import highs as HI
         eps = HI.load_eps(eps_dir) if eps_dir and Path(eps_dir).is_dir() else {}
         hdoc, hblocks = HI.build(data, assets, eps=eps, volumes=vols, raw=raws, out_path=None)
         if hdoc:
-            out.mkdir(parents=True, exist_ok=True)
-            _dump(out / 'highs.json', hdoc)
             hstat = {'at_highs': len(hdoc['now']), 'eps_companies': len(eps), **{g: v['base']['days'] for g, v in hdoc['groups'].items()}}
     except Exception as exc:                                            # noqa: BLE001
         errors.append(f"highs: {str(exc)[:160]}")
+    ldoc = rdoc = None
     rblocks, rstat = {}, None
     try:                                                                # at the lows and in a range (app/regimes.py)
         import regimes as RG
         ldoc, rdoc, rblocks = RG.build(data, assets, eps=eps, volumes=vols, raw=raws, out_dir=None)
         if ldoc:
-            out.mkdir(parents=True, exist_ok=True)
-            _dump(out / 'lows.json', ldoc)
-            _dump(out / 'ranges.json', rdoc)
             rstat = {**{f'lows_{k}': len(v) for k, v in ldoc['now'].items()}, **{f'range_{k}': len(v) for k, v in rdoc['now'].items()}}
     except Exception as exc:                                            # noqa: BLE001
         errors.append(f"regimes: {str(exc)[:160]}")
+    rtblocks, rtstat = {}, None
+    try:                                                                # valuation beside the price (app/ratios.py): P/E, P/S
+        import ratios as RT
+        fund = RT.load_fund(fund_dir, [a.get('cik') for a in assets if a['kind'] == 'stock']) if fund_dir else {}
+        run0 = {k: b['state'].get('run_start') for k, b in hblocks.items() if (b.get('state') or {}).get('high')}
+        rtblocks, rtstat = RT.build(data, raws, assets, eps=eps, fund=fund, val_dir=val_dir, names=SIC2, runs=run0)
+        fund = None
+        for k, b in rtblocks.items():                                   # the lists show each company's P/S and ranks
+            RT.stamp((hblocks.get(k) or {}).get('state'), b)
+            for f in ('lows', 'ranges'):
+                for blk in ((rblocks.get(k) or {}).get(f) or {}).values():
+                    RT.stamp(blk.get('state'), b)
+    except Exception as exc:                                            # noqa: BLE001
+        errors.append(f"ratios: {str(exc)[:160]}")
+    if hdoc:
+        out.mkdir(parents=True, exist_ok=True)
+        _dump(out / 'highs.json', hdoc)
+    if ldoc:
+        out.mkdir(parents=True, exist_ok=True)
+        _dump(out / 'lows.json', ldoc)
+        _dump(out / 'ranges.json', rdoc)
     extra = vols = raws = eps = None
     rows, written, out_cum, snaps, kinds = [], set(), {}, {}, {}
     spy = data.get('SPY')
@@ -557,6 +575,8 @@ def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
                 doc[k] = a[k]
         if hblocks.get(a['key']):
             doc['highs'] = hblocks[a['key']]
+        if rtblocks.get(a['key']):
+            doc['ratios'] = rtblocks[a['key']]
         for f in ('lows', 'ranges'):
             if (rblocks.get(a['key']) or {}).get(f):
                 doc[f] = rblocks[a['key']][f]
@@ -591,7 +611,7 @@ def build(root, universe_path, val_dir=None, limit=0, eps_dir=None):
         rr = {g: v['lines'] for g, v in (doc or {}).get('groups', {}).items()}
     except Exception as exc:                                            # noqa: BLE001
         errors.append(f"rrg research: {str(exc)[:160]}")
-    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'rrg_research': rr, 'highs': hstat, 'regimes': rstat,
+    status = {'built_at': now(), 'as_of': as_of, 'assets': len(rows), 'counts': counts, 'days': n_days, 'rrg_research': rr, 'highs': hstat, 'regimes': rstat, 'ratios': rtstat,
               'seconds': round(time.monotonic() - t0, 1), 'errors': errors[:40]}
     write_json(out / 'status.json', status)
     return status

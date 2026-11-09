@@ -452,16 +452,7 @@ def build(data, assets, eps=None, volumes=None, raw=None, out_dir=None, verbose=
         if recs:
             e = HI.ttm_eps(days, HI.fix_splits(recs))
             if key in raw:
-                dn = np.asarray(days, dtype='datetime64[D]')
-                rt, rv = np.asarray(raw[key][0], dtype='datetime64[D]'), np.array([np.nan if v is None else float(v) for v in raw[key][1]], float)
-                j = np.searchsorted(dn, rt)
-                ok = (j < len(dn)) & np.isfinite(rv) & (rv > 0)
-                ok[ok] = dn[j[ok]] == rt[ok]
-                rd = np.array(c)
-                if ok.any():
-                    rd[j[ok]] = rv[ok]
-                    j0 = int(j[ok][0])
-                    rd[:j0] = c[:j0] * (rd[j0] / c[j0])
+                rd = HI.raw_closes(days, c, raw[key])
         vr = HI.volume_ratio(days, *volumes[key]) if key in volumes else None
         C = common(c, raw=rd, eps=e, volu=vr)
         ai = len(meta)

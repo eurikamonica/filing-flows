@@ -3,10 +3,11 @@ docs/moves-view.js).
 
 For every valued company, its EDGAR filing list (data.sec.gov submissions: the recent filings and, back to the first day
 of its price history, the older pages) is kept with each filing's form, date, acceptance time and 8-K items; the 8-Ks
-filed around its biggest moves are read once each with app/events8k.py's parse_8k (the press release's headline and key
-sentences, the topics: earnings, guidance raised or cut, a CEO change, a deal, an offering …), the most extreme days of the
-largest companies first, a budget per run. The browser then shows, for each day like the one looked at, what the company
-had filed that day or after the close the day before.
+filed around its biggest moves, on the days the Highs, lows & ranges view names (key_days: its all-time highs, the first
+highs and peaks of its runs, its lows) and every earnings release are read once each with app/events8k.py's parse_8k
+(the press release's headline and key sentences, the topics: earnings, guidance raised or cut, a CEO change, a deal, an
+offering …), the most extreme days and the key days of the largest companies first, a budget per run. The browser then
+shows, for each day like the one looked at, what the company had filed that day or after the close the day before.
 
 Store (branch research-paths):  cache/news/<cik>.json  {'cik', 'ticker', 'sub_at', 'filings': [[acc, form, date,
                                  'HH:MM' accepted (ET), items]], 'read': {acc: {h, q, t, g}}, 'tried': {acc: failures}}
@@ -134,11 +135,58 @@ def big_days(days, closes):
     return out
 
 
-def to_read(doc, days, closes):
-    """The 8-Ks to read, most extreme day first: on a big-move day (or filed the trading day before it), not read yet."""
+KEY_FAR = 45.0                 # a key day of the highs, lows and ranges is read as early as a day this far out
+
+
+def key_days(root, ticker):
+    """The days the Highs, lows & ranges view names for one asset (public/moves/a/<KEY>.json, written by the move odds
+    step before the news): its latest all-time high and this run's first one, the first highs and peaks of its last
+    runs, its lows and when the slide and the range began — [(day, what)], the newest first."""
+    try:
+        doc = json.loads((Path(root) / 'public' / 'moves' / 'a' / f'{ticker}.json').read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return []
+    out = []
+    h = doc.get('highs') or {}
+    st = h.get('state') or {}
+    if st.get('ath_date'):
+        out.append((st['ath_date'], 'the latest all-time high'))
+    if st.get('high') and st.get('run_start'):
+        out.append((st['run_start'], "this run's first high"))
+    for r in (h.get('own') or {}).get('last') or []:
+        if r.get('start'):
+            out.append((r['start'], "a run's first high"))
+        if r.get('peak'):
+            out.append((r['peak'], "a run's peak"))
+    for reg, b in (doc.get('lows') or {}).items():
+        s = (b or {}).get('state') or {}
+        if s.get('low_date'):
+            out.append((s['low_date'], f"the {({'atl': 'all-time', '52w': '52-week', '3m': '3-month'}).get(reg, reg)} low"))
+        if s.get('since'):
+            out.append((s['since'], 'the slide began'))
+    for reg, b in (doc.get('ranges') or {}).items():
+        s = (b or {}).get('state') or {}
+        if s.get('since'):
+            out.append((s['since'], 'the range began'))
+    seen, uniq = set(), []
+    for d, w in sorted(out, key=lambda x: x[0], reverse=True):
+        if d not in seen:
+            seen.add(d)
+            uniq.append((d, w))
+    return uniq
+
+
+def to_read(doc, days, closes, keys=()):
+    """The 8-Ks to read, most extreme day first: on a big-move day or a key day of the highs, lows and ranges (or filed
+    the trading day before it), and every earnings release; not read yet."""
     if len(days) < 30:
         return []
     big = big_days(days, closes)
+    import bisect
+    for d in keys:                                                     # the key days: as early as an extreme move
+        k = bisect.bisect_left(days, d)
+        if k < len(days) and days[k] == d:
+            big[k] = max(big.get(k, -1), KEY_FAR)
     cand = []
     for acc, form, date, hm, items in doc.get('filings') or []:
         if not form.startswith('8-K') or acc in doc.get('read', {}) or (doc.get('tried') or {}).get(acc, 0) >= 3:
@@ -170,10 +218,10 @@ def read_8k(client, cik, acc):
     return out
 
 
-def refresh(client, root, comps, bars_of, subs=300, reads=250, minutes=25.0, today=None):
+def refresh(client, root, comps, bars_of, subs=300, reads=250, minutes=25.0, today=None, keys_of=None):
     """Brings the filing lists up to date (the stalest first, `subs` per run) and reads up to `reads` 8-Ks (round by
-    company, largest first, the most extreme days first). comps: [{'t', 'cik'}] largest first; bars_of(ticker) → (days,
-    closes) or None."""
+    company, largest first, the most extreme days and the key days first). comps: [{'t', 'cik'}] largest first;
+    bars_of(ticker) → (days, closes) or None; keys_of(ticker) → the key days ([(day, what)], key_days)."""
     t0 = time.monotonic()
     today = today or dt.date.today()
     stale = (today - dt.timedelta(days=REFRESH_DAYS)).isoformat()
@@ -205,7 +253,7 @@ def refresh(client, root, comps, bars_of, subs=300, reads=250, minutes=25.0, tod
         b = bars_of(c['t'])
         if not doc.get('filings') or not b:
             continue
-        accs = to_read(doc, b[0], b[1])
+        accs = to_read(doc, b[0], b[1], [d for d, _ in (keys_of(c['t']) if keys_of else [])])
         if accs:
             queue.append((c, accs))
     while queue and done['read'] < reads and not out_of_time() and done['errors'] <= 40:

@@ -1,8 +1,10 @@
 """Move odds: the news headlines around each move — beside the company's own filings (app/move_news.py), what the press
 wrote. For every valued company (and the market, SPY, in its own words) Google News's search feed is asked for the
 headlines that name it over a window of days: the last week (the market and the 300 largest companies, every day), a
-month at a time back over the last three years (newest first), and the two days around each of its biggest moves since
-2008 (the bottom and top 10% of its days, the most extreme first). A window that comes back full (the feed gives 100 at
+month at a time back over the last three years (newest first), the two days around each day the Highs, lows & ranges
+view names (its latest all-time high, the first highs and peaks of its runs, its lows: move_news.key_days) and around
+each of its biggest moves since 2008 (the bottom and top 10% of its days, the most extreme first). A window that comes
+back full (the feed gives 100 at
 most) is split in two and asked again, down to two days. Each headline is put on the trading day it could move — its
 own day when published before the 16:00 New York close, else the next — and only the headline, its source, its time and
 the link are kept, never the article.
@@ -229,10 +231,12 @@ def months_back(today, n=MONTHS):
     return out
 
 
-def wanted(doc, days, closes, today, recent=True):
+def wanted(doc, days, closes, today, recent=True, keys=()):
     """The windows to search for one company, most wanted first: the last week (again each day), the last twelve months
-    a month at a time, the two days around each of its biggest moves since FROM (the most extreme first), then the
-    months back to three years; none already searched to the end."""
+    a month at a time, the two days around each key day of the highs, lows and ranges (its all-time highs, the first
+    highs and peaks of its runs, its lows: move_news.key_days, the newest first), the two days around each of its
+    biggest moves since FROM (the most extreme first), then the months back to three years; none already searched to
+    the end."""
     import move_news as MN
     done = {(a, b) for a, b, *_ in doc.get('windows') or []}
     seen = checked_days(doc, days)
@@ -246,21 +250,29 @@ def wanted(doc, days, closes, today, recent=True):
     months = [m for m in months_back(today) if m[1] >= first]
     fresh = lambda a, b: (a, b) not in done and not all(d in seen for d in days if a <= d <= b)   # noqa: E731
     out += [m for m in months[:12] if fresh(*m)]
+    import bisect
+    for d in keys:
+        k = bisect.bisect_left(days, d)
+        if d >= FROM and k < len(days) and days[k] == d and d not in seen:
+            a = (dt.date.fromisoformat(d) - dt.timedelta(days=1)).isoformat()
+            if (a, d) not in done and (a, d) not in out:
+                out.append((a, d))
     if len(days) > 30:
         big = sorted(MN.big_days(days, closes).items(), key=lambda kv: (-kv[1], days[kv[0]]))
         for k, _ in big:
             d = days[k]
             if d >= FROM and d not in seen:
                 a = (dt.date.fromisoformat(d) - dt.timedelta(days=1)).isoformat()
-                if (a, d) not in done:
+                if (a, d) not in done and (a, d) not in out:
                     out.append((a, d))
     out += [m for m in months[12:] if fresh(*m)]
     return out
 
 
-def refresh(client, root, comps, bars_of, queries=400, minutes=15.0, today=None, market=('SPY',)):
+def refresh(client, root, comps, bars_of, queries=400, minutes=15.0, today=None, market=('SPY',), keys_of=None):
     """Searches up to `queries` days (round by company, the market and the largest companies first). comps:
-    [{'t', 'name'}] largest first; bars_of(ticker) → (days, closes) or None."""
+    [{'t', 'name'}] largest first; bars_of(ticker) → (days, closes) or None; keys_of(ticker) → its key days
+    ([(day, what)]: move_news.key_days)."""
     t0 = time.monotonic()
     today = today or dt.date.today()
     done = {'searched': 0, 'headlines': 0, 'errors': 0, 'blocked': False}
@@ -272,7 +284,7 @@ def refresh(client, root, comps, bars_of, queries=400, minutes=15.0, today=None,
         if not b or not b[0]:
             continue
         doc = read_json(path(root, c['t']), None) or {'ticker': c['t'], 'days': {}, 'windows': []}
-        ds = wanted(doc, b[0], b[1], today, recent=i < RECENT_TOP)
+        ds = wanted(doc, b[0], b[1], today, recent=i < RECENT_TOP, keys=[d for d, _ in (keys_of(c['t']) if keys_of else [])])
         if ds:
             queue.append((c, ds))
     hdr = {'User-Agent': 'Mozilla/5.0 (compatible; FilingFlows move-odds headlines; +https://github.com/eurikamonica/filing-flows)',

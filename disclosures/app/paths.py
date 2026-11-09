@@ -477,6 +477,7 @@ def main():
     ap.add_argument('--reads', type=int, default=250, help='movenews: 8-Ks read per run')
     ap.add_argument('--queries', type=int, default=400, help='moveheadlines: days searched per run')
     ap.add_argument('--eps', default=None, help="moves: the first-filed quarterly EPS store (data branch eps-gaap/) for the P/E at the highs")
+    ap.add_argument('--fund', default=None, help="moves: the first-filed income statement store (data branch eps-fundamental/) for the P/S")
     a = ap.parse_args()
     if a.cmd in ('collect', 'long'):
         import tempfile
@@ -493,7 +494,7 @@ def main():
             print(json.dumps(collect(client, a.root, tickers, a.batch, a.refresh, a.minutes, first=extra)))
     elif a.cmd == 'moves':
         import moves
-        print(json.dumps(moves.build(a.root, a.universe, limit=a.limit, eps_dir=a.eps)))
+        print(json.dumps(moves.build(a.root, a.universe, limit=a.limit, eps_dir=a.eps, fund_dir=a.fund)))
     elif a.cmd == 'movenews':
         # the company filings around each day of the move odds (app/move_news.py): EDGAR, with SEC_USER_AGENT
         import tempfile
@@ -509,7 +510,7 @@ def main():
                 b = load(a.root, t)
                 memo[t] = moves.series(b) if b else None
             return memo[t]
-        st = move_news.refresh(client, a.root, comps, bars_of, a.subs, a.reads, a.minutes)
+        st = move_news.refresh(client, a.root, comps, bars_of, a.subs, a.reads, a.minutes, keys_of=lambda t: move_news.key_days(a.root, t))
         st['published'] = move_news.publish(a.root, comps, bars_of)
         print(json.dumps(st))
     elif a.cmd == 'moveheadlines':
@@ -529,7 +530,8 @@ def main():
                 b = load(a.root, t)
                 memo[t] = moves.series(b) if b else None
             return memo[t]
-        print(json.dumps(move_headlines.refresh(client, a.root, comps, bars_of, a.queries, a.minutes)))
+        import move_news
+        print(json.dumps(move_headlines.refresh(client, a.root, comps, bars_of, a.queries, a.minutes, keys_of=lambda t: move_news.key_days(a.root, t))))
     else:
         import paths_build
         print(json.dumps(paths_build.build(a.root, a.universe, a.people, limit=a.limit)))
