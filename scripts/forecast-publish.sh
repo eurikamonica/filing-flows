@@ -29,7 +29,7 @@ rm -rf "$pub"
 slot=$(cat "$dir/ledger_due")
 for i in 1 2 3; do
   lg=$(mktemp -d)
-  if git ls-remote --exit-code --heads "$PUSH_URL" forecast-ledger >/dev/null 2>&1; then
+  if git ls-remote --exit-code "$PUSH_URL" refs/heads/forecast-ledger >/dev/null 2>&1; then   # the full ref: "forecast-ledger" alone also matches feature/forecast-ledger
     git clone -q --depth 1 --branch forecast-ledger "$PUSH_URL" "$lg/r" || { rm -rf "$lg"; sleep $((i * 5)); continue; }
   else
     mkdir -p "$lg/r" && git -C "$lg/r" init -q -b forecast-ledger && git -C "$lg/r" remote add origin "$PUSH_URL"
