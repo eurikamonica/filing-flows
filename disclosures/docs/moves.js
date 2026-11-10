@@ -3,7 +3,8 @@
    indices & ETFs (every index — US, the world's, volatility — and ETF on file, by group), industries (every SIC
    composite, the most extreme first), stocks today (the valued companies' most extreme moves either way, or the most
    unusual against their own volatility) and one ticker. The analysis is moves-view.js, shared with the
-   company pages. Data: data/research/paths/moves/index.json and a/<KEY>.json (app/moves.py, branch research-paths).
+   company pages. Data: data/research/paths/moves/index.json and a/<KEY>.json (app/moves.py, branch research-paths), or
+   the copy made minutes after each US close while it is newer (app/moves_close.py, branch moves-live).
    Deep links: #moves, #moves/all, #moves/industries, #moves/stocks, #moves/SPY, #moves/IDX-N225, #moves/SIC-3674, #moves/NVDA;
    a past day: #moves/stocks/2026-10-15. A past day (the Day menu: the last year of trading days) shows every asset's move
    that day, ranked among its own days up to then, and what actually followed. */
@@ -17,7 +18,11 @@ function mvData(){
  const m=mvStore.ix||(mvStore.ix={});
  if(m.data||m.err||m.loading)return m;
  if(typeof fetch!=='function'){m.err='this browser cannot load data files';return m}
- m.loading=fetch((globalThis.FF_HUB_ROOT||'')+'data/research/paths/moves/index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+ // the newer of the site's copy and the one made minutes after the close (moves-view.js base(): the branch moves-live)
+ const hub=globalThis.FF_HUB_ROOT||'',site=hub+'data/research/paths/moves/';
+ const one=u=>fetch(u,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()});
+ const B=window.MovesView&&window.MovesView.base?window.MovesView.base(hub).catch(()=>({url:site,site})):Promise.resolve({url:site,site});
+ m.loading=B.then(b=>one(b.url+'index.json').then(d=>Object.assign(d,{_live:b.url!==b.site})).catch(e=>b.url===b.site?Promise.reject(e):one(site+'index.json')))
   .then(d=>{m.data=d;if(typeof render==='function')render()}).catch(e=>{m.err=e.message;if(typeof render==='function')render()});
  return m;
 }
@@ -251,7 +256,8 @@ function movesNotice(){
  if(s.err)return {stale:true,text:'Official derived view · Move odds unavailable · '+s.err};
  if(!d)return {stale:false,text:'Official derived view · Move odds loading…'};
  const age=(Date.now()-Date.parse(d.generated_at))/3600000;
- return {stale:!(age<=50),text:`Official derived view · Move odds built ${d.generated_at} · closes to ${d.as_of} · ${fmt((d.rows||[]).length)} assets · rebuilt after every US close`+(age>50?' · stale':'')};
+ if(d._live&&d.close)return {stale:!(age<=50),text:`Official derived view · Move odds with the close of ${d.as_of}, added ${d.generated_at} · ${fmt(d.close.assets||0)} of ${fmt((d.rows||[]).length)} assets updated minutes after the close · the nightly rebuild follows`+(age>50?' · stale':'')};
+ return {stale:!(age<=50),text:`Official derived view · Move odds built ${d.generated_at} · closes to ${d.as_of} · ${fmt((d.rows||[]).length)} assets · updated minutes after every US close, rebuilt nightly`+(age>50?' · stale':'')};
 }
 window.movesDeepLink=movesDeepLink;
 window.HUB_NOTICES=Object.assign(window.HUB_NOTICES||{},{moves:movesNotice});

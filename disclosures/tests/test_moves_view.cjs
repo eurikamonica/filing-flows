@@ -444,4 +444,24 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   ok(texts.includes('Each year’s deepest drop, then the rebound') && texts.some((t) => /average year: drop −20\.0% · rebound \+37\.5% · deepest −20\.0% \(2024\)/.test(t)), 'the picture panel: title and the average year');
   ok(calls.filter(([k]) => k === 'fillRect').length === 6, 'two bars a year in the picture');
 }
-console.log(`moves view: ${n} checks passed`);
+// the newer copy: the one made minutes after the close (the branch moves-live) while its closes are newer than the site's
+(async () => {
+  const answers = {};
+  global.fetch = async (u) => {
+    const k = Object.keys(answers).find((p) => u.startsWith(p));
+    return k && answers[k] ? { ok: true, json: async () => answers[k] } : { ok: false, status: 404 };
+  };
+  const site = 'hub/data/research/paths/moves/';
+  answers[site + 'status.json'] = { as_of: '2026-11-06' };
+  answers[V.LIVE + 'status.json'] = { as_of: '2026-11-09' };
+  let B = await V.base('hub/', Date.parse('2026-11-09T21:20:00Z'));
+  ok(B.url === V.LIVE && B.site === site && B.live.as_of === '2026-11-09', 'the close of Nov 9 read from the copy made after it');
+  answers[site + 'status.json'] = { as_of: '2026-11-09' };
+  B = await V.base('hub/', Date.parse('2026-11-10T09:00:00Z'));                 // the nightly run caught up: the site's
+  ok(B.url === site && B.live === null, 'the site once its own copy has the close');
+  answers[V.LIVE + 'status.json'] = null;
+  answers[site + 'status.json'] = { as_of: '2026-11-10' };
+  B = await V.base('hub/', Date.parse('2026-11-11T09:00:00Z'));
+  ok(B.url === site, 'the site when there is no copy made after the close');
+  console.log(`moves view: ${n} checks passed`);
+})();

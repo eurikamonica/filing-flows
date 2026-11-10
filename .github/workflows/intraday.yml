@@ -4,8 +4,10 @@
 # starts the next while the session is open. GitHub's clock starts few of the schedules (none on the first day), so the
 # X-post watch relay starts it: post-to-x.yml runs around the clock, and its owner lane (pipeline/owner_lane.py) starts
 # this workflow from 9:10 New York whenever no run of it is running or waiting; the cron below is a last resort. live.json is force-pushed to the branch intraday-live as one commit each scan; the hub reads it from
-# raw.githubusercontent.com. The hourly history (h60/) stays in the Actions cache, a key a day. Repository variable
-# INTRADAY_RELAY=off stops it.
+# raw.githubusercontent.com. The hourly history (h60/) stays in the Actions cache, a key a day. When the session is over,
+# the last hop starts the move odds at the close (moves-close.yml: every asset's close in minutes). Each start goes
+# through scripts/start-run.sh, which starts a run again when GitHub fails it as it starts (the relay broke on such a
+# start on Nov 9, 2026, and stayed down for the afternoon). Repository variable INTRADAY_RELAY=off stops it.
 name: Intraday move odds (relay)
 on:
   schedule:
@@ -23,14 +25,16 @@ on:
 permissions:
   contents: write      # push the branch intraday-live
   actions: write       # start the next hop
-concurrency:
-  group: intraday-relay
-  cancel-in-progress: false
 jobs:
   scan:
     if: vars.INTRADAY_RELAY != 'off'
     runs-on: ubuntu-latest
     timeout-minutes: 65
+    concurrency:          # the scan job holds the relay's group, not the run: the next hop's scan starts as soon as this
+      group: intraday-relay   # one is done, while this run's last job (next) sees that it did
+      cancel-in-progress: false
+    outputs:
+      then: ${{ steps.then.outputs.then }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -78,7 +82,7 @@ jobs:
             python disclosures/app/intraday.py --out live --cache h60 || echo "::warning::scan failed (the next one tries again)"
             [ -f live/live.json ] && publish
             [ "${{ inputs.once }}" = "true" ] && { echo "one scan: done"; break; }
-            python disclosures/app/intraday.py --session || { echo "the session has closed: the last scan is published"; break; }
+            python disclosures/app/intraday.py --session || { echo "the session has closed: the last scan is published"; touch over; break; }
             wait=$((300 - (SECONDS - t0))); [ "$wait" -gt 0 ] && sleep "$wait"
           done
       - name: The hourly history, saved once a day
@@ -88,15 +92,39 @@ jobs:
         with:
           path: h60
           key: intraday-h60-${{ steps.open.outputs.day }}
-      - name: The next hop (a relay)
-        if: steps.open.outputs.open == '1' && github.ref == 'refs/heads/main' && inputs.once != true
-        continue-on-error: true
+      - name: What follows (the next hop while the session is on, the move odds at the close when it is over)
+        id: then
+        if: always()
+        env:
+          HOP: ${{ github.event.inputs.hop || '0' }}
+        run: |
+          if [ "${{ inputs.once }}" = "true" ]; then t=none
+          elif [ "${{ steps.open.outputs.open }}" = "1" ]; then if [ -f over ]; then t=close; else t=hop; fi
+          elif [ "$HOP" != "0" ] || [ "${{ github.event_name }}" = "schedule" ]; then t=close     # the session was over when it began
+          else t=none; fi
+          echo "then=$t" >> "$GITHUB_OUTPUT"
+          echo "then: $t"
+  next:
+    # its own job, after the scan job has let go of the relay's group: the next hop's scan can start at once, and this
+    # job sees that it did (scripts/start-run.sh starts a run that fails as it starts again)
+    needs: scan
+    if: always() && github.ref == 'refs/heads/main' && vars.INTRADAY_RELAY != 'off' && (needs.scan.outputs.then == 'hop' || needs.scan.outputs.then == 'close')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            scripts/start-run.sh
+          sparse-checkout-cone-mode: false
+      - name: The next hop, or the move odds at the close (moves-close.yml)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOP: ${{ github.event.inputs.hop || '0' }}
+          THEN: ${{ needs.scan.outputs.then }}
         run: |
+          if [ "$THEN" = "close" ]; then bash scripts/start-run.sh moves-close.yml; exit $?; fi
           if [ "$HOP" -ge 12 ]; then echo "relay cap (12 hops) reached; the schedule restarts it"; exit 0; fi
-          if ! python disclosures/app/intraday.py --session; then echo "the session is over: no next hop"; exit 0; fi
           n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow intraday.yml --limit 20 --json status --jq '[.[] | select(.status == "queued" or .status == "pending" or .status == "waiting")] | length')
           if [ "${n:-0}" -gt 0 ]; then echo "a run is already waiting: it carries on"; exit 0; fi
-          gh workflow run intraday.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f hop=$((HOP + 1)) && echo "hop $((HOP + 1)) started"
+          bash scripts/start-run.sh intraday.yml -f hop=$((HOP + 1))

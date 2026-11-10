@@ -1,0 +1,66 @@
+# Move odds at the close (the hub's Move odds tab and every company page's): each asset's latest close minutes after
+# 4 pm New York, not the next morning. app/moves_close.py takes the nightly run's files (research-paths' public/moves/:
+# index.json and a/), adds the sessions since from Yahoo's daily bars and works every asset's numbers out again; the
+# result is force-pushed as the branch moves-live (one commit), which docs/moves.js and docs/moves-view.js read from
+# raw.githubusercontent.com while its closes are newer than the site's copy; the nightly run (research-paths.yml) then
+# replaces it. Started by the intraday relay when the session ends (intraday.yml, through scripts/start-run.sh), and by
+# the schedule below as a fallback; a run with nothing new to add stops after one look (moves_close.py --due), and files
+# made in the first minutes after the close are made once more 45 minutes after it, with the closing prints.
+name: Move odds at the close
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Make the files even when nothing new has closed (a check)'
+        type: boolean
+        default: false
+  schedule:
+    - cron: '14,44 20-23 * * 1-5'     # 4:14 pm New York on in summer (in winter 3:14 pm: not due yet), every half hour
+permissions:
+  contents: write
+concurrency:
+  group: moves-close
+  cancel-in-progress: false
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install --quiet numpy
+      - name: Has a session closed that the published move odds lack?
+        id: due
+        run: |
+          if [ "${{ inputs.force }}" = "true" ] || python disclosures/app/moves_close.py --due; then echo "due=1" >> "$GITHUB_OUTPUT"
+          else echo "due=0" >> "$GITHUB_OUTPUT"; fi
+      - name: The move odds as the nightly run left them (research-paths' public/moves/ index.json and a/)
+        if: steps.due.outputs.due == '1'
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git clone --quiet --depth 1 --filter=blob:none --sparse --branch research-paths "$url" base
+          git -C base sparse-checkout set --no-cone /public/moves/index.json /public/moves/a/
+          echo "$(ls base/public/moves/a | wc -l) assets on file"
+      - name: The closes since, every asset's numbers again
+        if: steps.due.outputs.due == '1'
+        timeout-minutes: 15
+        run: python disclosures/app/moves_close.py --base base/public/moves --out live
+      - name: Publish (the branch moves-live, one commit, force-pushed)
+        if: steps.due.outputs.due == '1'
+        run: |
+          cd live
+          printf '%s\n' '# moves-live (data only)' '' "The hub's move odds with the latest US close, made minutes after it by" \
+            '.github/workflows/moves-close.yml (app/moves_close.py) on main; the nightly run (research-paths) replaces it.' > README.md
+          git init -q -b moves-live
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "move odds at the close $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin moves-live && break; sleep $((i * 10)); done
+          cat status.json

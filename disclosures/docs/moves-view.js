@@ -8,7 +8,8 @@
    every day's (week's, month's) rise and fall added up.
    Shared by every company page of the Sankey site (views.json: window.MovesView.render(el, {cik, ticker, hub, here}))
    and the hub's Move odds tab (moves.js: MovesView.render(el, {key, hub})). Data: data/research/paths/moves/a/<KEY>.json
-   (app/moves.py, branch research-paths): trading days and daily log returns; everything else is worked out here, with
+   (app/moves.py, branch research-paths; minutes after each US close, the copy with that close while it is newer: app/
+   moves_close.py, branch moves-live): trading days and daily log returns; everything else is worked out here, with
    the same arithmetic as app/moves.py. No dependencies. */
 (function () {
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -36,6 +37,22 @@
   const store = {};
   const get = (u) => store[u] || (store[u] = fetch(u, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .catch((e) => { delete store[u]; throw e; }));
+  // the move odds at the close (app/moves_close.py → the branch moves-live): every asset's close minutes after 4 pm New
+  // York, read while its closes are newer than the site's copy (the nightly run's, published hours after the close)
+  const LIVE = 'https://raw.githubusercontent.com/eurikamonica/filing-flows/moves-live/';
+  const bases = {};
+  function base(hub, now = Date.now()) {
+    const site = `${hub || ''}data/research/paths/moves/`;
+    const k = `${hub || ''}|${Math.floor(now / 300000)}`;                // looked at again every five minutes
+    if (!bases[k]) {
+      bases[k] = Promise.all([get(`${site}status.json?t=${k.split('|')[1]}`).catch(() => null), get(`${LIVE}status.json?t=${k.split('|')[1]}`).catch(() => null)])
+        .then(([s, l]) => (l && l.as_of && (!s || !s.as_of || l.as_of > s.as_of) ? { url: LIVE, site, live: l } : { url: site, site, live: null }));
+    }
+    return bases[k];
+  }
+  // one asset's file from the newer copy (the site's when the close's has no such file)
+  const assetDoc = (B, k) => get(`${B.url}a/${encodeURIComponent(k)}.json`)
+    .catch((e) => (B.url === B.site ? Promise.reject(e) : get(`${B.site}a/${encodeURIComponent(k)}.json`)));
 
   /* ---------- the arithmetic (as app/moves.py) ---------- */
   function decode(doc) {
@@ -1701,10 +1718,11 @@
     const home = opts.key ? tk(opts.key) : tk(opts.ticker);
     const here = typeof opts.here === 'function' ? opts.here : () => true;
     if (!home) { el.innerHTML = '<p class="mv-sub">No ticker for this company.</p>'; return; }
-    const url = (k) => `${hub}data/research/paths/moves/a/${encodeURIComponent(k)}.json`;
     el.innerHTML = '<p class="mv-sub">Loading the daily history…</p>';
+    const B = await base(hub);
+    const doc_ = (k) => assetDoc(B, k);
     let homeDoc;
-    try { homeDoc = await get(url(home)); } catch (e) {
+    try { homeDoc = await doc_(home); } catch (e) {
       if (here()) el.innerHTML = `<p class="mv-sub">No daily price history for ${esc(home)} yet: it is collected for the valued companies, the market, its sectors and industries (refreshed after every US close).</p>`;
       return;
     }
@@ -1720,7 +1738,7 @@
     const draw = async () => {
       if (!here()) return;
       let doc = docs[st.key];
-      if (!doc) { try { doc = docs[st.key] = await get(url(st.key)); } catch (e) { doc = null; } }
+      if (!doc) { try { doc = docs[st.key] = await doc_(st.key); } catch (e) { doc = null; } }
       if (!here()) return;
       if (!doc) { st.key = home; doc = homeDoc; }
       const A = dec[st.key] || (dec[st.key] = Object.assign(decode(doc), { last: doc.last }));
@@ -1728,7 +1746,7 @@
       if (volIdx && !['level', 'raw'].includes(st.measure)) st.measure = 'level';
       if (!volIdx && st.measure === 'level') st.measure = 'raw';
       if (st.measure === 'beta' && (doc.key === 'SPY' || doc.kind === 'index' || doc.kind === 'market')) st.measure = 'raw';
-      const load = async (k) => { try { const m = docs[k] || (docs[k] = await get(url(k))); return dec[k] || (dec[k] = Object.assign(decode(m), { last: m.last, name: m.name })); } catch (e) { return null; } };
+      const load = async (k) => { try { const m = docs[k] || (docs[k] = await doc_(k)); return dec[k] || (dec[k] = Object.assign(decode(m), { last: m.last, name: m.name })); } catch (e) { return null; } };
       let Mk = null, Out = null, Vix = null;
       if (st.measure === 'beta') { Mk = await load('SPY'); if (!Mk) st.measure = 'raw'; }
       if (volIdx && st.outcome !== 'self' && doc.links && doc.links.outcome) Out = await load(doc.links.outcome);
@@ -1792,7 +1810,7 @@
     await draw();
   }
 
-  const api = { bars, stepChoices, render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf, swingYears, swingAvg, swingSection, drawSwing,
+  const api = { bars, stepChoices, render, base, LIVE, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb, analogs, simulate, rng32, seedOf, swingYears, swingAvg, swingSection, drawSwing,
     eventSplit, eventBlock, eventGroup };
   if (typeof window !== 'undefined') window.MovesView = api;
   if (typeof module !== 'undefined') module.exports = api;
