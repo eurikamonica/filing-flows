@@ -7,7 +7,8 @@
 # X-post watch relay's close lane (post-to-x.yml, pipeline/owner_lane.py: weekdays from 4:11 to 8 pm New York, every 20
 # minutes until the day's close is on file — a failed run is started again) and by the schedule below; a run with
 # nothing new to add stops after one look (moves_close.py --due), and files made in the first minutes after the close
-# are made once more 45 minutes after it, with the closing prints.
+# are made once more 45 minutes after it, with the closing prints. Then the Close forecast moves on to the next session
+# (app/closecast.py, scripts/forecast-publish.sh) and the day's official freezes are scored.
 name: Move odds at the close
 on:
   workflow_dispatch:
@@ -33,6 +34,7 @@ jobs:
           filter: blob:none
           sparse-checkout: |
             /disclosures/app/
+            /scripts/forecast-publish.sh
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
@@ -73,3 +75,22 @@ jobs:
           for i in 1 2 3; do if git push -q --force origin moves-live; then ok=1; break; fi; sleep $((i * 10)); done
           [ "$ok" = 1 ] || { echo "::error::the branch moves-live could not be pushed"; exit 1; }   # a failed run is started again
           cat status.json
+      - name: The Close forecast's daily reads (the intraday relay's Actions cache)
+        if: steps.due.outputs.due == '1'
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            h60
+            fc
+          key: intraday-h60-none
+          restore-keys: intraday-h60-
+      - name: The Close forecast for the next session, and the day's official freezes scored (app/closecast.py)
+        if: steps.due.outputs.due == '1'
+        continue-on-error: true
+        timeout-minutes: 12
+        env:
+          PUSH_URL: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        run: |
+          python disclosures/app/closecast.py --out fcout --cache fc --h60 h60
+          CACHE='fc' bash scripts/forecast-publish.sh fcout

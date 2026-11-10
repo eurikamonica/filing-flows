@@ -76,6 +76,8 @@
     ['Seven path models and price patterns', 'Sept modèles de trajectoire et figures de cours', 'Siete modelos de trayectoria y patrones de precio'],
     ['Move odds', 'Probabilités de mouvement', 'Probabilidades de movimiento'],
     ['How far prices move after an event', 'L’ampleur des mouvements de cours après un événement', 'Cuánto se mueven los precios tras un evento'],
+    ['Close forecast', 'Prévision de clôture', 'Previsión del cierre'],
+    ['Where prices close today, this week and this quarter', 'Où les cours clôtureront aujourd’hui, cette semaine et ce trimestre', 'Dónde cerrarán los precios hoy, esta semana y este trimestre'],
     ['Odds', 'Probabilités', 'Probabilidades'],
     ['Rotation forecasts and how they did', 'Prévisions de rotation et leurs résultats', 'Previsiones de rotación y cómo resultaron'],
     ['Market models', 'Modèles de marché', 'Modelos de mercado'],

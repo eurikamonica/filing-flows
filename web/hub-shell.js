@@ -12,7 +12,7 @@
   root.FF_SITE_ROOT = '';                         // and link to the site's own pages from here
   // the sections (disclosures/index.html's buttons; the page read at load adds any new one)
   const TABS = new Set(('signals smart allflows flows insiders trades stakes form144 events news calls earnings filings options paths '
-    + 'opportunity strategies odds mmodels moves rotation momentum composer shorts maps etf cot valuation consensus quality screener traps '
+    + 'opportunity strategies odds mmodels moves forecast rotation momentum composer shorts maps etf cot valuation consensus quality screener traps '
     + 'workforce outside notes guidance buyouts debt hidden cross people holdings congress npx banks review directory status').split(' '));
   const LABEL = {};
   // the site's own page answers these (the hub's version of it is not shown twice)

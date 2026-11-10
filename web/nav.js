@@ -63,6 +63,7 @@
       ['options', '#options', 'Options', 'Walls, max pain and the paths prices can take'],
       ['paths', '#paths', 'Price paths', 'Seven path models and price patterns'],
       ['moves', '#moves', 'Move odds', 'How far prices move after an event'],
+      ['forecast', '#forecast', 'Close forecast', 'Where prices close today, this week and this quarter'],
       ['odds', '#odds', 'Odds', 'Rotation forecasts and how they did'],
       ['mmodels', '#mmodels', 'Market models', 'The market’s valuation gauges'],
       ['opportunity', '#opportunity', 'Opportunity', 'Stocks and ETFs off their usual range'],

@@ -5,7 +5,9 @@
 # X-post watch relay starts it: post-to-x.yml runs around the clock, and its owner lane (pipeline/owner_lane.py) starts
 # this workflow from 9:10 New York whenever no run of it is running or waiting; the cron below is a last resort. live.json is force-pushed to the branch intraday-live as one commit each scan; the hub reads it from
 # raw.githubusercontent.com. The hourly history (h60/) stays in the Actions cache, a key a day. When the session is over,
-# the last hop starts the move odds at the close (moves-close.yml: every asset's close in minutes). Each start goes
+# the last hop starts the move odds at the close (moves-close.yml: every asset's close in minutes). Each scan also makes
+# the hub's Close forecast (app/closecast.py → the branch forecast-live, the official freezes at 9:45, 12:00 and 15:00 on
+# forecast-ledger: scripts/forecast-publish.sh), its daily reads kept in the Actions cache with the hourly history. Each start goes
 # through scripts/start-run.sh, which starts a run again when GitHub fails it as it starts (the relay broke on such a
 # start on Nov 9, 2026, and stayed down for the afternoon). Repository variable INTRADAY_RELAY=off stops it.
 name: Intraday move odds (relay)
@@ -40,6 +42,7 @@ jobs:
         with:
           sparse-checkout: |
             disclosures/app
+            scripts/forecast-publish.sh
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
@@ -52,12 +55,14 @@ jobs:
           if [ "${{ inputs.once }}" = "true" ]; then echo "open=1" >> "$GITHUB_OUTPUT"; echo "one scan, open or not"
           elif python disclosures/app/intraday.py --session; then echo "open=1" >> "$GITHUB_OUTPUT"
           else echo "open=0" >> "$GITHUB_OUTPUT"; echo "the US session is closed: nothing to scan"; fi
-      - name: The hourly history (the Actions cache)
+      - name: The hourly history and the Close forecast's daily reads (the Actions cache)
         id: hist
         if: steps.open.outputs.open == '1'
         uses: actions/cache/restore@v4
         with:
-          path: h60
+          path: |
+            h60
+            fc
           key: intraday-h60-${{ steps.open.outputs.day }}
           restore-keys: intraday-h60-
       - name: Scan every five minutes for about 50 minutes
@@ -81,16 +86,23 @@ jobs:
             t0=$SECONDS
             python disclosures/app/intraday.py --out live --cache h60 || echo "::warning::scan failed (the next one tries again)"
             [ -f live/live.json ] && publish
+            # the Close forecast (app/closecast.py): forecast-live each scan, the official freezes on forecast-ledger
+            rm -rf fcout
+            if timeout 270 python disclosures/app/closecast.py --out fcout --cache fc --h60 h60 --live live/live.json; then   # never in the way of the next scan
+              CACHE='fc' bash scripts/forecast-publish.sh fcout || echo "::warning::the forecast's publication failed (the next scan tries again)"
+            else echo "::warning::the close forecast failed (the next scan tries again)"; fi
             [ "${{ inputs.once }}" = "true" ] && { echo "one scan: done"; break; }
             python disclosures/app/intraday.py --session || { echo "the session has closed: the last scan is published"; touch over; break; }
             wait=$((300 - (SECONDS - t0))); [ "$wait" -gt 0 ] && sleep "$wait"
           done
-      - name: The hourly history, saved once a day
+      - name: The hourly history and the forecast's daily reads, saved once a day
         if: always() && steps.open.outputs.open == '1' && steps.hist.outputs.cache-hit != 'true'
         continue-on-error: true
         uses: actions/cache/save@v4
         with:
-          path: h60
+          path: |
+            h60
+            fc
           key: intraday-h60-${{ steps.open.outputs.day }}
       - name: What follows (the next hop while the session is on, the move odds at the close when it is over)
         id: then
