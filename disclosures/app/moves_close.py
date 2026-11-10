@@ -23,7 +23,12 @@ it from raw.githubusercontent.com while its closes are newer than the site's cop
     python app/moves_close.py --base BASE --out OUT [--workers 8] [--minutes 8]    BASE: research-paths' public/moves/
     python app/moves_close.py --due            exit 0 when a US session has closed that the published files lack (or
                                                the live files were made in the first minutes after it: once more, for
-                                               the closing prints)
+                                               the closing prints), 1 when none has, 2 when the check itself failed
+                                               (Yahoo unreachable, say: the run fails, and the next start tries again)
+
+Started by: the intraday relay's last hop (intraday.yml), the X-post watch relay's close lane (pipeline/owner_lane.py:
+weekdays after 4:11 pm New York, every 20 minutes until the day's close is on file with the closing prints) and the
+workflow's own schedule.
 """
 import argparse
 import datetime as dt
@@ -351,7 +356,11 @@ def main():
     ap.add_argument('--due', action='store_true', help='exit 0 when a close is due')
     a = ap.parse_args()
     if a.due:
-        ok, why = due(_status(LIVE_STATUS), _status(BASE_STATUS), last_closed_session())
+        try:
+            ok, why = due(_status(LIVE_STATUS), _status(BASE_STATUS), last_closed_session())
+        except Exception as exc:                                       # noqa: BLE001
+            print(f'the due check failed: {str(exc)[:200]}')
+            sys.exit(2)                    # not "nothing due": the run fails where it can be seen, and a later start tries again
         print(why)
         sys.exit(0 if ok else 1)
     print(json.dumps(run(a.base, a.out, a.workers, a.minutes)))

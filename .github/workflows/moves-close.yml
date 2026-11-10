@@ -3,9 +3,11 @@
 # index.json and a/), adds the sessions since from Yahoo's daily bars and works every asset's numbers out again; the
 # result is force-pushed as the branch moves-live (one commit), which docs/moves.js and docs/moves-view.js read from
 # raw.githubusercontent.com while its closes are newer than the site's copy; the nightly run (research-paths.yml) then
-# replaces it. Started by the intraday relay when the session ends (intraday.yml, through scripts/start-run.sh), and by
-# the schedule below as a fallback; a run with nothing new to add stops after one look (moves_close.py --due), and files
-# made in the first minutes after the close are made once more 45 minutes after it, with the closing prints.
+# replaces it. Started by the intraday relay when the session ends (intraday.yml, through scripts/start-run.sh), by the
+# X-post watch relay's close lane (post-to-x.yml, pipeline/owner_lane.py: weekdays from 4:11 to 8 pm New York, every 20
+# minutes until the day's close is on file — a failed run is started again) and by the schedule below; a run with
+# nothing new to add stops after one look (moves_close.py --due), and files made in the first minutes after the close
+# are made once more 45 minutes after it, with the closing prints.
 name: Move odds at the close
 on:
   workflow_dispatch:
@@ -39,8 +41,13 @@ jobs:
       - name: Has a session closed that the published move odds lack?
         id: due
         run: |
-          if [ "${{ inputs.force }}" = "true" ] || python disclosures/app/moves_close.py --due; then echo "due=1" >> "$GITHUB_OUTPUT"
-          else echo "due=0" >> "$GITHUB_OUTPUT"; fi
+          if [ "${{ inputs.force }}" = "true" ]; then echo "due=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          rc=0; python disclosures/app/moves_close.py --due || rc=$?
+          case $rc in
+            0) echo "due=1" >> "$GITHUB_OUTPUT" ;;
+            1) echo "due=0" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::the check failed: this run fails, and the next start tries again"; exit 1 ;;   # not "up to date"
+          esac
       - name: The move odds as the nightly run left them (research-paths' public/moves/ index.json and a/)
         if: steps.due.outputs.due == '1'
         run: |
@@ -62,5 +69,7 @@ jobs:
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           git add -A
           git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "move odds at the close $(date -u +%Y-%m-%dT%H:%MZ)"
-          for i in 1 2 3; do git push -q --force origin moves-live && break; sleep $((i * 10)); done
+          ok=0
+          for i in 1 2 3; do if git push -q --force origin moves-live; then ok=1; break; fi; sleep $((i * 10)); done
+          [ "$ok" = 1 ] || { echo "::error::the branch moves-live could not be pushed"; exit 1; }   # a failed run is started again
           cat status.json

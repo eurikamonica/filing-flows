@@ -1096,6 +1096,58 @@ def test_the_owner_lane_keeps_the_intraday_relay_going(monkeypatch):
     assert not OL.wake_intraday(GH([done]), ny(6, 11, 0), state={}, log=lambda *a: None)
 
 
+def test_the_owner_lane_starts_the_move_odds_at_the_close():
+    """Weekdays from 4:11 to 8 pm New York the watch relay starts moves-close.yml until the day's close is on file with
+    the closing prints (from 4:11 while the day is missing; from 4:46 when its files were made before 4:25) — not while
+    a run of it is running or waiting, within 20 minutes of the last, or once a run since then finished well."""
+    import datetime as dt
+    from pipeline import owner_lane as OL
+
+    class GH:
+        def __init__(self, runs, status=None):
+            self.r, self.s, self.started, self.looks = runs, status, [], 0
+
+        def runs(self, wf, n=20):
+            assert wf == "moves-close.yml"
+            self.looks += 1
+            return self.r
+
+        def file(self, branch, path):
+            assert (branch, path) == ("moves-live", "status.json")
+            return self.s
+
+        def start(self, wf, inputs):
+            self.started.append((wf, inputs))
+
+    ny = lambda d, h, m: dt.datetime(2026, 11, d, tzinfo=dt.timezone.utc) + dt.timedelta(hours=h + 5, minutes=m)   # UTC-5
+    run = lambda h, m, status="completed", conclusion="success", d=10: {
+        "id": h * 100 + m, "status": status, "conclusion": conclusion, "created_at": ny(d, h, m).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    go = lambda gh, when, st=None: OL.wake_close(gh, when, state={} if st is None else st, log=lambda *a: None)
+    yday = {"as_of": "2026-11-09", "built_at": ny(9, 16, 14).isoformat()}       # Tuesday the 10th, Monday's close on file
+    first = {"as_of": "2026-11-10", "built_at": ny(10, 16, 14).isoformat()}     # made minutes after 4 pm
+    final = {"as_of": "2026-11-10", "built_at": ny(10, 16, 48).isoformat()}     # with the closing prints
+
+    gh, st = GH([run(16, 11, d=9)], yday), {}
+    assert not go(gh, ny(10, 16, 10), st) and gh.looks == 0                   # the bars are not final yet
+    assert go(gh, ny(10, 16, 11), st) and gh.started == [("moves-close.yml", {})]
+    assert not go(gh, ny(10, 16, 12), st) and len(gh.started) == 1            # a look every two minutes at most
+    assert not go(GH([], yday), ny(7, 16, 30))                                # Saturday
+    assert not go(GH([], yday), ny(10, 20, 0))                                # 8 pm: the nightly run's
+    assert go(GH([], None), ny(10, 16, 15))                                   # no moves-live yet
+    # a run of it running or waiting, or made in the last 20 minutes: nothing; a failed one: again, 20 minutes on
+    assert not go(GH([run(16, 11, "in_progress", None)], yday), ny(10, 16, 40))
+    assert not go(GH([run(16, 11, "pending", None)], yday), ny(10, 16, 40))
+    assert not go(GH([run(16, 11, conclusion="failure")], yday), ny(10, 16, 25))
+    assert go(GH([run(16, 11, conclusion="failure")], yday), ny(10, 16, 32))
+    assert not go(GH([run(16, 11)], yday), ny(10, 16, 32))                    # finished well, no close: a holiday
+    # the day's first files: once more from 4:46 (a run before then does not count), then done
+    assert not go(GH([run(16, 11)], first), ny(10, 16, 40))
+    assert go(GH([run(16, 11)], first), ny(10, 16, 46))
+    assert not go(GH([run(16, 50), run(16, 11)], first), ny(10, 17, 15))       # the run since found nothing to redo
+    g = GH([run(16, 11)], final)
+    assert not go(g, ny(10, 17, 15)) and g.looks == 0 and g.started == []
+
+
 def test_owner_reports_go_first_and_are_never_held_back(tmp_path):
     """At the daily e-mail limit the owner's report still goes out, ahead of a reader who asked earlier."""
     import datetime as dt

@@ -8,14 +8,19 @@ name: Post to X
 # How it stays quick: GitHub runs cron schedules late and unevenly (a "*/5" schedule often fires every 20-40 minutes),
 # so a run does not rely on cron. Each watch run keeps checking Supabase for ~4 minutes and, when it ends, starts the
 # next watch run itself (workflow_dispatch with chained=true) — a continuous relay, one run at a time, with a button
-# press picked up within about 20 seconds. The cron only restarts the relay if it ever breaks; the repository variable
-# POST_WATCH=off stops it (runs then happen only on the cron / a Supabase wake / Run workflow).
+# press picked up within about 20 seconds. The post job holds the concurrency group, not the run, so the next watch
+# run's job starts the moment this one's ends, and a last job (relay) sees that it did: GitHub now and then fails a run
+# as it starts (no job at all — on Nov 9, 2026 the relay broke on such a start and stayed down for six hours, until the
+# cron came), and such a run is started again (scripts/start-run.sh). The cron only restarts the relay if it ever
+# breaks all the same; the repository variable POST_WATCH=off stops it (runs then happen only on the cron / a Supabase
+# wake / Run workflow).
 #
 # The owner lane rides on the same relay: every check also starts the workflow for the owner's other requests — a short
 # scan (scan.yml, fast) for the owner's companies and re-reads, "Send requested reports" for the owner's e-mails and
 # comparisons — so they are picked up within seconds too (pipeline/owner_lane.py; actions: write below). On weekdays
 # from 9:10 to 4 pm New York it also keeps the hub's live Move odds relay (intraday.yml) running, which GitHub's
-# schedule alone starts late or not at all (INTRADAY_RELAY=off stops it).
+# schedule alone starts late or not at all (INTRADAY_RELAY=off stops it), and from 4:11 to 8 pm it starts the Move
+# odds at the close (moves-close.yml) until the day's close is on file.
 
 on:
   schedule:
@@ -34,15 +39,14 @@ permissions:
   models: read         # GitHub Models writes the post text (pipeline/tweet.py)
   actions: write       # starts the next watch run, and the owner lane's scan / requests runs
 
-concurrency:
-  group: post-to-x
-  cancel-in-progress: false
-
 jobs:
   post:
     if: vars.SUPABASE_URL != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:          # the job, not the run: the next watch run's job starts as soon as this one is done, while this
+      group: post-to-x    # run's last job (relay) sees that it did
+      cancel-in-progress: false
     env:
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -130,3 +134,39 @@ jobs:
             [ "$attempt" -lt 3 ] && { echo "::warning::starting the next watch run failed (attempt $attempt), retrying"; sleep $((attempt * 20)); }
           done
           exit 1
+
+  relay:
+    # after the post job has let go of the group: the watch run it started has got going — or it failed as it started
+    # (GitHub, now and then: no job at all), or there is none (the post job stopped before its last step: a timeout),
+    # and one is started (scripts/start-run.sh: started again until it gets going). A Supabase wake (repository_dispatch)
+    # checks once and starts no run after it, so it is not the relay's next run.
+    needs: post
+    if: always() && needs.post.result != 'skipped' && needs.post.result != 'cancelled' && (github.event_name == 'schedule' || inputs.chained) && vars.POST_WATCH != 'off'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/start-run.sh
+          sparse-checkout-cone-mode: false
+      - name: Did the next watch run get going?
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          since=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" --jq .created_at 2>/dev/null || true)
+          since=${since:-$(date -u -d '-6 minutes' +%Y-%m-%dT%H:%M:%SZ)}       # this run began at most this long ago
+          s=none
+          for _ in $(seq 1 12); do
+            s=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --limit 10 --json databaseId,event,status,conclusion,createdAt \
+                  --jq "[.[] | select(.databaseId != $RUN_ID and .event != \"repository_dispatch\" and .createdAt > \"$since\")] | sort_by(.createdAt) | last | if . == null then \"none\" else .status + \" \" + (.conclusion // \"\") end" \
+                  2>/dev/null || echo none)
+            case "$s" in
+              "in_progress "*|"completed success"|"completed skipped"|"completed cancelled") echo "the next watch run is on ($s)"; exit 0 ;;
+              "completed "*) echo "::warning::the next watch run failed as it started ($s): starting it again"; break ;;
+            esac
+            sleep 10
+          done
+          case "$s" in "queued "*|"pending "*|"waiting "*|"requested "*) echo "the next watch run is waiting to start ($s)"; exit 0 ;; esac
+          bash scripts/start-run.sh post-to-x.yml -f chained=true

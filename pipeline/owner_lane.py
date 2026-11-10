@@ -15,6 +15,10 @@ also runs `wake` here, which looks at what the owner is waiting for and starts t
                  (intraday.yml) — started when no run of it is running or waiting, so it begins with the session and
                  comes back within minutes if it stops (GitHub's schedule alone starts it late or not at all);
                  the repository variable INTRADAY_RELAY=off stops it
+  close lane     not the owner's either: on weekdays from 4:11 to 8 pm New York, the hub's Move odds at the close
+                 (moves-close.yml, every asset's close in minutes) until the day's close is on file (the branch
+                 moves-live) with the closing prints — whether or not the intraday relay, which starts it when the
+                 session ends, is still running
 
 A lane starts nothing while a run of its workflow is waiting to start, or when a run started after the request (it
 claims the request itself). A regular scan already running when the owner asks wraps up early (should_yield, called by
@@ -45,6 +49,12 @@ INTRADAY = {"workflow": "intraday.yml", "inputs": {"hop": "0"}}
 INTRADAY_WINDOW = (9 * 60 + 10, 16 * 60)   # New York minutes: the relay starts 20 minutes before the open
 INTRADAY_EVERY = 120          # a look at its runs at most this often (the watch loop checks every 20 seconds)
 INTRADAY_GAP = 15 * 60        # no new run within 15 minutes of the last (a holiday or an early close: it found no session)
+CLOSE = {"workflow": "moves-close.yml", "inputs": {}, "status": ("moves-live", "status.json")}
+CLOSE_FIRST = 16 * 60 + 11    # New York minutes: a session's bars are final ten minutes after 4 pm (moves_close.GRACE)
+CLOSE_DONE = 16 * 60 + 25     # files made before this are made again with the closing prints (moves_close.FIRST)…
+CLOSE_REDO = 16 * 60 + 46     # …from this on (moves_close.REDO_AFTER)
+CLOSE_END = 20 * 60           # later, the nightly run's business
+CLOSE_GAP = 20 * 60           # no new run within 20 minutes of the last
 API = "https://api.github.com"
 
 
@@ -133,6 +143,15 @@ class GitHub:
         if r.status_code >= 300:
             raise RuntimeError(f"GitHub {r.status_code}: {r.text[:200]}")
 
+    def file(self, branch, path):
+        """A JSON file of a branch, as it is now (the API, not the raw files' cache); None when there is none."""
+        r = self.s.get(f"{API}/repos/{self.repo}/contents/{path}", params={"ref": branch}, timeout=30,
+                       headers=dict(self.h, Accept="application/vnd.github.raw+json"))
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        return r.json()
+
 
 def covered(runs, item):
     """Why no new run is needed for this request (or None): a run is waiting to start, or a run was created after the
@@ -193,6 +212,47 @@ def wake_intraday(gh, now=None, state=None, log=print):
             return False
     gh.start(INTRADAY["workflow"], INTRADAY["inputs"])
     log("::notice::intraday lane: started intraday.yml (the hub's live Move odds)")
+    return True
+
+
+def wake_close(gh, now=None, state=None, log=print):
+    """The close lane: on weekdays from 4:11 to 8 pm New York, start moves-close.yml until the day's close is on file
+    (moves-live's status.json) with the closing prints — from 4:11 while the day is missing, from 4:46 when its files
+    were made before 4:25. Nothing while a run of it is running or waiting, within 20 minutes of the last one, or once
+    a run made since then has finished well (it did what was due; on a holiday, nothing: moves_close.py --due). Looks
+    at most every two minutes. Returns True when it started one."""
+    from zoneinfo import ZoneInfo
+    now = now or _now()
+    t = now.astimezone(ZoneInfo("America/New_York"))
+    if t.weekday() >= 5 or not CLOSE_FIRST <= t.hour * 60 + t.minute < CLOSE_END:
+        return False
+    st = _state() if state is None else state
+    last = st.get("close")
+    if last and (now - _ts(last)).total_seconds() < INTRADAY_EVERY:
+        return False
+    st["close"] = now.isoformat()
+    if state is None:
+        _save(st)
+    at = lambda m: t.replace(hour=m // 60, minute=m % 60, second=0, microsecond=0)   # noqa: E731
+    s = gh.file(*CLOSE["status"]) or {}
+    if s.get("as_of") != t.date().isoformat():
+        since = at(CLOSE_FIRST)
+    elif s.get("built_at") and _ts(s["built_at"]) < at(CLOSE_DONE):
+        since = at(CLOSE_REDO)
+    else:
+        return False                                   # on file with the closing prints
+    if t < since:
+        return False
+    for r in gh.runs(CLOSE["workflow"], 10):
+        if r.get("status") in WAITING or r.get("status") == "in_progress":
+            return False
+        made = _ts(r["created_at"]) if r.get("created_at") else None
+        if made and (now - made).total_seconds() < CLOSE_GAP:
+            return False
+        if made and made >= since and r.get("conclusion") == "success":
+            return False
+    gh.start(CLOSE["workflow"], CLOSE["inputs"])
+    log("::notice::close lane: started moves-close.yml (the hub's Move odds at the close)")
     return True
 
 
@@ -279,6 +339,10 @@ def main():
             wake_intraday(gh)
         except Exception as err:                   # never in the way of the owner's lanes
             print(f"intraday lane: check skipped ({str(err)[:120]})")
+        try:
+            wake_close(gh)
+        except Exception as err:                   # nor this one
+            print(f"close lane: check skipped ({str(err)[:120]})")
         sys.exit(0 if wake(supa, gh) else 1)
     except SystemExit:
         raise
