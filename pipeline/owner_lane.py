@@ -218,9 +218,9 @@ def wake_intraday(gh, now=None, state=None, log=print):
 def wake_close(gh, now=None, state=None, log=print):
     """The close lane: on weekdays from 4:11 to 8 pm New York, start moves-close.yml until the day's close is on file
     (moves-live's status.json) with the closing prints — from 4:11 while the day is missing, from 4:46 when its files
-    were made before 4:25. Nothing while a run of it is running or waiting, within 20 minutes of the last one, or once
-    a run made since then has finished well (it did what was due; on a holiday, nothing: moves_close.py --due). Looks
-    at most every two minutes. Returns True when it started one."""
+    were made before 4:25. Nothing while a run of it is running or waiting, or after a run made since then: within 20
+    minutes of it, or at all once it finished well (it did what was due; on a holiday, nothing: moves_close.py --due).
+    Looks at most every two minutes. Returns True when it started one."""
     from zoneinfo import ZoneInfo
     now = now or _now()
     t = now.astimezone(ZoneInfo("America/New_York"))
@@ -247,10 +247,8 @@ def wake_close(gh, now=None, state=None, log=print):
         if r.get("status") in WAITING or r.get("status") == "in_progress":
             return False
         made = _ts(r["created_at"]) if r.get("created_at") else None
-        if made and (now - made).total_seconds() < CLOSE_GAP:
-            return False
-        if made and made >= since and r.get("conclusion") == "success":
-            return False
+        if made and made >= since and ((now - made).total_seconds() < CLOSE_GAP or r.get("conclusion") == "success"):
+            return False                               # a run since: give it time, or it did what was due
     gh.start(CLOSE["workflow"], CLOSE["inputs"])
     log("::notice::close lane: started moves-close.yml (the hub's Move odds at the close)")
     return True

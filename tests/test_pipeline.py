@@ -1143,6 +1143,7 @@ def test_the_owner_lane_starts_the_move_odds_at_the_close():
     # the day's first files: once more from 4:46 (a run before then does not count), then done
     assert not go(GH([run(16, 11)], first), ny(10, 16, 40))
     assert go(GH([run(16, 11)], first), ny(10, 16, 46))
+    assert go(GH([run(16, 44), run(16, 11)], first), ny(10, 16, 46))          # 4:44: too early to redo, so not in the way
     assert not go(GH([run(16, 50), run(16, 11)], first), ny(10, 17, 15))       # the run since found nothing to redo
     g = GH([run(16, 11)], final)
     assert not go(g, ny(10, 17, 15)) and g.looks == 0 and g.started == []
