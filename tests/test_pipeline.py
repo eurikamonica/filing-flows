@@ -68,6 +68,21 @@ def test_partition_finds_lines_that_add_up():
     assert part["groups"][0]["members"] == ["a", "b"] or set(part["groups"][0]["members"]) == {"a", "b"}
 
 
+def test_partition_never_mixes_a_subtotal_with_some_of_its_members():
+    # Williams Q4 2025 (FY 2025 10-K minus nine months): Service is the sum of the four service members; Service with
+    # Regulated Service and Other Service came within 0.2% of $3,198M revenue while counting $1.0B twice
+    members = {"us-gaap:ServiceMember": ("Service", 2203e6), "wmb:NonRegMonetary": ("NonRegulated Service Monetary", 1151e6),
+               "wmb:Regulated": ("Regulated Service", 963e6), "wmb:NonRegCommodity": ("NonRegulated Service Commodity", 51e6),
+               "wmb:Other": ("Other Service", 38e6), "us-gaap:ProductMember": ("Product", 1640e6),
+               "us-gaap:EnergyCommodities": ("Energy Commodities and Service", 90e6)}
+    assert dims.best_partition(members, 3198e6) is None
+    # the subtotal with all of its members still forms a group over them, and genuine lines are unaffected
+    part = dims.best_partition(members, 2203e6 + 1640e6)
+    leaves = {l["id"] for l in part["leaves"]}
+    assert "us-gaap:ServiceMember" not in leaves and "us-gaap:ProductMember" in leaves
+    assert dims.best_partition({"a": ("A", 50.0), "b": ("B", 30.0), "c": ("C", 20.0)}, 100.0)["leaves"]
+
+
 def test_formatting_rules():
     assert pct_change(110, 100) == "+10%"
     assert pct_change(-1, 100) == "n/m"
