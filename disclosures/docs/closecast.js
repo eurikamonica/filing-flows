@@ -116,8 +116,8 @@ function cfWidth(){const el=$('cf-body')||$('workspace');const w=el&&el.clientWi
 /* charts */
 function cfTodayChart(a,t,d,c,fz,u,W){
  const nar=W<520,zg=cfZ(d.pgrid),H=nar?210:250,L=nar?44:52,R=nar?62:86,T=12,B=26;
- const path=(a.path||[]).filter(p=>p[1]>0);
  const open=d.phase==='open';
+ const path=open?(a.path||[]).filter(p=>p[1]>0):[];                         // after the close the cone is the next session's
  const nowX=open&&path.length?path[path.length-1][0]:0;
  const s0=a.start||a.price;
  const lo=s0*Math.exp(cfQ(t.q,(1-c)/2,zg)),hi=s0*Math.exp(cfQ(t.q,(1+c)/2,zg));
@@ -278,7 +278,7 @@ function cfBody(d){
  const left=d.phase==='open'&&t0.lead_h!=null?(t0.lead_h>=1?fmt(Math.floor(t0.lead_h))+' h '+fmt(Math.round((t0.lead_h%1)*60))+' min':fmt(Math.round(t0.lead_h*60))+' min')+' to the close':'';
  const mv=a.prev?a.price/a.prev-1:null;
  out+=`<div class="cf-hero"><div><h3>${esc(lab0.name)}${lab0.tags?`<span class="cf-tag">${esc(lab0.tags)}</span>`:''}</h3>`
-  +`<div class="cf-big">${cfPx(s0*Math.exp(r0[1]),u)}</div><div class="cf-rng">${fmt(c*100)}% range <b>${cfPx(s0*Math.exp(r0[0]),u)} – ${cfPx(s0*Math.exp(r0[2]),u)}</b> <span class="muted">(${cfSign(Math.exp(r0[0])-1)} / ${cfSign(Math.exp(r0[2])-1)})</span></div>`
+  +`<div class="cf-big">${cfPx(s0*Math.exp(r0[1]),u)} <small class="muted" style="font-size:.8rem;font-weight:400">median</small></div><div class="cf-rng">${fmt(c*100)}% range <b>${cfPx(s0*Math.exp(r0[0]),u)} – ${cfPx(s0*Math.exp(r0[2]),u)}</b> <span class="muted">(${cfSign(Math.exp(r0[0])-1)} / ${cfSign(Math.exp(r0[2])-1)})</span></div>`
   +`<div class="cf-kv"><span>Now</span><span>${cfPx(a.price,u)} ${mv!=null?`<span class="${mv>=0?'positive':'negative'}">${cfSign(mv)}</span>`:''} · ${esc(cfTime(a.time))}</span>`
   +(left?`<span>Left</span><span>${left}</span>`:'')
   +(a.start&&Math.abs(a.start/a.price-1)>1e-6?`<span>Starts at</span><span>${cfPx(a.start,u)} <span class="muted">(the ${esc((a.futures||{}).symbol||'future')}'s move since the close)</span></span>`:'')
@@ -289,7 +289,7 @@ function cfBody(d){
  // every date
  out+=`<h3>Every date <span class="muted" style="font-weight:400;font-size:.85rem">· the ${fmt(c*100)}% range (whisker), the middle half (box) and the median · tap a date for its sources</span></h3>`;
  out+=cfHorizonChart(a,d,c,fz,u,sel.date,W);
- const hdr=['Date','Sessions','Median',`${fmt(c*100)}% range`,'± around now','P(above now)'].concat(X!=null?[`P(above ${cfPx(X,u)})`]:[]).concat(fz?['Frozen median',`Frozen ${fmt(c*100)}%`,'Shift']:[]).concat(['Close']);
+ const hdr=['Date','Sessions','Median',`${fmt(c*100)}% range`,'± around now',`Above the last close${a.prev?' ('+cfPx(a.prev,u)+')':''}`].concat(X!=null?[`P(above ${cfPx(X,u)})`]:[]).concat(fz?['Frozen median',`Frozen ${fmt(c*100)}%`,'Shift']:[]).concat(['Close']);
  const closes=((cfCloses().data||{})[a.key])||{};
  out+=`<div class="tablebox"><table class="cf-tbl"><thead><tr>${hdr.map((h,i)=>`<th class="${i?'num':''}">${esc(h)}</th>`).join('')}</tr></thead><tbody>`;
  for(const t of ts){
@@ -302,7 +302,7 @@ function cfBody(d){
   out+=`<tr data-cft="${t.date}" class="${t.date===sel.date?'on':''}"><td><b>${esc(lab.name)}</b>${lab.tags?`<span class="cf-tag">${esc(lab.tags)}</span>`:''}</td>`
    +`<td class="num">${t.sessions===0?(d.phase==='open'?fmt((t.risk_sessions||0)*100)+'% of today':'1'):fmt(t.sessions+(d.phase==='open'?0:1))}</td>`
    +`<td class="num">${cfPx(s0*Math.exp(r[1]),u)}</td><td class="num">${cfPx(s0*Math.exp(r[0]),u)} – ${cfPx(s0*Math.exp(r[2]),u)}</td>`
-   +`<td class="num">±${fmt((Math.exp(r[2])-Math.exp(r[0]))/2*100,2)}%</td><td class="num">${cfPc(t.p_up)}${t.src_up!=null&&Math.abs(t.src_up-t.p_up)>0.02?` <span class="muted" title="the sources' own view, before centring at the price">(${cfPc(t.src_up)})</span>`:''}</td>`
+   +`<td class="num">±${fmt((Math.exp(r[2])-Math.exp(r[0]))/2*100,2)}%</td><td class="num">${a.prev?cfPc(1-cfCdf(t.q,Math.log(a.prev/s0),zg)):'—'}</td>`
    +(X!=null?`<td class="num"><b>${cfPc(1-cfCdf(t.q,Math.log(X/s0),zg))}</b></td>`:'')
    +fzc.map(v=>`<td class="num">${v}</td>`).join('')+`<td class="num">${cl}</td></tr>`;
  }
