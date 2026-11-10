@@ -121,6 +121,35 @@ class Pool(unittest.TestCase):
         self.assertAlmostEqual(q[C.MED], 0.003)
 
 
+class MovesAndRegimes(unittest.TestCase):
+    def test_move_odds_sample(self):
+        rng = np.random.default_rng(2)
+        r = rng.normal(0, 0.01, 1500)
+        lc = np.concatenate([[0.0], np.cumsum(r[1:])])
+        pct = C.move_pct(r)
+        self.assertAlmostEqual(float(np.nanmean(pct)), 50.0, delta=0.5)
+        t = 1400
+        s = C.moves_sample(lc, pct, t, 5)
+        near = [j for j in range(1, t - 5 + 1) if abs(pct[j] - pct[t]) <= C.MOVE_BAND]
+        self.assertEqual(len(s), len(near))                            # the band held enough days
+        self.assertAlmostEqual(float(s[0]), lc[near[0] + 5] - lc[near[0]])
+        s1 = C.moves_sample(lc, pct, t, 5, skip=1)                    # in the session: from the day after
+        self.assertAlmostEqual(float(s1[0]), lc[near[0] + 6] - lc[near[0] + 1])
+
+    def test_regime_quantiles(self):
+        an = {'fwd21': {'n': 248, 'p10': -0.08, 'p25': -0.03, 'p50': 0.01, 'p75': 0.045, 'p90': 0.08},
+              'fwd63': {'n': 245, 'p10': -0.12, 'p25': -0.057, 'p50': 0.025, 'p75': 0.088, 'p90': 0.146}}
+        q = C.regime_q(an, 21)
+        self.assertAlmostEqual(q[C.PGRID.index(0.1)], math.log1p(-0.08), places=9)
+        self.assertAlmostEqual(q[C.MED], math.log1p(0.01), places=9)
+        self.assertTrue((np.diff(q) >= 0).all())
+        q10 = C.regime_q(an, 10)                                      # half the time: spread by the square root
+        self.assertAlmostEqual(q10[C.MED], math.log1p(0.01) * 10 / 21, places=9)
+        self.assertAlmostEqual(q10[-1] - q10[C.MED], (q[-1] - q[C.MED]) * math.sqrt(10 / 21), places=9)
+        self.assertAlmostEqual(C.regime_q(an, 63)[C.MED], math.log1p(0.025), places=9)
+        self.assertIsNone(C.regime_q({'fwd21': {'n': 10, 'p10': 0, 'p25': 0, 'p50': 0, 'p75': 0, 'p90': 0}}, 21))
+
+
 class FakeFeed:
     """Everything from memory: an hourly history, ten years of daily closes, a chain, two ladders, the VIX family."""
 
@@ -177,7 +206,11 @@ class Asset(unittest.TestCase):
                {'source': 'kalshi', 'kind': 'above', 'end': '2026-11-10', 'units': '^GSPC', 'strikes': ks, 'p_above': [0.99, 0.98, 0.9, 0.8, 0.7], 'as_of': old},
                {'source': 'polymarket', 'kind': 'above', 'end': '2026-11-13', 'units': 'SPY', 'strikes': [730, 740, 750, 760, 770], 'p_above': [0.95, 0.8, 0.5, 0.2, 0.05], 'as_of': old}]
         kl = {'*': {'≤ 6 hours': {'options': 0.65, 'markets': 0.8}, '1–3 days': {'options': 1.2, 'markets': 1.0}}}
-        a = C.forecast_asset(C.ASSETS[0], feed, cal, kladder=kl, now=now, ladders=lad)
+        reg = [{'file': 'highs', 'regime': 'highs', 'label': 'at its highs', 'state': {'dd': 0.0},
+                'analogues': {'fwd21': {'n': 248, 'p10': -0.05, 'p25': -0.02, 'p50': 0.008, 'p75': 0.03, 'p90': 0.05},
+                              'fwd63': {'n': 245, 'p10': -0.09, 'p25': -0.04, 'p50': 0.02, 'p75': 0.06, 'p90': 0.1},
+                              't5': {'p': {'21': 0.49, '63': 0.89}}}}]
+        a = C.forecast_asset(C.ASSETS[0], feed, cal, kladder=kl, now=now, ladders=lad, regimes=reg)
         self.assertEqual(a['phase'], 'open')
         self.assertEqual(a['mark'], '12:30')
         dates = [t['date'] for t in a['targets']]
@@ -197,6 +230,16 @@ class Asset(unittest.TestCase):
         self.assertIn('sim', fri['src'])
         widths = [t['q'][C.LV_IX[0.8][1]] - t['q'][C.LV_IX[0.8][0]] for t in a['targets']]
         self.assertEqual(widths, sorted(widths))                       # further out, wider
+        self.assertEqual(a['regimes'][0]['regime'], 'highs')
+        for t in a['targets'][1:]:
+            self.assertIn('moves', t['src'])                           # Move odds from the first whole session on
+        self.assertEqual([('regime' in t['src']) for t in a['targets']], [False, False, False, False, True, True])   # from two weeks out
+        self.assertEqual(today['hilo']['method'], 'analogs')
+        self.assertTrue(all(v >= 0 for v in today['hilo']['high']) and all(v <= 0 for v in today['hilo']['low']))
+        wk = a['targets'][2]
+        self.assertEqual(wk['hilo']['method'], 'reflection')
+        q75 = float(np.interp(C.ND.inv_cdf(0.75), C.ZG, wk['q']))
+        self.assertAlmostEqual(wk['hilo']['high'][C.MED], max(0.0, q75), places=5)    # the median high: the close's 75%
         json.dumps(a, allow_nan=False)
 
 

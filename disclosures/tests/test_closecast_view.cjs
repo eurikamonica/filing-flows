@@ -1,5 +1,5 @@
 // closecast.js: the Close forecast tab's numbers (normal quantiles, ranges at any confidence, P(close above a price)) and
-// its page drawn from a real forecast (fixtures/closecast_sample.json: SPY and NVDA from app/closecast.py) with the
+// its page drawn from a real forecast (fixtures/closecast_sample.json: SPY and AAPL from app/closecast.py) with the
 // hub's helpers stubbed — no browser, no network; a freeze kept and set against the live forecast.
 const assert = require('node:assert/strict');
 const fs = require('fs');
@@ -38,7 +38,7 @@ ok(V.cfCdf(q, -1, zg) < 0.01 && V.cfCdf(q, 1, zg) > 0.99, 'beyond the grid: the 
 
 // the page from a real forecast
 V.cfStore.fc = { data: d, at: Date.now() };
-for (const k of ['SPY', 'NVDA']) {
+for (const k of ['SPY', 'AAPL']) {
   state.cfa = k; state.cfc = 80; state.cft = ''; state.cfcmp = '';
   const html = V.cfBody(d);
   ok(html.includes('80% range'), `${k}: the range`);
@@ -49,7 +49,14 @@ for (const k of ['SPY', 'NVDA']) {
 // another confidence moves the range; a price gives its probability
 state.cfa = 'SPY'; state.cfc = 95; state.cfx = String(Math.round(d.assets.SPY.price));
 const h95 = V.cfBody(d);
-ok(h95.includes('95% range') && h95.includes(`P(above ${fmt(Math.round(d.assets.SPY.price), 2)})`), 'the 95% range and P(above the price typed)');
+const X = fmt(Math.round(d.assets.SPY.price), 2);
+ok(h95.includes('95% range') && h95.includes(`Closes above ${X}`) && h95.includes(`Trades at ${X}`), 'the 95% range, closing above and trading at the price typed');
+ok(h95.includes('High by then') && h95.includes('Low by then') && h95.includes('High from now'), 'the highs and lows');
+state.cfa = 'AAPL'; state.cfx = null; state.cft = d.assets.AAPL.targets.find((t) => t.tags.includes('month')).date;   // its month-end: every source
+const ha = V.cfBody(d);
+ok(ha.includes('At its highs') && ha.includes('pullback within a month'), 'the regime card: AAPL at its highs');
+ok(ha.includes('History: highs, lows &amp; ranges') && ha.includes('History: Move odds'), 'the regime and the Move odds among the sources');
+state.cfa = 'SPY';
 // a freeze, kept and set against the live forecast; a date that has closed scored against it
 const id = V.cfFreezeNow(d, d.assets.SPY);
 ok(V.cfMine().length === 1 && V.cfMine()[0].asset === 'SPY', 'the freeze is kept');

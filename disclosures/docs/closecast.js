@@ -19,10 +19,12 @@ const CF_TAG={first:'',expiry:'options expiry',week:'week end','2w':'two weeks',
 const CF_SRC=[
  ['options','Options','CBOE delayed quotes: P(close above each strike) from the expiry\'s smile'],
  ['markets','Prediction markets','Kalshi and Polymarket ladders on that day\'s close'],
- ['implied','Volatility indices','VIX1D, VIX9D, VIX, VIX3M, VIX6M (VXN, VXD, RVX): a log-normal'],
+ ['implied','Volatility indices','VIX1D, VIX9D, VIX, VIX3M, VIX6M (VXN, VXD): a log-normal'],
  ['analogs','History: analogs','the days most like now, and how they went on'],
+ ['moves','History: Move odds','after days whose move was as rare as the last one'],
+ ['regime','History: highs, lows & ranges','the 250 days most like it in the regime it is in now'],
  ['sim','History: simulation','4,000 paths of past returns at today\'s volatility']];
-const CF_COL={options:'var(--cf-opt)',markets:'var(--cf-mkt)',implied:'var(--cf-imp)',analogs:'var(--cf-ana)',sim:'var(--cf-sim)'};
+const CF_COL={options:'var(--cf-opt)',markets:'var(--cf-mkt)',implied:'var(--cf-imp)',analogs:'var(--cf-ana)',moves:'var(--cf-mov)',regime:'var(--cf-reg)',sim:'var(--cf-sim)'};
 
 /* numbers */
 function cfInvN(p){                       // the standard normal quantile (Acklam)
@@ -51,6 +53,15 @@ function cfCdf(q,y,zg){                                                     // P
  return cfN(cfLin(y,q,zg));
 }
 function cfRange(q,c,zg){return [cfQ(q,(1-c)/2,zg),cfQ(q,0.5,zg),cfQ(q,(1+c)/2,zg)]}
+/* the high and the low from now to a date's close (log returns from the start): its median and its range at c */
+function cfHL(t,c,zg){const h=t.hilo||{};return {hi:h.high?cfRange(h.high,c,zg):null,lo:h.low?cfRange(h.low,c,zg):null,so:h.so_far||null,how:h.method}}
+/* P(the price trades at x — at or above it when x is above now, at or below when under — before the date's close) */
+function cfTouch(t,x,s0,zg){
+ const h=t.hilo||{},y=Math.log(x/s0);
+ if(h.so_far&&((y>=0&&h.so_far[0]>=y)||(y<0&&h.so_far[1]<=y)))return {p:1,done:true};
+ if(y>=0)return h.high?{p:1-cfCdf(h.high,y,zg)}:null;
+ return h.low?{p:cfCdf(h.low,y,zg)}:null;
+}
 const cfSign=(v,d=2)=>v==null||!Number.isFinite(v)?'—':(v>0?'+':v<0?'−':'')+fmt(Math.abs(v*100),d)+'%';
 const cfPc=(v,d=0)=>v==null||!Number.isFinite(v)?'—':(v<0.005&&v>0?'<1%':v>0.995&&v<1?'>99%':fmt(v*100,d)+'%');
 
@@ -172,7 +183,7 @@ function cfSrcChart(t,a,d,c,u,Wa){
  const all=[['pool','Pooled',{q:t.q,w:1}]].concat(list);
  const rs=all.map(([k,l,s])=>{const r=cfRange(s.q,c,zg);return {k,l,s,lo:s0*Math.exp(r[0]),md:s0*Math.exp(r[1]),hi:s0*Math.exp(r[2])}});
  const xs=rs.flatMap(r=>[r.lo,r.hi]).concat([s0]);let x0=Math.min(...xs),x1=Math.max(...xs);const pd=(x1-x0)*0.05;x0-=pd;x1+=pd;
- const W=Math.min(Wa,900),nar=W<560,rowH=nar?42:30,L=nar?10:150,R=nar?10:130,H=rs.length*rowH+30,X=v=>L+(v-x0)/(x1-x0)*(W-L-R);
+ const W=Math.min(Wa,960),nar=W<560,rowH=nar?42:30,L=nar?10:205,R=nar?10:130,H=rs.length*rowH+30,X=v=>L+(v-x0)/(x1-x0)*(W-L-R);
  let s=`<svg viewBox="0 0 ${W} ${H}" class="cf-svg" style="max-width:${W}px" role="img" aria-label="Each source's range and the pooled range">`;
  s+=`<line x1="${X(s0)}" x2="${X(s0)}" y1="4" y2="${H-22}" class="cf-prev"/><text x="${X(s0)}" y="${H-8}" text-anchor="middle" class="cf-ax">now ${cfPx(s0,u)}</text>`;
  rs.forEach((r,i)=>{const y=(nar?26:14)+i*rowH,col=r.k==='pool'?'var(--ink)':CF_COL[r.k];
@@ -188,9 +199,9 @@ function cfCss(){
  if(document.getElementById('cf-css'))return;
  const st=document.createElement('style');st.id='cf-css';
  st.textContent=`
-:root{--cf-opt:#5b7fa6;--cf-mkt:#b07a1f;--cf-imp:#8a6fb0;--cf-ana:#17734a;--cf-sim:#3f8f9a}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--cf-opt:#8fb0d6;--cf-mkt:#e0b060;--cf-imp:#b9a2dc;--cf-ana:#5fb88a;--cf-sim:#7cc3cf}}
-:root[data-theme="dark"]{--cf-opt:#8fb0d6;--cf-mkt:#e0b060;--cf-imp:#b9a2dc;--cf-ana:#5fb88a;--cf-sim:#7cc3cf}
+:root{--cf-opt:#5b7fa6;--cf-mkt:#b07a1f;--cf-imp:#8a6fb0;--cf-ana:#17734a;--cf-mov:#b8577a;--cf-reg:#6f7d2a;--cf-sim:#3f8f9a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--cf-opt:#8fb0d6;--cf-mkt:#e0b060;--cf-imp:#b9a2dc;--cf-ana:#5fb88a;--cf-mov:#e594b2;--cf-reg:#bccb6e;--cf-sim:#7cc3cf}}
+:root[data-theme="dark"]{--cf-opt:#8fb0d6;--cf-mkt:#e0b060;--cf-imp:#b9a2dc;--cf-ana:#5fb88a;--cf-mov:#e594b2;--cf-reg:#bccb6e;--cf-sim:#7cc3cf}
 .cf-tools{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;margin:6px 0 14px}
 .cf-tools .field{min-width:150px}
 .cf-conf{display:flex;flex-direction:column;gap:4px;min-width:220px;flex:1 1 220px;max-width:360px}
@@ -284,12 +295,17 @@ function cfBody(d){
   +(a.start&&Math.abs(a.start/a.price-1)>1e-6?`<span>Starts at</span><span>${cfPx(a.start,u)} <span class="muted">(the ${esc((a.futures||{}).symbol||'future')}'s move since the close)</span></span>`:'')
   +(t0.p_prev!=null&&d.phase!=='closed'?`<span>Closes above the last close</span><span><b>${cfPc(t0.p_prev)}</b> <span class="muted">(${cfPx(a.prev,u)})</span></span>`:'')
   +(X!=null?`<span>Closes above ${cfPx(X,u)}</span><span><b>${cfPc(1-cfCdf(t0.q,Math.log(X/s0),zg))}</b></span>`:'')
+  +(()=>{const hl=cfHL(t0,c,zg),open=d.phase==='open';let h='';
+    if(hl.hi)h+=`<span>${open?'High from now':'The session\'s high'}</span><span>${cfPx(s0*Math.exp(hl.hi[1]),u)} <span class="muted">(${fmt(c*100)}%: ${cfPx(s0*Math.exp(hl.hi[0]),u)} – ${cfPx(s0*Math.exp(hl.hi[2]),u)}${hl.so?` · so far ${cfPx(s0*Math.exp(hl.so[0]),u)}`:''})</span></span>`;
+    if(hl.lo)h+=`<span>${open?'Low from now':'The session\'s low'}</span><span>${cfPx(s0*Math.exp(hl.lo[1]),u)} <span class="muted">(${fmt(c*100)}%: ${cfPx(s0*Math.exp(hl.lo[0]),u)} – ${cfPx(s0*Math.exp(hl.lo[2]),u)}${hl.so?` · so far ${cfPx(s0*Math.exp(hl.so[1]),u)}`:''})</span></span>`;
+    if(X!=null){const tc=cfTouch(t0,X,s0,zg);if(tc)h+=`<span>Trades at ${cfPx(X,u)} by the close</span><span><b>${tc.done?'already today':cfPc(tc.p)}</b></span>`}
+    return h})()
   +(fz?cfFzLine(t0,fz,c,u,s0,zg):'')
   +`</div></div><div>${cfTodayChart(a,t0,d,c,fz,u,wHero)}</div></div>`;
  // every date
  out+=`<h3>Every date <span class="muted" style="font-weight:400;font-size:.85rem">· the ${fmt(c*100)}% range (whisker), the middle half (box) and the median · tap a date for its sources</span></h3>`;
  out+=cfHorizonChart(a,d,c,fz,u,sel.date,W);
- const hdr=['Date','Sessions','Median',`${fmt(c*100)}% range`,'± around now',`Above the last close${a.prev?' ('+cfPx(a.prev,u)+')':''}`].concat(X!=null?[`P(above ${cfPx(X,u)})`]:[]).concat(fz?['Frozen median',`Frozen ${fmt(c*100)}%`,'Shift']:[]).concat(['Close']);
+ const hdr=['Date','Sessions','Median',`${fmt(c*100)}% range`,'± around now',`Above the last close${a.prev?' ('+cfPx(a.prev,u)+')':''}`,'High by then','Low by then'].concat(X!=null?[`Closes above ${cfPx(X,u)}`,`Trades at ${cfPx(X,u)}`]:[]).concat(fz?['Frozen median',`Frozen ${fmt(c*100)}%`,'Shift']:[]).concat(['Close']);
  const closes=((cfCloses().data||{})[a.key])||{};
  out+=`<div class="tablebox"><table class="cf-tbl"><thead><tr>${hdr.map((h,i)=>`<th class="${i?'num':''}">${esc(h)}</th>`).join('')}</tr></thead><tbody>`;
  for(const t of ts){
@@ -303,7 +319,8 @@ function cfBody(d){
    +`<td class="num">${t.sessions===0?(d.phase==='open'?fmt((t.risk_sessions||0)*100)+'% of today':'1'):fmt(t.sessions+(d.phase==='open'?0:1))}</td>`
    +`<td class="num">${cfPx(s0*Math.exp(r[1]),u)}</td><td class="num">${cfPx(s0*Math.exp(r[0]),u)} – ${cfPx(s0*Math.exp(r[2]),u)}</td>`
    +`<td class="num">±${fmt((Math.exp(r[2])-Math.exp(r[0]))/2*100,2)}%</td><td class="num">${a.prev?cfPc(1-cfCdf(t.q,Math.log(a.prev/s0),zg)):'—'}</td>`
-   +(X!=null?`<td class="num"><b>${cfPc(1-cfCdf(t.q,Math.log(X/s0),zg))}</b></td>`:'')
+   +(()=>{const hl=cfHL(t,c,zg);return `<td class="num" title="${fmt(c*100)}%: ${hl.hi?cfPx(s0*Math.exp(hl.hi[0]),u)+' – '+cfPx(s0*Math.exp(hl.hi[2]),u):''}">${hl.hi?cfPx(s0*Math.exp(hl.hi[1]),u):'—'}</td><td class="num" title="${fmt(c*100)}%: ${hl.lo?cfPx(s0*Math.exp(hl.lo[0]),u)+' – '+cfPx(s0*Math.exp(hl.lo[2]),u):''}">${hl.lo?cfPx(s0*Math.exp(hl.lo[1]),u):'—'}</td>`})()
+   +(X!=null?`<td class="num"><b>${cfPc(1-cfCdf(t.q,Math.log(X/s0),zg))}</b></td><td class="num">${(()=>{const tc=cfTouch(t,X,s0,zg);return tc?(tc.done?'already':cfPc(tc.p)):'—'})()}</td>`:'')
    +fzc.map(v=>`<td class="num">${v}</td>`).join('')+`<td class="num">${cl}</td></tr>`;
  }
  out+='</tbody></table></div>';
@@ -332,6 +349,8 @@ function cfSrcNote(k,s,a,u){
  if(k==='markets')return (s.ladders||[]).map(l=>`${l.url?`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.source==='kalshi'?'Kalshi':'Polymarket')}</a>`:esc(l.source)}: ${esc(l.title||'')} <span class="muted">(${fmt(l.strikes)} strikes${l.overround?` · overround ${fmt(l.overround,2)}`:''}${l.age_h!=null?` · read ${l.age_h<1?fmt(l.age_h*60)+' min':fmt(l.age_h,1)+' h'} before`:''})</span>`).join('<br>');
  if(k==='implied')return `σ to the close ${fmt((s.sigma||0)*100,2)}% · ${(s.tenors||[]).map(x=>({1:'VIX1D',9:'VIX9D',30:'30-day',93:'VIX3M',186:'VIX6M'})[x]||x+'d').join(', ')}`;
  if(k==='analogs')return s.mark?`the ${fmt(s.n)} days whose move by ${esc(s.mark)} was nearest to today's: their move from then to the close`:`the ${fmt(s.n)} days whose volatility and trends were nearest: their next ${fmt(s.sessions)} session${s.sessions>1?'s':''}, rescaled to today's volatility`;
+ if(k==='moves')return `the ${fmt(s.n)} days whose one-day move was within 2.5 percentile points of the last one (${fmt(s.pct,1)}th percentile${a.last_move?`: ${cfSign(a.last_move.move)} on ${esc(cfDay(a.last_move.date))}`:''}): their next ${fmt(s.sessions)} session${s.sessions>1?'s':''}`;
+ if(k==='regime')return `${esc(s.label)}: the returns after its ${fmt(s.n)} most similar days in that regime, scaled to the date · not calibrated (counts half)`;
  if(k==='sim')return `${fmt(s.paths)} paths over ${fmt(s.sessions)} session${s.sessions>1?'s':''}, volatility updated along each`;
  return '';
 }
@@ -342,8 +361,23 @@ function cfInputs(a,d,u){
   h+=`<div class="cf-card"><h4>Order book (best bid and ask)</h4>${cfPx(b.bid,{k:1,dec:2})} × ${fmt(b.bid_size)} · ${cfPx(b.ask,{k:1,dec:2})} × ${fmt(b.ask_size)}<br>spread ${sp==null?'—':fmt(sp,2)} · size imbalance ${im==null?'—':cfSign(im,0)}<br><span class="muted">CBOE, ${esc(b.quote_time||'')} UTC (about 15 minutes late). Shown, not used: it says where the next trades go, not the close.</span></div>`}
  if(fu)h+=`<div class="cf-card"><h4>Futures · ${esc(fu.symbol)}</h4>${fmt(fu.price,2)} · ${cfSign(fu.move)} since the last close${fu.vs_asset!=null?`<br>against ${esc(a.key)}: ${cfSign(fu.vs_asset,2)}`:''}<br><span class="muted">${d.phase==='open'?'In the session the future and the fund move together: context only.':'Sets where the next session starts.'}</span></div>`;
  const vk=Object.keys(vol);if(vk.length)h+=`<div class="cf-card"><h4>Volatility indices</h4>${vk.map(k=>`${({1:'1-day',9:'9-day',30:'30-day',93:'3-month',186:'6-month'})[k]||k+'-day'} <b>${fmt(vol[k],1)}</b>`).join(' · ')}<br><span class="muted">Annualised implied volatility; the term structure sets the volatility source at each date.</span></div>`;
+ h+=cfRegimeCard(a,u);
  if(fa&&fa.mark)h+=`<div class="cf-card"><h4>Factors at ${esc(fa.mark)}</h4>${fa.inputs?`move so far ${cfSign(fa.inputs.move,2)} · against VWAP ${cfSign(fa.inputs.vs_vwap,2)} · first hour ${cfSign(fa.inputs.first_hour,2)}<br>`:''}${fa.predicted!=null?`predicted to the close ${cfSign(fa.predicted,3)} · `:''}out-of-sample R² ${fa.r2_oos==null?'—':fmt(fa.r2_oos*100,2)+'%'}<br><span class="${fa.applied?'cf-in':'muted'}">${fa.applied?'Applied to the centre.':esc(fa.note||'Not applied.')}</span></div>`;
  return h+'</div>';
+}
+function cfRegimeCard(a,u){
+ const lm=a.last_move,rs=a.regimes||[],P=(o,h)=>o&&o.p&&o.p[h]!=null?pct(o.p[h],0):'—',Q=(o,k='p50')=>o&&o[k]!=null?cfSign(o[k],1):'—';
+ let h=`<div class="cf-card"><h4>Move odds · highs, lows &amp; ranges</h4>`;
+ if(lm)h+=`Last move ${cfSign(lm.move)} on ${esc(cfDay(lm.date))}: the ${fmt(lm.pct,1)}th percentile of its days.<br>`;
+ if(!rs.length)return h+`<span class="muted">Not at its highs, at a low or in a range now.</span></div>`;
+ for(const r of rs){const A=r.analogues||{},S=r.state||{};
+  h+=`<b>${esc(r.label.replace(/^./,x=>x.toUpperCase()))}</b>`;
+  if(r.file==='highs')h+=`${S.age!=null?` · run ${fmt(S.age)} days old`:''}: in the ${fmt(A.days||250)} most similar days, a 5% pullback within a month ${P(A.t5,'21')}, three months ${P(A.t5,'63')}; 10%: ${P(A.t10,'21')} / ${P(A.t10,'63')}; 20%: ${P(A.t20,'21')} / ${P(A.t20,'63')}. Another new high ${A.more_highs!=null?pct(A.more_highs,0):'—'}; gain left in the run ${Q(A.gain_left)}; the largest fall within three months ${Q(A.mdd63)}; higher a month on ${A.fwd21&&A.fwd21.up!=null?pct(A.fwd21.up,0):'—'}.<br>`;
+  else if(r.file==='lows')h+=`: in the ${fmt(A.days||250)} most similar days, another new low within a month ${P(A.next_low,'21')}; a 10% rebound within a month ${P(A.r10,'21')}, three months ${P(A.r10,'63')}; 20%: ${P(A.r20,'21')} / ${P(A.r20,'63')}; the further fall ${Q(A.fall)}, the bounce ${Q(A.bounce)}; higher three months on ${A.fwd63&&A.fwd63.up!=null?pct(A.fwd63.up,0):'—'}.<br>`;
+  else h+=`${S.width!=null?` · ${fmt(S.width*100,1)}% wide`:''}${S.days_in!=null?`, ${fmt(S.days_in)} days`:''}: in the ${fmt(A.days||250)} most similar days, a breakout within a month ${P(A.breakout,'21')}, three months ${P(A.breakout,'63')}; up first ${A.up_first!=null?pct(A.up_first,0):'—'}; back into the range within a month after breaking up ${A.failed_up!=null?pct(A.failed_up,0):'—'}, down ${A.failed_down!=null?pct(A.failed_down,0):'—'}; higher three months on ${A.fwd63&&A.fwd63.up!=null?pct(A.fwd63.up,0):'—'}.<br>`;
+ }
+ void u;
+ return h+`<span class="muted">Move odds → Highs, lows &amp; ranges; descriptive history.</span></div>`;
 }
 function cfFreezes(a,d,u,c){
  const mine=cfMine().filter(f=>f.asset===a.key).slice().reverse();

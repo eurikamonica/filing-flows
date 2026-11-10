@@ -17,6 +17,12 @@ Sources: each a distribution of the log return from the price now to the target'
               (app/intraday.py's hourly history); later dates: the 200 days whose volatility against its past year, 5-day
               and 20-day trends were nearest to the last close's, their returns over as many sessions, rescaled to today's
               volatility (EWMA), plus the rest of today from the intraday analogs.
+  moves       Move odds (app/moves.py): the days whose one-day move was within 2.5 percentile points of the last
+              session's, and their returns over as many sessions (the band widened until 40 days are in it).
+  regime      for an asset at its highs, at a low or in a range now (app/highs.py, app/regimes.py), from two weeks out: the
+              returns 21 or 63 sessions after its 250 most similar regime days, scaled to the date; not calibrated (their
+              record is per event, not per range), so it counts half. Their odds of a 5/10/20% pullback, a new low, a
+              rebound or a breakout come with the forecast.
   simulation  4,000 paths of daily returns: past standardised returns drawn at random, each day's volatility updated along
               the path (EWMA, lambda 0.94), from the last close's; the rest of today a normal draw at that volatility.
   factors     today only: the move to the close predicted from the move so far, the gap to VWAP and the first hour (one
@@ -33,6 +39,10 @@ ahead: the k whose 50, 80 and 95% ranges held closest to 50, 80 and 95% of the t
 analogs and the implied 1-day volatility on the hourly bars of the last two to three years; daily analogs, the simulation
 and the volatility indices on ten years of daily closes; recomputed once a day). The options' and the markets' k come
 from the ladder backtest (app/ladders.py, branch ladder-history): how often their 80% ranges held at that horizon.
+
+Highs and lows by each date (from now): today's from the 60 analog days' hourly highs and lows from this hour to the
+close (scaled by their k); later dates by the reflection principle on the pooled close: P(the high by then > x) =
+2 P(the close > x) — so the chance of touching a price comes beside the chance of closing past it.
 
 Pooled: the centre is the price now — on every resolved ladder of the backtest the price was nearer the close than the
 markets' own expected value, at every horizon; the drift stocks have had (a few hundredths of a percent a day) is left
@@ -78,8 +88,14 @@ MED = PGRID.index(0.5)
 LEVELS = (0.5, 0.8, 0.95)
 LV_IX = {c: (PGRID.index(round((1 - c) / 2, 3)), PGRID.index(round((1 + c) / 2, 3))) for c in LEVELS}
 KGRID = np.round(np.arange(0.3, 2.501, 0.02), 2)
-SOURCES = ('options', 'markets', 'implied', 'analogs', 'sim')
-GROUP = {'options': 'market', 'markets': 'market', 'implied': 'market', 'analogs': 'history', 'sim': 'history'}
+SOURCES = ('options', 'markets', 'implied', 'analogs', 'moves', 'regime', 'sim')
+GROUP = {'options': 'market', 'markets': 'market', 'implied': 'market', 'analogs': 'history', 'moves': 'history', 'regime': 'history',
+         'sim': 'history'}
+MOVE_BAND = 2.5                # the Move odds' similar days: within this many percentile points of the last move (app/moves.py BAND)
+MOVE_MIN = 40                  # at least this many similar days (the band widens until there are)
+REGIME_FILES = ('highs', 'lows', 'ranges')   # app/highs.py, app/regimes.py on research-paths public/moves/
+REGIME_LABEL = {'highs': 'at its highs', 'atl': 'at an all-time low', '52w': 'at a 52-week low', '3m': 'at a 3-month low',
+                'narrow': 'in a narrow range', 'wide': 'in a wide range'}
 LAMBDA = 0.94
 K_INTRADAY, K_DAILY = 60, 200
 N_PATHS = 4000
@@ -362,6 +378,55 @@ def analog_sample(c, s2, f, t, n, k=K_DAILY, sd=None):
     return fwd * np.sqrt(s2[t] / s2[near])
 
 
+def move_pct(r):
+    """Each day's one-day move as a percentile (mid-rank) among every day's (app/moves.py's percentiles)."""
+    r = np.asarray(r, float)
+    ok = np.isfinite(r)
+    out = np.full(len(r), np.nan)
+    v = np.sort(r[ok])
+    lo = np.searchsorted(v, r[ok], side='left')
+    hi = np.searchsorted(v, r[ok], side='right')
+    out[ok] = 100.0 * (lo + (hi - lo) / 2) / len(v)
+    return out
+
+
+def moves_sample(lc, pct, t, n, skip=0, band=MOVE_BAND):
+    """Move odds: the log returns over n sessions after the days whose one-day move was within `band` percentile points
+    of day t's (outcomes known by day t; `skip` sessions after the similar day first: in the session, today is the day
+    after the last close), the band doubled until MOVE_MIN days are in it."""
+    last = t - n - skip
+    if last < 260 or not np.isfinite(pct[t]):
+        return None
+    cand = np.arange(1, last + 1)
+    cand = cand[np.isfinite(pct[cand])]
+    b = band
+    while b <= 20:
+        near = cand[np.abs(pct[cand] - pct[t]) <= b]
+        if len(near) >= MOVE_MIN:
+            return lc[near + skip + n] - lc[near + skip]
+        b *= 2
+    return None
+
+
+def regime_q(an, n):
+    """Quantiles at PGRID of the log return over n sessions from a regime's analogues (app/highs.py, regimes.py: their
+    returns 21 and 63 sessions on, p10 … p90), scaled to n (spread by √time, centre by time); tails continued in normal
+    scores from the outer quartile steps."""
+    h = 21 if n <= 32 else 63
+    d = (an or {}).get(f'fwd{h}') or {}
+    ks = [('p10', 0.1), ('p25', 0.25), ('p50', 0.5), ('p75', 0.75), ('p90', 0.9)]
+    if any(d.get(k) is None for k, _ in ks) or (d.get('n') or 0) < 50:
+        return None
+    zs = np.array([ND.inv_cdf(p) for _, p in ks])
+    xs = np.log1p(np.array([float(d[k]) for k, _ in ks]))
+    xs = np.maximum.accumulate(xs)
+    lo_slope = (xs[1] - xs[0]) / (zs[1] - zs[0])
+    hi_slope = (xs[4] - xs[3]) / (zs[4] - zs[3])
+    q = np.where(ZG < zs[0], xs[0] + (ZG - zs[0]) * lo_slope, np.where(ZG > zs[-1], xs[-1] + (ZG - zs[-1]) * hi_slope, np.interp(ZG, zs, xs)))
+    med = xs[2]
+    return med * n / h + (q - med) * math.sqrt(n / h)
+
+
 def sim_paths(r, s2, t, n_max, n_paths=N_PATHS, rng=None):
     """Cumulative log returns of n_paths paths over n_max sessions after day t: standardised returns of days ≤ t drawn at
     random, the variance updated along each path (EWMA)."""
@@ -454,9 +519,18 @@ def calib_daily(c, vol=None, every=5, sim_every=10, rng=None):
     sd = np.nanstd(f[260:], axis=0)
     lc = np.log(c)
     rng = rng or np.random.default_rng(11)
-    out = {'analogs': {}, 'sim': {}, 'implied': {}}
+    out = {'analogs': {}, 'moves': {}, 'sim': {}, 'implied': {}}
     hmax = max(HORIZONS)
     start = 760
+    pct = move_pct(r)
+    for n in HORIZONS:
+        Q, y = [], []
+        for t in range(start, len(c) - n, every):
+            s = moves_sample(lc, pct, t, n)
+            if s is not None:
+                Q.append(q_samples(s))
+                y.append(lc[t + n] - lc[t])
+        out['moves'][str(n)] = fit_k(Q, y)
     for n in HORIZONS:
         Q, y = [], []
         for t in range(start, len(c) - n, every):
@@ -683,6 +757,37 @@ class Feed:
         self._write('ladders.json', {'at': now_s, 'rows': rows})
         return rows
 
+    def regimes(self):
+        """{asset: [the regimes it is in now — at its highs, at a low, in a range — with the state and the analogues' odds]}
+        from research-paths' public/moves/{highs,lows,ranges}.json (app/highs.py, app/regimes.py), read once a day."""
+        doc = self._read('regimes.json')
+        if doc and doc.get('refreshed') == self.today:
+            return doc['assets']
+        mine = {a[0] for a in ASSETS}
+        out = {}
+        keep = ('days', 'assets', 't5', 't10', 't20', 'run_left', 'more_highs', 'gain_left', 'pullback', 'mdd63', 'fwd21', 'fwd63', 'next_low', 'r10', 'r20',
+                'fall', 'bounce', 'breakout', 'up_first', 'failed_up', 'failed_down', 'after63_up', 'after63_down')
+        for f in REGIME_FILES:
+            try:
+                d = self.h.json(f'{RAW}/research-paths/public/moves/{f}.json')
+            except Exception as exc:                                   # noqa: BLE001
+                log(f'regimes {f}: {str(exc)[:100]}')
+                continue
+            now = d.get('now') or []
+            groups = now.items() if isinstance(now, dict) else [('highs', now)]
+            for reg, rows in groups:
+                for r in rows or []:
+                    if r.get('key') in mine and r.get('analogues'):
+                        st = r.get('state') or {}
+                        out.setdefault(r['key'], []).append({'file': f, 'regime': reg, 'label': REGIME_LABEL.get(reg, reg),
+                                                             'state': {k: st.get(k) for k in ('date', 'close', 'ath', 'ath_date', 'dd', 'dd_ath', 'age', 'run_gain', 'highs63',
+                                                                                              'low', 'low_date', 'lows63', 'width', 'width_pct', 'pos', 'hi', 'lo', 'since', 'days_in')
+                                                                       if st.get(k) is not None},
+                                                             'analogues': {k: v for k, v in r['analogues'].items() if k in keep}})
+        if out or not doc:
+            self._write('regimes.json', {'refreshed': self.today, 'assets': out})
+        return out if out or not doc else doc.get('assets') or {}
+
     def ladder_k(self):
         """{page or '*': {bucket: {options: k, markets: k, n}}} from the ladder backtest (each page's own when it has 20
         markets at that horizon, else every ladder's)."""
@@ -778,7 +883,7 @@ def pool(srcs, centre):
     return centre + acc, weights
 
 
-def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=None, rng=None):
+def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=None, rng=None, regimes=None):
     key, sym, name, ixid, vols, fut = spec
     now = now or feed.now
     first, phase, frac = phase_of(now)
@@ -844,7 +949,7 @@ def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=N
             log(f'{key} index: {str(exc)[:100]}')
     # today's intraday pieces: the analogs' rest of the day, the factor centre
     j = None
-    intra_rest = None
+    intra_rest = intra_hilo = None
     shift = 0.0
     if phase in ('open', 'pre') and hist and len((hist.get('cols') or [[]])[0]) >= 150:
         Mx = np.asarray(hist['cols'][1], float)
@@ -862,6 +967,12 @@ def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=N
         if len(ok) >= K_INTRADAY:
             near = ok[np.argpartition(np.abs(m[ok] - move), K_INTRADAY - 1)[:K_INTRADAY]]
             intra_rest = rest[near]
+            cols = hist['cols']
+            if len(cols) >= 6:                                         # their highs and lows from this hour to the close
+                pad = lambda rows: np.array([x if x else [np.nan] * 7 for x in rows], float)   # noqa: E731
+                HI, LO = pad(cols[4]), pad(cols[5])
+                base = 1 + Mx[near, j]
+                intra_hilo = (np.log((1 + np.nanmax(HI[near, j:7], axis=1)) / base), np.log((1 + np.nanmin(LO[near, j:7], axis=1)) / base))
         fm_ = ((acal.get('factors') or [None] * 7)[j]) if j is not None and j >= 1 else None
         out['factors'] = factor_view(fm_, q, prev, price, j) if phase == 'open' else {'mark': '09:30', 'shift': 0.0, 'applied': False,
                                                                                       'note': 'before the open: the factors start at 10:30'}
@@ -878,6 +989,12 @@ def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=N
     n_max = max((sessions_after(first, dt.date.fromisoformat(t['date'])) for t in ts), default=0)
     cum = sim_paths(r, s2, len(c) - 1, max(n_max + (1 if phase != 'open' else 0), 1), rng=rng) if r is not None else None
     sd_f = np.nanstd(f[260:], axis=0) if f is not None else None
+    lcl = np.log(c) if len(c) else None
+    pct = move_pct(r) if r is not None else None
+    if pct is not None and np.isfinite(pct[-1]):
+        out['last_move'] = {'date': (d or {}).get('t', [None])[-1], 'move': _r(math.expm1(r[-1]), 5), 'pct': _r(pct[-1], 1)}
+    if regimes:
+        out['regimes'] = regimes
     lad = [x for x in (ladders or []) if x.get('end')]
     page = LADDER_PAGES.get(ixid) if ixid else key
     kl = (kladder or {}).get(page) or {}
@@ -961,6 +1078,23 @@ def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=N
                     s = rng.choice(s, 4000) + rng.choice(intra_rest, 4000)   # the rest of today, then the sessions after
                 srcs['analogs'] = {'q': q_samples(s), 'k': k_at((acal.get('daily') or {}).get('analogs'), n_daily) or 1.0, 'w': 1.0, 'n': K_DAILY,
                                    'sessions': n_daily}
+        # Move odds: after days whose last move was as rare as this one
+        if pct is not None and not today_only and n_daily >= 1:
+            s = moves_sample(lcl, pct, len(c) - 1, n_daily, skip=1 if phase == 'open' else 0)
+            if s is not None:
+                nm = int(len(s))
+                if phase == 'open' and intra_rest is not None:
+                    s = rng.choice(s, 4000) + rng.choice(intra_rest, 4000)
+                srcs['moves'] = {'q': q_samples(s), 'k': k_at((acal.get('daily') or {}).get('moves'), n_daily) or 1.0, 'w': 1.0, 'n': nm,
+                                 'sessions': n_daily, 'pct': _r(pct[-1], 1)}
+        # the regime it is in now (at its highs, at a low, in a range): its analogues' returns, from two weeks out
+        if regimes and not today_only and n_daily >= 10:
+            for rg in regimes:
+                qq = regime_q(rg.get('analogues'), n_daily)
+                if qq is not None:
+                    srcs['regime'] = {'q': qq, 'k': 1.0, 'w': 0.5, 'regime': rg['regime'], 'label': rg['label'],
+                                      'n': (rg['analogues'].get('fwd21' if n_daily <= 32 else 'fwd63') or {}).get('n'), 'calibrated': False}
+                    break
         # simulation
         if cum is not None and not today_only and n_daily >= 1:
             x = cum[:, n_daily - 1]
@@ -975,10 +1109,24 @@ def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=N
         if pooled is None:
             continue
         pooled = np.maximum.accumulate(pooled)
+        if today_only and intra_hilo is not None:
+            kk = (((acal.get('intraday') or {}).get('analogs') or [None] * 7)[j] or {}).get('k') or 1.0
+            hq, lq = q_samples(intra_hilo[0]), q_samples(intra_hilo[1])
+            hilo = {'method': 'analogs', 'n': int(len(intra_hilo[0])), 'k': kk,
+                    'high': [_r(max(0.0, v * kk), 6) for v in hq] if hq is not None else None,
+                    'low': [_r(min(0.0, v * kk), 6) for v in lq] if lq is not None else None}
+            pth = [x for _, x in (q.get('path') or [])]
+            if pth and phase == 'open':
+                hilo['so_far'] = [_r(math.log(max(pth) / start), 6), _r(math.log(min(pth) / start), 6)]
+        else:                                                          # the reflection principle: P(max > x) = 2 P(close > x)
+            hilo = {'method': 'reflection',
+                    'high': [_r(max(0.0, float(np.interp(ND.inv_cdf((1 + p_) / 2), ZG, pooled))), 6) for p_ in PGRID],
+                    'low': [_r(min(0.0, float(np.interp(ND.inv_cdf(p_ / 2), ZG, pooled))), 6) for p_ in PGRID]}
         tgt = {'date': t['date'], 'tags': t['tags'], 'close_at': close_t.isoformat(), 'sessions': n_after, 'risk_sessions': _r(n_eq, 3), 'lead_h': _r(lead_h, 2),
                'bucket': bucket, 'centre': _r(centre, 6), 'q': [_r(v, 6) for v in pooled], 'weights': weights,
                'p_up': _r(1 - cdf_at(pooled, 0.0), 4), 'p_prev': _r(1 - cdf_at(pooled, math.log(prev / start)), 4) if prev else None,
-               'src_up': _r(sum(weights.get(n, 0) * (1 - cdf_at(s['qk'], 0.0)) for n, s in srcs.items() if s.get('qk') is not None), 4), 'src': {}}
+               'src_up': _r(sum(weights.get(n, 0) * (1 - cdf_at(s['qk'], 0.0)) for n, s in srcs.items() if s.get('qk') is not None), 4),
+               'hilo': hilo, 'src': {}}
         for name_, s in srcs.items():
             info = {k: v for k, v in s.items() if k not in ('q', 'qk', 'w')}
             info['k'] = _r(s.get('k'), 3)
@@ -1144,6 +1292,11 @@ def run(out, cache, h60, live_path=None, now=None, feed=None, assets=None, log_=
     cal = calibration(feed, log_, assets)
     kl = feed.ladder_k()
     lad = feed.ladders()
+    try:
+        regs = feed.regimes()
+    except Exception as exc:                                           # noqa: BLE001
+        log_(f'regimes: {exc}')
+        regs = {}
     first, phase, frac = phase_of(now)
     fc = {'schema': SCHEMA, 'generated_at': now.isoformat(timespec='seconds'), 'phase': phase, 'first': first.isoformat(),
           'share_left': _r(frac, 4), 'pgrid': list(PGRID), 'levels': list(LEVELS), 'freezes': list(FREEZES),
@@ -1152,7 +1305,7 @@ def run(out, cache, h60, live_path=None, now=None, feed=None, assets=None, log_=
         if assets and spec[0] not in assets:
             continue
         try:
-            a = forecast_asset(spec, feed, cal, live=live, kladder=kl, now=now, ladders=lad)
+            a = forecast_asset(spec, feed, cal, live=live, kladder=kl, now=now, ladders=lad, regimes=regs.get(spec[0]))
         except Exception as exc:                                       # noqa: BLE001 — one asset's failure never stops the run
             fc['errors'].append(f'{spec[0]}: {str(exc)[:160]}')
             log_(f'{spec[0]}: {exc}')
@@ -1194,7 +1347,7 @@ def calib_summary(a):
         if intra.get(src):
             s[f'intraday_{src}'] = [None if x is None else {'k': x['k'], 'n': x['n'], 'raw': x['raw'], 'fit': x['fit']} for x in intra[src]]
     daily = a.get('daily') or {}
-    for src in ('analogs', 'sim', 'implied'):
+    for src in ('analogs', 'moves', 'sim', 'implied'):
         if daily.get(src):
             s[f'daily_{src}'] = {h: daily[src].get(h) for h in ('1', '5', '21', '63') if daily[src].get(h)}
     if a.get('factors'):
