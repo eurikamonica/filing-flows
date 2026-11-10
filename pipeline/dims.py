@@ -8,6 +8,7 @@ from .facts import CONCEPTS
 
 AXES = ("ProductOrServiceAxis", "StatementBusinessSegmentsAxis")
 TOL = 0.004                     # a breakdown must add up to total revenue within 0.4%
+SUBTOTAL_TOL = 0.0005           # a member within 0.05% of the sum of smaller members is their subtotal (XBRL is exact)
 
 
 def _local(tag):
@@ -374,7 +375,21 @@ def best_partition(members, total, unit=None):
     items = items[:14]
     best = None
     n = len(items)
+    # a member that is exactly the sum of two or more smaller members is their subtotal: a breakdown never holds it
+    # together with only some of them (Williams Q4 2025: Service $2,203M beside Regulated Service $963M and Other
+    # Service $38M, two of the four members Service adds up to, came within 0.2% of revenue while counting $1.0B twice).
+    # XBRL members only: their subtotals are exact, figures read from a table are left to its rounding rules
+    clash = []
+    for i in range(n if unit is None else 0):
+        gv = items[i][2]
+        for sub in range(1, 1 << (n - i - 1)):
+            sub <<= i + 1
+            if bin(sub).count("1") >= 2 and \
+                    abs(sum(items[j][2] for j in range(n) if sub >> j & 1) - gv) <= SUBTOTAL_TOL * gv:
+                clash.append((1 << i, sub))
     for mask in range(1, 1 << n):
+        if any(mask & p and mask & sub and mask & sub != sub for p, sub in clash):
+            continue
         s = sum(items[i][2] for i in range(n) if mask >> i & 1)
         if abs(s - total) <= TOL * abs(total):
             size = bin(mask).count("1")
