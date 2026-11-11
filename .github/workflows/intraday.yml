@@ -1,6 +1,7 @@
 # Move odds, intraday (the hub's Move odds → Market & sectors, live): every five minutes through the US session, each
 # asset's move so far today against its own history at the same time of day, and what followed — to the close and over
-# the next days, and the price against its VWAP (app/intraday.py). A relay: one run scans for about 50 minutes, then
+# the next days, and the price against its VWAP (app/intraday.py), and the intraday RRG and money-inflow screen of the
+# RRG's ETFs, five-minute bars (app/intraday_rotation.py → rotation.json). A relay: one run scans for about 50 minutes, then
 # starts the next while the session is open. GitHub's clock starts few of the schedules (none on the first day), so the
 # X-post watch relay starts it: post-to-x.yml runs around the clock, and its owner lane (pipeline/owner_lane.py) starts
 # this workflow from 9:10 New York whenever no run of it is running or waiting; the cron below is a last resort. live.json is force-pushed to the branch intraday-live as one commit each scan; the hub reads it from
@@ -75,8 +76,8 @@ jobs:
           publish() {                                                # one commit with live.json alone, force-pushed
             ( cd live
               rm -rf .git
-              printf '%s\n' '# intraday-live (data only)' '' 'live.json of the hub'\''s intraday move odds, force-pushed as one commit every scan' \
-                'by .github/workflows/intraday.yml (app/intraday.py).' > README.md
+              printf '%s\n' '# intraday-live (data only)' '' 'live.json of the hub'\''s intraday move odds and rotation.json of its intraday RRG and' \
+                'money-inflow screen, force-pushed as one commit every scan by .github/workflows/intraday.yml (app/intraday.py).' > README.md
               git init -q -b intraday-live && git remote add origin "$PUSH_URL" && git add -A
               git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "intraday $(date -u +%Y-%m-%dT%H:%MZ)"
               for i in 1 2 3; do git push -q --force origin intraday-live && break; sleep $((i * 5)); done )

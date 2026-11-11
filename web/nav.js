@@ -26,6 +26,7 @@
       ['chains', '#chains', 'Supply chains & themes', 'Where the money flows: AI capex, power, GLP-1…'],
       ['model', '#model', 'Growth model', 'Company, industry, sector and theme forecasts'],
       ['rotation', '#rotation', 'Rotation (RRG)', 'Which sectors and themes lead, week by week'],
+      ['rotation', '#rotation/rrgi', 'Intraday rotation & money flow', 'Sectors and indices today, every five minutes, and where money flows in'],
       ['maps', '#maps', 'Market maps', 'Money flows, heatmaps, the ownership network'],
       ['workforce', '#workforce', 'Workforce', 'Headcount and pay from the filings'],
     ] },

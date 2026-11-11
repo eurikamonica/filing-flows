@@ -81,11 +81,18 @@ def et_of(ts):
 
 
 # ------------------------------------------------------------------ the Yahoo chart API (as app/ladders.py reads it)
+_TODAY = {}                                                            # one scan's 1-day charts: the rotation reuses them
+
+
 def chart(h, sym, rng, interval):
+    if rng == '1d' and (sym, interval) in _TODAY:
+        return _TODAY[(sym, interval)]
     d = h.json(f'{CS.YQ}/v8/finance/chart/{urllib.parse.quote(sym)}?range={rng}&interval={interval}&includePrePost=false')
     res = ((d or {}).get('chart') or {}).get('result') or []
     if not res:
         raise RuntimeError(f'no chart for {sym}')
+    if rng == '1d':
+        _TODAY[(sym, interval)] = res[0]
     return res[0]
 
 
@@ -321,6 +328,7 @@ def vwap_odds(hist, gap, j, k=K_SIMILAR):
 def scan(h, cache, now=None, fetch_history=True, log=print):
     """One pass over every asset: today's price and path, the odds at the nearest mark."""
     now = now or dt.datetime.now(UTC)
+    _TODAY.clear()                                                     # this scan's charts only (the rotation after it reuses them)
     today = now.astimezone(ET).date().isoformat()
     out = {'schema': SCHEMA, 'generated_at': now.isoformat(timespec='seconds'), 'source': 'Yahoo Finance chart API (prices as published; some may be delayed)',
            'marks': list(MARKS), 'edges': EDGES, 'k': K_SIMILAR, 'session': None, 'assets': {}}
@@ -380,6 +388,7 @@ def main():
     ap.add_argument('--out', help='the folder published as the branch intraday-live (live.json)')
     ap.add_argument('--cache', help='the hourly history cache (default OUT/cache/h60)')
     ap.add_argument('--session', action='store_true', help='exit 0 while the regular session is open (or opens within 20 minutes)')
+    ap.add_argument('--no-rotation', action='store_true', help='live.json alone (no rotation.json: the intraday RRG and money flow)')
     a = ap.parse_args()
     h = CS.Http({'query2.finance.yahoo.com': 0.4})
     if a.session:
@@ -400,6 +409,19 @@ def main():
     print(f"intraday: {len(doc['assets'])} assets, session {s.get('date')} {'open' if s.get('open') else 'closed'}, "
           f"{sum(1 for x in doc['assets'].values() if x.get('odds'))} with odds, {sum(1 for x in doc['assets'].values() if x.get('vwap_odds'))} with VWAP odds, "
           f"{h.calls} requests", flush=True)
+    if a.no_rotation:
+        return
+    # the intraday RRG and money flow (intraday_rotation.py): never in the way of live.json, written above
+    try:
+        import intraday_rotation as IR
+        n0 = h.calls
+        rot = IR.build(h, (Path(a.cache) if a.cache else out / 'cache' / 'h60') / 'm5', chart, log=lambda m: print(m, file=sys.stderr))
+        IR.write(rot, out)
+        s = rot['session']
+        print(f"rotation: {len(rot['assets'])} lines, session {s['date']} to {s['last']} ({'open' if s['open'] else 'closed'}), "
+              f"{len(rot['days'])} sessions on the grid, {h.calls - n0} requests", flush=True)
+    except Exception as exc:                                           # noqa: BLE001
+        print(f'rotation: {exc}', file=sys.stderr, flush=True)
 
 
 if __name__ == '__main__':

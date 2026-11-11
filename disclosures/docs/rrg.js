@@ -152,7 +152,8 @@ function rrgView(){
  const unis=rrgUniverses(D);
  const chLoading=/^(themes|chain:)/.test(state.rrgu||'')&&!(RRG_CH.m&&(RRG_CH.m.data||RRG_CH.m.err));   // a deep link while the chains load
  state.rrgu=unis.some(u=>u[0]===state.rrgu)||chLoading?state.rrgu:'sectors';
- state.rrgf=['w','m','d'].includes(state.rrgf)?state.rrgf:'w';
+ if(state.rrgf==='i'&&typeof rrgIntradayView==='function'){state.rrgf=RRG.lastF||'w';state.rview='rrgi';return rrgIntradayView()}   // rrg-intraday.js
+ state.rrgf=['w','m','d'].includes(state.rrgf)?state.rrgf:'w';RRG.lastF=state.rrgf;
  const W=state.rrgf==='w',Dy=state.rrgf==='d',FQ=RRG_FQ[state.rrgf],wins=FQ.wins,tails=FQ.tails,PR=RRGLab.PAR[state.rrgf];
  if(RRG.fq!==state.rrgf){if(RRG.fq)state.rrgn=state.rrgt=null;RRG.fq=state.rrgf}   // a new frequency: its own window and tail
  state.rrgn=wins.some(x=>x[0]===state.rrgn)?state.rrgn:FQ.n;
@@ -161,7 +162,7 @@ function rrgView(){
  state.rrgz=RRG_Z.some(z=>z[0]===state.rrgz)?state.rrgz:'r52';
  const rrgCos=state.rrgu==='tickers'||String(state.rrgu).startsWith('top:');
  state.rrgb=state.rrgb==='industry'&&!Dy?'industry':'spy';
- let out=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rrgu','Lines',unis,state.rrgu)}${field('rrgf','Frequency',[['w','Weekly (the standard)'],['d','Daily (every trading day)'],['m','Monthly (long cycles)']],state.rrgf)}${field('rrgm','Chart type',RRG_MODES,state.rrgm)}${state.rrgm==='4d'?field('rrgz','↗ Depth (third measure)',RRG_Z,state.rrgz):''}${state.rrgm==='2d'&&W?field('rfc','Next step',FC_MODES,(state.rfc=fcDefault())):''}</div>`;
+ let out=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rrgu','Lines',unis,state.rrgu)}${field('rrgf','Frequency',[['w','Weekly (the standard)'],['d','Daily (every trading day)'],['m','Monthly (long cycles)']].concat(typeof rrgIntradayView==='function'?[['i','Intraday (today, five-minute bars)']]:[]),state.rrgf)}${field('rrgm','Chart type',RRG_MODES,state.rrgm)}${state.rrgm==='4d'?field('rrgz','↗ Depth (third measure)',RRG_Z,state.rrgz):''}${state.rrgm==='2d'&&W?field('rfc','Next step',FC_MODES,(state.rfc=fcDefault())):''}</div>`;
  out+=`<div class="toolbar rot-display">${field('rrgn','RS window',wins,state.rrgn)}${field('rrgt','Tail',tails,state.rrgt)}${state.rrgu==='tickers'?`<div class="field wide"><label for="rrgtk">Tickers (up to 12, any company or ETF on file)</label><input id="rrgtk" value="${esc(state.rrgtk||'')}" placeholder="e.g. NVDA, AMD, SMH · Enter"></div>`:''}${rrgCos&&!Dy?field('rrgb','Companies against',[['spy','The S&P 500 (SPY)'],['industry','Their industry without themselves (dual RRG)']],state.rrgb):''}__FP__</div>`;
  if(Dy&&!RRGL_DAILY_OK(state.rrgu))return out.replace('__FP__','')+`<div class="explain">Daily lines come from the move-odds files (each asset's adjusted daily closes): the sector and style ETFs, the index ETFs, the countries, bonds, commodities and industry ETFs, the largest companies of a sector and tickers you type. Site sectors, themes and chain baskets are weekly only — pick other lines or the weekly chart.</div>`;
  const GD=Dy?rrglGrid():null;

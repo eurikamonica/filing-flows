@@ -77,6 +77,8 @@
     ['Move odds', 'Probabilités de mouvement', 'Probabilidades de movimiento'],
     ['How far prices move after an event', 'L’ampleur des mouvements de cours après un événement', 'Cuánto se mueven los precios tras un evento'],
     ['Close forecast', 'Prévision de clôture', 'Previsión del cierre'],
+    ['Intraday rotation & money flow', 'Rotation intrajournalière et flux de capitaux', 'Rotación intradía y flujo de dinero'],
+    ['Sectors and indices today, every five minutes, and where money flows in', 'Secteurs et indices aujourd’hui, toutes les cinq minutes, et où l’argent afflue', 'Sectores e índices hoy, cada cinco minutos, y adónde entra el dinero'],
     ['Where prices close today, this week and this quarter', 'Où les cours clôtureront aujourd’hui, cette semaine et ce trimestre', 'Dónde cerrarán los precios hoy, esta semana y este trimestre'],
     ['Odds', 'Probabilités', 'Probabilidades'],
     ['Rotation forecasts and how they did', 'Prévisions de rotation et leurs résultats', 'Previsiones de rotación y cómo resultaron'],
