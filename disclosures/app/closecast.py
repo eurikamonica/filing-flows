@@ -44,10 +44,13 @@ Highs and lows by each date (from now): today's from the 60 analog days' hourly 
 close (scaled by their k); later dates by the reflection principle on the pooled close: P(the high by then > x) =
 2 P(the close > x) — so the chance of touching a price comes beside the chance of closing past it.
 
-Pooled: the centre is the price now — on every resolved ladder of the backtest the price was nearer the close than the
-markets' own expected value, at every horizon; the drift stocks have had (a few hundredths of a percent a day) is left
-out, small next to the spread even over a quarter — moved only by the factors (today) when they predicted out of sample.
-The spread is the average of the calibrated sources' quantiles around their own medians, half the weight to the
+Pooled: the median starts at the price now and rises by the asset's drift a session (drift(): its own mean daily log
+return over the ten years, pulled toward the market's long-run 0.03% a session by how noisy its own is) — today's also
+moved by the factors when they predicted out of sample. The markets' own expected value is not used: on every resolved
+ladder of the backtest the price now was nearer the close. Left at the price now, the median was too low: on 2019–2026
+(the eleven assets, the drift known only from the years before each day) the close ended above it 58% of the time two
+weeks on and 64% seven weeks on; above the drifted one 54% and 56%, and nearer at every horizon (|error| 4.34 → 4.30%,
+9.54 → 9.22%) — though not in a falling year (2022: 39% → 32% seven weeks on). The spread is the average of the calibrated sources' quantiles around their own medians, half the weight to the
 market-implied sources (options, markets, implied), half to the history (analogs, simulation); each source's own
 median is kept in its breakdown (src_up: their weighted P(close above the price now)).
 
@@ -91,6 +94,7 @@ KGRID = np.round(np.arange(0.3, 2.501, 0.02), 2)
 SOURCES = ('options', 'markets', 'implied', 'analogs', 'moves', 'regime', 'sim')
 GROUP = {'options': 'market', 'markets': 'market', 'implied': 'market', 'analogs': 'history', 'moves': 'history', 'regime': 'history',
          'sim': 'history'}
+DRIFT_PRIOR, DRIFT_SD = 0.0003, 0.0005   # a session: the market's long-run price drift (≈7.5% a year), how far an asset's may sit
 MOVE_BAND = 2.5                # the Move odds' similar days: within this many percentile points of the last move (app/moves.py BAND)
 MOVE_MIN = 40                  # at least this many similar days (the band widens until there are)
 REGIME_FILES = ('highs', 'lows', 'ranges')   # app/highs.py, app/regimes.py on research-paths public/moves/
@@ -862,6 +866,21 @@ def calibration(feed, log_=log, assets=None):
 
 
 # ------------------------------------------------------------------ one asset's forecast
+def drift(closes):
+    """The median's rise a session (log): the mean daily log return of `closes` (as traded: dividends not added back),
+    pulled toward DRIFT_PRIOR as a normal prior of sd DRIFT_SD would — the noisier the asset, the nearer the prior
+    (ten years: SPY keeps most of its own, NVDA or TSLA about half). (drift, its own mean or None)."""
+    c = np.asarray(closes, float)
+    c = c[np.isfinite(c) & (c > 0)]
+    if len(c) < 260:
+        return DRIFT_PRIOR, None
+    r = np.diff(np.log(c))
+    n, own, var = len(r), float(r.mean()), float(r.var())
+    if not var > 0:
+        return DRIFT_PRIOR, own
+    return (DRIFT_PRIOR / DRIFT_SD ** 2 + n * own / var) / (1 / DRIFT_SD ** 2 + n / var), own
+
+
 def pool(srcs, centre):
     """Quantiles pooled from calibrated sources {name: {q, w}}: each around its own median, half the weight to each
     group (market-implied, history) present, then placed at `centre`."""
@@ -980,6 +999,10 @@ def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=N
     out['mark'] = I.MARKS[j] if j is not None else None
     # the daily pieces
     c = np.asarray((d or {}).get('ac') or [], float)
+    mu, mu_own = drift((d or {}).get('c') or (d or {}).get('ac') or [])
+    out['drift'] = {'session': _r(mu, 6), 'own': _r(mu_own, 6) if mu_own is not None else None, 'prior': DRIFT_PRIOR, 'prior_sd': DRIFT_SD}
+    last = prev if phase == 'open' else price                          # the last close: yesterday's in the session, else the price
+    out['last_close'] = _r(last, 4) if last else None
     r = s2 = f = None
     if len(c) > 900:
         r = np.concatenate([[0.0], np.diff(np.log(c))])
@@ -1104,7 +1127,7 @@ def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=N
                            'sessions': n_daily}
         for s in srcs.values():
             s['qk'] = scale(s['q'], s['k']) if s.get('q') is not None else None
-        centre = shift if today_only else 0.0                          # the price now (the factors' shift, today)
+        centre = mu * n_eq + (shift if today_only else 0.0)            # the price now, the drift to then (the factors' shift, today)
         pooled, weights = pool(srcs, centre)
         if pooled is None:
             continue
@@ -1124,7 +1147,7 @@ def forecast_asset(spec, feed, cal, live=None, kladder=None, now=None, ladders=N
                     'low': [_r(min(0.0, float(np.interp(ND.inv_cdf(p_ / 2), ZG, pooled))), 6) for p_ in PGRID]}
         tgt = {'date': t['date'], 'tags': t['tags'], 'close_at': close_t.isoformat(), 'sessions': n_after, 'risk_sessions': _r(n_eq, 3), 'lead_h': _r(lead_h, 2),
                'bucket': bucket, 'centre': _r(centre, 6), 'q': [_r(v, 6) for v in pooled], 'weights': weights,
-               'p_up': _r(1 - cdf_at(pooled, 0.0), 4), 'p_prev': _r(1 - cdf_at(pooled, math.log(prev / start)), 4) if prev else None,
+               'p_up': _r(1 - cdf_at(pooled, 0.0), 4), 'p_prev': _r(1 - cdf_at(pooled, math.log(last / start)), 4) if last else None,
                'src_up': _r(sum(weights.get(n, 0) * (1 - cdf_at(s['qk'], 0.0)) for n, s in srcs.items() if s.get('qk') is not None), 4),
                'hilo': hilo, 'src': {}}
         for name_, s in srcs.items():

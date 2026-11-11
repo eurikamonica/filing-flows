@@ -220,7 +220,12 @@ class Asset(unittest.TestCase):
         self.assertEqual(today['src']['options']['k'], 0.65)
         self.assertEqual(today['src']['implied']['k'], 1.4)
         self.assertAlmostEqual(today['src']['options']['w'] + today['src']['markets']['w'] + today['src']['implied']['w'], 0.5, places=3)
-        self.assertAlmostEqual(today['q'][C.MED], 0.0)                 # centred at the price (the factors did not hold)
+        self.assertAlmostEqual(today['q'][C.MED], a['drift']['session'] * today['risk_sessions'], places=5)   # the price, the drift to the close (no factors)
+        meds = [t['q'][C.MED] for t in a['targets']]
+        self.assertEqual(meds, sorted(meds))                           # the median rises with the sessions ahead
+        self.assertAlmostEqual(meds[-1], a['drift']['session'] * a['targets'][-1]['risk_sessions'], delta=5e-5)   # (both rounded)
+        dr = a['drift']
+        self.assertTrue(min(dr['own'], C.DRIFT_PRIOR) <= dr['session'] <= max(dr['own'], C.DRIFT_PRIOR))   # between its own and the market's
         self.assertFalse(a['factors']['applied'])
         self.assertTrue(0 < today['p_prev'] < 0.5)                     # below yesterday's close now
         self.assertEqual(len(today['src']['markets']['ladders']), 1)    # the 8 am ladder is too old for today's close
@@ -241,6 +246,35 @@ class Asset(unittest.TestCase):
         q75 = float(np.interp(C.ND.inv_cdf(0.75), C.ZG, wk['q']))
         self.assertAlmostEqual(wk['hilo']['high'][C.MED], max(0.0, q75), places=5)    # the median high: the close's 75%
         json.dumps(a, allow_nan=False)
+
+
+    def test_after_the_close_the_last_close_is_today(self):
+        now = et(2026, 11, 10, 17, 5).astimezone(dt.timezone.utc)     # closed at 750 (752 the day before); futures −0.13%
+        feed = FakeFeed(now)
+        a = C.forecast_asset(C.ASSETS[0], feed, {}, now=now)
+        self.assertEqual((a['phase'], a['last_close'], a['start']), ('closed', 750.0, 749.025))
+        t0 = a['targets'][0]
+        self.assertEqual(t0['date'], '2026-11-11')
+        self.assertAlmostEqual(t0['p_prev'], 1 - C.cdf_at(t0['q'], math.log(750 / 749.025)), places=3)   # against today's 750, not 752
+        self.assertGreater(t0['p_prev'], 1 - C.cdf_at(t0['q'], math.log(752 / 749.025)) + 0.05)
+
+
+class Drift(unittest.TestCase):
+    def test_its_own_pulled_toward_the_market_by_its_noise(self):
+        self.assertEqual(C.drift([100.0] * 10), (C.DRIFT_PRIOR, None))                    # too short: the market's
+        rng = np.random.default_rng(5)
+        def path(sd):                                                 # +0.1% a session exactly, around noise of sd
+            e = rng.normal(0, sd, 2520)
+            return 100 * np.exp(np.cumsum(np.concatenate([[0.0], 0.001 + e - e.mean()])))
+        p1 = path(0.005)
+        calm, own = C.drift(p1)
+        wild, own2 = C.drift(path(0.04))
+        self.assertAlmostEqual(own, 0.001, places=9)
+        self.assertAlmostEqual(own2, 0.001, places=9)
+        v = np.diff(np.log(p1)).var()
+        self.assertAlmostEqual(calm, (0.0003 / 0.0005 ** 2 + 2520 * 0.001 / v) / (1 / 0.0005 ** 2 + 2520 / v), places=9)
+        self.assertTrue(own > calm > wild > C.DRIFT_PRIOR)            # a noisy history says less: nearer the market's
+        self.assertLess(wild - C.DRIFT_PRIOR, 0.3 * (own2 - C.DRIFT_PRIOR))
 
 
 class Ledger(unittest.TestCase):
