@@ -53,6 +53,20 @@ function cfCdf(q,y,zg){                                                     // P
  return cfN(cfLin(y,q,zg));
 }
 function cfRange(q,c,zg){return [cfQ(q,(1-c)/2,zg),cfQ(q,0.5,zg),cfQ(q,(1+c)/2,zg)]}
+/* the expected value of exp(X), X a log return given by its quantiles q at the normal scores zg: straight between them,
+   beyond the ends along the last step (a normal's tail); summed over z from −6 to 6 in steps of 0.01. ×start = the
+   expected close — the probability-weighted average, not the median: below it when the fall tail is the heavier, above
+   it when the spread is wide (a price can rise further than it can fall) */
+function cfMean(q,zg){
+ const n=zg.length;if(!q||q.length!==n||n<2)return null;
+ const s0=(q[1]-q[0])/((zg[1]-zg[0])||1),s1=(q[n-1]-q[n-2])/((zg[n-1]-zg[n-2])||1);
+ let s=0,w=0,i=1;
+ for(let k=-600;k<=600;k++){
+  const z=k/100;let x;
+  if(z<=zg[0])x=q[0]+(z-zg[0])*s0;else if(z>=zg[n-1])x=q[n-1]+(z-zg[n-1])*s1;
+  else{while(zg[i]<z)i++;const f=(z-zg[i-1])/((zg[i]-zg[i-1])||1);x=q[i-1]+f*(q[i]-q[i-1])}
+  const p=Math.exp(-z*z/2);s+=p*Math.exp(x);w+=p}
+ return s/w}
 /* the high and the low from now to a date's close (log returns from the start): its median and its range at c */
 function cfHL(t,c,zg){const h=t.hilo||{};return {hi:h.high?cfRange(h.high,c,zg):null,lo:h.low?cfRange(h.low,c,zg):null,so:h.so_far||null,how:h.method}}
 /* P(the price trades at x — at or above it when x is above now, at or below when under — before the date's close) */
@@ -205,7 +219,8 @@ function cfTodayChart(a,t,d,c,fz,u,W){
  const lo=s0*Math.exp(cfQ(t.q,(1-c)/2,zg)),hi=s0*Math.exp(cfQ(t.q,(1+c)/2,zg));
  const fr=fz&&fz.targets.find(x=>x.date===t.date);
  const fzr=fr?[cfLin(cfInvN((1-c)/2),cfZ(fz.pgrid),fr.px),cfLin(cfInvN(0.5),cfZ(fz.pgrid),fr.px),cfLin(cfInvN((1+c)/2),cfZ(fz.pgrid),fr.px)]:null;
- const ys=[lo,hi,s0,...path.map(p=>p[1])].concat(a.prev?[a.prev]:[]).concat(fzr||[]);
+ const em=cfMean(t.q,zg),ev=em!=null?s0*em:null;
+ const ys=[lo,hi,s0,...path.map(p=>p[1])].concat(ev!=null?[ev]:[]).concat(a.prev?[a.prev]:[]).concat(fzr||[]);
  let y0=Math.min(...ys),y1=Math.max(...ys);const pad=(y1-y0)*0.08||s0*0.002;y0-=pad;y1+=pad;
  const X=m=>L+m/390*(W-L-R),Y=v=>T+(1-(v-y0)/(y1-y0))*(H-T-B);
  let s=`<svg viewBox="0 0 ${W} ${H}" class="cf-svg" role="img" aria-label="Today's path and the forecast of the close">`;
@@ -218,6 +233,7 @@ function cfTodayChart(a,t,d,c,fz,u,W){
   return up.concat(dn.reverse()).join(' ')};
  s+=`<polygon points="${band(c)}" class="cf-band-o"/><polygon points="${band(Math.min(0.5,c))}" class="cf-band-i"/>`;
  s+=`<line x1="${X(nowX)}" x2="${X(390)}" y1="${Y(s0)}" y2="${Y(s0*Math.exp(cfQ(t.q,0.5,zg)))}" class="cf-med"/>`;
+ if(ev!=null){const ex=X(390),ey=Y(ev);s+=`<line x1="${X(nowX)}" x2="${ex}" y1="${Y(s0)}" y2="${ey}" class="cf-evl"/><path d="M${ex.toFixed(1)},${(ey-5).toFixed(1)}l5,5l-5,5l-5,-5z" class="cf-evd"/>`}
  if(fzr){const fx=X(390)+10;s+=`<line x1="${fx}" x2="${fx}" y1="${Y(fzr[0])}" y2="${Y(fzr[2])}" class="cf-fz"/><circle cx="${fx}" cy="${Y(fzr[1])}" r="3.5" class="cf-fzdot"/>${nar?'':`<text x="${fx+6}" y="${Y(fzr[1])+3}" class="cf-ax">frozen</text>`}`}
  if(path.length>1)s+=`<path d="${path.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join('')}" class="cf-path"/>`;
  if(open&&path.length)s+=`<circle cx="${X(nowX)}" cy="${Y(path[path.length-1][1])}" r="3.5" class="cf-now"/>`;
@@ -226,9 +242,9 @@ function cfTodayChart(a,t,d,c,fz,u,W){
 }
 function cfHorizonChart(a,d,c,fz,u,sel,W){
  const zg=cfZ(d.pgrid),nar=W/Math.max(1,a.targets.length)<90,H=nar?230:270,L=nar?44:52,R=nar?8:20,T=14,B=46,ts=a.targets,n=ts.length;if(!n)return '';
- const s0=a.start||a.price,rows=ts.map(t=>{const r=cfRange(t.q,c,zg),i50=cfRange(t.q,0.5,zg);return {t,lo:s0*Math.exp(r[0]),md:s0*Math.exp(r[1]),hi:s0*Math.exp(r[2]),l5:s0*Math.exp(i50[0]),h5:s0*Math.exp(i50[2])}});
+ const s0=a.start||a.price,rows=ts.map(t=>{const r=cfRange(t.q,c,zg),i50=cfRange(t.q,0.5,zg),m=cfMean(t.q,zg);return {t,lo:s0*Math.exp(r[0]),md:s0*Math.exp(r[1]),hi:s0*Math.exp(r[2]),l5:s0*Math.exp(i50[0]),h5:s0*Math.exp(i50[2]),ev:m!=null?s0*m:null}});
  const fzz=fz?ts.map(t=>{const f=fz.targets.find(x=>x.date===t.date);if(!f)return null;const zf=cfZ(fz.pgrid);return [cfLin(cfInvN((1-c)/2),zf,f.px),cfLin(0,zf,f.px),cfLin(cfInvN((1+c)/2),zf,f.px)]}):[];
- const ys=rows.flatMap(r=>[r.lo,r.hi]).concat([s0]).concat(fzz.filter(Boolean).flat());
+ const ys=rows.flatMap(r=>[r.lo,r.hi]).concat([s0]).concat(rows.map(r=>r.ev).filter(v=>v!=null)).concat(fzz.filter(Boolean).flat());
  let y0=Math.min(...ys),y1=Math.max(...ys);const pad=(y1-y0)*0.06;y0-=pad;y1+=pad;
  const X=i=>L+(i+0.5)/n*(W-L-R),Y=v=>T+(1-(v-y0)/(y1-y0))*(H-T-B),bw=Math.min(46,(W-L-R)/n*0.42);
  let s=`<svg viewBox="0 0 ${W} ${H}" class="cf-svg" role="img" aria-label="The range forecast for each date">`;
@@ -247,6 +263,9 @@ function cfHorizonChart(a,d,c,fz,u,sel,W){
   const sub=nar?r.t.tags.filter(x=>x!=='first').map(x=>short[x]||x).join('·'):lab.tags.replace('options expiry','expiry');
   s+=`<text x="${x}" y="${H-B+14}" text-anchor="middle" class="cf-ax">${esc(top)}</text><text x="${x}" y="${H-B+27}" text-anchor="middle" class="cf-ax cf-ax2">${esc(sub)}</text></g>`;
  });
+ const ev=rows.map((r,i)=>r.ev!=null?[X(i),Y(r.ev)]:null).filter(Boolean);
+ if(ev.length){s+=`<polyline points="${[[L,Y(s0)]].concat(ev).map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" class="cf-evl"/>`;
+  ev.forEach(([x,y])=>{s+=`<path d="M${x.toFixed(1)},${(y-5).toFixed(1)}l5,5l-5,5l-5,-5z" class="cf-evd"/>`})}
  return s+'</svg>';
 }
 function cfSrcChart(t,a,d,c,u,Wa){
@@ -303,6 +322,9 @@ function cfCss(){
 .cf-box{fill:var(--slate);opacity:.45}
 .cf-fz{stroke:var(--warn-ink);stroke-width:2.5;stroke-dasharray:3 2}
 .cf-fzdot{fill:var(--warn-ink)}
+.cf-evl{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-dasharray:2 3;pointer-events:none}
+.cf-evd{fill:var(--accent);stroke:var(--surface);stroke-width:1.5;pointer-events:none}
+.cf-evk,.cf-kv span.cf-evk{color:var(--accent)}
 .cf-hbar{cursor:pointer;outline:none}.cf-hbar .cf-hit{fill:transparent}.cf-hbar.on .cf-hit,.cf-hbar:hover .cf-hit,.cf-hbar:focus .cf-hit{fill:var(--slate-soft);opacity:.7}
 .cf-tbl td,.cf-tbl th{white-space:nowrap}
 .cf-tbl tr.on td{background:var(--slate-soft)}
@@ -358,10 +380,10 @@ function cfBody(d){
  if(cfStore.flash)out+=`<p class="cf-flash" role="status">${esc(cfStore.flash)}</p>`;
  // today's close (or the next one)
  const left=d.phase==='open'&&t0.lead_h!=null?(t0.lead_h>=1?fmt(Math.floor(t0.lead_h))+' h '+fmt(Math.round((t0.lead_h%1)*60))+' min':fmt(Math.round(t0.lead_h*60))+' min')+' to the close':'';
- const mv=a.prev?a.price/a.prev-1:null,lc=cfLast(d,a);
+ const mv=a.prev?a.price/a.prev-1:null,lc=cfLast(d,a),em0=cfMean(t0.q,zg),ev0=em0!=null?s0*em0:null;
  out+=`<div class="cf-hero"><div><h3>${esc(lab0.name)}${lab0.tags?`<span class="cf-tag">${esc(lab0.tags)}</span>`:''}</h3>`
   +`<div class="cf-big">${cfPx(s0*Math.exp(r0[1]),u)} <small class="muted" style="font-size:.8rem;font-weight:400">median</small></div><div class="cf-rng">${fmt(c*100)}% range <b>${cfPx(s0*Math.exp(r0[0]),u)} – ${cfPx(s0*Math.exp(r0[2]),u)}</b> <span class="muted">(${cfSign(Math.exp(r0[0])-1)} / ${cfSign(Math.exp(r0[2])-1)})</span></div>`
-  +`<div class="cf-kv"><span>Now</span><span>${cfPx(a.price,u)} ${mv!=null?`<span class="${mv>=0?'positive':'negative'}">${cfSign(mv)}</span>`:''} · ${esc(cfTime(a.time))}</span>`
+  +`<div class="cf-kv">${ev0!=null?`<span>Expected value <span class="cf-evk" aria-hidden="true">◆</span></span><span><b>${cfPx(ev0,u)}</b> <span class="muted">(${cfSign(ev0/(s0*Math.exp(r0[1]))-1)} from the median)</span></span>`:''}<span>Now</span><span>${cfPx(a.price,u)} ${mv!=null?`<span class="${mv>=0?'positive':'negative'}">${cfSign(mv)}</span>`:''} · ${esc(cfTime(a.time))}</span>`
   +(left?`<span>Left</span><span>${left}</span>`:'')
   +(a.start&&Math.abs(a.start/a.price-1)>1e-6?`<span>Starts at</span><span>${cfPx(a.start,u)} <span class="muted">(the ${esc((a.futures||{}).symbol||'future')}'s move since the close)</span></span>`:'')
   +(lc?`<span>Closes above the last close</span><span><b>${cfPc(1-cfCdf(t0.q,Math.log(lc/s0),zg))}</b> <span class="muted">(${cfPx(lc,u)})</span></span>`:'')
@@ -374,9 +396,9 @@ function cfBody(d){
   +(fz?cfFzLine(t0,fz,c,u,s0,zg):'')
   +`</div></div><div>${cfTodayChart(a,t0,d,c,fz,u,wHero)}</div></div>`;
  // every date
- out+=`<h3>Every date <span class="muted" style="font-weight:400;font-size:.85rem">· the ${fmt(c*100)}% range (whisker), the middle half (box) and the median · tap a date for its sources</span></h3>`;
+ out+=`<h3>Every date <span class="muted" style="font-weight:400;font-size:.85rem">· the ${fmt(c*100)}% range (whisker), the middle half (box), the median (—) and the expected value (<span class="cf-evk">◆</span>) · tap a date for its sources</span></h3>`;
  out+=cfHorizonChart(a,d,c,fz,u,sel.date,W);
- const hdr=['Date','Sessions','Median',`${fmt(c*100)}% range`,'Half the range',`Above the last close${lc?' ('+cfPx(lc,u)+')':''}`,'High by then','Low by then'].concat(X!=null?[`Closes above ${cfPx(X,u)}`,`Trades at ${cfPx(X,u)}`]:[]).concat(fz?['Frozen median',`Frozen ${fmt(c*100)}%`,'Shift']:[]).concat(['Close']);
+ const hdr=['Date','Sessions','Median','Expected',`${fmt(c*100)}% range`,'Half the range',`Above the last close${lc?' ('+cfPx(lc,u)+')':''}`,'High by then','Low by then'].concat(X!=null?[`Closes above ${cfPx(X,u)}`,`Trades at ${cfPx(X,u)}`]:[]).concat(fz?['Frozen median',`Frozen ${fmt(c*100)}%`,'Shift']:[]).concat(['Close']);
  const closes=((cfCloses().data||{})[a.key])||{};
  out+=`<div class="tablebox"><table class="cf-tbl"><thead><tr>${hdr.map((h,i)=>`<th class="${i?'num':''}">${esc(h)}</th>`).join('')}</tr></thead><tbody>`;
  for(const t of ts){
@@ -388,7 +410,7 @@ function cfBody(d){
   if(y){const pf=f?(()=>{const zf=cfZ(fz.pgrid);const lo=cfLin(cfInvN((1-c)/2),zf,f.px),hi=cfLin(cfInvN((1+c)/2),zf,f.px);return y>=lo&&y<=hi?' <span class="cf-in">inside the frozen range</span>':' <span class="cf-out">outside the frozen range</span>'})():'';cl=cfPx(y,u)+pf}
   out+=`<tr data-cft="${t.date}" class="${t.date===sel.date?'on':''}"><td><b>${esc(lab.name)}</b>${lab.tags?`<span class="cf-tag">${esc(lab.tags)}</span>`:''}</td>`
    +`<td class="num">${t.sessions===0?(d.phase==='open'?fmt((t.risk_sessions||0)*100)+'% of today':'1'):fmt(t.sessions+(d.phase==='open'?0:1))}</td>`
-   +`<td class="num">${cfPx(s0*Math.exp(r[1]),u)}</td><td class="num">${cfPx(s0*Math.exp(r[0]),u)} – ${cfPx(s0*Math.exp(r[2]),u)}</td>`
+   +`<td class="num">${cfPx(s0*Math.exp(r[1]),u)}</td><td class="num">${(()=>{const m=cfMean(t.q,zg);return m!=null?cfPx(s0*m,u):'—'})()}</td><td class="num">${cfPx(s0*Math.exp(r[0]),u)} – ${cfPx(s0*Math.exp(r[2]),u)}</td>`
    +`<td class="num">±${fmt((Math.exp(r[2])-Math.exp(r[0]))/2*100,2)}%</td><td class="num">${lc?cfPc(1-cfCdf(t.q,Math.log(lc/s0),zg)):'—'}</td>`
    +(()=>{const hl=cfHL(t,c,zg);return `<td class="num" title="${fmt(c*100)}%: ${hl.hi?cfPx(s0*Math.exp(hl.hi[0]),u)+' – '+cfPx(s0*Math.exp(hl.hi[2]),u):''}">${hl.hi?cfPx(s0*Math.exp(hl.hi[1]),u):'—'}</td><td class="num" title="${fmt(c*100)}%: ${hl.lo?cfPx(s0*Math.exp(hl.lo[0]),u)+' – '+cfPx(s0*Math.exp(hl.lo[2]),u):''}">${hl.lo?cfPx(s0*Math.exp(hl.lo[1]),u):'—'}</td>`})()
    +(X!=null?`<td class="num"><b>${cfPc(1-cfCdf(t.q,Math.log(X/s0),zg))}</b></td><td class="num">${(()=>{const tc=cfTouch(t,X,s0,zg);return tc?(tc.done?'already':cfPc(tc.p)):'—'})()}</td>`:'')
@@ -482,7 +504,7 @@ function cfMethod(a,d){
  const cal=a.calibration||{},ia=cal.intraday_analogs,ii=cal.intraday_implied;
  const marks=['9:30','10:30','11:30','12:30','1:30','2:30','3:30'];
  let h='<details class="cf-note" style="margin-top:12px"><summary><b>How it is made, and how each source was scaled</b></summary>';
- h+='<p>Each source gives a distribution of the close; each is scaled around its own median by the factor (×) that made its 50, 80 and 95% ranges hold closest to 50, 80 and 95% of the time on its record: the intraday analogs and the 1-day implied volatility on two to three years of hourly bars, the daily analogs, the simulation and the volatility indices on ten years of daily closes (recomputed every day), the options and the prediction markets on every resolved price ladder (the ladder backtest). Then they are pooled. The median starts at the price now and rises by the asset\'s drift: its own mean daily move over ten years, pulled toward the market\'s long-run 0.03% a session, the more so the noisier it is. Left at the price now, the median was too low: from 2019 to 2026 the close ended above it 58% of the time two weeks on and 64% seven weeks on; above the drifted one 54% and 56%, and nearer on average (not in a falling year like 2022). The markets\' own expected value is not used: on every resolved ladder the price now was nearer the close. Risk-neutral sources (options, volatility indices) carry the market\'s price of risk: their ranges usually come out wide, and the scale narrows them.</p>';
+ h+='<p>Each source gives a distribution of the close; each is scaled around its own median by the factor (×) that made its 50, 80 and 95% ranges hold closest to 50, 80 and 95% of the time on its record: the intraday analogs and the 1-day implied volatility on two to three years of hourly bars, the daily analogs, the simulation and the volatility indices on ten years of daily closes (recomputed every day), the options and the prediction markets on every resolved price ladder (the ladder backtest). Then they are pooled. The median starts at the price now and rises by the asset\'s drift: its own mean daily move over ten years, pulled toward the market\'s long-run 0.03% a session, the more so the noisier it is. Left at the price now, the median was too low: from 2019 to 2026 the close ended above it 58% of the time two weeks on and 64% seven weeks on; above the drifted one 54% and 56%, and nearer on average (not in a falling year like 2022). The markets\' own expected value is not used: on every resolved ladder the price now was nearer the close. The expected value (◆) is the probability-weighted average of the close over the pooled distribution (its tails continued as a normal\'s), not the median: it sits below the median when the fall tail is the heavier one (index options price crashes), above it when the spread is wide (a volatile stock months out), since a price can rise further than it can fall. Risk-neutral sources (options, volatility indices) carry the market\'s price of risk: their ranges usually come out wide, and the scale narrows them.</p>';
  if(ia||ii)h+=`<p>Today's close, by hour — scale (80% range held before → after): ${marks.map((m,i)=>`${m}: ${ia&&ia[i]?`analogs ×${fmt(ia[i].k,2)} (${pct(ia[i].raw['0.8'],0)}→${pct(ia[i].fit['0.8'],0)})`:''}${ii&&ii[i]?` · implied ×${fmt(ii[i].k,2)} (${pct(ii[i].raw['0.8'],0)}→${pct(ii[i].fit['0.8'],0)})`:''}`).join('; ')}.</p>`;
  for(const [k,l] of [['daily_analogs','Daily analogs'],['daily_sim','Simulation'],['daily_implied','Volatility indices']]){const v=cal[k];if(v)h+=`<p>${l} — ${Object.entries(v).map(([n,x])=>`${n} session${n==='1'?'':'s'}: ×${fmt(x.k,2)} (${pct(x.raw['0.8'],0)}→${pct(x.fit['0.8'],0)}, ${fmt(x.n)} forecasts)`).join('; ')}.</p>`}
  if(cal.factors_r2)h+=`<p>Factors (move so far, gap to VWAP, first hour → move to the close), out-of-sample R² by hour: ${cal.factors_r2.map((x,i)=>x==null?null:`${marks[i]} ${fmt(x*100,2)}%`).filter(Boolean).join(', ')} — applied only above 0.5%.</p>`;
@@ -539,5 +561,5 @@ if(typeof window!=='undefined'){
  window.HUB_VIEWS=Object.assign(window.HUB_VIEWS||{},{forecast:cfView});
  window.HUB_BINDS=Object.assign(window.HUB_BINDS||{},{forecast:cfBind});
 }
-if(typeof module!=="undefined")module.exports={cfInvN,cfN,cfQ,cfCdf,cfRange,cfZ,cfLin,cfTargetLabel,cfBody,cfStore,cfFreezeNow,cfMine,cfAll,cfAccount,cfDrop,cfMoveHere,CF_ACCT};
+if(typeof module!=="undefined")module.exports={cfInvN,cfN,cfQ,cfCdf,cfRange,cfMean,cfZ,cfLin,cfTargetLabel,cfBody,cfStore,cfFreezeNow,cfMine,cfAll,cfAccount,cfDrop,cfMoveHere,CF_ACCT};
 })();

@@ -33,6 +33,9 @@ near(r80[2], 0.012816, 2e-5, '80% high');
 near(r95[0], -0.0196, 2e-5, '95% low');
 near(r60[2], 0.01 * V.cfInvN(0.8), 2e-4, '60% high (between the grid points)');
 near(V.cfQ(q, 0.5, zg), 0, 1e-12, 'median');
+// the expected value: of a normal log return (μ 1%, σ 10%) exp(μ + σ²/2) — above the median exp(μ); a heavier fall tail pulls it under
+near(V.cfMean(zg.map((z) => 0.01 + 0.1 * z), zg), Math.exp(0.01 + 0.005), 2e-4, 'the mean of a lognormal');
+ok(V.cfMean(zg.map((z) => 0.01 * z + (z < 0 ? 0.01 * z : 0)), zg) < 1, 'skewed to the downside: the mean under the median');
 near(1 - V.cfCdf(q, 0.01, zg), 0.1587, 2e-3, 'P(above +1 sd)');
 ok(V.cfCdf(q, -1, zg) < 0.01 && V.cfCdf(q, 1, zg) > 0.99, 'beyond the grid: the tails');
 
@@ -45,6 +48,7 @@ for (const k of ['SPY', 'AAPL']) {
   ok(!/NaN|undefined|Infinity/.test(html), `${k}: no broken numbers`);
   ok((html.match(/data-cft="/g) || []).length >= 2 * d.assets[k].targets.length, `${k}: every date in the chart and the table`);
   ok(html.includes('Sources ·'), `${k}: the sources`);
+  ok(html.includes('Expected value') && html.includes('<th class="num">Expected</th>') && (html.match(/class="cf-evd"/g) || []).length >= d.assets[k].targets.length + 1, `${k}: the expected value in the hero, the table and on both charts`);
 }
 // another confidence moves the range; a price gives its probability
 state.cfa = 'SPY'; state.cfc = 95; state.cfx = String(Math.round(d.assets.SPY.price));
