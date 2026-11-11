@@ -88,21 +88,90 @@ function cfRefresh(){
  if(!body&&typeof render==='function')render();
 }
 
-/* freezes of your own (this browser) */
+/* freezes of your own: in your account (Supabase forecast_freezes — every device you sign in on has them) when this
+   browser holds a session of the site's sign-in (Alerts, e-mail only; the same origin), else in this browser */
+const CF_ACCT={state:'unknown',client:null,user:null,rows:null,err:null};      // unknown | none | loading | on | off
+const CF_JS=['cdn.jsdelivr.net/npm','fastly.jsdelivr.net/npm','unpkg.com'].map(h=>`https://${h}/@supabase/supabase-js@2.58.0/dist/umd/supabase.js`);
+/* the site's sign-in as kept in this browser ('' when signed out): a change (signed in on #account, signed out, the token
+   renewed) reads the account again; a check is never repeated for the same sign-in */
+function cfSig(){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i)||'';if(/^sb-.+-auth-token$/.test(k))return k+'='+(localStorage.getItem(k)||'')}}catch(e){}return ''}
+const cfTimed=(u,o={})=>{const ab=new AbortController(),t=setTimeout(()=>ab.abort(),20000);
+ if(o.signal){if(o.signal.aborted)ab.abort();else o.signal.addEventListener('abort',()=>ab.abort(),{once:true})}
+ return fetch(u,Object.assign({},o,{signal:ab.signal})).finally(()=>clearTimeout(t))};
+function cfLoadJs(src){return new Promise((res,rej)=>{const el=document.createElement('script');const t=setTimeout(()=>{el.remove();rej(Error('timeout'))},6000);
+ el.src=src;el.onload=()=>{clearTimeout(t);res()};el.onerror=()=>{clearTimeout(t);el.remove();rej(Error('blocked'))};document.head.appendChild(el)})}
+const cfDbErr=e=>/relation|does not exist|schema cache|column|policy/i.test((e&&e.message)||'')?'the site owner has to update the database first (run supabase/schema.sql again)':((e&&e.message)||'the account could not be reached');
+function cfAccount(){
+ const fake=typeof window!=='undefined'&&window.FF_SUPABASE;                  // injected by tests
+ if(!fake&&CF_ACCT.state!=='unknown'&&CF_ACCT.state!=='loading'&&cfSig()!==CF_ACCT.sig)Object.assign(CF_ACCT,{state:'unknown',client:null,user:null,rows:null,err:null});
+ if(CF_ACCT.state!=='unknown')return CF_ACCT;
+ CF_ACCT.sig=fake?'':cfSig();
+ if(!fake&&(!CF_ACCT.sig||typeof fetch!=='function')){CF_ACCT.state='none';return CF_ACCT}
+ CF_ACCT.state='loading';
+ CF_ACCT.ready=(async()=>{
+  try{
+   let c=fake||(typeof XPOST!=='undefined'&&XPOST.client)||(typeof window!=='undefined'&&window.FF_HUB_SUPA)||null;
+   if(!c){
+    const site=await cfTimed((globalThis.FF_SITE_ROOT??'../')+'data/site.json').then(r=>r.ok?r.json():{});
+    if(!site.supabase_url||!site.supabase_key)throw Error('no sign-in on this site');
+    for(const src of CF_JS){if(window.supabase&&window.supabase.createClient)break;await cfLoadJs(src).catch(()=>{})}
+    const lib=window.supabase;if(!lib||!lib.createClient)throw Error('the sign-in library did not load');
+    c=window.FF_HUB_SUPA=lib.createClient(site.supabase_url,site.supabase_key,{auth:lib.processLock?{lock:lib.processLock}:{},global:{fetch:cfTimed}});
+   }
+   const s=await c.auth.getSession(),user=s&&s.data&&s.data.session&&s.data.session.user;
+   if(!user){CF_ACCT.state='none';return}
+   CF_ACCT.client=c;CF_ACCT.user=user;
+   const r=await c.from('forecast_freezes').select('id,asset,frozen_at,payload').order('created_at',{ascending:false}).limit(500);
+   if(r.error){CF_ACCT.state='off';CF_ACCT.err=cfDbErr(r.error);return}
+   CF_ACCT.rows=(r.data||[]).map(x=>Object.assign({},x.payload||{},{id:'a'+x.id,dbid:x.id,at:x.frozen_at,asset:x.asset,where:'account'}));
+   CF_ACCT.state='on';
+  }catch(e){CF_ACCT.state='off';CF_ACCT.err=e.message||String(e)}
+  finally{cfRefresh()}
+ })();
+ return CF_ACCT;
+}
 function cfMine(){try{const v=JSON.parse(localStorage.getItem(CF_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return cfMem}}
 function cfKeep(list){list=list.slice(-120);try{localStorage.setItem(CF_KEY,JSON.stringify(list))}catch(e){cfMem=list}}
-function cfFreezeNow(d,a){
- const list=cfMine();
- list.push({id:'u'+Date.now(),saved:new Date().toISOString(),at:d.generated_at,asset:a.key,start:a.start,prev:a.prev,price:a.price,pgrid:d.pgrid,
-  targets:a.targets.map(t=>({date:t.date,tags:t.tags,q:t.q}))});
- cfKeep(list);return list[list.length-1].id;
+/* every freeze of yours, the account's and this browser's, newest first */
+function cfAll(){
+ const acc=CF_ACCT.state==='on'?(CF_ACCT.rows||[]):[];
+ return acc.concat(cfMine().map(f=>Object.assign({where:'browser'},f))).sort((x,y)=>String(y.at).localeCompare(String(x.at)));
 }
-function cfDrop(id){cfKeep(cfMine().filter(f=>f.id!==id))}
+const cfShape=(d,a)=>({at:d.generated_at,asset:a.key,start:a.start,prev:a.prev,price:a.price,pgrid:d.pgrid,targets:a.targets.map(t=>({date:t.date,tags:t.tags,q:t.q}))});
+function cfKeepHere(f){const list=cfMine(),row=Object.assign({id:'u'+Date.now()+Math.floor(Math.random()*1000),saved:new Date().toISOString()},f);list.push(row);cfKeep(list);return row.id}
+async function cfToAccount(f){
+ const {at,asset,...payload}=f;delete payload.id;delete payload.saved;delete payload.where;
+ let r;try{r=await CF_ACCT.client.from('forecast_freezes').insert({asset,frozen_at:at,payload}).select('id').single()}catch(e){r={error:e}}
+ if(r.error||!r.data)return {why:cfDbErr(r.error)};
+ const row=Object.assign({},payload,{id:'a'+r.data.id,dbid:r.data.id,at,asset,where:'account'});
+ CF_ACCT.rows=[row].concat(CF_ACCT.rows||[]);return {id:row.id};
+}
+/* freeze the forecast now: into the account when signed in (else, or when that fails, this browser) — {id, where, why} */
+async function cfFreezeNow(d,a){
+ const f=cfShape(d,a);
+ if(CF_ACCT.state==='on'){const r=await cfToAccount(f);if(r.id)return {id:r.id,where:'account'};return {id:cfKeepHere(f),where:'browser',why:r.why}}
+ return {id:cfKeepHere(f),where:'browser'};
+}
+async function cfDrop(id){
+ if(id.startsWith('a')&&CF_ACCT.state==='on'){
+  const f=(CF_ACCT.rows||[]).find(x=>x.id===id);if(!f)return;
+  let r;try{r=await CF_ACCT.client.from('forecast_freezes').delete().eq('id',f.dbid)}catch(e){r={error:e}}
+  if(r.error){cfStore.flash='The freeze could not be deleted: '+cfDbErr(r.error);return}
+  CF_ACCT.rows=CF_ACCT.rows.filter(x=>x.id!==id);return;
+ }
+ cfKeep(cfMine().filter(f=>f.id!==id));
+}
+/* this browser's freezes into the account (each kept here until the account has it) */
+async function cfMoveHere(){
+ let moved=0,why='';
+ for(const f of cfMine()){const r=await cfToAccount(f);if(r.id){moved++;cfKeep(cfMine().filter(x=>x.id!==f.id))}else{why=r.why;break}}
+ return {moved,why};
+}
 /* the comparison: one of your freezes or an official one, as {label, at, targets: [{date, px: price quantiles}]} */
 function cfFrozen(key,d){
  const id=state.cfcmp||'';if(!id)return null;
- if(id.startsWith('u')){
-  const f=cfMine().find(x=>x.id===id&&x.asset===key);if(!f)return null;
+ if(id.startsWith('u')||id.startsWith('a')){
+  const f=cfAll().find(x=>x.id===id&&x.asset===key);if(!f||!f.targets)return null;
   return {label:'Your freeze',at:f.at,start:f.start,targets:f.targets.map(t=>({date:t.date,tags:t.tags,px:t.q.map(v=>f.start*Math.exp(v))})),pgrid:f.pgrid||d.pgrid};
  }
  const r=cfRecord().data;if(!r)return null;
@@ -262,16 +331,16 @@ function cfView(){
  const d=g.data,keys=cfAssetPick(d),a=d.assets[state.cfa];
  if(state.cfc==null)state.cfc=80;
  const ixu=a&&a.index&&a.index.ratio;
- const mine=cfMine().filter(f=>f.asset===state.cfa).slice().reverse();
+ const A=cfAccount(),mine=cfAll().filter(f=>f.asset===state.cfa);
  const off=((cfRecord().data||{}).latest||[]).filter(f=>f.assets&&f.assets[state.cfa]).slice().reverse();
- const cmp=[['','Nothing']].concat(mine.map(f=>[f.id,'Your freeze · '+cfTime(f.at)])).concat(off.map(f=>['o'+f.slot,'Official · '+f.slot.replace(/^\d{4}-/,'')]));
+ const cmp=[['','Nothing']].concat(mine.map(f=>[f.id,'Your freeze · '+cfTime(f.at)+(A.state==='on'&&f.where==='browser'?' (this browser)':'')])).concat(off.map(f=>['o'+f.slot,'Official · '+f.slot.replace(/^\d{4}-/,'')]));
  if(state.cfcmp&&!cmp.some(x=>x[0]===state.cfcmp))state.cfcmp='';
  out+=`<div class="cf-tools">${field('cf-a','Asset',keys.map(k=>[k,d.assets[k].name]),state.cfa)}`
   +`<div class="cf-conf"><label for="cf-c">Confidence: <b id="cf-cv">${state.cfc}%</b> of closes inside the range</label><input id="cf-c" type="range" min="50" max="99" step="1" value="${state.cfc}" aria-label="Confidence level"></div>`
   +(ixu?field('cf-u','Units',[['etf',a.key+' price'],['index',a.index.name+' points']],state.cfu==='index'?'index':'etf'):'')
   +`<div class="field"><label for="cf-x">P(close above)</label><input id="cf-x" class="cf-x" type="number" step="any" inputmode="decimal" placeholder="a price" value="${state.cfx==null?'':esc(state.cfx)}"></div>`
   +field('cf-cmp','Compare with',cmp,state.cfcmp||'')
-  +`<div class="field"><label>&nbsp;</label><button type="button" class="cf-btn pri" id="cf-freeze" title="Keep this forecast in this browser">Freeze now</button></div></div>`;
+  +`<div class="field"><label>&nbsp;</label><button type="button" class="cf-btn pri" id="cf-freeze" title="${A.state==='on'?'Keep this forecast in your account (every device you sign in on)':'Keep this forecast in this browser'}">Freeze now</button></div></div>`;
  return out+`<div id="cf-body">${cfBody(d)}</div>`;
 }
 function cfBody(d){
@@ -380,18 +449,21 @@ function cfRegimeCard(a,u){
  return h+`<span class="muted">Move odds → Highs, lows &amp; ranges; descriptive history.</span></div>`;
 }
 function cfFreezes(a,d,u,c){
- const mine=cfMine().filter(f=>f.asset===a.key).slice().reverse();
+ const A=cfAccount(),mine=cfAll().filter(f=>f.asset===a.key),here=cfMine().length;
+ const signin=`<a href="${esc((globalThis.FF_SITE_ROOT??'../')+'#account')}">sign in</a>`;
+ const where=A.state==='on'?`Kept in your account: every device you sign in on has them.${here?` <button type="button" class="cf-btn" id="cf-move">Move ${here===1?'1 freeze':fmt(here)+' freezes'} from this browser to your account</button>`:''}`
+  :A.state==='loading'?'Reading your account\'s freezes…'
+  :A.state==='off'?`Your account's freezes could not be read (${esc(A.err||'')}): these are kept in this browser meanwhile.`
+  :`Kept in this browser only; ${signin} (Alerts, e-mail only, no password) to keep them in your account and see them on every device.`;
  let h=`<h3>Your freezes · ${esc(a.key)}</h3>`;
- if(!mine.length)return h+`<p class="cf-note">None yet. <b>Freeze now</b> keeps this forecast, every date, in this browser; then pick it under <b>Compare with</b> to see how the live forecast has moved and, once a date has closed, where the close fell in the frozen range.</p>`;
- const zg=cfZ(d.pgrid);
- h+=`<div class="tablebox"><table class="cf-tbl"><thead><tr><th>Frozen</th><th class="num">Price then</th><th class="num">First date</th><th class="num">Its ${fmt(c*100)}% range</th><th></th></tr></thead><tbody>`;
- for(const f of mine.slice(0,12)){
-  const t=f.targets[0];const r=t?cfRange(t.q,c,cfZ(f.pgrid||d.pgrid)):null;
+ if(!mine.length)return h+`<p class="cf-note">None yet. <b>Freeze now</b> keeps this forecast, every date; then pick it under <b>Compare with</b> to see how the live forecast has moved and, once a date has closed, where the close fell in the frozen range. ${where}</p>`;
+ h+=`<div class="tablebox"><table class="cf-tbl"><thead><tr><th>Frozen</th><th class="num">Price then</th><th class="num">First date</th><th class="num">Its ${fmt(c*100)}% range</th><th>Kept</th><th></th></tr></thead><tbody>`;
+ for(const f of mine.slice(0,20)){
+  const t=(f.targets||[])[0];const r=t?cfRange(t.q,c,cfZ(f.pgrid||d.pgrid)):null;
   h+=`<tr><td>${esc(cfTime(f.at))}</td><td class="num">${cfPx(f.price||f.start,u)}</td><td class="num">${t?esc(cfDay(t.date)):'—'}</td><td class="num">${r?`${cfPx(f.start*Math.exp(r[0]),u)} – ${cfPx(f.start*Math.exp(r[2]),u)}`:'—'}</td>`
-   +`<td><button type="button" class="cf-btn" data-cfuse="${esc(f.id)}">Compare</button> <button type="button" class="cf-btn" data-cfdel="${esc(f.id)}" aria-label="Delete this freeze">Delete</button></td></tr>`;
+   +`<td>${f.where==='account'?'your account':'this browser'}</td><td><button type="button" class="cf-btn" data-cfuse="${esc(f.id)}">Compare</button> <button type="button" class="cf-btn" data-cfdel="${esc(f.id)}" aria-label="Delete this freeze">Delete</button></td></tr>`;
  }
- void zg;
- return h+`</tbody></table></div><p class="cf-note">Kept in this browser only (another device or a cleared browser will not have them).</p>`;
+ return h+`</tbody></table></div><p class="cf-note">${where}</p>`;
 }
 function cfRecordView(a){
  const r=cfRecord();
@@ -425,7 +497,9 @@ function cfBindBody(){
   const go=()=>{state.cft=el.dataset.cft;cfPaint()};
   el.onclick=go;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}};
  });
- document.querySelectorAll('#cf-body [data-cfdel]').forEach(b=>b.onclick=()=>{cfDrop(b.dataset.cfdel);if(state.cfcmp===b.dataset.cfdel)state.cfcmp='';render()});
+ document.querySelectorAll('#cf-body [data-cfdel]').forEach(b=>b.onclick=async()=>{b.disabled=true;await cfDrop(b.dataset.cfdel);if(state.cfcmp===b.dataset.cfdel)state.cfcmp='';render()});
+ const mv=document.getElementById('cf-move');
+ if(mv)mv.onclick=async()=>{mv.disabled=true;const r=await cfMoveHere();cfStore.flash=r.moved?`Moved ${r.moved} freeze${r.moved>1?'s':''} to your account.`+(r.why?` The rest stay here: ${r.why}.`:''):`Nothing moved: ${r.why}.`;render()};
  document.querySelectorAll('#cf-body [data-cfuse]').forEach(b=>b.onclick=()=>{state.cfcmp=b.dataset.cfuse;render()});
 }
 let cfTimer=null;
@@ -437,8 +511,13 @@ function cfBind(){
  if($('cf-c'))$('cf-c').oninput=e=>{state.cfc=+e.target.value;cfPaint()};
  if($('cf-x'))$('cf-x').oninput=e=>{const v=e.target.value.trim();clearTimeout(cfStore.xt);cfStore.xt=setTimeout(()=>{state.cfx=v===''?null:v;cfPaint()},250)};
  if($('cf-cmp'))$('cf-cmp').onchange=e=>{state.cfcmp=e.target.value;cfPaint()};
- if($('cf-freeze'))$('cf-freeze').onclick=()=>{const d=cfStore.fc.data,a=d.assets[state.cfa];if(!a)return;state.cfcmp=cfFreezeNow(d,a);
-  cfStore.flash=`Frozen: ${a.key} as of ${cfTime(d.generated_at)} — now set against the live forecast (Compare with).`;render()};
+ if($('cf-freeze'))$('cf-freeze').onclick=async e=>{const d=cfStore.fc.data,a=d.assets[state.cfa];if(!a)return;e.target.disabled=true;
+  try{
+   if(CF_ACCT.state==='loading'&&CF_ACCT.ready)await CF_ACCT.ready;
+   const r=await cfFreezeNow(d,a);state.cfcmp=r.id;
+   cfStore.flash=`Frozen: ${a.key} as of ${cfTime(d.generated_at)}, kept in ${r.where==='account'?'your account':'this browser'}${r.why?` (${r.why})`:''} — now set against the live forecast (Compare with).`;
+  }catch(err){cfStore.flash='Not frozen: '+((err&&err.message)||err)}
+  finally{render()}};
  cfBindBody();
  if(!cfTimer){cfTimer=setInterval(()=>{if(state.tab==='forecast'&&document.visibilityState!=='hidden'){cfData();cfCloses();cfRecord()}},60000);
   let rz=null;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(state.tab==='forecast')cfPaint()},200)})}
@@ -458,5 +537,5 @@ if(typeof window!=='undefined'){
  window.HUB_VIEWS=Object.assign(window.HUB_VIEWS||{},{forecast:cfView});
  window.HUB_BINDS=Object.assign(window.HUB_BINDS||{},{forecast:cfBind});
 }
-if(typeof module!=="undefined")module.exports={cfInvN,cfN,cfQ,cfCdf,cfRange,cfZ,cfLin,cfTargetLabel,cfBody,cfStore,cfFreezeNow,cfMine};
+if(typeof module!=="undefined")module.exports={cfInvN,cfN,cfQ,cfCdf,cfRange,cfZ,cfLin,cfTargetLabel,cfBody,cfStore,cfFreezeNow,cfMine,cfAll,cfAccount,cfDrop,cfMoveHere,CF_ACCT};
 })();

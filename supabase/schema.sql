@@ -436,3 +436,35 @@ drop trigger if exists reread_requests_wake on public.reread_requests;
 create trigger reread_requests_wake after insert on public.reread_requests
   for each statement execute function public.send_requests_wake('reread');
 
+
+-- The hub's Close forecast (Disclosures → Close forecast): a signed-in reader's freezes, kept in the account so every
+-- device they sign in on has them (disclosures/docs/closecast.js; without an account they stay in that browser).
+-- payload: {start, prev, price, pgrid, targets: [{date, tags, q (log returns from start at pgrid)}]}. At most 500 a reader.
+create table if not exists public.forecast_freezes (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  asset       text not null check (asset ~ '^[A-Z][A-Z.-]{0,9}$'),
+  frozen_at   timestamptz not null,
+  payload     jsonb not null check (octet_length(payload::text) < 200000),
+  created_at  timestamptz not null default now()
+);
+create index if not exists forecast_freezes_user on public.forecast_freezes (user_id, created_at desc);
+alter table public.forecast_freezes enable row level security;
+drop policy if exists "read own freezes" on public.forecast_freezes;
+drop policy if exists "keep own freezes" on public.forecast_freezes;
+drop policy if exists "drop own freezes" on public.forecast_freezes;
+create policy "read own freezes" on public.forecast_freezes for select using (auth.uid() = user_id);
+create policy "keep own freezes" on public.forecast_freezes for insert with check (auth.uid() = user_id);
+create policy "drop own freezes" on public.forecast_freezes for delete using (auth.uid() = user_id);
+create or replace function public.forecast_freezes_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  new.created_at := now();
+  if (select count(*) from public.forecast_freezes f where f.user_id = new.user_id) >= 500 then
+    raise exception 'limit: 500 freezes (delete some first)' using errcode = 'P0001';
+  end if;
+  return new;
+end $$;
+drop trigger if exists forecast_freezes_guard on public.forecast_freezes;
+create trigger forecast_freezes_guard before insert on public.forecast_freezes
+  for each row execute function public.forecast_freezes_guard();
