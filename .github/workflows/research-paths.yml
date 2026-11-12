@@ -7,7 +7,8 @@
 # weekly ledger of frozen forecasts. Then public/moves/ (app/moves.py, the Move odds): each asset's daily returns, the
 # latest moves and their percentiles; for it the style ETFs, the market indices (the S&P 500 since 1928) and the volatility
 # indices (VIX since 1990 …) are collected, and every company's older daily bars once (paths.py long, cache/long/);
-# public/moves/n/ (app/move_news.py): each company's filings around its moves, the 8-Ks around the biggest ones read.
+# public/moves/n/ (app/move_news.py): each company's filings around its moves, the 8-Ks around the biggest ones read;
+# public/backtest/ (app/momentum_backtest.py): the momentum portfolios of the hub's Momentum tab → Back-test.
 # Kept on the branch "research-paths" (one commit, force-pushed); scan.yml publishes public/ at
 # disclosures/data/research/paths/.
 name: Research — price paths & patterns
@@ -98,6 +99,14 @@ jobs:
         continue-on-error: true
         timeout-minutes: 35
         run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json --eps _eps_data/eps-gaap --fund _eps_data/eps-fundamental
+      - name: Momentum back-test (public/backtest/)
+        # the hub's Momentum tab → Back-test (app/momentum_backtest.py): the valued companies' daily returns of the step
+        # above, ranked by the last day to quarter or 12-1, the top and bottom tenths and long-short held a day to a
+        # quarter since 2000, against SPY and the equal-weight universe; about a minute
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python disclosures/app/momentum_backtest.py --root pth
       - name: Move odds headlines (cache/headlines/)
         # the news headlines that name each company (app/move_headlines.py: Google News's search feed, headline, source,
         # time and link only): the last week, the last three years a month at a time, the days of its biggest moves; a
