@@ -91,7 +91,7 @@ def rows_of(path):
     return ix, {r[0]: dict(zip(ix['fields'], r)) for r in ix['rows']}
 
 
-NUMBERS = ['as_of', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every', 'last_as', 'move5', 'pct5', 'move21', 'pct21'] + \
+NUMBERS = ['as_of', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every', 'last_as', 'move5', 'pct5', 'move10', 'pct10', 'move21', 'pct21', 'move63', 'pct63'] + \
     [f'{s}{h}' for s in ('sim', 'ext', 'all') for h in M.HORIZONS] + ['back', 'high', 'rv21', 'rvpct', 'level', 'lpct', 'out5', 'out21']
 
 
@@ -130,6 +130,28 @@ class Close(unittest.TestCase):
             self.assertEqual({x: a[x] for x in ('d0', 'r', 'as_of')}, {x: b[x] for x in ('d0', 'r', 'as_of')}, k)
             self.assertAlmostEqual(a['last'], b['last'], delta=1e-5 * abs(b['last']))     # Yahoo's six digits
             self.assertEqual(a['links'], b['links'])
+
+    def test_a_nightly_file_from_before_a_field_was_added(self):
+        # the day the code adds a field (move10 …), the close reads last night's file without it: it keeps that file's fields
+        import shutil
+        old = Path(self.tmp.name) / 'old-base'
+        shutil.copytree(self.F.base, old)
+        ix = json.loads((old / 'index.json').read_text())
+        drop = [i for i, f in enumerate(ix['fields']) if f in ('move10', 'pct10', 'move63', 'pct63')]
+        ix['fields'] = [f for i, f in enumerate(ix['fields']) if i not in drop]
+        ix['rows'] = [[v for i, v in enumerate(r) if i not in drop] for r in ix['rows']]
+        (old / 'index.json').write_text(json.dumps(ix))
+        out = Path(self.tmp.name) / 'old-live'
+        st = C.run(old, out, workers=2, get=self.F.yahoo(), now_ts=ts(self.F.days[-1], 23, 0), log=lambda *a: None)
+        self.assertEqual(st['errors'], [])
+        got_ix, got = rows_of(out)
+        self.assertEqual(got_ix['fields'], ix['fields'])
+        _, want = rows_of(self.F.full)
+        self.assertEqual(got['SPY']['move5'], want['SPY']['move5'])
+        ix['fields'] = ix['fields'] + ['brand-new']                    # a field this code does not know: refused
+        (old / 'index.json').write_text(json.dumps(ix))
+        with self.assertRaises(RuntimeError):
+            C.run(old, out, workers=2, get=self.F.yahoo(), now_ts=ts(self.F.days[-1], 23, 0), log=lambda *a: None)
 
     def test_a_session_still_open_adds_nothing(self):
         out = Path(self.tmp.name) / 'open'

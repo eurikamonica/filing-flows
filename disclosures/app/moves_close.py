@@ -214,8 +214,9 @@ def run(base, out, workers=8, minutes=8.0, get=None, now_ts=None, log=print):
     base, out = Path(base), Path(out)
     ix = json.loads((base / 'index.json').read_text())
     fields = ix['fields']
-    if fields != M.FIELDS:
-        raise RuntimeError('index.json fields differ from moves.FIELDS: the nightly format changed')
+    if not set(fields) <= set(M.FIELDS):
+        raise RuntimeError('index.json has fields moves.FIELDS does not know: the nightly format changed')
+    # a nightly file from before a field was added (the day the code adds it) keeps its own fields until the next night
     rows = {r[0]: dict(zip(fields, r)) for r in ix['rows']}
     docs = {}
     for k in rows:

@@ -11,7 +11,9 @@ docs/moves.js):
                 IDX-GSPC …), the sector and style ETFs, and an equal-weighted composite of every SIC industry
                 (SIC-3674) and SIC major group (SIC-36) with five or more companies on file
   index.json    every asset's latest one-day move, its percentile, its size against its own recent volatility, how often
-                moves as large come, its 5- and 21-day moves, and what followed the similar and the more extreme days
+                moves as large come, its 5-, 10-, 21- and 63-day moves (a week, two weeks, a month and a quarter of trading
+                days; the hub's Momentum tab ranks by them) and each one's percentile among the asset's own, and what
+                followed the similar and the more extreme days
                 (the hub's leaderboards; the same arithmetic as the view's)
   status.json
 
@@ -242,7 +244,7 @@ def summary(days, r, band=BAND):
     out['z'] = float(z[last]) if np.isfinite(z[last]) else None
     zp = pct_ranks(z)
     out['zpct'] = float(zp[last]) if np.isfinite(zp[last]) else None
-    for w in (5, 21):
+    for w in (5, 10, 21, 63):
         mw = moves(c, w)
         out[f'move{w}'] = math.expm1(mw[last]) if np.isfinite(mw[last]) else None
         out[f'pct{w}'] = float(pct_ranks(mw)[last]) if np.isfinite(mw[last]) else None
@@ -412,7 +414,7 @@ def _r(v, n=4):
 
 
 FIELDS = ['key', 'ticker', 'name', 'kind', 'sector', 'industry', 'cik', 'members', 'as_of', 'd0', 'n', 'last', 'move', 'pct', 'z', 'zpct', 'every',
-          'last_as', 'move5', 'pct5', 'move21', 'pct21'] + [f'{s}{h}' for s in ('sim', 'ext', 'all') for h in HORIZONS] + ['back', 'high',
+          'last_as', 'move5', 'pct5', 'move10', 'pct10', 'move21', 'pct21', 'move63', 'pct63'] + [f'{s}{h}' for s in ('sim', 'ext', 'all') for h in HORIZONS] + ['back', 'high',
           'rv21', 'rvpct', 'level', 'lpct', 'out5', 'out21', 'group']
 
 

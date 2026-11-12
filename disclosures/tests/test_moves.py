@@ -94,6 +94,11 @@ class Arithmetic(unittest.TestCase):
         self.assertTrue(0 <= up <= 1)
         self.assertIsNone(s['ext1'])                          # nothing as low has a known next day
         self.assertEqual(len(s['all21']), 2)
+        for w in (5, 10, 21, 63):                             # a week, two weeks, a month and a quarter of trading days
+            self.assertAlmostEqual(s[f'move{w}'], math.expm1(float(np.sum(r[-w:]))), msg=w)
+            self.assertTrue(0 <= s[f'pct{w}'] <= 100, w)
+            self.assertIn(f'move{w}', M.FIELDS)
+            self.assertIn(f'pct{w}', M.FIELDS)
 
 
 class Recovery(unittest.TestCase):

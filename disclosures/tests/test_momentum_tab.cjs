@@ -1,7 +1,7 @@
 // momentum.js (the Hub's Momentum tab): the leaderboards from the latest-week files with the shapes app/momentum.py
 // writes (companies; ETFs with the rank inside the asset class), the sectors and styles computed here from rrg.json by
-// momentum-view.js, the breadth tiles, the summary by sector, the filters and sorts, the CSV rows, the deep links and a
-// ticker's history. The hub's helpers and fetch stubbed; no browser, no network.
+// momentum-view.js, the breadth tiles, the summary by sector, the filters and sorts, the short horizons (a day to a
+// quarter, from the Move odds index), the CSV rows, the deep links and a ticker's history. The hub's helpers and fetch stubbed; no browser, no network.
 const assert = require('node:assert/strict');
 const path = require('node:path');
 global.window = global;
@@ -146,6 +146,45 @@ const order = (html, ts) => ts.map((t) => html.indexOf(`#momentum/${encodeURICom
   html = M.momentumView();
   ok(html.includes('4 of 8 lines') && html.includes('<label>Ahead of SPY</label>'), 'the sector ETFs alone');
   state.mogrp = '';
+
+  // short horizons: the returns over the last 1, 5, 10, 21 and 63 trading days from the Move odds index (moves.js mvData)
+  state.mou = 'stocks'; state.mogrp = ''; state.mosort = 'h5'; state.modir = 'desc';
+  global.mvData = () => ({ loading: true });
+  ok(/Reading the daily closes/.test(M.momentumView()), 'the daily closes load first');
+  const F = ['key', 'ticker', 'name', 'kind', 'as_of', 'move', 'pct', 'move5', 'pct5', 'move10', 'pct10', 'move21', 'pct21', 'move63', 'pct63'];
+  const R = (t, as, m1, m5, q5) => [t, t, t, t === 'SPY' ? 'market' : 'stock', as, m1, 50, m5, q5, m5 * 1.5, 60, m5 * 2, 65, m5 * 3, 70];
+  const IX = { fields: F, as_of: '2026-11-12', rows: [R('SPY', '2026-11-12', 0.002, 0.01, 55), R('NVDA', '2026-11-12', 0.01, 0.05, 96), R('MSFT', '2026-11-12', 0.004, 0.02, 70),
+    R('AAPL', '2026-11-12', -0.003, -0.01, 40), R('XOM', '2026-11-12', 0.006, 0.03, 85), R('OXY', '2026-11-12', -0.01, -0.04, 3), R('JPM', '2026-11-12', 0.001, 0.015, 60),
+    R('CVX', '2026-11-10', 0.02, 0.09, 99)] };
+  global.mvData = () => ({ data: IX });
+  html = M.momentumView();
+  ok(order(html, ['NVDA', 'XOM', 'MSFT', 'JPM', 'AAPL', 'OXY']) && html.indexOf('#momentum/OXY"><b>') < html.indexOf('#momentum/CVX"><b>') && html.indexOf('#momentum/OXY"><b>') < html.indexOf('#momentum/NEWC"><b>'), 'by the week, highest first; a line not at the latest close and one without daily closes after them');
+  ok(html.includes('6 of 8 companies with daily closes to the close of 2026-11-12') && html.includes('Return over the last 1 week (5 trading days), highest first'), 'the coverage and the heading');
+  ok(html.includes('<label>Up</label><strong>67%</strong>') && html.includes('<label>Ahead of SPY</label><strong>67%</strong>') && html.includes('SPY +1.0% over the same days') && html.includes('<label>Extreme for their own history</label><strong>33%</strong>'), 'the breadth over the week');
+  const hb = html.slice(html.indexOf('<h3>By sector'), html.indexOf('</table>', html.indexOf('<h3>By sector')));
+  ok(hb.includes('the last 1 week') && hb.includes('data-mogrp="technology"') && !hb.includes('data-mogrp="energy"') && hb.includes('+2.0%') && /NVDA.*MSFT.*AAPL/.test(hb), 'by sector: the median week, the strongest (energy has two with daily closes: left out)');
+  ok(['Day', 'Week', '2 weeks', 'Month', 'Quarter', 'vs SPY, week', 'Own history, week'].every((h) => html.includes(`<th>${h}</th>`)) && !html.includes('<th>12-1</th>'), 'the horizons\' columns');
+  ok(html.includes('<b><span class="positive">+5.0%</span></b>') && html.includes('<td>96</td>'), 'the ranked column in bold; the move against its own history');
+  ok(exported[0].ticker === 'NVDA' && exported[0].week === 0.05 && Math.abs(exported[0].vs_spy_week - 0.04) < 1e-12 && exported[0].own_percentile_week === 96 && exported[0].daily_close === '2026-11-12', 'the CSV rows');
+  ok(/daily closes to 2026-11-12/.test(M.momentumNotice().text), 'the notice says which closes');
+  state.modir = 'asc';
+  html = M.momentumView();
+  ok(order(html, ['OXY', 'AAPL', 'JPM']) && html.includes('<th>Weakest</th>'), 'lowest first: the weakest');
+  state.modir = 'desc'; state.mosort = 'h63';
+  html = M.momentumView();
+  ok(order(html, ['NVDA', 'XOM', 'MSFT']) && html.includes('Return over the last 1 quarter (63 trading days)'), 'the quarter');
+  // last night's file without the two-week and quarter returns (the day the fields are added)
+  const old = { fields: F.filter((f) => !/10|63/.test(f)), as_of: '2026-11-12' };
+  old.rows = IX.rows.map((r) => r.filter((_, i) => !/10|63/.test(F[i])));
+  global.mvData = () => ({ data: old });
+  html = M.momentumView();
+  ok(html.includes('come with the next nightly build') && html.includes('0 of 8 companies with daily closes'), 'not in the file yet: said so');
+  state.mosort = 'h1';
+  html = M.momentumView();
+  ok(order(html, ['NVDA', 'XOM', 'MSFT', 'JPM', 'AAPL', 'OXY']) && !html.includes('come with the next nightly build'), 'the day is there');
+  global.mvData = () => ({ err: 'HTTP 404' });
+  ok(M.momentumView().includes('could not load (HTTP 404)'), 'the daily closes failing: said so');
+  state.mosort = 'comp'; delete global.mvData;
 
   // a universe not published yet: says so, offers the sectors and a ticker's history
   delete FILES['data/etf/momentum-latest.json']; delete M.moStore.etfs;

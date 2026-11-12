@@ -6,9 +6,15 @@
                        formulas of momentum-view.js (no build of its own)
    ranked by the composite score or any factor, with the selection's breadth, the spread of the composite score and a
    summary by sector or asset class; a ticker opens its history (momentum-view.js). #momentum/NVDA opens a ticker,
-   #momentum/etfs a universe. */
+   #momentum/etfs a universe.
+   Short horizons: ranked by the return over the last 1, 5, 10, 21 or 63 trading days (a day, a week, two weeks, a month,
+   a quarter), close to close on daily adjusted closes to the latest close — the Move odds tab's index (moves.js mvData:
+   app/moves.py nightly, app/moves_close.py minutes after each close), for the lines it has (the valued companies, the
+   market, sector, style and other ETFs); the others have weekly closes only and are listed after them. */
 const MO_U = [['stocks', 'Companies'], ['etfs', 'ETFs'], ['sectors', 'Sectors & styles']];
-const MO_SORT = [['comp', 'Composite score'], ['m12_1', '12-1 month return'], ['m6_1', '6-1 month return'], ['hi52', 'Distance from the 52-week high'],
+const MO_H = [['h1', 1, '1 day', 'Day'], ['h5', 5, '1 week (5 trading days)', 'Week'], ['h10', 10, '2 weeks (10 trading days)', '2 weeks'],
+  ['h21', 21, '1 month (21 trading days)', 'Month'], ['h63', 63, '1 quarter (63 trading days)', 'Quarter']];
+const MO_SORT = [['comp', 'Composite score'], ...MO_H.map(([k, , l]) => [k, 'Return over ' + l]), ['m12_1', '12-1 month return'], ['m6_1', '6-1 month return'], ['hi52', 'Distance from the 52-week high'],
   ['ra12', 'Vol-scaled 12-1'], ['rel_b', 'Relative to SPY (12-1)'], ['rel_s', 'Relative to the sector ETF (12-1)'], ['rcomp', 'Relative composite'],
   ['m1', 'Latest month'], ['vol', 'Volatility']];
 const MO_SECTOR = { technology: 'Technology', communication: 'Communication services', 'consumer-disc': 'Consumer discretionary',
@@ -29,6 +35,25 @@ function moData(u) {
     .then(d => { m.data = u === 'sectors' ? moSectors(d) : moLatest(d); if (state.tab === 'momentum') render() })
     .catch(e => { m.err = e.message; if (state.tab === 'momentum') render() });
   return m;
+}
+// the daily closes' returns over each horizon, by ticker, from the Move odds index (only the lines at its latest close)
+let moDay = null;
+const moKey = t => String(t || '').toUpperCase().replace(/\./g, '-');
+function moDaily() {
+  const m = typeof mvData === 'function' ? mvData() : { err: 'the daily closes did not load' };
+  if (!m.data) return m;
+  if (!moDay || moDay.src !== m.data) {
+    const d = m.data, at = Object.fromEntries((d.fields || []).map((f, i) => [f, i])), map = {};
+    const g = (r, f) => (at[f] != null ? r[at[f]] : null);
+    for (const r of d.rows || []) {
+      if (g(r, 'as_of') !== d.as_of) continue;                                   // not at the latest close: left out
+      const o = {};
+      MO_H.forEach(([k, n]) => { o[k] = g(r, n === 1 ? 'move' : 'move' + n); o['q' + n] = g(r, n === 1 ? 'pct' : 'pct' + n) });
+      for (const t of [g(r, 'key'), g(r, 'ticker')]) if (t) map[moKey(t)] = o;
+    }
+    moDay = { src: d, map, as_of: d.as_of, live: !!d._live, has: Object.fromEntries(MO_H.map(([k, n]) => [k, at[n === 1 ? 'move' : 'move' + n] != null])) };
+  }
+  return { data: m.data, day: moDay };
 }
 // the latest-week file: {cols, rows: {ticker: [values in cols' order]}} → one object per ticker
 function moLatest(d) {
@@ -101,9 +126,19 @@ function momentumView() {
   const sk = sorts.some(x => x[0] === state.mosort) ? state.mosort : 'comp', dir = state.modir === 'asc' ? 'asc' : 'desc';
   const aum = u === 'etfs' ? String(state.moaum ?? '1e8') : '0';
   out += `<div class="toolbar">${field('mosort', 'Rank by', sorts, sk)}${field('modir', 'Order', [['desc', 'Highest first'], ['asc', 'Lowest first']], dir)}${field('mogrp', u === 'stocks' ? 'Sector' : u === 'etfs' ? 'Asset class' : 'Kind', [['', 'All']].concat(groups.map(g => [g, gname(g)])), state.mogrp || '')}${u === 'etfs' ? field('moaum', 'Net assets', [['0', 'Any size'], ['1e8', '$100M or more'], ['1e9', '$1B or more'], ['1e10', '$10B or more']], aum) : ''}<div class="field"><label for="moq">Ticker or name</label><input id="moq" value="${esc(state.moq || '')}" placeholder="filter the list"></div></div>`;
+  const hz = MO_H.find(x => x[0] === sk);
+  let D = null;
+  if (hz) {
+    const dm = moDaily();
+    if (dm.day) D = dm.day;
+    else if (dm.err) return out + empty(`The daily closes behind the ${hz[3].toLowerCase()}'s ranking could not load (${dm.err}). The other rankings use the weekly closes.`);
+    else return out + empty('Reading the daily closes…');
+    d.list.forEach(r => { const o = D.map[moKey(r.t)]; MO_H.forEach(([k, n]) => { r[k] = o ? o[k] : null; r['q' + n] = o ? o['q' + n] : null }) });
+  }
   const q = String(state.moq || '').trim().toLowerCase();
   const rows = d.list.filter(r => (!state.mogrp || r[gkey] === state.mogrp) && (+aum <= 0 || (r.aum || 0) >= +aum) && (!q || r.t.toLowerCase().includes(q) || String(r.n || '').toLowerCase().includes(q)));
   rows.sort((a, b) => (!moFin(a[sk])) - (!moFin(b[sk])) || (dir === 'asc' ? a[sk] - b[sk] : b[sk] - a[sk]));
+  if (hz) return out + moHorizon(u, d, rows, hz, dir, D, gkey, gname, groups, noun);
   // breadth of the selection
   const vals = k => rows.map(r => r[k]).filter(moFin);
   const sh = (k, f) => { const xs = vals(k); return xs.length ? xs.filter(f).length / xs.length : null };
@@ -140,6 +175,39 @@ function momentumView() {
   out += `<details class="panel"><summary>Definitions and limits</summary><p class="sub">12-1 = P[t−4w] ÷ P[t−52w] − 1 (Jegadeesh &amp; Titman 1993; the skipped month after Jegadeesh 1990). Composite score = the mean over 13, 26 and 52 weeks of ln(P[t−4w] ÷ P[t−w]) ÷ (the weekly σ of the last 52 weekly returns × √(w − 4)) — volatility-scaled time-series momentum (Moskowitz, Ooi &amp; Pedersen 2012) over three horizons; σ is floored at 0.4% a week (≈ 2.9% a year) so a cash-like fund's steady yield does not read as an extreme trend. Relative: against SPY and the company's sector SPDR; the relative composite is the composite score of the price ratio. 52-week high: George &amp; Hwang (2004). Vol-scaled 12-1: 12-1 ÷ the annualised volatility, with the same floor (Barroso &amp; Santa-Clara 2015). Weekly total-return closes (Yahoo Finance; Stooq as the fallback), a month = 4 weeks; today's tickers only (survivorship); no costs, borrow or taxes. Momentum has crashed after bear-market lows (Daniel &amp; Moskowitz 2016). Not investment advice.</p></details>`;
   return out;
 }
+// a short horizon: the breadth, the sectors and the leaderboard by the return over the last n trading days
+function moHorizon(u, d, rows, hz, dir, D, gkey, gname, groups, noun) {
+  const [sk, n, label, short] = hz, qk = 'q' + n, spy = D.map.SPY || {}, sv = spy[sk], lo = short.toLowerCase();
+  const have = rows.filter(r => moFin(r[sk]));
+  const sh = f => (have.length ? have.filter(f).length / have.length : null);
+  const mid = xs => { const v = xs.slice().sort((a, b) => a - b); return v.length ? (v[(v.length - 1) >> 1] + v[v.length >> 1]) / 2 : null };
+  const med = mid(have.map(r => r[sk])), up = dir !== 'asc';
+  let out = `<p class="muted">${fmt(have.length)} of ${fmt(rows.length)} ${noun} with daily closes to the close of ${esc(D.as_of || '—')}${D.live ? ' (the copy made minutes after it)' : ''} — the Move odds set (${u === 'stocks' ? 'the valued companies' : u === 'etfs' ? 'the market, sector, style, country, bond, commodity and industry ETFs' : 'SPY and the sector and style ETFs'}); the others have weekly closes only and come after them</p>`;
+  if (!D.has[sk]) out += `<p class="muted">The ${esc(lo)} returns come with the next nightly build of the daily data (this file was made before they were added).</p>`;
+  out += `<div class="metrics">${kpi('Up', pct(sh(r => r[sk] > 0), 0), `over the last ${esc(label)}`)}${kpi('Ahead of SPY', moFin(sv) ? pct(sh(r => r[sk] > sv), 0) : '—', `SPY ${moPc(sv)} over the same days`)}${kpi('Median', moPc(med), `of the ${fmt(have.length)} ${noun}`)}${kpi('Extreme for their own history', pct(sh(r => moFin(r[qk]) && (r[qk] >= 95 || r[qk] <= 5)), 0), `the ${esc(lo)}'s move in the top or bottom 5% of their own`)}</div>`;
+  if (u !== 'sectors' && !state.mogrp && groups.length > 1) {
+    const by = {};
+    have.forEach(r => { (by[r[gkey] || ''] = by[r[gkey] || ''] || []).push(r) });
+    const gl = Object.entries(by).filter(([g, xs]) => g && xs.length >= 3).map(([g, xs]) => ({ g, n: xs.length, med: mid(xs.map(r => r[sk])),
+      up: xs.filter(r => r[sk] > 0).length / xs.length, ah: moFin(sv) ? xs.filter(r => r[sk] > sv).length / xs.length : null,
+      top: xs.slice().sort((a, b) => (up ? b[sk] - a[sk] : a[sk] - b[sk])).slice(0, 3) })).sort((a, b) => (up ? b.med - a.med : a.med - b.med));
+    if (gl.length) out += `<div class="panel"><h3>By ${u === 'stocks' ? 'sector' : 'asset class'} · the last ${esc(label)}</h3><p class="sub">The median return of each ${u === 'stocks' ? 'sector’s companies' : 'asset class’s ETFs'} with daily closes over the last ${esc(label)}, the share up and the share ahead of SPY (${moPc(sv)}), and the ${up ? 'strongest' : 'weakest'} three. Click one to list it.</p><div class="tablebox"><table><thead><tr><th>${u === 'stocks' ? 'Sector' : 'Asset class'}</th><th class="num">${esc(noun[0].toUpperCase() + noun.slice(1))}</th><th class="num">Median, ${esc(lo)}</th><th class="num">Up</th><th class="num">Ahead of SPY</th><th>${up ? 'Strongest' : 'Weakest'}</th></tr></thead><tbody>`
+      + gl.map(x => `<tr><td style="min-width:9em"><button type="button" class="text-button" data-mogrp="${esc(x.g)}">${esc(gname(x.g))}</button></td><td class="num">${fmt(x.n)}</td><td class="num">${moTone(x.med, moPc(x.med))}</td><td class="num">${pct(x.up, 0)}</td><td class="num">${pct(x.ah, 0)}</td><td style="white-space:nowrap">${x.top.map(r => `<a href="#momentum/${encodeURIComponent(r.t)}">${esc(r.t)}</a> <span class="muted">${moPc(r[sk])}</span>`).join(' · ')}</td></tr>`).join('')
+      + '</tbody></table></div></div>';
+  }
+  const rk = r => (moFin(r.p_comp) ? String(Math.round(r.p_comp)) : '—');
+  const cell = (r, k) => { const v = moTone(r[k], moPc(r[k])); return k === sk ? `<b>${v}</b>` : v };
+  const headers = ['Ticker', 'Name', u === 'stocks' ? 'Sector' : u === 'etfs' ? 'Asset class' : 'Kind', ...MO_H.map(x => x[3]), `vs SPY, ${lo}`, `Own history, ${lo}`, 'Composite', 'Rank'];
+  exported = rows.map(r => ({ ticker: r.t, name: r.n, [u === 'stocks' ? 'sector' : u === 'etfs' ? 'asset_class' : 'kind']: gname(r[gkey]), day: r.h1, week: r.h5, two_weeks: r.h10, month: r.h21, quarter: r.h63,
+    ['vs_spy_' + lo.replace(/ /g, '_')]: moFin(r[sk]) && moFin(sv) ? r[sk] - sv : null, ['own_percentile_' + lo.replace(/ /g, '_')]: r[qk], composite: r.comp, composite_rank: r.p_comp, daily_close: D.as_of }));
+  out += `<div class="section-head"><h3>Return over the last ${esc(label)}, ${up ? 'highest' : 'lowest'} first</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+  out += `<p class="sub">Day, week, 2 weeks, month, quarter: the return over the last 1, 5, 10, 21 and 63 trading days, close to close on adjusted closes, to the close of ${esc(D.as_of || '—')}. vs SPY: the ${esc(lo)}'s return less SPY's (${moPc(sv)}). Own history: where this ${esc(lo)}'s move ranks among all of its own moves of the same length since its listing (0–100; 50 is a typical one). Composite and Rank: the trend score at the latest week, for comparison. Click a ticker for its history; click a column to sort by it.</p>`;
+  const tk = r => (String(r.t).startsWith('s:') ? MO_SECTOR[r.s] || r.t.slice(2) : r.t);
+  out += table(headers, rows.map(r => [`<a href="#momentum/${encodeURIComponent(r.t)}"><b>${esc(tk(r))}</b></a>`, esc(String(r.n || '').slice(0, 48)), esc(gname(r[gkey])),
+    ...MO_H.map(([k]) => cell(r, k)), moFin(r[sk]) && moFin(sv) ? moTone(r[sk] - sv, moPc(r[sk] - sv)) : '—', moFin(r[qk]) ? String(Math.round(r[qk])) : '—', moTone(r.comp, moSig(r.comp)), rk(r)]));
+  out += `<details class="panel"><summary>Definitions and limits</summary><p class="sub">Short-horizon returns are close to close over trading days on daily closes adjusted for splits and dividends (the Move odds data: Yahoo Finance's daily bars, the latest close added minutes after 4 pm New York). A week is 5 trading days, two weeks 10, a month 21 and a quarter 63. Short-horizon returns tend to reverse more than they persist (the one-month reversal, Jegadeesh 1990; weekly reversals, Lehmann 1990), which is why the trend ranking skips the latest month; they show where money moved lately, not a trend. Lines without daily closes (most of the smaller companies and ETFs) are listed after the rest. Today's tickers only (survivorship); no costs or taxes. Not investment advice.</p></details>`;
+  return out;
+}
 function bindMomentum() {
   if (state.tab !== 'momentum') return;
   const hash = h => { try { history.replaceState(null, '', h) } catch (e) {} };
@@ -163,6 +231,7 @@ function momentumDeepLink(arg) {
 function momentumNotice() {
   const u = state.mou || 'stocks', m = moStore[u];
   if (state.mot || !m || (!m.data && !m.err)) return null;
+  if (MO_H.some(x => x[0] === state.mosort) && moDay) return { stale: false, text: `Derived view · Momentum · daily closes to ${moDay.as_of || '—'} (the Move odds data) · weekly closes to ${(m.data || {}).week || '—'} for the trend` };
   return m.err ? { stale: false, text: `Derived view · Momentum · the ${u === 'etfs' ? 'ETF' : 'companies’'} readings are ${m.err}` }
     : { stale: false, text: `Derived view · Momentum · weekly closes to ${m.data.week || '—'}${m.data.built ? ' · built ' + m.data.built : ''}` };
 }
@@ -170,4 +239,4 @@ window.HUB_VIEWS = Object.assign(window.HUB_VIEWS || {}, { momentum: momentumVie
 window.HUB_BINDS = Object.assign(window.HUB_BINDS || {}, { momentum: bindMomentum });
 window.HUB_NOTICES = Object.assign(window.HUB_NOTICES || {}, { momentum: momentumNotice });
 window.momentumDeepLink = momentumDeepLink;
-if (typeof module !== 'undefined') module.exports = { moData, moLatest, moPct, moSectors, moHist, momentumView, bindMomentum, momentumDeepLink, momentumNotice, moStore };
+if (typeof module !== 'undefined') module.exports = { moData, moLatest, moPct, moSectors, moHist, moDaily, moHorizon, momentumView, bindMomentum, momentumDeepLink, momentumNotice, moStore, MO_H };
