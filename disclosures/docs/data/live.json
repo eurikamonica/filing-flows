@@ -1749064,23 +1749064,22 @@
     "prices": {
       "status": "ok",
       "errors": [
-        "time budget of 15 minutes reached: 9787 managers keep their earlier estimates until the next run",
-        "EXMOC: yahoo: HTTP 404 from query1.finance.yahoo.com | stooq: Network/timeout error from stooq.com",
-        "SCYXEUR: yahoo: HTTP 404 from query1.finance.yahoo.com | stooq: Network/timeout error from stooq.com"
+        "time budget of 15 minutes reached: 3404 managers keep their earlier estimates until the next run",
+        "EXMOC: yahoo: HTTP 404 from query1.finance.yahoo.com | stooq: Stooq answered with a page instead of CSV: This site requires JavaScript to verify your browser. Please enable JavaScript and reload. (async()=>{const c=\"AAAAAGr1"
       ],
-      "last_attempt": "2026-11-12T00:59:31+00:00",
-      "updated_at": "2026-11-12T00:59:31+00:00",
+      "last_attempt": "2026-11-12T15:29:30+00:00",
+      "updated_at": "2026-11-12T15:29:30+00:00",
       "error": null,
       "counts": {
         "cusips_seen": 54692,
-        "cusips_mapped": 11399,
-        "cusips_unmapped": 10099,
-        "cusips_pending": 33194,
+        "cusips_mapped": 11407,
+        "cusips_unmapped": 10291,
+        "cusips_pending": 32994,
         "tickers_fetched_this_run": 60,
-        "positions_priced": 1888153,
-        "positions_total": 4824972,
+        "positions_priced": 10013168,
+        "positions_total": 20190745,
         "records_priced": 0,
-        "managers_deferred": 9787
+        "managers_deferred": 3404
       },
       "coverage_note": "Estimates only. 13F: quantity change × average daily close of the report quarter; transactions: close on or just before the disclosed date (up to 7 days back). Sources: Stooq daily closes, Yahoo Finance chart data as fallback; CUSIP→ticker via OpenFIGI. Options, non-share quantities and unmapped securities have no estimate. Actual execution prices are not disclosed.",
       "source": "yahoo / stooq + openfigi",
@@ -1749104,5 +1749103,5 @@
       "last_attempt": "2026-10-25T17:50:40+00:00"
     }
   },
-  "generated_at": "2026-11-12T15:41:25+00:00"
+  "generated_at": "2026-11-12T15:29:30+00:00"
 }
