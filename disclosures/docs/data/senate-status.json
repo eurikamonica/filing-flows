@@ -1,18 +1,28 @@
 {
-  "status": "ok",
-  "failed_queue": 0,
-  "next_retry_at": null,
-  "error_samples": [],
-  "found": 17,
-  "read": 16,
-  "waiting": 0,
-  "paper": 139,
-  "trades": 8919,
-  "cursor": "2019-10-18",
-  "errors": [],
-  "last_attempt": "2026-11-12T10:45:12+00:00",
+  "status": "partial",
+  "failed_queue": 1,
+  "next_retry_at": "2026-11-12T12:39:35.717474+00:00",
+  "error_samples": [
+    {
+      "key": "senate-bc5764cd-d819-4508-bfda-8b3931bcfeb6",
+      "attempts": 1,
+      "last_attempt": "2026-11-12T11:39:35+00:00",
+      "error": "HTTP 403 from efdsearch.senate.gov",
+      "next_retry_at": "2026-11-12T12:39:35.717474+00:00"
+    }
+  ],
+  "found": 12,
+  "read": 9,
+  "waiting": 1,
+  "paper": 141,
+  "trades": 8960,
+  "cursor": "2019-09-16",
+  "errors": [
+    "senate-bc5764cd-d819-4508-bfda-8b3931bcfeb6: HTTP 403 from efdsearch.senate.gov"
+  ],
+  "last_attempt": "2026-11-12T11:39:22+00:00",
   "last_success": "2026-11-12T10:45:34+00:00",
-  "last_partial_success": "2026-11-11T10:07:33+00:00",
-  "updated_at": "2026-11-12T10:45:34+00:00",
+  "last_partial_success": "2026-11-12T11:39:38+00:00",
+  "updated_at": "2026-11-12T11:39:38+00:00",
   "latest_filing_date": "2026-11-04"
 }
