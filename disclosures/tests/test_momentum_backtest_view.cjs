@@ -71,6 +71,7 @@ const URL = 'data/research/paths/backtest/momentum.json';
   eq(B.mobTicks(Math.log(0.01), Math.log(200)), [0.01, 0.1, 1, 10, 100], 'every decade over four');
   eq(B.mobTicks(Math.log(0.79), Math.log(2.2)), [0.8, 1, 1.25, 1.5, 2], 'finer under a decade');
   eq([B.mobTick(1e-5), B.mobTick(1e5), B.mobTick(2e6), B.mobTick(0.5), B.mobTick(1.25)], ['$1e-5', '$100k', '$2M', '$0.5', '$1.25'], 'tick labels');
+  eq([B.mobPc(-0.00004, 2), B.mobPc(0.123), B.mobPc(-0.3071), B.mobPc(null)], ['0.00%', '+12.3%', '−30.7%', '—'], 'percents signed as shown: no −0.00%');
 
   // the values after costs: each trading day 1 − cost × turnover; days counted from the start at 252 a year
   const d = DOC, key = '12-1|21|top', c = 0.001, f = 1 - c * d.turn[key];

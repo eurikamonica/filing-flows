@@ -90,6 +90,7 @@
     ['Stocks, ETFs and sectors ranked by absolute, relative and composite momentum', 'Actions, ETF et secteurs classés par momentum absolu, relatif et composite', 'Acciones, ETF y sectores ordenados por momentum absoluto, relativo y compuesto'],
     ['Momentum factors', 'Facteurs de momentum', 'Factores de momentum'],
     ['Momentum back-test: portfolios since 2000', 'Backtest du momentum : portefeuilles depuis 2000', 'Backtest del momentum: carteras desde 2000'],
+    ['RRG portfolios: buy by quadrant, back-tested', 'Portefeuilles RRG : acheter par quadrant, testés sur l’historique', 'Carteras RRG: comprar por cuadrante, con backtest'],
     ['Strategies', 'Stratégies', 'Estrategias'],
     ['Rules tested on the site’s data', 'Des règles testées sur les données du site', 'Reglas probadas con los datos del sitio'],
     ['FINRA short positions, twice a month', 'Positions vendeuses FINRA, deux fois par mois', 'Posiciones cortas de FINRA, dos veces al mes'],

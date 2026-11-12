@@ -8,7 +8,8 @@
 # latest moves and their percentiles; for it the style ETFs, the market indices (the S&P 500 since 1928) and the volatility
 # indices (VIX since 1990 …) are collected, and every company's older daily bars once (paths.py long, cache/long/);
 # public/moves/n/ (app/move_news.py): each company's filings around its moves, the 8-Ks around the biggest ones read;
-# public/backtest/ (app/momentum_backtest.py): the momentum portfolios of the hub's Momentum tab → Back-test.
+# public/backtest/ (app/momentum_backtest.py): the momentum portfolios of the hub's Momentum tab → Back-test;
+# public/backtest/rrg/ (app/rrg_backtest.py): the RRG quadrant portfolios of the Rotation tab → RRG portfolios.
 # Kept on the branch "research-paths" (one commit, force-pushed); scan.yml publishes public/ at
 # disclosures/data/research/paths/.
 name: Research — price paths & patterns
@@ -107,6 +108,15 @@ jobs:
         continue-on-error: true
         timeout-minutes: 15
         run: python disclosures/app/momentum_backtest.py --root pth
+      - name: RRG quadrant portfolios (public/backtest/rrg/)
+        # the hub's Rotation tab → RRG portfolios (app/rrg_backtest.py): the weekly and daily RRG of every line of the
+        # step above against SPY (sectors, index and style ETFs, countries, bonds and commodities, industry ETFs, the SIC
+        # industries, the companies), the lines in each mix of quadrants held 1–13 weeks or 1–21 days since 2000, the
+        # return of a portfolio bought at a close, and where each line stands now; under a minute
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python disclosures/app/rrg_backtest.py --root pth
       - name: Move odds headlines (cache/headlines/)
         # the news headlines that name each company (app/move_headlines.py: Google News's search feed, headline, source,
         # time and link only): the last week, the last three years a month at a time, the days of its biggest moves; a

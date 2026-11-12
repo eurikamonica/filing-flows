@@ -16,7 +16,7 @@ const MOB_C = [['0', 'None (theoretical)'], ['5', '0.05% a trade'], ['10', '0.10
 const MOB_P = [['all', 'Since 2000'], ['10y', 'The last 10 years'], ['5y', 'The last 5 years']];
 const mobStore = {};
 const mobFin = v => v != null && Number.isFinite(+v);
-const mobPc = (v, d = 1) => (mobFin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(100 * v).toFixed(d) + '%' : '—');
+const mobPc = (v, d = 1) => (mobFin(v) ? ((r) => (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(d) + '%')(+(100 * v).toFixed(d)) : '—');   // signed as shown: no −0.00%
 const mobTone = (v, s) => (mobFin(v) && v !== 0 ? `<span class="${v > 0 ? 'positive' : 'negative'}">${s}</span>` : s);
 const mobAbs = (v, d = 1) => (mobFin(v) ? (100 * v).toFixed(d) + '%' : '—');
 const mobNarrow = () => typeof innerWidth === 'number' && innerWidth < 560;
@@ -213,4 +213,4 @@ if (typeof document !== 'undefined' && !document.getElementById('mob-css')) {
     + `@media (max-width:560px){${H}.mob-wrap>.panel{padding:14px}${H}.mob-grid,${H}.mob-stats{min-width:0}${H}.mob-grid th,${H}.mob-grid td{padding:7px 5px;font-size:12px}${H}.mob-stats th,${H}.mob-stats td{padding:7px 6px}${H}.mob-stats td:first-child{min-width:0;width:42%;white-space:normal;font-size:12.5px}${H}.mob-stats td.num{font-size:12px}}`;
   document.head.appendChild(st);
 }
-if (typeof module !== 'undefined') module.exports = { mobData, mobLine, mobCagr, mobYears, mobGrid, mobChart, mobYearBars, mobView, bindMobGrid, mobUsd, mobTicks, mobTick, mobCut, mobStore, MOB_R, MOB_H, MOB_S, MOB_C, MOB_P, MOB_FLOOR };
+if (typeof module !== 'undefined') module.exports = { mobData, mobLine, mobCagr, mobYears, mobGrid, mobChart, mobYearBars, mobView, bindMobGrid, mobUsd, mobTicks, mobTick, mobCut, mobFin, mobPc, mobTone, mobAbs, mobNarrow, mobStore, MOB_R, MOB_H, MOB_S, MOB_C, MOB_P, MOB_FLOOR };
