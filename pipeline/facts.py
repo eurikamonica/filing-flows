@@ -365,11 +365,16 @@ def _pick(facts, key, get, end=None, annual=False):
 # below its contract revenue by its hedging losses and close the statement; Blue Owl's "Revenues" ($0.14B, a narrower
 # line) against its $0.75B of total revenues, net (= contract revenue) do not.
 TOTAL_NEAR = 0.75
+# a "Revenues" figure between TOTAL_NEAR and this share of the largest revenue tag is still checked against the income
+# statement when the statement is read (_total_or_larger, ixbrl): Lands' End tags its U.S. Digital segment ($205.1M in
+# Q1 FY27, 86%) as "Revenues" beside $238.9M of net revenue, and only the $238.9M closes it ($238.9M − $127.4M cost of
+# sales = the $111.5M gross profit)
+CHECK_NEAR = 0.95
 
 
-def total_ok(total, top):
+def total_ok(total, top, near=TOTAL_NEAR):
     """True when a "Revenues" figure is close enough to the largest revenue tag to be taken without a check."""
-    return total is not None and top is not None and (top <= 0 or total >= TOTAL_NEAR * top)
+    return total is not None and top is not None and (top <= 0 or total >= near * top)
 
 
 # a "Revenues" below this share of the largest revenue tag that the company did not report in the quarter before nor a
@@ -380,7 +385,7 @@ NEW_LINE = 0.25
 
 def _total_or_larger(facts, get, c, hit, end=None, annual=False):
     top = max(c, key=lambda x: x[0])
-    if top is hit or total_ok(hit[0], top[0]):
+    if top is hit or total_ok(hit[0], top[0], CHECK_NEAR):
         return hit
     nper = facts.get("NonoperatingIncomeExpense")
     v = lambda k: _pick(facts, k, get)[0]                                                    # noqa: E731

@@ -380,7 +380,9 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 10          # bump when the way figures are read changes: stored figures are read again (refresh_da)
+DA_VERSION = 11          # bump when the way figures are read changes: stored figures are read again (refresh_da)
+# v11 (Nov 2026): a "Revenues" 75-95% of contract revenue is checked against the income statement too (facts.CHECK_NEAR:
+# Lands' End's revenue read as its U.S. Digital segment, $205.1M, not its $238.9M of net revenue in Q1 FY27)
 # v10 (Nov 2026): a quarter a filing tags with the next quarter's figure takes its other filings' version (facts.
 # _period_slips: Turtle Beach's Q3 2025 chart compared revenue with itself, Q/Q 0%, its Q2 read as $80.5M, not $56.8M)
 # v9 (Nov 2026): a "Revenues" far below contract revenue is checked against the cost lines too when no costs subtotal

@@ -88,7 +88,7 @@ def _pick(vals, key, start, end):
         if not tot:
             return top
         t = max(tot, key=lambda g: g[1])
-        if facts.total_ok(t[1], top[1]):
+        if facts.total_ok(t[1], top[1], facts.CHECK_NEAR):
             return t
         # "Revenues" far below another revenue tag: the one that closes the income statement (facts.closes_better)
         first = lambda k: next((vals[(n, start, end)] for n in facts.CONCEPTS.get(k, []) if (n, start, end) in vals), None)

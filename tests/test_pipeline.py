@@ -3922,3 +3922,24 @@ def test_a_narrower_revenues_tag_is_checked_against_the_cost_lines():
     raw = {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
     assert facts.extract(facts.index_facts(raw, accn=own), "2025-03-31")["revenue"] == 0.9e6
     assert facts.cost_lines({"cor": 1.0, "rd": None, "sga": None, "sm": None, "ga": None}.get) is None
+
+
+def test_a_revenues_tag_near_contract_revenue_is_checked_against_gross_profit():
+    """Lands' End's Q1 FY27 10-Q tags its U.S. Digital segment ($205.1M, 86% of revenue) as "Revenues" beside $238.9M
+    of net revenue (contract revenue): only $238.9M closes the statement ($238.9M − $127.4M cost of sales = the $111.5M
+    gross profit), so the chart showed $205.1M of revenue under $238.9M of revenue lines."""
+    from pipeline import facts, ixbrl
+    own = "0000799288-26-000010"
+    mk = lambda v: [{"start": "2026-01-31", "end": "2026-05-01", "val": v, "filed": "2026-06-09", "form": "10-Q",
+                     "accn": own}]
+    g = {"Revenues": mk(205.123e6), "RevenueFromContractWithCustomerExcludingAssessedTax": mk(238.916e6),
+         "CostOfGoodsAndServicesSold": mk(127.404e6), "GrossProfit": mk(111.512e6),
+         "SellingGeneralAndAdministrativeExpense": mk(126.452e6), "OperatingIncomeLoss": mk(-44.108e6),
+         "NetIncomeLoss": mk(330.693e6)}
+    raw = lambda: {"facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    assert facts.extract(facts.index_facts(raw(), accn=own), "2026-05-01")["revenue"] == 238.916e6
+    vals = {(k, "2026-01-31", "2026-05-01"): v[0]["val"] for k, v in g.items()}
+    assert ixbrl._pick(vals, "revenue", "2026-01-31", "2026-05-01")[1] == 238.916e6
+    # a "Revenues" total below contract revenue that gross profit closes on is kept (hedging losses)
+    g["GrossProfit"] = mk(205.123e6 - 127.404e6)
+    assert facts.extract(facts.index_facts(raw(), accn=own), "2026-05-01")["revenue"] == 205.123e6
