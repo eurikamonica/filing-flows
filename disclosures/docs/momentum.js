@@ -12,8 +12,9 @@
    app/moves.py nightly, app/moves_close.py minutes after each close), for the lines it has (the valued companies, the
    market, sector, style and other ETFs); the others have weekly closes only and are listed after them.
    Back-test (#momentum/backtest; momentum-backtest.js): the top and bottom tenths by each of those returns, bought and
-   held a day to a quarter, since 2000. */
-const MO_U = [['stocks', 'Companies'], ['etfs', 'ETFs'], ['sectors', 'Sectors & styles'], ['backtest', 'Back-test: portfolios since 2000']];
+   held a day to a quarter, since 2000. Strategy picker (#momentum/picker; strategy-picker.js): momentum × RRG strategies,
+   the one that fits now and what it holds. */
+const MO_U = [['stocks', 'Companies'], ['etfs', 'ETFs'], ['sectors', 'Sectors & styles'], ['backtest', 'Back-test: portfolios since 2000'], ['picker', 'Strategy picker: momentum × RRG, now']];
 const MO_H = [['h1', 1, '1 day', 'Day'], ['h5', 5, '1 week (5 trading days)', 'Week'], ['h10', 10, '2 weeks (10 trading days)', '2 weeks'],
   ['h21', 21, '1 month (21 trading days)', 'Month'], ['h63', 63, '1 quarter (63 trading days)', 'Quarter']];
 const MO_SORT = [['comp', 'Composite score'], ...MO_H.map(([k, , l]) => [k, 'Return over ' + l]), ['m12_1', '12-1 month return'], ['m6_1', '6-1 month return'], ['hi52', 'Distance from the 52-week high'],
@@ -113,12 +114,14 @@ function moMissing(u, err) {
 }
 function momentumView() {
   const u = MO_U.some(x => x[0] === state.mou) ? state.mou : (state.mou = 'stocks');
-  const t = String(state.mot || '').trim(), bt = u === 'backtest';
-  let out = bt ? head('Momentum', 'What buying the stocks that rose most — or fell most — and holding them would have returned since 2000: each trading day the companies are ranked by their return over the last day, week, two weeks, month, quarter or year (12-1), the top and the bottom tenth bought and held from a day to a quarter, against SPY and the equal-weight average, before and after trading costs. History on today’s companies, not a forecast or advice.', 'Derived · daily closes since 2000')
+  const t = String(state.mot || '').trim(), bt = u === 'backtest', sp = u === 'picker';
+  let out = sp ? head('Momentum', 'Momentum and the RRG together: strategies that buy the companies that rose most when their RRG against SPY stands in a chosen quadrant and sell when it turns, or when they drop out of the winners — back-tested week by week since 2000; the one whose record is best both lately and over the long run, what it holds today, since when, and when and on what condition each holding is sold. History, not a forecast or advice.', 'Derived · weekly closes since 2000')
+    : bt ? head('Momentum', 'What buying the stocks that rose most — or fell most — and holding them would have returned since 2000: each trading day the companies are ranked by their return over the last day, week, two weeks, month, quarter or year (12-1), the top and the bottom tenth bought and held from a day to a quarter, against SPY and the equal-weight average, before and after trading costs. History on today’s companies, not a forecast or advice.', 'Derived · daily closes since 2000')
     : head('Momentum', 'Which stocks and ETFs are in a trend — on their own, against the market and against their sector: the 12-1 and 6-1 month returns, the distance from the 52-week high, relative momentum against SPY and the sector ETF, and a <b>composite score</b> that averages the 3-, 6- and 12-month trends, each in units of the ticker’s own volatility. Every reading uses the closes up to its week only; a reading of a factor, not a forecast or advice.', 'Derived · weekly closes');
   out += `<div class="toolbar">${field('mou', 'Universe', MO_U, u)}<div class="field wide"><label for="mot">A ticker's history</label><input id="mot" value="${esc(t)}" placeholder="e.g. NVDA, SMH, XLK · Enter"></div></div>`;
-  if (t) return out + `<p><button type="button" class="action" id="mo-back">← ${bt ? 'The back-test' : `The ${esc(((MO_U.find(x => x[0] === u) || [])[1] || '').toLowerCase())} leaderboard`}</button></p><div class="panel" id="mo-one" data-k="${esc(t)}"></div>`;
+  if (t) return out + `<p><button type="button" class="action" id="mo-back">← ${bt ? 'The back-test' : sp ? 'The strategy picker' : `The ${esc(((MO_U.find(x => x[0] === u) || [])[1] || '').toLowerCase())} leaderboard`}</button></p><div class="panel" id="mo-one" data-k="${esc(t)}"></div>`;
   if (bt) return out + (typeof mobView === 'function' ? mobView() : empty('The back-test did not load; reload the page.'));
+  if (sp) return out + (typeof spView === 'function' && typeof mobChart === 'function' ? spView() : empty('The strategy picker did not load; reload the page.'));
   const m = moData(u);
   if (m.err) return out + moMissing(u, m.err);
   if (!m.data) return out + empty(u === 'sectors' ? 'Reading the weekly closes…' : 'Reading the momentum readings…');
@@ -215,13 +218,14 @@ function moHorizon(u, d, rows, hz, dir, D, gkey, gname, groups, noun) {
 function bindMomentum() {
   if (state.tab !== 'momentum') return;
   const hash = h => { try { history.replaceState(null, '', h) } catch (e) {} };
-  for (const k of ['mou', 'mosort', 'modir', 'mogrp', 'moaum', 'mobr', 'mobh', 'mobs', 'mobc', 'mobp']) if ($(k)) $(k).onchange = e => { state[k] = e.target.value; if (k === 'mou') { state.mogrp = ''; hash('#momentum/' + state.mou) } state.page = 0; render() };
+  for (const k of ['mou', 'mosort', 'modir', 'mogrp', 'moaum', 'mobr', 'mobh', 'mobs', 'mobc', 'mobp', 'spw', 'spc', 'spk', 'spp']) if ($(k)) $(k).onchange = e => { state[k] = e.target.value; if (k === 'mou') { state.mogrp = ''; hash('#momentum/' + state.mou) } state.page = 0; render() };
   if ($('moq')) { $('moq').onchange = e => { state.moq = e.target.value; state.page = 0; render() }; $('moq').onkeydown = e => { if (e.key === 'Enter') e.target.blur() } }
   if ($('mot')) { $('mot').onchange = e => { state.mot = e.target.value.trim(); hash('#momentum' + (state.mot ? '/' + encodeURIComponent(state.mot) : '')); render() }; $('mot').onkeydown = e => { if (e.key === 'Enter') e.target.blur() } }
   if ($('mo-back')) $('mo-back').onclick = () => { state.mot = ''; hash('#momentum/' + (state.mou || 'stocks')); render() };
   document.querySelectorAll('#workspace [data-mou]').forEach(b => b.onclick = () => { state.mou = b.dataset.mou; state.mogrp = ''; state.page = 0; hash('#momentum/' + state.mou); render() });
   document.querySelectorAll('#workspace [data-mogrp]').forEach(b => b.onclick = () => { state.mogrp = b.dataset.mogrp; state.page = 0; render(); scrollTo({ top: 0, behavior: 'smooth' }) });
   if (state.mou === 'backtest' && typeof bindMobGrid === 'function') bindMobGrid();
+  if (state.mou === 'picker' && typeof bindSp === 'function') bindSp();
   const el = $('mo-one');
   if (el && window.MomentumView && el.dataset.on !== el.dataset.k) {
     const k = el.dataset.k;
@@ -230,7 +234,7 @@ function bindMomentum() {
   }
 }
 function momentumDeepLink(arg) {
-  const v = String(decodeURIComponent(arg || '')).trim(), u = { stocks: 'stocks', companies: 'stocks', etfs: 'etfs', sectors: 'sectors', backtest: 'backtest', 'back-test': 'backtest' }[v.toLowerCase()];
+  const v = String(decodeURIComponent(arg || '')).trim(), u = { stocks: 'stocks', companies: 'stocks', etfs: 'etfs', sectors: 'sectors', backtest: 'backtest', 'back-test': 'backtest', picker: 'picker' }[v.toLowerCase()];
   if (u) { state.mou = u; state.mot = '' } else state.mot = v;
 }
 function momentumNotice() {
@@ -239,6 +243,11 @@ function momentumNotice() {
     const b = typeof mobStore === 'object' ? mobStore.bt : null;
     if (!b || (!b.data && !b.err)) return null;
     return { stale: false, text: b.err ? `Derived view · Momentum back-test · not on file yet (${b.err})` : `Derived view · Momentum back-test · daily closes ${b.data.start} to ${b.data.as_of} · built ${String(b.data.generated_at || '').replace('T', ' ').slice(0, 16)} UTC` };
+  }
+  if (u === 'picker' && !state.mot) {
+    const b = typeof spStore === 'object' ? spStore.d : null;
+    if (!b || (!b.data && !b.err)) return null;
+    return { stale: false, text: b.err ? `Derived view · Strategy picker · not on file yet (${b.err})` : `Derived view · Strategy picker · weekly closes ${b.data.start} to ${b.data.as_of} · built ${String(b.data.generated_at || '').replace('T', ' ').slice(0, 16)} UTC` };
   }
   if (state.mot || !m || (!m.data && !m.err)) return null;
   if (MO_H.some(x => x[0] === state.mosort) && moDay) return { stale: false, text: `Derived view · Momentum · daily closes to ${moDay.as_of || '—'} (the Move odds data) · weekly closes to ${(m.data || {}).week || '—'} for the trend` };

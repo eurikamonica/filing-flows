@@ -91,6 +91,7 @@
     ['Momentum factors', 'Facteurs de momentum', 'Factores de momentum'],
     ['Momentum back-test: portfolios since 2000', 'Backtest du momentum : portefeuilles depuis 2000', 'Backtest del momentum: carteras desde 2000'],
     ['RRG portfolios: buy by quadrant, back-tested', 'Portefeuilles RRG : acheter par quadrant, testés sur l’historique', 'Carteras RRG: comprar por cuadrante, con backtest'],
+    ['Strategy picker: momentum × RRG, now', 'Sélecteur de stratégie : momentum × RRG, maintenant', 'Selector de estrategia: momentum × RRG, ahora'],
     ['Strategies', 'Stratégies', 'Estrategias'],
     ['Rules tested on the site’s data', 'Des règles testées sur les données du site', 'Reglas probadas con los datos del sitio'],
     ['FINRA short positions, twice a month', 'Positions vendeuses FINRA, deux fois par mois', 'Posiciones cortas de FINRA, dos veces al mes'],

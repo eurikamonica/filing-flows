@@ -9,7 +9,8 @@
 # indices (VIX since 1990 …) are collected, and every company's older daily bars once (paths.py long, cache/long/);
 # public/moves/n/ (app/move_news.py): each company's filings around its moves, the 8-Ks around the biggest ones read;
 # public/backtest/ (app/momentum_backtest.py): the momentum portfolios of the hub's Momentum tab → Back-test;
-# public/backtest/rrg/ (app/rrg_backtest.py): the RRG quadrant portfolios of the Rotation tab → RRG portfolios.
+# public/backtest/rrg/ (app/rrg_backtest.py): the RRG quadrant portfolios of the Rotation tab → RRG portfolios;
+# public/backtest/combo.json (app/combo_backtest.py): the momentum × RRG strategies of the Momentum tab → Strategy picker.
 # Kept on the branch "research-paths" (one commit, force-pushed); scan.yml publishes public/ at
 # disclosures/data/research/paths/.
 name: Research — price paths & patterns
@@ -117,6 +118,15 @@ jobs:
         continue-on-error: true
         timeout-minutes: 15
         run: python disclosures/app/rrg_backtest.py --root pth
+      - name: Momentum × RRG strategies (public/backtest/combo.json)
+        # the hub's Momentum tab → Strategy picker (app/combo_backtest.py): the companies' weekly momentum bands and RRG,
+        # 48 strategies that buy in chosen quadrants and sell when the RRG turns or the company drops out of the
+        # winners, their recent and long-run records, a walk-forward test of picking the recent leader, and today's
+        # holdings with their entry weeks; under a minute
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python disclosures/app/combo_backtest.py --root pth
       - name: Move odds headlines (cache/headlines/)
         # the news headlines that name each company (app/move_headlines.py: Google News's search feed, headline, source,
         # time and link only): the last week, the last three years a month at a time, the days of its biggest moves; a

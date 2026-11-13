@@ -17,7 +17,7 @@
     ["13D / 13G stakes", '#stakes'], ["Form 144", '#form144'], ["8-K events", '#events'], ["News", '#news'], ["Earnings calls", '#calls'],
     ["Earnings season", '#earnings'], ["Filings radar", '#filings'], ["Options", '#options'], ["Price paths", '#paths'],
     ["Opportunity", '#opportunity'], ["Strategies", '#strategies'], ["Odds", '#odds'], ["Market models", '#mmodels'], ["Move odds", '#moves'], ["Close forecast", '#forecast'],
-    ["Rotation (RRG)", '#rotation'], ["Intraday RRG", '#rotation/rrgi'], ["RRG portfolios: buy by quadrant, back-tested", '#rotation/rrgbt'], ["Money-inflow screen", '#rotation/rrgi'], ["Momentum factors", '#momentum'], ["Momentum back-test: portfolios since 2000", '#momentum/backtest'], ["Chart composer", '#composer'], ["Short interest", '#shorts'], ["Market maps", '#maps'], ["ETF scanner", '#etf'],
+    ["Rotation (RRG)", '#rotation'], ["Intraday RRG", '#rotation/rrgi'], ["RRG portfolios: buy by quadrant, back-tested", '#rotation/rrgbt'], ["Strategy picker: momentum × RRG, now", '#momentum/picker'], ["Money-inflow screen", '#rotation/rrgi'], ["Momentum factors", '#momentum'], ["Momentum back-test: portfolios since 2000", '#momentum/backtest'], ["Chart composer", '#composer'], ["Short interest", '#shorts'], ["Market maps", '#maps'], ["ETF scanner", '#etf'],
     ["COT", '#cot'], ["Valuation", '#valuation'], ["Consensus & prediction markets", '#consensus'], ["Quality", '#quality'], ["Screener", '#screener'],
     ["Analysis traps", '#traps'], ["Workforce", '#workforce'], ["Beyond filings", '#outside'], ["Notes & ties", '#notes'], ["Guidance", '#guidance'],
     ["Buyouts", '#buyouts'], ["Debt & rates", '#debt'], ["Hidden leverage", '#hidden'], ["Cross-holdings: who holds whom", '#cross'],
