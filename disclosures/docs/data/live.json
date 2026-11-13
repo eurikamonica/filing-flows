@@ -1776984,22 +1776984,23 @@
     "prices": {
       "status": "ok",
       "errors": [
-        "time budget of 15 minutes reached: 8510 managers keep their earlier estimates until the next run",
-        "EXMOC: yahoo: HTTP 404 from query1.finance.yahoo.com | stooq: Network/timeout error from stooq.com"
+        "time budget of 15 minutes reached: 2779 managers keep their earlier estimates until the next run",
+        "EXMOC: yahoo: HTTP 404 from query1.finance.yahoo.com | stooq: Stooq answered with a page instead of CSV: This site requires JavaScript to verify your browser. Please enable JavaScript and reload. (async()=>{const c=\"AAAAAGr2",
+        "SCYXEUR: yahoo: HTTP 404 from query1.finance.yahoo.com | stooq: Stooq answered with a page instead of CSV: This site requires JavaScript to verify your browser. Please enable JavaScript and reload. (async()=>{const c=\"AAAAAGr2"
       ],
-      "last_attempt": "2026-11-12T23:56:31+00:00",
-      "updated_at": "2026-11-12T23:56:31+00:00",
+      "last_attempt": "2026-11-13T06:57:47+00:00",
+      "updated_at": "2026-11-13T06:57:47+00:00",
       "error": null,
       "counts": {
         "cusips_seen": 54695,
-        "cusips_mapped": 11417,
-        "cusips_unmapped": 10481,
-        "cusips_pending": 32797,
+        "cusips_mapped": 11423,
+        "cusips_unmapped": 10675,
+        "cusips_pending": 32597,
         "tickers_fetched_this_run": 60,
-        "positions_priced": 3929716,
-        "positions_total": 8692983,
+        "positions_priced": 10962124,
+        "positions_total": 21796460,
         "records_priced": 0,
-        "managers_deferred": 8510
+        "managers_deferred": 2779
       },
       "coverage_note": "Estimates only. 13F: quantity change × average daily close of the report quarter; transactions: close on or just before the disclosed date (up to 7 days back). Sources: Stooq daily closes, Yahoo Finance chart data as fallback; CUSIP→ticker via OpenFIGI. Options, non-share quantities and unmapped securities have no estimate. Actual execution prices are not disclosed.",
       "source": "yahoo / stooq + openfigi",
@@ -1777023,5 +1777024,5 @@
       "last_attempt": "2026-10-25T17:50:40+00:00"
     }
   },
-  "generated_at": "2026-11-13T06:50:37+00:00"
+  "generated_at": "2026-11-13T06:57:48+00:00"
 }
