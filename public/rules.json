@@ -1,0 +1,5308 @@
+{
+  "built_at": "2026-11-09T03:02:39+00:00",
+  "tickers": 1873,
+  "split": "2021-01-01",
+  "horizons": [
+    5,
+    20,
+    60
+  ],
+  "rules": [
+    {
+      "id": "hammer",
+      "name": "Hammer / bullish pin bar",
+      "family": "candlestick",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "A bar with a small body near its top and a long lower wick: sellers pushed the price well down during the day, buyers pushed it back up by the close. After a decline it is read as a sign that selling is drying up.",
+      "rule": "Lower wick ≥ 2 × body, upper wick ≤ 25% of the bar range, range ≥ 0.5 × ATR (average true range, 14 days) of the bar before, and the close is below its 10-day mean (a decline).",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Hammer / bullish pin bar",
+        "family": "candlestick",
+        "dir": "bull",
+        "n_events_total": 139768,
+        "n_bull": 139768,
+        "n_bear": 0,
+        "n_is": 51294,
+        "n_oos": 88474,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 51294,
+              "months": 51,
+              "mean": -0.00703,
+              "hit": 0.5045,
+              "t": -0.869,
+              "p": 0.3851
+            },
+            "oos": {
+              "n": 88324,
+              "months": 70,
+              "mean": 0.00105,
+              "hit": 0.5155,
+              "t": 0.578,
+              "p": 0.5631
+            }
+          },
+          "20": {
+            "is": {
+              "n": 51294,
+              "months": 51,
+              "mean": -0.00872,
+              "hit": 0.5182,
+              "t": -0.836,
+              "p": 0.4031
+            },
+            "oos": {
+              "n": 87571,
+              "months": 70,
+              "mean": 0.0034,
+              "hit": 0.5144,
+              "t": 0.674,
+              "p": 0.5004
+            }
+          },
+          "60": {
+            "is": {
+              "n": 51294,
+              "months": 51,
+              "mean": -0.00309,
+              "hit": 0.5248,
+              "t": -0.182,
+              "p": 0.8556
+            },
+            "oos": {
+              "n": 84616,
+              "months": 68,
+              "mean": 0.00678,
+              "hit": 0.52,
+              "t": 0.594,
+              "p": 0.5524
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "shooting_star",
+      "name": "Shooting star / bearish pin bar",
+      "family": "candlestick",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "The mirror of the hammer: a small body near the bottom of the bar and a long upper wick. After a rise it is read as buyers failing to hold a push higher.",
+      "rule": "Upper wick ≥ 2 × body, lower wick ≤ 25% of the range, range ≥ 0.5 × ATR(14) of the bar before, close above its 10-day mean (a rise).",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Shooting star / bearish pin bar",
+        "family": "candlestick",
+        "dir": "bear",
+        "n_events_total": 154842,
+        "n_bull": 0,
+        "n_bear": 154842,
+        "n_is": 57966,
+        "n_oos": 96876,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 57966,
+              "months": 51,
+              "mean": -0.00102,
+              "hit": 0.484,
+              "t": -0.522,
+              "p": 0.6014
+            },
+            "oos": {
+              "n": 96497,
+              "months": 70,
+              "mean": 0.00053,
+              "hit": 0.4958,
+              "t": 0.381,
+              "p": 0.7028
+            }
+          },
+          "20": {
+            "is": {
+              "n": 57966,
+              "months": 51,
+              "mean": -0.00162,
+              "hit": 0.4739,
+              "t": -0.204,
+              "p": 0.8387
+            },
+            "oos": {
+              "n": 95439,
+              "months": 70,
+              "mean": 0.00251,
+              "hit": 0.5031,
+              "t": 0.537,
+              "p": 0.5913
+            }
+          },
+          "60": {
+            "is": {
+              "n": 57966,
+              "months": 51,
+              "mean": 0.00246,
+              "hit": 0.4735,
+              "t": 0.112,
+              "p": 0.911
+            },
+            "oos": {
+              "n": 93231,
+              "months": 68,
+              "mean": 0.00628,
+              "hit": 0.5064,
+              "t": 0.507,
+              "p": 0.6125
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "bull_engulfing",
+      "name": "Bullish engulfing",
+      "family": "candlestick",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "A down day followed by an up day whose body (open to close) covers the whole body of the down day. After a decline it is read as buyers taking over.",
+      "rule": "Bar i−1 closes below its open, bar i closes above its open, open(i) ≤ close(i−1), close(i) ≥ open(i−1), body(i) > body(i−1), and close(i−1) is below its 10-day mean.",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Bullish engulfing",
+        "family": "candlestick",
+        "dir": "bull",
+        "n_events_total": 93719,
+        "n_bull": 93719,
+        "n_bear": 0,
+        "n_is": 33547,
+        "n_oos": 60172,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 33547,
+              "months": 51,
+              "mean": 0.0036,
+              "hit": 0.5334,
+              "t": 1.558,
+              "p": 0.1193
+            },
+            "oos": {
+              "n": 60105,
+              "months": 70,
+              "mean": -0.00083,
+              "hit": 0.4983,
+              "t": -0.422,
+              "p": 0.6727
+            }
+          },
+          "20": {
+            "is": {
+              "n": 33547,
+              "months": 51,
+              "mean": 0.00188,
+              "hit": 0.5342,
+              "t": 0.207,
+              "p": 0.8361
+            },
+            "oos": {
+              "n": 59514,
+              "months": 70,
+              "mean": 0.00047,
+              "hit": 0.5108,
+              "t": 0.085,
+              "p": 0.9324
+            }
+          },
+          "60": {
+            "is": {
+              "n": 33547,
+              "months": 51,
+              "mean": -0.00084,
+              "hit": 0.5295,
+              "t": -0.041,
+              "p": 0.9669
+            },
+            "oos": {
+              "n": 57705,
+              "months": 68,
+              "mean": 0.00489,
+              "hit": 0.5148,
+              "t": 0.393,
+              "p": 0.694
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "bear_engulfing",
+      "name": "Bearish engulfing",
+      "family": "candlestick",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "An up day followed by a down day whose body covers the whole body of the up day. After a rise it is read as sellers taking over.",
+      "rule": "Bar i−1 closes above its open, bar i closes below its open, open(i) ≥ close(i−1), close(i) ≤ open(i−1), body(i) > body(i−1), and close(i−1) is above its 10-day mean.",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Bearish engulfing",
+        "family": "candlestick",
+        "dir": "bear",
+        "n_events_total": 123549,
+        "n_bull": 0,
+        "n_bear": 123549,
+        "n_is": 50912,
+        "n_oos": 72637,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 50912,
+              "months": 51,
+              "mean": -0.00095,
+              "hit": 0.4854,
+              "t": -0.512,
+              "p": 0.6089
+            },
+            "oos": {
+              "n": 72201,
+              "months": 70,
+              "mean": -0.00021,
+              "hit": 0.4927,
+              "t": -0.154,
+              "p": 0.8773
+            }
+          },
+          "20": {
+            "is": {
+              "n": 50912,
+              "months": 51,
+              "mean": 0.00192,
+              "hit": 0.4849,
+              "t": 0.238,
+              "p": 0.8117
+            },
+            "oos": {
+              "n": 71408,
+              "months": 70,
+              "mean": 0.00206,
+              "hit": 0.5042,
+              "t": 0.451,
+              "p": 0.652
+            }
+          },
+          "60": {
+            "is": {
+              "n": 50912,
+              "months": 51,
+              "mean": 0.01073,
+              "hit": 0.4873,
+              "t": 0.464,
+              "p": 0.6427
+            },
+            "oos": {
+              "n": 69865,
+              "months": 68,
+              "mean": 0.00737,
+              "hit": 0.5119,
+              "t": 0.625,
+              "p": 0.5318
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "inside_bar",
+      "name": "Inside bar",
+      "family": "candlestick",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "A bar whose high and low both stay inside the previous bar's range: a pause, a contraction of the range. Traders treat it as a continuation set-up in the direction of the trend.",
+      "rule": "high(i) < high(i−1) and low(i) > low(i−1); direction = the slope of the 20-day EMA (exponential moving average) at bar i (rising → bull).",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Inside bar",
+        "family": "candlestick",
+        "dir": "both",
+        "n_events_total": 515519,
+        "n_bull": 277901,
+        "n_bear": 237618,
+        "n_is": 200899,
+        "n_oos": 314620,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 200899,
+              "months": 51,
+              "mean": -0.00019,
+              "hit": 0.4898,
+              "t": -0.124,
+              "p": 0.901
+            },
+            "oos": {
+              "n": 313391,
+              "months": 70,
+              "mean": -0.00163,
+              "hit": 0.4891,
+              "t": -3.308,
+              "p": 0.000941
+            }
+          },
+          "20": {
+            "is": {
+              "n": 200899,
+              "months": 51,
+              "mean": -0.00283,
+              "hit": 0.4842,
+              "t": -1.65,
+              "p": 0.09886
+            },
+            "oos": {
+              "n": 310013,
+              "months": 70,
+              "mean": -0.00547,
+              "hit": 0.4806,
+              "t": -2.895,
+              "p": 0.003793
+            }
+          },
+          "60": {
+            "is": {
+              "n": 200899,
+              "months": 51,
+              "mean": -0.00857,
+              "hit": 0.4903,
+              "t": -1.247,
+              "p": 0.2125
+            },
+            "oos": {
+              "n": 301146,
+              "months": 68,
+              "mean": -0.01254,
+              "hit": 0.4728,
+              "t": -6.094,
+              "p": 0.0
+            }
+          }
+        },
+        "evidence": {
+          "5": "strong",
+          "20": "strong",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": -1,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": true,
+          "20": true,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "doji",
+      "name": "Doji",
+      "family": "candlestick",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "A bar that closes almost exactly where it opened: neither buyers nor sellers won the day. After a move it is read as indecision that can precede a turn.",
+      "rule": "Body ≤ 10% of the range and range ≥ 0.3 × ATR(14) of the bar before; direction = against the 10-day move (close(i) > close(i−10) → bear).",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Doji",
+        "family": "candlestick",
+        "dir": "both",
+        "n_events_total": 458951,
+        "n_bull": 212067,
+        "n_bear": 246884,
+        "n_is": 177194,
+        "n_oos": 281757,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 177194,
+              "months": 51,
+              "mean": -0.0006,
+              "hit": 0.5072,
+              "t": -0.373,
+              "p": 0.7089
+            },
+            "oos": {
+              "n": 280886,
+              "months": 70,
+              "mean": 0.00067,
+              "hit": 0.5037,
+              "t": 1.118,
+              "p": 0.2634
+            }
+          },
+          "20": {
+            "is": {
+              "n": 177194,
+              "months": 51,
+              "mean": 0.00164,
+              "hit": 0.5121,
+              "t": 0.808,
+              "p": 0.419
+            },
+            "oos": {
+              "n": 277875,
+              "months": 70,
+              "mean": 0.00303,
+              "hit": 0.5098,
+              "t": 2.028,
+              "p": 0.04259
+            }
+          },
+          "60": {
+            "is": {
+              "n": 177194,
+              "months": 51,
+              "mean": 0.00615,
+              "hit": 0.5068,
+              "t": 1.038,
+              "p": 0.2994
+            },
+            "oos": {
+              "n": 269499,
+              "months": 68,
+              "mean": 0.00808,
+              "hit": 0.517,
+              "t": 5.005,
+              "p": 1e-06
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "moderate",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 1,
+          "60": 1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "morning_star",
+      "name": "Morning star",
+      "family": "candlestick",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "Three bars at the end of a decline: a long down bar, a small-bodied \"star\", then an up bar that closes well into the first bar's body. Read as a bottoming pattern.",
+      "rule": "Bar i−2: down, body ≥ 0.6 × ATR(14), close below its 10-day mean; bar i−1: body ≤ 30% of bar i−2's and top of its body below bar i−2's midpoint; bar i: up, close above the midpoint of bar i−2's body.",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Morning star",
+        "family": "candlestick",
+        "dir": "bull",
+        "n_events_total": 32062,
+        "n_bull": 32062,
+        "n_bear": 0,
+        "n_is": 12097,
+        "n_oos": 19965,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 12097,
+              "months": 50,
+              "mean": -0.00078,
+              "hit": 0.5103,
+              "t": -0.41,
+              "p": 0.6818
+            },
+            "oos": {
+              "n": 19914,
+              "months": 70,
+              "mean": -0.0019,
+              "hit": 0.4885,
+              "t": -0.985,
+              "p": 0.3247
+            }
+          },
+          "20": {
+            "is": {
+              "n": 12097,
+              "months": 50,
+              "mean": 0.00225,
+              "hit": 0.5349,
+              "t": 0.273,
+              "p": 0.7852
+            },
+            "oos": {
+              "n": 19722,
+              "months": 70,
+              "mean": -0.00476,
+              "hit": 0.4814,
+              "t": -0.964,
+              "p": 0.3352
+            }
+          },
+          "60": {
+            "is": {
+              "n": 12097,
+              "months": 50,
+              "mean": -0.00266,
+              "hit": 0.521,
+              "t": -0.16,
+              "p": 0.8725
+            },
+            "oos": {
+              "n": 19254,
+              "months": 68,
+              "mean": -0.00549,
+              "hit": 0.4934,
+              "t": -0.42,
+              "p": 0.6748
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "evening_star",
+      "name": "Evening star",
+      "family": "candlestick",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "The mirror of the morning star at the end of a rise: a long up bar, a small star, then a down bar closing well into the first bar's body.",
+      "rule": "Bar i−2: up, body ≥ 0.6 × ATR(14), close above its 10-day mean; bar i−1: body ≤ 30% of bar i−2's and bottom of its body above bar i−2's midpoint; bar i: down, close below the midpoint of bar i−2's body.",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Evening star",
+        "family": "candlestick",
+        "dir": "bear",
+        "n_events_total": 29955,
+        "n_bull": 0,
+        "n_bear": 29955,
+        "n_is": 10961,
+        "n_oos": 18994,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 10961,
+              "months": 50,
+              "mean": -0.00061,
+              "hit": 0.4801,
+              "t": -0.258,
+              "p": 0.7964
+            },
+            "oos": {
+              "n": 18942,
+              "months": 70,
+              "mean": 0.00145,
+              "hit": 0.4979,
+              "t": 0.79,
+              "p": 0.4297
+            }
+          },
+          "20": {
+            "is": {
+              "n": 10961,
+              "months": 50,
+              "mean": 0.00324,
+              "hit": 0.486,
+              "t": 0.287,
+              "p": 0.7739
+            },
+            "oos": {
+              "n": 18722,
+              "months": 70,
+              "mean": 0.00367,
+              "hit": 0.4988,
+              "t": 0.759,
+              "p": 0.4479
+            }
+          },
+          "60": {
+            "is": {
+              "n": 10961,
+              "months": 50,
+              "mean": 0.00417,
+              "hit": 0.4811,
+              "t": 0.181,
+              "p": 0.8567
+            },
+            "oos": {
+              "n": 18372,
+              "months": 68,
+              "mean": 0.00854,
+              "hit": 0.5101,
+              "t": 0.708,
+              "p": 0.4792
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "three_white_soldiers",
+      "name": "Three white soldiers",
+      "family": "candlestick",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "Three up bars in a row, each opening inside the previous body and closing near its high at a new close. Read as steady buying.",
+      "rule": "Bars i−2..i: each close > open with body ≥ 0.4 × ATR(14), close > previous close, open between the previous open and close, upper wick ≤ 30% of the range.",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Three white soldiers",
+        "family": "candlestick",
+        "dir": "bull",
+        "n_events_total": 5738,
+        "n_bull": 5738,
+        "n_bear": 0,
+        "n_is": 2007,
+        "n_oos": 3731,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 2007,
+              "months": 51,
+              "mean": -0.0004,
+              "hit": 0.5012,
+              "t": -0.161,
+              "p": 0.8717
+            },
+            "oos": {
+              "n": 3727,
+              "months": 70,
+              "mean": -0.00604,
+              "hit": 0.4537,
+              "t": -2.109,
+              "p": 0.03497
+            }
+          },
+          "20": {
+            "is": {
+              "n": 2007,
+              "months": 51,
+              "mean": -0.00649,
+              "hit": 0.5052,
+              "t": -0.761,
+              "p": 0.4466
+            },
+            "oos": {
+              "n": 3683,
+              "months": 70,
+              "mean": -0.01935,
+              "hit": 0.4431,
+              "t": -2.664,
+              "p": 0.007718
+            }
+          },
+          "60": {
+            "is": {
+              "n": 2007,
+              "months": 51,
+              "mean": -0.02339,
+              "hit": 0.4978,
+              "t": -1.068,
+              "p": 0.2854
+            },
+            "oos": {
+              "n": 3644,
+              "months": 68,
+              "mean": -0.03781,
+              "hit": 0.4328,
+              "t": -1.704,
+              "p": 0.08829
+            }
+          }
+        },
+        "evidence": {
+          "5": "moderate",
+          "20": "moderate",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": -1,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "three_black_crows",
+      "name": "Three black crows",
+      "family": "candlestick",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "Three down bars in a row, each opening inside the previous body and closing near its low. Read as steady selling.",
+      "rule": "Bars i−2..i: each close < open with body ≥ 0.4 × ATR(14), close < previous close, open between the previous open and close, lower wick ≤ 30% of the range.",
+      "source": "Steve Nison, Japanese Candlestick Charting Techniques (1991)",
+      "stats": {
+        "name": "Three black crows",
+        "family": "candlestick",
+        "dir": "bear",
+        "n_events_total": 6742,
+        "n_bull": 0,
+        "n_bear": 6742,
+        "n_is": 2656,
+        "n_oos": 4086,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 2656,
+              "months": 51,
+              "mean": -2e-05,
+              "hit": 0.4895,
+              "t": -0.007,
+              "p": 0.9943
+            },
+            "oos": {
+              "n": 4076,
+              "months": 70,
+              "mean": 0.00095,
+              "hit": 0.5081,
+              "t": 0.307,
+              "p": 0.759
+            }
+          },
+          "20": {
+            "is": {
+              "n": 2656,
+              "months": 51,
+              "mean": 0.01331,
+              "hit": 0.4684,
+              "t": 0.485,
+              "p": 0.6274
+            },
+            "oos": {
+              "n": 4047,
+              "months": 70,
+              "mean": -0.00583,
+              "hit": 0.4905,
+              "t": -1.054,
+              "p": 0.2917
+            }
+          },
+          "60": {
+            "is": {
+              "n": 2656,
+              "months": 51,
+              "mean": 0.00534,
+              "hit": 0.4793,
+              "t": 0.155,
+              "p": 0.8767
+            },
+            "oos": {
+              "n": 3867,
+              "months": 68,
+              "mean": 0.00459,
+              "hit": 0.5182,
+              "t": 0.331,
+              "p": 0.741
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "always_in",
+      "name": "Always-in direction",
+      "family": "brooks",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "Al Brooks asks of every chart: if you had to be in the market right now, long or short, which would it be? That answer is the \"always-in\" direction.",
+      "rule": "Long once the 20-bar EMA (exponential moving average) is above its value 5 bars earlier and the last two closes are above it; short on the mirror; otherwise the previous answer stands.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": null
+    },
+    {
+      "id": "always_in_flip",
+      "name": "Always-in flip",
+      "family": "brooks",
+      "dir": "both",
+      "subjective": true,
+      "kind": "event",
+      "what": "The moment the always-in direction changes from short to long (bull) or long to short (bear).",
+      "rule": "Fires on the bar where the always-in state switches sides (not on its first assignment).",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": {
+        "name": "Always-in flip",
+        "family": "brooks",
+        "dir": "both",
+        "n_events_total": 221972,
+        "n_bull": 111007,
+        "n_bear": 110965,
+        "n_is": 83380,
+        "n_oos": 138592,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 83380,
+              "months": 51,
+              "mean": -0.00011,
+              "hit": 0.4967,
+              "t": -0.076,
+              "p": 0.9396
+            },
+            "oos": {
+              "n": 138058,
+              "months": 70,
+              "mean": -0.00079,
+              "hit": 0.4969,
+              "t": -0.963,
+              "p": 0.3356
+            }
+          },
+          "20": {
+            "is": {
+              "n": 83380,
+              "months": 51,
+              "mean": 0.00244,
+              "hit": 0.5042,
+              "t": 0.622,
+              "p": 0.5337
+            },
+            "oos": {
+              "n": 136600,
+              "months": 70,
+              "mean": 0.00042,
+              "hit": 0.5073,
+              "t": 0.186,
+              "p": 0.8522
+            }
+          },
+          "60": {
+            "is": {
+              "n": 83380,
+              "months": 51,
+              "mean": 0.00194,
+              "hit": 0.5022,
+              "t": 0.377,
+              "p": 0.706
+            },
+            "oos": {
+              "n": 133331,
+              "months": 68,
+              "mean": -0.00284,
+              "hit": 0.4961,
+              "t": -1.215,
+              "p": 0.2245
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "trend_or_range",
+      "name": "Trend or trading range",
+      "family": "brooks",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "Brooks sorts every stretch of a chart into trend (the price travels) or trading range (bars overlap and the price goes back and forth). Most breakouts of a trading range fail; most trends continue.",
+      "rule": "Trend when the 20-bar efficiency ratio (|close − close 20 bars ago| ÷ sum of absolute daily changes, after Perry Kaufman) is ≥ 0.30 and ≥ 70% of the last 20 closes are on one side of the 20-bar EMA; else trading range.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": null
+    },
+    {
+      "id": "h2_buy",
+      "name": "H2 buy (second-leg pullback)",
+      "family": "brooks",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "In a bull trend pullbacks often come in two legs. Each time a bar's high goes above the previous bar's high during the pullback is a \"high 1\", \"high 2\"…; the high 2 is Brooks' classic buy signal.",
+      "rule": "While always-in long: a pullback starts with a bar whose high is below the previous high; the second time in that pullback a bar's high exceeds the previous bar's high (after at least one lower-high bar in between) fires; a new trend high ends the pullback.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": {
+        "name": "H2 buy (second-leg pullback)",
+        "family": "brooks",
+        "dir": "bull",
+        "n_events_total": 81266,
+        "n_bull": 81266,
+        "n_bear": 0,
+        "n_is": 33567,
+        "n_oos": 47699,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 33567,
+              "months": 51,
+              "mean": -0.00129,
+              "hit": 0.494,
+              "t": -0.767,
+              "p": 0.443
+            },
+            "oos": {
+              "n": 47594,
+              "months": 70,
+              "mean": -0.00093,
+              "hit": 0.4938,
+              "t": -0.574,
+              "p": 0.5662
+            }
+          },
+          "20": {
+            "is": {
+              "n": 33567,
+              "months": 51,
+              "mean": -0.0006,
+              "hit": 0.5119,
+              "t": -0.085,
+              "p": 0.9319
+            },
+            "oos": {
+              "n": 47297,
+              "months": 70,
+              "mean": -0.00685,
+              "hit": 0.4729,
+              "t": -1.329,
+              "p": 0.1839
+            }
+          },
+          "60": {
+            "is": {
+              "n": 33567,
+              "months": 51,
+              "mean": -0.0061,
+              "hit": 0.5222,
+              "t": -0.271,
+              "p": 0.7864
+            },
+            "oos": {
+              "n": 46295,
+              "months": 68,
+              "mean": -0.01074,
+              "hit": 0.4762,
+              "t": -0.981,
+              "p": 0.3266
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "l2_sell",
+      "name": "L2 sell (second-leg rally)",
+      "family": "brooks",
+      "dir": "bear",
+      "subjective": true,
+      "kind": "event",
+      "what": "The mirror of the H2 in a bear trend: the second time a rally bar's low goes below the previous bar's low.",
+      "rule": "While always-in short: a rally starts with a bar whose low is above the previous low; the second time in that rally a bar's low falls below the previous bar's low (after at least one higher-low bar in between) fires; a new trend low ends the rally.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": {
+        "name": "L2 sell (second-leg rally)",
+        "family": "brooks",
+        "dir": "bear",
+        "n_events_total": 69108,
+        "n_bull": 0,
+        "n_bear": 69108,
+        "n_is": 24119,
+        "n_oos": 44989,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 24119,
+              "months": 51,
+              "mean": -7e-05,
+              "hit": 0.4765,
+              "t": -0.014,
+              "p": 0.9888
+            },
+            "oos": {
+              "n": 44886,
+              "months": 70,
+              "mean": -0.00179,
+              "hit": 0.4805,
+              "t": -0.955,
+              "p": 0.3396
+            }
+          },
+          "20": {
+            "is": {
+              "n": 24119,
+              "months": 51,
+              "mean": -0.00459,
+              "hit": 0.4411,
+              "t": -0.397,
+              "p": 0.691
+            },
+            "oos": {
+              "n": 44329,
+              "months": 70,
+              "mean": -0.00626,
+              "hit": 0.4727,
+              "t": -0.928,
+              "p": 0.3534
+            }
+          },
+          "60": {
+            "is": {
+              "n": 24119,
+              "months": 51,
+              "mean": -0.01161,
+              "hit": 0.4477,
+              "t": -0.684,
+              "p": 0.4939
+            },
+            "oos": {
+              "n": 42717,
+              "months": 68,
+              "mean": -0.01316,
+              "hit": 0.4651,
+              "t": -0.97,
+              "p": 0.3322
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "wedge_top",
+      "name": "Wedge top (three pushes up)",
+      "family": "brooks",
+      "dir": "bear",
+      "subjective": true,
+      "kind": "event",
+      "what": "Three pushes up, each making a higher high with higher lows between, often with fading momentum. Brooks reads a third push that cannot follow through as exhaustion and expects at least two legs down.",
+      "rule": "Three consecutive swing highs (3-bar fractals) rising within 60 bars with the lows between them rising; fires when a close falls below the low between pushes 2 and 3 within 15 bars, unless the high of push 3 is exceeded first.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": {
+        "name": "Wedge top (three pushes up)",
+        "family": "brooks",
+        "dir": "bear",
+        "n_events_total": 30464,
+        "n_bull": 0,
+        "n_bear": 30464,
+        "n_is": 11497,
+        "n_oos": 18967,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 11497,
+              "months": 50,
+              "mean": -0.00019,
+              "hit": 0.4743,
+              "t": -0.067,
+              "p": 0.9465
+            },
+            "oos": {
+              "n": 18878,
+              "months": 70,
+              "mean": -0.00107,
+              "hit": 0.4888,
+              "t": -0.528,
+              "p": 0.5972
+            }
+          },
+          "20": {
+            "is": {
+              "n": 11497,
+              "months": 50,
+              "mean": 0.0112,
+              "hit": 0.4949,
+              "t": 0.714,
+              "p": 0.4753
+            },
+            "oos": {
+              "n": 18741,
+              "months": 70,
+              "mean": 0.00059,
+              "hit": 0.4945,
+              "t": 0.098,
+              "p": 0.9222
+            }
+          },
+          "60": {
+            "is": {
+              "n": 11497,
+              "months": 50,
+              "mean": 0.01181,
+              "hit": 0.4917,
+              "t": 0.426,
+              "p": 0.6702
+            },
+            "oos": {
+              "n": 18257,
+              "months": 68,
+              "mean": -0.00099,
+              "hit": 0.4931,
+              "t": -0.083,
+              "p": 0.9339
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "wedge_bottom",
+      "name": "Wedge bottom (three pushes down)",
+      "family": "brooks",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "The mirror: three pushes down to lower lows, then a reversal up.",
+      "rule": "Three consecutive swing lows (3-bar fractals) falling within 60 bars with the highs between them falling; fires when a close rises above the high between pushes 2 and 3 within 15 bars, unless the low of push 3 is broken first.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": {
+        "name": "Wedge bottom (three pushes down)",
+        "family": "brooks",
+        "dir": "bull",
+        "n_events_total": 25762,
+        "n_bull": 25762,
+        "n_bear": 0,
+        "n_is": 8782,
+        "n_oos": 16980,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 8782,
+              "months": 50,
+              "mean": 0.00014,
+              "hit": 0.5158,
+              "t": 0.047,
+              "p": 0.9623
+            },
+            "oos": {
+              "n": 16897,
+              "months": 70,
+              "mean": -0.00093,
+              "hit": 0.5024,
+              "t": -0.569,
+              "p": 0.5694
+            }
+          },
+          "20": {
+            "is": {
+              "n": 8782,
+              "months": 50,
+              "mean": -0.00349,
+              "hit": 0.5216,
+              "t": -0.393,
+              "p": 0.6943
+            },
+            "oos": {
+              "n": 16450,
+              "months": 70,
+              "mean": -0.00036,
+              "hit": 0.5078,
+              "t": -0.056,
+              "p": 0.9551
+            }
+          },
+          "60": {
+            "is": {
+              "n": 8782,
+              "months": 50,
+              "mean": -0.00278,
+              "hit": 0.5224,
+              "t": -0.136,
+              "p": 0.892
+            },
+            "oos": {
+              "n": 16053,
+              "months": 68,
+              "mean": -0.00613,
+              "hit": 0.4952,
+              "t": -0.412,
+              "p": 0.6805
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "brooks_breakout",
+      "name": "Strong breakout bar",
+      "family": "brooks",
+      "dir": "both",
+      "subjective": true,
+      "kind": "event",
+      "what": "A breakout of the recent trading range made by a big trend bar that closes near its extreme: Brooks' sign of urgency, which tends to be followed by a measured move.",
+      "rule": "Close beyond the previous 20 bars' high (low), body ≥ 0.8 × ATR(14) of the bar before, close in the outer 25% of the bar's range.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": {
+        "name": "Strong breakout bar",
+        "family": "brooks",
+        "dir": "both",
+        "n_events_total": 172087,
+        "n_bull": 94893,
+        "n_bear": 77194,
+        "n_is": 64529,
+        "n_oos": 107558,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 64529,
+              "months": 50,
+              "mean": 0.00196,
+              "hit": 0.4794,
+              "t": 0.41,
+              "p": 0.6817
+            },
+            "oos": {
+              "n": 106551,
+              "months": 70,
+              "mean": -0.00231,
+              "hit": 0.4808,
+              "t": -2.078,
+              "p": 0.03772
+            }
+          },
+          "20": {
+            "is": {
+              "n": 64529,
+              "months": 50,
+              "mean": -0.00042,
+              "hit": 0.4606,
+              "t": -0.044,
+              "p": 0.9648
+            },
+            "oos": {
+              "n": 105037,
+              "months": 70,
+              "mean": -0.00682,
+              "hit": 0.4744,
+              "t": -2.382,
+              "p": 0.01724
+            }
+          },
+          "60": {
+            "is": {
+              "n": 64529,
+              "months": 50,
+              "mean": -0.01435,
+              "hit": 0.4731,
+              "t": -1.624,
+              "p": 0.1043
+            },
+            "oos": {
+              "n": 102525,
+              "months": 68,
+              "mean": -0.01825,
+              "hit": 0.4571,
+              "t": -4.671,
+              "p": 3e-06
+            }
+          }
+        },
+        "evidence": {
+          "5": "moderate",
+          "20": "moderate",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": -1,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "failed_breakout",
+      "name": "Failed breakout",
+      "family": "brooks",
+      "dir": "both",
+      "subjective": true,
+      "kind": "event",
+      "what": "A close above the recent range that is back inside within a few bars. Brooks: most breakouts of trading ranges fail, and a failed breakout traps the traders who bought it.",
+      "rule": "After a close above the previous 20-bar high (below the low), a close back below (above) that level within 3 bars fires against the breakout.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": {
+        "name": "Failed breakout",
+        "family": "brooks",
+        "dir": "both",
+        "n_events_total": 220430,
+        "n_bull": 98076,
+        "n_bear": 122354,
+        "n_is": 80913,
+        "n_oos": 139517,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 80913,
+              "months": 50,
+              "mean": -0.0017,
+              "hit": 0.5004,
+              "t": -0.561,
+              "p": 0.5745
+            },
+            "oos": {
+              "n": 138540,
+              "months": 70,
+              "mean": 0.00071,
+              "hit": 0.5026,
+              "t": 0.684,
+              "p": 0.4943
+            }
+          },
+          "20": {
+            "is": {
+              "n": 80913,
+              "months": 50,
+              "mean": 0.00462,
+              "hit": 0.5272,
+              "t": 1.089,
+              "p": 0.2762
+            },
+            "oos": {
+              "n": 136865,
+              "months": 70,
+              "mean": 0.00572,
+              "hit": 0.5214,
+              "t": 2.417,
+              "p": 0.01566
+            }
+          },
+          "60": {
+            "is": {
+              "n": 80913,
+              "months": 50,
+              "mean": 0.01032,
+              "hit": 0.5125,
+              "t": 1.011,
+              "p": 0.3121
+            },
+            "oos": {
+              "n": 133039,
+              "months": 68,
+              "mean": 0.01489,
+              "hit": 0.5342,
+              "t": 4.855,
+              "p": 1e-06
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "moderate",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 1,
+          "60": 1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "measured_move",
+      "name": "Measured-move target",
+      "family": "brooks",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "After a breakout the price often travels about as far as the height of the range it left (a \"measured move\").",
+      "rule": "Target = breakout level ± height of the 20-bar range before the last strong breakout bar; reached when a later high (low) gets there.",
+      "source": "Al Brooks, Reading Price Charts Bar by Bar (2009) and his Trading Price Action books",
+      "stats": null
+    },
+    {
+      "id": "swings",
+      "name": "Swing points HH / HL / LH / LL",
+      "family": "structure",
+      "dir": "both",
+      "subjective": false,
+      "kind": "state",
+      "what": "A swing high is a peak with lower highs on both sides; a swing low is a trough. Comparing each with the previous one gives HH (higher high), HL (higher low), LH (lower high) and LL (lower low): an up-trend is HH + HL.",
+      "rule": "Fractals with k = 3: high(j) above the highs of the 3 bars before and not below those of the 3 after; known only at bar j + 3.",
+      "source": "Dow theory (Charles Dow; William Hamilton, The Stock Market Barometer, 1922); fractal swings: Bill Williams, Trading Chaos (1995)",
+      "stats": null
+    },
+    {
+      "id": "bos",
+      "name": "Break of structure (BOS)",
+      "family": "structure",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "A BOS (break of structure) is a close beyond the last swing point in the direction of the current structure: the trend continuing.",
+      "rule": "In an up-structure a close above the last unbroken swing high (bull); in a down-structure a close below the last swing low (bear). The first break of a series only sets the structure.",
+      "source": "Dow theory (Charles Dow; William Hamilton, The Stock Market Barometer, 1922); fractal swings: Bill Williams, Trading Chaos (1995)",
+      "stats": {
+        "name": "Break of structure (BOS)",
+        "family": "structure",
+        "dir": "both",
+        "n_events_total": 157827,
+        "n_bull": 90712,
+        "n_bear": 67115,
+        "n_is": 59623,
+        "n_oos": 98204,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 59623,
+              "months": 50,
+              "mean": 0.00141,
+              "hit": 0.4831,
+              "t": 0.37,
+              "p": 0.7113
+            },
+            "oos": {
+              "n": 97663,
+              "months": 70,
+              "mean": -0.00202,
+              "hit": 0.4856,
+              "t": -2.201,
+              "p": 0.0277
+            }
+          },
+          "20": {
+            "is": {
+              "n": 59623,
+              "months": 50,
+              "mean": -0.00069,
+              "hit": 0.4752,
+              "t": -0.14,
+              "p": 0.8888
+            },
+            "oos": {
+              "n": 96621,
+              "months": 70,
+              "mean": -0.00758,
+              "hit": 0.473,
+              "t": -3.183,
+              "p": 0.00146
+            }
+          },
+          "60": {
+            "is": {
+              "n": 59623,
+              "months": 50,
+              "mean": -0.01125,
+              "hit": 0.4814,
+              "t": -1.412,
+              "p": 0.1579
+            },
+            "oos": {
+              "n": 93718,
+              "months": 68,
+              "mean": -0.01777,
+              "hit": 0.4599,
+              "t": -5.166,
+              "p": 0.0
+            }
+          }
+        },
+        "evidence": {
+          "5": "moderate",
+          "20": "strong",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": -1,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": true,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "choch",
+      "name": "Change of character (CHoCH)",
+      "family": "structure",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "A CHoCH (change of character) is the first close beyond the opposite swing point, against the prevailing structure: the first sign that the trend may be turning.",
+      "rule": "In an up-structure a close below the last unbroken swing low (bear, the structure becomes down); mirror in a down-structure.",
+      "source": "Dow theory (Charles Dow; William Hamilton, The Stock Market Barometer, 1922); fractal swings: Bill Williams, Trading Chaos (1995)",
+      "stats": {
+        "name": "Change of character (CHoCH)",
+        "family": "structure",
+        "dir": "both",
+        "n_events_total": 153953,
+        "n_bull": 76959,
+        "n_bear": 76994,
+        "n_is": 56578,
+        "n_oos": 97375,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 56578,
+              "months": 51,
+              "mean": -0.0,
+              "hit": 0.4946,
+              "t": -0.001,
+              "p": 0.9995
+            },
+            "oos": {
+              "n": 96941,
+              "months": 70,
+              "mean": -0.00082,
+              "hit": 0.4983,
+              "t": -0.975,
+              "p": 0.3297
+            }
+          },
+          "20": {
+            "is": {
+              "n": 56578,
+              "months": 51,
+              "mean": 0.00245,
+              "hit": 0.4976,
+              "t": 0.462,
+              "p": 0.6444
+            },
+            "oos": {
+              "n": 95674,
+              "months": 70,
+              "mean": 0.0004,
+              "hit": 0.5069,
+              "t": 0.149,
+              "p": 0.8814
+            }
+          },
+          "60": {
+            "is": {
+              "n": 56578,
+              "months": 51,
+              "mean": 0.00216,
+              "hit": 0.4995,
+              "t": 0.313,
+              "p": 0.7544
+            },
+            "oos": {
+              "n": 93271,
+              "months": 68,
+              "mean": -0.00333,
+              "hit": 0.4979,
+              "t": -1.137,
+              "p": 0.2554
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "head_shoulders",
+      "name": "Head and shoulders",
+      "family": "pattern",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "Three peaks, the middle one (the head) highest, the outer two (shoulders) about equal, with a \"neckline\" through the two troughs between them. A close below the neckline completes the top.",
+      "rule": "Five alternating extrema of the close (±5-bar window): E1, E3, E5 peaks with E3 above both, E1 and E5 within 1.5% of their mean, E2 and E4 within 1.5%; fires at the first close below the line through E2 and E4, unless a close above E3 comes first or half the pattern width passes.",
+      "source": "Lo, Mamaysky & Wang, \"Foundations of Technical Analysis\", Journal of Finance (2000); Edwards & Magee, Technical Analysis of Stock Trends (1948)",
+      "stats": {
+        "name": "Head and shoulders",
+        "family": "pattern",
+        "dir": "bear",
+        "n_events_total": 2836,
+        "n_bull": 0,
+        "n_bear": 2836,
+        "n_is": 1128,
+        "n_oos": 1708,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 1128,
+              "months": 48,
+              "mean": -0.00022,
+              "hit": 0.4574,
+              "t": -0.085,
+              "p": 0.932
+            },
+            "oos": {
+              "n": 1701,
+              "months": 70,
+              "mean": -0.00023,
+              "hit": 0.4897,
+              "t": -0.093,
+              "p": 0.9262
+            }
+          },
+          "20": {
+            "is": {
+              "n": 1128,
+              "months": 48,
+              "mean": 0.00316,
+              "hit": 0.4645,
+              "t": 0.306,
+              "p": 0.7595
+            },
+            "oos": {
+              "n": 1692,
+              "months": 70,
+              "mean": -0.00047,
+              "hit": 0.4852,
+              "t": -0.102,
+              "p": 0.9191
+            }
+          },
+          "60": {
+            "is": {
+              "n": 1128,
+              "months": 48,
+              "mean": 0.01916,
+              "hit": 0.5089,
+              "t": 0.777,
+              "p": 0.4373
+            },
+            "oos": {
+              "n": 1640,
+              "months": 68,
+              "mean": -0.00975,
+              "hit": 0.475,
+              "t": -1.193,
+              "p": 0.2327
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "inv_head_shoulders",
+      "name": "Inverse head and shoulders",
+      "family": "pattern",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "The mirror at a bottom: three troughs with the middle one lowest; a close above the neckline completes it.",
+      "rule": "Five alternating close extrema: E1, E3, E5 troughs with E3 below both, E1 and E5 within 1.5% of their mean, E2 and E4 within 1.5%; fires at the first close above the line through E2 and E4, unless a close below E3 comes first or half the pattern width passes.",
+      "source": "Lo, Mamaysky & Wang, \"Foundations of Technical Analysis\", Journal of Finance (2000); Edwards & Magee, Technical Analysis of Stock Trends (1948)",
+      "stats": {
+        "name": "Inverse head and shoulders",
+        "family": "pattern",
+        "dir": "bull",
+        "n_events_total": 2821,
+        "n_bull": 2821,
+        "n_bear": 0,
+        "n_is": 1233,
+        "n_oos": 1588,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 1233,
+              "months": 48,
+              "mean": 0.00117,
+              "hit": 0.5264,
+              "t": 0.652,
+              "p": 0.5141
+            },
+            "oos": {
+              "n": 1584,
+              "months": 70,
+              "mean": -0.00042,
+              "hit": 0.5088,
+              "t": -0.254,
+              "p": 0.7996
+            }
+          },
+          "20": {
+            "is": {
+              "n": 1233,
+              "months": 48,
+              "mean": -0.00668,
+              "hit": 0.5036,
+              "t": -1.067,
+              "p": 0.2861
+            },
+            "oos": {
+              "n": 1570,
+              "months": 70,
+              "mean": 0.00051,
+              "hit": 0.4911,
+              "t": 0.11,
+              "p": 0.9125
+            }
+          },
+          "60": {
+            "is": {
+              "n": 1233,
+              "months": 48,
+              "mean": -0.02487,
+              "hit": 0.4404,
+              "t": -1.273,
+              "p": 0.203
+            },
+            "oos": {
+              "n": 1551,
+              "months": 68,
+              "mean": -0.00251,
+              "hit": 0.4971,
+              "t": -0.28,
+              "p": 0.7796
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "double_top",
+      "name": "Double top",
+      "family": "pattern",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "Two peaks at about the same price with a trough between them; a close below that trough completes the top.",
+      "rule": "Two consecutive close maxima within 1.5% of each other, at least 20 bars apart, the minimum between them at least 3% below; fires at the first close below that minimum within the pattern's width, unless a close 1.5% above the peaks comes first.",
+      "source": "Lo, Mamaysky & Wang, \"Foundations of Technical Analysis\", Journal of Finance (2000); Edwards & Magee, Technical Analysis of Stock Trends (1948)",
+      "stats": {
+        "name": "Double top",
+        "family": "pattern",
+        "dir": "bear",
+        "n_events_total": 3520,
+        "n_bull": 0,
+        "n_bear": 3520,
+        "n_is": 1321,
+        "n_oos": 2199,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 1321,
+              "months": 49,
+              "mean": 0.00097,
+              "hit": 0.4792,
+              "t": 0.351,
+              "p": 0.7256
+            },
+            "oos": {
+              "n": 2181,
+              "months": 70,
+              "mean": -0.00467,
+              "hit": 0.4567,
+              "t": -2.586,
+              "p": 0.009723
+            }
+          },
+          "20": {
+            "is": {
+              "n": 1321,
+              "months": 49,
+              "mean": 0.01107,
+              "hit": 0.4875,
+              "t": 0.601,
+              "p": 0.5477
+            },
+            "oos": {
+              "n": 2166,
+              "months": 70,
+              "mean": -0.01179,
+              "hit": 0.4391,
+              "t": -2.407,
+              "p": 0.01608
+            }
+          },
+          "60": {
+            "is": {
+              "n": 1321,
+              "months": 49,
+              "mean": 0.01653,
+              "hit": 0.4618,
+              "t": 0.61,
+              "p": 0.5419
+            },
+            "oos": {
+              "n": 2098,
+              "months": 68,
+              "mean": -0.01939,
+              "hit": 0.4276,
+              "t": -1.879,
+              "p": 0.06029
+            }
+          }
+        },
+        "evidence": {
+          "5": "moderate",
+          "20": "moderate",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": -1,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "double_bottom",
+      "name": "Double bottom",
+      "family": "pattern",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "Two troughs at about the same price; a close above the peak between them completes the bottom.",
+      "rule": "Two consecutive close minima within 1.5% of each other, at least 20 bars apart, the maximum between them at least 3% above; fires at the first close above that maximum within the pattern's width, unless a close 1.5% below the troughs comes first.",
+      "source": "Lo, Mamaysky & Wang, \"Foundations of Technical Analysis\", Journal of Finance (2000); Edwards & Magee, Technical Analysis of Stock Trends (1948)",
+      "stats": {
+        "name": "Double bottom",
+        "family": "pattern",
+        "dir": "bull",
+        "n_events_total": 4094,
+        "n_bull": 4094,
+        "n_bear": 0,
+        "n_is": 1706,
+        "n_oos": 2388,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 1706,
+              "months": 48,
+              "mean": -0.00097,
+              "hit": 0.5006,
+              "t": -0.421,
+              "p": 0.6738
+            },
+            "oos": {
+              "n": 2379,
+              "months": 70,
+              "mean": -0.00028,
+              "hit": 0.5095,
+              "t": -0.192,
+              "p": 0.8478
+            }
+          },
+          "20": {
+            "is": {
+              "n": 1706,
+              "months": 48,
+              "mean": -0.00626,
+              "hit": 0.5,
+              "t": -0.679,
+              "p": 0.497
+            },
+            "oos": {
+              "n": 2339,
+              "months": 70,
+              "mean": -0.00146,
+              "hit": 0.5058,
+              "t": -0.353,
+              "p": 0.7237
+            }
+          },
+          "60": {
+            "is": {
+              "n": 1706,
+              "months": 48,
+              "mean": -0.02335,
+              "hit": 0.4877,
+              "t": -1.025,
+              "p": 0.3055
+            },
+            "oos": {
+              "n": 2314,
+              "months": 68,
+              "mean": -0.01045,
+              "hit": 0.4806,
+              "t": -0.859,
+              "p": 0.3901
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "triangle",
+      "name": "Triangle breakout",
+      "family": "pattern",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "Peaks getting lower while troughs get higher: the range contracts into a triangle. The direction of the breakout is taken as the signal.",
+      "rule": "Five alternating close extrema with the peaks falling and the troughs rising (LMW's triangle); fires at the first close above the line through the last two peaks (bull) or below the line through the last two troughs (bear) within half the pattern width.",
+      "source": "Lo, Mamaysky & Wang, \"Foundations of Technical Analysis\", Journal of Finance (2000); Edwards & Magee, Technical Analysis of Stock Trends (1948)",
+      "stats": {
+        "name": "Triangle breakout",
+        "family": "pattern",
+        "dir": "both",
+        "n_events_total": 17540,
+        "n_bull": 9897,
+        "n_bear": 7643,
+        "n_is": 6815,
+        "n_oos": 10725,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 6815,
+              "months": 50,
+              "mean": 0.00063,
+              "hit": 0.5077,
+              "t": 0.369,
+              "p": 0.7124
+            },
+            "oos": {
+              "n": 10706,
+              "months": 70,
+              "mean": -0.00148,
+              "hit": 0.4957,
+              "t": -1.563,
+              "p": 0.118
+            }
+          },
+          "20": {
+            "is": {
+              "n": 6815,
+              "months": 50,
+              "mean": -0.00161,
+              "hit": 0.4988,
+              "t": -0.475,
+              "p": 0.6348
+            },
+            "oos": {
+              "n": 10636,
+              "months": 70,
+              "mean": -0.00358,
+              "hit": 0.4884,
+              "t": -1.638,
+              "p": 0.1014
+            }
+          },
+          "60": {
+            "is": {
+              "n": 6815,
+              "months": 50,
+              "mean": -0.00821,
+              "hit": 0.4825,
+              "t": -1.599,
+              "p": 0.1099
+            },
+            "oos": {
+              "n": 10301,
+              "months": 68,
+              "mean": -0.01053,
+              "hit": 0.4727,
+              "t": -3.475,
+              "p": 0.00051
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "bull_flag",
+      "name": "Bull flag",
+      "family": "pattern",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "A sharp rise (the pole) followed by a short, tight drift down or sideways (the flag), then a break above the flag: a continuation pattern.",
+      "rule": "Pole: the close rises ≥ 4 × ATR(14) above the lowest low of the 10 bars ending at the pole bar; flag: 5–15 bars after it with a range ≤ half the pole, highs no more than 0.25 ATR above the pole bar's high and a last close not above the pole close; fires when a close exceeds the flag's high (at most once per 5 bars).",
+      "source": "Edwards & Magee, Technical Analysis of Stock Trends (1948); Thomas Bulkowski, Encyclopedia of Chart Patterns (2000)",
+      "stats": {
+        "name": "Bull flag",
+        "family": "pattern",
+        "dir": "bull",
+        "n_events_total": 10063,
+        "n_bull": 10063,
+        "n_bear": 0,
+        "n_is": 4138,
+        "n_oos": 5925,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 4138,
+              "months": 50,
+              "mean": -0.00447,
+              "hit": 0.4638,
+              "t": -1.911,
+              "p": 0.05598
+            },
+            "oos": {
+              "n": 5882,
+              "months": 70,
+              "mean": -0.00216,
+              "hit": 0.4869,
+              "t": -1.285,
+              "p": 0.1989
+            }
+          },
+          "20": {
+            "is": {
+              "n": 4138,
+              "months": 50,
+              "mean": -0.00825,
+              "hit": 0.4807,
+              "t": -1.187,
+              "p": 0.2351
+            },
+            "oos": {
+              "n": 5861,
+              "months": 70,
+              "mean": -0.00816,
+              "hit": 0.4723,
+              "t": -1.232,
+              "p": 0.2181
+            }
+          },
+          "60": {
+            "is": {
+              "n": 4138,
+              "months": 50,
+              "mean": -0.00861,
+              "hit": 0.5118,
+              "t": -0.337,
+              "p": 0.7359
+            },
+            "oos": {
+              "n": 5755,
+              "months": 68,
+              "mean": -0.01611,
+              "hit": 0.4721,
+              "t": -1.236,
+              "p": 0.2166
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "bear_flag",
+      "name": "Bear flag",
+      "family": "pattern",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "A sharp fall followed by a tight drift up or sideways, then a break below the flag.",
+      "rule": "Pole: the close falls ≥ 4 × ATR(14) below the highest high of the 10 bars ending at the pole bar; flag: 5–15 bars with a range ≤ half the pole, lows no more than 0.25 ATR below the pole bar's low and a last close not below the pole close; fires when a close falls below the flag's low (at most once per 5 bars).",
+      "source": "Edwards & Magee, Technical Analysis of Stock Trends (1948); Thomas Bulkowski, Encyclopedia of Chart Patterns (2000)",
+      "stats": {
+        "name": "Bear flag",
+        "family": "pattern",
+        "dir": "bear",
+        "n_events_total": 8887,
+        "n_bull": 0,
+        "n_bear": 8887,
+        "n_is": 3282,
+        "n_oos": 5605,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 3282,
+              "months": 50,
+              "mean": -0.00223,
+              "hit": 0.4711,
+              "t": -0.156,
+              "p": 0.8762
+            },
+            "oos": {
+              "n": 5569,
+              "months": 70,
+              "mean": -0.00297,
+              "hit": 0.4714,
+              "t": -1.022,
+              "p": 0.3067
+            }
+          },
+          "20": {
+            "is": {
+              "n": 3282,
+              "months": 50,
+              "mean": 0.00118,
+              "hit": 0.4604,
+              "t": 0.043,
+              "p": 0.9655
+            },
+            "oos": {
+              "n": 5527,
+              "months": 70,
+              "mean": -0.00768,
+              "hit": 0.4762,
+              "t": -1.238,
+              "p": 0.2157
+            }
+          },
+          "60": {
+            "is": {
+              "n": 3282,
+              "months": 50,
+              "mean": -0.02088,
+              "hit": 0.4467,
+              "t": -0.772,
+              "p": 0.4398
+            },
+            "oos": {
+              "n": 5311,
+              "months": 68,
+              "mean": -0.0196,
+              "hit": 0.4528,
+              "t": -1.659,
+              "p": 0.0972
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "cup_handle",
+      "name": "Cup with handle",
+      "family": "pattern",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "A rounded U-shaped base between two peaks at about the same price (the cup), then a small pullback (the handle) and a break above the rim. William O'Neil's favourite base for growth stocks.",
+      "rule": "Two close maxima 30–150 bars apart, the right one 95–103% of the left, cup depth 12–35%, the bottom in the middle 60% of the cup and ≥ 55% of the cup's closes in its lower half (round, not V-shaped); fires at the first close above the rim within 40 bars while the handle holds (no close more than 12% or half the cup depth below the rim).",
+      "source": "William O'Neil, How to Make Money in Stocks (1988)",
+      "stats": {
+        "name": "Cup with handle",
+        "family": "pattern",
+        "dir": "bull",
+        "n_events_total": 5347,
+        "n_bull": 5347,
+        "n_bear": 0,
+        "n_is": 1824,
+        "n_oos": 3523,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 1824,
+              "months": 48,
+              "mean": -0.00266,
+              "hit": 0.4748,
+              "t": -1.325,
+              "p": 0.1853
+            },
+            "oos": {
+              "n": 3494,
+              "months": 70,
+              "mean": -0.00314,
+              "hit": 0.4791,
+              "t": -1.72,
+              "p": 0.08545
+            }
+          },
+          "20": {
+            "is": {
+              "n": 1824,
+              "months": 48,
+              "mean": -0.01226,
+              "hit": 0.4764,
+              "t": -1.43,
+              "p": 0.1528
+            },
+            "oos": {
+              "n": 3476,
+              "months": 70,
+              "mean": -0.01041,
+              "hit": 0.4646,
+              "t": -2.001,
+              "p": 0.04543
+            }
+          },
+          "60": {
+            "is": {
+              "n": 1824,
+              "months": 48,
+              "mean": -0.03924,
+              "hit": 0.4589,
+              "t": -1.352,
+              "p": 0.1763
+            },
+            "oos": {
+              "n": 3410,
+              "months": 68,
+              "mean": -0.02669,
+              "hit": 0.4326,
+              "t": -2.359,
+              "p": 0.01832
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "moderate",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": -1,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "wyckoff_phase",
+      "name": "Wyckoff phase",
+      "family": "wyckoff",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "Wyckoff saw markets cycle through accumulation (large operators buying in a trading range after a fall), markup (the rise), distribution (selling in a range after a rise) and markdown (the fall).",
+      "rule": "A trading range is 30 bars whose high–low span is ≤ 6 × ATR(14), after a move of ≥ 4 × ATR over the 60 bars before it (a decline → accumulation, a rise → distribution); its bounds are the climax (the window's lowest low, or highest high) and the extreme of the rally (reaction) after it, the climax at least 5 bars old; the range then lasts at most 30 more bars (30–60 in all). A sign of strength / weakness, or 3 closes outside the range, ends it (→ markup / markdown); a close back through the far side of that range ends the markup / markdown (phase: none).",
+      "source": "Richard D. Wyckoff (his stock-market course of the 1930s), as taught by the Wyckoff school",
+      "stats": null
+    },
+    {
+      "id": "spring",
+      "name": "Spring",
+      "family": "wyckoff",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "Inside an accumulation-type range, the price dips below the range low and closes back inside the same day: the sellers below the range were shaken out. Volume is recorded (higher volume is the classic reading).",
+      "rule": "Inside an active Wyckoff range: low < range low and close > range low (at most once per 5 bars); the volume ratio to its 20-day average is kept in info.",
+      "source": "Richard D. Wyckoff (his stock-market course of the 1930s), as taught by the Wyckoff school",
+      "stats": {
+        "name": "Spring",
+        "family": "wyckoff",
+        "dir": "bull",
+        "n_events_total": 46632,
+        "n_bull": 46632,
+        "n_bear": 0,
+        "n_is": 15478,
+        "n_oos": 31154,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 15478,
+              "months": 47,
+              "mean": -0.00095,
+              "hit": 0.5174,
+              "t": -0.355,
+              "p": 0.7223
+            },
+            "oos": {
+              "n": 31052,
+              "months": 70,
+              "mean": 0.00127,
+              "hit": 0.5109,
+              "t": 0.758,
+              "p": 0.4486
+            }
+          },
+          "20": {
+            "is": {
+              "n": 15478,
+              "months": 47,
+              "mean": -0.00478,
+              "hit": 0.5206,
+              "t": -0.437,
+              "p": 0.6625
+            },
+            "oos": {
+              "n": 30705,
+              "months": 70,
+              "mean": 0.00553,
+              "hit": 0.5176,
+              "t": 1.21,
+              "p": 0.2265
+            }
+          },
+          "60": {
+            "is": {
+              "n": 15478,
+              "months": 47,
+              "mean": -0.01463,
+              "hit": 0.5094,
+              "t": -0.462,
+              "p": 0.6438
+            },
+            "oos": {
+              "n": 29367,
+              "months": 68,
+              "mean": 0.00722,
+              "hit": 0.5178,
+              "t": 0.689,
+              "p": 0.491
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "upthrust",
+      "name": "Upthrust (Wyckoff)",
+      "family": "wyckoff",
+      "dir": "bear",
+      "subjective": true,
+      "kind": "event",
+      "what": "The mirror of the spring at the range high: a push above the range that closes back inside.",
+      "rule": "Inside an active Wyckoff range: high > range high and close < range high.",
+      "source": "Richard D. Wyckoff (his stock-market course of the 1930s), as taught by the Wyckoff school",
+      "stats": {
+        "name": "Upthrust (Wyckoff)",
+        "family": "wyckoff",
+        "dir": "bear",
+        "n_events_total": 48503,
+        "n_bull": 0,
+        "n_bear": 48503,
+        "n_is": 17174,
+        "n_oos": 31329,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 17174,
+              "months": 47,
+              "mean": -0.00047,
+              "hit": 0.4859,
+              "t": -0.175,
+              "p": 0.861
+            },
+            "oos": {
+              "n": 31129,
+              "months": 70,
+              "mean": -0.00103,
+              "hit": 0.4845,
+              "t": -0.644,
+              "p": 0.5195
+            }
+          },
+          "20": {
+            "is": {
+              "n": 17174,
+              "months": 47,
+              "mean": 0.00231,
+              "hit": 0.4889,
+              "t": 0.292,
+              "p": 0.7701
+            },
+            "oos": {
+              "n": 30694,
+              "months": 70,
+              "mean": -0.00082,
+              "hit": 0.487,
+              "t": -0.157,
+              "p": 0.8756
+            }
+          },
+          "60": {
+            "is": {
+              "n": 17174,
+              "months": 47,
+              "mean": 0.01215,
+              "hit": 0.4867,
+              "t": 0.498,
+              "p": 0.6186
+            },
+            "oos": {
+              "n": 30201,
+              "months": 68,
+              "mean": 0.00755,
+              "hit": 0.5125,
+              "t": 0.566,
+              "p": 0.5712
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "sos",
+      "name": "Sign of strength",
+      "family": "wyckoff",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "A wide up bar on rising volume that closes above the trading range: demand overcoming supply, the start of markup.",
+      "rule": "Close > range high + 0.25 × ATR(14), spread ≥ its 20-bar average and volume ≥ its 20-bar average; ends the range.",
+      "source": "Richard D. Wyckoff (his stock-market course of the 1930s), as taught by the Wyckoff school",
+      "stats": {
+        "name": "Sign of strength",
+        "family": "wyckoff",
+        "dir": "bull",
+        "n_events_total": 34260,
+        "n_bull": 34260,
+        "n_bear": 0,
+        "n_is": 12325,
+        "n_oos": 21935,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 12325,
+              "months": 47,
+              "mean": -0.00578,
+              "hit": 0.4812,
+              "t": -1.285,
+              "p": 0.1987
+            },
+            "oos": {
+              "n": 21630,
+              "months": 70,
+              "mean": -0.0002,
+              "hit": 0.5036,
+              "t": -0.141,
+              "p": 0.8879
+            }
+          },
+          "20": {
+            "is": {
+              "n": 12325,
+              "months": 47,
+              "mean": -0.01224,
+              "hit": 0.4709,
+              "t": -1.214,
+              "p": 0.2249
+            },
+            "oos": {
+              "n": 21262,
+              "months": 70,
+              "mean": -0.00219,
+              "hit": 0.5003,
+              "t": -0.409,
+              "p": 0.6825
+            }
+          },
+          "60": {
+            "is": {
+              "n": 12325,
+              "months": 47,
+              "mean": -0.0201,
+              "hit": 0.4843,
+              "t": -0.763,
+              "p": 0.4457
+            },
+            "oos": {
+              "n": 20988,
+              "months": 68,
+              "mean": -0.01273,
+              "hit": 0.4752,
+              "t": -0.928,
+              "p": 0.3533
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "sow",
+      "name": "Sign of weakness",
+      "family": "wyckoff",
+      "dir": "bear",
+      "subjective": true,
+      "kind": "event",
+      "what": "A wide down bar on rising volume that closes below the trading range: the start of markdown.",
+      "rule": "Close < range low − 0.25 × ATR(14), spread ≥ its 20-bar average and volume ≥ its 20-bar average; ends the range.",
+      "source": "Richard D. Wyckoff (his stock-market course of the 1930s), as taught by the Wyckoff school",
+      "stats": {
+        "name": "Sign of weakness",
+        "family": "wyckoff",
+        "dir": "bear",
+        "n_events_total": 32772,
+        "n_bull": 0,
+        "n_bear": 32772,
+        "n_is": 11507,
+        "n_oos": 21265,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 11507,
+              "months": 47,
+              "mean": 0.00607,
+              "hit": 0.4967,
+              "t": 1.162,
+              "p": 0.2451
+            },
+            "oos": {
+              "n": 21081,
+              "months": 70,
+              "mean": -0.00467,
+              "hit": 0.4588,
+              "t": -2.312,
+              "p": 0.02076
+            }
+          },
+          "20": {
+            "is": {
+              "n": 11507,
+              "months": 47,
+              "mean": 0.0218,
+              "hit": 0.499,
+              "t": 0.91,
+              "p": 0.3631
+            },
+            "oos": {
+              "n": 20847,
+              "months": 70,
+              "mean": -0.01141,
+              "hit": 0.4548,
+              "t": -2.185,
+              "p": 0.02885
+            }
+          },
+          "60": {
+            "is": {
+              "n": 11507,
+              "months": 47,
+              "mean": 0.01931,
+              "hit": 0.5018,
+              "t": 0.578,
+              "p": 0.5631
+            },
+            "oos": {
+              "n": 20083,
+              "months": 68,
+              "mean": -0.0189,
+              "hit": 0.4492,
+              "t": -1.615,
+              "p": 0.1063
+            }
+          }
+        },
+        "evidence": {
+          "5": "moderate",
+          "20": "moderate",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": -1,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "vsa_bar",
+      "name": "VSA bar reading",
+      "family": "vsa",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "VSA (volume spread analysis) reads each bar from three things: its spread (high − low), its volume and where it closes within the bar, each judged against recent bars.",
+      "rule": "Spread and volume as multiples of their 20-bar averages (narrow < 0.7, wide > 1.3, ultra ≥ 2), close position = (close − low) ÷ (high − low): low < 1/3, high > 2/3.",
+      "source": "Tom Williams, Volume Spread Analysis (Master the Markets), building on Wyckoff",
+      "stats": null
+    },
+    {
+      "id": "no_demand",
+      "name": "No demand",
+      "family": "vsa",
+      "dir": "bear",
+      "subjective": true,
+      "kind": "event",
+      "what": "An up bar on a narrow spread with volume lower than the two previous bars: professionals are not interested in higher prices.",
+      "rule": "close > previous close, spread < 0.7 × average, volume < each of the 2 previous bars, close position ≤ 0.6.",
+      "source": "Tom Williams, Volume Spread Analysis (Master the Markets), building on Wyckoff",
+      "stats": {
+        "name": "No demand",
+        "family": "vsa",
+        "dir": "bear",
+        "n_events_total": 114315,
+        "n_bull": 0,
+        "n_bear": 114315,
+        "n_is": 44592,
+        "n_oos": 69723,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 44592,
+              "months": 50,
+              "mean": -0.00216,
+              "hit": 0.4839,
+              "t": -1.262,
+              "p": 0.2069
+            },
+            "oos": {
+              "n": 69611,
+              "months": 70,
+              "mean": 0.00072,
+              "hit": 0.4934,
+              "t": 0.591,
+              "p": 0.5543
+            }
+          },
+          "20": {
+            "is": {
+              "n": 44592,
+              "months": 50,
+              "mean": -0.00598,
+              "hit": 0.4498,
+              "t": -0.82,
+              "p": 0.412
+            },
+            "oos": {
+              "n": 68919,
+              "months": 70,
+              "mean": 0.0013,
+              "hit": 0.5035,
+              "t": 0.255,
+              "p": 0.7986
+            }
+          },
+          "60": {
+            "is": {
+              "n": 44592,
+              "months": 50,
+              "mean": -0.00374,
+              "hit": 0.4594,
+              "t": -0.2,
+              "p": 0.8419
+            },
+            "oos": {
+              "n": 66846,
+              "months": 68,
+              "mean": -0.00047,
+              "hit": 0.4966,
+              "t": -0.04,
+              "p": 0.9684
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "no_supply",
+      "name": "No supply",
+      "family": "vsa",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "A down bar on a narrow spread with volume lower than the two previous bars: no selling pressure.",
+      "rule": "close < previous close, spread < 0.7 × average, volume < each of the 2 previous bars, close position ≥ 0.4.",
+      "source": "Tom Williams, Volume Spread Analysis (Master the Markets), building on Wyckoff",
+      "stats": {
+        "name": "No supply",
+        "family": "vsa",
+        "dir": "bull",
+        "n_events_total": 98794,
+        "n_bull": 98794,
+        "n_bear": 0,
+        "n_is": 36664,
+        "n_oos": 62130,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 36664,
+              "months": 50,
+              "mean": 0.00328,
+              "hit": 0.5334,
+              "t": 1.015,
+              "p": 0.3099
+            },
+            "oos": {
+              "n": 62039,
+              "months": 70,
+              "mean": -0.00011,
+              "hit": 0.5037,
+              "t": -0.065,
+              "p": 0.9482
+            }
+          },
+          "20": {
+            "is": {
+              "n": 36664,
+              "months": 50,
+              "mean": 0.00558,
+              "hit": 0.5482,
+              "t": 0.599,
+              "p": 0.5492
+            },
+            "oos": {
+              "n": 61545,
+              "months": 70,
+              "mean": -0.00042,
+              "hit": 0.4976,
+              "t": -0.077,
+              "p": 0.9386
+            }
+          },
+          "60": {
+            "is": {
+              "n": 36664,
+              "months": 50,
+              "mean": 0.00976,
+              "hit": 0.5536,
+              "t": 0.458,
+              "p": 0.6473
+            },
+            "oos": {
+              "n": 59688,
+              "months": 68,
+              "mean": 0.00201,
+              "hit": 0.508,
+              "t": 0.157,
+              "p": 0.8749
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "stopping_volume",
+      "name": "Stopping volume",
+      "family": "vsa",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "Heavy volume on a down move with the close well off the low: large buyers absorbing the selling.",
+      "rule": "Low at the lowest of 10 bars, volume ≥ 2 × average, spread ≥ average, close position ≥ 0.5.",
+      "source": "Tom Williams, Volume Spread Analysis (Master the Markets), building on Wyckoff",
+      "stats": {
+        "name": "Stopping volume",
+        "family": "vsa",
+        "dir": "bull",
+        "n_events_total": 21360,
+        "n_bull": 21360,
+        "n_bear": 0,
+        "n_is": 8231,
+        "n_oos": 13129,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 8231,
+              "months": 50,
+              "mean": -0.011,
+              "hit": 0.472,
+              "t": -1.715,
+              "p": 0.08632
+            },
+            "oos": {
+              "n": 13055,
+              "months": 70,
+              "mean": 0.00058,
+              "hit": 0.5079,
+              "t": 0.294,
+              "p": 0.769
+            }
+          },
+          "20": {
+            "is": {
+              "n": 8231,
+              "months": 50,
+              "mean": -0.03313,
+              "hit": 0.4569,
+              "t": -1.29,
+              "p": 0.1972
+            },
+            "oos": {
+              "n": 12905,
+              "months": 70,
+              "mean": 0.00671,
+              "hit": 0.5317,
+              "t": 1.16,
+              "p": 0.246
+            }
+          },
+          "60": {
+            "is": {
+              "n": 8231,
+              "months": 50,
+              "mean": -0.01264,
+              "hit": 0.4964,
+              "t": -0.769,
+              "p": 0.4421
+            },
+            "oos": {
+              "n": 12643,
+              "months": 68,
+              "mean": 0.01379,
+              "hit": 0.5292,
+              "t": 0.891,
+              "p": 0.373
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "selling_climax",
+      "name": "Selling climax (climactic down bar)",
+      "family": "vsa",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "An ultra-wide bar on ultra-high volume at a new low after a fall: panic selling, read as the end of the move.",
+      "rule": "Low at the lowest of 20 bars, close below its 10-day mean, spread ≥ 2 × average, volume ≥ 2.5 × average.",
+      "source": "Tom Williams, Volume Spread Analysis (Master the Markets), building on Wyckoff",
+      "stats": {
+        "name": "Selling climax (climactic down bar)",
+        "family": "vsa",
+        "dir": "bull",
+        "n_events_total": 16459,
+        "n_bull": 16459,
+        "n_bear": 0,
+        "n_is": 6696,
+        "n_oos": 9763,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 6696,
+              "months": 50,
+              "mean": -0.00957,
+              "hit": 0.4828,
+              "t": -1.223,
+              "p": 0.2214
+            },
+            "oos": {
+              "n": 9624,
+              "months": 70,
+              "mean": 0.00151,
+              "hit": 0.5219,
+              "t": 0.652,
+              "p": 0.5146
+            }
+          },
+          "20": {
+            "is": {
+              "n": 6696,
+              "months": 50,
+              "mean": -0.03435,
+              "hit": 0.4592,
+              "t": -1.265,
+              "p": 0.2058
+            },
+            "oos": {
+              "n": 9500,
+              "months": 70,
+              "mean": 0.00606,
+              "hit": 0.5277,
+              "t": 1.059,
+              "p": 0.2896
+            }
+          },
+          "60": {
+            "is": {
+              "n": 6696,
+              "months": 50,
+              "mean": -0.0191,
+              "hit": 0.4842,
+              "t": -1.061,
+              "p": 0.2888
+            },
+            "oos": {
+              "n": 9312,
+              "months": 68,
+              "mean": 0.01757,
+              "hit": 0.5391,
+              "t": 1.1,
+              "p": 0.2714
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "buying_climax",
+      "name": "Buying climax (climactic up bar)",
+      "family": "vsa",
+      "dir": "bear",
+      "subjective": true,
+      "kind": "event",
+      "what": "An ultra-wide bar on ultra-high volume at a new high after a rise: euphoric buying, read as the end of the move.",
+      "rule": "High at the highest of 20 bars, close above its 10-day mean, spread ≥ 2 × average, volume ≥ 2.5 × average.",
+      "source": "Tom Williams, Volume Spread Analysis (Master the Markets), building on Wyckoff",
+      "stats": {
+        "name": "Buying climax (climactic up bar)",
+        "family": "vsa",
+        "dir": "bear",
+        "n_events_total": 20411,
+        "n_bull": 0,
+        "n_bear": 20411,
+        "n_is": 8587,
+        "n_oos": 11824,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 8587,
+              "months": 50,
+              "mean": 0.0045,
+              "hit": 0.5253,
+              "t": 1.297,
+              "p": 0.1947
+            },
+            "oos": {
+              "n": 11678,
+              "months": 70,
+              "mean": 0.00016,
+              "hit": 0.5088,
+              "t": 0.067,
+              "p": 0.9469
+            }
+          },
+          "20": {
+            "is": {
+              "n": 8587,
+              "months": 50,
+              "mean": 0.01251,
+              "hit": 0.5215,
+              "t": 0.914,
+              "p": 0.3607
+            },
+            "oos": {
+              "n": 11582,
+              "months": 70,
+              "mean": 0.00096,
+              "hit": 0.5038,
+              "t": 0.135,
+              "p": 0.8925
+            }
+          },
+          "60": {
+            "is": {
+              "n": 8587,
+              "months": 50,
+              "mean": 0.01733,
+              "hit": 0.5302,
+              "t": 0.583,
+              "p": 0.56
+            },
+            "oos": {
+              "n": 11444,
+              "months": 68,
+              "mean": 0.00902,
+              "hit": 0.5154,
+              "t": 0.542,
+              "p": 0.588
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "vsa_upthrust",
+      "name": "Upthrust bar (VSA)",
+      "family": "vsa",
+      "dir": "bear",
+      "subjective": true,
+      "kind": "event",
+      "what": "A wide bar that pushes to a new high and closes near its low on high volume: a trap for buyers.",
+      "rule": "High above the previous 10 highs, spread ≥ 1.2 × average, volume ≥ 1.5 × average, close position ≤ 0.3.",
+      "source": "Tom Williams, Volume Spread Analysis (Master the Markets), building on Wyckoff",
+      "stats": {
+        "name": "Upthrust bar (VSA)",
+        "family": "vsa",
+        "dir": "bear",
+        "n_events_total": 21846,
+        "n_bull": 0,
+        "n_bear": 21846,
+        "n_is": 8556,
+        "n_oos": 13290,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 8556,
+              "months": 50,
+              "mean": 0.00027,
+              "hit": 0.4892,
+              "t": 0.064,
+              "p": 0.9489
+            },
+            "oos": {
+              "n": 13061,
+              "months": 70,
+              "mean": -0.00052,
+              "hit": 0.4918,
+              "t": -0.316,
+              "p": 0.7523
+            }
+          },
+          "20": {
+            "is": {
+              "n": 8556,
+              "months": 50,
+              "mean": 0.00293,
+              "hit": 0.4951,
+              "t": 0.273,
+              "p": 0.7845
+            },
+            "oos": {
+              "n": 12906,
+              "months": 70,
+              "mean": 7e-05,
+              "hit": 0.4931,
+              "t": 0.013,
+              "p": 0.9893
+            }
+          },
+          "60": {
+            "is": {
+              "n": 8556,
+              "months": 50,
+              "mean": 0.00124,
+              "hit": 0.4794,
+              "t": 0.045,
+              "p": 0.964
+            },
+            "oos": {
+              "n": 12751,
+              "months": 68,
+              "mean": 0.00443,
+              "hit": 0.5061,
+              "t": 0.316,
+              "p": 0.7517
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "vsa_test",
+      "name": "Test (VSA)",
+      "family": "vsa",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "A dip below the previous low on low volume that closes near the high, in an up-move: a test showing no supply.",
+      "rule": "low < previous low, close position ≥ 0.6, spread < average, volume < each of the 2 previous bars, close above the 20-day EMA.",
+      "source": "Tom Williams, Volume Spread Analysis (Master the Markets), building on Wyckoff",
+      "stats": {
+        "name": "Test (VSA)",
+        "family": "vsa",
+        "dir": "bull",
+        "n_events_total": 75878,
+        "n_bull": 75878,
+        "n_bear": 0,
+        "n_is": 30308,
+        "n_oos": 45570,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 30308,
+              "months": 50,
+              "mean": 0.00056,
+              "hit": 0.5142,
+              "t": 0.27,
+              "p": 0.7872
+            },
+            "oos": {
+              "n": 45454,
+              "months": 70,
+              "mean": -0.00226,
+              "hit": 0.495,
+              "t": -1.365,
+              "p": 0.1722
+            }
+          },
+          "20": {
+            "is": {
+              "n": 30308,
+              "months": 50,
+              "mean": -0.0003,
+              "hit": 0.5249,
+              "t": -0.04,
+              "p": 0.9681
+            },
+            "oos": {
+              "n": 45052,
+              "months": 70,
+              "mean": -0.00631,
+              "hit": 0.4799,
+              "t": -1.282,
+              "p": 0.1998
+            }
+          },
+          "60": {
+            "is": {
+              "n": 30308,
+              "months": 50,
+              "mean": -0.00258,
+              "hit": 0.5341,
+              "t": -0.114,
+              "p": 0.9093
+            },
+            "oos": {
+              "n": 44146,
+              "months": 68,
+              "mean": -0.01152,
+              "hit": 0.4784,
+              "t": -0.951,
+              "p": 0.3418
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "value_area",
+      "name": "Volume profile: POC, value area, HVN / LVN",
+      "family": "profile",
+      "dir": "both",
+      "subjective": false,
+      "kind": "state",
+      "what": "A volume profile shows how much volume traded at each price. The POC (point of control) is the busiest price; the value area holds 70% of the volume, between VAH (value area high) and VAL (value area low); HVN / LVN are high and low volume nodes.",
+      "rule": "60 and 250 bars, 50 price bins, each day's volume spread evenly over its high–low; value area grown from the POC toward the heavier neighbour until 70% (see the module docstring).",
+      "source": "Peter Steidlmayer (Market Profile, Chicago Board of Trade, 1980s); James Dalton et al., Mind Over Markets (1990)",
+      "stats": null
+    },
+    {
+      "id": "va_reentry",
+      "name": "Back into value",
+      "family": "profile",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "After closing outside the value area, the price closes back inside it. Market Profile traders expect it to rotate through the value area toward the other side (the \"80% rule\").",
+      "rule": "60-bar profile of the bars before (refreshed every 5 bars): close(i−1) > VAH and close(i) inside → bear; close(i−1) < VAL and close(i) inside → bull.",
+      "source": "Peter Steidlmayer (Market Profile); James Dalton et al., Mind Over Markets (1990)",
+      "stats": {
+        "name": "Back into value",
+        "family": "profile",
+        "dir": "both",
+        "n_events_total": 205924,
+        "n_bull": 93550,
+        "n_bear": 112374,
+        "n_is": 73848,
+        "n_oos": 132076,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 73848,
+              "months": 48,
+              "mean": -0.00024,
+              "hit": 0.4988,
+              "t": -0.173,
+              "p": 0.8628
+            },
+            "oos": {
+              "n": 131421,
+              "months": 70,
+              "mean": 0.0001,
+              "hit": 0.502,
+              "t": 0.147,
+              "p": 0.8827
+            }
+          },
+          "20": {
+            "is": {
+              "n": 73848,
+              "months": 48,
+              "mean": 0.00374,
+              "hit": 0.509,
+              "t": 1.263,
+              "p": 0.2066
+            },
+            "oos": {
+              "n": 130000,
+              "months": 70,
+              "mean": 0.0046,
+              "hit": 0.5156,
+              "t": 2.157,
+              "p": 0.031
+            }
+          },
+          "60": {
+            "is": {
+              "n": 73848,
+              "months": 48,
+              "mean": 0.008,
+              "hit": 0.5127,
+              "t": 1.321,
+              "p": 0.1867
+            },
+            "oos": {
+              "n": 126656,
+              "months": 68,
+              "mean": 0.00874,
+              "hit": 0.522,
+              "t": 2.201,
+              "p": 0.02772
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "moderate",
+          "60": "moderate"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 1,
+          "60": 1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "vah_breakout",
+      "name": "Breakout above value",
+      "family": "profile",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "A close that moves from inside the value area to above its high: acceptance of higher prices.",
+      "rule": "close(i−1) ≤ VAH < close(i), 60-bar profile of the bars before.",
+      "source": "Peter Steidlmayer (Market Profile)",
+      "stats": {
+        "name": "Breakout above value",
+        "family": "profile",
+        "dir": "bull",
+        "n_events_total": 149720,
+        "n_bull": 149720,
+        "n_bear": 0,
+        "n_is": 57479,
+        "n_oos": 92241,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 57479,
+              "months": 48,
+              "mean": -2e-05,
+              "hit": 0.506,
+              "t": -0.011,
+              "p": 0.9909
+            },
+            "oos": {
+              "n": 91762,
+              "months": 70,
+              "mean": -0.0012,
+              "hit": 0.5007,
+              "t": -0.908,
+              "p": 0.364
+            }
+          },
+          "20": {
+            "is": {
+              "n": 57479,
+              "months": 48,
+              "mean": -0.00508,
+              "hit": 0.5017,
+              "t": -0.733,
+              "p": 0.4637
+            },
+            "oos": {
+              "n": 90738,
+              "months": 70,
+              "mean": -0.00367,
+              "hit": 0.4952,
+              "t": -0.836,
+              "p": 0.4031
+            }
+          },
+          "60": {
+            "is": {
+              "n": 57479,
+              "months": 48,
+              "mean": -0.01424,
+              "hit": 0.5015,
+              "t": -0.618,
+              "p": 0.5367
+            },
+            "oos": {
+              "n": 89051,
+              "months": 68,
+              "mean": -0.01131,
+              "hit": 0.4804,
+              "t": -0.997,
+              "p": 0.3186
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "val_breakdown",
+      "name": "Breakdown below value",
+      "family": "profile",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "A close that moves from inside the value area to below its low (VAL, value area low): acceptance of lower prices.",
+      "rule": "close(i−1) ≥ VAL > close(i), 60-bar profile of the bars before (refreshed every 5 bars).",
+      "source": "Peter Steidlmayer (Market Profile)",
+      "stats": {
+        "name": "Breakdown below value",
+        "family": "profile",
+        "dir": "bear",
+        "n_events_total": 123243,
+        "n_bull": 0,
+        "n_bear": 123243,
+        "n_is": 40914,
+        "n_oos": 82329,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 40914,
+              "months": 48,
+              "mean": 0.0018,
+              "hit": 0.4724,
+              "t": 0.355,
+              "p": 0.7224
+            },
+            "oos": {
+              "n": 81908,
+              "months": 70,
+              "mean": -0.002,
+              "hit": 0.4776,
+              "t": -1.143,
+              "p": 0.2531
+            }
+          },
+          "20": {
+            "is": {
+              "n": 40914,
+              "months": 48,
+              "mean": 0.00504,
+              "hit": 0.4665,
+              "t": 0.32,
+              "p": 0.7488
+            },
+            "oos": {
+              "n": 80903,
+              "months": 70,
+              "mean": -0.00784,
+              "hit": 0.4689,
+              "t": -1.488,
+              "p": 0.1368
+            }
+          },
+          "60": {
+            "is": {
+              "n": 40914,
+              "months": 48,
+              "mean": -0.00377,
+              "hit": 0.454,
+              "t": -0.155,
+              "p": 0.8765
+            },
+            "oos": {
+              "n": 78046,
+              "months": 68,
+              "mean": -0.01663,
+              "hit": 0.4569,
+              "t": -1.206,
+              "p": 0.2277
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "sr_levels",
+      "name": "Support and resistance levels",
+      "family": "levels",
+      "dir": "both",
+      "subjective": false,
+      "kind": "state",
+      "what": "Prices where the market has turned more than once. Below the price a level is support (buyers stepped in), above it resistance (sellers did).",
+      "rule": "Swing highs and lows (3-bar fractals) within 0.5 × ATR(14) of a level's mean join it; ≥ 2 touches make a level; a bar whose range comes within 0.25 ATR of it is a test; levels untouched for 500 bars are dropped.",
+      "source": "Edwards & Magee, Technical Analysis of Stock Trends (1948)",
+      "stats": null
+    },
+    {
+      "id": "sd_zones",
+      "name": "Supply and demand zones",
+      "family": "levels",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "A demand zone is the small base the price sat in just before a strong rally: the idea is that unfilled buy orders remain there. A supply zone is the base before a strong drop.",
+      "rule": "Base = 1–3 consecutive bars each with a range ≤ 0.7 × ATR(14); a close ≥ 2 × ATR above (below) the base's last close within 3 bars makes a demand (supply) zone from the base's lowest low to highest high.",
+      "source": "Sam Seiden (Online Trading Academy), supply-and-demand trading",
+      "stats": null
+    },
+    {
+      "id": "support_bounce",
+      "name": "Bounce from support",
+      "family": "levels",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "The price comes down to a support level and closes back above it.",
+      "rule": "Level with ≥ 2 touches; close(i−1) ≥ level, low(i) within [level − 0.5 ATR, level + 0.25 ATR], close(i) ≥ level + 0.25 ATR; one event per level and kind per 10 bars.",
+      "source": "Edwards & Magee, Technical Analysis of Stock Trends (1948)",
+      "stats": {
+        "name": "Bounce from support",
+        "family": "levels",
+        "dir": "bull",
+        "n_events_total": 460683,
+        "n_bull": 460683,
+        "n_bear": 0,
+        "n_is": 161579,
+        "n_oos": 299104,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 161579,
+              "months": 50,
+              "mean": -0.00315,
+              "hit": 0.5065,
+              "t": -0.786,
+              "p": 0.4321
+            },
+            "oos": {
+              "n": 297750,
+              "months": 70,
+              "mean": -0.00012,
+              "hit": 0.5072,
+              "t": -0.09,
+              "p": 0.9286
+            }
+          },
+          "20": {
+            "is": {
+              "n": 161579,
+              "months": 50,
+              "mean": -0.00726,
+              "hit": 0.5166,
+              "t": -0.68,
+              "p": 0.4963
+            },
+            "oos": {
+              "n": 294333,
+              "months": 70,
+              "mean": -0.00014,
+              "hit": 0.5053,
+              "t": -0.032,
+              "p": 0.9744
+            }
+          },
+          "60": {
+            "is": {
+              "n": 161579,
+              "months": 50,
+              "mean": -0.00519,
+              "hit": 0.525,
+              "t": -0.235,
+              "p": 0.8141
+            },
+            "oos": {
+              "n": 286589,
+              "months": 68,
+              "mean": -0.00032,
+              "hit": 0.506,
+              "t": -0.028,
+              "p": 0.9775
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "resistance_reject",
+      "name": "Rejection at resistance",
+      "family": "levels",
+      "dir": "bear",
+      "subjective": false,
+      "kind": "event",
+      "what": "The price rises to a resistance level and closes back below it.",
+      "rule": "Level with ≥ 2 touches; close(i−1) ≤ level, high(i) within [level − 0.25 ATR, level + 0.5 ATR], close(i) ≤ level − 0.25 ATR; one event per level and kind per 10 bars.",
+      "source": "Edwards & Magee, Technical Analysis of Stock Trends (1948)",
+      "stats": {
+        "name": "Rejection at resistance",
+        "family": "levels",
+        "dir": "bear",
+        "n_events_total": 440658,
+        "n_bull": 0,
+        "n_bear": 440658,
+        "n_is": 152030,
+        "n_oos": 288628,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 152030,
+              "months": 50,
+              "mean": 0.00037,
+              "hit": 0.4827,
+              "t": 0.147,
+              "p": 0.883
+            },
+            "oos": {
+              "n": 286950,
+              "months": 70,
+              "mean": -0.00105,
+              "hit": 0.4836,
+              "t": -0.805,
+              "p": 0.4205
+            }
+          },
+          "20": {
+            "is": {
+              "n": 152030,
+              "months": 50,
+              "mean": 0.00284,
+              "hit": 0.4706,
+              "t": 0.265,
+              "p": 0.7913
+            },
+            "oos": {
+              "n": 283804,
+              "months": 70,
+              "mean": -0.00182,
+              "hit": 0.4875,
+              "t": -0.394,
+              "p": 0.6938
+            }
+          },
+          "60": {
+            "is": {
+              "n": 152030,
+              "months": 50,
+              "mean": 0.00062,
+              "hit": 0.4653,
+              "t": 0.028,
+              "p": 0.9777
+            },
+            "oos": {
+              "n": 275529,
+              "months": 68,
+              "mean": -0.00356,
+              "hit": 0.4855,
+              "t": -0.31,
+              "p": 0.7567
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "level_break",
+      "name": "Break of a level",
+      "family": "levels",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "A close through a support or resistance level: old resistance broken upward (bull) or support broken downward (bear).",
+      "rule": "close(i−1) ≤ level and close(i) ≥ level + 0.25 ATR (bull); mirror (bear); level with ≥ 2 touches; one per bar (the level with most touches).",
+      "source": "Edwards & Magee (1948); tested as trading-range breakouts by Brock, Lakonishok & LeBaron, Journal of Finance (1992)",
+      "stats": {
+        "name": "Break of a level",
+        "family": "levels",
+        "dir": "both",
+        "n_events_total": 493149,
+        "n_bull": 250224,
+        "n_bear": 242925,
+        "n_is": 171060,
+        "n_oos": 322089,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 171060,
+              "months": 50,
+              "mean": 0.00074,
+              "hit": 0.4916,
+              "t": 0.374,
+              "p": 0.7083
+            },
+            "oos": {
+              "n": 319828,
+              "months": 70,
+              "mean": -0.00125,
+              "hit": 0.4909,
+              "t": -2.079,
+              "p": 0.03764
+            }
+          },
+          "20": {
+            "is": {
+              "n": 171060,
+              "months": 50,
+              "mean": 0.00339,
+              "hit": 0.4938,
+              "t": 0.512,
+              "p": 0.6087
+            },
+            "oos": {
+              "n": 315867,
+              "months": 70,
+              "mean": -0.00251,
+              "hit": 0.4922,
+              "t": -1.757,
+              "p": 0.07884
+            }
+          },
+          "60": {
+            "is": {
+              "n": 171060,
+              "months": 50,
+              "mean": -0.0014,
+              "hit": 0.4948,
+              "t": -0.316,
+              "p": 0.7518
+            },
+            "oos": {
+              "n": 307951,
+              "months": 68,
+              "mean": -0.00674,
+              "hit": 0.485,
+              "t": -4.571,
+              "p": 5e-06
+            }
+          }
+        },
+        "evidence": {
+          "5": "moderate",
+          "20": "none",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": 0,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "demand_zone_test",
+      "name": "Return to a demand zone",
+      "family": "levels",
+      "dir": "bull",
+      "subjective": true,
+      "kind": "event",
+      "what": "The first time the price comes back down into an untested demand zone and closes above its bottom.",
+      "rule": "First bar after the zone formed with low ≤ zone top and close ≥ zone bottom (zones expire after 500 bars).",
+      "source": "Sam Seiden (Online Trading Academy), supply-and-demand trading",
+      "stats": {
+        "name": "Return to a demand zone",
+        "family": "levels",
+        "dir": "bull",
+        "n_events_total": 34995,
+        "n_bull": 34995,
+        "n_bear": 0,
+        "n_is": 12438,
+        "n_oos": 22557,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 12438,
+              "months": 51,
+              "mean": -0.00465,
+              "hit": 0.499,
+              "t": -0.808,
+              "p": 0.4188
+            },
+            "oos": {
+              "n": 22408,
+              "months": 70,
+              "mean": 0.00206,
+              "hit": 0.5228,
+              "t": 1.112,
+              "p": 0.2661
+            }
+          },
+          "20": {
+            "is": {
+              "n": 12438,
+              "months": 51,
+              "mean": -0.01534,
+              "hit": 0.4977,
+              "t": -0.77,
+              "p": 0.4416
+            },
+            "oos": {
+              "n": 22154,
+              "months": 70,
+              "mean": 0.00237,
+              "hit": 0.5142,
+              "t": 0.431,
+              "p": 0.6668
+            }
+          },
+          "60": {
+            "is": {
+              "n": 12438,
+              "months": 51,
+              "mean": -0.00403,
+              "hit": 0.519,
+              "t": -0.161,
+              "p": 0.8722
+            },
+            "oos": {
+              "n": 21494,
+              "months": 68,
+              "mean": 0.00741,
+              "hit": 0.5279,
+              "t": 0.616,
+              "p": 0.5378
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "supply_zone_test",
+      "name": "Return to a supply zone",
+      "family": "levels",
+      "dir": "bear",
+      "subjective": true,
+      "kind": "event",
+      "what": "The first time the price comes back up into an untested supply zone and closes below its top.",
+      "rule": "First bar after the zone formed with high ≥ zone bottom and close ≤ zone top (zones expire after 500 bars).",
+      "source": "Sam Seiden (Online Trading Academy), supply-and-demand trading",
+      "stats": {
+        "name": "Return to a supply zone",
+        "family": "levels",
+        "dir": "bear",
+        "n_events_total": 33746,
+        "n_bull": 0,
+        "n_bear": 33746,
+        "n_is": 12270,
+        "n_oos": 21476,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 12270,
+              "months": 51,
+              "mean": -0.00071,
+              "hit": 0.4826,
+              "t": -0.235,
+              "p": 0.8145
+            },
+            "oos": {
+              "n": 21326,
+              "months": 70,
+              "mean": 0.00155,
+              "hit": 0.498,
+              "t": 1.269,
+              "p": 0.2045
+            }
+          },
+          "20": {
+            "is": {
+              "n": 12270,
+              "months": 51,
+              "mean": 0.00139,
+              "hit": 0.4732,
+              "t": 0.16,
+              "p": 0.8731
+            },
+            "oos": {
+              "n": 21055,
+              "months": 70,
+              "mean": 0.00083,
+              "hit": 0.4915,
+              "t": 0.177,
+              "p": 0.8597
+            }
+          },
+          "60": {
+            "is": {
+              "n": 12270,
+              "months": 51,
+              "mean": 0.00225,
+              "hit": 0.47,
+              "t": 0.099,
+              "p": 0.9213
+            },
+            "oos": {
+              "n": 20751,
+              "months": 68,
+              "mean": 0.00524,
+              "hit": 0.5015,
+              "t": 0.4,
+              "p": 0.6892
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "fvg_return",
+      "name": "Return into a fair value gap",
+      "family": "ict",
+      "dir": "both",
+      "subjective": true,
+      "kind": "event",
+      "what": "An FVG (fair value gap) is a three-bar gap: bar i−2's high is below bar i's low (bullish), so the middle bar moved so fast that no trading overlapped. ICT teaches that price tends to come back to \"rebalance\" the gap and then continue.",
+      "rule": "Bullish FVG: high(i−2) < low(i), gap ≥ 0.1 × ATR(14); fires at the first later bar whose low enters the gap and whose close stays above its bottom (mirror for bearish); gaps expire after 250 bars.",
+      "source": "Michael J. Huddleston (ICT, the Inner Circle Trader), online teaching; \"smart money concepts\"",
+      "stats": {
+        "name": "Return into a fair value gap",
+        "family": "ict",
+        "dir": "both",
+        "n_events_total": 729132,
+        "n_bull": 385277,
+        "n_bear": 343855,
+        "n_is": 270876,
+        "n_oos": 458256,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 270876,
+              "months": 51,
+              "mean": 0.00041,
+              "hit": 0.5001,
+              "t": 0.38,
+              "p": 0.7039
+            },
+            "oos": {
+              "n": 456252,
+              "months": 70,
+              "mean": -0.00013,
+              "hit": 0.4996,
+              "t": -0.27,
+              "p": 0.7873
+            }
+          },
+          "20": {
+            "is": {
+              "n": 270876,
+              "months": 51,
+              "mean": -0.00333,
+              "hit": 0.4922,
+              "t": -1.225,
+              "p": 0.2208
+            },
+            "oos": {
+              "n": 451497,
+              "months": 70,
+              "mean": -0.00193,
+              "hit": 0.4935,
+              "t": -2.234,
+              "p": 0.02551
+            }
+          },
+          "60": {
+            "is": {
+              "n": 270876,
+              "months": 51,
+              "mean": -0.00572,
+              "hit": 0.4934,
+              "t": -1.461,
+              "p": 0.144
+            },
+            "oos": {
+              "n": 440189,
+              "months": 68,
+              "mean": -0.0044,
+              "hit": 0.4911,
+              "t": -3.78,
+              "p": 0.000157
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "moderate",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": -1,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "order_block",
+      "name": "Order block retest",
+      "family": "ict",
+      "dir": "both",
+      "subjective": true,
+      "kind": "event",
+      "what": "An order block is the last opposite-coloured bar before a strong (\"displacement\") move that breaks market structure: ICT reads it as where large orders were placed. A return to it is taken as an entry.",
+      "rule": "At a BOS or CHoCH bar, the last down bar (for a bullish break) among the 10 bars before, if the close has moved ≥ 1.5 × ATR(14) beyond that bar's close; zone = that bar's low–high; fires at the first later bar (within 120) that trades into the zone without closing beyond its far side (bullish block: close ≥ its low).",
+      "source": "Michael J. Huddleston (ICT, the Inner Circle Trader), online teaching; \"smart money concepts\"",
+      "stats": {
+        "name": "Order block retest",
+        "family": "ict",
+        "dir": "both",
+        "n_events_total": 121886,
+        "n_bull": 62021,
+        "n_bear": 59865,
+        "n_is": 43988,
+        "n_oos": 77898,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 43988,
+              "months": 50,
+              "mean": -0.00064,
+              "hit": 0.5025,
+              "t": -0.544,
+              "p": 0.5865
+            },
+            "oos": {
+              "n": 77395,
+              "months": 70,
+              "mean": 0.00025,
+              "hit": 0.4986,
+              "t": 0.392,
+              "p": 0.6954
+            }
+          },
+          "20": {
+            "is": {
+              "n": 43988,
+              "months": 50,
+              "mean": -0.00512,
+              "hit": 0.4885,
+              "t": -1.094,
+              "p": 0.2738
+            },
+            "oos": {
+              "n": 76477,
+              "months": 70,
+              "mean": -0.00058,
+              "hit": 0.4939,
+              "t": -0.381,
+              "p": 0.7032
+            }
+          },
+          "60": {
+            "is": {
+              "n": 43988,
+              "months": 50,
+              "mean": -0.00355,
+              "hit": 0.4934,
+              "t": -0.669,
+              "p": 0.5035
+            },
+            "oos": {
+              "n": 74720,
+              "months": 68,
+              "mean": 0.00078,
+              "hit": 0.5004,
+              "t": 0.342,
+              "p": 0.7322
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "liquidity_sweep",
+      "name": "Liquidity sweep",
+      "family": "ict",
+      "dir": "both",
+      "subjective": true,
+      "kind": "event",
+      "what": "Stops cluster just beyond obvious swing highs and lows (\"liquidity\"). A sweep is a wick through such a level that closes back inside: the stops were taken and the move reverses.",
+      "rule": "high(i) > the latest untaken swing high (3-bar fractal) and close(i) < it → bear; low(i) < the latest untaken swing low and close(i) > it → bull.",
+      "source": "Michael J. Huddleston (ICT, the Inner Circle Trader), online teaching; \"smart money concepts\"",
+      "stats": {
+        "name": "Liquidity sweep",
+        "family": "ict",
+        "dir": "both",
+        "n_events_total": 194602,
+        "n_bull": 91635,
+        "n_bear": 102967,
+        "n_is": 72660,
+        "n_oos": 121942,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 72660,
+              "months": 51,
+              "mean": -0.00118,
+              "hit": 0.4994,
+              "t": -0.93,
+              "p": 0.3521
+            },
+            "oos": {
+              "n": 121475,
+              "months": 70,
+              "mean": 0.00083,
+              "hit": 0.5037,
+              "t": 1.193,
+              "p": 0.2327
+            }
+          },
+          "20": {
+            "is": {
+              "n": 72660,
+              "months": 51,
+              "mean": -0.00213,
+              "hit": 0.5009,
+              "t": -0.856,
+              "p": 0.3922
+            },
+            "oos": {
+              "n": 120009,
+              "months": 70,
+              "mean": 0.00146,
+              "hit": 0.5035,
+              "t": 1.127,
+              "p": 0.2596
+            }
+          },
+          "60": {
+            "is": {
+              "n": 72660,
+              "months": 51,
+              "mean": 0.00032,
+              "hit": 0.4976,
+              "t": 0.078,
+              "p": 0.9377
+            },
+            "oos": {
+              "n": 116457,
+              "months": 68,
+              "mean": 0.0045,
+              "hit": 0.509,
+              "t": 3.195,
+              "p": 0.001401
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "premium_discount",
+      "name": "Premium / discount",
+      "family": "ict",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "Between the last swing high and swing low (the \"dealing range\"), the upper half is premium (expensive, where ICT sells) and the lower half discount (cheap, where ICT buys).",
+      "rule": "Close above the midpoint of the last swing high and last swing low → premium, below → discount.",
+      "source": "Michael J. Huddleston (ICT, the Inner Circle Trader), online teaching; \"smart money concepts\"",
+      "stats": null
+    },
+    {
+      "id": "fvg",
+      "name": "Unfilled fair value gaps",
+      "family": "ict",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "FVGs (fair value gaps) the price has not traded back through yet.",
+      "rule": "A bullish FVG is filled once a later low reaches its bottom (bearish: a high reaches its top).",
+      "source": "Michael J. Huddleston (ICT, the Inner Circle Trader), online teaching; \"smart money concepts\"",
+      "stats": null
+    },
+    {
+      "id": "elliott_count",
+      "name": "Elliott wave count",
+      "family": "elliott",
+      "dir": "both",
+      "subjective": true,
+      "kind": "state",
+      "what": "Elliott held that trends move in five waves (1 up, 2 down, 3 up, 4 down, 5 up) and are corrected in three (A, B, C). Counts are notoriously subjective; this one follows fixed zigzag swings and Elliott's three hard rules.",
+      "rule": "ZigZag pivots at 3 × ATR(14); the latest six alternating pivots that keep the hard rules form the impulse; Fibonacci ratios of the waves are reported.",
+      "source": "R. N. Elliott, The Wave Principle (1938); Frost & Prechter, Elliott Wave Principle (1978)",
+      "stats": null
+    },
+    {
+      "id": "elliott_impulse",
+      "name": "Completed 5-wave impulse",
+      "family": "elliott",
+      "dir": "both",
+      "subjective": true,
+      "kind": "event",
+      "what": "Five waves that satisfy the hard rules have just completed: Elliott expects a three-wave correction against them.",
+      "rule": "At the bar that confirms pivot 5: wave 2 does not pass the start of wave 1, wave 3 is not the shortest of 1/3/5, wave 4 stays out of wave 1's range; direction = against the impulse.",
+      "source": "R. N. Elliott, The Wave Principle (1938); Frost & Prechter, Elliott Wave Principle (1978)",
+      "stats": {
+        "name": "Completed 5-wave impulse",
+        "family": "elliott",
+        "dir": "both",
+        "n_events_total": 13009,
+        "n_bull": 4710,
+        "n_bear": 8299,
+        "n_is": 4849,
+        "n_oos": 8160,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 4849,
+              "months": 49,
+              "mean": 0.00493,
+              "hit": 0.524,
+              "t": 1.121,
+              "p": 0.2623
+            },
+            "oos": {
+              "n": 8113,
+              "months": 70,
+              "mean": -0.00202,
+              "hit": 0.495,
+              "t": -1.407,
+              "p": 0.1594
+            }
+          },
+          "20": {
+            "is": {
+              "n": 4849,
+              "months": 49,
+              "mean": 0.02267,
+              "hit": 0.5385,
+              "t": 1.442,
+              "p": 0.1493
+            },
+            "oos": {
+              "n": 8053,
+              "months": 70,
+              "mean": 0.00419,
+              "hit": 0.5333,
+              "t": 0.86,
+              "p": 0.3897
+            }
+          },
+          "60": {
+            "is": {
+              "n": 4849,
+              "months": 49,
+              "mean": 0.03719,
+              "hit": 0.577,
+              "t": 1.576,
+              "p": 0.1151
+            },
+            "oos": {
+              "n": 7886,
+              "months": 68,
+              "mean": 0.00827,
+              "hit": 0.5213,
+              "t": 0.761,
+              "p": 0.4467
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "elliott_abc",
+      "name": "Completed A-B-C correction",
+      "family": "elliott",
+      "dir": "both",
+      "subjective": true,
+      "kind": "event",
+      "what": "An A-B-C correction after an impulse has completed: Elliott expects the larger trend to resume.",
+      "rule": "At the bar that confirms pivot C after a valid impulse: B does not pass the impulse end, C does not pass the impulse start, wave C ≥ 0.618 × wave A; direction = the impulse's.",
+      "source": "R. N. Elliott, The Wave Principle (1938); Frost & Prechter, Elliott Wave Principle (1978)",
+      "stats": {
+        "name": "Completed A-B-C correction",
+        "family": "elliott",
+        "dir": "both",
+        "n_events_total": 3400,
+        "n_bull": 1918,
+        "n_bear": 1482,
+        "n_is": 1212,
+        "n_oos": 2188,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 1212,
+              "months": 47,
+              "mean": -0.00517,
+              "hit": 0.4431,
+              "t": -1.415,
+              "p": 0.1571
+            },
+            "oos": {
+              "n": 2177,
+              "months": 70,
+              "mean": -0.00071,
+              "hit": 0.5204,
+              "t": -0.444,
+              "p": 0.6572
+            }
+          },
+          "20": {
+            "is": {
+              "n": 1212,
+              "months": 47,
+              "mean": -0.00248,
+              "hit": 0.4983,
+              "t": -0.334,
+              "p": 0.7384
+            },
+            "oos": {
+              "n": 2153,
+              "months": 70,
+              "mean": 0.00176,
+              "hit": 0.5156,
+              "t": 0.304,
+              "p": 0.7609
+            }
+          },
+          "60": {
+            "is": {
+              "n": 1212,
+              "months": 47,
+              "mean": -0.02712,
+              "hit": 0.4505,
+              "t": -1.748,
+              "p": 0.08039
+            },
+            "oos": {
+              "n": 2113,
+              "months": 68,
+              "mean": 0.00287,
+              "hit": 0.523,
+              "t": 0.263,
+              "p": 0.7924
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "donchian20",
+      "name": "Donchian 20-day breakout",
+      "family": "quant",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "A close above the highest high of the previous 20 days (or below the lowest low): the entry of the Turtles' System 1, a classic trend-following rule.",
+      "rule": "close(i) > max(high, previous 20 bars) → bull, < min(low) → bear; only the first bar of a run of breakouts.",
+      "source": "Richard Donchian / the Turtles (Richard Dennis and William Eckhardt, 1983); Curtis Faith, Way of the Turtle (2007)",
+      "stats": {
+        "name": "Donchian 20-day breakout",
+        "family": "quant",
+        "dir": "both",
+        "n_events_total": 348256,
+        "n_bull": 196338,
+        "n_bear": 151918,
+        "n_is": 130612,
+        "n_oos": 217644,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 130612,
+              "months": 50,
+              "mean": 0.00181,
+              "hit": 0.4866,
+              "t": 0.43,
+              "p": 0.6674
+            },
+            "oos": {
+              "n": 216136,
+              "months": 70,
+              "mean": -0.00224,
+              "hit": 0.4859,
+              "t": -2.531,
+              "p": 0.01136
+            }
+          },
+          "20": {
+            "is": {
+              "n": 130612,
+              "months": 50,
+              "mean": -0.00326,
+              "hit": 0.4676,
+              "t": -0.667,
+              "p": 0.5045
+            },
+            "oos": {
+              "n": 213176,
+              "months": 70,
+              "mean": -0.00653,
+              "hit": 0.4778,
+              "t": -2.576,
+              "p": 0.00999
+            }
+          },
+          "60": {
+            "is": {
+              "n": 130612,
+              "months": 50,
+              "mean": -0.01517,
+              "hit": 0.4785,
+              "t": -1.499,
+              "p": 0.134
+            },
+            "oos": {
+              "n": 207207,
+              "months": 68,
+              "mean": -0.01747,
+              "hit": 0.4613,
+              "t": -5.812,
+              "p": 0.0
+            }
+          }
+        },
+        "evidence": {
+          "5": "moderate",
+          "20": "moderate",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": -1,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "donchian55",
+      "name": "Donchian 55-day breakout",
+      "family": "quant",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "The same breakout with 55 days instead of 20: the Turtles' slower System 2, which trades less often and only catches the bigger trends.",
+      "rule": "close(i) > max(high, previous 55 bars) → bull, < min(low, previous 55 bars) → bear; only the first bar of a run of breakouts.",
+      "source": "Richard Donchian / the Turtles; Curtis Faith, Way of the Turtle (2007)",
+      "stats": {
+        "name": "Donchian 55-day breakout",
+        "family": "quant",
+        "dir": "both",
+        "n_events_total": 200810,
+        "n_bull": 119249,
+        "n_bear": 81561,
+        "n_is": 74981,
+        "n_oos": 125829,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 74981,
+              "months": 48,
+              "mean": 0.00353,
+              "hit": 0.4827,
+              "t": 0.533,
+              "p": 0.5937
+            },
+            "oos": {
+              "n": 124875,
+              "months": 70,
+              "mean": -0.00378,
+              "hit": 0.4748,
+              "t": -4.124,
+              "p": 3.7e-05
+            }
+          },
+          "20": {
+            "is": {
+              "n": 74981,
+              "months": 48,
+              "mean": -0.00608,
+              "hit": 0.4518,
+              "t": -1.038,
+              "p": 0.2991
+            },
+            "oos": {
+              "n": 123414,
+              "months": 70,
+              "mean": -0.01081,
+              "hit": 0.4599,
+              "t": -3.611,
+              "p": 0.000306
+            }
+          },
+          "60": {
+            "is": {
+              "n": 74981,
+              "months": 48,
+              "mean": -0.02948,
+              "hit": 0.4547,
+              "t": -1.791,
+              "p": 0.07321
+            },
+            "oos": {
+              "n": 120007,
+              "months": 68,
+              "mean": -0.02575,
+              "hit": 0.4406,
+              "t": -5.019,
+              "p": 1e-06
+            }
+          }
+        },
+        "evidence": {
+          "5": "moderate",
+          "20": "strong",
+          "60": "strong"
+        },
+        "evidence_sign": {
+          "5": -1,
+          "20": -1,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": true,
+          "20": true,
+          "60": true
+        }
+      }
+    },
+    {
+      "id": "tsmom",
+      "name": "Time-series momentum (12-1)",
+      "family": "quant",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "A stock's own return over the past 12 months, leaving out the latest month, predicts the sign of its next month's return in many markets (time-series momentum).",
+      "rule": "Every 21st bar: r = log(close 21 bars ago ÷ close 252 bars ago); r > 0 → bull, else bear.",
+      "source": "Moskowitz, Ooi & Pedersen, \"Time Series Momentum\", Journal of Financial Economics (2012)",
+      "stats": {
+        "name": "Time-series momentum (12-1)",
+        "family": "quant",
+        "dir": "both",
+        "n_events_total": 182323,
+        "n_bull": 106404,
+        "n_bear": 75919,
+        "n_is": 58362,
+        "n_oos": 123961,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 58362,
+              "months": 38,
+              "mean": -0.00322,
+              "hit": 0.4717,
+              "t": -1.127,
+              "p": 0.2599
+            },
+            "oos": {
+              "n": 123816,
+              "months": 70,
+              "mean": 0.00062,
+              "hit": 0.5112,
+              "t": 0.56,
+              "p": 0.5752
+            }
+          },
+          "20": {
+            "is": {
+              "n": 58362,
+              "months": 38,
+              "mean": -0.01294,
+              "hit": 0.4596,
+              "t": -2.247,
+              "p": 0.02462
+            },
+            "oos": {
+              "n": 122161,
+              "months": 70,
+              "mean": -0.00215,
+              "hit": 0.4897,
+              "t": -0.967,
+              "p": 0.3336
+            }
+          },
+          "60": {
+            "is": {
+              "n": 58362,
+              "months": 38,
+              "mean": -0.0408,
+              "hit": 0.4153,
+              "t": -4.881,
+              "p": 1e-06
+            },
+            "oos": {
+              "n": 118450,
+              "months": 68,
+              "mean": -0.0066,
+              "hit": 0.4851,
+              "t": -1.357,
+              "p": 0.1747
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "weak",
+          "60": "weak"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": -1,
+          "60": -1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "hi52",
+      "name": "Near the 52-week high",
+      "family": "quant",
+      "dir": "bull",
+      "subjective": false,
+      "kind": "event",
+      "what": "Stocks trading close to their 52-week high have tended to keep outperforming: investors anchor on the high and under-react to the good news that took the price there.",
+      "rule": "Every 21st bar: close ÷ highest close of the last 252 bars (this one included) ≥ 0.95.",
+      "source": "George & Hwang, \"The 52-Week High and Momentum Investing\", Journal of Finance (2004)",
+      "stats": {
+        "name": "Near the 52-week high",
+        "family": "quant",
+        "dir": "bull",
+        "n_events_total": 41727,
+        "n_bull": 41727,
+        "n_bear": 0,
+        "n_is": 15400,
+        "n_oos": 26327,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 15400,
+              "months": 38,
+              "mean": -0.00732,
+              "hit": 0.4393,
+              "t": -1.923,
+              "p": 0.05453
+            },
+            "oos": {
+              "n": 26298,
+              "months": 70,
+              "mean": -0.0012,
+              "hit": 0.5094,
+              "t": -0.716,
+              "p": 0.4738
+            }
+          },
+          "20": {
+            "is": {
+              "n": 15400,
+              "months": 38,
+              "mean": -0.02271,
+              "hit": 0.4812,
+              "t": -1.153,
+              "p": 0.2487
+            },
+            "oos": {
+              "n": 26012,
+              "months": 70,
+              "mean": -0.00635,
+              "hit": 0.4775,
+              "t": -1.456,
+              "p": 0.1455
+            }
+          },
+          "60": {
+            "is": {
+              "n": 15400,
+              "months": 38,
+              "mean": -0.05684,
+              "hit": 0.4205,
+              "t": -1.699,
+              "p": 0.08925
+            },
+            "oos": {
+              "n": 25473,
+              "months": 68,
+              "mean": -0.01407,
+              "hit": 0.4733,
+              "t": -1.393,
+              "p": 0.1636
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "none",
+          "60": "none"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 0,
+          "60": 0
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": false
+        }
+      }
+    },
+    {
+      "id": "st_reversal",
+      "name": "Short-term reversal",
+      "family": "quant",
+      "dir": "both",
+      "subjective": false,
+      "kind": "event",
+      "what": "Extreme one-month returns tend to partly reverse the next month (liquidity provision and over-reaction).",
+      "rule": "r21 = log(close ÷ close 21 bars ago); when it enters the top 10% of the stock's own past r21 values (≥ 252 of them) → bear, the bottom 10% → bull.",
+      "source": "Jegadeesh, \"Evidence of Predictable Behavior of Security Returns\", Journal of Finance (1990)",
+      "stats": {
+        "name": "Short-term reversal",
+        "family": "quant",
+        "dir": "both",
+        "n_events_total": 179714,
+        "n_bull": 89646,
+        "n_bear": 90068,
+        "n_is": 64404,
+        "n_oos": 115310,
+        "horizons": {
+          "5": {
+            "is": {
+              "n": 64404,
+              "months": 38,
+              "mean": -0.00328,
+              "hit": 0.5056,
+              "t": -0.811,
+              "p": 0.4171
+            },
+            "oos": {
+              "n": 114672,
+              "months": 70,
+              "mean": 0.00144,
+              "hit": 0.5127,
+              "t": 1.251,
+              "p": 0.2109
+            }
+          },
+          "20": {
+            "is": {
+              "n": 64404,
+              "months": 38,
+              "mean": -0.00648,
+              "hit": 0.5097,
+              "t": -0.755,
+              "p": 0.45
+            },
+            "oos": {
+              "n": 113251,
+              "months": 70,
+              "mean": 0.00653,
+              "hit": 0.5277,
+              "t": 2.063,
+              "p": 0.03908
+            }
+          },
+          "60": {
+            "is": {
+              "n": 64404,
+              "months": 38,
+              "mean": -0.00726,
+              "hit": 0.4843,
+              "t": -0.621,
+              "p": 0.5347
+            },
+            "oos": {
+              "n": 109957,
+              "months": 68,
+              "mean": 0.01536,
+              "hit": 0.5373,
+              "t": 3.634,
+              "p": 0.000279
+            }
+          }
+        },
+        "evidence": {
+          "5": "none",
+          "20": "moderate",
+          "60": "moderate"
+        },
+        "evidence_sign": {
+          "5": 0,
+          "20": 1,
+          "60": 1
+        },
+        "bh_significant": {
+          "5": false,
+          "20": false,
+          "60": true
+        }
+      }
+    }
+  ]
+}
