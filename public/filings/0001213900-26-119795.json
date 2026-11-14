@@ -1,0 +1,5415 @@
+{
+  "cik": 1967822,
+  "name": "Creative Global Technology Holdings Ltd",
+  "form": "F-1",
+  "filed": "2026-11-13",
+  "accession": "0001213900-26-119795",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+  "file_number": "333-300044",
+  "accepted": "2026-11-13T21:31:57+00:00",
+  "method": "inline_xbrl",
+  "document_sha256": "b027459e9d0e5364d4db52f5ec09dfaa64bcafc178e331d4b74c267f04c7cb42",
+  "periods": [
+    {
+      "start": "2022-10-01",
+      "end": "2023-09-30",
+      "label": "2022-10-01 \u2192 2023-09-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 50278937.0,
+        "cor": 45309410.0,
+        "gp": 4969527.0,
+        "sm": 34132.0,
+        "ga": 1141069.0,
+        "opex_total": 1175201.0,
+        "oi": 3794326.0,
+        "pretax": 3835136.0,
+        "tax": 679815.0,
+        "ni": 3155321.0,
+        "ocf": 4874638.0,
+        "dep": 6880.0,
+        "capex": 3784.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "gp": {
+          "label": "GrossProfit"
+        },
+        "sm": {
+          "label": "SellingAndMarketingExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": 0.09883914212426567,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": 0.07546551749890815,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": 0.0627563188139797,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": 0.0969518906097796,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": 0.09687663046655104,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": 1.5448944814172632,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 7.526014322856507e-05,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2023-10-01",
+      "end": "2024-09-30",
+      "label": "2023-10-01 \u2192 2024-09-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 35611761.0,
+        "cor": 29275274.0,
+        "gp": 6336487.0,
+        "sm": 32738.0,
+        "ga": 1118217.0,
+        "opex_total": 1150955.0,
+        "oi": 5185532.0,
+        "pretax": 5185650.0,
+        "tax": 903282.0,
+        "ni": 4282368.0,
+        "ocf": -3524152.0,
+        "dep": 7949.0,
+        "capex": 18597.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "gp": {
+          "label": "GrossProfit"
+        },
+        "sm": {
+          "label": "SellingAndMarketingExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": 0.1779324251895322,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": 0.1456129058037877,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": 0.12025150904500342,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.0989603406582449,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.09948255577700861,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": -0.8229446885461502,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.0005222151187637141,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2024-10-01",
+      "end": "2025-03-31",
+      "label": "2024-10-01 \u2192 2025-03-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 12248499.0,
+        "cor": 10700185.0,
+        "gp": 1548314.0,
+        "sm": 15429.0,
+        "ga": 885228.0,
+        "opex_total": 15136657.0,
+        "oi": -13588343.0,
+        "pretax": -13576976.0,
+        "tax": 142362.0,
+        "ni": -13719338.0,
+        "ocf": -4768395.0,
+        "dep": 8328.0,
+        "sbc": 14236000.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "gp": {
+          "label": "GrossProfit"
+        },
+        "sm": {
+          "label": "SellingAndMarketingExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": 0.12640846849887485,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -1.1093884238387088,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -1.1200832036643837,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.3893044364048199,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 1.162264862004724,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2024-10-01",
+      "end": "2025-09-30",
+      "label": "2024-10-01 \u2192 2025-09-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 21150042.0,
+        "cor": 18864549.0,
+        "gp": 2285493.0,
+        "sm": 25497.0,
+        "ga": 1184369.0,
+        "opex_total": 15445866.0,
+        "oi": -13160373.0,
+        "pretax": -13157696.0,
+        "tax": 212053.0,
+        "ni": -13369749.0,
+        "ocf": -4811035.0,
+        "dep": 16736.0,
+        "sbc": 14236000.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "gp": {
+          "label": "GrossProfit"
+        },
+        "sm": {
+          "label": "SellingAndMarketingExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": 0.10806092016271174,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.6222386225048631,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.6321381773142578,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.22747165230215619,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.673095590070223,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-10-01",
+      "end": "2026-03-31",
+      "label": "2025-10-01 \u2192 2026-03-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 18413179.0,
+        "cor": 22188832.0,
+        "gp": -3775653.0,
+        "sm": 10097.0,
+        "ga": 669909.0,
+        "opex_total": 680006.0,
+        "oi": -4455659.0,
+        "pretax": -4458165.0,
+        "tax": -700850.0,
+        "ni": -3757315.0,
+        "ocf": 445398.0,
+        "dep": 4611.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "gp": {
+          "label": "GrossProfit"
+        },
+        "sm": {
+          "label": "SellingAndMarketingExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "dep": {
+          "label": "Depreciation"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": -0.20505166435410202,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.24198206078374626,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.20405574724494885,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": 0.024189087609477973,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    }
+  ],
+  "limitations": [
+    "IPO price, proceeds and dilution are not inferred from funding announcements.",
+    "Commitments, recognized lease liabilities and cash expenses may overlap and must not be added.",
+    "Company-specific cost presentation does not establish cost of revenue or gross margin."
+  ],
+  "classification": "registration_unclassified",
+  "sections": [
+    {
+      "title": "Prospectus Summary",
+      "excerpt": "PROSPECTUS SUMMARY 1 THE OFFERING 14 SUMMARY FINANCIAL DATA 17 RISK FACTORS 19 ENFORCEABILITY OF CIVIL LIABILITIES 63 USE OF PROCEEDS 64 DIVIDENDS AND DIVIDEND POLICY 64 CAPITALIZATION 65 DILUTION 66 CORPORATE HISTORY AND STRUCTURE 68 MANAGEMENT\u2019S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITIONS AND RESULTS OF OPERATIONS 69 BUSINESS 85 REGULATORY ENVIRONMENT 95 MANAGEMENT 102 PRINCIPAL SHAREHOLDERS 108 RELATED PARTY TRANSACTIONS 109 DESCRIPTION OF SHARE CAPITAL 110 CERTAIN CAYMAN ISLAND COMPANY CONSIDERATIONS 116 PLAN OF DISTRIBUTION 123 SHARES ELIGIBLE FOR FUTURE SALE 126 DESCRIPTION OF SECURITIES WE ARE OFFERING 127 EXPENSES RELATING TO THIS OFFERING 131 LEGAL MATTERS 132 EXPERTS 132 WHERE YOU CAN FIND ADDITIONAL INFORMATION 132 INDEX TO FINANCIAL STATEMENTS F-1 You should rely only on the information contained\nin this prospectus or any prospectus supplement or amendment. Neither we, no",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Use of Proceeds",
+      "excerpt": "USE OF PROCEEDS We estimate the net proceeds from this offering\nto us will be approximately $5,757,239, after deducting the estimated placement agent fees and expected offering expenses payable by\nus, and none of the Warrants issued in this offering are exercised. Even if the Warrants are exercised, we do not expect to receive any\nproceeds from the exercise of the Warrants because it is highly unlikely that a holder of the Warrants would elect to exercise the Warrants\nby paying cash or via cashless exercise in lieu of the zero exercise price option. We may, however, receive cash proceeds to the extent\nholders exercise Warrants for cash at times when the zero exercise price option is unavailable or would yield fewer than one Class A\nOrdinary Share per Warrant; any such proceeds would be used for working capital and general corporate purposes. The maximum gross proceeds\nof this offering ar",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Risk Factors",
+      "excerpt": "RISK FACTORS Investing in our Class\u00a0A Ordinary Shares\nis highly speculative and involves a significant degree of risk. You should carefully consider the following risks, as well as other information\ncontained in this prospectus, before making an investment in our Company. The risks discussed below could materially and adversely affect\nour business, prospects, financial condition, results of operations, cash flows, ability to pay dividends and the trading price of our\nshares. Additional risks and uncertainties not currently known to us or that we currently deem to be immaterial may also materially and\nadversely affect our business, prospects, financial condition, results of operations, cash flows and ability to pay dividends, and you\nmay lose all or part of your investment. This prospectus also contains forward-looking\nstatements having direct and/or indirect implications on our future pe",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Dilution",
+      "excerpt": "DILUTION Investors purchasing our Class\u00a0A Ordinary\nShares in this offering will not experience dilution in the pro forma as adjusted net tangible book value of their Class A Ordinary Shares,\nbecause the assumed public offering price in this offering is below our historical net tangible book value per ordinary share. Instead,\nour existing shareholders will experience an immediate decrease in the pro forma as adjusted net tangible book value per share of their\nordinary shares, and investors purchasing our Class A Ordinary Shares in this offering will acquire them at a price below that net tangible\nbook value per share. Dilution or accretion in pro forma as adjusted net tangible book value represents the difference between the public\noffering price of our Class\u00a0A Ordinary Shares and the pro forma as adjusted net tangible book value per share of our Class\u00a0A\nOrdinary Shares immediately after ",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Principal Shareholders",
+      "excerpt": "PRINCIPAL SHAREHOLDERS The following table sets forth information with\nrespect to the beneficial ownership, within the meaning of Rule\u00a013d-3 under the Exchange\u00a0Act, of our Class\u00a0A Ordinary Shares\nand Class\u00a0B Ordinary Shares as of the date of this prospectus for: \u25cf each of our directors and executive officers; \u25cf all of our current directors and executive officers as a\ngroup; and \u25cf each person known to us to own beneficially more than 5%\nof our Class\u00a0A Ordinary Shares or Class\u00a0B Ordinary Shares. Information with respect to beneficial ownership\nhas been furnished by each director, officer, or beneficial owner of 5% or more of our Class\u00a0A Ordinary Shares or Class\u00a0B Ordinary\nShares. Beneficial ownership is determined in accordance with the rules of the SEC and generally requires that such person have voting\nor investment power with respect to securities. In computing the number of Class\u00a0A Ord",
+      "status": "source_excerpt_not_model_conclusion"
+    }
+  ],
+  "source_tables": [
+    {
+      "table_index": 84,
+      "rows": [
+        [
+          "",
+          "",
+          "Year Ended September\u00a030,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          "",
+          "",
+          "2023",
+          ""
+        ],
+        [
+          "Revenues",
+          "",
+          "$",
+          "21,150,042",
+          "",
+          "",
+          "$",
+          "35,611,761",
+          "",
+          "",
+          "$",
+          "50,278,937",
+          ""
+        ],
+        [
+          "Cost of revenues",
+          "",
+          "",
+          "(18,864,549",
+          ")",
+          "",
+          "",
+          "(29,275,274",
+          ")",
+          "",
+          "",
+          "(45,309,410",
+          ")"
+        ],
+        [
+          "Gross Profit",
+          "",
+          "",
+          "2,285,493",
+          "",
+          "",
+          "",
+          "6,336,487",
+          "",
+          "",
+          "",
+          "4,969,527",
+          ""
+        ],
+        [
+          "Selling and marketing",
+          "",
+          "",
+          "(25,497",
+          ")",
+          "",
+          "",
+          "(32,738",
+          ")",
+          "",
+          "",
+          "(34,132",
+          ")"
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "(1,184,369",
+          ")",
+          "",
+          "",
+          "(1,118,217",
+          ")",
+          "",
+          "",
+          "(1,141,069",
+          ")"
+        ],
+        [
+          "Share-based compensation",
+          "",
+          "",
+          "(14,236,000",
+          ")",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "\u2014",
+          ""
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "(15,445,866",
+          ")",
+          "",
+          "",
+          "(1,150,955",
+          ")",
+          "",
+          "",
+          "(1,175,201",
+          ")"
+        ],
+        [
+          "Income (loss) from operations",
+          "",
+          "",
+          "(13,160,373",
+          ")",
+          "",
+          "",
+          "5,185,532",
+          "",
+          "",
+          "",
+          "3,794,326",
+          ""
+        ],
+        [
+          "Other income",
+          "",
+          "",
+          "1,213",
+          "",
+          "",
+          "",
+          "5,290",
+          "",
+          "",
+          "",
+          "30,541",
+          ""
+        ],
+        [
+          "Other expenses",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "(2,726",
+          ")",
+          "",
+          "",
+          "\u2014",
+          ""
+        ],
+        [
+          "Interest income, net",
+          "",
+          "",
+          "1,464",
+          "",
+          "",
+          "",
+          "(2,446",
+          ")",
+          "",
+          "",
+          "10,269",
+          ""
+        ],
+        [
+          "Total other income, net",
+          "",
+          "",
+          "2,677",
+          "",
+          "",
+          "",
+          "118",
+          "",
+          "",
+          "",
+          "40,810",
+          ""
+        ],
+        [
+          "Income (loss) before income tax expenses",
+          "",
+          "",
+          "(13,157,696",
+          ")",
+          "",
+          "",
+          "5,185,650",
+          "",
+          "",
+          "",
+          "3,835,136",
+          ""
+        ],
+        [
+          "Income taxes",
+          "",
+          "",
+          "(212,053",
+          ")",
+          "",
+          "",
+          "(903,282",
+          ")",
+          "",
+          "",
+          "(679,815",
+          ")"
+        ],
+        [
+          "Net income (loss)",
+          "",
+          "$",
+          "(13,369,749",
+          ")",
+          "",
+          "$",
+          "4,282,368",
+          "",
+          "",
+          "$",
+          "3,155,321",
+          ""
+        ],
+        [
+          "Foreign currency translation adjustment",
+          "",
+          "",
+          "(14,238",
+          ")",
+          "",
+          "",
+          "(21,709",
+          ")",
+          "",
+          "",
+          "24,697",
+          ""
+        ],
+        [
+          "Total Comprehensive Income (loss)",
+          "",
+          "$",
+          "(13,383,987",
+          ")",
+          "",
+          "$",
+          "4,260,659",
+          "",
+          "",
+          "$",
+          "3,180,018",
+          ""
+        ],
+        [
+          "Net income (loss) per share attributable to ordinary shareholders\u00a0\u2013\u00a0basic and diluted",
+          "",
+          "$",
+          "(8.51",
+          ")",
+          "",
+          "$",
+          "3.21",
+          "",
+          "",
+          "$",
+          "2.37",
+          ""
+        ],
+        [
+          "Weighted average number of ordinary shares used in computing net income(loss) per share\u00a0\u2013\u00a0basic and diluted",
+          "",
+          "",
+          "1,571,251",
+          "",
+          "",
+          "",
+          "1,333,333",
+          "",
+          "",
+          "",
+          "1,333,333",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 85,
+      "rows": [
+        [
+          "",
+          "",
+          "Six Months Ended March 31,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          ""
+        ],
+        [
+          "Revenues",
+          "",
+          "$",
+          "18,413,179",
+          "",
+          "",
+          "$",
+          "12,248,499",
+          ""
+        ],
+        [
+          "Cost of revenues",
+          "",
+          "",
+          "(22,188,832",
+          ")",
+          "",
+          "",
+          "(10,700,185",
+          ")"
+        ],
+        [
+          "Gross Profit",
+          "",
+          "",
+          "(3,775,653",
+          ")",
+          "",
+          "",
+          "1,548,314",
+          ""
+        ],
+        [
+          "Selling and marketing",
+          "",
+          "",
+          "(10,097",
+          ")",
+          "",
+          "",
+          "(15,429",
+          ")"
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "(669,909",
+          ")",
+          "",
+          "",
+          "(885,228",
+          ")"
+        ],
+        [
+          "Share-based compensation",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "(14,236,000",
+          ")"
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "(680,006",
+          ")",
+          "",
+          "",
+          "(15,136,657",
+          ")"
+        ],
+        [
+          "Loss from operations",
+          "",
+          "",
+          "(4,455,659",
+          ")",
+          "",
+          "",
+          "(13,588,343",
+          ")"
+        ],
+        [
+          "Other income",
+          "",
+          "",
+          "(2,584",
+          ")",
+          "",
+          "",
+          "10,089",
+          ""
+        ],
+        [
+          "Interest income, net",
+          "",
+          "",
+          "78",
+          "",
+          "",
+          "",
+          "1,278",
+          ""
+        ],
+        [
+          "Total other income (expense), net",
+          "",
+          "",
+          "(2,506",
+          ")",
+          "",
+          "",
+          "11,367",
+          ""
+        ],
+        [
+          "Loss before taxes",
+          "",
+          "",
+          "(4,458,165",
+          ")",
+          "",
+          "",
+          "(13,576,976",
+          ")"
+        ],
+        [
+          "Income tax benefit (expense)",
+          "",
+          "",
+          "700,850",
+          "",
+          "",
+          "",
+          "(142,362",
+          ")"
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "(3,757,315",
+          ")",
+          "",
+          "$",
+          "(13,719,338",
+          ")"
+        ],
+        [
+          "Foreign currency translation adjustment",
+          "",
+          "",
+          "(21,368",
+          ")",
+          "",
+          "",
+          "(20,937",
+          ")"
+        ],
+        [
+          "Total Comprehensive Loss",
+          "",
+          "$",
+          "(3,778,683",
+          ")",
+          "",
+          "$",
+          "(13,740,275",
+          ")"
+        ],
+        [
+          "Net Loss per share attributable to ordinary shareholders basic and diluted",
+          "",
+          "",
+          "(2.19",
+          ")",
+          "",
+          "",
+          "(9.62",
+          ")"
+        ],
+        [
+          "Weighted average number of ordinary shares used in computing net loss per share basic and diluted",
+          "",
+          "",
+          "1,719,255",
+          "",
+          "",
+          "",
+          "1,426,712",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 87,
+      "rows": [
+        [
+          "",
+          "",
+          "Year Ended September\u00a030, 2025",
+          "",
+          "",
+          "Year Ended September\u00a030, 2024",
+          "",
+          "",
+          "Year Ended September\u00a030, 2023",
+          ""
+        ],
+        [
+          "Net cash provided by (used in) operating activities",
+          "",
+          "$",
+          "(4,811,035",
+          ")",
+          "",
+          "$",
+          "(3,524,152",
+          ")",
+          "",
+          "$",
+          "4,874,638",
+          ""
+        ],
+        [
+          "Net cash used in investing activities",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "(18,597",
+          ")",
+          "",
+          "$",
+          "(3,784",
+          ")"
+        ],
+        [
+          "Net cash provided by (used in) financing activities",
+          "",
+          "$",
+          "4,584,014",
+          "",
+          "",
+          "$",
+          "(299,324",
+          ")",
+          "",
+          "$",
+          "(1,546,250",
+          ")"
+        ],
+        [
+          "Effect of exchange-rate changes",
+          "",
+          "$",
+          "(31,061",
+          ")",
+          "",
+          "$",
+          "(20,182",
+          ")",
+          "",
+          "$",
+          "21,673",
+          ""
+        ],
+        [
+          "Cash and cash equivalents at period end",
+          "",
+          "$",
+          "185,240",
+          "",
+          "",
+          "$",
+          "443,322",
+          "",
+          "",
+          "$",
+          "4,305,577",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 88,
+      "rows": [
+        [
+          "",
+          "",
+          "Six\u00a0Months Ended March\u00a031, 2026 (Unaudited)",
+          "",
+          "",
+          "Six\u00a0Months Ended March\u00a031, 2025 (Unaudited)",
+          ""
+        ],
+        [
+          "Net cash provided by (used in) operating activities",
+          "",
+          "$",
+          "445,398",
+          "",
+          "",
+          "$",
+          "(4,768,395",
+          ")"
+        ],
+        [
+          "Net cash used in investing activities",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "\u2014",
+          ""
+        ],
+        [
+          "Net cash provided by (used in) financing activities",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "$",
+          "4,583,949",
+          ""
+        ],
+        [
+          "Effect of exchange-rate changes",
+          "",
+          "$",
+          "(136,854",
+          ")",
+          "",
+          "$",
+          "(38,144",
+          ")"
+        ],
+        [
+          "Cash and cash equivalents at period end",
+          "",
+          "$",
+          "493,784",
+          "",
+          "",
+          "$",
+          "220,732",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 197,
+      "rows": [
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "Change",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "Amount",
+          "",
+          "",
+          "%",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(Unaudited)",
+          "",
+          "",
+          "(Unaudited)",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(US$)",
+          "",
+          "",
+          "(US$)",
+          "",
+          "",
+          "(US$)",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Selected Consolidated Statements of Operations and Comprehensive Loss Data:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Revenues",
+          "",
+          "",
+          "18,413,179",
+          "",
+          "",
+          "",
+          "12,248,499",
+          "",
+          "",
+          "",
+          "6,164,680",
+          "",
+          "",
+          "",
+          "50.3",
+          "%"
+        ],
+        [
+          "Cost of revenues",
+          "",
+          "",
+          "(22,188,832",
+          ")",
+          "",
+          "",
+          "(10,700,185",
+          ")",
+          "",
+          "",
+          "(11,488,647",
+          ")",
+          "",
+          "",
+          "107.4",
+          "%"
+        ],
+        [
+          "Gross Profit",
+          "",
+          "",
+          "(3,775,653",
+          ")",
+          "",
+          "",
+          "1,548,314",
+          "",
+          "",
+          "",
+          "(5,323,967",
+          ")",
+          "",
+          "",
+          "-343.9",
+          "%"
+        ],
+        [
+          "Operating expenses:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Selling and marketing",
+          "",
+          "",
+          "(10,097",
+          ")",
+          "",
+          "",
+          "(15,429",
+          ")",
+          "",
+          "",
+          "5,332",
+          "",
+          "",
+          "",
+          "-34.6",
+          "%"
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "(669,909",
+          ")",
+          "",
+          "",
+          "(885,228",
+          ")",
+          "",
+          "",
+          "215,319",
+          "",
+          "",
+          "",
+          "-24.3",
+          "%"
+        ],
+        [
+          "Share-based compensation",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "(14,236,000",
+          ")",
+          "",
+          "",
+          "14,236,000",
+          "",
+          "",
+          "",
+          "-100.0",
+          "%"
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "(680,006",
+          ")",
+          "",
+          "",
+          "(15,136,657",
+          ")",
+          "",
+          "",
+          "14,456,651",
+          "",
+          "",
+          "",
+          "-95.5",
+          "%"
+        ],
+        [
+          "Income from operations",
+          "",
+          "",
+          "(4,455,659",
+          ")",
+          "",
+          "",
+          "(13,588,343",
+          ")",
+          "",
+          "",
+          "9,132,684",
+          "",
+          "",
+          "",
+          "-67.2",
+          "%"
+        ],
+        [
+          "Total other income (expenses), net",
+          "",
+          "",
+          "(2,506",
+          ")",
+          "",
+          "",
+          "11,367",
+          "",
+          "",
+          "",
+          "(13,873",
+          ")",
+          "",
+          "",
+          "-122.1",
+          "%"
+        ],
+        [
+          "Income (loss) before income tax",
+          "",
+          "",
+          "(4,458,165",
+          ")",
+          "",
+          "",
+          "(13,576,976",
+          ")",
+          "",
+          "",
+          "9,118,811",
+          "",
+          "",
+          "",
+          "-67.2",
+          "%"
+        ],
+        [
+          "Income tax benefit (expense)",
+          "",
+          "",
+          "700,850",
+          "",
+          "",
+          "",
+          "(142,362",
+          ")",
+          "",
+          "",
+          "843,212",
+          "",
+          "",
+          "",
+          "-592.3",
+          "%"
+        ],
+        [
+          "Net income(loss)",
+          "",
+          "",
+          "(3,757,315",
+          ")",
+          "",
+          "",
+          "(13,719,338",
+          ")",
+          "",
+          "",
+          "9,962,023",
+          "",
+          "",
+          "",
+          "-72.6",
+          "%"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 203,
+      "rows": [
+        [
+          "",
+          "",
+          "For the Six\u00a0Months Ended March\u00a031,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          ""
+        ],
+        [
+          "",
+          "",
+          "US$",
+          "",
+          "",
+          "US$",
+          ""
+        ],
+        [
+          "Net cash provided by (used in) from operating activities",
+          "",
+          "",
+          "445,398",
+          "",
+          "",
+          "$",
+          "(4,768,395",
+          ")"
+        ],
+        [
+          "Net cash provided by financing activities",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "4,583,949",
+          ""
+        ],
+        [
+          "Effect of foreign exchange rate changes",
+          "",
+          "",
+          "(136,854",
+          ")",
+          "",
+          "",
+          "(38,144",
+          ")"
+        ],
+        [
+          "Net (decrease) increase in cash, equivalents",
+          "",
+          "",
+          "308,544",
+          "",
+          "",
+          "",
+          "(222,590",
+          ")"
+        ],
+        [
+          "Cash, and equivalents beginning of year",
+          "",
+          "",
+          "185,240",
+          "",
+          "",
+          "",
+          "443,322",
+          ""
+        ],
+        [
+          "Cash, and equivalents at end of year",
+          "",
+          "",
+          "493,784",
+          "",
+          "",
+          "",
+          "220,732",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 205,
+      "rows": [
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          "",
+          "",
+          "2023",
+          ""
+        ],
+        [
+          "Selected Consolidated Statements of Operations and Comprehensive Loss Data:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Revenues",
+          "",
+          "$",
+          "21,150,042",
+          "",
+          "",
+          "$",
+          "35,611,761",
+          "",
+          "",
+          "$",
+          "50,278,937",
+          ""
+        ],
+        [
+          "Cost of goods sold",
+          "",
+          "",
+          "(18,864,549",
+          ")",
+          "",
+          "",
+          "(29,275,274",
+          ")",
+          "",
+          "",
+          "(45,309,410",
+          ")"
+        ],
+        [
+          "Gross profit",
+          "",
+          "",
+          "2,285,493",
+          "",
+          "",
+          "",
+          "6,336,487",
+          "",
+          "",
+          "",
+          "4,969,527",
+          ""
+        ],
+        [
+          "Selling and marketing expenses",
+          "",
+          "",
+          "(25,497",
+          ")",
+          "",
+          "",
+          "(32,738",
+          ")",
+          "",
+          "",
+          "(34,132",
+          ")"
+        ],
+        [
+          "General and administrative expenses",
+          "",
+          "",
+          "(1,184,369",
+          ")",
+          "",
+          "",
+          "(1,118,217",
+          ")",
+          "",
+          "",
+          "(1,141,069",
+          ""
+        ],
+        [
+          "Share-based compensation",
+          "",
+          "",
+          "(14,236,000",
+          ")",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "\u2014",
+          ""
+        ],
+        [
+          "Income(loss) from operations",
+          "",
+          "",
+          "(13,160,373",
+          ")",
+          "",
+          "",
+          "5,185,532",
+          "",
+          "",
+          "",
+          "3,794,326",
+          ""
+        ],
+        [
+          "Total other income, net",
+          "",
+          "",
+          "2,677",
+          "",
+          "",
+          "",
+          "118",
+          "",
+          "",
+          "",
+          "40,810",
+          ""
+        ],
+        [
+          "Income(loss) before provision for income taxes",
+          "",
+          "",
+          "(13,157,696",
+          ")",
+          "",
+          "",
+          "5,185,650",
+          "",
+          "",
+          "",
+          "3,835,136",
+          ""
+        ],
+        [
+          "Provision for income taxes",
+          "",
+          "",
+          "(212,053",
+          ")",
+          "",
+          "",
+          "(903,282",
+          ")",
+          "",
+          "",
+          "(679,815",
+          ")"
+        ],
+        [
+          "Net income(loss)",
+          "",
+          "$",
+          "(13,369,749",
+          ")",
+          "",
+          "$",
+          "4,282,368",
+          "",
+          "",
+          "$",
+          "3,155,321",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 210,
+      "rows": [
+        [
+          "",
+          "",
+          "For the\u00a0Years Ended September\u00a030,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          "",
+          "",
+          "2023",
+          ""
+        ],
+        [
+          "",
+          "",
+          "US$",
+          "",
+          "",
+          "US$",
+          "",
+          "",
+          "US$",
+          ""
+        ],
+        [
+          "Net cash provided by (used in) from operating activities",
+          "",
+          "",
+          "(4,811,035",
+          ")",
+          "",
+          "",
+          "(3,524,152",
+          ")",
+          "",
+          "",
+          "4,874,638",
+          ""
+        ],
+        [
+          "Net cash (used in) from investing activities",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "(18,597",
+          ")",
+          "",
+          "",
+          "(3,784",
+          ")"
+        ],
+        [
+          "Net cash provided by (used in) from financing activities",
+          "",
+          "",
+          "4,584,014",
+          "",
+          "",
+          "",
+          "(299,324",
+          ")",
+          "",
+          "",
+          "(1,546,250",
+          ")"
+        ],
+        [
+          "Effect of foreign exchange rate changes",
+          "",
+          "",
+          "(31,061",
+          ")",
+          "",
+          "",
+          "(20,182",
+          ")",
+          "",
+          "",
+          "21,673",
+          ""
+        ],
+        [
+          "Net (decrease) increase in cash, equivalents",
+          "",
+          "",
+          "(258,082",
+          ")",
+          "",
+          "",
+          "(3,862,255",
+          ")",
+          "",
+          "",
+          "3,346,277",
+          ""
+        ],
+        [
+          "Cash, and equivalents beginning of year",
+          "",
+          "",
+          "443,322",
+          "",
+          "",
+          "",
+          "4,305,577",
+          "",
+          "",
+          "",
+          "959,300",
+          ""
+        ],
+        [
+          "Cash, equivalents at end of year",
+          "",
+          "",
+          "185,240",
+          "",
+          "",
+          "",
+          "443,322",
+          "",
+          "",
+          "",
+          "4,305,577",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    }
+  ],
+  "analysis_state": "parsed",
+  "parser_version": 1,
+  "charts": {
+    "v": 1,
+    "periods": [
+      {
+        "key": "2025-10-01_2026-03-31",
+        "label": "6M to Mar 2026",
+        "start": "2025-10-01",
+        "end": "2026-03-31",
+        "months": 6,
+        "vs": "6M to Mar 2025",
+        "vs_key": "2024-10-01_2025-03-31",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "6M to Mar 2025",
+          "title": "Creative Global Technology Holdings Ltd 6M to Mar 2026 vs 6M to Mar 2025: what changed",
+          "bullets": [
+            "Revenue rose $6.2M versus 6M to Mar 2025 and the operating result improved by $9.1M, 148% of the added revenue.",
+            "The largest single swing was income tax, lower by $843K.",
+            "Operating cash flow rose $5.2M to $445K, while net earnings rose $10.0M to \u2212$3.8M."
+          ]
+        },
+        "preliminary": false,
+        "form": "F-1",
+        "filed": "2026-11-13",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html",
+        "kind": "loss",
+        "title": "Creative Global Technology Holdings Ltd 6M to Mar 2026 earnings &amp; cash flow",
+        "subtitle": "Six months ended Mar 31, 2026 \u00b7 GAAP \u00b7 Y/Y vs. 6M to Mar 2025",
+        "footer": [
+          "Source: the company\u2019s registration statement (F-1 filed Nov 13, 2026), read from the inline XBRL tags of its financial statements. Six months ended Mar 31, 2026 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with 6M to Mar 2025; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 18413179.0,
+            "y": 12248499.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$18.4M"
+              ],
+              [
+                "mut",
+                "Y/Y +50%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$6.2M",
+            "source": "Inline XBRL tag Revenues in the F-1, six months ended Mar 31, 2026."
+          },
+          {
+            "id": "taxben",
+            "col": 0,
+            "color": "profit",
+            "name": "Income tax benefit",
+            "pos": "left",
+            "v": 700850.0,
+            "y": -142362.0,
+            "lines": [
+              [
+                "name",
+                "Income tax benefit"
+              ],
+              [
+                "val",
+                "$701K \u00b7 3.1% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$843K \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 3757315.0,
+            "y": 13719338.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$3.8M \u00b7 16% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221273%"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$10.0M \u00b7 scale \u22121.6 \u00b7 mix \u22128.3",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1, six months ended Mar 31, 2026."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 22871344.0,
+            "y": 25979204.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$22.9M \u00b7 124% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221212%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$3.1M \u00b7 scale +13.1 \u00b7 mix \u221216.2"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 22868838.0,
+            "y": 25836842.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$22.9M \u00b7 100% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221211%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $4.5M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$3.0M \u00b7 scale \u22123.1 \u00b7 mix +0.12"
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 22188832.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$22.2M \u00b7 97% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the F-1, six months ended Mar 31, 2026."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 10097.0,
+            "y": 15429.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$10K \u00b7 0.0% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221235%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$5K \u00b7 scale \u22120.00 \u00b7 mix \u22120.00",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the F-1, six months ended Mar 31, 2026."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 669909.0,
+            "y": 885228.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$670K \u00b7 2.9% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221224%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$215K \u00b7 scale \u22120.10 \u00b7 mix \u22120.11",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the F-1, six months ended Mar 31, 2026."
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 4202713.0,
+            "y": -5285057.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$4.2M \u00b7 23% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9.5M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "wc_in",
+            "col": 4,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 4202713.0,
+            "y": -5285057.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$4.2M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9.5M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 3757315.0,
+            "y": 13719338.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$3.8M \u00b7 89% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221273%"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$10.0M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1, six months ended Mar 31, 2026."
+          },
+          {
+            "id": "ocf",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash flow",
+            "pos": "right",
+            "v": 445398.0,
+            "y": -4768395.0,
+            "lines": [
+              [
+                "ocf",
+                "Operating cash flow"
+              ],
+              [
+                "val",
+                "$445K \u00b7 2.4% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "11% of cash sources"
+              ]
+            ],
+            "cmp_y": "\u0394 +$5.2M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the F-1, six months ended Mar 31, 2026."
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 18413179.0,
+            "y": 12248499.0,
+            "color": "rev"
+          },
+          {
+            "s": "taxben",
+            "t": "total",
+            "v": 700850.0,
+            "y": -142362.0,
+            "color": "profit"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 3757315.0,
+            "y": 13719338.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 22868838.0,
+            "y": 25836842.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 22188832.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 10097.0,
+            "y": 15429.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 669909.0,
+            "y": 885228.0,
+            "color": "cost"
+          },
+          {
+            "s": "wc_in",
+            "t": "bridge",
+            "v": 4202713.0,
+            "y": -5285057.0,
+            "color": "profit"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 3757315.0,
+            "y": 13719338.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "ocf",
+            "v": 445398.0,
+            "y": -4768395.0,
+            "color": "profit"
+          }
+        ],
+        "cite": {
+          "text": "Creative Global Technology Holdings Ltd \u00b7 F-1 filed Nov 13, 2026 \u00b7 Six months ended Mar 31, 2026",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html"
+        },
+        "analysis": [
+          "Revenue was $18.4M in 6M to Mar 2026, up 50% year over year.",
+          "Operating costs exceeded revenue by $4.5M, an operating margin of -24.2%. The period ended with a net loss of $3.8M.",
+          "Operating cash flow was $445K. Working capital and other items added $4.2M."
+        ],
+        "headline": {
+          "revenue": 18413179.0,
+          "rev_fmt": "$18.4M",
+          "yoy": 50.33008534351842,
+          "oi": -4455659.0,
+          "oi_fmt": "\u2212$4.5M",
+          "om": -24.198206078374625,
+          "ni": -3757315.0,
+          "ni_fmt": "\u2212$3.8M",
+          "nm": -20.405574724494883,
+          "ocf": 445398.0,
+          "ocf_fmt": "$445K",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 12248499.0,
+            "oi": -13588343.0,
+            "ni": -13719338.0,
+            "ocf": -4768395.0
+          }
+        }
+      },
+      {
+        "key": "2024-10-01_2025-09-30",
+        "label": "FY to Sep 2025",
+        "start": "2024-10-01",
+        "end": "2025-09-30",
+        "months": 12,
+        "vs": "FY to Sep 2024",
+        "vs_key": "2023-10-01_2024-09-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY to Sep 2024",
+          "title": "Creative Global Technology Holdings Ltd FY to Sep 2025 vs FY to Sep 2024: what changed",
+          "bullets": [
+            "Revenue fell $14.5M versus FY to Sep 2024; operating profit fell $18.3M.",
+            "The largest single swing was Cost of revenue, \u2212$10.4M (\u221236%).",
+            "Operating cash flow fell $1.3M to \u2212$4.8M, while net earnings fell $17.7M to \u2212$13.4M."
+          ]
+        },
+        "preliminary": false,
+        "form": "F-1",
+        "filed": "2026-11-13",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html",
+        "kind": "loss",
+        "title": "Creative Global Technology Holdings Ltd FY to Sep 2025 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Sep 30, 2025 \u00b7 GAAP \u00b7 Y/Y vs. FY to Sep 2024",
+        "footer": [
+          "Source: the company\u2019s registration statement (F-1 filed Nov 13, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Sep 30, 2025. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY to Sep 2024; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 21150042.0,
+            "y": 35611761.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$21.2M"
+              ],
+              [
+                "mut",
+                "Y/Y \u221241%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$14.5M",
+            "source": "Inline XBRL tag Revenues in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 13369749.0,
+            "y": -4282368.0,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$13.4M \u00b7 39% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 +$17.7M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 34522468.0,
+            "y": 35611879.0,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$34.5M \u00b7 163% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u22123%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1.1M \u00b7 scale \u221214.5 \u00b7 mix +13.4"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 34310415.0,
+            "y": 30426229.0,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$34.3M \u00b7 99% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y +13%"
+              ],
+              [
+                "mut",
+                "exceed revenue by $13.2M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 +$3.9M \u00b7 scale \u22120.93 \u00b7 mix +4.8"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 212053.0,
+            "y": 903282.0,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$212K \u00b7 0.6% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221277%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$691K \u00b7 scale \u22120.03 \u00b7 mix \u22120.66",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 18864549.0,
+            "y": 29275274.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$18.9M \u00b7 55% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221236%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$10.4M \u00b7 scale +3.7 \u00b7 mix \u221214.1",
+            "source": "Inline XBRL tag CostOfRevenue in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 25497.0,
+            "y": 32738.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$25K \u00b7 0.1% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u221222%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$7K \u00b7 scale +0.00 \u00b7 mix \u22120.01",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 1184369.0,
+            "y": 1118217.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$1.2M \u00b7 3.5% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y +6%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$66K \u00b7 scale +0.14 \u00b7 mix \u22120.08",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 14236000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$14.2M \u00b7 41% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 19047035.0,
+            "y": 3524152.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$19.0M \u00b7 90% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +440%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$15.5M \u00b7 scale \u22121.4 \u00b7 mix +17.0"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 14236000.0,
+            "y": 0.0,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$14.2M \u00b7 75% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$14.2M \u00b7 scale \u00b10.00 \u00b7 mix +14.2",
+            "source": "Inline XBRL tag ShareBasedCompensation in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 4811035.0,
+            "y": 3524152.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$4.8M \u00b7 25% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y +37%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.3M \u00b7 scale +15.5 \u00b7 mix \u221214.2",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 13369749.0,
+            "y": -4282368.0,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$13.4M \u00b7 70% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 +$17.7M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1, fiscal year ended Sep 30, 2025."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 5677286.0,
+            "y": 7806520.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$5.7M \u00b7 30% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u221227%"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$2.1M \u00b7 scale +34.4 \u00b7 mix \u221236.5"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 21150042.0,
+            "y": 35611761.0,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 13369749.0,
+            "y": -4282368.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 34310415.0,
+            "y": 30426229.0,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 212053.0,
+            "y": 903282.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 18864549.0,
+            "y": 29275274.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 25497.0,
+            "y": 32738.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 1184369.0,
+            "y": 1118217.0,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 14236000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 14236000.0,
+            "y": 0.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 4811035.0,
+            "y": 3524152.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 13369749.0,
+            "y": -4282368.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 5677286.0,
+            "y": 7806520.0,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "Creative Global Technology Holdings Ltd \u00b7 F-1 filed Nov 13, 2026 \u00b7 Fiscal year ended Sep 30, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html"
+        },
+        "analysis": [
+          "Revenue was $21.2M in FY to Sep 2025, down 41% year over year.",
+          "Gross margin was 10.8%, down 7.0 points from FY to Sep 2024. Operating costs exceeded revenue by $13.2M, an operating margin of -62.2%. Operating expenses grew 1242% against a revenue fall of 41%. The year ended with a net loss of $13.4M.",
+          "Operating cash flow was \u2212$4.8M. Non-cash charges added back $14.2M of share-based compensation. Working capital and other items used $5.7M."
+        ],
+        "headline": {
+          "revenue": 21150042.0,
+          "rev_fmt": "$21.2M",
+          "yoy": -40.60939025172049,
+          "oi": -13160373.0,
+          "oi_fmt": "\u2212$13.2M",
+          "om": -62.223862250486306,
+          "ni": -13369749.0,
+          "ni_fmt": "\u2212$13.4M",
+          "nm": -63.21381773142578,
+          "ocf": -4811035.0,
+          "ocf_fmt": "\u2212$4.8M",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": {
+            "revenue": 35611761.0,
+            "oi": 5185532.0,
+            "ni": 4282368.0,
+            "ocf": -3524152.0
+          }
+        }
+      },
+      {
+        "key": "2024-10-01_2025-03-31",
+        "label": "6M to Mar 2025",
+        "start": "2024-10-01",
+        "end": "2025-03-31",
+        "months": 6,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "F-1",
+        "filed": "2026-11-13",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html",
+        "kind": "loss",
+        "title": "Creative Global Technology Holdings Ltd 6M to Mar 2025 earnings &amp; cash flow",
+        "subtitle": "Six months ended Mar 31, 2025 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (F-1 filed Nov 13, 2026), read from the inline XBRL tags of its financial statements. Six months ended Mar 31, 2025 (unaudited). Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Loss-making period: revenue, other income and the net loss together fund all costs; the cash bridge starts from non-cash charges.",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 12248499.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$12.2M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "netloss",
+            "col": 0,
+            "color": "cost",
+            "name": "Net loss",
+            "pos": "left",
+            "v": 13719338.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss"
+              ],
+              [
+                "val",
+                "$13.7M \u00b7 53% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "Y/Y compares the size of the loss"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "total",
+            "col": 1,
+            "color": "cost",
+            "name": "Costs &amp; expenses",
+            "pos": "above",
+            "v": 25979204.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Costs &amp; expenses"
+              ],
+              [
+                "val",
+                "$26.0M \u00b7 212% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "opcosts",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating costs",
+            "pos": "above",
+            "v": 25836842.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating costs"
+              ],
+              [
+                "val",
+                "$25.8M \u00b7 99% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "exceed revenue by $13.6M (operating loss)"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "tax",
+            "col": 2,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "right",
+            "v": 142362.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$142K \u00b7 0.5% of costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "I:cor",
+            "col": 3,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 10700185.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$10.7M \u00b7 41% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag CostOfRevenue in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 15429.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$15K \u00b7 0.1% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 885228.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$885K \u00b7 3.4% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "I:other_opex",
+            "col": 3,
+            "color": "cost",
+            "name": "Other operating costs",
+            "pos": "right",
+            "v": 14236000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Other operating costs"
+              ],
+              [
+                "val",
+                "$14.2M \u00b7 55% of operating costs"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "bridge",
+            "col": 5,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 19004395.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$19.0M \u00b7 155% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "sbc",
+            "col": 4,
+            "color": "profit",
+            "name": "Share-based compensation",
+            "pos": "left",
+            "v": 14236000.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Share-based compensation"
+              ],
+              [
+                "val",
+                "$14.2M \u00b7 75% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag ShareBasedCompensation in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "burn",
+            "col": 4,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 4768395.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$4.8M \u00b7 25% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "loss_abs",
+            "col": 6,
+            "color": "cost",
+            "name": "Net loss absorbed",
+            "pos": "right",
+            "v": 13719338.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net loss absorbed"
+              ],
+              [
+                "val",
+                "$13.7M \u00b7 72% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "same loss as in the income statement"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1, six months ended Mar 31, 2025."
+          },
+          {
+            "id": "wc_out",
+            "col": 6,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 5285057.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$5.3M \u00b7 28% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "total",
+            "v": 12248499.0,
+            "y": null,
+            "color": "rev"
+          },
+          {
+            "s": "netloss",
+            "t": "total",
+            "v": 13719338.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "opcosts",
+            "v": 25836842.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "total",
+            "t": "tax",
+            "v": 142362.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:cor",
+            "v": 10700185.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:sm",
+            "v": 15429.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:ga",
+            "v": 885228.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opcosts",
+            "t": "I:other_opex",
+            "v": 14236000.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "sbc",
+            "t": "bridge",
+            "v": 14236000.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 4768395.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "loss_abs",
+            "v": 13719338.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 5285057.0,
+            "y": null,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "Creative Global Technology Holdings Ltd \u00b7 F-1 filed Nov 13, 2026 \u00b7 Six months ended Mar 31, 2025",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html"
+        },
+        "analysis": [
+          "Revenue was $12.2M in 6M to Mar 2025.",
+          "Gross margin was 12.6%. Operating costs exceeded revenue by $13.6M, an operating margin of -110.9%. The period ended with a net loss of $13.7M.",
+          "Operating cash flow was \u2212$4.8M. Non-cash charges added back $14.2M of share-based compensation. Working capital and other items used $5.3M."
+        ],
+        "headline": {
+          "revenue": 12248499.0,
+          "rev_fmt": "$12.2M",
+          "yoy": null,
+          "oi": -13588343.0,
+          "oi_fmt": "\u2212$13.6M",
+          "om": -110.93884238387088,
+          "ni": -13719338.0,
+          "ni_fmt": "\u2212$13.7M",
+          "nm": -112.00832036643837,
+          "ocf": -4768395.0,
+          "ocf_fmt": "\u2212$4.8M",
+          "fcf": null,
+          "fcf_fmt": null,
+          "prior": null
+        }
+      },
+      {
+        "key": "2023-10-01_2024-09-30",
+        "label": "FY to Sep 2024",
+        "start": "2023-10-01",
+        "end": "2024-09-30",
+        "months": 12,
+        "vs": "FY to Sep 2023",
+        "vs_key": "2022-10-01_2023-09-30",
+        "period": "fy",
+        "compare": null,
+        "compare_y": {
+          "vs": "FY to Sep 2023",
+          "title": "Creative Global Technology Holdings Ltd FY to Sep 2024 vs FY to Sep 2023: what changed",
+          "bullets": [
+            "Revenue fell $14.7M versus FY to Sep 2023; operating profit rose $1.4M.",
+            "The largest single swing was Cost of revenue, \u2212$16.0M (\u221235%).",
+            "Operating cash flow fell $8.4M to \u2212$3.5M, while net earnings rose $1.1M to $4.3M."
+          ]
+        },
+        "preliminary": false,
+        "form": "F-1",
+        "filed": "2026-11-13",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html",
+        "kind": "profit",
+        "title": "Creative Global Technology Holdings Ltd FY to Sep 2024 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Sep 30, 2024 \u00b7 GAAP \u00b7 Y/Y vs. FY to Sep 2023",
+        "footer": [
+          "Source: the company\u2019s registration statement (F-1 filed Nov 13, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Sep 30, 2024. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares with FY to Sep 2023; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 35611761.0,
+            "y": 50278937.0,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$35.6M"
+              ],
+              [
+                "mut",
+                "Y/Y \u221229%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$14.7M",
+            "source": "Inline XBRL tag Revenues in the F-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "gp",
+            "col": 1,
+            "color": "profit",
+            "name": "Gross profit",
+            "pos": "above",
+            "v": 6336487.0,
+            "y": 4969527.0,
+            "lines": [
+              [
+                "name",
+                "Gross profit"
+              ],
+              [
+                "val",
+                "$6.3M \u00b7 18% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +28%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.4M \u00b7 scale \u22121.4 \u00b7 mix +2.8"
+          },
+          {
+            "id": "cor",
+            "col": 1,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 29275274.0,
+            "y": 45309410.0,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$29.3M \u00b7 82% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u221235%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$16.0M \u00b7 scale \u221213.2 \u00b7 mix \u22122.8"
+          },
+          {
+            "id": "oi",
+            "col": 2,
+            "color": "profit",
+            "name": "Operating profit",
+            "pos": "above",
+            "v": 5185532.0,
+            "y": 3794326.0,
+            "lines": [
+              [
+                "name",
+                "Operating profit"
+              ],
+              [
+                "val",
+                "$5.2M \u00b7 82% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y +37%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.4M \u00b7 scale +1.0 \u00b7 mix +0.35",
+            "source": "Inline XBRL tag OperatingIncomeLoss in the F-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "opex",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "below",
+            "v": 1150955.0,
+            "y": 1175201.0,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$1.2M \u00b7 18% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u22122%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$24K \u00b7 scale +0.32 \u00b7 mix \u22120.35"
+          },
+          {
+            "id": "pretax",
+            "col": 3,
+            "color": "profit",
+            "name": "Pre-tax earnings",
+            "pos": "above",
+            "v": 5185650.0,
+            "y": 3835136.0,
+            "lines": [
+              [
+                "name",
+                "Pre-tax earnings"
+              ],
+              [
+                "val",
+                "$5.2M \u00b7 15% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y +35%"
+              ],
+              [
+                "mut",
+                "after +$0K interest &amp; other"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.4M \u00b7 scale \u22121.1 \u00b7 mix +2.5",
+            "source": "Inline XBRL tag IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest in the F-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 32738.0,
+            "y": 34132.0,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$33K \u00b7 2.8% of opex"
+              ],
+              [
+                "mut",
+                "Y/Y \u22124%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$1K \u00b7 scale \u22120.00 \u00b7 mix \u22120.00",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the F-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 1118217.0,
+            "y": 1141069.0,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 97% of opex"
+              ],
+              [
+                "mut",
+                "Y/Y \u22122%"
+              ]
+            ],
+            "cmp_y": "\u0394 \u2212$23K \u00b7 scale \u22120.02 \u00b7 mix +0.00",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the F-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "net",
+            "col": 4,
+            "color": "profit",
+            "name": "Net earnings",
+            "pos": "above_left",
+            "v": 4282368.0,
+            "y": 3155321.0,
+            "lines": [
+              [
+                "name",
+                "Net earnings"
+              ],
+              [
+                "val",
+                "$4.3M \u00b7 83% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y +36%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$1.1M \u00b7 scale +1.1 \u00b7 mix +0.02",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "tax",
+            "col": 4,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "below_right",
+            "v": 903282.0,
+            "y": 679815.0,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$903K \u00b7 17% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y +33%"
+              ]
+            ],
+            "cmp_y": "\u0394 +$223K \u00b7 scale +0.24 \u00b7 mix \u22120.02",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the F-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "bridge",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash sources",
+            "pos": "above",
+            "v": 7806520.0,
+            "y": -1719317.0,
+            "lines": [
+              [
+                "name",
+                "Operating cash sources"
+              ],
+              [
+                "val",
+                "$7.8M \u00b7 22% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9.5M \u00b7 scale/mix n/m"
+          },
+          {
+            "id": "burn",
+            "col": 5,
+            "color": "cost",
+            "name": "Cash used in operations",
+            "pos": "left",
+            "v": 3524152.0,
+            "y": -4874638.0,
+            "lines": [
+              [
+                "name",
+                "Cash used in operations"
+              ],
+              [
+                "val",
+                "$3.5M \u00b7 45% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ]
+            ],
+            "cmp_y": "\u0394 +$8.4M \u00b7 scale/mix n/m",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the F-1, fiscal year ended Sep 30, 2024."
+          },
+          {
+            "id": "wc_out",
+            "col": 7,
+            "color": "noncash",
+            "name": "Working capital &amp; other",
+            "pos": "right",
+            "v": 7806520.0,
+            "y": -1719317.0,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$7.8M \u00b7 100% of sources"
+              ],
+              [
+                "mut",
+                "Y/Y n/m"
+              ],
+              [
+                "mut",
+                "timing items, removed"
+              ]
+            ],
+            "cmp_y": "\u0394 +$9.5M \u00b7 scale/mix n/m"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "gp",
+            "v": 6336487.0,
+            "y": 4969527.0,
+            "color": "profit"
+          },
+          {
+            "s": "revenue",
+            "t": "cor",
+            "v": 29275274.0,
+            "y": 45309410.0,
+            "color": "cost"
+          },
+          {
+            "s": "gp",
+            "t": "oi",
+            "v": 5185532.0,
+            "y": 3794326.0,
+            "color": "profit"
+          },
+          {
+            "s": "gp",
+            "t": "opex",
+            "v": 1150955.0,
+            "y": 1175201.0,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "pretax",
+            "v": 5185532.0,
+            "y": 3794326.0,
+            "color": "profit"
+          },
+          {
+            "s": "opex",
+            "t": "I:sm",
+            "v": 32738.0,
+            "y": 34132.0,
+            "color": "cost"
+          },
+          {
+            "s": "opex",
+            "t": "I:ga",
+            "v": 1118217.0,
+            "y": 1141069.0,
+            "color": "cost"
+          },
+          {
+            "s": "pretax",
+            "t": "net",
+            "v": 4282368.0,
+            "y": 3155321.0,
+            "color": "profit"
+          },
+          {
+            "s": "pretax",
+            "t": "tax",
+            "v": 903282.0,
+            "y": 679815.0,
+            "color": "cost"
+          },
+          {
+            "s": "net",
+            "t": "bridge",
+            "v": 4282368.0,
+            "y": 3155321.0,
+            "color": "profit"
+          },
+          {
+            "s": "burn",
+            "t": "bridge",
+            "v": 3524152.0,
+            "y": -4874638.0,
+            "color": "cost"
+          },
+          {
+            "s": "bridge",
+            "t": "wc_out",
+            "v": 7806520.0,
+            "y": -1719317.0,
+            "color": "noncash"
+          }
+        ],
+        "cite": {
+          "text": "Creative Global Technology Holdings Ltd \u00b7 F-1 filed Nov 13, 2026 \u00b7 Fiscal year ended Sep 30, 2024",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html"
+        },
+        "analysis": [
+          "Revenue was $35.6M in FY to Sep 2024, down 29% year over year.",
+          "Gross margin was 17.8%, up 7.9 points from FY to Sep 2023. Operating profit was $5.2M, a 14.6% margin (up 7.0 points year over year). Operating expenses fell 2% while revenue fell 29%. Net earnings were $4.3M, up 36% year over year. The effective tax rate was 17.4%.",
+          "Operating cash flow was \u2212$3.5M. Working capital and other items used $7.8M. Capital expenditures of $19K exceeded it, leaving free cash flow of \u2212$3.5M."
+        ],
+        "headline": {
+          "revenue": 35611761.0,
+          "rev_fmt": "$35.6M",
+          "yoy": -29.171611165924215,
+          "oi": 5185532.0,
+          "oi_fmt": "$5.2M",
+          "om": 14.561290580378769,
+          "ni": 4282368.0,
+          "ni_fmt": "$4.3M",
+          "nm": 12.025150904500343,
+          "ocf": -3524152.0,
+          "ocf_fmt": "\u2212$3.5M",
+          "fcf": -3542749.0,
+          "fcf_fmt": "\u2212$3.5M",
+          "prior": {
+            "revenue": 50278937.0,
+            "oi": 3794326.0,
+            "ni": 3155321.0,
+            "ocf": 4874638.0
+          }
+        }
+      },
+      {
+        "key": "2022-10-01_2023-09-30",
+        "label": "FY to Sep 2023",
+        "start": "2022-10-01",
+        "end": "2023-09-30",
+        "months": 12,
+        "vs": null,
+        "vs_key": null,
+        "period": "fy",
+        "compare": null,
+        "compare_y": null,
+        "preliminary": false,
+        "form": "F-1",
+        "filed": "2026-11-13",
+        "doc_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+        "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html",
+        "kind": "profit",
+        "title": "Creative Global Technology Holdings Ltd FY to Sep 2023 earnings &amp; cash flow",
+        "subtitle": "Fiscal year ended Sep 30, 2023 \u00b7 GAAP \u00b7 no earlier period of the same length",
+        "footer": [
+          "Source: the company\u2019s registration statement (F-1 filed Nov 13, 2026), read from the inline XBRL tags of its financial statements. Fiscal year ended Sep 30, 2023. Percentages show each item\u2019s share of the node it splits from or flows into. Y/Y compares nothing: the filing has no earlier period of the same length; n/m = not meaningful (a comparison period was \u2264 0 or changed sign).",
+          "Working capital &amp; other is the residual between operating cash flow and the listed items. Free cash flow = operating cash flow \u2212 capital expenditures (purchases of property and equipment). The IPO proceeds, offering price and dilution are not inferred.",
+          "Derived here, not line items in the filing: costs &amp; expenses (the funding total), working capital &amp; other, operating cash sources and free cash flow."
+        ],
+        "nodes": [
+          {
+            "id": "revenue",
+            "col": 0,
+            "color": "rev",
+            "name": "Revenue",
+            "pos": "left",
+            "v": 50278937.0,
+            "y": null,
+            "lines": [
+              [
+                "big",
+                "Revenue"
+              ],
+              [
+                "val",
+                "$50.3M"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag Revenues in the F-1, fiscal year ended Sep 30, 2023."
+          },
+          {
+            "id": "gp",
+            "col": 1,
+            "color": "profit",
+            "name": "Gross profit",
+            "pos": "above",
+            "v": 4969527.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Gross profit"
+              ],
+              [
+                "val",
+                "$5.0M \u00b7 9.9% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "cor",
+            "col": 1,
+            "color": "cost",
+            "name": "Cost of revenue",
+            "pos": "right",
+            "v": 45309410.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Cost of revenue"
+              ],
+              [
+                "val",
+                "$45.3M \u00b7 90% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "oi",
+            "col": 2,
+            "color": "profit",
+            "name": "Operating profit",
+            "pos": "above",
+            "v": 3794326.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating profit"
+              ],
+              [
+                "val",
+                "$3.8M \u00b7 76% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag OperatingIncomeLoss in the F-1, fiscal year ended Sep 30, 2023."
+          },
+          {
+            "id": "opex",
+            "col": 2,
+            "color": "cost",
+            "name": "Operating expenses",
+            "pos": "below",
+            "v": 1175201.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Operating expenses"
+              ],
+              [
+                "val",
+                "$1.2M \u00b7 24% of gross profit"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "pretax",
+            "col": 3,
+            "color": "profit",
+            "name": "Pre-tax earnings",
+            "pos": "above",
+            "v": 3835136.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Pre-tax earnings"
+              ],
+              [
+                "val",
+                "$3.8M \u00b7 7.6% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "after +$41K interest &amp; other"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest in the F-1, fiscal year ended Sep 30, 2023."
+          },
+          {
+            "id": "I:sm",
+            "col": 3,
+            "color": "cost",
+            "name": "Sales &amp; marketing",
+            "pos": "right",
+            "v": 34132.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Sales &amp; marketing"
+              ],
+              [
+                "val",
+                "$34K \u00b7 2.9% of opex"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag SellingAndMarketingExpense in the F-1, fiscal year ended Sep 30, 2023."
+          },
+          {
+            "id": "I:ga",
+            "col": 3,
+            "color": "cost",
+            "name": "General &amp; admin",
+            "pos": "right",
+            "v": 1141069.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "General &amp; admin"
+              ],
+              [
+                "val",
+                "$1.1M \u00b7 97% of opex"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag GeneralAndAdministrativeExpense in the F-1, fiscal year ended Sep 30, 2023."
+          },
+          {
+            "id": "net",
+            "col": 4,
+            "color": "profit",
+            "name": "Net earnings",
+            "pos": "above_left",
+            "v": 3155321.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Net earnings"
+              ],
+              [
+                "val",
+                "$3.2M \u00b7 82% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetIncomeLoss in the F-1, fiscal year ended Sep 30, 2023."
+          },
+          {
+            "id": "tax",
+            "col": 4,
+            "color": "cost",
+            "name": "Income tax",
+            "pos": "below_right",
+            "v": 679815.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Income tax"
+              ],
+              [
+                "val",
+                "$680K \u00b7 18% of pre-tax"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag IncomeTaxExpenseBenefit in the F-1, fiscal year ended Sep 30, 2023."
+          },
+          {
+            "id": "wc_in",
+            "col": 5,
+            "color": "profit",
+            "name": "Working capital &amp; other",
+            "pos": "left",
+            "v": 1719317.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Working capital &amp; other"
+              ],
+              [
+                "val",
+                "$1.7M \u00b7 35% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "ocf",
+            "col": 6,
+            "color": "profit",
+            "name": "Operating cash flow",
+            "pos": "above",
+            "v": 4874638.0,
+            "y": null,
+            "lines": [
+              [
+                "ocf",
+                "Operating cash flow"
+              ],
+              [
+                "val",
+                "$4.9M \u00b7 9.7% of revenue"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "154% of net earnings"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)",
+            "source": "Inline XBRL tag NetCashProvidedByUsedInOperatingActivities in the F-1, fiscal year ended Sep 30, 2023."
+          },
+          {
+            "id": "fcf",
+            "col": 7,
+            "color": "profit",
+            "name": "Free cash flow (OCF \u2212 capex)",
+            "pos": "right",
+            "v": 4870854.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Free cash flow (OCF \u2212 capex)"
+              ],
+              [
+                "val",
+                "$4.9M \u00b7 100% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ],
+              [
+                "mut",
+                "FCF margin 9.7%"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          },
+          {
+            "id": "capex",
+            "col": 7,
+            "color": "cost",
+            "name": "Capital expenditures",
+            "pos": "right",
+            "v": 3784.0,
+            "y": null,
+            "lines": [
+              [
+                "name",
+                "Capital expenditures"
+              ],
+              [
+                "val",
+                "$4K \u00b7 0.1% of OCF"
+              ],
+              [
+                "mut",
+                "Y/Y \u2014"
+              ]
+            ],
+            "cmp_y": "\u0394 n/a (no year-ago quarter)"
+          }
+        ],
+        "links": [
+          {
+            "s": "revenue",
+            "t": "gp",
+            "v": 4969527.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "revenue",
+            "t": "cor",
+            "v": 45309410.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "gp",
+            "t": "oi",
+            "v": 3794326.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "gp",
+            "t": "opex",
+            "v": 1175201.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "oi",
+            "t": "pretax",
+            "v": 3794326.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "opex",
+            "t": "I:sm",
+            "v": 34132.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "opex",
+            "t": "I:ga",
+            "v": 1141069.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "pretax",
+            "t": "net",
+            "v": 3155321.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "pretax",
+            "t": "tax",
+            "v": 679815.0,
+            "y": null,
+            "color": "cost"
+          },
+          {
+            "s": "net",
+            "t": "ocf",
+            "v": 3155321.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "wc_in",
+            "t": "ocf",
+            "v": 1719317.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "fcf",
+            "v": 4870854.0,
+            "y": null,
+            "color": "profit"
+          },
+          {
+            "s": "ocf",
+            "t": "capex",
+            "v": 3784.0,
+            "y": null,
+            "color": "cost"
+          }
+        ],
+        "cite": {
+          "text": "Creative Global Technology Holdings Ltd \u00b7 F-1 filed Nov 13, 2026 \u00b7 Fiscal year ended Sep 30, 2023",
+          "doc": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+          "index": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html"
+        },
+        "analysis": [
+          "Revenue was $50.3M in FY to Sep 2023.",
+          "Gross margin was 9.9%. Operating profit was $3.8M, a 7.5% margin. Net earnings were $3.2M. The effective tax rate was 17.7%.",
+          "Operating cash flow was $4.9M, 154% of net earnings. Working capital and other items added $1.7M. Capital expenditures of $4K left free cash flow of $4.9M."
+        ],
+        "headline": {
+          "revenue": 50278937.0,
+          "rev_fmt": "$50.3M",
+          "yoy": null,
+          "oi": 3794326.0,
+          "oi_fmt": "$3.8M",
+          "om": 7.546551749890814,
+          "ni": 3155321.0,
+          "ni_fmt": "$3.2M",
+          "nm": 6.2756318813979695,
+          "ocf": 4874638.0,
+          "ocf_fmt": "$4.9M",
+          "fcf": 4870854.0,
+          "fcf_fmt": "$4.9M",
+          "prior": null
+        }
+      }
+    ],
+    "default": "2025-10-01_2026-03-31"
+  },
+  "filings": [
+    {
+      "accession": "0001213900-26-119795",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1",
+      "filed": "2026-11-13",
+      "accepted": "2026-11-13T21:31:57+00:00",
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+      "file_number": "333-300044",
+      "discovered_at": "2026-11-14T01:39:17+00:00",
+      "state": "parsed",
+      "last_attempt": "2026-11-14T01:39:59+00:00",
+      "last_success": "2026-11-14T01:40:01+00:00",
+      "error": null,
+      "classification": "registration_unclassified"
+    },
+    {
+      "accession": "9999999995-25-003012",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "EFFECT",
+      "filed": "2025-09-19",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/999999999525003012/9999999995-25-003012-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-026982",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "424B3",
+      "filed": "2025-04-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390025026982/0001213900-25-026982-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-023852",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "424B3",
+      "filed": "2025-03-14",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390025023852/0001213900-25-023852-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-023851",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "424B3",
+      "filed": "2025-03-14",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390025023851/0001213900-25-023851-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-000529",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "EFFECT",
+      "filed": "2025-02-26",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/999999999525000529/9999999995-25-000529-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-102413",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "424B4",
+      "filed": "2024-11-26",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024102413/0001213900-24-102413-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-102407",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "424B4",
+      "filed": "2024-11-26",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024102407/0001213900-24-102407-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-003505",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "EFFECT",
+      "filed": "2024-11-18",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/999999999524003505/9999999995-24-003505-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-098891",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-11-15",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024098891/0001213900-24-098891-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-081352",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-09-24",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024081352/0001213900-24-081352-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-077639",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-09-11",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024077639/0001213900-24-077639-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-062073",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-07-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024062073/0001213900-24-062073-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-041237",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-05-09",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024041237/0001213900-24-041237-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-036562",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-04-26",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024036562/0001213900-24-036562-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-031123",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-04-08",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024031123/0001213900-24-031123-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-025002",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-03-22",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024025002/0001213900-24-025002-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-025001",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-03-22",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024025001/0001213900-24-025001-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-019626",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-03-04",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024019626/0001213900-24-019626-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-014737",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-02-16",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024014737/0001213900-24-014737-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-007722",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-01-30",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024007722/0001213900-24-007722-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-003589",
+      "cik": 1967822,
+      "name": "Creative Global Technology Holdings Ltd",
+      "form": "F-1/A",
+      "filed": "2024-01-16",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390024003589/0001213900-24-003589-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    }
+  ],
+  "latest_discovered": {
+    "accession": "0001213900-26-119795",
+    "cik": 1967822,
+    "name": "Creative Global Technology Holdings Ltd",
+    "form": "F-1",
+    "filed": "2026-11-13",
+    "accepted": "2026-11-13T21:31:57+00:00",
+    "index_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/0001213900-26-119795-index.html",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1967822/000121390026119795/ea0311142-f1_creative.htm",
+    "file_number": "333-300044",
+    "discovered_at": "2026-11-14T01:39:17+00:00",
+    "state": "parsed",
+    "last_attempt": "2026-11-14T01:39:59+00:00",
+    "last_success": "2026-11-14T01:40:01+00:00",
+    "error": null,
+    "classification": "registration_unclassified"
+  },
+  "generated_at": "2026-11-14T01:40:23+00:00"
+}
