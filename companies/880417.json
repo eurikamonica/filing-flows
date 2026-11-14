@@ -1,0 +1,202 @@
+{
+  "cik": 880417,
+  "ticker": "CSBB",
+  "name": "CSB Bancorp, Inc.",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0001193125-26-108381": {
+      "instruments": [
+        {
+          "name": "Fixed Rate Amortizing Borrowing",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "rate_now": 0.0198,
+          "coupon_min": 0.0195,
+          "coupon_max": 0.0201,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-16",
+      "report": "2025-12-31"
+    },
+    "xbrl:0000880417-26-000005": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-11-13",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "cash": 84658000,
+    "equity": 134556000,
+    "assets": 1310516000,
+    "liabilities": 1175960000,
+    "retained_earnings": 122871000,
+    "deposits": 1145172000,
+    "interest_paid": 14477000,
+    "pretax_income": 19926000,
+    "net_income": 16035000,
+    "ocf": 21587000,
+    "deposit_interest": 14247000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 262000,
+      "y2": 195000,
+      "y3": 144000,
+      "y4": 106000,
+      "y5": 77000,
+      "after5": 133000
+    },
+    "wavg_rate_short": 0.0093,
+    "shares": 2627015,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "history": [
+    {
+      "end": "2023-12-31",
+      "filed": "2024-03-15",
+      "total_debt": 1754000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": 9875000,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 2664967,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-12-31",
+      "filed": "2025-03-14",
+      "total_debt": 1266000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 2641847,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-12-31",
+      "filed": "2026-03-16",
+      "total_debt": 917000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": 941000,
+      "ocf": 19496000,
+      "revenue": null,
+      "shares": 2627015,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 14680000
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "(Unaudited) NOTE 4 – SHORT-TERM BORROWINGS The following table provides additional detail regarding repurchase agreements and the related collateral accounted for as secured borrowings. | Remaining Contractual Maturity Overnight and Continuous | September 30, | December",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/880417/000088041726000005/csbb-20260930.htm",
+        "accession": "0000880417-26-000005",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000880417-26-000005",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/880417/000088041726000005/csbb-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "(Unaudited) NOTE 4 – SHORT-TERM BORROWINGS The following table provides additional detail regarding repurchase agreements and the related collateral accounted for as secured borrowings. | Remaining Contractual Maturity Overnight and Continuous | September 30, | December",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/880417/000088041726000005/csbb-20260930.htm",
+      "accession": "0000880417-26-000005",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0000880417-26-000005",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0000880417-26-000005",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0000880417-26-000005",
+  "xbrl_10-K": "xbrl:0001193125-26-108381",
+  "xbrl_10-Q": "xbrl:0000880417-26-000005",
+  "events": [
+    {
+      "date": "2011-06-24",
+      "items": "1.01,9.01",
+      "acc": "0000950123-11-061428",
+      "doc": "l42991e8vk.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-13T23:40:15+00:00",
+  "signature": "0000880417-26-000005",
+  "fdic": {
+    "matched": false
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "cik": 1542574,
+  "name": "Prosper Funding LLC",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "docs": {
+    "xbrl:0001416265-26-000012": {
+      "instruments": [
+        {
+          "name": "2022 Term Loan",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "spread": 0.11,
+          "floating": true
+        },
+        {
+          "name": "2025 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-11-14",
+          "spread": 0.07,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001416265-26-000041": {
+      "instruments": [
+        {
+          "name": "2025 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-11-14",
+          "spread": 0.07,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-12",
+      "report": "2026-09-30"
+    },
+    "0001416265-26-000012:exhibit1058-10k2025.htm": {
+      "kind": "agreement",
+      "date": "2026-03-26",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-11-14",
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        7.0,
+        7.0
+      ],
+      "margin_text": " a percentage per annum equal to (i) for SOFR Loans, 7.00% and (ii) for ABR Loans, 6.00%. "
+    },
+    "0001416265-26-000012:exhibit101-10k2025.htm": {
+      "kind": "agreement",
+      "date": "2026-03-26",
+      "agreement_kind": "other"
+    },
+    "0001416265-23-000011:a202210-kexhibit101.htm": {
+      "kind": "agreement",
+      "date": "2023-03-29",
+      "agreement_kind": "other"
+    }
+  },
+  "sic_description": "Finance Services",
+  "snapshot": {
+    "cash": 74059000,
+    "operating_leases": 6481000,
+    "equity": -424528000,
+    "assets": 990842000,
+    "liabilities": 848449000,
+    "retained_earnings": -566801000,
+    "shares": 79938949,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 6481000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+        "accession": "0001416265-26-000041",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 6481000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001416265-26-000041",
+            "filed": "2026-11-12",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "oration, and Prosper Healthcare Lending LLC (“PHL”), a Delaware limited liability company, and (iii) its variable interest entities, Prosper Warehouse I Trust (“PWIT,” terminated March 28, 2024), a Delaware statutory trust, Prosper Warehouse II Trust (“PWIIT,” terminated September",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+        "accession": "0001416265-26-000041",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "dge or exchange the assets without any significant constraints, and (iii) Prosper has not entered into a repurchase agreement, does not hold unconditional call options and has not written put options on the transferred assets. In assessing whether control has been surrendere",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+        "accession": "0001416265-26-000041",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001416265-26-000041",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "which provides a practical expedient for measuring expected credit losses on current accounts receivable and contract assets. The expedient allows an entity to assume that current economic conditions will remain unchanged for the remaining life of the asset when developing",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+        "accession": "0001416265-26-000041",
+        "form": "10-Q",
+        "filed": "2026-11-12"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "ah law, where WebBank is domiciled. Changes in the estimated liability for prepayment refunds are recorded as variable consideration and reduce transaction fee revenues. Borrower Loans originated on or after May 6, 2026, are no longer subject to this refund requirement under Utah l",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+        "accession": "0001416265-26-000041",
+        "form": "10-Q",
+        "filed": "2026-11-12"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "consist of the following for the periods presented (in thousands): September 30, 2026 | December 31, 2025 | Deferred revenue | $ | 13,522 | $ | 11,819 | Operating lease liabilities (Note 16) | 6,481 | 9,193 | Credit Card servicing obligation liability (Notes 2 and 5) | 4,72",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+        "accession": "0001416265-26-000041",
+        "form": "10-Q",
+        "filed": "2026-11-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "oration, and Prosper Healthcare Lending LLC (“PHL”), a Delaware limited liability company, and (iii) its variable interest entities, Prosper Warehouse I Trust (“PWIT,” terminated March 28, 2024), a Delaware statutory trust, Prosper Warehouse II Trust (“PWIIT,” terminated September",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+      "accession": "0001416265-26-000041",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "dge or exchange the assets without any significant constraints, and (iii) Prosper has not entered into a repurchase agreement, does not hold unconditional call options and has not written put options on the transferred assets. In assessing whether control has been surrendere",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+      "accession": "0001416265-26-000041",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001416265-26-000041",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001416265-26-000041",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "which provides a practical expedient for measuring expected credit losses on current accounts receivable and contract assets. The expedient allows an entity to assume that current economic conditions will remain unchanged for the remaining life of the asset when developing",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+      "accession": "0001416265-26-000041",
+      "form": "10-Q",
+      "filed": "2026-11-12"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "ah law, where WebBank is domiciled. Changes in the estimated liability for prepayment refunds are recorded as variable consideration and reduce transaction fee revenues. Borrower Loans originated on or after May 6, 2026, are no longer subject to this refund requirement under Utah l",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+      "accession": "0001416265-26-000041",
+      "form": "10-Q",
+      "filed": "2026-11-12"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "consist of the following for the periods presented (in thousands): September 30, 2026 | December 31, 2025 | Deferred revenue | $ | 13,522 | $ | 11,819 | Operating lease liabilities (Note 16) | 6,481 | 9,193 | Credit Card servicing obligation liability (Notes 2 and 5) | 4,72",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1542574/000141626526000041/prosper-20260930.htm",
+      "accession": "0001416265-26-000041",
+      "form": "10-Q",
+      "filed": "2026-11-12"
+    }
+  ],
+  "revenue_quality_text_source": "0001416265-26-000041",
+  "xbrl_10-K": "xbrl:0001416265-26-000012",
+  "xbrl_10-Q": "xbrl:0001416265-26-000041",
+  "events": [],
+  "fetched_at": "2026-11-12T23:43:15+00:00",
+  "signature": "0001416265-26-000041"
+}

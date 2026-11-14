@@ -1,0 +1,626 @@
+{
+  "cik": 1795815,
+  "ticker": "BCAL",
+  "name": "California BanCorp \\ CA",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "sic_description": "National Commercial Banks",
+  "generated_at": "2026-11-14T20:47:06+00:00",
+  "fetched_at": "2026-11-07T02:01:27+00:00",
+  "price": 22.05,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.156324,
+  "snapshot": {
+    "total_debt": 0,
+    "cash": 266653000,
+    "operating_leases": 19371000,
+    "equity": 581354000,
+    "assets": 4105696000,
+    "liabilities": 3524342000,
+    "retained_earnings": 167536000,
+    "deposits": 3476482000,
+    "time_deposits": 88985000,
+    "interest_paid": 47460000,
+    "pretax_income": 79753000,
+    "net_income": 58529000,
+    "da": 1447000,
+    "ocf": 52341000,
+    "capex": 1051000,
+    "shares": 31845770,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 0.0,
+    "cash_and_investments": 266653000.0,
+    "net_debt": -266653000.0,
+    "ebitda": 81200000.0,
+    "ebit": 79753000.0,
+    "interest_expense": null,
+    "leverage": 0.0,
+    "net_leverage": -3.283904,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.102845,
+    "fcf": 51290000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 90500000.0,
+    "liquidity": 357153000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 702199228.5,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 19371000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795815/000179581526000023/bcal-20260930.htm",
+        "accession": "0001795815-26-000023",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 19371000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001795815-26-000023",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1795815/000179581526000023/bcal-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "s (Topic 805) and Consolidation (Topic 810): Determining the Accounting Acquirer in the Acquisition of a Variable Interest Entity . In May 2025, the FASB issued ASU 2025-03, which revises the guidance in ASC 805 on identifying the accounting acquirer in a business combination in",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795815/000179581526000023/bcal-20260930.htm",
+        "accession": "0001795815-26-000023",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "other participating banks in exchange for the deposits we place into the networks to fully qualify large customer deposits for FDIC insurance. Effective July 11, 2026, Section 902 of the 21st Century ROAD to Housing Act amended the reciprocal deposit exception under Secti",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795815/000179581526000023/bcal-20260930.htm",
+        "accession": "0001795815-26-000023",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001795815-26-000023",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1795815/000179581526000023/bcal-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "re not included in the computation of diluted earnings per share, because they were anti-dilutive. NOTE 9 - RELATED PARTY TRANSACTIONS In the ordinary course of business, the Bank has made loans to certain directors, their related interests with which they are associated, and benef",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1795815/000179581526000023/bcal-20260930.htm",
+        "accession": "0001795815-26-000023",
+        "form": "10-Q",
+        "filed": "2026-11-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "capacity": 90500000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2024-07-31",
+      "items": "2.01,2.03,5.02,5.03,8.01,9.01",
+      "acc": "0001493152-24-029764",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-01-30",
+      "items": "1.01,5.02,7.01,8.01,9.01",
+      "acc": "0001493152-24-004219",
+      "doc": "form8-k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-03-31",
+      17794000,
+      102139000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      32818000,
+      104627000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      25842000,
+      95121000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      44889000,
+      86542000,
+      35837000,
+      null,
+      null,
+      0.79835
+    ],
+    [
+      "2024-06-30",
+      42913000,
+      104733000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      69142000,
+      614423000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      70308000,
+      439241000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      52883000,
+      430137000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      33443000,
+      559216000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      34221000,
+      411140000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      34611000,
+      264951000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-09-30",
+      0,
+      266653000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2023-06",
+      0.0,
+      16.358,
+      0.214,
+      68.1
+    ],
+    [
+      "2023-07",
+      0.0,
+      15.775,
+      0.2274,
+      68.1
+    ],
+    [
+      "2023-08",
+      0.0,
+      13.017,
+      0.234,
+      77.7
+    ],
+    [
+      "2023-09",
+      0.0,
+      12.678,
+      0.236,
+      79.5
+    ],
+    [
+      "2023-10",
+      0.0,
+      11.629,
+      0.2537,
+      85.3
+    ],
+    [
+      "2023-11",
+      0.0,
+      12.076,
+      0.2681,
+      82.7
+    ],
+    [
+      "2023-12",
+      0.0,
+      11.873,
+      0.2829,
+      83.9
+    ],
+    [
+      "2024-01",
+      0.0,
+      11.72,
+      0.2833,
+      84.7
+    ],
+    [
+      "2024-02",
+      0.0,
+      11.208,
+      0.2887,
+      87.7
+    ],
+    [
+      "2024-03",
+      0.0,
+      11.419,
+      0.2829,
+      86.5
+    ],
+    [
+      "2024-04",
+      0.0,
+      11.949,
+      0.267,
+      83.4
+    ],
+    [
+      "2024-05",
+      0.0,
+      11.899,
+      0.2306,
+      83.7
+    ],
+    [
+      "2024-06",
+      0.0,
+      11.961,
+      0.2273,
+      83.4
+    ],
+    [
+      "2024-07",
+      0.0,
+      12.214,
+      0.2305,
+      82.0
+    ],
+    [
+      "2024-08",
+      0.0,
+      12.077,
+      0.2344,
+      82.7
+    ],
+    [
+      "2024-09",
+      0.0,
+      12.154,
+      0.2314,
+      82.3
+    ],
+    [
+      "2024-10",
+      0.0,
+      12.818,
+      0.2171,
+      78.7
+    ],
+    [
+      "2024-11",
+      0.0,
+      12.268,
+      0.2472,
+      81.7
+    ],
+    [
+      "2024-12",
+      0.0,
+      12.516,
+      0.238,
+      80.3
+    ],
+    [
+      "2025-01",
+      0.0,
+      10.909,
+      0.2716,
+      89.5
+    ],
+    [
+      "2025-02",
+      0.0,
+      10.795,
+      0.2716,
+      90.1
+    ],
+    [
+      "2025-03",
+      0.0,
+      10.628,
+      0.2679,
+      91.2
+    ],
+    [
+      "2025-04",
+      0.05,
+      8.822,
+      0.3166,
+      102.9
+    ],
+    [
+      "2025-05",
+      0.07,
+      8.661,
+      0.3295,
+      104.0
+    ],
+    [
+      "2025-06",
+      0.08,
+      8.639,
+      0.3341,
+      104.1
+    ],
+    [
+      "2025-07",
+      0.06,
+      8.818,
+      0.3301,
+      102.9
+    ],
+    [
+      "2025-08",
+      0.03,
+      9.212,
+      0.3456,
+      100.2
+    ],
+    [
+      "2025-09",
+      0.03,
+      9.223,
+      0.3455,
+      100.1
+    ],
+    [
+      "2025-10",
+      0.05,
+      9.089,
+      0.3585,
+      101.0
+    ],
+    [
+      "2025-11",
+      0.0,
+      11.192,
+      0.3313,
+      87.8
+    ],
+    [
+      "2025-12",
+      0.0,
+      11.228,
+      0.3284,
+      87.6
+    ],
+    [
+      "2026-01",
+      0.0,
+      12.143,
+      0.3008,
+      82.4
+    ],
+    [
+      "2026-02",
+      0.0,
+      12.002,
+      0.3056,
+      83.2
+    ],
+    [
+      "2026-03",
+      0.0,
+      12.06,
+      0.3015,
+      82.8
+    ],
+    [
+      "2026-04",
+      0.0,
+      14.806,
+      0.2497,
+      68.9
+    ],
+    [
+      "2026-05",
+      0.0,
+      15.553,
+      0.2379,
+      68.1
+    ],
+    [
+      "2026-06",
+      0.0,
+      16.277,
+      0.2329,
+      68.1
+    ],
+    [
+      "2026-07",
+      -0.0,
+      18.871,
+      0.2024,
+      68.1
+    ],
+    [
+      "2026-08",
+      -0.0,
+      19.987,
+      0.1906,
+      68.1
+    ],
+    [
+      "2026-09",
+      -0.0,
+      20.283,
+      0.189,
+      68.1
+    ],
+    [
+      "2026-10",
+      -0.0,
+      24.471,
+      0.1566,
+      68.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

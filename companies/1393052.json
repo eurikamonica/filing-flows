@@ -1,0 +1,295 @@
+{
+  "cik": 1393052,
+  "ticker": "VEEV",
+  "name": "VEEVA SYSTEMS INC",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "docs": {
+    "xbrl:0001393052-26-000014": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-20",
+      "report": "2026-01-31"
+    },
+    "xbrl:0001393052-26-000036": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-27",
+      "report": "2026-07-31"
+    }
+  },
+  "sic_description": "Services-Prepackaged Software",
+  "snapshot": {
+    "cash": 1812012000,
+    "investments": 5430935000,
+    "operating_leases": 151695000,
+    "equity": 7431449000,
+    "assets": 9060223000,
+    "liabilities": 1628774000,
+    "assets_current": 7946227000,
+    "liabilities_current": 1455950000,
+    "retained_earnings": 4897866000,
+    "operating_income": 1034859000,
+    "pretax_income": 1327383000,
+    "net_income": 1014772000,
+    "ocf": 1665459000,
+    "revenue": 3458098000,
+    "shares": 161908850,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001393052-26-000014",
+  "xbrl_10-Q": "xbrl:0001393052-26-000036",
+  "events": [
+    {
+      "date": "2021-02-01",
+      "items": "1.01,5.02,5.03,9.01",
+      "acc": "0001628280-21-001246",
+      "doc": "veev-20210127.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T22:46:11+00:00",
+  "signature": "0001393052-26-000036",
+  "hidden_leverage": {
+    "as_of": "2026-07-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 151695000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000036/veev-20260731.htm",
+        "accession": "0001393052-26-000036",
+        "form": "10-Q",
+        "filed": "2026-08-27",
+        "as_of": "2026-07-31",
+        "evidence": [
+          {
+            "value_usd": 151695000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001393052-26-000036",
+            "filed": "2026-08-27",
+            "form": "10-Q",
+            "as_of": "2026-07-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000036/veev-20260731.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001393052-26-000036",
+      "form": "10-Q",
+      "filed": "2026-08-27",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000036/veev-20260731.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-31",
+    "metrics": {
+      "revenue_growth": 0.1634,
+      "receivables_growth": 0.2395,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.1686,
+      "dsri": 1.0654,
+      "ocf_to_net_income": 1.5571
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 3195311000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        },
+        {
+          "value_usd": 2746619000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1259737000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        },
+        {
+          "value_usd": 1016356000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 1488819000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        },
+        {
+          "value_usd": 1273978000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 1415225000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        },
+        {
+          "value_usd": 1090051000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 908906000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        },
+        {
+          "value_usd": 714138000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001393052-26-000014",
+          "filed": "2026-03-20",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000014/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "$ 45 million primarily for revenue recognized for professional services performed but not yet billed and (ii) contract assets of $ 24 million primarily related to professional services performed but for which we are not contractually able to invoice until a future period.",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000036/veev-20260731.htm",
+        "accession": "0001393052-26-000036",
+        "form": "10-Q",
+        "filed": "2026-08-27"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ll and Intangible Assets | 11 | Note 6 . Fair Value Measurements | 12 | Note 7 . Income Taxes | 13 | Note 8 . Deferred Revenue, Performance Obligations, and Unbilled Accounts Receivable | 14 | Note 9 . Leases | 14 | Note 10 . Stockholders’ Equity | 15 | Note 1 1 . Net Income",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000036/veev-20260731.htm",
+        "accession": "0001393052-26-000036",
+        "form": "10-Q",
+        "filed": "2026-08-27"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-01-31",
+      "2025-01-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001393052-26-000036",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001393052-26-000036",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "$ 45 million primarily for revenue recognized for professional services performed but not yet billed and (ii) contract assets of $ 24 million primarily related to professional services performed but for which we are not contractually able to invoice until a future period.",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000036/veev-20260731.htm",
+      "accession": "0001393052-26-000036",
+      "form": "10-Q",
+      "filed": "2026-08-27"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "ll and Intangible Assets | 11 | Note 6 . Fair Value Measurements | 12 | Note 7 . Income Taxes | 13 | Note 8 . Deferred Revenue, Performance Obligations, and Unbilled Accounts Receivable | 14 | Note 9 . Leases | 14 | Note 10 . Stockholders’ Equity | 15 | Note 1 1 . Net Income",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1393052/000139305226000036/veev-20260731.htm",
+      "accession": "0001393052-26-000036",
+      "form": "10-Q",
+      "filed": "2026-08-27"
+    }
+  ],
+  "revenue_quality_text_source": "0001393052-26-000036"
+}

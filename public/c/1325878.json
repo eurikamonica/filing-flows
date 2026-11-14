@@ -1,0 +1,759 @@
+{
+  "cik": 1325878,
+  "ticker": null,
+  "name": "Federal Home Loan Bank of Topeka",
+  "sector": "financials",
+  "industry": "Federal & Federally-Sponsored Credit Agencies",
+  "sic": "6111",
+  "sic_description": "Federal & Federally-Sponsored Credit Agencies",
+  "generated_at": "2026-11-14T20:47:02+00:00",
+  "fetched_at": "2026-11-11T01:58:12+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 21585000,
+    "equity": 4571553000,
+    "assets": 85602120000,
+    "liabilities": 81030567000,
+    "retained_earnings": 1835016000,
+    "interest_paid": 2566406000,
+    "pretax_income": 378040000,
+    "net_income": 340058000,
+    "da": -4139000,
+    "ocf": 1093881000,
+    "capex": 1971000,
+    "wavg_rate_long": 0.0151,
+    "wavg_rate_short": 0.0006,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "wavg_rate_long": "LongtermDebtWeightedAverageInterestRate",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 21585000.0,
+    "net_debt": null,
+    "ebitda": 373901000.0,
+    "ebit": 378040000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.426231,
+    "fcf": 1091910000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 21585000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": 46186000000.0,
+    "floating_share": null,
+    "plus100bp_interest": 461860000.0,
+    "plus100bp_share_of_ebit": 1.221723,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "enhance income. It is comprised of short-term investments, primarily interest-bearing deposits, reverse repurchase agreements, Federal funds sold, and certificates of deposit. Fluctuations in the liquidity portfolio reflect the impact of regulatory requirements, anticipated",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1325878/000132587826000235/fhlbt-20260930.htm",
+        "accession": "0001325878-26-000235",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001325878-26-000235",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1325878/000132587826000235/fhlbt-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Simple variable rate",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "carrying": 46186000000.0,
+      "floating": true
+    },
+    {
+      "name": "Fixed rate",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "carrying": 21085065000.0,
+      "floating": false
+    },
+    {
+      "name": "Callable",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "carrying": 17851155000.0,
+      "floating": false
+    },
+    {
+      "name": "Consolidated Obligation Discount Notes",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "face": 11308991000.0,
+      "rate_now": 0.0368,
+      "floating": false
+    },
+    {
+      "name": "Step",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "carrying": 858000000.0,
+      "floating": false
+    },
+    {
+      "name": "Shawnee County Financing Lease Agreement",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "face": 36000000.0,
+      "maturity": "2027-12-31",
+      "coupon": 0.02,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-11-10",
+      "items": "2.03",
+      "acc": "0001325878-26-000233",
+      "doc": "fhlbt-20261106.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-11-05",
+      "items": "2.03",
+      "acc": "0001325878-26-000230",
+      "doc": "fhlbt-20261103.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-11-03",
+      "items": "2.03",
+      "acc": "0001325878-26-000226",
+      "doc": "fhlbt-20261028.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-10-29",
+      "items": "2.03",
+      "acc": "0001325878-26-000223",
+      "doc": "fhlbt-20261026.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-10-27",
+      "items": "2.03",
+      "acc": "0001325878-26-000220",
+      "doc": "fhlbt-20261023.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-10-22",
+      "items": "2.03",
+      "acc": "0001325878-26-000217",
+      "doc": "fhlbt-20261019.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-10-20",
+      "items": "2.03",
+      "acc": "0001325878-26-000215",
+      "doc": "fhlbt-20261014.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-10-13",
+      "items": "2.03",
+      "acc": "0001325878-26-000213",
+      "doc": "fhlbt-20261007.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-10-08",
+      "items": "2.03",
+      "acc": "0001325878-26-000211",
+      "doc": "fhlbt-20261005.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-10-06",
+      "items": "2.03",
+      "acc": "0001325878-26-000209",
+      "doc": "fhlbt-20261001.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-10-01",
+      "items": "2.03",
+      "acc": "0001325878-26-000207",
+      "doc": "fhlbt-20260928.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-29",
+      "items": "2.03",
+      "acc": "0001325878-26-000205",
+      "doc": "fhlbt-20260923.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-24",
+      "items": "2.03",
+      "acc": "0001325878-26-000195",
+      "doc": "fhlbt-20260921.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-22",
+      "items": "2.03",
+      "acc": "0001325878-26-000193",
+      "doc": "fhlbt-20260916.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-17",
+      "items": "2.03",
+      "acc": "0001325878-26-000191",
+      "doc": "fhlbt-20260914.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-15",
+      "items": "2.03",
+      "acc": "0001325878-26-000189",
+      "doc": "fhlbt-20260909.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-10",
+      "items": "2.03",
+      "acc": "0001325878-26-000180",
+      "doc": "fhlbt-20260908.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-08",
+      "items": "2.03",
+      "acc": "0001325878-26-000178",
+      "doc": "fhlbt-20260903.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-03",
+      "items": "2.03",
+      "acc": "0001325878-26-000176",
+      "doc": "fhlbt-20260831.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-01",
+      "items": "2.03",
+      "acc": "0001325878-26-000174",
+      "doc": "fhlbt-20260826.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-27",
+      "items": "2.03",
+      "acc": "0001325878-26-000172",
+      "doc": "fhlbt-20260824.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-25",
+      "items": "2.03",
+      "acc": "0001325878-26-000170",
+      "doc": "fhlbt-20260819.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-20",
+      "items": "2.03",
+      "acc": "0001325878-26-000168",
+      "doc": "fhlbt-20260818.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-18",
+      "items": "2.03",
+      "acc": "0001325878-26-000165",
+      "doc": "fhlbt-20260812.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-13",
+      "items": "2.03",
+      "acc": "0001325878-26-000163",
+      "doc": "fhlbt-20260811.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-11",
+      "items": "2.03",
+      "acc": "0001325878-26-000161",
+      "doc": "fhlbt-20260805.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-06",
+      "items": "2.03",
+      "acc": "0001325878-26-000155",
+      "doc": "fhlbt-20260803.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-08-04",
+      "items": "2.03",
+      "acc": "0001325878-26-000151",
+      "doc": "fhlbt-20260729.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-30",
+      "items": "2.03",
+      "acc": "0001325878-26-000149",
+      "doc": "fhlbt-20260727.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-28",
+      "items": "2.03",
+      "acc": "0001325878-26-000147",
+      "doc": "fhlbt-20260722.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-23",
+      "items": "2.03",
+      "acc": "0001325878-26-000144",
+      "doc": "fhlbt-20260721.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-21",
+      "items": "2.03",
+      "acc": "0001325878-26-000141",
+      "doc": "fhlbt-20260715.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-16",
+      "items": "2.03",
+      "acc": "0001325878-26-000139",
+      "doc": "fhlbt-20260713.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-14",
+      "items": "2.03",
+      "acc": "0001325878-26-000137",
+      "doc": "fhlbt-20260708.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-09",
+      "items": "2.03",
+      "acc": "0001325878-26-000135",
+      "doc": "fhlbt-20260706.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-07",
+      "items": "2.03",
+      "acc": "0001325878-26-000133",
+      "doc": "fhlbt-20260701.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-02",
+      "items": "2.03",
+      "acc": "0001325878-26-000131",
+      "doc": "fhlbt-20260629.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-30",
+      "items": "2.03",
+      "acc": "0001325878-26-000129",
+      "doc": "fhlbt-20260624.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-25",
+      "items": "2.03",
+      "acc": "0001325878-26-000127",
+      "doc": "fhlbt-20260622.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-23",
+      "items": "2.03",
+      "acc": "0001325878-26-000125",
+      "doc": "fhlbt-20260617.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-18",
+      "items": "2.03",
+      "acc": "0001325878-26-000121",
+      "doc": "fhlbt-20260615.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-16",
+      "items": "2.03",
+      "acc": "0001325878-26-000119",
+      "doc": "fhlbt-20260610.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-11",
+      "items": "2.03",
+      "acc": "0001325878-26-000117",
+      "doc": "fhlbt-20260608.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-09",
+      "items": "2.03",
+      "acc": "0001325878-26-000115",
+      "doc": "fhlbt-20260605.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-04",
+      "items": "2.03",
+      "acc": "0001325878-26-000113",
+      "doc": "fhlbt-20260601.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-02",
+      "items": "2.03",
+      "acc": "0001325878-26-000111",
+      "doc": "fhlbt-20260527.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-27",
+      "items": "2.03",
+      "acc": "0001325878-26-000109",
+      "doc": "fhlbt-20260520.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-21",
+      "items": "2.03",
+      "acc": "0001325878-26-000107",
+      "doc": "fhlbt-20260518.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-19",
+      "items": "2.03",
+      "acc": "0001325878-26-000105",
+      "doc": "fhlbt-20260513.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-14",
+      "items": "2.03",
+      "acc": "0001325878-26-000103",
+      "doc": "fhlbt-20260511.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-12",
+      "items": "2.03",
+      "acc": "0001325878-26-000101",
+      "doc": "fhlbt-20260506.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-07",
+      "items": "2.03",
+      "acc": "0001325878-26-000096",
+      "doc": "fhlbt-20260504.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-05",
+      "items": "2.03",
+      "acc": "0001325878-26-000094",
+      "doc": "fhlbt-20260429.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-30",
+      "items": "2.03",
+      "acc": "0001325878-26-000091",
+      "doc": "fhlbt-20260428.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-28",
+      "items": "2.03",
+      "acc": "0001325878-26-000089",
+      "doc": "fhlbt-20260422.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-23",
+      "items": "2.03",
+      "acc": "0001325878-26-000086",
+      "doc": "fhlbt-20260420.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-21",
+      "items": "2.03",
+      "acc": "0001325878-26-000082",
+      "doc": "fhlbt-20260415.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-16",
+      "items": "2.03",
+      "acc": "0001325878-26-000079",
+      "doc": "fhlbt-20260413.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-14",
+      "items": "2.03",
+      "acc": "0001325878-26-000077",
+      "doc": "fhlbt-20260408.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-09",
+      "items": "2.03",
+      "acc": "0001325878-26-000074",
+      "doc": "fhlbt-20260406.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-07",
+      "items": "2.03",
+      "acc": "0001325878-26-000072",
+      "doc": "fhlbt-20260401.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-02",
+      "items": "2.03",
+      "acc": "0001325878-26-000070",
+      "doc": "fhlbt-20260331.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-31",
+      "items": "2.03",
+      "acc": "0001325878-26-000068",
+      "doc": "fhlbt-20260325.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-26",
+      "items": "2.03",
+      "acc": "0001325878-26-000062",
+      "doc": "fhlbt-20260324.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-24",
+      "items": "2.03",
+      "acc": "0001325878-26-000060",
+      "doc": "fhlbt-20260318.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-19",
+      "items": "2.03",
+      "acc": "0001325878-26-000058",
+      "doc": "fhlbt-20260316.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-17",
+      "items": "2.03",
+      "acc": "0001325878-26-000056",
+      "doc": "fhlbt-20260311.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-12",
+      "items": "2.03",
+      "acc": "0001325878-26-000051",
+      "doc": "fhlbt-20260309.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-10",
+      "items": "2.03",
+      "acc": "0001325878-26-000047",
+      "doc": "fhlbt-20260304.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-05",
+      "items": "2.03",
+      "acc": "0001325878-26-000044",
+      "doc": "fhlbt-20260302.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-03",
+      "items": "2.03",
+      "acc": "0001325878-26-000040",
+      "doc": "fhlbt-20260225.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-26",
+      "items": "2.03",
+      "acc": "0001325878-26-000038",
+      "doc": "fhlbt-20260223.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-24",
+      "items": "2.03",
+      "acc": "0001325878-26-000036",
+      "doc": "fhlbt-20260218.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-19",
+      "items": "2.03",
+      "acc": "0001325878-26-000031",
+      "doc": "fhlbt-20260217.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-18",
+      "items": "2.03",
+      "acc": "0001325878-26-000028",
+      "doc": "fhlbt-20260212.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-12",
+      "items": "2.03",
+      "acc": "0001325878-26-000026",
+      "doc": "fhlbt-20260209.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-10",
+      "items": "2.03",
+      "acc": "0001325878-26-000024",
+      "doc": "fhlbt-20260204.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-05",
+      "items": "2.03",
+      "acc": "0001325878-26-000022",
+      "doc": "fhlbt-20260202.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-03",
+      "items": "2.03",
+      "acc": "0001325878-26-000020",
+      "doc": "fhlbt-20260128.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-01-29",
+      "items": "2.03",
+      "acc": "0001325878-26-000018",
+      "doc": "fhlbt-20260127.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

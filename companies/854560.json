@@ -1,0 +1,244 @@
+{
+  "cik": 854560,
+  "ticker": "GSBC",
+  "name": "GREAT SOUTHERN BANCORP, INC.",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0001104659-26-024659": {
+      "instruments": [
+        {
+          "name": "Federal Reserve Bank Advances",
+          "kind": "other",
+          "as_of": "2024-12-31",
+          "coupon": 0.0483,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-06",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001104659-26-123818": {
+      "instruments": [
+        {
+          "name": "Senior Subordinated Notes",
+          "kind": "notes",
+          "as_of": "2020-06-10",
+          "spread": 0.05325,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-06",
+      "report": "2026-09-30"
+    },
+    "0001104659-20-072038:tm2022319d1_fwp.htm": {
+      "kind": "fwp",
+      "date": "2020-06-10",
+      "tranches": [
+        {
+          "title": "5.50% Fixed to Floating Rate Subordinated Notes due 2030",
+          "floating": true,
+          "margin_bps": 532.5,
+          "reference": "SOFR",
+          "principal": 75000000.0,
+          "currency": "USD",
+          "maturity": "2030-06-15",
+          "price": 100.0,
+          "trade_date": "2020-06-10",
+          "ratings": "BBB- by Kroll Bond Rating Agency, Inc.",
+          "convertible": false,
+          "cusip": "390905 AC1"
+        }
+      ]
+    },
+    "0001571049-16-017281:t1601978_fwp.htm": {
+      "kind": "fwp",
+      "date": "2016-08-10",
+      "tranches": []
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "cash": 161735000,
+    "operating_leases": 4621000,
+    "equity": 612529000,
+    "assets": 5821006000,
+    "liabilities": 5208477000,
+    "deposits": 4069964000,
+    "time_deposits": 618553000,
+    "pretax_income": 76336000,
+    "net_income": 63555000,
+    "ocf": 72898000,
+    "capex": 9287000,
+    "deposit_interest": 73480000,
+    "wavg_rate_short": 0.0358,
+    "stated_rate": 0.05325,
+    "shares": 10667515,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 4621000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/854560/000110465926123818/gsbc-20260930x10q.htm",
+        "accession": "0001104659-26-123818",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 4621000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001104659-26-123818",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/854560/000110465926123818/gsbc-20260930x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "credit exposures not accounted for as insurance, including loan commitments, standby letters of credit, financial guarantees, and other similar instruments. Classes of loans at September 30, 2026 and December 31, 2025 were as follows: | September 30, | December 31, | 2026",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/854560/000110465926123818/gsbc-20260930x10q.htm",
+        "accession": "0001104659-26-123818",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "OLDERS’ EQUITY | Liabilities: | Deposits | $ | 4,069,964 | $ | 4,482,774 | Securities sold under reverse repurchase agreements with customers | 41,233 | 48,467 | Short-term borrowings and other interest-bearing liabilities | 995,526 | 330,928 | Subordinated debentures issued",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/854560/000110465926123818/gsbc-20260930x10q.htm",
+        "accession": "0001104659-26-123818",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-123818",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/854560/000110465926123818/gsbc-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "guarantee_support",
+      "label": "Guarantees / keepwell support",
+      "excerpt": "credit exposures not accounted for as insurance, including loan commitments, standby letters of credit, financial guarantees, and other similar instruments. Classes of loans at September 30, 2026 and December 31, 2025 were as follows: | September 30, | December 31, | 2026",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/854560/000110465926123818/gsbc-20260930x10q.htm",
+      "accession": "0001104659-26-123818",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "OLDERS’ EQUITY | Liabilities: | Deposits | $ | 4,069,964 | $ | 4,482,774 | Securities sold under reverse repurchase agreements with customers | 41,233 | 48,467 | Short-term borrowings and other interest-bearing liabilities | 995,526 | 330,928 | Subordinated debentures issued",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/854560/000110465926123818/gsbc-20260930x10q.htm",
+      "accession": "0001104659-26-123818",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001104659-26-123818",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001104659-26-123818",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001104659-26-123818",
+  "xbrl_10-K": "xbrl:0001104659-26-024659",
+  "xbrl_10-Q": "xbrl:0001104659-26-123818",
+  "events": [
+    {
+      "date": "2020-06-12",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001104659-20-072767",
+      "doc": "tm2022499d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-08-12",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0000927089-16-000919",
+      "doc": "gsbc-8k080916.htm",
+      "desc": ""
+    },
+    {
+      "date": "2014-06-23",
+      "items": "1.01,7.01,9.01",
+      "acc": "0000927089-14-000222",
+      "doc": "gsbc-8k062014.htm",
+      "desc": ""
+    }
+  ],
+  "fetched_at": "2026-11-06T21:36:13+00:00",
+  "signature": "0001104659-26-123818",
+  "fdic": {
+    "matched": false
+  }
+}

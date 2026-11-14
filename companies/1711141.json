@@ -1,0 +1,302 @@
+{
+  "cik": 1711141,
+  "ticker": "LEEEF",
+  "name": "Leef Brands Inc.",
+  "sector": "health",
+  "industry": "Medicinal Chemicals & Botanical Products",
+  "sic": "2833",
+  "docs": {
+    "xbrl:0001493152-26-012758": {
+      "instruments": [
+        {
+          "name": "Small Business Administration Loan",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "coupon": 0.01,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001493152-26-036384": {
+      "instruments": [
+        {
+          "name": "Note Payable",
+          "kind": "notes",
+          "as_of": "2025-12-31",
+          "face": 350000.0,
+          "floating": false
+        },
+        {
+          "name": "Small Business Administration Loan",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "coupon": 0.01,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-30"
+    },
+    "0001493152-26-034577:form424b3.htm": {
+      "kind": "424b",
+      "date": "2026-07-24",
+      "tranches": []
+    }
+  },
+  "sic_description": "Medicinal Chemicals & Botanical Products",
+  "snapshot": {
+    "total_debt": 10584507,
+    "cash": 4950962,
+    "operating_leases": 1837192,
+    "equity": -2039556,
+    "assets": 52412846,
+    "liabilities": 54452402,
+    "assets_current": 16367755,
+    "liabilities_current": 7692026,
+    "retained_earnings": -141275602,
+    "interest_expense": 1753502,
+    "interest_paid": 215725,
+    "operating_income": -4014898,
+    "pretax_income": -13855012,
+    "net_income": -16723253,
+    "da": 1297412,
+    "ocf": -1973589,
+    "capex": 1794162,
+    "revenue": 33349589,
+    "shares": 305556473,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001493152-26-012758",
+  "xbrl_10-Q": "xbrl:0001493152-26-036384",
+  "events": [
+    {
+      "date": "2026-08-03",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001493152-26-035720",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-20",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001493152-26-018032",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T03:04:29+00:00",
+  "signature": "0001493152-26-045552",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1837192.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226036384/form10-q.htm",
+        "accession": "0001493152-26-036384",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 1837192.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001493152-26-036384",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226036384/form10-q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-036384",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226036384/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.2208,
+      "receivables_growth": -0.3349,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.5448,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 34787596.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-012758",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226012758/"
+        },
+        {
+          "value_usd": 28495447.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-012758",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226012758/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 1592653.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-012758",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226012758/"
+        },
+        {
+          "value_usd": 2394542.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-012758",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226012758/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -336895.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-012758",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226012758/"
+        },
+        {
+          "value_usd": -1049106.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-012758",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226012758/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -17629675.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-012758",
+          "filed": "2026-03-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226012758/"
+        },
+        {
+          "value_usd": -24621514.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-012758",
+          "filed": "2026-03-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226012758/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": ", in compensation and stock-based compensation provided to key management. For further information regarding related party transactions, see Note 18 – Related Party Transactions of the condensed consolidated financial statements. 38 | Critical Accounting Policies and Estimates Our",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226036384/form10-q.htm",
+        "accession": "0001493152-26-036384",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001493152-26-036384",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-036384",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": ", in compensation and stock-based compensation provided to key management. For further information regarding related party transactions, see Note 18 – Related Party Transactions of the condensed consolidated financial statements. 38 | Critical Accounting Policies and Estimates Our",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1711141/000149315226036384/form10-q.htm",
+      "accession": "0001493152-26-036384",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-036384"
+}

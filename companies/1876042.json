@@ -1,0 +1,404 @@
+{
+  "cik": 1876042,
+  "ticker": "CRCL",
+  "name": "Circle Internet Group, Inc.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "docs": {
+    "xbrl:0001876042-26-000062": {
+      "instruments": [
+        {
+          "name": "First Note",
+          "kind": "convertible",
+          "as_of": "2019-03-31",
+          "coupon": 0.029,
+          "conv_price": 16.23,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-09",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001876042-26-000248": {
+      "instruments": [
+        {
+          "name": "First Note",
+          "kind": "convertible",
+          "as_of": "2019-03-31",
+          "coupon": 0.029,
+          "conv_price": 16.23,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-05",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Finance Services",
+  "snapshot": {
+    "cash": 1730126000,
+    "operating_leases": 15951000,
+    "convertible": 0,
+    "convertible_current": 0,
+    "equity": 3508582000,
+    "assets": 77165460000,
+    "liabilities": 73655485000,
+    "assets_current": 76169618000,
+    "liabilities_current": 73602153000,
+    "retained_earnings": -1189235000,
+    "interest_expense": 649000,
+    "interest_paid": 216000,
+    "operating_income": 215568000,
+    "pretax_income": 402264000,
+    "net_income": 451275000,
+    "da": 105201000,
+    "ocf": 776918000,
+    "capex": 15402000,
+    "revenue": 2905439000,
+    "shares": 267940000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "convertible_current": "ConvertibleNotesPayableCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001876042-26-000062",
+  "xbrl_10-Q": "xbrl:0001876042-26-000248",
+  "events": [
+    {
+      "date": "2026-09-08",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001876042-26-000267",
+      "doc": "crcl-20260904.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T22:51:18+00:00",
+  "signature": "0001876042-26-000279",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 15951000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+        "accession": "0001876042-26-000248",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 15951000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001876042-26-000248",
+            "filed": "2026-08-05",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "o holds investments in certain funds managed by affiliates of Hashnote. These funds, including SDYF, are variable interest entities that are not consolidated by the Company due to the fact that we are not the primary beneficiary as we do not have an obligation to absorb losses or",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+        "accession": "0001876042-26-000248",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "o of U.S. Treasury securities with remaining maturities of three months or less, overnight U.S. Treasury repurchase agreements, and cash. As an SEC-registered Rule 2a-7 fund, the securities purchased by the Circle Reserve Fund are subject to the quality, diversification, and",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+        "accession": "0001876042-26-000248",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "eceived that has not yet been transferred to corporate cash due to the timing of receipt and unprocessed customer deposits that have not yet been minted. We have access to and are entitled to the excess over redemption and customer obligations. We are not required by law",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+        "accession": "0001876042-26-000248",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001876042-26-000248",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 6.2398,
+      "receivables_growth": 8.7953,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.1403,
+      "dsri": 1.353,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.353,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 109820000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        },
+        {
+          "value_usd": 15169000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 62866000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        },
+        {
+          "value_usd": 6418000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 11512000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        },
+        {
+          "value_usd": 13390000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 542129000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        },
+        {
+          "value_usd": 344576000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -69508000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        },
+        {
+          "value_usd": 155667000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001876042-26-000062",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000062/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "eives fees associated with the management of USYC in the form of performance fees. Performance fees represent variable consideration and are recognized as revenue when the Company is entitled to such fees and significant reversals of such fees are not probable. Transaction revenu",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+        "accession": "0001876042-26-000248",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "in institutional investors to sell ARC Tokens. Proceeds received from the ARC Token presale are recognized as deferred revenue until the Company's performance obligations under the token purchase agreements are satisfied. Upon satisfaction of the performance obligations, proc",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+        "accession": "0001876042-26-000248",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "o holds investments in certain funds managed by affiliates of Hashnote. These funds, including SDYF, are variable interest entities that are not consolidated by the Company due to the fact that we are not the primary beneficiary as we do not have an obligation to absorb losses or",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+      "accession": "0001876042-26-000248",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "o of U.S. Treasury securities with remaining maturities of three months or less, overnight U.S. Treasury repurchase agreements, and cash. As an SEC-registered Rule 2a-7 fund, the securities purchased by the Circle Reserve Fund are subject to the quality, diversification, and",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+      "accession": "0001876042-26-000248",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "eceived that has not yet been transferred to corporate cash due to the timing of receipt and unprocessed customer deposits that have not yet been minted. We have access to and are entitled to the excess over redemption and customer obligations. We are not required by law",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+      "accession": "0001876042-26-000248",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001876042-26-000248",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001876042-26-000248",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "eives fees associated with the management of USYC in the form of performance fees. Performance fees represent variable consideration and are recognized as revenue when the Company is entitled to such fees and significant reversals of such fees are not probable. Transaction revenu",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+      "accession": "0001876042-26-000248",
+      "form": "10-Q",
+      "filed": "2026-08-05"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "in institutional investors to sell ARC Tokens. Proceeds received from the ARC Token presale are recognized as deferred revenue until the Company's performance obligations under the token purchase agreements are satisfied. Upon satisfaction of the performance obligations, proc",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000248/crcl-20260630.htm",
+      "accession": "0001876042-26-000248",
+      "form": "10-Q",
+      "filed": "2026-08-05"
+    }
+  ],
+  "revenue_quality_text_source": "0001876042-26-000248"
+}

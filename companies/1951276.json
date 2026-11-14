@@ -1,0 +1,275 @@
+{
+  "cik": 1951276,
+  "ticker": "SRBK",
+  "name": "SR Bancorp, Inc.",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "docs": {
+    "xbrl:0001437749-26-031222": {
+      "instruments": [
+        {
+          "name": "Federal Reserve Bank of New York",
+          "kind": "other",
+          "as_of": "2026-06-30",
+          "capacity": 25000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-09-25",
+      "report": "2026-06-30"
+    },
+    "xbrl:0001437749-26-036557": {
+      "instruments": [
+        {
+          "name": "Federal Reserve Bank of New York",
+          "kind": "other",
+          "as_of": "2026-09-30",
+          "capacity": 25000000.0,
+          "drawn": 0.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-12",
+      "report": "2026-09-30"
+    },
+    "0001193125-23-191077:d352312d424b3.htm": {
+      "kind": "424b",
+      "date": "2023-07-21",
+      "tranches": []
+    },
+    "0001193125-23-191075:d352312d424b3.htm": {
+      "kind": "424b",
+      "date": "2023-07-21",
+      "tranches": []
+    }
+  },
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "snapshot": {
+    "total_debt": 35000000,
+    "cash": 60188000,
+    "operating_leases": 2571000,
+    "equity": 182317000,
+    "assets": 1216367000,
+    "liabilities": 1034050000,
+    "retained_earnings": 122889000,
+    "deposits": 979246000,
+    "time_deposits": 332090000,
+    "interest_paid": 20517000,
+    "pretax_income": 4935000,
+    "net_income": 3728000,
+    "da": 965000,
+    "ocf": 12254000,
+    "capex": 770000,
+    "shares": 7793906,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "DebtLongtermAndShorttermCombinedAmount",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2026-03-31",
+      "filed": "2026-05-15",
+      "total_debt": 50000000,
+      "cash": 63681000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 8100214,
+      "convertible": null,
+      "equity": 184450000,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-09-30",
+      "filed": "2026-11-12",
+      "total_debt": 35000000,
+      "cash": 60188000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": 965000,
+      "ocf": 12254000,
+      "revenue": null,
+      "shares": 7793906,
+      "convertible": null,
+      "equity": 182317000,
+      "interest_paid": 20517000
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 2571000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm",
+        "accession": "0001437749-26-036557",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 2571000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-036557",
+            "filed": "2026-11-12",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "t intercompany accounts and transactions have been eliminated in consolidation. The Investment Co. is a special purpose entity subject to the investment company provisions of the New Jersey Corporation Business Tax Act whose activities are limited to holding investment securi",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm",
+        "accession": "0001437749-26-036557",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "uncommenced_leases",
+        "label": "Uncommenced leases",
+        "excerpt": "tements of Financial Condition. As of September 30, 2026 , the Company had not entered into any material leases that have not yet commenced. The operating lease agreements recognized on the Consolidated Statements of Financial Condition as a right-of-use asset and a corresponding lease li",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm",
+        "accession": "0001437749-26-036557",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "replacement certificates of deposit, brokered deposits, securities sold under agreements to repurchase (repurchase agreements) or advances from the Federal Home Loan Bank of New York and other borrowing sources. Depending on market conditions, we may be required to pay highe",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm",
+        "accession": "0001437749-26-036557",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-036557",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "t intercompany accounts and transactions have been eliminated in consolidation. The Investment Co. is a special purpose entity subject to the investment company provisions of the New Jersey Corporation Business Tax Act whose activities are limited to holding investment securi",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm",
+      "accession": "0001437749-26-036557",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "uncommenced_leases",
+      "label": "Uncommenced leases",
+      "excerpt": "tements of Financial Condition. As of September 30, 2026 , the Company had not entered into any material leases that have not yet commenced. The operating lease agreements recognized on the Consolidated Statements of Financial Condition as a right-of-use asset and a corresponding lease li",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm",
+      "accession": "0001437749-26-036557",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "replacement certificates of deposit, brokered deposits, securities sold under agreements to repurchase (repurchase agreements) or advances from the Federal Home Loan Bank of New York and other borrowing sources. Depending on market conditions, we may be required to pay highe",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1951276/000143774926036557/srbk20260930_10q.htm",
+      "accession": "0001437749-26-036557",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001437749-26-036557",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-036557",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001437749-26-036557",
+  "xbrl_10-K": "xbrl:0001437749-26-031222",
+  "xbrl_10-Q": "xbrl:0001437749-26-036557",
+  "events": [
+    {
+      "date": "2023-07-14",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-186907",
+      "doc": "d489848d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-11-12T23:43:58+00:00",
+  "signature": "0001437749-26-036557",
+  "fdic": {
+    "matched": false
+  }
+}

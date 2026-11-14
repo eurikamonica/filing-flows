@@ -1,0 +1,330 @@
+{
+  "cik": 1964333,
+  "ticker": "BHRB",
+  "name": "Burke & Herbert Financial Services Corp.",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "sic_description": "National Commercial Banks",
+  "generated_at": "2026-11-14T20:47:07+00:00",
+  "fetched_at": "2026-11-06T15:58:46+00:00",
+  "price": 70.89,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.196755,
+  "snapshot": {
+    "current_debt": 525000000,
+    "cash": 144396000,
+    "short_term_borrowings": 525000000,
+    "finance_leases": 3211000,
+    "operating_leases": 29572000,
+    "equity": 1153744000,
+    "assets": 11034393000,
+    "liabilities": 9880649000,
+    "retained_earnings": 558786000,
+    "deposits": 8955635000,
+    "time_deposits": 1679566000,
+    "pretax_income": 127778000,
+    "net_income": 103466000,
+    "da": 8018000,
+    "ocf": 100037000,
+    "capex": 5506000,
+    "deposit_interest": 132414000,
+    "wavg_rate_short": 0.0388,
+    "shares": 20193681,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 144396000.0,
+    "net_debt": null,
+    "ebitda": 135796000.0,
+    "ebit": 127778000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 94531000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 144396000.0,
+    "due_12m": 525000000,
+    "due_24m": null,
+    "floating_debt": 74100000.0,
+    "floating_share": null,
+    "plus100bp_interest": 741000.0,
+    "plus100bp_share_of_ebit": 0.005799,
+    "market_cap": 1431530046.09,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 29572000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1964333/000196433326000107/bhrb-20260930.htm",
+        "accession": "0001964333-26-000107",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 29572000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001964333-26-000107",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1964333/000196433326000107/bhrb-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "non-performance of the customer. The Company’s credit policies and procedures for credit commitments and financial guarantees are the same as those for extensions of credit that are recorded on the Consolidated Balance Sheets. Many of these instruments have fixed maturity da",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1964333/000196433326000107/bhrb-20260930.htm",
+        "accession": "0001964333-26-000107",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "es range from less than one year to approximately twelve years . The lease agreements do not provide for residual value guarantees and have no restrictions or covenants that would impact dividends or require incurring additional financial obligations. Lease liabilities represen",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1964333/000196433326000107/bhrb-20260930.htm",
+        "accession": "0001964333-26-000107",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001964333-26-000107",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1964333/000196433326000107/bhrb-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Subordinated debentures",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "carrying": 237550000.0,
+      "floating": false
+    },
+    {
+      "name": "Underwritten Public Offering, Fixed-To-Floating Rate Subordinated Notes Due 2036",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "face": 100000000.0,
+      "spread": 0.0222,
+      "maturity_year": 2036,
+      "floating": true
+    },
+    {
+      "name": "Subordinated Debentures, Issued In Fourth Quarter Of 2021",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "carrying": 74100000.0,
+      "spread": 0.023,
+      "floating": true
+    },
+    {
+      "name": "Subordinated Debentures, Assumed In Business Combination",
+      "kind": "notes",
+      "as_of": "2026-05-01",
+      "face": 62600000.0,
+      "floating": false
+    },
+    {
+      "name": "Subordinated Debentures, Issued In Third Quarter Of 2022",
+      "kind": "notes",
+      "as_of": "2026-05-01",
+      "face": 20000000.0,
+      "floating": false
+    },
+    {
+      "name": "Subordinated Debentures, Tranche Two",
+      "kind": "notes",
+      "as_of": "2026-05-01",
+      "face": 20000000.0,
+      "spread": 0.0475,
+      "floating": true
+    },
+    {
+      "name": "Subordinated debentures owed to unconsolidated subsidiary trusts",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "carrying": 19589000.0,
+      "floating": false
+    },
+    {
+      "name": "Subordinated Debenture Three, Tranche Two",
+      "kind": "notes",
+      "as_of": "2026-05-01",
+      "face": 18100000.0,
+      "spread": 0.059,
+      "floating": true
+    },
+    {
+      "name": "Subordinated Debenture Three, Tranche One",
+      "kind": "notes",
+      "as_of": "2026-05-01",
+      "face": 4500000.0,
+      "floating": false
+    },
+    {
+      "name": "Fixed-To-Floating Rate Subordinated Notes, Due July 1, 2030",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "spread": 0.059,
+      "floating": true
+    },
+    {
+      "name": "Fixed-To-Floating Rate Subordinated Notes, Due October 1, 2030",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "spread": 0.0475,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [
+    {
+      "title": "7.00% Fixed-to-Floating Rate Subordinated Notes due 2036",
+      "floating": true,
+      "margin_bps": 222.0,
+      "reference": "SOFR",
+      "principal": 100000000.0,
+      "currency": "USD",
+      "maturity": "2036-10-01",
+      "price": 100.0,
+      "trade_date": "2026-09-28",
+      "ratings": "BBB- (positive) by Kroll Bond Rating Agency.",
+      "convertible": false,
+      "cusip": "12135YAA6",
+      "date": "2026-09-28",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1964333/000110465926111384/tm2625875d3_fwp.htm"
+    }
+  ],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-30",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-26-112339",
+      "doc": "tm2625875d4_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-18",
+      "items": "1.01,5.03,7.01,9.01",
+      "acc": "0001964333-25-000256",
+      "doc": "bhrb-20251218.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-03",
+      "items": "2.01,2.03,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0001964333-24-000129",
+      "doc": "bhrb-20240503.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-08-25",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001964333-23-000170",
+      "doc": "bhrb-20230824.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

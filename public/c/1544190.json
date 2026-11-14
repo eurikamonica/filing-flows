@@ -1,0 +1,611 @@
+{
+  "cik": 1544190,
+  "ticker": null,
+  "name": "Shepherd's Finance, LLC",
+  "sector": "financials",
+  "industry": "Short-Term Business Credit Institutions",
+  "sic": "6153",
+  "sic_description": "Short-Term Business Credit Institutions",
+  "generated_at": "2026-11-14T20:47:04+00:00",
+  "fetched_at": "2026-11-13T23:41:58+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 67825000,
+    "cash": 1613000,
+    "assets": 84902000,
+    "liabilities": 74721000,
+    "deposits": 1320000,
+    "interest_expense": 168000,
+    "interest_paid": 4911000,
+    "net_income": 2578000,
+    "da": 31000,
+    "ocf": 5904000,
+    "maturities": {
+      "as_of": "2026-09-30",
+      "next12m": 10744000,
+      "rest_of_year": 28295000,
+      "y2": 14002000,
+      "y3": 6869000
+    },
+    "effective_rate": 0.025,
+    "shares": 0,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "deposits": "Deposits",
+    "interest_expense": "InterestCostsIncurred (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "analysis": {
+    "total_debt": 67825000,
+    "cash_and_investments": 1613000.0,
+    "net_debt": 66212000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 168000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.202199,
+    "fcf": 5904000.0,
+    "fcf_to_debt": 0.087048,
+    "effective_rate": 0.002477,
+    "revolver_available": null,
+    "liquidity": 1613000.0,
+    "due_12m": 10744000,
+    "due_24m": 24746000,
+    "floating_debt": 5000000.0,
+    "floating_share": 0.073719,
+    "plus100bp_interest": 50000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": 1153733.679248,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-051615",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1544190/000149315226051615/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "1,395 | 2029 | 206 | 2030 and thereafter | 4,014 | Total amount convertible | 4,014 | Total | $ | 9,501 | 11. Related Party Transactions As of September 30, 2026 and December 31, 2025, the Company had $ 0 and $ 26 borrowed against its lines of credit from affiliates, respectively, wi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1544190/000149315226051615/form10-q.htm",
+        "accession": "0001493152-26-051615",
+        "form": "10-Q",
+        "filed": "2026-11-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| ( 12 | ) | - | Loss on the sale of real estate investments | 3 | - | Gain on sale of 339 | - | ( 193 | ) | Deferred revenue – real estate investments | - | 166 | Issuance of Class A equity units for employee compensation | 3 | 4 | Net change in operating assets and liabili",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1544190/000149315226051615/form10-q.htm",
+        "accession": "0001493152-26-051615",
+        "form": "10-Q",
+        "filed": "2026-11-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Secured Borrowings",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "carrying": 26585000.0,
+      "drawn": 0.0,
+      "capacity": 2500000.0,
+      "floating": false
+    },
+    {
+      "name": "Public Offering",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "carrying": 22566000.0,
+      "floating": false
+    },
+    {
+      "name": "Unsecured Debt",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "carrying": 18674000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "drawn": 5000000.0,
+      "fee": 0.005,
+      "floating": true
+    },
+    {
+      "name": "Notes Program",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "effective": 0.09,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2014-06-26",
+      "agreement_kind": "credit_agreement",
+      "dated": "2014-06-26",
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1544190/000101968714002564/credit_agr.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2015-01-06",
+      "agreement_kind": "amendment",
+      "dated": "2011-12-30",
+      "title": "Seventh Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1544190/000101968715000071/shepherd_ex1003.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-08-12",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001641172-25-023247",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-06-05",
+      "items": "1.01,3.02,5.02,8.01,9.01",
+      "acc": "0001641172-25-013841",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-22",
+      "items": "1.01,9.01",
+      "acc": "0001493152-24-015576",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2024-02-21",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001493152-24-007354",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-07-27",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001493152-21-017887",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-02-11",
+      "items": "1.01,9.01",
+      "acc": "0001493152-21-003326",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-03-31",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001493152-20-005511",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2020-02-04",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001493152-20-001573",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-01-02",
+      "items": "1.01,9.01",
+      "acc": "0001493152-19-000053",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2018-05-03",
+      "items": "1.01,9.01",
+      "acc": "0001493152-18-006175",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2018-04-18",
+      "items": "1.01,9.01",
+      "acc": "0001493152-18-005399",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2018-01-08",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001493152-18-000309",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-11-13",
+      "items": "1.01,9.01",
+      "acc": "0001493152-17-012920",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-10-27",
+      "items": "1.01,9.01",
+      "acc": "0001493152-17-012118",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-07-27",
+      "items": "1.01,9.01",
+      "acc": "0001493152-17-008220",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-03-21",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001493152-17-002692",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2017-02-10",
+      "items": "1.01,9.01",
+      "acc": "0001493152-17-001308",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2016-07-25",
+      "items": "1.01,9.01",
+      "acc": "0001493152-16-011729",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2016-07-07",
+      "items": "1.01,9.01",
+      "acc": "0001493152-16-011394",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2016-02-25",
+      "items": "1.01,9.01",
+      "acc": "0001493152-16-007637",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2016-01-19",
+      "items": "1.01,9.01",
+      "acc": "0001575872-16-000233",
+      "doc": "8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-12-31",
+      "items": "1.01,9.01",
+      "acc": "0001575872-15-000229",
+      "doc": "8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-12-15",
+      "items": "1.01,9.01",
+      "acc": "0001575872-15-000210",
+      "doc": "8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-11-24",
+      "items": "1.01,9.01",
+      "acc": "0001575872-15-000197",
+      "doc": "8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-11-09",
+      "items": "1.01,9.01",
+      "acc": "0001575872-15-000165",
+      "doc": "8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-08-12",
+      "items": "1.01,9.01",
+      "acc": "0001575872-15-000078",
+      "doc": "8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-05-05",
+      "items": "1.01,9.01",
+      "acc": "0001019687-15-001763",
+      "doc": "shepherd_8k-050515.htm",
+      "desc": "FORM 8K"
+    },
+    {
+      "date": "2015-03-30",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001019687-15-001132",
+      "doc": "shepherd_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-01-06",
+      "items": "1.01,9.01",
+      "acc": "0001019687-15-000071",
+      "doc": "shepherd_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-12-29",
+      "items": "1.01,9.01",
+      "acc": "0001019687-14-004841",
+      "doc": "shepherds_8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2014-06-26",
+      "items": "1.01,9.01",
+      "acc": "0001019687-14-002564",
+      "doc": "shepherd_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-04-02",
+      "items": "1.01,9.01",
+      "acc": "0001019687-14-001216",
+      "doc": "shepherd_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2014-06-30",
+      5557000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      5668000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      7520000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      8678000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      52250000,
+      3325000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      53137000,
+      3552000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-12-31",
+      53543000,
+      null,
+      5524000,
+      null,
+      null,
+      0.10317
+    ],
+    [
+      "2024-03-31",
+      59275000,
+      925000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      58786000,
+      2502000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      58252000,
+      4348000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-12-31",
+      56465000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      54460000,
+      1434000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      54836000,
+      1382000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      55531000,
+      1575000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      54460000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      62977000,
+      3316000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      68822000,
+      2789000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-09-30",
+      67825000,
+      1613000,
+      168000,
+      null,
+      null,
+      0.00248
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

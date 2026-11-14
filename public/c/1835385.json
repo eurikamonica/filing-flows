@@ -1,0 +1,215 @@
+{
+  "cik": 1835385,
+  "ticker": "MBBC",
+  "name": "Marathon Bancorp, Inc. /MD/",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "generated_at": "2026-11-14T20:47:06+00:00",
+  "fetched_at": "2026-11-11T01:59:09+00:00",
+  "price": 14.18,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.235016,
+  "snapshot": {
+    "cash": 14612902,
+    "finance_leases": 0,
+    "operating_leases": 295737,
+    "equity": 48394945,
+    "assets": 258914226,
+    "liabilities": 210519281,
+    "retained_earnings": 27810193,
+    "deposits": 201012910,
+    "time_deposits": 74861367,
+    "interest_paid": 3704425,
+    "pretax_income": 2153561,
+    "net_income": 1799603,
+    "da": 285162,
+    "ocf": 3765730,
+    "capex": 640067,
+    "debt_issued": 873970,
+    "deposit_interest": 3169407,
+    "stated_rate": 0.0325,
+    "shares": 2998889,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 14612902.0,
+    "net_debt": null,
+    "ebitda": 2438723.0,
+    "ebit": 2153561.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.016549,
+    "fcf": 3125663,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 14612902.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 42524246.02,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 295737.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+        "accession": "0001104659-26-125239",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 295737.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001104659-26-125239",
+            "filed": "2026-11-10",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "he extent the options are reasonably assured of being exercised. The lease agreements do not provide for residual value guarantees and have no restrictions or covenants that would impact dividends or require incurring additional financial obligations. On June 25, 2025, the Compa",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+        "accession": "0001104659-26-125239",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-125239",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "the gain or loss on the sale, the Company adjusts the transaction price and related gain (loss) on sale if a significant financing component is present. 33 Table of Contents Item 2. Management’s Discussion and Analysis of Financial Condition and Results of Operations This discussion a",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+        "accession": "0001104659-26-125239",
+        "form": "10-Q",
+        "filed": "2026-11-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-02-18",
+      "items": "1.01,9.01",
+      "acc": "0001104659-25-014749",
+      "doc": "tm256880d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-02-17",
+      "items": "1.01,9.01",
+      "acc": "0001104659-21-024828",
+      "doc": "tm217042d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

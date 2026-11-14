@@ -1,0 +1,536 @@
+{
+  "cik": 2041385,
+  "ticker": "RAL",
+  "name": "Ralliant Corp",
+  "sector": "industrials",
+  "industry": "Industrial Instruments For Measurement, Display, and Control",
+  "sic": "3823",
+  "docs": {
+    "xbrl:0002041385-26-000023": {
+      "instruments": [
+        {
+          "name": "USD Term Loan due June 2028",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "effective": 0.0494,
+          "carrying": 619200000.0,
+          "maturity_year": 2028,
+          "floating": true
+        },
+        {
+          "name": "USD Term Loan due December 2026",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "effective": 0.0481,
+          "carrying": 530800000.0,
+          "maturity_year": 2026,
+          "floating": true
+        },
+        {
+          "name": "Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-11-24",
+          "spread": 0.001,
+          "spread_min": 0.00875,
+          "spread_max": 0.01625,
+          "fee_min": 0.009,
+          "fee_max": 0.02,
+          "reference": "Adjusted Term SOFR Reference Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0002041385-26-000065": {
+      "instruments": [
+        {
+          "name": "USD Term Loan due June 2028",
+          "kind": "loan",
+          "as_of": "2026-07-03",
+          "effective": 0.0486,
+          "carrying": 600000000.0,
+          "maturity_year": 2028,
+          "floating": true
+        },
+        {
+          "name": "USD Term Loan due March 2029",
+          "kind": "loan",
+          "as_of": "2026-07-03",
+          "effective": 0.0498,
+          "carrying": 550000000.0,
+          "maturity_year": 2029,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-07-30",
+      "report": "2026-07-03"
+    },
+    "0001185185-26-001195:ralliantex10-1.htm": {
+      "kind": "agreement",
+      "date": "2026-03-31",
+      "agreement_kind": "amendment",
+      "dated": "2026-03-30",
+      "title": "And Limited Consent To Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "SONIA"
+      ],
+      "maturity": "2030-05-15",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Net Leverage Ratio as of the end of any fiscal quarter of the Company (commencing with the fiscal quarter ending September 26, 2025) to be greater than 3.50 to 1:00."
+        }
+      ]
+    },
+    "0002041385-25-000077:formxcreditagreementamen.htm": {
+      "kind": "agreement",
+      "date": "2025-11-25",
+      "agreement_kind": "amendment",
+      "dated": "2025-11-24",
+      "title": "To Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "SONIA"
+      ],
+      "maturity": "2030-05-15",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Net Leverage Ratio as of the end of any fiscal quarter of the Company (commencing with the fiscal quarter ending September 26, 2025) to be greater than 3.50 to 1:00."
+        }
+      ]
+    }
+  },
+  "sic_description": "Industrial Instruments For Measurement, Display, and Control",
+  "snapshot": {
+    "total_debt": 1148500000,
+    "current_debt": 0,
+    "cash": 270900000,
+    "operating_leases": 75500000,
+    "equity": 1533900000,
+    "assets": 3705700000,
+    "liabilities": 2171800000,
+    "assets_current": 972000000,
+    "liabilities_current": 637900000,
+    "retained_earnings": -1255000000,
+    "interest_expense": 60700000,
+    "operating_income": -1165400000,
+    "pretax_income": -1227100000,
+    "net_income": -1233100000,
+    "da": 119700000,
+    "ocf": 364800000,
+    "capex": 37100000,
+    "revenue": 2186000000,
+    "debt_issued": 59200000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 530800000,
+      "y2": 0,
+      "y3": 619200000
+    },
+    "shares": 110640008,
+    "balance_date": "2026-07-03",
+    "latest_period": "2026-07-03"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2025-06-27",
+      "filed": "2025-08-11",
+      "total_debt": 1148500000,
+      "cash": 198600000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 112739191,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-09-26",
+      "filed": "2025-11-06",
+      "total_debt": 1148600000,
+      "cash": 264200000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 112805827,
+      "convertible": null,
+      "equity": 2964200000,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-04-03",
+      "filed": "2026-05-12",
+      "total_debt": 1148300000,
+      "cash": 268000000,
+      "investments": null,
+      "interest_expense": 47000000,
+      "operating_income": -1188700000,
+      "da": 118300000,
+      "ocf": 344700000,
+      "revenue": 2121600000,
+      "shares": 111933148,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-07-03",
+      "filed": "2026-07-30",
+      "total_debt": 1148500000,
+      "cash": 270900000,
+      "investments": null,
+      "interest_expense": 60700000,
+      "operating_income": -1165400000,
+      "da": 119700000,
+      "ocf": 364800000,
+      "revenue": 2186000000,
+      "shares": 110640008,
+      "convertible": null,
+      "equity": 1533900000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0002041385-26-000023",
+  "xbrl_10-Q": "xbrl:0002041385-26-000065",
+  "events": [
+    {
+      "date": "2026-03-31",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001185185-26-001195",
+      "doc": "ralliant8k033026.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-11-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0002041385-25-000077",
+      "doc": "ral-20251124.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-06-30",
+      "items": "1.01,2.03,3.03,5.01,5.02,5.03,5.05,7.01,8.01,9.01",
+      "acc": "0001104659-25-064115",
+      "doc": "tm2429554d14_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T22:54:57+00:00",
+  "signature": "0002041385-26-000065",
+  "hidden_leverage": {
+    "as_of": "2026-07-03",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 75500000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+        "accession": "0002041385-26-000065",
+        "form": "10-Q",
+        "filed": "2026-07-30",
+        "as_of": "2026-07-03",
+        "evidence": [
+          {
+            "value_usd": 75500000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0002041385-26-000065",
+            "filed": "2026-07-30",
+            "form": "10-Q",
+            "as_of": "2026-07-03",
+            "url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ntract Liabilities — The Company’s contract liabilities consist of deferred revenue generally related to customer deposits received in advance of performance under the contract, extended warranty sales, and product maintenance agreements, where the Company generally recei",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+        "accession": "0002041385-26-000065",
+        "form": "10-Q",
+        "filed": "2026-07-30",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002041385-26-000065",
+      "form": "10-Q",
+      "filed": "2026-07-30",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-03",
+    "metrics": {
+      "revenue_growth": -0.0399,
+      "receivables_growth": -0.0289,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.0804,
+      "dsri": 1.0114,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2068800000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        },
+        {
+          "value_usd": 2154700000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 285300000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        },
+        {
+          "value_usd": 293800000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 154600000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        },
+        {
+          "value_usd": 143100000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 397600000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        },
+        {
+          "value_usd": 454500000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1222500000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        },
+        {
+          "value_usd": 354600000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0002041385-26-000023",
+          "filed": "2026-02-26",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000023/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "t and measurement instruments, systems, and services. Allowances for Credit Losses All trade accounts and unbilled receivables are recorded in the Consolidated Condensed Balance Sheets and were adjusted for any write-offs and net of allowances for credit losses. The allowance",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+        "accession": "0002041385-26-000065",
+        "form": "10-Q",
+        "filed": "2026-07-30"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "(a) Other represents corporate assets which consist primarily of cash and income tax assets. | 20 NOTE 11. RELATED-PARTY TRANSACTIONS In connection with the Separation, on June 27, 2025, Fortive and Ralliant entered into a Separation and Distribution Agreement as well as various o",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+        "accession": "0002041385-26-000065",
+        "form": "10-Q",
+        "filed": "2026-07-30"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "m extended warranties, maintenance contracts or services, and services related to previously sold products. Contract Liabilities — The Company’s contract liabilities consist of deferred revenue generally related to customer deposits received in advance of performance under the",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+        "accession": "0002041385-26-000065",
+        "form": "10-Q",
+        "filed": "2026-07-30"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "ntract Liabilities — The Company’s contract liabilities consist of deferred revenue generally related to customer deposits received in advance of performance under the contract, extended warranty sales, and product maintenance agreements, where the Company generally recei",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+      "accession": "0002041385-26-000065",
+      "form": "10-Q",
+      "filed": "2026-07-30",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0002041385-26-000065",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0002041385-26-000065",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "t and measurement instruments, systems, and services. Allowances for Credit Losses All trade accounts and unbilled receivables are recorded in the Consolidated Condensed Balance Sheets and were adjusted for any write-offs and net of allowances for credit losses. The allowance",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+      "accession": "0002041385-26-000065",
+      "form": "10-Q",
+      "filed": "2026-07-30"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "(a) Other represents corporate assets which consist primarily of cash and income tax assets. | 20 NOTE 11. RELATED-PARTY TRANSACTIONS In connection with the Separation, on June 27, 2025, Fortive and Ralliant entered into a Separation and Distribution Agreement as well as various o",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+      "accession": "0002041385-26-000065",
+      "form": "10-Q",
+      "filed": "2026-07-30"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "m extended warranties, maintenance contracts or services, and services related to previously sold products. Contract Liabilities — The Company’s contract liabilities consist of deferred revenue generally related to customer deposits received in advance of performance under the",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2041385/000204138526000065/ral-20260703.htm",
+      "accession": "0002041385-26-000065",
+      "form": "10-Q",
+      "filed": "2026-07-30"
+    }
+  ],
+  "revenue_quality_text_source": "0002041385-26-000065"
+}

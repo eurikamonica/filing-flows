@@ -1,0 +1,254 @@
+{
+  "cik": 1098151,
+  "ticker": "FDBC",
+  "name": "FIDELITY D & D BANCORP INC",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "sic_description": "National Commercial Banks",
+  "generated_at": "2026-11-14T20:47:00+00:00",
+  "fetched_at": "2026-11-07T02:01:47+00:00",
+  "price": 67.06,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.248715,
+  "snapshot": {
+    "current_debt": 132708000,
+    "cash": 173606000,
+    "short_term_borrowings": 132708000,
+    "finance_leases": 635000,
+    "operating_leases": 9860000,
+    "equity": 246984000,
+    "assets": 3028419000,
+    "liabilities": 2781435000,
+    "retained_earnings": 175464000,
+    "deposits": 2610272000,
+    "interest_paid": 47185000,
+    "pretax_income": 37927000,
+    "net_income": 32167000,
+    "da": 5698000,
+    "ocf": 51398000,
+    "capex": 16199000,
+    "stated_rate": 0.0361,
+    "shares": 5808508,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 173606000.0,
+    "net_debt": null,
+    "ebitda": 43625000.0,
+    "ebit": 37927000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.089287,
+    "fcf": 35199000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 173606000.0,
+    "due_12m": 132708000,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 389518546.48,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 9860000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1098151/000143774926035558/fdbc20260930_10q.htm",
+        "accession": "0001437749-26-035558",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 9860000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-035558",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1098151/000143774926035558/fdbc20260930_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-035558",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1098151/000143774926035558/fdbc20260930_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Secured Debt",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "fair_value": 6000000.0,
+      "carrying": 5957000.0,
+      "floating": false
+    },
+    {
+      "name": "Forgivable Note",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 20000.0,
+      "floating": false
+    },
+    {
+      "name": "Other Short-term Borrowings",
+      "kind": "other",
+      "as_of": "2024-12-31",
+      "carrying": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Overnight Borrowings",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Federal Reserve Bank Term Funding Program",
+      "kind": "other",
+      "as_of": "2024-12-31",
+      "rate_now": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Federal Home Loan Bank Advances",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "available": 812700000.0,
+      "floating": false
+    },
+    {
+      "name": "Correspondent Banks",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "available": 30000000.0,
+      "floating": false
+    },
+    {
+      "name": "Federal Reserve Bank Discount Window",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "available": 145000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2021-03-01",
+      "items": "1.01,9.01",
+      "acc": "0001098151-21-000010",
+      "doc": "fdbc-20210225x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-12-12",
+      "items": "1.01,9.01",
+      "acc": "0001098151-19-000072",
+      "doc": "fdbc-20191211x8ka.htm",
+      "desc": "8-K/A"
+    },
+    {
+      "date": "2019-12-11",
+      "items": "1.01,9.01",
+      "acc": "0001098151-19-000063",
+      "doc": "fdbc-20191211x8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

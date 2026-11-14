@@ -1,0 +1,163 @@
+{
+  "cik": 49938,
+  "ticker": "IMO",
+  "name": "IMPERIAL OIL LTD",
+  "sector": "energy",
+  "industry": "Petroleum Refining",
+  "sic": "2911",
+  "sic_description": "Petroleum Refining",
+  "generated_at": "2026-11-14T20:47:08+00:00",
+  "fetched_at": "2026-11-02T23:37:14+00:00",
+  "price": 123.28,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.33125,
+  "snapshot": {
+    "finance_leases": 480000000,
+    "wavg_rate_short": 0.049,
+    "effective_rate": 0.027,
+    "shares": 472011797,
+    "balance_date": null,
+    "latest_period": null
+  },
+  "sources": {
+    "finance_leases": "CapitalLeaseObligations",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": null,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 500000000.0,
+    "liquidity": 500000000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 58189614334.16,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": null,
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "t Dec 31 | millions of Canadian dollars | 2026 | 2025 | Employee retirement benefits (a) | 818 | 811 | Asset retirement obligations and other environmental liabilities (b) | 3,347 | 3,348 | Share-based incentive compensation liabilities | 400 | 198 | Operating lease liability (c)",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/49938/000004993826000051/imo-20260930.htm",
+        "accession": "0000049938-26-000051",
+        "form": "10-Q",
+        "filed": "2026-11-02",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_valid_balance_date",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000049938-26-000051",
+      "form": "10-Q",
+      "filed": "2026-11-02",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/49938/000004993826000051/imo-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": null,
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Long-Term Line Of Credit Due November Two Thousand And Twenty Seven",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 250000000.0,
+      "floating": false
+    },
+    {
+      "name": "Long Term Line Of Credit Due November Two Thousand And Twenty Six",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 250000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2016-10-31",
+      "items": "1.01,9.01",
+      "acc": "0001193125-16-753654",
+      "doc": "d275286d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-10-31",
+      "items": "1.01,9.01",
+      "acc": "0001193125-16-753638",
+      "doc": "d275284d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "cik": 1933359,
+  "ticker": "NTCS",
+  "name": "Natics Corp.",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "docs": {
+    "xbrl:0001683168-26-004650": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-06-09",
+      "report": "2026-04-30"
+    },
+    "xbrl:0001683168-26-006686": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-24",
+      "report": "2026-07-31"
+    }
+  },
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "snapshot": {
+    "cash": 6985,
+    "equity": -87277,
+    "assets": 13418,
+    "liabilities": 100695,
+    "assets_current": 6985,
+    "liabilities_current": 18275,
+    "retained_earnings": -112530,
+    "interest_paid": 0,
+    "pretax_income": -25770,
+    "net_income": -25770,
+    "ocf": -21470,
+    "revenue": 28800,
+    "stated_rate": 0.1,
+    "shares": 5495300,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001683168-26-004650",
+  "xbrl_10-Q": "xbrl:0001683168-26-006686",
+  "events": [],
+  "fetched_at": "2026-10-26T04:57:46+00:00",
+  "signature": "0001683168-26-006686",
+  "hidden_leverage": {
+    "as_of": "2026-07-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001683168-26-006686",
+      "form": "10-Q",
+      "filed": "2026-08-24",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1933359/000168316826006686/natics_i10q-073126.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-31",
+    "metrics": {
+      "revenue_growth": 0.7037,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 27600.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001683168-26-004650",
+          "filed": "2026-06-09",
+          "end": "2026-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1933359/000168316826004650/"
+        },
+        {
+          "value_usd": 16200.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001683168-26-004650",
+          "filed": "2026-06-09",
+          "end": "2025-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1933359/000168316826004650/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -22859.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001683168-26-004650",
+          "filed": "2026-06-09",
+          "end": "2026-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1933359/000168316826004650/"
+        },
+        {
+          "value_usd": -36749.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001683168-26-004650",
+          "filed": "2026-06-09",
+          "end": "2025-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1933359/000168316826004650/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -27159.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001683168-26-004650",
+          "filed": "2026-06-09",
+          "end": "2026-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1933359/000168316826004650/"
+        },
+        {
+          "value_usd": -41049.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001683168-26-004650",
+          "filed": "2026-06-09",
+          "end": "2025-04-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1933359/000168316826004650/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-04-30",
+      "2025-04-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001683168-26-006686",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001683168-26-006686",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001683168-26-006686"
+}

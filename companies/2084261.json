@@ -1,0 +1,176 @@
+{
+  "cik": 2084261,
+  "ticker": "URSB",
+  "name": "URSB Bancorp, Inc.",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "docs": {
+    "xbrl:0001104659-26-041445": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-04-09",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001104659-26-127072": {
+      "instruments": [
+        {
+          "name": "Federal Home Loan Bank Advances",
+          "kind": "loan",
+          "as_of": "2026-09-30",
+          "rate_now": 0.0,
+          "floating": false
+        },
+        {
+          "name": "Senior Notes",
+          "kind": "notes",
+          "as_of": "2026-09-30",
+          "rate_now": 0.0623,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-13",
+      "report": "2026-09-30"
+    },
+    "0001104659-26-005009:tm2525410d5_424b3.htm": {
+      "kind": "424b",
+      "date": "2026-01-20",
+      "tranches": []
+    },
+    "0001104659-26-005008:tm2525410d4_424b3.htm": {
+      "kind": "424b",
+      "date": "2026-01-20",
+      "tranches": []
+    }
+  },
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "snapshot": {
+    "total_debt": 37072000,
+    "cash": 10769000,
+    "equity": 39329000,
+    "assets": 423747000,
+    "liabilities": 384418000,
+    "retained_earnings": 21117000,
+    "deposits": 342861000,
+    "time_deposits": 185623000,
+    "wavg_rate_all": 0.0432,
+    "shares": 2334375,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "DebtLongtermAndShorttermCombinedAmount",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "history": [
+    {
+      "end": "2026-03-31",
+      "filed": "2026-05-15",
+      "total_debt": 51572000,
+      "cash": 17996000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 2334375,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-14",
+      "total_debt": 46072000,
+      "cash": 6045000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 2334375,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-09-30",
+      "filed": "2026-11-13",
+      "total_debt": 37072000,
+      "cash": 10769000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 2334375,
+      "convertible": null,
+      "equity": 39329000,
+      "interest_paid": null
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-127072",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2084261/000110465926127072/ursb-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001104659-26-127072",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001104659-26-127072",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001104659-26-127072",
+  "xbrl_10-K": "xbrl:0001104659-26-041445",
+  "xbrl_10-Q": "xbrl:0001104659-26-127072",
+  "events": [
+    {
+      "date": "2026-01-12",
+      "items": "1.01,9.01",
+      "acc": "0001104659-26-002896",
+      "doc": "tm262790d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-13T23:41:24+00:00",
+  "signature": "0001104659-26-127072",
+  "fdic": {
+    "matched": false
+  }
+}

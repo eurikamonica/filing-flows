@@ -1,0 +1,265 @@
+{
+  "cik": 732417,
+  "ticker": "HBIA",
+  "name": "HILLS BANCORPORATION",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0000732417-26-000022": {
+      "instruments": [
+        {
+          "name": "Bank Term Funding Program",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "coupon": 0.0476,
+          "carrying": 0.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-18",
+      "report": "2025-12-31"
+    },
+    "xbrl:0000732417-26-000076": {
+      "instruments": [
+        {
+          "name": "Federal Home Loan Bank Advances, Due 2026",
+          "kind": "loan",
+          "as_of": "2026-09-30",
+          "coupon": 0.0387,
+          "maturity_year": 2026,
+          "floating": false
+        },
+        {
+          "name": "Federal home loan bank advances, due 2027",
+          "kind": "loan",
+          "as_of": "2026-09-30",
+          "coupon": 0.0387,
+          "maturity_year": 2027,
+          "floating": false
+        },
+        {
+          "name": "Federal Home Loan Bank Advances, Due 2030",
+          "kind": "loan",
+          "as_of": "2026-09-30",
+          "coupon": 0.0406,
+          "maturity_year": 2030,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-06",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "current_debt": 143927000,
+    "cash": 41463000,
+    "short_term_borrowings": 143927000,
+    "operating_leases": 1650000,
+    "equity": 545602000,
+    "assets": 4961444000,
+    "liabilities": 4353147000,
+    "retained_earnings": 689685000,
+    "deposits": 3670211000,
+    "pretax_income": 108783000,
+    "net_income": 85934000,
+    "da": 2428000,
+    "ocf": 94917000,
+    "capex": 4003000,
+    "deposit_interest": 52907000,
+    "wavg_rate_short": 0,
+    "shares": 17393749,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 1650000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+        "accession": "0000732417-26-000076",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 1650000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000732417-26-000076",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "tax_equity",
+        "label": "Tax equity financing",
+        "excerpt": "are affordable housing projects as of September 30, 2026. In addition, in July 2024, the Company made a tax equity investment in an entity to provide for the historic preservation of a mixed use property in Cedar Rapids, Iowa. The Company has a 99 % or greater limited partne",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+        "accession": "0000732417-26-000076",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000732417-26-000076",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "our performance obligation is completed each month, which is generally the time that payment is received. A contract asset balance occurs when an entity performs a service for a customer before the customer pays consideration (resulting in a contract receivable) or before",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+        "accession": "0000732417-26-000076",
+        "form": "10-Q",
+        "filed": "2026-11-06"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ndex HILLS BANCORPORATION NOTES TO CONSOLIDATED FINANCIAL STATEMENTS (continued) (Unaudited) Note 14. Related Party Transactions Certain directors of the Company and the Bank, companies with which the directors are affiliated, and certain principal officers and immediate fami",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+        "accession": "0000732417-26-000076",
+        "form": "10-Q",
+        "filed": "2026-11-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "onsideration (resulting in a contract receivable) or before payment is due (resulting in a contract asset). A contract liability balance is an entity's obligation to transfer a service to a customer for which the entity has already received payment (or payment is due) from the",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+        "accession": "0000732417-26-000076",
+        "form": "10-Q",
+        "filed": "2026-11-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "tax_equity",
+      "label": "Tax equity financing",
+      "excerpt": "are affordable housing projects as of September 30, 2026. In addition, in July 2024, the Company made a tax equity investment in an entity to provide for the historic preservation of a mixed use property in Cedar Rapids, Iowa. The Company has a 99 % or greater limited partne",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+      "accession": "0000732417-26-000076",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0000732417-26-000076",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0000732417-26-000076",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "our performance obligation is completed each month, which is generally the time that payment is received. A contract asset balance occurs when an entity performs a service for a customer before the customer pays consideration (resulting in a contract receivable) or before",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+      "accession": "0000732417-26-000076",
+      "form": "10-Q",
+      "filed": "2026-11-06"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "ndex HILLS BANCORPORATION NOTES TO CONSOLIDATED FINANCIAL STATEMENTS (continued) (Unaudited) Note 14. Related Party Transactions Certain directors of the Company and the Bank, companies with which the directors are affiliated, and certain principal officers and immediate fami",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+      "accession": "0000732417-26-000076",
+      "form": "10-Q",
+      "filed": "2026-11-06"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "onsideration (resulting in a contract receivable) or before payment is due (resulting in a contract asset). A contract liability balance is an entity's obligation to transfer a service to a customer for which the entity has already received payment (or payment is due) from the",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/732417/000073241726000076/hbia-20260930.htm",
+      "accession": "0000732417-26-000076",
+      "form": "10-Q",
+      "filed": "2026-11-06"
+    }
+  ],
+  "revenue_quality_text_source": "0000732417-26-000076",
+  "xbrl_10-K": "xbrl:0000732417-26-000022",
+  "xbrl_10-Q": "xbrl:0000732417-26-000076",
+  "events": [
+    {
+      "date": "2026-05-15",
+      "items": "1.01",
+      "acc": "0000732417-26-000058",
+      "doc": "hbia-20260511.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-11-06T21:36:07+00:00",
+  "signature": "0000732417-26-000076",
+  "fdic": {
+    "matched": false
+  }
+}

@@ -1,0 +1,308 @@
+{
+  "cik": 919864,
+  "ticker": "FNWD",
+  "name": "Finward Bancorp",
+  "sector": "financials",
+  "industry": "Savings Institution, Federally Chartered",
+  "sic": "6035",
+  "docs": {
+    "xbrl:0001628280-26-021073": {
+      "instruments": [
+        {
+          "name": "Federal Home Loan Bank Advances",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "capacity": 25000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-25",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001628280-26-073830": {
+      "instruments": [
+        {
+          "name": "Federal Home Loan Bank Advances",
+          "kind": "loan",
+          "as_of": "2026-09-30",
+          "capacity": 25000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-13",
+      "report": "2026-09-30"
+    },
+    "0001140361-21-036980:ny20000551x5_424b3.htm": {
+      "kind": "424b",
+      "date": "2021-11-08",
+      "tranches": []
+    },
+    "0001193125-21-246084:d552501d424b3.htm": {
+      "kind": "424b",
+      "date": "2021-08-13",
+      "tranches": []
+    },
+    "0001140361-18-042094:s002463x4_424b3.htm": {
+      "kind": "424b",
+      "date": "2018-11-01",
+      "tranches": []
+    },
+    "0001144204-18-035597:tv496910_424b3.htm": {
+      "kind": "424b",
+      "date": "2018-06-25",
+      "tranches": []
+    },
+    "0001193125-18-154461:d568072d424b3.htm": {
+      "kind": "424b",
+      "date": "2018-05-07",
+      "tranches": []
+    },
+    "0001144204-15-017429:v405088_ex10-1.htm": {
+      "kind": "agreement",
+      "date": "2015-03-20",
+      "agreement_kind": "other"
+    },
+    "0001144204-13-068360:v363440_ex10-1.htm": {
+      "kind": "agreement",
+      "date": "2013-12-20",
+      "agreement_kind": "other"
+    }
+  },
+  "sic_description": "Savings Institution, Federally Chartered",
+  "snapshot": {
+    "cash": 16630000,
+    "operating_leases": 14132000,
+    "equity": 157842000,
+    "assets": 2014125000,
+    "liabilities": 1856283000,
+    "retained_earnings": 150130000,
+    "deposits": 1758457000,
+    "time_deposits": 493346000,
+    "interest_paid": 33506000,
+    "pretax_income": 8430000,
+    "net_income": 7680000,
+    "da": 5063000,
+    "ocf": 18924000,
+    "capex": 908000,
+    "deposit_interest": 29201000,
+    "shares": 4330684,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndDueFromBanks",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2025-03-31",
+      "filed": "2025-05-15",
+      "total_debt": 56657000,
+      "cash": 18563000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 4325589,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 14132000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+        "accession": "0001628280-26-073830",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 14132000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-073830",
+            "filed": "2026-11-13",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "| Interest bearing | 1,476,980 | 1,459,530 | Total | 1,758,457 | 1,726,971 | Federal funds purchased and repurchase agreements | 24,849 | 39,703 | Borrowed funds | 35,000 | 45,000 | Accrued expenses and other liabilities | 37,977 | 34,844 | Total liabilities | 1,856,283 | 1,8",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+        "accession": "0001628280-26-073830",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ed, subject to market conditions. In the future, our liquidity position will be affected by the level of customer deposits and payments, as well as acquisitions, dividends, and share repurchases in which we may engage. For the next twelve months, we believe that our exist",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+        "accession": "0001628280-26-073830",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-073830",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "| Interest bearing | 1,476,980 | 1,459,530 | Total | 1,758,457 | 1,726,971 | Federal funds purchased and repurchase agreements | 24,849 | 39,703 | Borrowed funds | 35,000 | 45,000 | Accrued expenses and other liabilities | 37,977 | 34,844 | Total liabilities | 1,856,283 | 1,8",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+      "accession": "0001628280-26-073830",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "ed, subject to market conditions. In the future, our liquidity position will be affected by the level of customer deposits and payments, as well as acquisitions, dividends, and share repurchases in which we may engage. For the next twelve months, we believe that our exist",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+      "accession": "0001628280-26-073830",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001628280-26-073830",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001628280-26-073830",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001628280-26-073830",
+  "xbrl_10-K": "xbrl:0001628280-26-021073",
+  "xbrl_10-Q": "xbrl:0001628280-26-073830",
+  "events": [
+    {
+      "date": "2026-07-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-26-310388",
+      "doc": "d140760d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-31",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-24-021070",
+      "doc": "d748419d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-29",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-21-228252",
+      "doc": "d140694d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-31",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-18-232470",
+      "doc": "d586416d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-02-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-18-051238",
+      "doc": "d540839d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-02-26",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001144204-16-084538",
+      "doc": "v432790_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-03-20",
+      "items": "1.01,9.01",
+      "acc": "0001144204-15-017429",
+      "doc": "v405088_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2013-12-20",
+      "items": "1.01,9.01",
+      "acc": "0001144204-13-068360",
+      "doc": "v363440_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-13T23:39:49+00:00",
+  "signature": "0001628280-26-073830",
+  "fdic": {
+    "matched": false
+  }
+}

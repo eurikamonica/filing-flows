@@ -1,0 +1,482 @@
+{
+  "cik": 1168455,
+  "ticker": "PLBC",
+  "name": "PLUMAS BANCORP",
+  "sector": "financials",
+  "industry": "Short-Term Business Credit Institutions",
+  "sic": "6153",
+  "sic_description": "Short-Term Business Credit Institutions",
+  "generated_at": "2026-11-14T20:47:01+00:00",
+  "fetched_at": "2026-11-03T16:24:16+00:00",
+  "price": 63.09,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.189885,
+  "snapshot": {
+    "cash": 135546000,
+    "operating_leases": 28388000,
+    "equity": 272133000,
+    "assets": 2277744000,
+    "liabilities": 2005611000,
+    "retained_earnings": 211013000,
+    "deposits": 1885065000,
+    "time_deposits": 210728000,
+    "interest_paid": 18044000,
+    "pretax_income": 47716000,
+    "net_income": 35838000,
+    "da": 3017000,
+    "ocf": 33111000,
+    "capex": 1376000,
+    "deposit_interest": 15351000,
+    "stated_rate": 0.075,
+    "shares": 6959016,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 135546000.0,
+    "net_debt": null,
+    "ebitda": 50733000.0,
+    "ebit": 47716000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.835014,
+    "fcf": 31735000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 135546000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": 4200000.0,
+    "floating_share": null,
+    "plus100bp_interest": 42000.0,
+    "plus100bp_share_of_ebit": 0.00088,
+    "market_cap": 439044319.44,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 28388000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774926025819/plbc20260630_10q.htm",
+        "accession": "0001437749-26-025819",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 28388000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-025819",
+            "filed": "2026-08-05",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774926025819/plbc20260630_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "64,075 | $ | 848,986 | Interest bearing | 1,020,990 | 960,618 | Total deposits | 1,885,065 | 1,809,604 | Repurchase agreements | 59,217 | 97,855 | Lease liabilities | 28,388 | 29,029 | Accrued interest payable and other liabilities | 16,908 | 19,946 | Borrowings | 16,033 | 21",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774926025819/plbc20260630_10q.htm",
+        "accession": "0001437749-26-025819",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ings to the FHLB, FRB Discount Window or the correspondent banks at June 30, 2026 and December 31 2025. Customer deposits are the Company’s primary source of funds. Total deposits increased by $75 million from $1.8 billion at December 31, 2025, to $1.9 billion at June 30",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774926025819/plbc20260630_10q.htm",
+        "accession": "0001437749-26-025819",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-025819",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774926025819/plbc20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.138,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.7016
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2323000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-21-004784",
+          "filed": "2021-03-03",
+          "end": "2020-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774921004784/"
+        },
+        {
+          "value_usd": 2695000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-21-004784",
+          "filed": "2021-03-03",
+          "end": "2019-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774921004784/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 24630000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-23-006797",
+          "filed": "2023-03-16",
+          "end": "2020-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774923006797/"
+        },
+        {
+          "value_usd": 15477000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-22-006531",
+          "filed": "2022-03-17",
+          "end": "2019-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774922006531/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 14475000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-23-006797",
+          "filed": "2023-03-16",
+          "end": "2020-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774923006797/"
+        },
+        {
+          "value_usd": 15512000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-22-006531",
+          "filed": "2022-03-17",
+          "end": "2019-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774922006531/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2020-12-31",
+      "2019-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Federal Reserve Bank Advances",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Loan Agreement and Promissory Note",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "coupon": 0.0385,
+      "carrying": 15000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "The 2030 Notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon": 0.0475,
+      "spread": 0.0452,
+      "carrying": 4200000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Lender Banks",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-02-19",
+      "items": "1.01,9.01",
+      "acc": "0001437749-26-004627",
+      "doc": "plbc20260218_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-18",
+      "items": "1.01,9.01",
+      "acc": "0001437749-25-038239",
+      "doc": "plbc20251218_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-08-25",
+      "items": "1.01,9.01",
+      "acc": "0001437749-25-027657",
+      "doc": "plbc20250825_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-08-22",
+      "items": "1.01,9.01",
+      "acc": "0001437749-25-027612",
+      "doc": "plbc20250822_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-07-22",
+      "items": "1.01,9.01",
+      "acc": "0001437749-25-023130",
+      "doc": "plbc20250721_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-07-02",
+      "items": "2.01,2.03,5.02,8.01,9.01",
+      "acc": "0001437749-25-021869",
+      "doc": "plbc20250701_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-04-01",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001437749-25-010372",
+      "doc": "plbc20250328_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-02-20",
+      "items": "1.01,9.01",
+      "acc": "0001437749-25-004564",
+      "doc": "plbc20250220_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-01-29",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001437749-25-002080",
+      "doc": "plbc20250128_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-03-15",
+      "items": "1.01,9.01",
+      "acc": "0001437749-24-008007",
+      "doc": "plbc20240314_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-02-22",
+      "items": "1.01,9.01",
+      "acc": "0001437749-24-005178",
+      "doc": "plbc20240222_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-02-15",
+      "items": "2.03,7.01,8.01,9.01",
+      "acc": "0001437749-24-004269",
+      "doc": "plbc20240213_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-01-23",
+      "items": "1.01,9.01",
+      "acc": "0001437749-24-001914",
+      "doc": "plbc20240119_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-01-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001437749-22-001667",
+      "doc": "plbc20220125_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-03-11",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001437749-21-005634",
+      "doc": "plbc20210310_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-08-20",
+      "items": "1.01,9.01",
+      "acc": "0001437749-20-018415",
+      "doc": "plbc20200812b_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-03-09",
+      "items": "1.01",
+      "acc": "0001437749-20-004580",
+      "doc": "plbc20200305_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-05-11",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001437749-16-031517",
+      "doc": "plbc20160509_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-10-28",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001299933-13-001872",
+      "doc": "htm_48693.htm",
+      "desc": "LIVE FILING"
+    },
+    {
+      "date": "2013-04-19",
+      "items": "1.01,3.02",
+      "acc": "0001299933-13-000688",
+      "doc": "htm_47486.htm",
+      "desc": "LIVE FILING"
+    },
+    {
+      "date": "2011-07-29",
+      "items": "1.01,9.01",
+      "acc": "0000950123-11-070334",
+      "doc": "c20392e8vk.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-03-21",
+      "items": "1.01,9.01",
+      "acc": "0000950123-11-027303",
+      "doc": "c14203e8vk.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2022-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

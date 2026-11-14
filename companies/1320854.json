@@ -1,0 +1,866 @@
+{
+  "cik": 1320854,
+  "ticker": "RAIL",
+  "name": "FreightCar America, Inc.",
+  "sector": "industrials",
+  "industry": "Railroad Equipment",
+  "sic": "3743",
+  "docs": {
+    "xbrl:0001193125-26-098668": {
+      "instruments": [
+        {
+          "name": "Term Loan Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2024-12-31",
+          "face": 115000000.0,
+          "maturity": "2028-12-31",
+          "floating": true
+        },
+        {
+          "name": "Term Loan",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "carrying": 112125000.0,
+          "floating": true
+        },
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "maturity": "2030-02-12",
+          "spread_min": 0.015,
+          "spread_max": 0.02,
+          "rate_now": 0.055,
+          "available": 24911000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-09",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001193125-26-330623": {
+      "instruments": [
+        {
+          "name": "Term Loan",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "carrying": 104794000.0,
+          "floating": true
+        },
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "maturity": "2030-02-12",
+          "spread_min": 0.015,
+          "spread_max": 0.02,
+          "rate_now": 0.055,
+          "available": 24468000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-03",
+      "report": "2026-06-30"
+    },
+    "0001193125-07-190893:dex101.htm": {
+      "kind": "agreement",
+      "date": "2007-08-28",
+      "agreement_kind": "credit_agreement",
+      "dated": "2007-08-24",
+      "size": 100000000.0,
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.1,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Not permit the Fixed Charge Coverage Ratio as of the last day of any Computation Period to be less than 1.10 to 1.00. 11.12 Cancellation of Debt ."
+        }
+      ]
+    },
+    "0000950170-23-023979:rail-ex10_2.htm": {
+      "kind": "agreement",
+      "date": "2023-05-24",
+      "agreement_kind": "credit_agreement",
+      "dated": "2023-05-22",
+      "facility": "loan",
+      "benchmarks": [
+        "Base Rate",
+        "Prime Rate"
+      ]
+    },
+    "0000950170-23-010051:rail-ex10_251.htm": {
+      "kind": "agreement",
+      "date": "2023-03-27",
+      "agreement_kind": "amendment",
+      "dated": "2023-03-23",
+      "facility": "loan"
+    }
+  },
+  "sic_description": "Railroad Equipment",
+  "snapshot": {
+    "total_debt": 100725000,
+    "current_debt": 2875000,
+    "cash": 62978000,
+    "equity": 36201000,
+    "assets": 276096000,
+    "liabilities": 239895000,
+    "assets_current": 150915000,
+    "liabilities_current": 83270000,
+    "retained_earnings": -170969000,
+    "interest_paid": 15532000,
+    "operating_income": 17452000,
+    "pretax_income": -9267000,
+    "net_income": -12477000,
+    "da": 6872000,
+    "ocf": 21220000,
+    "capex": 3321000,
+    "revenue": 463524000,
+    "debt_repaid": 8767000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 9728000,
+      "y2": 2875000,
+      "y3": 99522000,
+      "y4": 0,
+      "y5": 0,
+      "after5": 0
+    },
+    "shares": 32791280,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2020-06-30",
+      "filed": "2020-08-10",
+      "total_debt": 20200000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": 921000,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 13319161,
+      "convertible": null,
+      "equity": 87760000,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-09-30",
+      "filed": "2020-11-09",
+      "total_debt": 20200000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": 906000,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15534829,
+      "convertible": null,
+      "equity": 47857000,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-03-31",
+      "filed": "2021-05-17",
+      "total_debt": 56126000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15541920,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-06-30",
+      "filed": "2021-08-16",
+      "total_debt": 68705000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15724922,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-09-30",
+      "filed": "2021-11-15",
+      "total_debt": 80881000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 15947228,
+      "convertible": null,
+      "equity": -9920000,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-03-31",
+      "filed": "2022-05-10",
+      "total_debt": 88572000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 16535266,
+      "convertible": null,
+      "equity": -26028000,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-06-30",
+      "filed": "2022-08-08",
+      "total_debt": 81960000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 16700850,
+      "convertible": null,
+      "equity": -10151000,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-09-30",
+      "filed": "2022-11-07",
+      "total_debt": 91597000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17223306,
+      "convertible": null,
+      "equity": -18848000,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-03-31",
+      "filed": "2023-05-09",
+      "total_debt": 94321000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17702459,
+      "convertible": null,
+      "equity": -32514000,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-06-30",
+      "filed": "2023-08-07",
+      "total_debt": 22293000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17902660,
+      "convertible": null,
+      "equity": -48954000,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-09-30",
+      "filed": "2023-11-06",
+      "total_debt": 31062000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 17903437,
+      "convertible": null,
+      "equity": -44269000,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-03-31",
+      "filed": "2025-05-05",
+      "total_debt": 108177000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 19040310,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-06-30",
+      "filed": "2025-08-04",
+      "total_debt": 107866000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 19127412,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-09-30",
+      "filed": "2025-11-10",
+      "total_debt": 107554000,
+      "cash": 62743000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 19079106,
+      "convertible": null,
+      "equity": -90874000,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-03-31",
+      "filed": "2026-05-04",
+      "total_debt": 101037000,
+      "cash": 52782000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 29455000,
+      "da": 6576000,
+      "ocf": 17664000,
+      "revenue": 469009000,
+      "shares": 19137208,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 15774000
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-03",
+      "total_debt": 100725000,
+      "cash": 62978000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": 17452000,
+      "da": 6872000,
+      "ocf": 21220000,
+      "revenue": 463524000,
+      "shares": 32791280,
+      "convertible": null,
+      "equity": 36201000,
+      "interest_paid": 15532000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001193125-26-098668",
+  "xbrl_10-Q": "xbrl:0001193125-26-330623",
+  "events": [
+    {
+      "date": "2026-10-15",
+      "items": "1.01,1.02,3.03,9.01",
+      "acc": "0001213900-26-109859",
+      "doc": "ea0308698-8k_freightcar.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-08-05",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001213900-26-085699",
+      "doc": "ea0300615-8k_freightcar.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-09-08",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001213900-25-085543",
+      "doc": "ea0256294-8k_freight.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-02-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-25-022260",
+      "doc": "rail-20250212.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-01-06",
+      "items": "1.01,1.02,2.01,2.03,9.01",
+      "acc": "0000950170-25-002119",
+      "doc": "rail-20241231.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-24-120097",
+      "doc": "rail-20241030.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-29",
+      "items": "1.01,1.02",
+      "acc": "0000950170-24-008394",
+      "doc": "rail-20240123.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-09-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950170-23-049916",
+      "doc": "rail-20230921.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-05-24",
+      "items": "1.01,2.03,3.02,3.03,5.03,9.01",
+      "acc": "0000950170-23-023979",
+      "doc": "rail-20230519.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-01",
+      "items": "1.01",
+      "acc": "0000950170-23-005500",
+      "doc": "rail-20230227.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-02-01",
+      "items": "1.01",
+      "acc": "0000950170-23-001559",
+      "doc": "rail-20230130.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-06",
+      "items": "1.01,2.03,3.02",
+      "acc": "0000950170-22-005407",
+      "doc": "rail-20220404.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-01",
+      "items": "1.01,2.03",
+      "acc": "0001171843-22-001508",
+      "doc": "f8k_030122.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-01-06",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001171843-22-000136",
+      "doc": "f8k_010622.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-01-04",
+      "items": "1.01",
+      "acc": "0001171843-22-000052",
+      "doc": "f8k_010422.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-08-05",
+      "items": "1.01,2.03,3.02",
+      "acc": "0001171843-21-005584",
+      "doc": "f8k_080521.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-05-20",
+      "items": "1.01,2.03",
+      "acc": "0001171843-21-003678",
+      "doc": "f8k_052021.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-12-28",
+      "items": "2.04",
+      "acc": "0001171843-20-008786",
+      "doc": "f8k_122820.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-19",
+      "items": "1.01,2.03,3.02,5.02,8.01,9.01",
+      "acc": "0001171843-20-007101",
+      "doc": "f8k_101920.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-13",
+      "items": "1.01,1.02,2.03,2.06,8.01,9.01",
+      "acc": "0001171843-20-007006",
+      "doc": "f8k_101320.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-02-27",
+      "items": "1.01",
+      "acc": "0001171843-20-001315",
+      "doc": "f8k_022620.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-04-17",
+      "items": "1.01,1.02,2.03",
+      "acc": "0001171843-19-002462",
+      "doc": "f8k_041719.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-02-27",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001171843-19-001252",
+      "doc": "f8k_022719.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-02-28",
+      "items": "1.01,1.02,2.01",
+      "acc": "0001171843-18-001566",
+      "doc": "f8k_022818.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-02-27",
+      "items": "1.01,2.02,8.01,9.01",
+      "acc": "0001171843-18-001442",
+      "doc": "f8k_022718.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-06-14",
+      "items": "1.01",
+      "acc": "0001193125-16-620825",
+      "doc": "d211261d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-10-06",
+      "items": "1.01,9.01",
+      "acc": "0001193125-15-338501",
+      "doc": "d42131d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-08-01",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001193125-13-315265",
+      "doc": "d578177d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-02-20",
+      "items": "1.01,9.01",
+      "acc": "0001193125-13-066296",
+      "doc": "d489699d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2010-09-08",
+      "items": "1.01,9.01",
+      "acc": "0000950123-10-084570",
+      "doc": "l40662e8vk.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-07-30",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0000950123-10-070444",
+      "doc": "l40379e8vk.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-03-24",
+      "items": "1.01,9.01",
+      "acc": "0000950123-10-027623",
+      "doc": "l39239e8vk.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:26:13+00:00",
+  "signature": "0001193125-26-425341",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "counts and contractual payables | 8,326 | 41,164 | Income taxes payable, net | ( 1,286 | ) | ( 665 | ) | Customer deposits | — | 17,611 | Other assets and liabilities | ( 4,078 | ) | ( 15,117 | ) | Net cash flows provided by operating activities | 7,766 | 21,322 | Cash fl",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526330623/rail-20260630.htm",
+        "accession": "0001193125-26-330623",
+        "form": "10-Q",
+        "filed": "2026-08-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-330623",
+      "form": "10-Q",
+      "filed": "2026-08-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526330623/rail-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.1022,
+      "receivables_growth": -0.005,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.1083,
+      "ocf_to_net_income": 0.9127
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 500676000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-098668",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526098668/"
+        },
+        {
+          "value_usd": 557699000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001193125-26-098668",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526098668/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 12443000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-098668",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526098668/"
+        },
+        {
+          "value_usd": 12506000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-26-098668",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526098668/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        {
+          "value_usd": 8556000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0000950170-25-037977",
+          "filed": "2025-03-12",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000095017025037977/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 34776000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-098668",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526098668/"
+        },
+        {
+          "value_usd": 44933000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-26-098668",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526098668/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 38104000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001193125-26-098668",
+          "filed": "2026-03-09",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526098668/"
+        },
+        {
+          "value_usd": -75817000.0,
+          "tag": "us-gaap:ProfitLoss",
+          "accession": "0001193125-26-098668",
+          "filed": "2026-03-09",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526098668/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "ers | $ | 113,138 | $ | 118,623 | $ | 177,446 | $ | 214,913 | 9 Contract Balances and Accounts Receivable Contract assets represent the Company’s rights to consideration for performance obligations that have been satisfied but for which the terms of the contract do not p",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526330623/rail-20260630.htm",
+        "accession": "0001193125-26-330623",
+        "form": "10-Q",
+        "filed": "2026-08-03"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| $ | 55,671 | Accrued payroll and other employee costs | 5,803 | 9,110 | Accrued warranty | 1,989 | 2,050 | Deferred revenue | 3,046 | 539 | Current portion of long-term debt | 2,875 | 9,728 | Lease liability, current | 1,990 | 1,888 | Other current liabilities | 4,390 | 6,",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526330623/rail-20260630.htm",
+        "accession": "0001193125-26-330623",
+        "form": "10-Q",
+        "filed": "2026-08-03"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "counts and contractual payables | 8,326 | 41,164 | Income taxes payable, net | ( 1,286 | ) | ( 665 | ) | Customer deposits | — | 17,611 | Other assets and liabilities | ( 4,078 | ) | ( 15,117 | ) | Net cash flows provided by operating activities | 7,766 | 21,322 | Cash fl",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526330623/rail-20260630.htm",
+      "accession": "0001193125-26-330623",
+      "form": "10-Q",
+      "filed": "2026-08-03",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001193125-26-330623",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001193125-26-330623",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "ers | $ | 113,138 | $ | 118,623 | $ | 177,446 | $ | 214,913 | 9 Contract Balances and Accounts Receivable Contract assets represent the Company’s rights to consideration for performance obligations that have been satisfied but for which the terms of the contract do not p",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526330623/rail-20260630.htm",
+      "accession": "0001193125-26-330623",
+      "form": "10-Q",
+      "filed": "2026-08-03"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "| $ | 55,671 | Accrued payroll and other employee costs | 5,803 | 9,110 | Accrued warranty | 1,989 | 2,050 | Deferred revenue | 3,046 | 539 | Current portion of long-term debt | 2,875 | 9,728 | Lease liability, current | 1,990 | 1,888 | Other current liabilities | 4,390 | 6,",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1320854/000119312526330623/rail-20260630.htm",
+      "accession": "0001193125-26-330623",
+      "form": "10-Q",
+      "filed": "2026-08-03"
+    }
+  ],
+  "revenue_quality_text_source": "0001193125-26-330623"
+}

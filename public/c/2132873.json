@@ -1,0 +1,251 @@
+{
+  "cik": 2132873,
+  "ticker": "MSGR",
+  "name": "MSG Rangers Corp.",
+  "sector": "communication",
+  "industry": "Services-Miscellaneous Amusement & Recreation",
+  "sic": "7990",
+  "sic_description": "Services-Miscellaneous Amusement & Recreation",
+  "generated_at": "2026-11-14T20:47:07+00:00",
+  "fetched_at": "2026-11-06T15:59:21+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "current_debt": 16500000,
+    "cash": 51000,
+    "short_term_borrowings": 16500000,
+    "operating_leases": 327692000,
+    "equity": 22965000,
+    "assets": 601883000,
+    "liabilities": 578918000,
+    "assets_current": 118310000,
+    "liabilities_current": 255752000,
+    "retained_earnings": 22965000,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 51000.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 51000.0,
+    "due_12m": 16500000,
+    "due_24m": null,
+    "liquidity_to_due12": 0.003091,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 327692000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgr-20260930.htm",
+        "accession": "0001628280-26-071325",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 327692000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-071325",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgr-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "ng the continuance of an event of default under the Rangers Revolving Credit Facility ; (iv) engaging in sale and leaseback transactions; (v) merging or consolidating; and (vi) taking certain actions that would invalidate the secured lenders’ liens on any of Rangers LLC ’s",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgr-20260930.htm",
+        "accession": "0001628280-26-071325",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-071325",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgr-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "customers. For the three months ended September 30, 2026, the Company did not record any impairment losses on contract assets arising from contracts with customers. For the three months ended September 30, 2025, the Company did not record any impairment losses on receivables",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgr-20260930.htm",
+        "accession": "0001628280-26-071325",
+        "form": "10-Q",
+        "filed": "2026-11-06"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "s that have original expected durations of one year or less. Additionally, the Company has elected to exclude variable consideration from its disclosure related to the remaining performance obligations under its local telecast rights agreement with MSG Networks, league-wide nationa",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgr-20260930.htm",
+        "accession": "0001628280-26-071325",
+        "form": "10-Q",
+        "filed": "2026-11-06"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "Record Date, one option to purchase Class A Common Stock was issued under the Employee Stock Plan. Note 13. Related Party Transactions Certain members of the Dolan family, including trusts for the benefit of members of the Dolan family, for purposes of Section 13(d) of the Securiti",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgr-20260930.htm",
+        "accession": "0001628280-26-071325",
+        "form": "10-Q",
+        "filed": "2026-11-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "87,250 | Other accrued liabilities | 2,260 | 1,166 | Operating lease liabilities, current | 19,429 | 19,288 | Deferred revenue | 139,365 | 75,143 | Total current liabilities | 255,752 | 219,355 | Operating lease liabilities, noncurrent | 308,263 | 312,309 | Other employee-rel",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgr-20260930.htm",
+        "accession": "0001628280-26-071325",
+        "form": "10-Q",
+        "filed": "2026-11-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "2021 Rangers NHL Advance",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "carrying": 16500000.0,
+      "floating": false
+    },
+    {
+      "name": "Rangers Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "spread_min": 0.00375,
+      "spread_max": 0.00625,
+      "fee_min": 0.0035,
+      "fee_max": 0.004,
+      "reference": "SOFR",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-11-06",
+      "agreement_kind": "amendment",
+      "dated": "2026-10-01",
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/2132873/000162828026071325/msgrexhibit10119302610q.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-10-27",
+      "items": "1.01,5.02,5.03,8.01,9.01",
+      "acc": "0001193125-26-434266",
+      "doc": "d180862d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

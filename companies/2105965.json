@@ -1,0 +1,169 @@
+{
+  "cik": 2105965,
+  "ticker": "WCCB",
+  "name": "West Coast Community Bancorp",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0002105965-26-000043": {
+      "instruments": [
+        {
+          "name": "Subordinated Debentures",
+          "kind": "notes",
+          "as_of": "2026-09-30",
+          "coupon": 0.04,
+          "carrying": 0.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-10",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "cash": 116929000,
+    "operating_leases": 8616000,
+    "equity": 402590000,
+    "assets": 2983584000,
+    "liabilities": 2580994000,
+    "retained_earnings": 218780000,
+    "deposits": 2555185000,
+    "shares": 10528456,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 8616000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2105965/000210596526000043/wccb-20260930.htm",
+        "accession": "0002105965-26-000043",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 8616000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0002105965-26-000043",
+            "filed": "2026-11-10",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2105965/000210596526000043/wccb-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "t arrangements include commitments to extend credit, standby letters of credit, overdraft protection and financial guarantees which would impact the Company’s liquidity and capital resources to the extent customers accept and/or use these commitments. We expect to fund these",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2105965/000210596526000043/wccb-20260930.htm",
+        "accession": "0002105965-26-000043",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "verage discount rate used in the determination of lease liabilities is 3.85 %. Our leases do not include residual value guarantees or covenants. Some leases may include a free rent period or have net operating costs associated with them. Leases are classified as operating or fi",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2105965/000210596526000043/wccb-20260930.htm",
+        "accession": "0002105965-26-000043",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002105965-26-000043",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2105965/000210596526000043/wccb-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "guarantee_support",
+      "label": "Guarantees / keepwell support",
+      "excerpt": "t arrangements include commitments to extend credit, standby letters of credit, overdraft protection and financial guarantees which would impact the Company’s liquidity and capital resources to the extent customers accept and/or use these commitments. We expect to fund these",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2105965/000210596526000043/wccb-20260930.htm",
+      "accession": "0002105965-26-000043",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "residual_guarantee",
+      "label": "Residual value guarantees",
+      "excerpt": "verage discount rate used in the determination of lease liabilities is 3.85 %. Our leases do not include residual value guarantees or covenants. Some leases may include a free rent period or have net operating costs associated with them. Leases are classified as operating or fi",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2105965/000210596526000043/wccb-20260930.htm",
+      "accession": "0002105965-26-000043",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0002105965-26-000043",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0002105965-26-000043",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0002105965-26-000043",
+  "xbrl_10-Q": "xbrl:0002105965-26-000043",
+  "events": [],
+  "fetched_at": "2026-11-11T01:58:27+00:00",
+  "signature": "0002105965-26-000043",
+  "fdic": {
+    "matched": false
+  }
+}

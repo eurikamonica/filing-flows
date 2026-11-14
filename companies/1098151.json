@@ -1,0 +1,217 @@
+{
+  "cik": 1098151,
+  "ticker": "FDBC",
+  "name": "FIDELITY D & D BANCORP INC",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "docs": {
+    "xbrl:0001437749-26-008215": {
+      "instruments": [
+        {
+          "name": "Secured Debt",
+          "kind": "notes",
+          "as_of": "2025-12-31",
+          "fair_value": 6000000.0,
+          "carrying": 5957000.0,
+          "floating": false
+        },
+        {
+          "name": "Forgivable Note",
+          "kind": "notes",
+          "as_of": "2025-12-31",
+          "carrying": 20000.0,
+          "floating": false
+        },
+        {
+          "name": "Other Short-term Borrowings",
+          "kind": "other",
+          "as_of": "2024-12-31",
+          "carrying": 0.0,
+          "floating": false
+        },
+        {
+          "name": "Overnight Borrowings",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "rate_now": 0.0,
+          "floating": false
+        },
+        {
+          "name": "Federal Reserve Bank Term Funding Program",
+          "kind": "other",
+          "as_of": "2024-12-31",
+          "rate_now": 0.0,
+          "floating": false
+        },
+        {
+          "name": "Federal Home Loan Bank Advances",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "available": 812700000.0,
+          "floating": false
+        },
+        {
+          "name": "Correspondent Banks",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "available": 30000000.0,
+          "floating": false
+        },
+        {
+          "name": "Federal Reserve Bank Discount Window",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "available": 145000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-13",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001437749-26-035558": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-11-06",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "National Commercial Banks",
+  "snapshot": {
+    "current_debt": 132708000,
+    "cash": 173606000,
+    "short_term_borrowings": 132708000,
+    "finance_leases": 635000,
+    "operating_leases": 9860000,
+    "equity": 246984000,
+    "assets": 3028419000,
+    "liabilities": 2781435000,
+    "retained_earnings": 175464000,
+    "deposits": 2610272000,
+    "interest_paid": 47185000,
+    "pretax_income": 37927000,
+    "net_income": 32167000,
+    "da": 5698000,
+    "ocf": 51398000,
+    "capex": 16199000,
+    "stated_rate": 0.0361,
+    "shares": 5808508,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 9860000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1098151/000143774926035558/fdbc20260930_10q.htm",
+        "accession": "0001437749-26-035558",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 9860000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-035558",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1098151/000143774926035558/fdbc20260930_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-035558",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1098151/000143774926035558/fdbc20260930_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001437749-26-035558",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-035558",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001437749-26-035558",
+  "xbrl_10-K": "xbrl:0001437749-26-008215",
+  "xbrl_10-Q": "xbrl:0001437749-26-035558",
+  "events": [
+    {
+      "date": "2021-03-01",
+      "items": "1.01,9.01",
+      "acc": "0001098151-21-000010",
+      "doc": "fdbc-20210225x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-12-12",
+      "items": "1.01,9.01",
+      "acc": "0001098151-19-000072",
+      "doc": "fdbc-20191211x8ka.htm",
+      "desc": "8-K/A"
+    },
+    {
+      "date": "2019-12-11",
+      "items": "1.01,9.01",
+      "acc": "0001098151-19-000063",
+      "doc": "fdbc-20191211x8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-11-07T02:01:47+00:00",
+  "signature": "0001437749-26-035558",
+  "fdic": {
+    "matched": false
+  }
+}

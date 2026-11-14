@@ -1,0 +1,598 @@
+{
+  "cik": 1825384,
+  "ticker": null,
+  "name": "Stone Point Credit Corp",
+  "sector": "other",
+  "industry": null,
+  "sic": "",
+  "sic_description": "",
+  "generated_at": "2026-11-14T20:47:06+00:00",
+  "fetched_at": "2026-11-12T23:44:22+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 1695463000,
+    "cash": 65960000,
+    "revolver_available": 191484000,
+    "revolver_drawn": 1199502000,
+    "equity": 1382477000,
+    "assets": 3135288000,
+    "liabilities": 1752811000,
+    "retained_earnings": -33661000,
+    "interest_paid": 97081000,
+    "net_income": 85722000,
+    "da": -10156000,
+    "ocf": -281029000,
+    "wavg_rate_all": 0.057,
+    "shares": 71392436,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": 1695463000,
+    "cash_and_investments": 65960000.0,
+    "net_debt": 1629503000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": -1.894789,
+    "fcf": -281029000.0,
+    "fcf_to_debt": -0.165754,
+    "effective_rate": null,
+    "revolver_available": 191484000,
+    "liquidity": 257444000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 1695463000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 16954630.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001825384-26-000003",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1825384/000182538426000003/none-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "JPM Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "spread": 0.02,
+      "capacity": 850000000.0,
+      "carrying": 694016000.0,
+      "floating": true
+    },
+    {
+      "name": "Senior Notes",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "face": 300000000.0,
+      "carrying": 297495000.0,
+      "floating": false
+    },
+    {
+      "name": "Credit facilities",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "capacity": 850000000.0,
+      "available": 155984000.0,
+      "drawn": 689020000.0,
+      "spread": 0.0235,
+      "carrying": 292500000.0,
+      "coupon": 0.0175,
+      "fee": 0.00375,
+      "reference": "Federal Funds Effective Swap Rate",
+      "floating": true
+    },
+    {
+      "name": "2029 Notes",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "face": 200000000.0,
+      "carrying": 198466000.0,
+      "effective": 0.067,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 850000000.0,
+      "available": 46476000.0,
+      "drawn": 797166000.0,
+      "spread": 0.02,
+      "maturity": "2029-06-27",
+      "carrying": 803524000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Asset Based Revolving Loan Facility One",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 250000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Secured Debt",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "capacity": 300000000.0,
+      "available": 76500000.0,
+      "drawn": 221372000.0,
+      "carrying": 223500000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Two Thousand Twenty Nine Notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "capacity": 200000000.0,
+      "drawn": 198133000.0,
+      "effective": 0.067,
+      "carrying": 200000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Asset Based Revolving Loan Facility Two",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 50000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Capital Call Facility",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "capacity": 65000000.0,
+      "available": 33500000.0,
+      "drawn": 31435000.0,
+      "spread": 0.0235,
+      "carrying": 31500000.0,
+      "reference": "Federal Funds Effective Swap Rate",
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Two Thousand Twenty Five Notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "effective": 0.0583,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "First Amendment Date",
+      "kind": "other",
+      "as_of": "2025-03-03",
+      "spread_max": 0.031,
+      "spread_min": 0.02,
+      "maturity": "2030-03-03",
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Two Thousand Twenty Eight Notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "maturity": "2028-05-15",
+      "effective": 0.0603,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Two Thousand Thirty Notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "maturity": "2030-05-15",
+      "effective": 0.0626,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-03-26",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-03-23",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        1.75,
+        1.875
+      ],
+      "fee_pct": 0.375,
+      "floor_pct": 0.0,
+      "maturity": "2031-03-21",
+      "url": "https://www.sec.gov/Archives/edgar/data/1825384/000110465926035210/tm269834d1_ex10-1.htm",
+      "all_in_pct": [
+        1.7889,
+        1.9139
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-12-30",
+      "agreement_kind": "amendment",
+      "dated": "2021-12-28",
+      "title": "First Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.85,
+        1.85
+      ],
+      "fee_pct": 0.35,
+      "floor_pct": 0.15,
+      "url": "https://www.sec.gov/Archives/edgar/data/1825384/000089457921000221/stonepointexh10_1.htm",
+      "all_in_pct": [
+        0.8889,
+        1.8889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-01-04",
+      "agreement_kind": "credit_agreement",
+      "dated": "2020-12-29",
+      "title": "Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.75,
+        1.75
+      ],
+      "fee_pct": 0.35,
+      "url": "https://www.sec.gov/Archives/edgar/data/1825384/000089457921000004/stonepointexh10_1.htm",
+      "all_in_pct": [
+        0.7889,
+        1.7889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-03-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-26-035210",
+      "doc": "tm269834d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-123716",
+      "doc": "tm2533979d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-04-15",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-034994",
+      "doc": "tm2512253d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-03-24",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-027185",
+      "doc": "tm2510030d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-03-06",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-021304",
+      "doc": "tm258392d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-12-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-24-132031",
+      "doc": "tm2432008d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-09-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-24-101295",
+      "doc": "tm2423999d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-07-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-24-076851",
+      "doc": "tm2418571d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-12-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-23-128753",
+      "doc": "tm2333417d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-08-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-23-092940",
+      "doc": "tm2323987d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-07-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-23-079168",
+      "doc": "tm2320824d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-01-03",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-23-000686",
+      "doc": "d406704d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-22-064707",
+      "doc": "tm2216883-1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-02-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000894579-22-000051",
+      "doc": "spccbdc8k01282022.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-12-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000894579-21-000221",
+      "doc": "stonepoint8k12292021.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-10-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000945621-21-000411",
+      "doc": "stonepoint8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-06-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-21-204287",
+      "doc": "d711638d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-04-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-21-108948",
+      "doc": "d120766d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-01-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000894579-21-000004",
+      "doc": "stonepoint8k12312020.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-03-31",
+      933259246,
+      43933840,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      1007030585,
+      45327783,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      1046193077,
+      49593498,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      1062000312,
+      36315217,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      1204080411,
+      127804122,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      1277095843,
+      96096004,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      1400017000,
+      50479000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1424429000,
+      56107000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1467479000,
+      141162000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1613450000,
+      74508000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      1634522000,
+      53997000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-09-30",
+      1695463000,
+      65960000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

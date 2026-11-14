@@ -1,0 +1,785 @@
+{
+  "cik": 1135971,
+  "ticker": null,
+  "name": "PEPCO HOLDINGS LLC",
+  "sector": "utilities",
+  "industry": "Electric & Other Services Combined",
+  "sic": "4931",
+  "sic_description": "Electric & Other Services Combined",
+  "generated_at": "2026-11-14T20:47:01+00:00",
+  "fetched_at": "2026-11-03T06:55:51+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 6013000000,
+    "current_debt": 1357000000,
+    "cash": 25000000,
+    "short_term_borrowings": 1063000000,
+    "debt_fair_value": 5523000000,
+    "equity": 4413000000,
+    "assets": 16326000000,
+    "assets_current": 1202000000,
+    "liabilities_current": 2308000000,
+    "retained_earnings": 617000000,
+    "interest_expense": 280000000,
+    "interest_paid": 268000000,
+    "operating_income": 673000000,
+    "pretax_income": 447000000,
+    "net_income": 327000000,
+    "da": 651000000,
+    "ocf": 939000000,
+    "capex": 1230000000,
+    "revenue": 5023000000,
+    "debt_issued": 558000000,
+    "debt_repaid": 420000000,
+    "maturities": {
+      "as_of": "2015-12-31",
+      "next12m": 340000000,
+      "y2": 131000000,
+      "y3": 285000000,
+      "y4": 30000000,
+      "y5": 20000000,
+      "after5": 4366000000
+    },
+    "shares": 254340724,
+    "balance_date": "2015-12-31",
+    "latest_period": "2015-12-31"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent+ShortTermBorrowings",
+    "current_debt": "LongTermDebtCurrent+ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "da": "DepreciationDepletionAndAmortization (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "Revenues (fiscal year)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (fiscal year)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (fiscal year)"
+  },
+  "analysis": {
+    "total_debt": 6013000000,
+    "cash_and_investments": 25000000.0,
+    "net_debt": 5988000000.0,
+    "ebitda": 1324000000,
+    "ebit": 673000000,
+    "interest_expense": 280000000,
+    "leverage": 4.541541,
+    "net_leverage": 4.522659,
+    "interest_coverage": 2.403571,
+    "ebitda_coverage": 4.728571,
+    "cash_coverage": 4.503731,
+    "fcf": -291000000,
+    "fcf_to_debt": -0.048395,
+    "effective_rate": 0.046566,
+    "revolver_available": 1000000000.0,
+    "liquidity": 1025000000.0,
+    "due_12m": 340000000,
+    "due_24m": 471000000,
+    "liquidity_to_due12": 3.014706,
+    "liquidity_to_due24": 2.176221,
+    "floating_debt": 434000000.0,
+    "floating_share": 0.072177,
+    "plus100bp_interest": 4340000.0,
+    "plus100bp_share_of_ebit": 0.006449,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible Senior Notes Due Mar2029",
+          "face": 1000000000.0,
+          "carrying": 1000000000.0,
+          "coupon": null,
+          "conv_price": 57.0,
+          "maturity": null
+        }
+      ],
+      "total_face": 1000000000.0,
+      "in_the_money_face": 0,
+      "in_the_money_carrying": 0,
+      "shares_if_converted": 0,
+      "coupon_saved": 0
+    },
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": 1193620.372526,
+    "covenants": [],
+    "cushion_score": 48
+  },
+  "hidden_leverage": {
+    "as_of": "2015-12-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "| Accounts payable | 3,711 | 3,721 | Accrued expenses | 1,692 | 1,582 | Payables to affiliates | 5 | 5 | Customer deposits | 609 | 533 | Regulatory liabilities | 551 | 1,128 | Mark-to-market derivative liabilities | 21 | 30 | Unamortized energy contract liabilities | 4 |",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000110935726000095/exc-20260930.htm",
+        "accession": "0001109357-26-000095",
+        "form": "10-Q",
+        "filed": "2026-10-30",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "| AMI | Advanced Metering Infrastructure | AOCI | Accumulated Other Comprehensive Income (Loss) | ARO | Asset Retirement Obligation | ATM | At the market | BGS | Basic Generation Service | BSA | Bill Stabilization Adjustment | CEJA | Climate and Equitable Jobs Act; Illinois Public",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000110935726000095/exc-20260930.htm",
+        "accession": "0001109357-26-000095",
+        "form": "10-Q",
+        "filed": "2026-10-30",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001109357-26-000095",
+      "form": "10-Q",
+      "filed": "2026-10-30",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000110935726000095/exc-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2015-12-31",
+    "metrics": {
+      "revenue_growth": 0.0297,
+      "receivables_growth": 0.0729,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.0419,
+      "ocf_to_net_income": 2.8716
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 5023000000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-16-468556",
+          "filed": "2016-02-19",
+          "end": "2015-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000119312516468556/"
+        },
+        {
+          "value_usd": 4878000000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001193125-16-468556",
+          "filed": "2016-02-19",
+          "end": "2014-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000119312516468556/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 839000000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-16-468556",
+          "filed": "2016-02-19",
+          "end": "2015-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000119312516468556/"
+        },
+        {
+          "value_usd": 782000000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001193125-16-468556",
+          "filed": "2016-02-19",
+          "end": "2014-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000119312516468556/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 939000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-16-468556",
+          "filed": "2016-02-19",
+          "end": "2015-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000119312516468556/"
+        },
+        {
+          "value_usd": 854000000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001193125-16-468556",
+          "filed": "2016-02-19",
+          "end": "2014-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000119312516468556/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 327000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-16-468556",
+          "filed": "2016-02-19",
+          "end": "2015-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000119312516468556/"
+        },
+        {
+          "value_usd": 242000000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001193125-16-468556",
+          "filed": "2016-02-19",
+          "end": "2014-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000119312516468556/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "Changes in Accumulated Other Comprehensive Income | 103 | 15. Supplemental Financial Information | 104 | 16. Related Party Transactions | 108 | 2 Page No. | ITEM 2. | MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS | 111 | Exelon Corporation | 1",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000110935726000095/exc-20260930.htm",
+        "accession": "0001109357-26-000095",
+        "form": "10-Q",
+        "filed": "2026-10-30"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "| Regulatory liabilities | 551 | 1,128 | Mark-to-market derivative liabilities | 21 | 30 | Unamortized energy contract liabilities | 4 | 5 | Renewable energy credit obligations | 364 | 473 | Other | 675 | 577 | Total current liabilities | 9,644 | 10,331 | Long-term debt | 50,791",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1135971/000110935726000095/exc-20260930.htm",
+        "accession": "0001109357-26-000095",
+        "form": "10-Q",
+        "filed": "2026-10-30"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2015-12-31",
+      "2014-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "capacity": 1000000000.0,
+      "spread": 0.01,
+      "floating": true
+    },
+    {
+      "name": "Convertible Senior Notes Due Mar2029",
+      "kind": "convertible",
+      "as_of": "2025-12-04",
+      "face": 1000000000.0,
+      "conv_ratio": 18.0,
+      "conv_price": 57.0,
+      "floating": false
+    },
+    {
+      "name": "FMB585DueJune2056",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.0585,
+      "face": 825000000.0,
+      "floating": false
+    },
+    {
+      "name": "FMB500DueSep2031",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.05,
+      "face": 750000000.0,
+      "floating": false
+    },
+    {
+      "name": "FMB455DueJun2031",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.0455,
+      "face": 600000000.0,
+      "floating": false
+    },
+    {
+      "name": "Notes515DueJun2033",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "coupon": 0.0515,
+      "face": 500000000.0,
+      "floating": false
+    },
+    {
+      "name": "Commercial Paper",
+      "kind": "commercial_paper",
+      "as_of": "2026-09-30",
+      "carrying": 434000000.0,
+      "rate_now": 0.0419,
+      "floating": true
+    },
+    {
+      "name": "Notes605DueJune2056",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "coupon": 0.0605,
+      "face": 425000000.0,
+      "floating": false
+    },
+    {
+      "name": "FMB574DueJun2056",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.0574,
+      "face": 130000000.0,
+      "floating": false
+    },
+    {
+      "name": "FMB500DueMar2036",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.05,
+      "face": 110000000.0,
+      "floating": false
+    },
+    {
+      "name": "FMB495DueMar2036",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.0495,
+      "face": 100000000.0,
+      "floating": false
+    },
+    {
+      "name": "FMB360DueJan2031",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "face": 78400000.0,
+      "coupon": 0.036,
+      "floating": false
+    },
+    {
+      "name": "FMB574DueMar2056",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.0574,
+      "face": 75000000.0,
+      "floating": false
+    },
+    {
+      "name": "FMB500DueSep2036",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.05,
+      "face": 75000000.0,
+      "floating": false
+    },
+    {
+      "name": "FMB530DueMar2041",
+      "kind": "mortgage",
+      "as_of": "2026-09-30",
+      "coupon": 0.053,
+      "face": 60000000.0,
+      "floating": false
+    },
+    {
+      "name": "Letter of Credit",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "capacity": 40000000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes",
+      "kind": "convertible",
+      "as_of": "2025-12-04",
+      "coupon": 0.0325,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-10-30",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-08-29",
+      "size": 900000000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.8,
+      "maturity": "2029-08-29",
+      "url": "https://www.sec.gov/Archives/edgar/data/1135971/000110935724000187/exc-ex1005_20240930q3.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-10-30",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-08-29",
+      "size": 600000000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.69,
+      "maturity": "2029-08-29",
+      "url": "https://www.sec.gov/Archives/edgar/data/1135971/000110935724000187/exc-ex1004_20240930q3.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-10-30",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-08-29",
+      "size": 600000000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.69,
+      "maturity": "2029-08-29",
+      "url": "https://www.sec.gov/Archives/edgar/data/1135971/000110935724000187/exc-ex1003_20240930q3.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2024-08-29",
+      "items": "1.01",
+      "acc": "0001109357-24-000158",
+      "doc": "exc-20240829.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-02-03",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001104659-22-011422",
+      "doc": "tm225250d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-05-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-16-605671",
+      "doc": "d181632d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-03-28",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001571049-16-013369",
+      "doc": "t1600175_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-03-07",
+      "items": "1.01,8.01",
+      "acc": "0001135971-16-000046",
+      "doc": "mar7phi8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2016-01-14",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001571049-16-010732",
+      "doc": "t1600089_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-10-29",
+      "items": "1.01,9.01",
+      "acc": "0001571049-15-008527",
+      "doc": "t1502494_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-10-06",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001135971-15-000031",
+      "doc": "oct6phi8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2015-07-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001571049-15-005990",
+      "doc": "t1501728_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-05-01",
+      "items": "1.01,9.01",
+      "acc": "0001135971-15-000005",
+      "doc": "may1credit8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2014-07-21",
+      "items": "1.01,9.01",
+      "acc": "0001193125-14-273582",
+      "doc": "d761287d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-05-20",
+      "items": "1.01,9.01",
+      "acc": "0001571049-14-001969",
+      "doc": "t79363_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-04-30",
+      "items": "1.01,3.02,5.03,9.01",
+      "acc": "0001193125-14-172735",
+      "doc": "d720190d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-03-28",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001188112-13-000859",
+      "doc": "t76037_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2012-04-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001135971-12-000073",
+      "doc": "apr25-phi8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2012-03-08",
+      "items": "1.01,9.01",
+      "acc": "0001135971-12-000054",
+      "doc": "mar8-phi8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2010-11-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001135971-10-000150",
+      "doc": "nov2-phi8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2010-04-21",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001135971-10-000061",
+      "doc": "apr21-phi8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2011-06-30",
+      4301000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-09-30",
+      4452000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-03-31",
+      3794000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-06-30",
+      4203000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      4100000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-31",
+      3898000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-30",
+      3811000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-09-30",
+      3805000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      4452000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      4557000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      4691000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      4649000000,
+      141000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      4848000000,
+      34000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      4845000000,
+      271000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-12-31",
+      6013000000,
+      25000000,
+      280000000,
+      1324000000,
+      673000000,
+      0.04657
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

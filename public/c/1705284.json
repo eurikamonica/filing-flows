@@ -1,0 +1,235 @@
+{
+  "cik": 1705284,
+  "ticker": "PBAM",
+  "name": "Private Bancorp of America, Inc.",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "sic_description": "National Commercial Banks",
+  "generated_at": "2026-11-14T20:47:05+00:00",
+  "fetched_at": "2026-11-13T06:52:18+00:00",
+  "price": 86.95,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.153749,
+  "snapshot": {
+    "total_debt": 25981000,
+    "cash": 251234000,
+    "operating_leases": 7121000,
+    "revolver_drawn": 0,
+    "equity": 291349000,
+    "assets": 2748220000,
+    "liabilities": 2456871000,
+    "retained_earnings": 220660000,
+    "deposits": 2412993000,
+    "time_deposits": 294518000,
+    "shares": 5730094,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "DebtLongtermAndShorttermCombinedAmount",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits"
+  },
+  "analysis": {
+    "total_debt": 25981000,
+    "cash_and_investments": 251234000.0,
+    "net_debt": -225253000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 251234000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 498231673.3,
+    "debt_to_ev": 0.095176,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 7121000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1705284/000170528426000013/pbam-20260930.htm",
+        "accession": "0001705284-26-000013",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 7121000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001705284-26-000013",
+            "filed": "2026-11-12",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1705284/000170528426000013/pbam-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001705284-26-000013",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1705284/000170528426000013/pbam-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Federal Home Loan Bank Due March Twelve Two Thousand Twenty Six",
+      "kind": "loan",
+      "as_of": "2026-09-30",
+      "maturity": "2026-03-12",
+      "effective": 0.0477,
+      "floating": false
+    },
+    {
+      "name": "Federal Home Loan Bank Due March Twelve Two Thousand Twenty Seven",
+      "kind": "loan",
+      "as_of": "2026-09-30",
+      "maturity": "2027-03-12",
+      "effective": 0.0456,
+      "floating": false
+    },
+    {
+      "name": "Federal Home Loan Bank Due March Seventeen Two Thousand Twenty Eight",
+      "kind": "loan",
+      "as_of": "2026-09-30",
+      "maturity": "2028-03-17",
+      "effective": 0.0396,
+      "floating": false
+    },
+    {
+      "name": "Subordinated Notes",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "maturity": "2029-04-25",
+      "coupon": 0.06,
+      "spread": 0.0342,
+      "effective": 0.0735,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      25979000,
+      300355000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-09-30",
+      25981000,
+      251234000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-09",
+      -0.0,
+      23.218,
+      0.1632,
+      68.1
+    ],
+    [
+      "2026-10",
+      -0.0,
+      24.778,
+      0.1526,
+      68.1
+    ],
+    [
+      "2026-11",
+      -0.0,
+      24.699,
+      0.1537,
+      68.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

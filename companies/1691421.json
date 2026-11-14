@@ -1,0 +1,350 @@
+{
+  "cik": 1691421,
+  "ticker": "LMND",
+  "name": "Lemonade, Inc.",
+  "sector": "financials",
+  "industry": "Fire, Marine & Casualty Insurance",
+  "sic": "6331",
+  "docs": {
+    "xbrl:0001691421-26-000016": {
+      "instruments": [
+        {
+          "name": "Customer Investment Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 158100000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-25",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001691421-26-000055": {
+      "instruments": [
+        {
+          "name": "New Business Financing Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-22",
+          "capacity": 250000000.0,
+          "spread": 0.0,
+          "reference": "Three Year U.S.Treasury Bill Rate",
+          "floating": true
+        },
+        {
+          "name": "Customer Investment Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "carrying": 206400000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-04",
+      "report": "2026-06-30"
+    },
+    "0001104659-21-154305:tm2134571-6_424b3.htm": {
+      "kind": "424b",
+      "date": "2021-12-29",
+      "tranches": []
+    }
+  },
+  "sic_description": "Fire, Marine & Casualty Insurance",
+  "snapshot": {
+    "cash": 367600000,
+    "investments": 9200000,
+    "operating_leases": 20000000,
+    "revolver_drawn": 206400000,
+    "equity": 499500000,
+    "assets": 2011900000,
+    "liabilities": 1512400000,
+    "retained_earnings": -1543500000,
+    "interest_paid": 22100000,
+    "pretax_income": -133300000,
+    "net_income": -138900000,
+    "da": 11100000,
+    "ocf": 21200000,
+    "capex": 13100000,
+    "revenue": 975000000,
+    "shares": 77396615,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001691421-26-000016",
+  "xbrl_10-Q": "xbrl:0001691421-26-000055",
+  "events": [
+    {
+      "date": "2026-06-24",
+      "items": "1.01,2.03",
+      "acc": "0001691421-26-000041",
+      "doc": "lmnd-20260622.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-02",
+      "items": "1.01",
+      "acc": "0001691421-25-000108",
+      "doc": "lmnd-20250630.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-02-07",
+      "items": "1.01,2.03",
+      "acc": "0001691421-25-000010",
+      "doc": "lmnd-20250203.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-11",
+      "items": "1.01,2.03",
+      "acc": "0001691421-24-000006",
+      "doc": "lmnd-20240108.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-06-29",
+      "items": "1.01,2.03,7.01",
+      "acc": "0001691421-23-000084",
+      "doc": "lmda-20230628.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-06-27",
+      "items": "1.01",
+      "acc": "0001691421-23-000078",
+      "doc": "lmda-20230621.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-10-20",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001691421-22-000073",
+      "doc": "lmda-20221014.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-09",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001691421-21-000092",
+      "doc": "lmnd-20211108.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-25T23:10:04+00:00",
+  "signature": "0001691421-26-000055",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 20000000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000055/lmnd-20260630.htm",
+        "accession": "0001691421-26-000055",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 20000000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001691421-26-000055",
+            "filed": "2026-08-04",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000055/lmnd-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "of America (“U.S. GAAP”) and include the accounts of the Company and its wholly-owned subsidiaries and a variable interest entity for which the Company is deemed to be the primary beneficiary. All material intercompany balances and transactions have been eliminated. All foreign",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000055/lmnd-20260630.htm",
+        "accession": "0001691421-26-000055",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001691421-26-000055",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000055/lmnd-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.4015,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 737900000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001691421-26-000016",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000016/"
+        },
+        {
+          "value_usd": 526500000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001691421-26-000016",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000016/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -16500000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001691421-26-000016",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000016/"
+        },
+        {
+          "value_usd": -11400000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001691421-26-000016",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000016/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -165500000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001691421-26-000016",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000016/"
+        },
+        {
+          "value_usd": -202200000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001691421-26-000016",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000016/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ise price adjusted based on the exchange ratio of 0.05263 . These warrants expired on February 9, 2026. 14. Related Party Transactions The Company’s Chief Executive Officer and President, both of whom are also members of the Company’s board of directors, are the two sole members of",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000055/lmnd-20260630.htm",
+        "accession": "0001691421-26-000055",
+        "form": "10-Q",
+        "filed": "2026-08-04"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "of America (“U.S. GAAP”) and include the accounts of the Company and its wholly-owned subsidiaries and a variable interest entity for which the Company is deemed to be the primary beneficiary. All material intercompany balances and transactions have been eliminated. All foreign",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000055/lmnd-20260630.htm",
+      "accession": "0001691421-26-000055",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001691421-26-000055",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001691421-26-000055",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "ise price adjusted based on the exchange ratio of 0.05263 . These warrants expired on February 9, 2026. 14. Related Party Transactions The Company’s Chief Executive Officer and President, both of whom are also members of the Company’s board of directors, are the two sole members of",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1691421/000169142126000055/lmnd-20260630.htm",
+      "accession": "0001691421-26-000055",
+      "form": "10-Q",
+      "filed": "2026-08-04"
+    }
+  ],
+  "revenue_quality_text_source": "0001691421-26-000055"
+}

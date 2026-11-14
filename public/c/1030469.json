@@ -1,0 +1,369 @@
+{
+  "cik": 1030469,
+  "ticker": "OFG",
+  "name": "OFG BANCORP",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-11-14T20:46:59+00:00",
+  "fetched_at": "2026-11-05T23:41:57+00:00",
+  "price": 51.17,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.228808,
+  "snapshot": {
+    "cash": 566773000,
+    "operating_leases": 24505000,
+    "equity": 1336876000,
+    "assets": 12144479000,
+    "liabilities": 10807603000,
+    "retained_earnings": 1013210000,
+    "deposits": 9988919000,
+    "time_deposits": 2960759000,
+    "interest_paid": 163129000,
+    "pretax_income": 262507000,
+    "net_income": 225218000,
+    "da": 18891000,
+    "ocf": 274035000,
+    "capex": 23641000,
+    "deposit_interest": 143166000,
+    "wavg_rate_all": 0.03,
+    "shares": 41860206,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 566773000.0,
+    "net_debt": null,
+    "ebitda": 281398000.0,
+    "ebit": 262507000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.679867,
+    "fcf": 250394000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 566773000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 2141986741.02,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 24505000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000047/ofg-20260930.htm",
+        "accession": "0001030469-26-000047",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 24505000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001030469-26-000047",
+            "filed": "2026-11-05",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000047/ofg-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "inancial instruments include commitments to extend credit, standby and commercial letters of credit, and financial guarantees. Those instruments involve, to varying degrees, elements of credit and interest rate risk in excess of the amounts recognized in the consolidated sta",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000047/ofg-20260930.htm",
+        "accession": "0001030469-26-000047",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "branches, ATM locations, and office space with terms extending through 2038. OFG’s leases do not contain residual value guarantees or material variable lease payments. All leases are classified as operating leases and are included on the consolidated statements of financial condi",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000047/ofg-20260930.htm",
+        "accession": "0001030469-26-000047",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "ies underlying agreements to repurchase were delivered to, and held by, the counterparties with whom the repurchase agreements were transacted. The counterparties agreed to resell to OFG the same or similar securities at the maturity of these agreements. The purpose of these",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000047/ofg-20260930.htm",
+        "accession": "0001030469-26-000047",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "tions, partially offset by market value adjustments and mortgage-backed securities principal paydowns. Customer Deposits of $9.66 billion compared to $9.74 billion in the second quarter of 2026 and $9.82 billion in the third quarter of 2025. The third quarter of 2026 de",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000047/ofg-20260930.htm",
+        "accession": "0001030469-26-000047",
+        "form": "10-Q",
+        "filed": "2026-11-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001030469-26-000047",
+      "form": "10-Q",
+      "filed": "2026-11-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000047/ofg-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": null,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.6256
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001030469-24-000007",
+          "filed": "2024-02-26",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046924000007/"
+        },
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001030469-24-000007",
+          "filed": "2024-02-26",
+          "end": "2022-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046924000007/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 295657000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001030469-26-000008",
+          "filed": "2026-02-25",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000008/"
+        },
+        {
+          "value_usd": 164456000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001030469-25-000007",
+          "filed": "2025-02-27",
+          "end": "2022-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046925000007/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 181872000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001030469-26-000008",
+          "filed": "2026-02-25",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046926000008/"
+        },
+        {
+          "value_usd": 166239000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001030469-25-000007",
+          "filed": "2025-02-27",
+          "end": "2022-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1030469/000103046925000007/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2023-12-31",
+      "2022-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Short-term Fixed-rate Repurchase Agreements",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0389,
+      "floating": false
+    },
+    {
+      "name": "FNMA and FHLMC Certificates",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0493,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2020-12-03",
+      "items": "1.01",
+      "acc": "0001193125-20-309513",
+      "doc": "d23437d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-07-02",
+      "items": "1.01,9.01",
+      "acc": "0001193125-19-188257",
+      "doc": "d771076d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-06-13",
+      "items": "1.01",
+      "acc": "0001030469-18-000029",
+      "doc": "ofg8k06132018101.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-11-08",
+      "items": "1.01",
+      "acc": "0001030469-13-000044",
+      "doc": "d339177d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2012-06-30",
+      0,
+      459917000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      0,
+      511478000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

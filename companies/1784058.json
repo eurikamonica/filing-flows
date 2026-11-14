@@ -1,0 +1,297 @@
+{
+  "cik": 1784058,
+  "ticker": "PNYG",
+  "name": "Pony Group Inc.",
+  "sector": "other",
+  "industry": "Services-Automotive Repair, Services & Parking",
+  "sic": "7500",
+  "docs": {
+    "xbrl:0001213900-26-035496": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-27",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001213900-26-089999": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Automotive Repair, Services & Parking",
+  "snapshot": {
+    "cash": 9841,
+    "operating_leases": 5593,
+    "equity": -1067389,
+    "assets": 27605,
+    "liabilities": 1094994,
+    "assets_current": 22012,
+    "liabilities_current": 1094994,
+    "retained_earnings": -1243161,
+    "operating_income": -265917,
+    "pretax_income": -266827,
+    "net_income": -266827,
+    "ocf": -110448,
+    "revenue": 121754,
+    "shares": 11500000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001213900-26-035496",
+  "xbrl_10-Q": "xbrl:0001213900-26-089999",
+  "events": [],
+  "fetched_at": "2026-10-26T04:56:43+00:00",
+  "signature": "0001213900-26-089999",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 5593.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm",
+        "accession": "0001213900-26-089999",
+        "form": "10-Q",
+        "filed": "2026-08-14",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 5593.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001213900-26-089999",
+            "filed": "2026-08-14",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001213900-26-089999",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.4518,
+      "receivables_growth": -0.5798,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 0.2895,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 141393.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        },
+        {
+          "value_usd": 97394.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 2471.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        },
+        {
+          "value_usd": 5880.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 8939.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        },
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -101270.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        },
+        {
+          "value_usd": -148977.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -246429.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        },
+        {
+          "value_usd": -164074.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001213900-26-035496",
+          "filed": "2026-03-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026035496/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "ocating the transaction price to the performance obligation in the contract, which may include an estimate of variable consideration, and (5) recognizing revenue when or as each performance obligation is satisfied. Our sales arrangements generally ask customers to pay in advance be",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm",
+        "accession": "0001213900-26-089999",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "paragraph and eventually to secure other sources of financing and attain profitable operations. 7 NOTE 4 - RELATED PARTY TRANSACTIONS Wenxian Fan is the founder of our Company and has been serving as our Chairman of the Board of Directors, Chief Executive Officer and Chief Financi",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm",
+        "accession": "0001213900-26-089999",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ets | 5,593 | 8,405 | Total assets | $ | 27,605 | $ | 22,140 | Liabilities and Equity | Current liabilities | Deferred revenue | 5,928 | 8,939 | Accounts payable | 19,549 | 7,709 | Operating lease liabilities, current | 5,593 | 5,571 | Other payable- related parties | 838,644",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm",
+        "accession": "0001213900-26-089999",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001213900-26-089999",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001213900-26-089999",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "ocating the transaction price to the performance obligation in the contract, which may include an estimate of variable consideration, and (5) recognizing revenue when or as each performance obligation is satisfied. Our sales arrangements generally ask customers to pay in advance be",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm",
+      "accession": "0001213900-26-089999",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "paragraph and eventually to secure other sources of financing and attain profitable operations. 7 NOTE 4 - RELATED PARTY TRANSACTIONS Wenxian Fan is the founder of our Company and has been serving as our Chairman of the Board of Directors, Chief Executive Officer and Chief Financi",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm",
+      "accession": "0001213900-26-089999",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "ets | 5,593 | 8,405 | Total assets | $ | 27,605 | $ | 22,140 | Liabilities and Equity | Current liabilities | Deferred revenue | 5,928 | 8,939 | Accounts payable | 19,549 | 7,709 | Operating lease liabilities, current | 5,593 | 5,571 | Other payable- related parties | 838,644",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1784058/000121390026089999/ea0301324-10q_ponygroup.htm",
+      "accession": "0001213900-26-089999",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    }
+  ],
+  "revenue_quality_text_source": "0001213900-26-089999"
+}

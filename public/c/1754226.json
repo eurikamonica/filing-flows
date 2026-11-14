@@ -1,0 +1,203 @@
+{
+  "cik": 1754226,
+  "ticker": "OBT",
+  "name": "Orange County Bancorp, Inc. /DE/",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-11-14T20:47:05+00:00",
+  "fetched_at": "2026-11-10T04:11:54+00:00",
+  "price": 39.88,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.233592,
+  "snapshot": {
+    "cash": 244571000,
+    "equity": 308996000,
+    "assets": 2737747000,
+    "liabilities": 2428751000,
+    "retained_earnings": 194629000,
+    "deposits": 2366340000,
+    "time_deposits": 32711000,
+    "interest_paid": 26385000,
+    "pretax_income": 57066000,
+    "net_income": 49859000,
+    "da": 1642000,
+    "ocf": 63208000,
+    "capex": 1646000,
+    "stated_rate": 0.056,
+    "shares": 13411153,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 244571000.0,
+    "net_debt": null,
+    "ebitda": 58708000.0,
+    "ebit": 57066000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 3.395604,
+    "fcf": 61562000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 244571000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 534836781.64,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "lt of increased core deposits and allow for replacement of maturing brokered deposits with transactional customer deposits resulting in lower interest expense. Our reciprocal deposits obtained through the CDARS and ICS networks totaled $ 140.3 million and $101.8 million a",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1754226/000110465926124437/obt-20260930x10q.htm",
+        "accession": "0001104659-26-124437",
+        "form": "10-Q",
+        "filed": "2026-11-09",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-124437",
+      "form": "10-Q",
+      "filed": "2026-11-09",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1754226/000110465926124437/obt-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Subordinated Debt",
+      "kind": "notes",
+      "as_of": "2025-09-30",
+      "face": 25000000.0,
+      "coupon": 0.065,
+      "spread": 0.03205,
+      "floating": true
+    },
+    {
+      "name": "Municipal letters of credit",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "drawn": 87400000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Subordinated notes",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon": 0.065,
+      "spread": 0.03205,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-09-25",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-25-093383",
+      "doc": "tm2526902d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-06-04",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-25-056255",
+      "doc": "tm2517119d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-04-23",
+      "items": "1.01,9.01",
+      "acc": "0000943374-25-000167",
+      "doc": "form8k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

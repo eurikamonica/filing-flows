@@ -1,0 +1,312 @@
+{
+  "cik": 1891027,
+  "ticker": "MNTN",
+  "name": "MNTN, Inc.",
+  "sector": "industrials",
+  "industry": "Services-Advertising",
+  "sic": "7310",
+  "docs": {
+    "xbrl:0001891027-26-000019": {
+      "instruments": [
+        {
+          "name": "2025 Amended and Restated Financing Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "spread": 0.03,
+          "drawn": 0.0,
+          "available": 49400000.0,
+          "floating": true
+        },
+        {
+          "name": "Convertible Notes",
+          "kind": "convertible",
+          "as_of": "2025-12-31",
+          "coupon": 0.06,
+          "conv_price": 22.9653,
+          "effective": 0.199,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-19",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001891027-26-000073": {
+      "instruments": [
+        {
+          "name": "2025 Amended and Restated Financing Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "spread": 0.03,
+          "drawn": 0.0,
+          "available": 48500000.0,
+          "floating": true
+        },
+        {
+          "name": "Subordinated Convertible Promissory Notes",
+          "kind": "convertible",
+          "as_of": "2025-06-30",
+          "coupon": 0.06,
+          "conv_price": 22.9653,
+          "effective": 0.199,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-10",
+      "report": "2026-06-30"
+    },
+    "0001891027-26-000019:exhibit1022businessfinanci.htm": {
+      "kind": "agreement",
+      "date": "2026-02-19",
+      "agreement_kind": "other"
+    }
+  },
+  "sic_description": "Services-Advertising",
+  "snapshot": {
+    "cash": 237281000,
+    "convertible_current": 0,
+    "equity": 334329000,
+    "assets": 402739000,
+    "liabilities": 68410000,
+    "assets_current": 311640000,
+    "liabilities_current": 64121000,
+    "retained_earnings": -245626000,
+    "interest_paid": 0,
+    "operating_income": 44747000,
+    "pretax_income": 54438000,
+    "net_income": 56395000,
+    "da": 9870000,
+    "ocf": 72910000,
+    "revenue": 313331000,
+    "shares": 78774979,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "convertible_current": "ConvertibleDebtCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001891027-26-000019",
+  "xbrl_10-Q": "xbrl:0001891027-26-000073",
+  "events": [],
+  "fetched_at": "2026-10-26T01:30:32+00:00",
+  "signature": "0001891027-26-000089",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001891027-26-000073",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000073/mntn-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.286,
+      "receivables_growth": -0.0757,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.3881,
+      "dsri": 0.7187,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "deferred_release",
+        "label": "Contract liabilities decline while revenue increases",
+        "value": -0.3881,
+        "rule": "Contract liabilities < -20% and revenue growth >= 10%"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 290093000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        },
+        {
+          "value_usd": 225571000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 61837000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        },
+        {
+          "value_usd": 66900000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 5486000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        },
+        {
+          "value_usd": 8966000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 56471000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        },
+        {
+          "value_usd": 42548000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -6426000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        },
+        {
+          "value_usd": -32877000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001891027-26-000019",
+          "filed": "2026-02-19",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000019/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments – Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025-05”), which provides a practical expedient for estimating expected credit losses for current accounts receivable and current contract asse",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000073/mntn-20260630.htm",
+        "accession": "0001891027-26-000073",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ies Other current liabilities were as follows (in thousands): As of | June 30, 2026 | December 31, 2025 | Deferred revenue | $ | 2,694 | $ | 5,486 | Income taxes payable | 2,767 | 101 | Other | 45 | 39 | Total other current liabilities | $ | 5,506 | $ | 5,626 | 18 Table",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000073/mntn-20260630.htm",
+        "accession": "0001891027-26-000073",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001891027-26-000073",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001891027-26-000073",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": ", Financial Instruments – Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025-05”), which provides a practical expedient for estimating expected credit losses for current accounts receivable and current contract asse",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000073/mntn-20260630.htm",
+      "accession": "0001891027-26-000073",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "ies Other current liabilities were as follows (in thousands): As of | June 30, 2026 | December 31, 2025 | Deferred revenue | $ | 2,694 | $ | 5,486 | Income taxes payable | 2,767 | 101 | Other | 45 | 39 | Total other current liabilities | $ | 5,506 | $ | 5,626 | 18 Table",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1891027/000189102726000073/mntn-20260630.htm",
+      "accession": "0001891027-26-000073",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    }
+  ],
+  "revenue_quality_text_source": "0001891027-26-000073"
+}

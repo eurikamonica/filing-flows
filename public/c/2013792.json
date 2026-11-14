@@ -1,0 +1,393 @@
+{
+  "cik": 2013792,
+  "ticker": "EWSB",
+  "name": "EWSB Bancorp, Inc. /MD/",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "generated_at": "2026-11-14T20:47:07+00:00",
+  "fetched_at": "2026-11-12T23:44:08+00:00",
+  "price": 10.25,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.231511,
+  "snapshot": {
+    "total_debt": 12214087,
+    "cash": 2167592,
+    "equity": 15529269,
+    "assets": 258199985,
+    "liabilities": 242670716,
+    "retained_earnings": 12529247,
+    "deposits": 226604271,
+    "time_deposits": 117433538,
+    "interest_paid": 5904521,
+    "pretax_income": -732771,
+    "net_income": -781956,
+    "ocf": -694086,
+    "capex": 88975,
+    "deposit_interest": 4728899,
+    "maturities": {
+      "as_of": "2026-09-30",
+      "y2": 5968729,
+      "y3": 5345858,
+      "y4": 899500
+    },
+    "shares": 1014220,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 12214087,
+    "cash_and_investments": 2167592.0,
+    "net_debt": 10046495.0,
+    "ebitda": -732771.0,
+    "ebit": -732771.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 0.882448,
+    "fcf": -783061,
+    "fcf_to_debt": -0.064111,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 2167592.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 10395755.0,
+    "debt_to_ev": 0.597492,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-126195",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2013792/000110465926126195/ewsb-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Federal Loan Home Bank Advances Fixed Term Period",
+      "kind": "loan",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0335,
+      "carrying": 12214087.0,
+      "floating": false
+    },
+    {
+      "name": "Federal Loan Home Bank Advances Short Term Period",
+      "kind": "loan",
+      "as_of": "2026-09-30",
+      "carrying": 0.0,
+      "rate_now": 0.038,
+      "floating": false
+    },
+    {
+      "name": "Federal Reserve Bank Advances",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "carrying": 0.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2024-06-28",
+      "items": "1.01,9.01",
+      "acc": "0001104659-24-076391",
+      "doc": "tm2418551d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-06-30",
+      31078000,
+      1515507,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      25301000,
+      1146500,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      27835000,
+      1125467,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      44268000,
+      2733723,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      44824000,
+      1006872,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      29257820,
+      964642,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      23417549,
+      6681903,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-09-30",
+      12214087,
+      2167592,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-04",
+      52.53,
+      3.043,
+      0.3991,
+      151.4
+    ],
+    [
+      "2025-05",
+      22.5,
+      3.522,
+      0.3432,
+      146.6
+    ],
+    [
+      "2025-06",
+      16.93,
+      3.638,
+      0.3278,
+      145.5
+    ],
+    [
+      "2025-07",
+      10.0,
+      3.921,
+      0.3052,
+      142.7
+    ],
+    [
+      "2025-08",
+      3.77,
+      3.969,
+      0.285,
+      142.3
+    ],
+    [
+      "2025-09",
+      2.46,
+      4.223,
+      0.268,
+      139.9
+    ],
+    [
+      "2025-10",
+      1.79,
+      4.44,
+      0.2569,
+      137.9
+    ],
+    [
+      "2025-11",
+      1.57,
+      4.456,
+      0.2544,
+      137.7
+    ],
+    [
+      "2025-12",
+      2.05,
+      4.406,
+      0.2576,
+      138.2
+    ],
+    [
+      "2026-01",
+      1.35,
+      4.588,
+      0.2474,
+      136.5
+    ],
+    [
+      "2026-02",
+      1.27,
+      4.661,
+      0.2444,
+      135.8
+    ],
+    [
+      "2026-03",
+      0.29,
+      5.167,
+      0.2214,
+      131.3
+    ],
+    [
+      "2026-04",
+      0.02,
+      6.283,
+      0.184,
+      121.9
+    ],
+    [
+      "2026-05",
+      0.28,
+      5.846,
+      0.2081,
+      125.5
+    ],
+    [
+      "2026-06",
+      0.08,
+      6.248,
+      0.1942,
+      122.2
+    ],
+    [
+      "2026-07",
+      1.35,
+      5.119,
+      0.2402,
+      131.7
+    ],
+    [
+      "2026-08",
+      1.37,
+      5.604,
+      0.2402,
+      127.5
+    ],
+    [
+      "2026-09",
+      1.14,
+      5.61,
+      0.2402,
+      127.5
+    ],
+    [
+      "2026-10",
+      0.97,
+      5.703,
+      0.2368,
+      126.7
+    ],
+    [
+      "2026-11",
+      0.32,
+      6.824,
+      0.2315,
+      117.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

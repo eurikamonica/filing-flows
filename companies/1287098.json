@@ -1,0 +1,313 @@
+{
+  "cik": 1287098,
+  "ticker": "MXCT",
+  "name": "MAXCYTE, INC.",
+  "sector": "industrials",
+  "industry": "Services-Commercial Physical & Biological Research",
+  "sic": "8731",
+  "docs": {
+    "xbrl:0001104659-26-034557": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-25",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001104659-26-095971": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-13",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Commercial Physical & Biological Research",
+  "snapshot": {
+    "cash": 15042000,
+    "investments": 90648000,
+    "finance_leases": 0,
+    "operating_leases": 17251000,
+    "equity": 158752000,
+    "assets": 184672000,
+    "liabilities": 25920000,
+    "assets_current": 121274000,
+    "liabilities_current": 9895000,
+    "retained_earnings": -275107000,
+    "operating_income": -41792000,
+    "pretax_income": -35636000,
+    "net_income": -35636000,
+    "da": 4169000,
+    "ocf": -22977000,
+    "capex": 665000,
+    "revenue": 31051000,
+    "shares": 103206206,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001104659-26-034557",
+  "xbrl_10-Q": "xbrl:0001104659-26-095971",
+  "events": [],
+  "fetched_at": "2026-10-26T03:04:31+00:00",
+  "signature": "0001104659-26-115745",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 17251000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm",
+        "accession": "0001104659-26-095971",
+        "form": "10-Q",
+        "filed": "2026-08-13",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 17251000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001104659-26-095971",
+            "filed": "2026-08-13",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-095971",
+      "form": "10-Q",
+      "filed": "2026-08-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0566,
+      "receivables_growth": -0.2518,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.3012,
+      "dsri": 0.7931,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 20957000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        },
+        {
+          "value_usd": 22215000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 3503000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        },
+        {
+          "value_usd": 4682000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 3861000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        },
+        {
+          "value_usd": 5525000.0,
+          "tag": "us-gaap:ContractWithCustomerLiability",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -34410000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        },
+        {
+          "value_usd": -27610000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -44630000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        },
+        {
+          "value_usd": -41055000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001104659-26-034557",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926034557/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments – Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025-05”). ASU 2025-05 provides a practical expedient that all entities can use when estimating expected credit losses, which permits an entity",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm",
+        "accession": "0001104659-26-095971",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "tual property is recognized over the license term. Milestone payments included in SPL arrangements represent variable consideration and are recognized when it is probable that a significant reversal of cumulative revenue recognized will not occur, usually upon a customer’s obtainm",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm",
+        "accession": "0001104659-26-095971",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "$ | 1,401 | Accrued expenses and other | 4,170 | 7,812 | Operating lease liability, current | 1,528 | 1,456 | Deferred revenue, current portion | 2,463 | 3,598 | Total current liabilities | 9,895 | 14,267 | Operating lease liability, net of current portion | 15,723 | 16,487 |",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm",
+        "accession": "0001104659-26-095971",
+        "form": "10-Q",
+        "filed": "2026-08-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001104659-26-095971",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001104659-26-095971",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": ", Financial Instruments – Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets (“ASU 2025-05”). ASU 2025-05 provides a practical expedient that all entities can use when estimating expected credit losses, which permits an entity",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm",
+      "accession": "0001104659-26-095971",
+      "form": "10-Q",
+      "filed": "2026-08-13"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "tual property is recognized over the license term. Milestone payments included in SPL arrangements represent variable consideration and are recognized when it is probable that a significant reversal of cumulative revenue recognized will not occur, usually upon a customer’s obtainm",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm",
+      "accession": "0001104659-26-095971",
+      "form": "10-Q",
+      "filed": "2026-08-13"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "$ | 1,401 | Accrued expenses and other | 4,170 | 7,812 | Operating lease liability, current | 1,528 | 1,456 | Deferred revenue, current portion | 2,463 | 3,598 | Total current liabilities | 9,895 | 14,267 | Operating lease liability, net of current portion | 15,723 | 16,487 |",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1287098/000110465926095971/mxct-20260630x10q.htm",
+      "accession": "0001104659-26-095971",
+      "form": "10-Q",
+      "filed": "2026-08-13"
+    }
+  ],
+  "revenue_quality_text_source": "0001104659-26-095971"
+}

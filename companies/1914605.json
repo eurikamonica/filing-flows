@@ -1,0 +1,229 @@
+{
+  "cik": 1914605,
+  "ticker": "ECBK",
+  "name": "ECB Bancorp, Inc. /MD/",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "docs": {
+    "xbrl:0001437749-26-009778": {
+      "instruments": [
+        {
+          "name": "Atlantic Community Bankers Bank",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "drawn": 0.0,
+          "capacity": 15000000.0,
+          "floating": false
+        },
+        {
+          "name": "Federal Reserve Bank",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "available": 75700000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-25",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001437749-26-026449": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-07",
+      "report": "2026-06-30"
+    },
+    "0001193125-22-177568:d367083d424b3.htm": {
+      "kind": "424b",
+      "date": "2022-06-21",
+      "tranches": []
+    },
+    "0001193125-22-155701:d308512d424b3.htm": {
+      "kind": "424b",
+      "date": "2022-05-20",
+      "tranches": []
+    }
+  },
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "snapshot": {
+    "cash": 2943000,
+    "investments": 121026000,
+    "operating_leases": 1693000,
+    "equity": 179879000,
+    "assets": 1671515000,
+    "liabilities": 1491636000,
+    "retained_earnings": 102000000,
+    "deposits": 1192702000,
+    "time_deposits": 728311000,
+    "interest_paid": 47796000,
+    "pretax_income": 15471000,
+    "net_income": 11418000,
+    "da": 297000,
+    "ocf": 22758000,
+    "capex": 363000,
+    "revenue": 611000,
+    "deposit_interest": 37736000,
+    "shares": 8737702,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndDueFromBanks",
+    "investments": "ShortTermInvestments",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-026449",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1914605/000143774926026449/ecbk20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0364,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.1863
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 598000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001437749-26-009778",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1914605/000143774926009778/"
+        },
+        {
+          "value_usd": 577000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001437749-26-009778",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1914605/000143774926009778/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 9220000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-009778",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1914605/000143774926009778/"
+        },
+        {
+          "value_usd": 6228000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-009778",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1914605/000143774926009778/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 7772000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-009778",
+          "filed": "2026-03-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1914605/000143774926009778/"
+        },
+        {
+          "value_usd": 3991000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-009778",
+          "filed": "2026-03-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1914605/000143774926009778/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001437749-26-026449",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-026449",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001437749-26-026449",
+  "xbrl_10-K": "xbrl:0001437749-26-009778",
+  "xbrl_10-Q": "xbrl:0001437749-26-026449",
+  "events": [
+    {
+      "date": "2022-05-13",
+      "items": "1.01,9.01",
+      "acc": "0001193125-22-149840",
+      "doc": "d697652d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-11-03T16:25:24+00:00",
+  "signature": "0001437749-26-033178",
+  "fdic": {
+    "matched": false
+  }
+}

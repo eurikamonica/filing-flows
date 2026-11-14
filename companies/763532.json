@@ -1,0 +1,959 @@
+{
+  "cik": 763532,
+  "ticker": "LYTS",
+  "name": "LSI INDUSTRIES INC",
+  "sector": "technology",
+  "industry": "Electric Lighting & Wiring Equipment",
+  "sic": "3640",
+  "docs": {
+    "xbrl:0001437749-26-029621": {
+      "instruments": [
+        {
+          "name": "Term Loan",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "carrying": 195931000.0,
+          "floating": true
+        },
+        {
+          "name": "Senior Secured Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 150000000.0,
+          "effective": 0.055,
+          "spread": 0.025,
+          "available": 90000000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-09-03",
+      "report": "2026-06-30"
+    },
+    "0001437749-26-006148:lyts20260227_424b5.htm": {
+      "kind": "424b",
+      "date": "2026-02-27",
+      "tranches": []
+    },
+    "0001437749-26-005627:lyts20260224_424b5.htm": {
+      "kind": "424b",
+      "date": "2026-02-25",
+      "tranches": []
+    },
+    "0000892251-10-000044:ex101033110.htm": {
+      "kind": "agreement",
+      "date": "2010-03-31",
+      "agreement_kind": "amendment",
+      "dated": "2010-03-31",
+      "title": "- Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Leverage Ratio | Applicable Unused Fee | Borrower’s Leverage Ratio is less than 1.00:1.00 | 25 basis points | Borrower’s Leverage Ratio is equal to or greater than 1.00:1.00 but less than or equal to 1.50:1.00 | 25 basis points | Borrower’s Leverage Ratio is greater than 1.50:1.00 | 25 basis points | Applicable Euro-Rate Margin : The number of basis points based upon the Borrower’s Leverage Ratio as at the end of the"
+        },
+        {
+          "type": "leverage",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Leverage Ratio | Applicable Unused Fee | Borrower’s Leverage Ratio is less than 1.00:1.00 | 25 basis points | Borrower’s Leverage Ratio is equal to or greater than 1.00:1.00 but less than or equal to 1.50:1.00 | 25 basis points | Borrower’s Leverage Ratio is greater than 1.50:1.00 | 25 basis points | Applicable Euro-Rate Margin : The number of basis points based upon the Borrower’s Leverage Ratio as at the end of the"
+        }
+      ]
+    },
+    "0000892251-09-000035:ex101031709.htm": {
+      "kind": "agreement",
+      "date": "2009-03-18",
+      "agreement_kind": "amendment",
+      "dated": "2009-03-18",
+      "size": 10000000.0,
+      "title": "Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Base Rate"
+      ]
+    },
+    "0000892251-07-000008:ex102loan.htm": {
+      "kind": "agreement",
+      "date": "2007-01-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2007-01-12",
+      "title": "Loan Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate",
+        "Prime Rate"
+      ]
+    }
+  },
+  "sic_description": "Electric Lighting & Wiring Equipment",
+  "snapshot": {
+    "total_debt": 255931000,
+    "current_debt": 10000000,
+    "cash": 14249000,
+    "operating_leases": 50795000,
+    "revolver_drawn": 60000000,
+    "equity": 360677000,
+    "assets": 829864000,
+    "assets_current": 295885000,
+    "liabilities_current": 149919000,
+    "retained_earnings": 82319000,
+    "interest_expense": 5928000,
+    "interest_paid": 5597000,
+    "operating_income": 38403000,
+    "pretax_income": 31474000,
+    "net_income": 22600000,
+    "da": 16565000,
+    "ocf": 44148000,
+    "capex": 5142000,
+    "revenue": 689397000,
+    "debt_issued": 1483149000,
+    "debt_repaid": 1275776000,
+    "shares": 37261336,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "da": "DepreciationDepletionAndAmortization (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "Revenues (four quarters)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (fiscal year)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (fiscal year)"
+  },
+  "history": [
+    {
+      "end": "2017-03-31",
+      "filed": "2017-05-08",
+      "total_debt": 54966000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 25399626,
+      "convertible": null,
+      "equity": 159577000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-09-30",
+      "filed": "2017-11-06",
+      "total_debt": 51862000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": 334699000,
+      "shares": 25791814,
+      "convertible": null,
+      "equity": 144394000,
+      "interest_paid": null
+    },
+    {
+      "end": "2017-12-31",
+      "filed": "2018-02-07",
+      "total_debt": 52149000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": 341346000,
+      "shares": 25574457,
+      "convertible": null,
+      "equity": 142328000,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-03-31",
+      "filed": "2018-05-08",
+      "total_debt": 45289000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 25875184,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-09-30",
+      "filed": "2018-11-07",
+      "total_debt": 46152000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26025256,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-12-31",
+      "filed": "2019-02-06",
+      "total_debt": 48372000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 25888975,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-03-31",
+      "filed": "2019-05-08",
+      "total_debt": 43812000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 25937670,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-09-30",
+      "filed": "2019-11-07",
+      "total_debt": 23181000,
+      "cash": 1579000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26105943,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-12-31",
+      "filed": "2020-02-06",
+      "total_debt": 10437000,
+      "cash": 1248000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26136418,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-03-31",
+      "filed": "2020-05-05",
+      "total_debt": 7919000,
+      "cash": 820000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26192949,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-09-30",
+      "filed": "2020-11-05",
+      "total_debt": 0,
+      "cash": 9463000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26355467,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-12-31",
+      "filed": "2021-01-29",
+      "total_debt": 0,
+      "cash": 13584000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26435719,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-03-31",
+      "filed": "2021-04-28",
+      "total_debt": 0,
+      "cash": 23528000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26498775,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-09-30",
+      "filed": "2021-11-04",
+      "total_debt": 78271000,
+      "cash": 2570000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26920238,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-12-31",
+      "filed": "2022-02-04",
+      "total_debt": 86601000,
+      "cash": 914000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 26641808,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-09-30",
+      "filed": "2022-11-04",
+      "total_debt": 77546000,
+      "cash": 9028000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 27777410,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-12-31",
+      "filed": "2023-02-07",
+      "total_debt": 62821000,
+      "cash": 2765000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 28166965,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-03-31",
+      "filed": "2023-05-05",
+      "total_debt": 49573000,
+      "cash": 1350000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 28367653,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-09-30",
+      "filed": "2023-11-06",
+      "total_debt": 28669000,
+      "cash": 3533000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 28921449,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-12-31",
+      "filed": "2024-02-06",
+      "total_debt": 21521000,
+      "cash": 2660000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 29070313,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-03-31",
+      "filed": "2024-05-06",
+      "total_debt": 16353000,
+      "cash": 7175000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 29129848,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-09-30",
+      "filed": "2024-11-08",
+      "total_debt": 47689000,
+      "cash": 6969000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 29838315,
+      "convertible": null,
+      "equity": 211183000,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-12-31",
+      "filed": "2025-02-07",
+      "total_debt": 38186000,
+      "cash": 4712000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 29921385,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-03-31",
+      "filed": "2025-05-08",
+      "total_debt": 55360000,
+      "cash": 4301000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 30004460,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-09-30",
+      "filed": "2025-11-07",
+      "total_debt": 50676000,
+      "cash": 7143000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 31092786,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-12-31",
+      "filed": "2026-02-09",
+      "total_debt": 27939000,
+      "cash": 6407000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 31133195,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-03-31",
+      "filed": "2026-05-08",
+      "total_debt": 261006000,
+      "cash": 10333000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 36712404,
+      "convertible": null,
+      "equity": 352811000,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-09-03",
+      "total_debt": 255931000,
+      "cash": 14249000,
+      "investments": null,
+      "interest_expense": 5928000,
+      "operating_income": 38403000,
+      "da": 16565000,
+      "ocf": 44148000,
+      "revenue": 689397000,
+      "shares": 37261336,
+      "convertible": null,
+      "equity": 360677000,
+      "interest_paid": 5597000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001437749-26-029621",
+  "events": [
+    {
+      "date": "2026-03-24",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001437749-26-009635",
+      "doc": "lyts20260320_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001437749-26-006372",
+      "doc": "lyts20260226_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-25",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001437749-26-005618",
+      "doc": "lyts20260223_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-11-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001437749-25-033146",
+      "doc": "lyts20251029_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-04-19",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001437749-24-012474",
+      "doc": "lyts20240418_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-05-24",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001437749-21-013166",
+      "doc": "lyts20210521_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-04-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001437749-21-007967",
+      "doc": "lyts20210331_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-02-21",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001437749-17-002834",
+      "doc": "lyts20170214_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-06-23",
+      "items": "1.01,9.01",
+      "acc": "0000892251-16-000242",
+      "doc": "form8k062316.htm",
+      "desc": "FORM 8-K FOR JUNE 23, 2016."
+    }
+  ],
+  "fetched_at": "2026-10-25T23:14:42+00:00",
+  "signature": "0001437749-26-029621",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "purchase_broad",
+        "label": "Purchase obligations, gross (potential overlap)",
+        "class": "operating_commitment",
+        "amount_usd": 61600000.0,
+        "reported_total": true,
+        "schedule": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "schedule_labels": [
+          "Year 1",
+          "Year 2",
+          "Year 3",
+          "Year 4",
+          "Year 5",
+          "Thereafter"
+        ],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+        "accession": "0001437749-26-029621",
+        "form": "10-K",
+        "filed": "2026-09-03",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 61600000.0,
+            "tag": "us-gaap:PurchaseObligation",
+            "accession": "0001437749-26-029621",
+            "filed": "2026-09-03",
+            "form": "10-K",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      },
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 50795000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+        "accession": "0001437749-26-029621",
+        "form": "10-K",
+        "filed": "2026-09-03",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 50795000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-029621",
+            "filed": "2026-09-03",
+            "form": "10-K",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "rovided as of the dates indicated: (In thousands) | June 30, 2026 | June 30, 2025 | Accrued expenses: | Customer prepayments | $ | 6,432 | $ | 4,070 | Compensation and benefits | 16,690 | 12,471 | Accrued warranty | 7,331 | 7,505 | Accrued sales commissions | 3,761 | 3,956",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+        "accession": "0001437749-26-029621",
+        "form": "10-K",
+        "filed": "2026-09-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "earnouts",
+        "label": "Contingent earn-outs",
+        "excerpt": "and changes in fair value will be reported in our Consolidated Statements of Operations. Changes in the earn-out liability measured at fair value using Level 3 inputs were as follows: | (in thousands) | Earnout liability at June 30, 2024 | $ | - | Addition for a",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+        "accession": "0001437749-26-029621",
+        "form": "10-K",
+        "filed": "2026-09-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-029621",
+      "form": "10-K",
+      "filed": "2026-09-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.2023,
+      "receivables_growth": 0.4493,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.5803,
+      "dsri": 1.2054,
+      "ocf_to_net_income": 1.9553
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 689397000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        },
+        {
+          "value_usd": 573377000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 151231000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        },
+        {
+          "value_usd": 104347000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 6432000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        },
+        {
+          "value_usd": 4070000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 44148000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        },
+        {
+          "value_usd": 38118000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 22579000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        },
+        {
+          "value_usd": 24383000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-029621",
+          "filed": "2026-09-03",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "bill_and_hold",
+        "label": "Bill-and-hold arrangements",
+        "excerpt": "t incurred and the total estimated cost for the performance obligation. On occasion, the Company enters into bill-and-hold arrangements on a limited basis. Each bill-and-hold arrangement is reviewed and revenue is recognized only when certain criteria have been met: ( 1 )",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+        "accession": "0001437749-26-029621",
+        "form": "10-K",
+        "filed": "2026-09-03"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-06-30",
+      "2025-06-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "rovided as of the dates indicated: (In thousands) | June 30, 2026 | June 30, 2025 | Accrued expenses: | Customer prepayments | $ | 6,432 | $ | 4,070 | Compensation and benefits | 16,690 | 12,471 | Accrued warranty | 7,331 | 7,505 | Accrued sales commissions | 3,761 | 3,956",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+      "accession": "0001437749-26-029621",
+      "form": "10-K",
+      "filed": "2026-09-03",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "earnouts",
+      "label": "Contingent earn-outs",
+      "excerpt": "and changes in fair value will be reported in our Consolidated Statements of Operations. Changes in the earn-out liability measured at fair value using Level 3 inputs were as follows: | (in thousands) | Earnout liability at June 30, 2024 | $ | - | Addition for a",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+      "accession": "0001437749-26-029621",
+      "form": "10-K",
+      "filed": "2026-09-03",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001437749-26-029621",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-029621",
+  "revenue_quality_text_leads": [
+    {
+      "key": "bill_and_hold",
+      "label": "Bill-and-hold arrangements",
+      "excerpt": "t incurred and the total estimated cost for the performance obligation. On occasion, the Company enters into bill-and-hold arrangements on a limited basis. Each bill-and-hold arrangement is reviewed and revenue is recognized only when certain criteria have been met: ( 1 )",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/763532/000143774926029621/lyts20260630d_10k.htm",
+      "accession": "0001437749-26-029621",
+      "form": "10-K",
+      "filed": "2026-09-03"
+    }
+  ],
+  "revenue_quality_text_source": "0001437749-26-029621"
+}

@@ -1,0 +1,464 @@
+{
+  "cik": 1672773,
+  "ticker": null,
+  "name": "Arboretum Silverleaf Income Fund, L.P.",
+  "sector": "industrials",
+  "industry": "Services-Equipment Rental & Leasing, NEC",
+  "sic": "7359",
+  "sic_description": "Services-Equipment Rental & Leasing, NEC",
+  "generated_at": "2026-11-14T20:47:05+00:00",
+  "fetched_at": "2026-11-05T23:44:16+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 1254516,
+    "equity": 3842093,
+    "assets": 4157533,
+    "liabilities": 450932,
+    "net_income": -1098053,
+    "ocf": -132639,
+    "revenue": 66626,
+    "maturities": {
+      "as_of": "2024-12-31",
+      "next12m": 11127
+    },
+    "shares": 2520653.57,
+    "balance_date": "2025-09-30",
+    "latest_period": "2025-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1254516.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -132639.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1254516.0,
+    "due_12m": 11127,
+    "due_24m": null,
+    "liquidity_to_due12": 112.745214,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2025-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-050203",
+      "form": "10-Q",
+      "filed": "2026-11-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226050203/form10-q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2025-09-30",
+    "metrics": {
+      "revenue_growth": -0.6969,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 218243.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-008480",
+          "filed": "2026-03-02",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226008480/"
+        },
+        {
+          "value_usd": 719991.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-26-008480",
+          "filed": "2026-03-02",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226008480/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -154403.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-008480",
+          "filed": "2026-03-02",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226008480/"
+        },
+        {
+          "value_usd": 249335.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-008480",
+          "filed": "2026-03-02",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226008480/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -1140781.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-008480",
+          "filed": "2026-03-02",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226008480/"
+        },
+        {
+          "value_usd": -1249351.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-008480",
+          "filed": "2026-03-02",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226008480/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "ting pronouncements, if adopted, would have a material effect on the interim financial statements. 11 | 3. Related Party Transactions . The General Partner is responsible for the operations of the Partnership and the Investment Manager makes all investment decisions and manages th",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226050203/form10-q.htm",
+        "accession": "0001493152-26-050203",
+        "form": "10-Q",
+        "filed": "2026-11-05"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "ties: | Other assets | 398,106 | 852,708 | Accounts payable and accrued liabilities | ( 79,900 | ) | 15,324 | Deferred revenue | ( 7,297 | ) | ( 491,159 | ) | Net cash used in operating activities | ( 121,269 | ) | ( 143,033 | ) | Cash flows from investing activities: | Chang",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1672773/000149315226050203/form10-q.htm",
+        "accession": "0001493152-26-050203",
+        "form": "10-Q",
+        "filed": "2026-11-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2024-12-31",
+      "2023-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [],
+  "instruments_from": {
+    "form": null,
+    "date": null
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2017-12-31",
+      3851334,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      817921,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      6129953,
+      2770157,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      2052084,
+      3258438,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-12-31",
+      3317763,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      3319556,
+      7396559,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      2947708,
+      4763264,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      2796758,
+      1301574,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-12-31",
+      3119304,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      3431660,
+      845670,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      3646713,
+      50286,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      4251557,
+      488727,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-12-31",
+      3982229,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      3161008,
+      2464081,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      3296896,
+      15512,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      1067279,
+      266231,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-12-31",
+      965437,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      860869,
+      282472,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      442052,
+      139589,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      355085,
+      136853,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-12-31",
+      266018,
+      null,
+      281523,
+      null,
+      null,
+      1.05829
+    ],
+    [
+      "2023-03-31",
+      225976,
+      900854,
+      164997,
+      null,
+      null,
+      0.73015
+    ],
+    [
+      "2023-06-30",
+      184822,
+      2078351,
+      85984,
+      null,
+      null,
+      0.46523
+    ],
+    [
+      "2023-09-30",
+      142526,
+      1802249,
+      29568,
+      null,
+      null,
+      0.20746
+    ],
+    [
+      "2024-12-31",
+      11127,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

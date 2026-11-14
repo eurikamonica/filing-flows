@@ -1,0 +1,325 @@
+{
+  "cik": 708781,
+  "ticker": "CASS",
+  "name": "CASS INFORMATION SYSTEMS INC",
+  "sector": "industrials",
+  "industry": "Services-Business Services, NEC",
+  "sic": "7389",
+  "docs": {
+    "xbrl:0000708781-26-000010": {
+      "instruments": [
+        {
+          "name": "Federal Home Loan Bank",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "capacity": 239900000.0,
+          "floating": false
+        },
+        {
+          "name": "Two Corresponding Banks",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "capacity": 225000000.0,
+          "floating": false
+        },
+        {
+          "name": "Six Corresponding Banks",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "capacity": 83000000.0,
+          "floating": false
+        },
+        {
+          "name": "Standby letters of credit",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "drawn": 12794000.0,
+          "floating": false
+        },
+        {
+          "name": "Commercial letters of credit",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "drawn": 782000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-06",
+      "report": "2025-12-31"
+    },
+    "xbrl:0000708781-26-000031": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-05",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Business Services, NEC",
+  "snapshot": {
+    "cash": 228473000,
+    "investments": 187349000,
+    "short_term_borrowings": 80000000,
+    "operating_leases": 4149000,
+    "equity": 244664000,
+    "assets": 2516212000,
+    "liabilities": 2271548000,
+    "retained_earnings": 178287000,
+    "deposits": 1116568000,
+    "time_deposits": 97402000,
+    "interest_paid": 16029000,
+    "pretax_income": 45661000,
+    "net_income": 36714000,
+    "da": 5997000,
+    "ocf": 48649000,
+    "capex": 6741000,
+    "revenue": 198990000,
+    "deposit_interest": 15782000,
+    "shares": 12806149,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "investments": "ShortTermInvestments",
+    "short_term_borrowings": "OtherShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0000708781-26-000010",
+  "xbrl_10-Q": "xbrl:0000708781-26-000031",
+  "events": [],
+  "fetched_at": "2026-10-26T01:37:19+00:00",
+  "signature": "0000708781-26-000036",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 4149000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm",
+        "accession": "0000708781-26-000031",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 4149000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000708781-26-000031",
+            "filed": "2026-08-05",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "ed cash flows | 4,484 | Discount on cash flows | 335 | Total lease liability | $ | 4,149 | There were no sale and leaseback transactions, leveraged leases, or lease transactions with related parties during the six months ended June 30, 2026. Note 17 – Subsequent Events",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm",
+        "accession": "0000708781-26-000031",
+        "form": "10-Q",
+        "filed": "2026-08-05",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000708781-26-000031",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": -0.0176,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.0661
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 107997000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000708781-26-000010",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000010/"
+        },
+        {
+          "value_usd": 109929000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000708781-26-000010",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000010/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 37437000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000708781-26-000010",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000010/"
+        },
+        {
+          "value_usd": 38949000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000708781-26-000010",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000010/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 35116000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000708781-26-000010",
+          "filed": "2026-03-06",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000010/"
+        },
+        {
+          "value_usd": 19168000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000708781-26-000010",
+          "filed": "2026-03-06",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000010/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": ", Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Asset s (\"ASU 2025-05\"). ASU 2025-05 provides the option to elect a practical expedient to assume that the current conditions as of the balance sheet date",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm",
+        "accession": "0000708781-26-000031",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "representing the period over which the performance obligation is satisfied. The contracts have no significant variable consideration or financing components. Financial fees – The Company earns fees on a transaction level basis for invoice payment services when making customer pay",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm",
+        "accession": "0000708781-26-000031",
+        "form": "10-Q",
+        "filed": "2026-08-05"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "sale_leaseback",
+      "label": "Sale-and-leaseback",
+      "excerpt": "ed cash flows | 4,484 | Discount on cash flows | 335 | Total lease liability | $ | 4,149 | There were no sale and leaseback transactions, leveraged leases, or lease transactions with related parties during the six months ended June 30, 2026. Note 17 – Subsequent Events",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm",
+      "accession": "0000708781-26-000031",
+      "form": "10-Q",
+      "filed": "2026-08-05",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0000708781-26-000031",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0000708781-26-000031",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": ", Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Asset s (\"ASU 2025-05\"). ASU 2025-05 provides the option to elect a practical expedient to assume that the current conditions as of the balance sheet date",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm",
+      "accession": "0000708781-26-000031",
+      "form": "10-Q",
+      "filed": "2026-08-05"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "representing the period over which the performance obligation is satisfied. The contracts have no significant variable consideration or financing components. Financial fees – The Company earns fees on a transaction level basis for invoice payment services when making customer pay",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/708781/000070878126000031/cass-20260630.htm",
+      "accession": "0000708781-26-000031",
+      "form": "10-Q",
+      "filed": "2026-08-05"
+    }
+  ],
+  "revenue_quality_text_source": "0000708781-26-000031"
+}

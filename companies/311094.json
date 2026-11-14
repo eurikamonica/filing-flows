@@ -1,0 +1,290 @@
+{
+  "cik": 311094,
+  "ticker": "WABC",
+  "name": "WESTAMERICA BANCORPORATION",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "docs": {
+    "xbrl:0001171843-26-001195": {
+      "instruments": [
+        {
+          "name": "Federal Reserve",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "capacity": 741923000.0,
+          "floating": false
+        },
+        {
+          "name": "Corresponding Banks",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "capacity": 60000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-27",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001171843-26-007225": {
+      "instruments": [
+        {
+          "name": "Federal Reserve",
+          "kind": "other",
+          "as_of": "2026-09-30",
+          "capacity": 767994000.0,
+          "floating": false
+        },
+        {
+          "name": "Corresponding Banks",
+          "kind": "other",
+          "as_of": "2026-09-30",
+          "capacity": 60000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-06",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "National Commercial Banks",
+  "snapshot": {
+    "current_debt": 139062000,
+    "cash": 322510000,
+    "short_term_borrowings": 139062000,
+    "operating_leases": 21410000,
+    "equity": 789672000,
+    "assets": 5793774000,
+    "liabilities": 5004102000,
+    "retained_earnings": 570759000,
+    "deposits": 4816365000,
+    "interest_paid": 13746000,
+    "pretax_income": 148882000,
+    "net_income": 110699000,
+    "da": 3013000,
+    "ocf": 115500000,
+    "capex": 2606000,
+    "stated_rate": 0.02,
+    "fixed_share": 0.0531,
+    "shares": 23097337,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndDueFromBanks",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "fixed_share": "LongTermDebtPercentageBearingFixedInterestRate"
+  },
+  "history": [
+    {
+      "end": "2011-06-30",
+      "filed": "2011-08-02",
+      "total_debt": 15000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 28523000,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2011-09-30",
+      "filed": "2011-11-02",
+      "total_debt": 15000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 28478701,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2012-03-31",
+      "filed": "2012-05-02",
+      "total_debt": 15000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 27864883,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2012-06-30",
+      "filed": "2012-08-02",
+      "total_debt": 15000000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 27564656,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 21410000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/311094/000117184326007225/wabc20260930_10q.htm",
+        "accession": "0001171843-26-007225",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 21410000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001171843-26-007225",
+            "filed": "2026-11-06",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/311094/000117184326007225/wabc20260930_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "earing deposits | 2,649,750 | 2,587,529 | Total deposits | 4,816,365 | 4,840,019 | Securities sold under repurchase agreements | 139,062 | 137,298 | Other liabilities | 48,675 | 49,354 | Total Liabilities | 5,004,102 | 5,026,671 | Contingencies (Note 10) | Shareholders' Equit",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/311094/000117184326007225/wabc20260930_10q.htm",
+        "accession": "0001171843-26-007225",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "r the nine months ended September 30, 2026 and the year ended December 31, 2025. The Bank’s funding from customer deposits is in part reliant on the confidence clients have in the Bank. The Bank places a very high priority in maintaining this confidence through conservati",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/311094/000117184326007225/wabc20260930_10q.htm",
+        "accession": "0001171843-26-007225",
+        "form": "10-Q",
+        "filed": "2026-11-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001171843-26-007225",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/311094/000117184326007225/wabc20260930_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "earing deposits | 2,649,750 | 2,587,529 | Total deposits | 4,816,365 | 4,840,019 | Securities sold under repurchase agreements | 139,062 | 137,298 | Other liabilities | 48,675 | 49,354 | Total Liabilities | 5,004,102 | 5,026,671 | Contingencies (Note 10) | Shareholders' Equit",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/311094/000117184326007225/wabc20260930_10q.htm",
+      "accession": "0001171843-26-007225",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "r the nine months ended September 30, 2026 and the year ended December 31, 2025. The Bank’s funding from customer deposits is in part reliant on the confidence clients have in the Bank. The Bank places a very high priority in maintaining this confidence through conservati",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/311094/000117184326007225/wabc20260930_10q.htm",
+      "accession": "0001171843-26-007225",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001171843-26-007225",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001171843-26-007225",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001171843-26-007225",
+  "xbrl_10-K": "xbrl:0001171843-26-001195",
+  "xbrl_10-Q": "xbrl:0001171843-26-007225",
+  "events": [
+    {
+      "date": "2019-06-28",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001171843-19-004244",
+      "doc": "f8k_062819.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-06T21:36:02+00:00",
+  "signature": "0001171843-26-007225",
+  "fdic": {
+    "matched": false
+  }
+}

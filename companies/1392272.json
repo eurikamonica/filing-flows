@@ -1,0 +1,131 @@
+{
+  "cik": 1392272,
+  "ticker": "CBNA",
+  "name": "CHAIN BRIDGE BANCORP INC",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "docs": {
+    "xbrl:0001628280-26-020177": {
+      "instruments": [
+        {
+          "name": "Federal Funds Purchased",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "capacity": 50000000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-20",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001628280-26-072729": {
+      "instruments": [
+        {
+          "name": "Federal Funds Purchased",
+          "kind": "other",
+          "as_of": "2026-09-30",
+          "capacity": 50000000.0,
+          "floating": false
+        },
+        {
+          "name": "The Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-02-20",
+          "capacity": 15000000.0,
+          "spread_max": 0.013,
+          "spread_min": 0.01,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-10",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "National Commercial Banks",
+  "snapshot": {
+    "current_debt": 0,
+    "cash": 1041584000,
+    "short_term_borrowings": 0,
+    "equity": 191841000,
+    "assets": 2265574000,
+    "liabilities": 2073733000,
+    "retained_earnings": 125387000,
+    "deposits": 2064937000,
+    "interest_paid": 3284000,
+    "pretax_income": 41370000,
+    "net_income": 32853000,
+    "da": 576000,
+    "ocf": 28954000,
+    "capex": 5241000,
+    "deposit_interest": 3272000,
+    "shares": 6561817,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-072729",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1392272/000162828026072729/chnbrdg-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001628280-26-072729",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001628280-26-072729",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001628280-26-072729",
+  "xbrl_10-K": "xbrl:0001628280-26-020177",
+  "xbrl_10-Q": "xbrl:0001628280-26-072729",
+  "events": [],
+  "fetched_at": "2026-11-11T01:58:30+00:00",
+  "signature": "0001628280-26-072735",
+  "fdic": {
+    "matched": false
+  }
+}

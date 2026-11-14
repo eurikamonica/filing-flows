@@ -1,0 +1,404 @@
+{
+  "cik": 1415744,
+  "ticker": "NMEX",
+  "name": "NORTHERN MINERALS & EXPLORATION LTD.",
+  "sector": "materials",
+  "industry": "Gold and Silver Ores",
+  "sic": "1040",
+  "docs": {
+    "xbrl:0001437749-26-034681": {
+      "instruments": [
+        {
+          "name": "July 31, 2020 Unsecured Note",
+          "kind": "notes",
+          "as_of": "2020-07-31",
+          "coupon": 0.08,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-11-03",
+      "report": "2026-07-31"
+    }
+  },
+  "sic_description": "Gold and Silver Ores",
+  "snapshot": {
+    "cash": 10488,
+    "equity": -219827,
+    "assets": 84297,
+    "liabilities": 304124,
+    "assets_current": 52821,
+    "liabilities_current": 304124,
+    "retained_earnings": -4396713,
+    "interest_expense": 17433,
+    "interest_paid": 5075,
+    "operating_income": -295366,
+    "pretax_income": -474918,
+    "net_income": -474918,
+    "ocf": -283432,
+    "revenue": 30600,
+    "converted_amount": 414942,
+    "effective_rate": 0.75,
+    "shares": 120029425,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "cash": "Cash",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (fiscal year)",
+    "converted_amount": "DebtConversionConvertedInstrumentAmount1 (fiscal year)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "history": [
+    {
+      "end": "2014-07-31",
+      "filed": "2014-11-14",
+      "total_debt": 30000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 13344484,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-07-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "asset_retirement",
+        "label": "Asset retirement obligations",
+        "excerpt": "related to the valuation of stock-based compensation, expected credit losses on accounts receivable, and asset retirement obligations, when applicable. These estimates are based on available information and assumptions considered reasonable under the circumstances. Actual results co",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+        "accession": "0001437749-26-034681",
+        "form": "10-K",
+        "filed": "2026-11-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "B/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-034681",
+      "form": "10-K",
+      "filed": "2026-11-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-31",
+    "metrics": {
+      "revenue_growth": 2.5441,
+      "receivables_growth": 3.6667,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.3167,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.3167,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 30600.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-034681",
+          "filed": "2026-11-03",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/"
+        },
+        {
+          "value_usd": 8634.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-034681",
+          "filed": "2026-11-03",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 31500.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-034681",
+          "filed": "2026-11-03",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/"
+        },
+        {
+          "value_usd": 6750.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-034681",
+          "filed": "2026-11-03",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -283432.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-034681",
+          "filed": "2026-11-03",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/"
+        },
+        {
+          "value_usd": -176580.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-034681",
+          "filed": "2026-11-03",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -474918.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-034681",
+          "filed": "2026-11-03",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/"
+        },
+        {
+          "value_usd": -383612.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-034681",
+          "filed": "2026-11-03",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "rdance with ASC 326, Financial Instruments — Credit Losses . The Company does not generally have significant contract assets, contract liabilities, or material unsatisfied performance obligations associated with its oil and natural gas sales arrangements. Accounts Receivab",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+        "accession": "0001437749-26-034681",
+        "form": "10-K",
+        "filed": "2026-11-03"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "5, there is $ 135,000 and $ 2,040 of principal and accrued interest, respectively, due on the LOC. NOTE 10 — RELATED PARTY TRANSACTIONS During the year ending July 31, 2025, Victor Miranda, a former Director, purchased 300,000 shares of common stock for total proceeds of $ 15,000 .",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+        "accession": "0001437749-26-034681",
+        "form": "10-K",
+        "filed": "2026-11-03"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "26, Financial Instruments — Credit Losses . The Company does not generally have significant contract assets, contract liabilities, or material unsatisfied performance obligations associated with its oil and natural gas sales arrangements. Accounts Receivable Accounts receivab",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+        "accession": "0001437749-26-034681",
+        "form": "10-K",
+        "filed": "2026-11-03"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-07-31",
+      "2025-07-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "asset_retirement",
+      "label": "Asset retirement obligations",
+      "excerpt": "related to the valuation of stock-based compensation, expected credit losses on accounts receivable, and asset retirement obligations, when applicable. These estimates are based on available information and assumptions considered reasonable under the circumstances. Actual results co",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+      "accession": "0001437749-26-034681",
+      "form": "10-K",
+      "filed": "2026-11-03",
+      "classification": "unverified_text_lead",
+      "review_lane": "B/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001437749-26-034681",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-034681",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "rdance with ASC 326, Financial Instruments — Credit Losses . The Company does not generally have significant contract assets, contract liabilities, or material unsatisfied performance obligations associated with its oil and natural gas sales arrangements. Accounts Receivab",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+      "accession": "0001437749-26-034681",
+      "form": "10-K",
+      "filed": "2026-11-03"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "5, there is $ 135,000 and $ 2,040 of principal and accrued interest, respectively, due on the LOC. NOTE 10 — RELATED PARTY TRANSACTIONS During the year ending July 31, 2025, Victor Miranda, a former Director, purchased 300,000 shares of common stock for total proceeds of $ 15,000 .",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+      "accession": "0001437749-26-034681",
+      "form": "10-K",
+      "filed": "2026-11-03"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "26, Financial Instruments — Credit Losses . The Company does not generally have significant contract assets, contract liabilities, or material unsatisfied performance obligations associated with its oil and natural gas sales arrangements. Accounts Receivable Accounts receivab",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1415744/000143774926034681/nmex20260731_10k.htm",
+      "accession": "0001437749-26-034681",
+      "form": "10-K",
+      "filed": "2026-11-03"
+    }
+  ],
+  "revenue_quality_text_source": "0001437749-26-034681",
+  "xbrl_10-K": "xbrl:0001437749-26-034681",
+  "events": [
+    {
+      "date": "2026-06-05",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001437749-26-019754",
+      "doc": "nmex20260605c_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-04-09",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001213900-15-002557",
+      "doc": "f8k031615_northernminerals.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2014-11-19",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-14-008442",
+      "doc": "f8k101414_northenminerals.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-11-03",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001213900-14-007694",
+      "doc": "f8k073013_northernminerals.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2014-07-22",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001213900-14-005062",
+      "doc": "f8k070714_northernminerals.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2014-04-25",
+      "items": "1.01,5.01,5.02,9.01",
+      "acc": "0001213900-14-002668",
+      "doc": "f8k041114_northernminerals.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2013-08-29",
+      "items": "1.01,9.01",
+      "acc": "0001213900-13-004863",
+      "doc": "f8k082613_northernminerals.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2013-02-07",
+      "items": "1.01,9.01",
+      "acc": "0001213900-13-000563",
+      "doc": "f8k020113_punchline.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2012-09-20",
+      "items": "1.01,9.01",
+      "acc": "0001398080-12-000045",
+      "doc": "punchlineform8koptionagreeme.htm",
+      "desc": "8-K CURRENT REPORT"
+    },
+    {
+      "date": "2012-09-11",
+      "items": "1.01,2.01,5.01,5.06,9.01",
+      "acc": "0001213900-12-005206",
+      "doc": "f8k090712_punchline.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2012-08-31",
+      "items": "1.01,9.01",
+      "acc": "0001398080-12-000044",
+      "doc": "punchlineform8klineofcreditw.htm",
+      "desc": "8-K CURRENT REPORT"
+    },
+    {
+      "date": "2012-08-17",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001398080-12-000036",
+      "doc": "punchlineform8kmanagementcha.htm",
+      "desc": "8-K CURRENT REPORT"
+    }
+  ],
+  "fetched_at": "2026-11-04T02:25:06+00:00",
+  "signature": "0001437749-26-034681"
+}

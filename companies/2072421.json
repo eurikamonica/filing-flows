@@ -1,0 +1,148 @@
+{
+  "cik": 2072421,
+  "ticker": "SNNF",
+  "name": "Seneca Bancorp, Inc.",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "docs": {
+    "xbrl:0001104659-26-036813": {
+      "instruments": [
+        {
+          "name": "Federal Home Loan Bank, Credit Facilities",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "capacity": 86100000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-30",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001104659-26-127045": {
+      "instruments": [
+        {
+          "name": "Federal Home Loan Bank, Credit Facilities",
+          "kind": "revolver",
+          "as_of": "2026-09-30",
+          "capacity": 73100000.0,
+          "floating": false
+        },
+        {
+          "name": "Federal Reserve Discount Window",
+          "kind": "other",
+          "as_of": "2026-09-30",
+          "capacity": 1400000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-13",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "National Commercial Banks",
+  "snapshot": {
+    "cash": 8700000,
+    "revolver_capacity": 9000000,
+    "revolver_available": 14000000,
+    "revolver_drawn": 0,
+    "equity": 32291000,
+    "assets": 315637000,
+    "liabilities": 283346000,
+    "retained_earnings": 22678000,
+    "deposits": 244479000,
+    "time_deposits": 76613000,
+    "interest_paid": 4175000,
+    "pretax_income": 189000,
+    "net_income": 164000,
+    "da": 710000,
+    "ocf": -5617000,
+    "capex": 2806000,
+    "deposit_interest": 4406000,
+    "shares": 1804551,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-127045",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2072421/000110465926127045/snnf-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001104659-26-127045",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001104659-26-127045",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001104659-26-127045",
+  "xbrl_10-K": "xbrl:0001104659-26-036813",
+  "xbrl_10-Q": "xbrl:0001104659-26-127045",
+  "events": [
+    {
+      "date": "2026-10-27",
+      "items": "1.01,9.01",
+      "acc": "0000943374-26-000454",
+      "doc": "none-20261021.htm",
+      "desc": "CURRENT REPORT FILING"
+    },
+    {
+      "date": "2025-08-18",
+      "items": "1.01,9.01",
+      "acc": "0001104659-25-079833",
+      "doc": "tm2523753d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-13T23:40:58+00:00",
+  "signature": "0001104659-26-127045",
+  "fdic": {
+    "matched": false
+  }
+}

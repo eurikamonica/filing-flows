@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-11-14T20:46:59+00:00",
+  "pairs": 4149,
+  "fit": {
+    "a": 4.674153903058227,
+    "b": -0.0668607230342094,
+    "c": 0.34111954613927664,
+    "n": 4149,
+    "x": "distance_to_default",
+    "r2": 0.3535307529842,
+    "resid_p10": -0.5712859536420791,
+    "resid_p90": 0.6153977933114199
+  },
+  "note": "log(issue spread to Treasuries) = a + b·(Merton distance to default, capped at 15) + c·log(years to maturity), fitted on USD fixed-rate bonds priced in term sheets (spread at issue) and the issuer's model spread that month."
+}

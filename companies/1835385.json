@@ -1,0 +1,227 @@
+{
+  "cik": 1835385,
+  "ticker": "MBBC",
+  "name": "Marathon Bancorp, Inc. /MD/",
+  "sector": "financials",
+  "industry": "Savings Institutions, Not Federally Chartered",
+  "sic": "6036",
+  "docs": {
+    "xbrl:0001104659-26-108076": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-09-16",
+      "report": "2026-06-30"
+    },
+    "xbrl:0001104659-26-125239": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-11-10",
+      "report": "2026-09-30"
+    },
+    "0001410578-25-000181:mara-20240930x424b3.htm": {
+      "kind": "424b",
+      "date": "2025-02-21",
+      "tranches": []
+    },
+    "0001410578-25-000179:mara-20240930x424b3.htm": {
+      "kind": "424b",
+      "date": "2025-02-21",
+      "tranches": []
+    },
+    "0001410578-25-000178:mara-20240930x424b3.htm": {
+      "kind": "424b",
+      "date": "2025-02-21",
+      "tranches": []
+    },
+    "0001104659-21-025886:tm217024d2_424b3.htm": {
+      "kind": "424b",
+      "date": "2021-02-22",
+      "tranches": []
+    },
+    "0001104659-21-025885:tm217024d1_424b3.htm": {
+      "kind": "424b",
+      "date": "2021-02-22",
+      "tranches": []
+    }
+  },
+  "sic_description": "Savings Institutions, Not Federally Chartered",
+  "snapshot": {
+    "cash": 14612902,
+    "finance_leases": 0,
+    "operating_leases": 295737,
+    "equity": 48394945,
+    "assets": 258914226,
+    "liabilities": 210519281,
+    "retained_earnings": 27810193,
+    "deposits": 201012910,
+    "time_deposits": 74861367,
+    "interest_paid": 3704425,
+    "pretax_income": 2153561,
+    "net_income": 1799603,
+    "da": 285162,
+    "ocf": 3765730,
+    "capex": 640067,
+    "debt_issued": 873970,
+    "deposit_interest": 3169407,
+    "stated_rate": 0.0325,
+    "shares": 2998889,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 295737.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+        "accession": "0001104659-26-125239",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 295737.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001104659-26-125239",
+            "filed": "2026-11-10",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "he extent the options are reasonably assured of being exercised. The lease agreements do not provide for residual value guarantees and have no restrictions or covenants that would impact dividends or require incurring additional financial obligations. On June 25, 2025, the Compa",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+        "accession": "0001104659-26-125239",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001104659-26-125239",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "significant_financing",
+        "label": "Significant financing component",
+        "excerpt": "the gain or loss on the sale, the Company adjusts the transaction price and related gain (loss) on sale if a significant financing component is present. 33 Table of Contents Item 2. Management’s Discussion and Analysis of Financial Condition and Results of Operations This discussion a",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+        "accession": "0001104659-26-125239",
+        "form": "10-Q",
+        "filed": "2026-11-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "residual_guarantee",
+      "label": "Residual value guarantees",
+      "excerpt": "he extent the options are reasonably assured of being exercised. The lease agreements do not provide for residual value guarantees and have no restrictions or covenants that would impact dividends or require incurring additional financial obligations. On June 25, 2025, the Compa",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+      "accession": "0001104659-26-125239",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001104659-26-125239",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001104659-26-125239",
+  "revenue_quality_text_leads": [
+    {
+      "key": "significant_financing",
+      "label": "Significant financing component",
+      "excerpt": "the gain or loss on the sale, the Company adjusts the transaction price and related gain (loss) on sale if a significant financing component is present. 33 Table of Contents Item 2. Management’s Discussion and Analysis of Financial Condition and Results of Operations This discussion a",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1835385/000110465926125239/mara-20260930x10q.htm",
+      "accession": "0001104659-26-125239",
+      "form": "10-Q",
+      "filed": "2026-11-10"
+    }
+  ],
+  "revenue_quality_text_source": "0001104659-26-125239",
+  "xbrl_10-K": "xbrl:0001104659-26-108076",
+  "xbrl_10-Q": "xbrl:0001104659-26-125239",
+  "events": [
+    {
+      "date": "2025-02-18",
+      "items": "1.01,9.01",
+      "acc": "0001104659-25-014749",
+      "doc": "tm256880d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-02-17",
+      "items": "1.01,9.01",
+      "acc": "0001104659-21-024828",
+      "doc": "tm217042d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-11T01:59:09+00:00",
+  "signature": "0001104659-26-125239",
+  "fdic": {
+    "matched": false
+  }
+}

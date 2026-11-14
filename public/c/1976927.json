@@ -1,0 +1,416 @@
+{
+  "cik": 1976927,
+  "ticker": null,
+  "name": "Invesco Commercial Real Estate Finance Trust, Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-11-14T20:47:07+00:00",
+  "fetched_at": "2026-11-13T23:39:20+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 186776000,
+    "equity": 1249781000,
+    "assets": 6885482000,
+    "liabilities": 5470953000,
+    "retained_earnings": -17173000,
+    "interest_paid": 220019000,
+    "ocf": 115516000,
+    "wavg_rate_all": 0.0748,
+    "shares": 52047603,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 186776000.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.525027,
+    "fcf": 115516000.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 2600108000.0,
+    "liquidity": 2786884000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 3829332000.0,
+    "floating_share": null,
+    "plus100bp_interest": 38293320.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 1.25,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Revolving Credit Agreement",
+        "dated": "2026-05-07",
+        "text": "No Credit Party shall cause the Interest Coverage Ratio, as of the end of any fiscal quarter, to be less than 1.25 to 1.00. 9.27."
+      },
+      {
+        "type": "liquidity",
+        "direction": "min",
+        "limit": 25000000.0,
+        "unit": "usd",
+        "actual": 2786884000.0,
+        "cushion": 0.991029,
+        "agreement": "Revolving Credit Agreement",
+        "dated": "2026-05-07",
+        "text": "As of the end of each fiscal quarter, no Credit Party shall permit the Initial Borrower’s Liquidity (including any cash of the Initial Borrower held in the Investment Distribution Account maintained by the Investment Manager) to be an amount less than three percent (3%) of the Initial Borrower’s NAV, up to a maximum of $25,000,000. 9.28."
+      },
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 500000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Revolving Credit Agreement",
+        "dated": "2026-05-07",
+        "text": "The Guarantor shall not permit its Adjusted Tangible Net Worth to be less than $500,000,000 at any time. 9.24."
+      }
+    ],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "2.1 billion and $ 1.0 billion, respectively, of consolidated collateralized loan obligations, which are variable interest entities (“VIE”). The VIE’s assets can only be used to settle the obligations of the VIE. See Note 6 — “Collateralized Loan Obligations” for additional inform",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976927/000197692726000088/incref-20260930.htm",
+        "accession": "0001976927-26-000088",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "erm | 5.17 % | 72,840 | 4,840 | 68,000 | 68,000 | $ | 68,000 | $ | 68,000 | Secured Lending Agreements | Repurchase Agreements | Morgan Stanley Bank (3) | Dec 2027 | Dec 2028 | 5.29 % | 750,000 | 247,947 | 502,053 | 502,053 | 713,335 | 713,335 | Citibank | Jun 2028 | Jun 2030",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976927/000197692726000088/incref-20260930.htm",
+        "accession": "0001976927-26-000088",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001976927-26-000088",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1976927/000197692726000088/incref-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "s subscriptions received by our transfer agent prior to the date the subscriptions are effective . 20 10. Related Party Transactions Due to Affiliates The following table details the components of due to affiliates as of September 30, 2026 and December 31, 2025: $ in thousand",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1976927/000197692726000088/incref-20260930.htm",
+        "accession": "0001976927-26-000088",
+        "form": "10-Q",
+        "filed": "2026-11-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "capacity": 5379440000.0,
+      "available": 2150082000.0,
+      "carrying": 3229358000.0,
+      "fair_value": 3229214000.0,
+      "rate_now": 0.0716,
+      "floating": false
+    },
+    {
+      "name": "Secured Debt",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "carrying": 2283154000.0,
+      "floating": false
+    },
+    {
+      "name": "Secured Lending Agreements",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0529,
+      "capacity": 750000000.0,
+      "available": 247947000.0,
+      "carrying": 502053000.0,
+      "fair_value": 502053000.0,
+      "floating": false
+    },
+    {
+      "name": "Term Lending Agreements",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "rate_now": 0.0588,
+      "capacity": 300000000.0,
+      "available": 202079000.0,
+      "carrying": 97921000.0,
+      "fair_value": 97921000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "carrying": 0.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-08-10",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-05-07",
+      "size": 330000000.0,
+      "title": "Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "EURIBOR",
+        "SONIA"
+      ],
+      "margin_pct": [
+        1.9,
+        1.9
+      ],
+      "fee_pct": 0.25,
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "No Credit Party shall cause the Interest Coverage Ratio, as of the end of any fiscal quarter, to be less than 1.25 to 1.00. 9.27."
+        },
+        {
+          "type": "liquidity",
+          "limit": 25000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "As of the end of each fiscal quarter, no Credit Party shall permit the Initial Borrower’s Liquidity (including any cash of the Initial Borrower held in the Investment Distribution Account maintained by the Investment Manager) to be an amount less than three percent (3%) of the Initial Borrower’s NAV, up to a maximum of $25,000,000. 9.28."
+        },
+        {
+          "type": "net_worth",
+          "limit": 500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Guarantor shall not permit its Adjusted Tangible Net Worth to be less than $500,000,000 at any time. 9.24."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1976927/000197692726000062/incref063026-ex103xnatwest.htm",
+      "all_in_pct": [
+        1.9389,
+        1.9389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-08-21",
+      "agreement_kind": "amendment",
+      "dated": "2024-08-16",
+      "title": "First Amendment To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1976927/000197692724000035/gsb-invescocrefxfirstame.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-23",
+      "items": "1.01,2.03",
+      "acc": "0001976927-26-000046",
+      "doc": "incref-20260616.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-08-21",
+      "items": "1.01,5.03,8.01,9.01",
+      "acc": "0001976927-24-000035",
+      "doc": "incref-20240816.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-29",
+      "items": "1.01,9.01",
+      "acc": "0001976927-24-000010",
+      "doc": "incref-20240424.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-15",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001976927-23-000016",
+      "doc": "incref-20231211.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-11",
+      "items": "1.01,5.03,9.01",
+      "acc": "0001976927-23-000015",
+      "doc": "incref-20231205.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-09-30",
+      295839000,
+      3765000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      627258000,
+      5960000,
+      23877000,
+      null,
+      null,
+      0.03807
+    ],
+    [
+      "2024-06-30",
+      858832000,
+      6169000,
+      36132000,
+      null,
+      null,
+      0.04207
+    ],
+    [
+      "2024-09-30",
+      1604766000,
+      20115000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-12-31",
+      1854289000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      2149260000,
+      65675000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1826848000,
+      100859000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

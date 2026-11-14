@@ -1,0 +1,239 @@
+{
+  "cik": 1803096,
+  "ticker": "STRG",
+  "name": "STARGUIDE GROUP, INC.",
+  "sector": "industrials",
+  "industry": "Wholesale-Miscellaneous Nondurable Goods",
+  "sic": "5190",
+  "docs": {
+    "xbrl:0001640334-26-001377": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-08-14",
+      "report": "2026-01-31"
+    },
+    "xbrl:0001640334-26-001635": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-10-07",
+      "report": "2026-04-30"
+    }
+  },
+  "sic_description": "Wholesale-Miscellaneous Nondurable Goods",
+  "snapshot": {
+    "cash": 14,
+    "convertible": 138137,
+    "convertible_current": 138137,
+    "equity": -407461,
+    "assets": 852,
+    "liabilities": 449055,
+    "assets_current": 14,
+    "retained_earnings": -434575,
+    "interest_expense": 10054,
+    "interest_paid": 0,
+    "operating_income": -73960,
+    "pretax_income": -82929,
+    "net_income": -82929,
+    "da": 611,
+    "ocf": -17561,
+    "revenue": 88,
+    "debt_issued": 17050,
+    "if_converted_shares": 1381370,
+    "shares": 2868000,
+    "balance_date": "2026-04-30",
+    "latest_period": "2026-04-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "convertible": "ConvertibleNotesPayable",
+    "convertible_current": "ConvertibleNotesPayableCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromConvertibleDebt (FY + YTD − prior YTD)",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001640334-26-001377",
+  "xbrl_10-Q": "xbrl:0001640334-26-001635",
+  "events": [
+    {
+      "date": "2025-10-02",
+      "items": "1.01,2.01,5.06,9.01",
+      "acc": "0001640334-25-001768",
+      "doc": "strg_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2023-03-16",
+      "items": "1.01,2.01,5.06,9.01",
+      "acc": "0001477932-23-001529",
+      "doc": "strg_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T04:59:32+00:00",
+  "signature": "0001640334-26-001635",
+  "hidden_leverage": {
+    "as_of": "2026-04-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001640334-26-001635",
+      "form": "10-Q",
+      "filed": "2026-10-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001635/star_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-04-30",
+    "metrics": {
+      "revenue_growth": -0.9587,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 88.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001640334-26-001377",
+          "filed": "2026-08-14",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001377/"
+        },
+        {
+          "value_usd": 2132.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001640334-26-001377",
+          "filed": "2026-08-14",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001377/"
+        }
+      ],
+      "receivables": [
+        null,
+        {
+          "value_usd": 0.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001640334-25-000716",
+          "filed": "2025-04-29",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033425000716/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -31403.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001640334-26-001377",
+          "filed": "2026-08-14",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001377/"
+        },
+        {
+          "value_usd": -58943.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001640334-26-001377",
+          "filed": "2026-08-14",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001377/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -80939.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001640334-26-001377",
+          "filed": "2026-08-14",
+          "end": "2026-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001377/"
+        },
+        {
+          "value_usd": -90712.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001640334-26-001377",
+          "filed": "2026-08-14",
+          "end": "2025-01-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001377/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "We follow ASC 850, “Related Party Disclosures”, for the identification of related parties and disclosure of related party transactions. (see Note 5) | 8 | Table of Contents | Fair Value of Financial Instruments The Company adopted the provisions of ASC Topic 820, “Fair Value Measur",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001635/star_10q.htm",
+        "accession": "0001640334-26-001635",
+        "form": "10-Q",
+        "filed": "2026-10-07"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-01-31",
+      "2025-01-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001640334-26-001635",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001640334-26-001635",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "We follow ASC 850, “Related Party Disclosures”, for the identification of related parties and disclosure of related party transactions. (see Note 5) | 8 | Table of Contents | Fair Value of Financial Instruments The Company adopted the provisions of ASC Topic 820, “Fair Value Measur",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1803096/000164033426001635/star_10q.htm",
+      "accession": "0001640334-26-001635",
+      "form": "10-Q",
+      "filed": "2026-10-07"
+    }
+  ],
+  "revenue_quality_text_source": "0001640334-26-001635"
+}

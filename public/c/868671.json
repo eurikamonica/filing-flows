@@ -1,0 +1,421 @@
+{
+  "cik": 868671,
+  "ticker": "GBCI",
+  "name": "GLACIER BANCORP, INC.",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-11-14T20:47:11+00:00",
+  "fetched_at": "2026-11-03T16:21:53+00:00",
+  "price": 48.79,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.266122,
+  "snapshot": {
+    "cash": 1056679000,
+    "finance_leases": 31606000,
+    "operating_leases": 51320000,
+    "revolver_capacity": 530000000,
+    "equity": 4313022000,
+    "assets": 31599001000,
+    "liabilities": 27285979000,
+    "retained_earnings": 1253379000,
+    "time_deposits": 3928550000,
+    "interest_paid": 391308000,
+    "pretax_income": 386225000,
+    "net_income": 311685000,
+    "ocf": 444551000,
+    "capex": 37281000,
+    "revenue": 109159000,
+    "deposit_interest": 289976000,
+    "fixed_share": 0.0438,
+    "shares": 130211953,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "fixed_share": "LongTermDebtPercentageBearingFixedInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1056679000.0,
+    "net_debt": null,
+    "ebitda": 386225000.0,
+    "ebit": 386225000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.136064,
+    "fcf": 407270000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1056679000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 6353041186.87,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 51320000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000069/gbci-20260630.htm",
+        "accession": "0000868671-26-000069",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 51320000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000868671-26-000069",
+            "filed": "2026-08-04",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000069/gbci-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "rities and Exchange Commission | SOFR – Secured Overnight Financing Rate | TBA – to-be-announced | VIE – variable interest entity | GLACIER BANCORP, INC. UNAUDITED CONDENSED CONSOLIDATED STATEMENTS OF FINANCIAL CONDITION (Dollars in thousands, except share and per share data",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000069/gbci-20260630.htm",
+        "accession": "0000868671-26-000069",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "CI – other comprehensive income | OREO – other real estate owned | PCD – purchased credit-deteriorated | Repurchase agreements – securities sold under agreements to repurchase | ROU – right-of-use | S&P – Standard and Poor’s | SEC – United States Securities and Exchange Commi",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000069/gbci-20260630.htm",
+        "accession": "0000868671-26-000069",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "n the normal course of business, the Company has commitments that require material cash requirements for customer deposits outflows, repurchase agreements, borrowed funds, lease obligations, off-balance sheet obligations, operating expenses and other contractual obligatio",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000069/gbci-20260630.htm",
+        "accession": "0000868671-26-000069",
+        "form": "10-Q",
+        "filed": "2026-08-04",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000868671-26-000069",
+      "form": "10-Q",
+      "filed": "2026-08-04",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000069/gbci-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0751,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.5663
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 101072000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000868671-26-000023",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000023/"
+        },
+        {
+          "value_usd": 94011000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000868671-26-000023",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000023/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 374399000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000868671-26-000023",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000023/"
+        },
+        {
+          "value_usd": 258037000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000868671-26-000023",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000023/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 239028000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000868671-26-000023",
+          "filed": "2026-02-25",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000023/"
+        },
+        {
+          "value_usd": 190144000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000868671-26-000023",
+          "filed": "2026-02-25",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000023/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "First Company Statutory Trust 2001",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.07402,
+      "spread": 0.033,
+      "floating": true
+    },
+    {
+      "name": "First Company Statutory Trust 2003",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.072,
+      "spread": 0.0325,
+      "floating": true
+    },
+    {
+      "name": "FNB (UT) Statutory Trust I",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0705,
+      "spread": 0.031,
+      "floating": true
+    },
+    {
+      "name": "Glacier Capital Trust II",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.06916,
+      "spread": 0.0275,
+      "floating": true
+    },
+    {
+      "name": "Citizens (ID) Statutory Trust I",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.06616,
+      "spread": 0.0265,
+      "floating": true
+    },
+    {
+      "name": "Glacier Capital Trust III",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.05456,
+      "spread": 0.0129,
+      "floating": true
+    },
+    {
+      "name": "Glacier Capital Trust IV",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.05555,
+      "spread": 0.0157,
+      "floating": true
+    },
+    {
+      "name": "Guaranty (TX) Capital Trust III",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.05917,
+      "spread": 0.0167,
+      "floating": true
+    },
+    {
+      "name": "FNB (UT) Statutory Trust II",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.05705,
+      "spread": 0.0172,
+      "floating": true
+    },
+    {
+      "name": "Bank of the San Juans Bancorporation Trust I",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.05874,
+      "spread": 0.0182,
+      "floating": true
+    },
+    {
+      "name": "DCB Financial Trust I",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.05785,
+      "spread": 0.018,
+      "floating": true
+    },
+    {
+      "name": "Bank Of Idaho Holding Co 2021",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "effective": 0.03375,
+      "floating": false
+    },
+    {
+      "name": "Stifel Nicolaus And Co 2022",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "effective": 0.03625,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-06-25",
+      "items": "1.01,9.01",
+      "acc": "0001193125-25-147044",
+      "doc": "d187067d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-05-19",
+      "items": "1.01,9.01",
+      "acc": "0000868671-21-000061",
+      "doc": "gbci-20210519.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2010-03-17",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0000950123-10-025603",
+      "doc": "v55308e8vk.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

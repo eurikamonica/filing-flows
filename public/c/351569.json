@@ -1,0 +1,543 @@
+{
+  "cik": 351569,
+  "ticker": "ABCB",
+  "name": "Ameris Bancorp",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "sic_description": "State Commercial Banks",
+  "generated_at": "2026-11-14T20:47:08+00:00",
+  "fetched_at": "2026-11-06T21:33:41+00:00",
+  "price": 82.425,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.196878,
+  "snapshot": {
+    "cash": 1137170000,
+    "equity": 4124255000,
+    "assets": 28549695000,
+    "liabilities": 24425440000,
+    "retained_earnings": 2447900000,
+    "deposits": 22906973000,
+    "interest_paid": 446123000,
+    "pretax_income": 498387000,
+    "net_income": 386433000,
+    "da": 20841000,
+    "ocf": 663681000,
+    "capex": 28464000,
+    "deposit_interest": 405298000,
+    "wavg_rate_all": 0.0031,
+    "shares": 67011589,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1137170000.0,
+    "net_debt": null,
+    "ebitda": 519228000.0,
+    "ebit": 498387000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 2.487664,
+    "fcf": 635217000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1137170000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 5523430223.325,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000351569-26-000163",
+      "form": "10-Q",
+      "filed": "2026-11-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/351569/000035156926000163/abcb-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Fixed Rate Advance due October 22, 2026; fixed interest rate of 4.040%",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "effective": 0.0404,
+      "coupon": 0.0404,
+      "floating": false
+    },
+    {
+      "name": "Daily Rate Credit due December 16, 2026; variable interest rate of 4.130%",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "effective": 0.0413,
+      "coupon": 0.0413,
+      "floating": true
+    },
+    {
+      "name": "Fixed Rate Advance due March 2, 2027; fixed interest rate of 1.445%",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "effective": 0.01445,
+      "coupon": 0.01445,
+      "floating": false
+    },
+    {
+      "name": "Fixed Rate Advance due March 4, 2030; fixed interest rate of 1.606%",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "effective": 0.01606,
+      "coupon": 0.01606,
+      "floating": false
+    },
+    {
+      "name": "Fixed Rate Advance due December 9, 2030; fixed interest rate of 4.550%",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "effective": 0.0455,
+      "coupon": 0.0455,
+      "floating": false
+    },
+    {
+      "name": "Principal Reducing Advance due September 29, 2031; fixed interest rate of 3.095%",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "effective": 0.03095,
+      "coupon": 0.03095,
+      "floating": false
+    },
+    {
+      "name": "Advance from correspondent bank due July 1, 2026; secured by a loan receivable; variable interest rate at one-month SOFR plus 2.65%",
+      "kind": "loan",
+      "as_of": "2026-09-30",
+      "spread": 0.0265,
+      "coupon": 0.0265,
+      "floating": true
+    },
+    {
+      "name": "Fixed Rate Advance due January 21, 2025; fixed interest rate of 4.430%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "effective": 0.0443,
+      "coupon": 0.0443,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Fixed Rate Advance due March 3, 2025; fixed interest rate of 1.208%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "effective": 0.01208,
+      "coupon": 0.01208,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Daily Rate Credit due December 16, 2026; variable interest rate of 3.880%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "effective": 0.0388,
+      "coupon": 0.0388,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Subordinated notes payable due May 31, 2030 net of unaccreted purchase accounting fair value adjustment of $0 and $653, respectively; fixed interest rate of 5.875% through May 31, 2025; variable interest rate thereafter at three-month SOFR plus 3.63% (Bank subordinated notes)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.05875,
+      "spread": 0.0363,
+      "coupon": 0.05875,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Subordinated notes payable due October 1, 2030 net of unamortized debt issuance cost of $0 and $1,161, respectively; fixed interest rate of 3.875% through September 30, 2025; variable interest rate thereafter at three-month SOFR plus 3.753% (2030 subordinated notes)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.03875,
+      "spread": 0.03753,
+      "coupon": 0.03875,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Advance from correspondent bank due December 1, 2025; secured by a loan receivable; variable interest rate at one-month SOFR plus 2.65%",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0265,
+      "coupon": 0.0265,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Senior Subordinated Notes",
+      "kind": "notes",
+      "as_of": "2025-10-01",
+      "coupon": 0.03875,
+      "spread": 0.03753,
+      "effective": 0.0822,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [
+    {
+      "title": "3.875% Fixed-to-Floating Rate Subordinated Notes due 2030",
+      "floating": true,
+      "margin_bps": 375.3,
+      "reference": "SOFR",
+      "principal": 110000000.0,
+      "currency": "USD",
+      "maturity": "2030-10-01",
+      "price": 100.0,
+      "trade_date": "2020-09-23",
+      "ratings": "BBB by Kroll Bond Rating Agency",
+      "convertible": false,
+      "cusip": "03076K AC2",
+      "date": "2020-09-23",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/351569/000110465920107865/tm2031347-3_fwp.htm"
+    },
+    {
+      "title": "4.25% Fixed-to-Floating Rate Subordinated Notes due 2029",
+      "floating": true,
+      "margin_bps": 294.0,
+      "reference": "SOFR",
+      "principal": 120000000.0,
+      "currency": "USD",
+      "maturity_year": 2029,
+      "price": 100.0,
+      "trade_date": "2019-12-04",
+      "ratings": "BBB by Kroll Bond Rating Agency, Inc.",
+      "convertible": false,
+      "cusip": "03076K AB4",
+      "date": "2019-12-04",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/351569/000110465919069776/tm1924486d1_fwp.htm"
+    },
+    {
+      "floating": false,
+      "coupon": 5.75,
+      "principal": 75000000.0,
+      "currency": "USD",
+      "price": 100.0,
+      "trade_date": "2017-03-08",
+      "ratings": "Kroll Bond Rating Agency: BBB-",
+      "convertible": false,
+      "cusip": "03076KAA6",
+      "date": "2017-03-08",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/351569/000114420417013287/v461369_fwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2005-12-20",
+      "agreement_kind": "credit_agreement",
+      "dated": "2005-12-14",
+      "title": "Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate"
+      ],
+      "fee_pct": 0.1,
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 95000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "The Borrower on a consolidated basis will maintain at all times a Tangible Net Worth of not less than $95,000,000 from the Closing Date to December 31, 2006, and not less than $100,000,000 thereafter until the Commitment Termination Date."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/351569/000119312505245694/dex101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2020-09-28",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001104659-20-109187",
+      "doc": "tm2031838d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-12-06",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001104659-19-070471",
+      "doc": "tm1924624d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-07-01",
+      "items": "2.01,2.03,5.02,5.03,8.01,9.01",
+      "acc": "0001144204-19-033242",
+      "doc": "tv524542_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-12-17",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001144204-18-064762",
+      "doc": "tv509247_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-07-02",
+      "items": "2.01,2.03,8.01,9.01",
+      "acc": "0001144204-18-036810",
+      "doc": "tv497763_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-04-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-18-022369",
+      "doc": "tv492014_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-02-06",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001144204-18-006051",
+      "doc": "tv485035_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-01-26",
+      "items": "1.01,1.02,2.02,3.02,7.01,8.01,9.01",
+      "acc": "0001144204-18-003802",
+      "doc": "tv484146_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-11-17",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001144204-17-059851",
+      "doc": "tv479814_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-10-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-17-053593",
+      "doc": "tv477503_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-10-06",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001144204-17-051608",
+      "doc": "v476589_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-03-13",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001144204-17-014233",
+      "doc": "v461599_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-03-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001144204-17-012261",
+      "doc": "v460862_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-01-23",
+      "items": "1.01,9.01",
+      "acc": "0001144204-17-003309",
+      "doc": "v457304_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-12-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-16-141741",
+      "doc": "v455926_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-12-19",
+      "items": "1.01,3.02,7.01,8.01,9.01",
+      "acc": "0001144204-16-140126",
+      "doc": "v455210_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-03-14",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001144204-16-087692",
+      "doc": "v433989_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-10-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001144204-15-057529",
+      "doc": "v421341_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-05-27",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001144204-15-033525",
+      "doc": "v411559_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-01-30",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001144204-15-004838",
+      "doc": "v399958_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-01-29",
+      "items": "1.01,2.02,7.01,8.01,9.01",
+      "acc": "0001144204-15-004457",
+      "doc": "v399793_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-12-18",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001144204-14-074768",
+      "doc": "v397008_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-09-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-14-356314",
+      "doc": "d796788d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-07-01",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001193125-14-257152",
+      "doc": "d750107d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-03-11",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-14-092760",
+      "doc": "d691120d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-12-23",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001193125-13-482463",
+      "doc": "d647815d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-12-06",
+      "items": "1.01,9.01",
+      "acc": "0001193125-13-465273",
+      "doc": "d640815d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-08-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-13-351298",
+      "doc": "d593646d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-05-02",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-13-194229",
+      "doc": "d529314d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

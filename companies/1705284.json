@@ -1,0 +1,184 @@
+{
+  "cik": 1705284,
+  "ticker": "PBAM",
+  "name": "Private Bancorp of America, Inc.",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "docs": {
+    "xbrl:0001705284-26-000013": {
+      "instruments": [
+        {
+          "name": "Federal Home Loan Bank Due March Twelve Two Thousand Twenty Six",
+          "kind": "loan",
+          "as_of": "2026-09-30",
+          "maturity": "2026-03-12",
+          "effective": 0.0477,
+          "floating": false
+        },
+        {
+          "name": "Federal Home Loan Bank Due March Twelve Two Thousand Twenty Seven",
+          "kind": "loan",
+          "as_of": "2026-09-30",
+          "maturity": "2027-03-12",
+          "effective": 0.0456,
+          "floating": false
+        },
+        {
+          "name": "Federal Home Loan Bank Due March Seventeen Two Thousand Twenty Eight",
+          "kind": "loan",
+          "as_of": "2026-09-30",
+          "maturity": "2028-03-17",
+          "effective": 0.0396,
+          "floating": false
+        },
+        {
+          "name": "Subordinated Notes",
+          "kind": "notes",
+          "as_of": "2026-09-30",
+          "maturity": "2029-04-25",
+          "coupon": 0.06,
+          "spread": 0.0342,
+          "effective": 0.0735,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-12",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "National Commercial Banks",
+  "snapshot": {
+    "total_debt": 25981000,
+    "cash": 251234000,
+    "operating_leases": 7121000,
+    "revolver_drawn": 0,
+    "equity": 291349000,
+    "assets": 2748220000,
+    "liabilities": 2456871000,
+    "retained_earnings": 220660000,
+    "deposits": 2412993000,
+    "time_deposits": 294518000,
+    "shares": 5730094,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "DebtLongtermAndShorttermCombinedAmount",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits"
+  },
+  "history": [
+    {
+      "end": "2026-06-30",
+      "filed": "2026-09-04",
+      "total_debt": 25979000,
+      "cash": 300355000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 5729788,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-09-30",
+      "filed": "2026-11-12",
+      "total_debt": 25981000,
+      "cash": 251234000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 5730094,
+      "convertible": null,
+      "equity": 291349000,
+      "interest_paid": null
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 7121000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1705284/000170528426000013/pbam-20260930.htm",
+        "accession": "0001705284-26-000013",
+        "form": "10-Q",
+        "filed": "2026-11-12",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 7121000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001705284-26-000013",
+            "filed": "2026-11-12",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1705284/000170528426000013/pbam-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001705284-26-000013",
+      "form": "10-Q",
+      "filed": "2026-11-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1705284/000170528426000013/pbam-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001705284-26-000013",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001705284-26-000013",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001705284-26-000013",
+  "xbrl_10-Q": "xbrl:0001705284-26-000013",
+  "events": [],
+  "fetched_at": "2026-11-13T06:52:18+00:00",
+  "signature": "0001705284-26-000013",
+  "fdic": {
+    "matched": false
+  }
+}

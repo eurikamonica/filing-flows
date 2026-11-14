@@ -1,0 +1,315 @@
+{
+  "cik": 849401,
+  "ticker": "ADMT",
+  "name": "ADM TRONICS UNLIMITED, INC.",
+  "sector": "health",
+  "industry": "Electromedical & Electrotherapeutic Apparatus",
+  "sic": "3845",
+  "docs": {
+    "xbrl:0001437749-26-023316": {
+      "instruments": [
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-03-31",
+          "coupon": 0.0737,
+          "drawn": 379446.0,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-07-10",
+      "report": "2026-03-31"
+    },
+    "xbrl:0001437749-26-028556": {
+      "instruments": [
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "coupon": 0.0762,
+          "drawn": 379293.0,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-19",
+      "report": "2026-06-30"
+    },
+    "0000849401-99-000009:": {
+      "kind": "424b",
+      "date": "1999-02-18",
+      "tranches": []
+    },
+    "0000849401-04-000004:ex101aan.txt": {
+      "kind": "agreement",
+      "date": "2004-09-07",
+      "agreement_kind": "other"
+    }
+  },
+  "sic_description": "Electromedical & Electrotherapeutic Apparatus",
+  "snapshot": {
+    "cash": 222619,
+    "operating_leases": 203848,
+    "revolver_drawn": 379293,
+    "equity": 603336,
+    "assets": 2022635,
+    "liabilities": 1419299,
+    "assets_current": 1185439,
+    "liabilities_current": 1235384,
+    "retained_earnings": -33038230,
+    "interest_expense": 35987,
+    "interest_paid": 35971,
+    "operating_income": -288986,
+    "pretax_income": -393644,
+    "net_income": -395644,
+    "da": 6716,
+    "ocf": -142218,
+    "revenue": 3239662,
+    "stated_rate": 0.0215,
+    "shares": 67588492,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseDebt (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001437749-26-023316",
+  "xbrl_10-Q": "xbrl:0001437749-26-028556",
+  "events": [
+    {
+      "date": "2020-05-11",
+      "items": "1.01,2.03",
+      "acc": "0001437749-20-010282",
+      "doc": "admt20200511_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T03:19:44+00:00",
+  "signature": "0001437749-26-028556",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 203848.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926028556/admt20260930_10q.htm",
+        "accession": "0001437749-26-028556",
+        "form": "10-Q",
+        "filed": "2026-08-19",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 203848.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001437749-26-028556",
+            "filed": "2026-08-19",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926028556/admt20260930_10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "s | 92,487 | 53,721 | Line of credit | 379,293 | 379,446 | Operating lease liability | 99,382 | 98,149 | Customer deposits | 124,656 | 130,022 | Total current liabilities | 1,235,384 | 1,046,312 | Long-term liabilities | Due to employee | 79,449 | 79,449 | Operating lease",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926028556/admt20260930_10q.htm",
+        "accession": "0001437749-26-028556",
+        "form": "10-Q",
+        "filed": "2026-08-19",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-028556",
+      "form": "10-Q",
+      "filed": "2026-08-19",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926028556/admt20260930_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.0469,
+      "receivables_growth": -0.0241,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.3562,
+      "dsri": 0.9322,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 3347082.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        },
+        {
+          "value_usd": 3197110.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 515660.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        },
+        {
+          "value_usd": 528383.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 130022.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        },
+        {
+          "value_usd": 201968.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -124059.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        },
+        {
+          "value_usd": 9978.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -100374.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2026-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        },
+        {
+          "value_usd": -123056.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-023316",
+          "filed": "2026-07-10",
+          "end": "2025-03-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926023316/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-03-31",
+      "2025-03-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "s | 92,487 | 53,721 | Line of credit | 379,293 | 379,446 | Operating lease liability | 99,382 | 98,149 | Customer deposits | 124,656 | 130,022 | Total current liabilities | 1,235,384 | 1,046,312 | Long-term liabilities | Due to employee | 79,449 | 79,449 | Operating lease",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/849401/000143774926028556/admt20260930_10q.htm",
+      "accession": "0001437749-26-028556",
+      "form": "10-Q",
+      "filed": "2026-08-19",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001437749-26-028556",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-028556",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001437749-26-028556"
+}

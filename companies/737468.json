@@ -1,0 +1,300 @@
+{
+  "cik": 737468,
+  "ticker": "WASH",
+  "name": "WASHINGTON TRUST BANCORP INC",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0000737468-26-000034": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-02-24",
+      "report": "2025-12-31"
+    },
+    "xbrl:0000737468-26-000114": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "cash": 127395000,
+    "investments": 11883000,
+    "operating_leases": 37935000,
+    "equity": 553523000,
+    "assets": 6547904000,
+    "liabilities": 5994381000,
+    "retained_earnings": 449650000,
+    "deposits": 5358873000,
+    "time_deposits": 1133502000,
+    "interest_paid": 150330000,
+    "pretax_income": 70942000,
+    "net_income": 55401000,
+    "da": 3307000,
+    "ocf": 99760000,
+    "capex": 3907000,
+    "revenue": 234013000,
+    "deposit_interest": 116220000,
+    "wavg_rate_all": 0.0035,
+    "shares": 19074321,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "investments": "OtherShortTermInvestments",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0000737468-26-000034",
+  "xbrl_10-Q": "xbrl:0000737468-26-000114",
+  "events": [
+    {
+      "date": "2024-12-13",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000737468-24-000053",
+      "doc": "wash-20241212.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:34:51+00:00",
+  "signature": "0000737468-26-000120",
+  "fdic": {
+    "matched": false
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 37935000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm",
+        "accession": "0000737468-26-000114",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 37935000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000737468-26-000114",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "sale_leaseback",
+        "label": "Sale-and-leaseback",
+        "excerpt": "rs in scope of ASC 606. (3) For the six months ended June 30, 2025, included herein in accordance with sale-leaseback transaction provisions of ASC 842 and ASC 606. -37- Condensed Notes to Unaudited Consolidated Financial Statements – (continued) The following",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm",
+        "accession": "0000737468-26-000114",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000737468-26-000114",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 0.1974,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.5372
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 57744000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000737468-26-000034",
+          "filed": "2026-02-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000034/"
+        },
+        {
+          "value_usd": 48224000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000737468-26-000034",
+          "filed": "2026-02-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000034/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 80310000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000737468-26-000034",
+          "filed": "2026-02-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000034/"
+        },
+        {
+          "value_usd": 57668000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000737468-26-000034",
+          "filed": "2026-02-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000034/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 52244000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000737468-26-000034",
+          "filed": "2026-02-24",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000034/"
+        },
+        {
+          "value_usd": -28059000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000737468-26-000034",
+          "filed": "2026-02-24",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000034/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "“Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets” (“ASU 2025-05”) was issued in July 2025 to introduce a practical expedient intended to simplify the estimation of expected credit losses on current",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm",
+        "accession": "0000737468-26-000114",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "luded in other assets in the Unaudited Consolidated Balance Sheets. Deferred revenues, which are considered contract liabilities under ASC 606, represent advance consideration received from customers for which the Corporation has a remaining performance obligation to fulfill. C",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm",
+        "accession": "0000737468-26-000114",
+        "form": "10-Q",
+        "filed": "2026-08-06"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "sale_leaseback",
+      "label": "Sale-and-leaseback",
+      "excerpt": "rs in scope of ASC 606. (3) For the six months ended June 30, 2025, included herein in accordance with sale-leaseback transaction provisions of ASC 842 and ASC 606. -37- Condensed Notes to Unaudited Consolidated Financial Statements – (continued) The following",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm",
+      "accession": "0000737468-26-000114",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0000737468-26-000114",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0000737468-26-000114",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "“Financial Instruments - Credit Losses (Topic 326): Measurement of Credit Losses for Accounts Receivable and Contract Assets” (“ASU 2025-05”) was issued in July 2025 to introduce a practical expedient intended to simplify the estimation of expected credit losses on current",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm",
+      "accession": "0000737468-26-000114",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "luded in other assets in the Unaudited Consolidated Balance Sheets. Deferred revenues, which are considered contract liabilities under ASC 606, represent advance consideration received from customers for which the Corporation has a remaining performance obligation to fulfill. C",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/737468/000073746826000114/wash-20260630.htm",
+      "accession": "0000737468-26-000114",
+      "form": "10-Q",
+      "filed": "2026-08-06"
+    }
+  ],
+  "revenue_quality_text_source": "0000737468-26-000114"
+}

@@ -1,0 +1,273 @@
+{
+  "cik": 1823608,
+  "ticker": "AMAL",
+  "name": "Amalgamated Financial Corp.",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0001823608-26-000048": {
+      "instruments": [
+        {
+          "name": "Fixed-to-Floating Rate Notes",
+          "kind": "notes",
+          "as_of": "2021-11-08",
+          "coupon": 0.0325,
+          "spread": 0.023,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-05",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001823608-26-000215": {
+      "instruments": [
+        {
+          "name": "Fixed-to-Floating Rate Notes",
+          "kind": "notes",
+          "as_of": "2021-11-08",
+          "coupon": 0.0325,
+          "spread": 0.023,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-11-03",
+      "report": "2026-09-30"
+    },
+    "0001552781-21-000779:e21606_amal-fwp.htm": {
+      "kind": "fwp",
+      "date": "2021-11-04",
+      "tranches": [
+        {
+          "title": "Fixed-to-Floating Rate Subordinated Notes due 2031",
+          "floating": true,
+          "principal": 85000000.0,
+          "currency": "USD",
+          "maturity_year": 2031,
+          "trade_date": "2021-11-04",
+          "ratings": "BBB-",
+          "convertible": false
+        }
+      ]
+    },
+    "0001552781-21-000772:e21599_amal-fwp.pdf": {
+      "kind": "fwp",
+      "date": "2021-11-04",
+      "tranches": []
+    },
+    "0001552781-21-000772:e21599_amal-fwp.htm": {
+      "kind": "fwp",
+      "date": "2021-11-04",
+      "tranches": []
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "cash": 262520000,
+    "operating_leases": 73901000,
+    "equity": 833561000,
+    "assets": 9733683000,
+    "liabilities": 8900122000,
+    "retained_earnings": 648273000,
+    "deposits": 8714440000,
+    "time_deposits": 242242000,
+    "interest_paid": 122006000,
+    "pretax_income": 163192000,
+    "net_income": 123067000,
+    "da": 6459000,
+    "ocf": 165814000,
+    "capex": 24476000,
+    "deposit_interest": 119840000,
+    "shares": 29704953,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2020-12-31",
+      "filed": "2021-03-15",
+      "total_debt": 0,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 31115136,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 73901000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1823608/000182360826000215/amal-20260930.htm",
+        "accession": "0001823608-26-000215",
+        "form": "10-Q",
+        "filed": "2026-11-03",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 73901000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001823608-26-000215",
+            "filed": "2026-11-03",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1823608/000182360826000215/amal-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "| Thereafter | 57 | Total | $ | 598 | 45 Notes to Consolidated Financial Statements (unaudited) | 14. VARIABLE INTEREST ENTITIES Tax Credit Investments The Company makes investments in unconsolidated entities that construct, own and operate solar generation facilities. An u",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1823608/000182360826000215/amal-20260930.htm",
+        "accession": "0001823608-26-000215",
+        "form": "10-Q",
+        "filed": "2026-11-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "liquidity. Over the long term, we plan to meet our future cash needs through the generation of deposits. Customer deposits have historically provided a sizeable source of relatively stable and low-cost funds. We are also a member of the FHLBNY, from which we can borrow fo",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1823608/000182360826000215/amal-20260930.htm",
+        "accession": "0001823608-26-000215",
+        "form": "10-Q",
+        "filed": "2026-11-03",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001823608-26-000215",
+      "form": "10-Q",
+      "filed": "2026-11-03",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1823608/000182360826000215/amal-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "| Thereafter | 57 | Total | $ | 598 | 45 Notes to Consolidated Financial Statements (unaudited) | 14. VARIABLE INTEREST ENTITIES Tax Credit Investments The Company makes investments in unconsolidated entities that construct, own and operate solar generation facilities. An u",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1823608/000182360826000215/amal-20260930.htm",
+      "accession": "0001823608-26-000215",
+      "form": "10-Q",
+      "filed": "2026-11-03",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "liquidity. Over the long term, we plan to meet our future cash needs through the generation of deposits. Customer deposits have historically provided a sizeable source of relatively stable and low-cost funds. We are also a member of the FHLBNY, from which we can borrow fo",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1823608/000182360826000215/amal-20260930.htm",
+      "accession": "0001823608-26-000215",
+      "form": "10-Q",
+      "filed": "2026-11-03",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001823608-26-000215",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001823608-26-000215",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001823608-26-000215",
+  "xbrl_10-K": "xbrl:0001823608-26-000048",
+  "xbrl_10-Q": "xbrl:0001823608-26-000215",
+  "events": [
+    {
+      "date": "2025-04-08",
+      "items": "1.01,9.01",
+      "acc": "0001823608-25-000025",
+      "doc": "amal-20250404.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-05",
+      "items": "1.01,9.01",
+      "acc": "0001823608-24-000195",
+      "doc": "amal-20241129.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-08",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001552781-21-000788",
+      "doc": "e21608_amal-8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2021-09-22",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001552781-21-000714",
+      "doc": "e21555_amal-8k.htm",
+      "desc": ""
+    }
+  ],
+  "fetched_at": "2026-11-03T16:21:38+00:00",
+  "signature": "0001823608-26-000215",
+  "fdic": {
+    "matched": false
+  }
+}

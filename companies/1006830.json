@@ -1,0 +1,296 @@
+{
+  "cik": 1006830,
+  "ticker": "CBKM",
+  "name": "CONSUMERS BANCORP INC /OH/",
+  "sector": "financials",
+  "industry": "National Commercial Banks",
+  "sic": "6021",
+  "docs": {
+    "xbrl:0001437749-26-030039": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-09-10",
+      "report": "2026-06-30"
+    },
+    "xbrl:0001437749-26-036102": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-11-10",
+      "report": "2026-09-30"
+    }
+  },
+  "sic_description": "National Commercial Banks",
+  "snapshot": {
+    "current_debt": 31497000,
+    "cash": 21633000,
+    "short_term_borrowings": 31497000,
+    "operating_leases": 810000,
+    "revolver_capacity": 5000000,
+    "revolver_drawn": 225000,
+    "equity": 82358000,
+    "assets": 1293821000,
+    "liabilities": 1211463000,
+    "retained_earnings": 88680000,
+    "deposits": 1145684000,
+    "time_deposits": 284347000,
+    "interest_paid": 20339000,
+    "pretax_income": 13662000,
+    "net_income": 11568000,
+    "da": 1286000,
+    "ocf": 11219000,
+    "capex": 1698000,
+    "revenue": 4913000,
+    "deposit_interest": 19572000,
+    "wavg_rate_short": 0.0264,
+    "shares": 3161071,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndDueFromBanks",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (fiscal year)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "ts pursuant to Section 42 of the Internal Revenue Code. This partnership investment is an unconsolidated Variable Interest Entity (VIE) for which the Company holds an interest in but is not the primary beneficiary of the VIE. The purpose of this investment is to achieve a satisf",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926036102/cbkm20260930_10q.htm",
+        "accession": "0001437749-26-036102",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "borrowings, as needed, through the Federal Reserve discount window. Short-term borrowings consisted of repurchase agreements, federal funds purchased, and a line of credit from another financial institution and totaled $31,497 as of September 30, 2026 and $29,210 as of June",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926036102/cbkm20260930_10q.htm",
+        "accession": "0001437749-26-036102",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001437749-26-036102",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926036102/cbkm20260930_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": 0.0641,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.0022
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 4913000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-030039",
+          "filed": "2026-09-10",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926030039/"
+        },
+        {
+          "value_usd": 4617000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+          "accession": "0001437749-26-030039",
+          "filed": "2026-09-10",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926030039/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 11189000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-030039",
+          "filed": "2026-09-10",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926030039/"
+        },
+        {
+          "value_usd": 7934000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001437749-26-030039",
+          "filed": "2026-09-10",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926030039/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 11164000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-030039",
+          "filed": "2026-09-10",
+          "end": "2026-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926030039/"
+        },
+        {
+          "value_usd": 8667000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001437749-26-030039",
+          "filed": "2026-09-10",
+          "end": "2025-06-30",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926030039/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-06-30",
+      "2025-06-30"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "ts pursuant to Section 42 of the Internal Revenue Code. This partnership investment is an unconsolidated Variable Interest Entity (VIE) for which the Company holds an interest in but is not the primary beneficiary of the VIE. The purpose of this investment is to achieve a satisf",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926036102/cbkm20260930_10q.htm",
+      "accession": "0001437749-26-036102",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "borrowings, as needed, through the Federal Reserve discount window. Short-term borrowings consisted of repurchase agreements, federal funds purchased, and a line of credit from another financial institution and totaled $31,497 as of September 30, 2026 and $29,210 as of June",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1006830/000143774926036102/cbkm20260930_10q.htm",
+      "accession": "0001437749-26-036102",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001437749-26-036102",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001437749-26-036102",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0001437749-26-036102",
+  "xbrl_10-K": "xbrl:0001437749-26-030039",
+  "xbrl_10-Q": "xbrl:0001437749-26-036102",
+  "events": [
+    {
+      "date": "2020-12-29",
+      "items": "1.01,9.01",
+      "acc": "0001437749-20-026054",
+      "doc": "cbkm20201229_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-06-14",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001437749-19-012116",
+      "doc": "cbkm20190614_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-06-15",
+      "items": "1.01,9.01",
+      "acc": "0001437749-18-011897",
+      "doc": "cbkm20180615_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-11-09",
+      "items": "1.01,9.01",
+      "acc": "0001437749-16-041453",
+      "doc": "cbkm20161108_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-10-05",
+      "items": "1.01",
+      "acc": "0001437749-16-039508",
+      "doc": "cbkm20161005_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-12-30",
+      "items": "1.01,9.01",
+      "acc": "0001144204-15-073440",
+      "doc": "v428063_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-11T01:58:37+00:00",
+  "signature": "0001437749-26-036102",
+  "fdic": {
+    "matched": false
+  }
+}

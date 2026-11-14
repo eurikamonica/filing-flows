@@ -1,0 +1,453 @@
+{
+  "cik": 714395,
+  "ticker": "GABC",
+  "name": "GERMAN AMERICAN BANCORP, INC.",
+  "sector": "financials",
+  "industry": "State Commercial Banks",
+  "sic": "6022",
+  "docs": {
+    "xbrl:0000714395-26-000011": {
+      "instruments": [
+        {
+          "name": "Short-term Borrowings",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "carrying": 43852000.0,
+          "floating": false
+        },
+        {
+          "name": "4.50% Fixed-to-Floating Rate Subordinated Notes due 2029",
+          "kind": "notes",
+          "as_of": "2024-12-31",
+          "face": 39628000.0,
+          "coupon": 0.045,
+          "spread": 0.0026161,
+          "maturity_year": 2029,
+          "floating": true
+        },
+        {
+          "name": "5.0 % Fixed-to-Floating Rate Subordinated Notes Due 2030",
+          "kind": "notes",
+          "as_of": "2025-09-15",
+          "coupon": 0.05,
+          "face": 24300000.0,
+          "maturity_year": 2030,
+          "floating": true
+        },
+        {
+          "name": "ACB Trust I",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "fair_value": 4289000.0,
+          "spread": 0.0215,
+          "floating": true
+        },
+        {
+          "name": "ACB Trust II",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "fair_value": 2536000.0,
+          "spread": 0.0185,
+          "floating": true
+        },
+        {
+          "name": "RIVR Statutory Trust I",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "fair_value": 6451000.0,
+          "spread": 0.0315,
+          "floating": true
+        },
+        {
+          "name": "Citizens First Statutory Trust I",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "fair_value": 4433000.0,
+          "spread": 0.0165,
+          "floating": true
+        },
+        {
+          "name": "CUB Capital Trust I",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "fair_value": 9741000.0,
+          "spread": 0.02,
+          "floating": true
+        },
+        {
+          "name": "CUB Capital Trust II",
+          "kind": "other",
+          "as_of": "2025-12-31",
+          "fair_value": 9244000.0,
+          "spread": 0.015,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-27",
+      "report": "2025-12-31"
+    },
+    "xbrl:0000714395-26-000032": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-30"
+    },
+    "0001104659-19-037435:a19-12081_1ex10d1.htm": {
+      "kind": "agreement",
+      "date": "2019-06-25",
+      "agreement_kind": "indenture"
+    },
+    "0001144204-12-014190:v304017_ex10-20.htm": {
+      "kind": "agreement",
+      "date": "2012-03-12",
+      "agreement_kind": "amendment",
+      "dated": "2006-12-29",
+      "size": 35000000.0,
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate"
+      ]
+    },
+    "0000927946-05-000064:exhibit101.htm": {
+      "kind": "agreement",
+      "date": "2005-05-10",
+      "agreement_kind": "credit_agreement",
+      "dated": "2005-02-28",
+      "title": "Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "maturity": "2006-08-31"
+    }
+  },
+  "sic_description": "State Commercial Banks",
+  "snapshot": {
+    "total_debt": 187209000,
+    "cash": 118382000,
+    "finance_leases": 1992000,
+    "operating_leases": 5079000,
+    "revolver_capacity": 15000000,
+    "revolver_drawn": 0,
+    "equity": 1211560000,
+    "assets": 8439998000,
+    "liabilities": 7228438000,
+    "retained_earnings": 631097000,
+    "deposits": 6995763000,
+    "time_deposits": 1351650000,
+    "interest_paid": 117581000,
+    "pretax_income": 177350000,
+    "net_income": 142081000,
+    "da": 19815000,
+    "ocf": 189629000,
+    "capex": 7229000,
+    "revenue": 503039000,
+    "debt_issued": 25000000,
+    "debt_repaid": 64542000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 0,
+      "y2": 0,
+      "y3": 0,
+      "y4": 75000000,
+      "y5": 25000000,
+      "after5": 0
+    },
+    "wavg_rate_short": 0.0081,
+    "shares": 37578808,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtAndCapitalLeaseObligations",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)",
+    "wavg_rate_short": "ShortTermDebtWeightedAverageInterestRate"
+  },
+  "history": [
+    {
+      "end": "2021-12-31",
+      "filed": "2022-03-01",
+      "total_debt": 152183000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 29423841,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-12-31",
+      "filed": "2026-02-27",
+      "total_debt": 187209000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": 18714000,
+      "ocf": 159316000,
+      "revenue": 487401000,
+      "shares": 37496537,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 124182000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0000714395-26-000011",
+  "xbrl_10-Q": "xbrl:0000714395-26-000032",
+  "events": [
+    {
+      "date": "2025-02-03",
+      "items": "2.01,2.03,5.02,7.01,9.01",
+      "acc": "0001104659-25-008508",
+      "doc": "tm255296d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-07-29",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-24-083573",
+      "doc": "tm2419070d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-09-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-21-117497",
+      "doc": "tm2127353d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:24:09+00:00",
+  "signature": "0000714395-26-000039",
+  "fdic": {
+    "matched": false
+  },
+  "hidden_leverage": {
+    "as_of": "2025-12-31",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 5764000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000032/gabc-20260630.htm",
+        "accession": "0000714395-26-000032",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "as_of": "2025-12-31",
+        "evidence": [
+          {
+            "value_usd": 5764000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000714395-26-000032",
+            "filed": "2026-08-06",
+            "form": "10-Q",
+            "as_of": "2025-12-31",
+            "url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000032/gabc-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "— | — | Income Taxes on Net Gains (Losses) | — | — | The carrying value of securities pledged to secure repurchase agreements, public and trust deposits, and for other purposes as required by law was $ 957,118 and $ 1,034,917 as of June 30, 2026 and December 31, 2025, respec",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000032/gabc-20260630.htm",
+        "accession": "0000714395-26-000032",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ended June 30, 2026 of $31.1 million. The Company’s bank subsidiary’s primary source of funding is its customer deposits, supplemented by reciprocal deposits. The bank subsidiary of the Company also utilizes short-term funding sources from time to time. These sources co",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000032/gabc-20260630.htm",
+        "accession": "0000714395-26-000032",
+        "form": "10-Q",
+        "filed": "2026-08-06",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000714395-26-000032",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000032/gabc-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2025-12-31",
+    "metrics": {
+      "revenue_growth": 0.378,
+      "receivables_growth": null,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": null,
+      "ocf_to_net_income": 1.4144
+    },
+    "risk_flags": [],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 487401000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000714395-26-000011",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000011/"
+        },
+        {
+          "value_usd": 353703000.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0000714395-26-000011",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000011/"
+        }
+      ],
+      "receivables": [
+        null,
+        null
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 159316000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000714395-26-000011",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000011/"
+        },
+        {
+          "value_usd": 95764000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000714395-26-000011",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000011/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 112635000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000714395-26-000011",
+          "filed": "2026-02-27",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000011/"
+        },
+        {
+          "value_usd": 83811000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000714395-26-000011",
+          "filed": "2026-02-27",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000011/"
+        }
+      ]
+    },
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "— | — | Income Taxes on Net Gains (Losses) | — | — | The carrying value of securities pledged to secure repurchase agreements, public and trust deposits, and for other purposes as required by law was $ 957,118 and $ 1,034,917 as of June 30, 2026 and December 31, 2025, respec",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000032/gabc-20260630.htm",
+      "accession": "0000714395-26-000032",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "ended June 30, 2026 of $31.1 million. The Company’s bank subsidiary’s primary source of funding is its customer deposits, supplemented by reciprocal deposits. The bank subsidiary of the Company also utilizes short-term funding sources from time to time. These sources co",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/714395/000071439526000032/gabc-20260630.htm",
+      "accession": "0000714395-26-000032",
+      "form": "10-Q",
+      "filed": "2026-08-06",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0000714395-26-000032",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0000714395-26-000032",
+  "revenue_quality_text_leads": [],
+  "revenue_quality_text_source": "0000714395-26-000032"
+}

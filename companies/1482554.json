@@ -1,0 +1,302 @@
+{
+  "cik": 1482554,
+  "ticker": "HFUS",
+  "name": "Hartford Creative Group, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "docs": {
+    "xbrl:0001493152-26-051370": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-11-12",
+      "report": "2026-07-31"
+    }
+  },
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "snapshot": {
+    "cash": 88638,
+    "equity": 988150,
+    "assets": 4807248,
+    "liabilities": 3819098,
+    "assets_current": 4568285,
+    "liabilities_current": 3819098,
+    "retained_earnings": -4169966,
+    "operating_income": 1461039,
+    "pretax_income": 1446291,
+    "net_income": 641767,
+    "da": 677,
+    "ocf": -636298,
+    "revenue": 2744029,
+    "stated_rate": 0.03,
+    "converted_shares": 0,
+    "shares": 25027004,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "da": "Depreciation (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "revenue": "Revenues (fiscal year)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "converted_shares": "DebtConversionConvertedInstrumentSharesIssued1"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-07-31",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "to contractors, categorized as “Advance to contractor” and $ 245,735 and $ 4,852,812 , respectively, in customer advance payments, recorded under “Contract Liabilities”. NOTE 6. OTHER CURRENT LIABILITIES Other current payable consist as follows: SCHEDULE OF OTHER CURRENT P",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/form10-k.htm",
+        "accession": "0001493152-26-051370",
+        "form": "10-K",
+        "filed": "2026-11-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001493152-26-051370",
+      "form": "10-K",
+      "filed": "2026-11-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/form10-k.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-07-31",
+    "metrics": {
+      "revenue_growth": -0.9293,
+      "receivables_growth": 8.2444,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": -0.9494,
+      "dsri": 130.7133,
+      "ocf_to_net_income": -0.9915
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 130.7133,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      },
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": -0.9915,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 2744029.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        },
+        {
+          "value_usd": 38800000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0001493152-25-018158",
+          "filed": "2025-10-15",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315225018158/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 497966.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        },
+        {
+          "value_usd": 53867.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 245735.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        },
+        {
+          "value_usd": 4852812.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -636298.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        },
+        {
+          "value_usd": -13094.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 641767.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2026-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        },
+        {
+          "value_usd": 1099110.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001493152-26-051370",
+          "filed": "2026-11-12",
+          "end": "2025-07-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "nterest income for the years ended July 31, 2026 and 2025 was nil and $ 21,457 , respectively. 25 | NOTE 4. RELATED PARTY TRANSACTIONS Related Party Payables Settlement and Forgiveness The Company’s related party relationships with SH Qiaohong and SH Oversea, which previously aro",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/form10-k.htm",
+        "accession": "0001493152-26-051370",
+        "form": "10-K",
+        "filed": "2026-11-12"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "m changes in operating assets and liabilities. The principal usage of operating cash related to a decrease in contract liabilities of $4,764,048 and an increase in accounts receivable of $911,604, offset by a decrease in advance to contractors of $2,848,913, an increase in other",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/form10-k.htm",
+        "accession": "0001493152-26-051370",
+        "form": "10-K",
+        "filed": "2026-11-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2026-07-31",
+      "2025-07-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [
+    {
+      "key": "customer_prepayments",
+      "label": "Customer prepayments",
+      "excerpt": "to contractors, categorized as “Advance to contractor” and $ 245,735 and $ 4,852,812 , respectively, in customer advance payments, recorded under “Contract Liabilities”. NOTE 6. OTHER CURRENT LIABILITIES Other current payable consist as follows: SCHEDULE OF OTHER CURRENT P",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/form10-k.htm",
+      "accession": "0001493152-26-051370",
+      "form": "10-K",
+      "filed": "2026-11-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "B",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001493152-26-051370",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001493152-26-051370",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "nterest income for the years ended July 31, 2026 and 2025 was nil and $ 21,457 , respectively. 25 | NOTE 4. RELATED PARTY TRANSACTIONS Related Party Payables Settlement and Forgiveness The Company’s related party relationships with SH Qiaohong and SH Oversea, which previously aro",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/form10-k.htm",
+      "accession": "0001493152-26-051370",
+      "form": "10-K",
+      "filed": "2026-11-12"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "m changes in operating assets and liabilities. The principal usage of operating cash related to a decrease in contract liabilities of $4,764,048 and an increase in accounts receivable of $911,604, offset by a decrease in advance to contractors of $2,848,913, an increase in other",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1482554/000149315226051370/form10-k.htm",
+      "accession": "0001493152-26-051370",
+      "form": "10-K",
+      "filed": "2026-11-12"
+    }
+  ],
+  "revenue_quality_text_source": "0001493152-26-051370",
+  "xbrl_10-K": "xbrl:0001493152-26-051370",
+  "events": [
+    {
+      "date": "2019-04-09",
+      "items": "1.01,9.01",
+      "acc": "0001079973-19-000207",
+      "doc": "hgh_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-12T23:44:10+00:00",
+  "signature": "0001493152-26-051370"
+}

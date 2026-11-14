@@ -1,0 +1,404 @@
+{
+  "cik": 919864,
+  "ticker": "FNWD",
+  "name": "Finward Bancorp",
+  "sector": "financials",
+  "industry": "Savings Institution, Federally Chartered",
+  "sic": "6035",
+  "sic_description": "Savings Institution, Federally Chartered",
+  "generated_at": "2026-11-14T20:47:12+00:00",
+  "fetched_at": "2026-11-13T23:39:49+00:00",
+  "price": 43.81,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.290431,
+  "snapshot": {
+    "cash": 16630000,
+    "operating_leases": 14132000,
+    "equity": 157842000,
+    "assets": 2014125000,
+    "liabilities": 1856283000,
+    "retained_earnings": 150130000,
+    "deposits": 1758457000,
+    "time_deposits": 493346000,
+    "interest_paid": 33506000,
+    "pretax_income": 8430000,
+    "net_income": 7680000,
+    "da": 5063000,
+    "ocf": 18924000,
+    "capex": 908000,
+    "deposit_interest": 29201000,
+    "shares": 4330684,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndDueFromBanks",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 16630000.0,
+    "net_debt": null,
+    "ebitda": 13493000.0,
+    "ebit": 8430000.0,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.564794,
+    "fcf": 18016000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 16630000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 189727266.04,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "bank": true
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 14132000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+        "accession": "0001628280-26-073830",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 14132000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001628280-26-073830",
+            "filed": "2026-11-13",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "| Interest bearing | 1,476,980 | 1,459,530 | Total | 1,758,457 | 1,726,971 | Federal funds purchased and repurchase agreements | 24,849 | 39,703 | Borrowed funds | 35,000 | 45,000 | Accrued expenses and other liabilities | 37,977 | 34,844 | Total liabilities | 1,856,283 | 1,8",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+        "accession": "0001628280-26-073830",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "customer_prepayments",
+        "label": "Customer prepayments",
+        "excerpt": "ed, subject to market conditions. In the future, our liquidity position will be affected by the level of customer deposits and payments, as well as acquisitions, dividends, and share repurchases in which we may engage. For the next twelve months, we believe that our exist",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+        "accession": "0001628280-26-073830",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "classification": "unverified_text_lead",
+        "review_lane": "B",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-073830",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/919864/000162828026073830/fnwd-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Federal Home Loan Bank Advances",
+      "kind": "loan",
+      "as_of": "2026-09-30",
+      "capacity": 25000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-07-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-26-310388",
+      "doc": "d140760d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-31",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-24-021070",
+      "doc": "d748419d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-29",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-21-228252",
+      "doc": "d140694d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-31",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-18-232470",
+      "doc": "d586416d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-02-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-18-051238",
+      "doc": "d540839d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-02-26",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001144204-16-084538",
+      "doc": "v432790_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-03-20",
+      "items": "1.01,9.01",
+      "acc": "0001144204-15-017429",
+      "doc": "v405088_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2013-12-20",
+      "items": "1.01,9.01",
+      "acc": "0001144204-13-068360",
+      "doc": "v363440_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-03-31",
+      56657000,
+      18563000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      0.0,
+      9.804,
+      0.2116,
+      96.3
+    ],
+    [
+      "2025-06",
+      0.01,
+      9.129,
+      0.2226,
+      100.8
+    ],
+    [
+      "2025-07",
+      0.0,
+      10.018,
+      0.204,
+      95.0
+    ],
+    [
+      "2025-08",
+      0.0,
+      9.865,
+      0.2161,
+      95.9
+    ],
+    [
+      "2025-09",
+      0.0,
+      11.783,
+      0.1819,
+      84.4
+    ],
+    [
+      "2025-10",
+      0.0,
+      11.107,
+      0.1977,
+      88.3
+    ],
+    [
+      "2025-11",
+      0.0,
+      10.426,
+      0.2152,
+      92.4
+    ],
+    [
+      "2025-12",
+      0.0,
+      10.604,
+      0.2098,
+      91.3
+    ],
+    [
+      "2026-01",
+      0.0,
+      10.437,
+      0.2128,
+      92.3
+    ],
+    [
+      "2026-02",
+      0.0,
+      10.018,
+      0.2228,
+      95.0
+    ],
+    [
+      "2026-03",
+      0.01,
+      9.376,
+      0.2342,
+      99.1
+    ],
+    [
+      "2026-04",
+      0.01,
+      9.348,
+      0.2319,
+      99.3
+    ],
+    [
+      "2026-05",
+      0.01,
+      9.12,
+      0.2359,
+      100.8
+    ],
+    [
+      "2026-06",
+      0.01,
+      9.453,
+      0.2303,
+      98.6
+    ],
+    [
+      "2026-07",
+      0.39,
+      7.559,
+      0.3095,
+      111.9
+    ],
+    [
+      "2026-08",
+      0.36,
+      7.584,
+      0.3064,
+      111.7
+    ],
+    [
+      "2026-09",
+      0.33,
+      7.59,
+      0.3065,
+      111.7
+    ],
+    [
+      "2026-10",
+      0.25,
+      7.739,
+      0.3009,
+      110.6
+    ],
+    [
+      "2026-11",
+      0.13,
+      8.054,
+      0.2904,
+      108.3
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

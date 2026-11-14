@@ -1,0 +1,213 @@
+{
+  "cik": 2031283,
+  "name": "Stone Point Credit Income Fund",
+  "sector": "other",
+  "docs": {
+    "xbrl:0002031283-26-000005": {
+      "instruments": [
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "rate_now": 0.064,
+          "capacity": 500000000.0,
+          "carrying": 343426395.0,
+          "available": 156573605.0,
+          "drawn": 340608437.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-19",
+      "report": "2025-12-31"
+    },
+    "xbrl:0002031283-26-000012": {
+      "instruments": [
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "rate_now": 0.059,
+          "capacity": 700000000.0,
+          "carrying": 443083759.0,
+          "available": 256916241.0,
+          "drawn": 436270164.0,
+          "floating": false
+        },
+        {
+          "name": "Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 500000000.0,
+          "carrying": 443083759.0,
+          "available": 56916241.0,
+          "drawn": 438540228.0,
+          "spread": 0.022,
+          "floating": true
+        },
+        {
+          "name": "Truist Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 200000000.0,
+          "carrying": 0.0,
+          "available": 200000000.0,
+          "spread": 0.019,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "report": "2026-06-30"
+    },
+    "0001104659-26-086133:tm2621027d2_ex10-1.htm": {
+      "kind": "agreement",
+      "date": "2026-07-23",
+      "agreement_kind": "other"
+    },
+    "0001104659-26-069414:tm2616626d1_ex10-2.htm": {
+      "kind": "agreement",
+      "date": "2026-06-02",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-01",
+      "facility": "revolving"
+    },
+    "0001104659-26-069414:tm2616626d1_ex10-1.htm": {
+      "kind": "agreement",
+      "date": "2026-06-02",
+      "agreement_kind": "other"
+    }
+  },
+  "sic": "",
+  "sic_description": "",
+  "snapshot": {
+    "cash": 45557268,
+    "revolver_capacity": 500000000,
+    "revolver_available": 107555801,
+    "revolver_drawn": 438540228,
+    "equity": 393040880,
+    "assets": 848014267,
+    "liabilities": 454973387,
+    "retained_earnings": -5506746,
+    "shares": 16171228,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002031283-26-000012",
+      "form": "10-Q",
+      "filed": "2026-08-14",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2031283/000203128326000012/spcif-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "or as) the entity satisfies a performance obligation. In determining the transaction price, the Fund includes variable consideration only to the extent that it is probable that a significant reversal in the amount of cumulative revenue recognized would not occur when the uncertaint",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2031283/000203128326000012/spcif-20260630.htm",
+        "accession": "0002031283-26-000012",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "would have a material effect on the accompanying consolidated financial statements. Note 3. Agreements and Related Party Transactions Investment Advisory Agreement Subject to the overall supervision of the Board and in accordance with the 1940 Act, the Adviser manages the Fund’s",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2031283/000203128326000012/spcif-20260630.htm",
+        "accession": "0002031283-26-000012",
+        "form": "10-Q",
+        "filed": "2026-08-14"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0002031283-26-000012",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0002031283-26-000012",
+  "revenue_quality_text_leads": [
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "or as) the entity satisfies a performance obligation. In determining the transaction price, the Fund includes variable consideration only to the extent that it is probable that a significant reversal in the amount of cumulative revenue recognized would not occur when the uncertaint",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2031283/000203128326000012/spcif-20260630.htm",
+      "accession": "0002031283-26-000012",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "would have a material effect on the accompanying consolidated financial statements. Note 3. Agreements and Related Party Transactions Investment Advisory Agreement Subject to the overall supervision of the Board and in accordance with the 1940 Act, the Adviser manages the Fund’s",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2031283/000203128326000012/spcif-20260630.htm",
+      "accession": "0002031283-26-000012",
+      "form": "10-Q",
+      "filed": "2026-08-14"
+    }
+  ],
+  "revenue_quality_text_source": "0002031283-26-000012",
+  "xbrl_10-K": "xbrl:0002031283-26-000005",
+  "xbrl_10-Q": "xbrl:0002031283-26-000012",
+  "events": [
+    {
+      "date": "2026-07-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-26-086133",
+      "doc": "tm2621027d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-02",
+      "items": "1.01,9.01",
+      "acc": "0001104659-26-069414",
+      "doc": "tm2616626d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-01-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-005540",
+      "doc": "tm254158d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-03T16:25:31+00:00",
+  "signature": "0001104659-26-119574"
+}

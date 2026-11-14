@@ -1,0 +1,235 @@
+{
+  "cik": 2081628,
+  "name": "Rithm Perpetual Life Residential Trust",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "docs": {
+    "xbrl:0001628280-26-015484": {
+      "instruments": [
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "face": 207084000.0,
+          "carrying": 207084000.0,
+          "fair_value": 207084000.0,
+          "floating": false
+        },
+        {
+          "name": "RTL-C Repurchase Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "face": 135182000.0,
+          "carrying": 135182000.0,
+          "spread": 0.023,
+          "rate_now": 0.061,
+          "floating": true
+        },
+        {
+          "name": "TRS-W Repurchase Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "capacity": 71900000.0,
+          "face": 71902000.0,
+          "carrying": 71902000.0,
+          "spread": 0.016,
+          "rate_now": 0.054,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-06",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001628280-26-055103": {
+      "instruments": [
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "face": 467076000.0,
+          "carrying": 467076000.0,
+          "fair_value": 467076000.0,
+          "floating": false
+        },
+        {
+          "name": "TRS-W Repurchase Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "face": 282794000.0,
+          "carrying": 282794000.0,
+          "spread": 0.016,
+          "rate_now": 0.052,
+          "floating": true
+        },
+        {
+          "name": "RTL-C Repurchase Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "face": 184282000.0,
+          "carrying": 184282000.0,
+          "spread": 0.023,
+          "rate_now": 0.059,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-10",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Real Estate Investment Trusts",
+  "snapshot": {
+    "cash": 7998000,
+    "equity": 139150000,
+    "assets": 616028000,
+    "liabilities": 476878000,
+    "retained_earnings": 1451000,
+    "shares": 100,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001628280-26-015484",
+  "xbrl_10-Q": "xbrl:0001628280-26-055103",
+  "events": [],
+  "fetched_at": "2026-10-26T02:59:54+00:00",
+  "signature": "0001628280-26-066023",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "| 276,453 | (1) The Company's consolidated balance sheets include assets and liabilities of consolidated variable interest entities (“VIEs” and each, a “VIE”). VIE assets can only be used to settle obligations and liabilities of the VIEs. VIE creditors do not have recourse to Rith",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+        "accession": "0001628280-26-055103",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "repo_financing",
+        "label": "Repo / sale-and-repurchase",
+        "excerpt": "ings — The Company finances its RTL and NQM portfolios through secured borrowing arrangements, including repurchase agreements and warehouse credit facilities entered into by the VIEs. Under these arrangements, the Company pledges mortgage loans and/or related trust interests",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+        "accession": "0001628280-26-055103",
+        "form": "10-Q",
+        "filed": "2026-08-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001628280-26-055103",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "Financial Instruments - Credit Losses (Topic 326): Measurements of Credit Losses for Accounts Receivable and Contract Assets , which provides a practical expedient to measure credit losses for current accounts receivable and current contract assets under FASB Accounting Sta",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+        "accession": "0001628280-26-055103",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      },
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "J basic and diluted | $ | 0.41 | $ | 0.77 | Class E basic | 0.48 | 0.90 | Class E diluted | 0.46 | 0.86 | 9. RELATED PARTY TRANSACTIONS A party is considered to be related to the Company if the party, directly or indirectly or through one or more intermediaries, controls, is control",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+        "accession": "0001628280-26-055103",
+        "form": "10-Q",
+        "filed": "2026-08-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "| 276,453 | (1) The Company's consolidated balance sheets include assets and liabilities of consolidated variable interest entities (“VIEs” and each, a “VIE”). VIE assets can only be used to settle obligations and liabilities of the VIEs. VIE creditors do not have recourse to Rith",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+      "accession": "0001628280-26-055103",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "repo_financing",
+      "label": "Repo / sale-and-repurchase",
+      "excerpt": "ings — The Company finances its RTL and NQM portfolios through secured borrowing arrangements, including repurchase agreements and warehouse credit facilities entered into by the VIEs. Under these arrangements, the Company pledges mortgage loans and/or related trust interests",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+      "accession": "0001628280-26-055103",
+      "form": "10-Q",
+      "filed": "2026-08-10",
+      "classification": "unverified_text_lead",
+      "review_lane": "A",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0001628280-26-055103",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001628280-26-055103",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "Financial Instruments - Credit Losses (Topic 326): Measurements of Credit Losses for Accounts Receivable and Contract Assets , which provides a practical expedient to measure credit losses for current accounts receivable and current contract assets under FASB Accounting Sta",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+      "accession": "0001628280-26-055103",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    },
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "J basic and diluted | $ | 0.41 | $ | 0.77 | Class E basic | 0.48 | 0.90 | Class E diluted | 0.46 | 0.86 | 9. RELATED PARTY TRANSACTIONS A party is considered to be related to the Company if the party, directly or indirectly or through one or more intermediaries, controls, is control",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2081628/000162828026055103/rhome-20260630.htm",
+      "accession": "0001628280-26-055103",
+      "form": "10-Q",
+      "filed": "2026-08-10"
+    }
+  ],
+  "revenue_quality_text_source": "0001628280-26-055103"
+}

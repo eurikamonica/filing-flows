@@ -1,0 +1,191 @@
+{
+  "cik": 1041368,
+  "ticker": "RVSB",
+  "name": "RIVERVIEW BANCORP INC",
+  "sector": "financials",
+  "industry": "Savings Institution, Federally Chartered",
+  "sic": "6035",
+  "docs": {
+    "xbrl:0001041368-26-000007": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-06-12",
+      "report": "2026-03-31"
+    },
+    "xbrl:0001041368-26-000018": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-11-13",
+      "report": "2026-09-30"
+    },
+    "0000939057-05-000068:s4032205.txt": {
+      "kind": "424b",
+      "date": "2005-03-22",
+      "tranches": []
+    },
+    "0000939057-03-000137:frm424b3.txt": {
+      "kind": "424b",
+      "date": "2003-05-14",
+      "tranches": []
+    }
+  },
+  "sic_description": "Savings Institution, Federally Chartered",
+  "snapshot": {
+    "cash": 115803000,
+    "finance_leases": 1978000,
+    "operating_leases": 3252000,
+    "equity": 138177000,
+    "assets": 1486337000,
+    "liabilities": 1348160000,
+    "retained_earnings": 116585000,
+    "deposits": 1281858000,
+    "time_deposits": 248619000,
+    "interest_paid": 21556000,
+    "pretax_income": -4135000,
+    "net_income": -2998000,
+    "da": 3084000,
+    "ocf": 3398000,
+    "capex": 720000,
+    "debt_repaid": 816800000,
+    "deposit_interest": 17381000,
+    "shares": 19482421,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "deposits": "Deposits",
+    "time_deposits": "TimeDeposits",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (four quarters)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (fiscal year)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 3252000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1041368/000104136826000018/rvsb-20260930x10q.htm",
+        "accession": "0001041368-26-000018",
+        "form": "10-Q",
+        "filed": "2026-11-13",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 3252000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001041368-26-000018",
+            "filed": "2026-11-13",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1041368/000104136826000018/rvsb-20260930x10q.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001041368-26-000018",
+      "form": "10-Q",
+      "filed": "2026-11-13",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1041368/000104136826000018/rvsb-20260930x10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-09-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "licable billing cycle. Contract Balances As of September 30, 2026 and 2025, the Company had no significant contract liabilities where the Company had an obligation to transfer goods or services for which the Company had already received consideration. In addition, the Company",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1041368/000104136826000018/rvsb-20260930x10q.htm",
+        "accession": "0001041368-26-000018",
+        "form": "10-Q",
+        "filed": "2026-11-13"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001041368-26-000018",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001041368-26-000018",
+  "revenue_quality_text_leads": [
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "licable billing cycle. Contract Balances As of September 30, 2026 and 2025, the Company had no significant contract liabilities where the Company had an obligation to transfer goods or services for which the Company had already received consideration. In addition, the Company",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1041368/000104136826000018/rvsb-20260930x10q.htm",
+      "accession": "0001041368-26-000018",
+      "form": "10-Q",
+      "filed": "2026-11-13"
+    }
+  ],
+  "revenue_quality_text_source": "0001041368-26-000018",
+  "xbrl_10-K": "xbrl:0001041368-26-000007",
+  "xbrl_10-Q": "xbrl:0001041368-26-000018",
+  "events": [
+    {
+      "date": "2016-09-29",
+      "items": "1.01,9.01",
+      "acc": "0000939057-16-001016",
+      "doc": "k892816.htm",
+      "desc": "RIVERVIEW BANCORP, INC. FORM 8-K FOR THE EVENT ON 9.28.16"
+    },
+    {
+      "date": "2015-08-31",
+      "items": "1.01,5.02,5.03,8.01,9.01",
+      "acc": "0000927089-15-000399",
+      "doc": "k82615.htm",
+      "desc": ""
+    },
+    {
+      "date": "2010-07-30",
+      "items": "1.01,7.01,9.01",
+      "acc": "0000939057-10-000227",
+      "doc": "k8riv72910.htm",
+      "desc": "RIVERVIEW BANCORP, INC. FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-11-13T23:40:07+00:00",
+  "signature": "0001041368-26-000018",
+  "fdic": {
+    "matched": false
+  }
+}

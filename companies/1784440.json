@@ -1,0 +1,273 @@
+{
+  "cik": 1784440,
+  "ticker": "BHIC",
+  "name": "BioScience Health Innovations, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "docs": {
+    "xbrl:0001185185-26-001133": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-30",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001096906-26-001173": {
+      "instruments": [],
+      "form": "10-Q",
+      "date": "2026-08-07",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "snapshot": {
+    "cash": 712378,
+    "equity": 1834941,
+    "assets": 2136150,
+    "liabilities": 301209,
+    "assets_current": 1986913,
+    "retained_earnings": -114653,
+    "interest_paid": 0,
+    "operating_income": -613240,
+    "net_income": -658072,
+    "ocf": -1535122,
+    "revenue": 4491494,
+    "shares": 11752329,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001185185-26-001133",
+  "xbrl_10-Q": "xbrl:0001096906-26-001173",
+  "events": [
+    {
+      "date": "2024-06-25",
+      "items": "1.01,2.01,3.02,5.02,5.06,9.01",
+      "acc": "0001185185-24-000654",
+      "doc": "nowtransit20240625_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2023-02-17",
+      "items": "1.01,9.01",
+      "acc": "0001185185-23-000148",
+      "doc": "nowtransit20230217_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-11-29",
+      "items": "1.01,9.01",
+      "acc": "0001185185-22-001369",
+      "doc": "nowtransit20221129_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T03:18:34+00:00",
+  "signature": "0001096906-26-001173",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [],
+    "text_signals": [],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "no_standard_tag_at_period",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001096906-26-001173",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000109690626001173/bhic-20260630_10q.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-06-30",
+    "metrics": {
+      "revenue_growth": 2.0834,
+      "receivables_growth": 2.9812,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": null,
+      "dsri": 1.2912,
+      "ocf_to_net_income": 0.2682
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.2912,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      },
+      {
+        "key": "cash_conversion",
+        "label": "Operating cash flow below reported net income",
+        "value": 0.2682,
+        "rule": "OCF / positive net income < 0.60 (not revenue-specific)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 5688717.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001185185-26-001133",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000118518526001133/"
+        },
+        {
+          "value_usd": 1844966.0,
+          "tag": "us-gaap:Revenues",
+          "accession": "0001185185-26-001133",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000118518526001133/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 399257.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001185185-26-001133",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000118518526001133/"
+        },
+        {
+          "value_usd": 100285.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0001185185-26-001133",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000118518526001133/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        null,
+        null
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": 172178.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001185185-26-001133",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000118518526001133/"
+        },
+        {
+          "value_usd": 23188.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0001185185-26-001133",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000118518526001133/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": 642090.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001185185-26-001133",
+          "filed": "2026-03-30",
+          "end": "2025-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000118518526001133/"
+        },
+        {
+          "value_usd": 87000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0001185185-26-001133",
+          "filed": "2026-03-30",
+          "end": "2024-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000118518526001133/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "Assets | $ | 4,500 | $ | - | $ | - | $ | 4,500 | Total Liabilities | $ | - | $ | - | $ | - | $ | - | Note 4 - Related Party Transactions During the six months ended June 30, 2025 the Company purchased $ 1,153,197 worth of inventory from Ageless Holdings, LLC (“Holdings”), entity owne",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000109690626001173/bhic-20260630_10q.htm",
+        "accession": "0001096906-26-001173",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "Accounts payable | $ 9,715 | $ 6,274 | Accrued expenses | 28,542 | 7,957 | Income tax payable | - | 79,030 | Deferred revenue | 2,550 | 136,590 | Note payable - related party | 260,402 | - | Total current liabilities | 301,209 | 229,851 | STOCKHOLDERS' EQUITY (DEFICIT) | Pre",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000109690626001173/bhic-20260630_10q.htm",
+        "accession": "0001096906-26-001173",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2025-12-31",
+      "2024-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "hidden_text_signals": [],
+  "hidden_text_source": "0001096906-26-001173",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0001096906-26-001173",
+  "revenue_quality_text_leads": [
+    {
+      "key": "related_party_sales",
+      "label": "Related-party revenue",
+      "excerpt": "Assets | $ | 4,500 | $ | - | $ | - | $ | 4,500 | Total Liabilities | $ | - | $ | - | $ | - | $ | - | Note 4 - Related Party Transactions During the six months ended June 30, 2025 the Company purchased $ 1,153,197 worth of inventory from Ageless Holdings, LLC (“Holdings”), entity owne",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000109690626001173/bhic-20260630_10q.htm",
+      "accession": "0001096906-26-001173",
+      "form": "10-Q",
+      "filed": "2026-08-07"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "Accounts payable | $ 9,715 | $ 6,274 | Accrued expenses | 28,542 | 7,957 | Income tax payable | - | 79,030 | Deferred revenue | 2,550 | 136,590 | Note payable - related party | 260,402 | - | Total current liabilities | 301,209 | 229,851 | STOCKHOLDERS' EQUITY (DEFICIT) | Pre",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1784440/000109690626001173/bhic-20260630_10q.htm",
+      "accession": "0001096906-26-001173",
+      "form": "10-Q",
+      "filed": "2026-08-07"
+    }
+  ],
+  "revenue_quality_text_source": "0001096906-26-001173"
+}

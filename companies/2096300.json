@@ -1,0 +1,394 @@
+{
+  "cik": 2096300,
+  "ticker": "AVEX",
+  "name": "AEVEX Corp.",
+  "sector": "industrials",
+  "industry": "Aircraft",
+  "sic": "3721",
+  "docs": {
+    "xbrl:0002096300-26-000022": {
+      "instruments": [
+        {
+          "name": "Loan Authorization Agreement",
+          "kind": "loan",
+          "as_of": "2025-10-09",
+          "capacity": 60000000.0,
+          "floating": false
+        },
+        {
+          "name": "New Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "spread_min": 0.0225,
+          "spread_max": 0.03,
+          "fee_min": 0.0025,
+          "fee_max": 0.005,
+          "coupon": 0.0637,
+          "reference": "Base Rate",
+          "floating": true
+        },
+        {
+          "name": "Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "spread": 0.05,
+          "coupon": 0.0992,
+          "reference": "Term SOFR Floor",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-12",
+      "report": "2026-06-30"
+    },
+    "0001193125-26-177298:d108131dex101.htm": {
+      "kind": "agreement",
+      "date": "2026-04-24",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-04-20",
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "floor_pct": 0.0,
+      "maturity": "2031-04-20",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "The Borrower and each of the Restricted Subsidiaries covenant and agree that: (1) The Borrower shall not permit the Total Net Leverage Ratio as of the last day of any Test Period, commencing with the Test Period ending September 30, 2026, to be greater than 3.50 to 1.00 (the “ Leverage Test ”);"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(2) The Borrower shall not permit the Interest Coverage Ratio as of the last day of any Test Period, commencing with the Test Period ending September 30, 2026, to be less than 3.00 to 1.00 (such compliance to be determined on the basis of the financial information most recently delivered to the Administrative Agent pursuant to Section 6.01(1) and Section 6.01(2) for such Test Period)."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ns and Letter of Credit fees and (ii) 1.75% for Base Rate Loans; (b) thereafter, the following percentages per annum, based upon the Secured Net Leverage Ratio as specified in the most recent Compliance Certificate received by the Administrative Agent pursuant to Section 6.02(1) : | Pricing Level | Secured Net Leverage Ratio | Term SOFR, Daily Simple SOFR and Letter of Credit Fees | Base Rate | 1 | Greater than or eq"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ng any limitations, as if a Restricted Payment were made pursuant to such applicable clause; (33) any Investments if on a pro forma basis after giving effect to such Investment, (A) no Event of Default under Section 8.01(1) or (6) has occurred and is continuing or would result therefrom and (B) the Total Net Leverage Ratio would be equal to or less than 3.00 to 1.00 as of the last day of the Test Period most recently"
+        }
+      ]
+    }
+  },
+  "sic_description": "Aircraft",
+  "snapshot": {
+    "total_debt": 99107000,
+    "current_debt": 2500000,
+    "cash": 215238000,
+    "operating_leases": 8989000,
+    "equity": -533711000,
+    "assets": 948093000,
+    "liabilities": 274559000,
+    "assets_current": 431433000,
+    "liabilities_current": 76176000,
+    "retained_earnings": -533722000,
+    "shares": 52805593,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-12",
+      "total_debt": 99107000,
+      "cash": 215238000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 52805593,
+      "convertible": null,
+      "equity": -533711000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0002096300-26-000022",
+  "events": [
+    {
+      "date": "2026-08-12",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001193125-26-346904",
+      "doc": "d139310d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-05",
+      "items": "1.01,9.01",
+      "acc": "0001193125-26-259643",
+      "doc": "d141582d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-24",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001193125-26-177298",
+      "doc": "d108131d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-20",
+      "items": "1.01,3.02,3.03,5.02,5.03,9.01",
+      "acc": "0001193125-26-164202",
+      "doc": "d123077d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-26T01:16:07+00:00",
+  "signature": "0001193125-26-385301",
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 8989000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+        "accession": "0002096300-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 8989000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0002096300-26-000022",
+            "filed": "2026-08-12",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "nancial position, results of operations, and cash flows of AEVEX Corp. and its subsidiaries, including a variable interest entity (“VIE”) for which the Company is the primary beneficiary. All intercompany transactions and balances have been eliminated in consolidation. The conde",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+        "accession": "0002096300-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "residual_guarantee",
+        "label": "Residual value guarantees",
+        "excerpt": "m. The lease may be terminated by either party at any time, for any reason. The lease does not contain a residual value guarantee and the Company is not obligated to provide any financial support to the VIE other than the lease payments. The Company does not have an equity inter",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+        "accession": "0002096300-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      },
+      {
+        "key": "redeemable_nci",
+        "label": "Put options / redeemable NCI",
+        "excerpt": "ed Statements of Operations (Unaudited) | 2 | Condensed Consolidated Statements of Changes in Equity and Redeemable Noncontrolling Interests (Unaudited) | 3 | Condensed Consolidated Statements of Cash Flows (Unaudited) | 5 | Notes to Condensed Consolidated Financial Statements (Unaudited)",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+        "accession": "0002096300-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-12",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0002096300-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "contract_assets",
+        "label": "Unbilled revenue / contract assets",
+        "excerpt": "Assets: | Cash and cash equivalents | $ | 215,238 | $ | 27,908 | Accounts receivable, net | 69,050 | 55,215 | Contract assets | 119,561 | 79,680 | Inventories | 12,668 | 4,134 | Prepaid expenses and other current assets | 14,916 | 23,479 | Total current assets | 431,433 | 19",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+        "accession": "0002096300-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "variable_consideration",
+        "label": "Variable consideration / rebates / returns",
+        "excerpt": "finalization of undefinitized contract actions, occur. The impact of revisions in estimate of completion and variable consideration for all types of contracts is recognized on a cumulative catch-up basis in the period in which the revisions are made. Changes in variable considerat",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+        "accession": "0002096300-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "contract_modification",
+        "label": "Contract modifications",
+        "excerpt": "more information is obtained, even though the scope of work required under the contract may not change, or if contract modifications, including the finalization of undefinitized contract actions, occur. The impact of revisions in estimate of completion and variable consideration fo",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+        "accession": "0002096300-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "counts payable | $ | 30,729 | $ | 23,700 | Accrued expenses and other current liabilities | 23,164 | 21,760 | Deferred revenue | 16,637 | 10,942 | Current portion of long-term debt | 2,500 | 2,720 | Operating lease liabilities | 3,146 | 3,426 | Total current liabilities | 76,",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+        "accession": "0002096300-26-000022",
+        "form": "10-Q",
+        "filed": "2026-08-12"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "hidden_text_signals": [
+    {
+      "key": "vie",
+      "label": "SPE / SPV / VIE financing",
+      "excerpt": "nancial position, results of operations, and cash flows of AEVEX Corp. and its subsidiaries, including a variable interest entity (“VIE”) for which the Company is the primary beneficiary. All intercompany transactions and balances have been eliminated in consolidation. The conde",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+      "accession": "0002096300-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "A/C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "residual_guarantee",
+      "label": "Residual value guarantees",
+      "excerpt": "m. The lease may be terminated by either party at any time, for any reason. The lease does not contain a residual value guarantee and the Company is not obligated to provide any financial support to the VIE other than the lease payments. The Company does not have an equity inter",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+      "accession": "0002096300-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    },
+    {
+      "key": "redeemable_nci",
+      "label": "Put options / redeemable NCI",
+      "excerpt": "ed Statements of Operations (Unaudited) | 2 | Condensed Consolidated Statements of Changes in Equity and Redeemable Noncontrolling Interests (Unaudited) | 3 | Condensed Consolidated Statements of Cash Flows (Unaudited) | 5 | Notes to Condensed Consolidated Financial Statements (Unaudited)",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+      "accession": "0002096300-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-12",
+      "classification": "unverified_text_lead",
+      "review_lane": "C",
+      "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+    }
+  ],
+  "hidden_text_source": "0002096300-26-000022",
+  "hidden_footnote_tables": [],
+  "hidden_leverage_phase2_source": "0002096300-26-000022",
+  "revenue_quality_text_leads": [
+    {
+      "key": "contract_assets",
+      "label": "Unbilled revenue / contract assets",
+      "excerpt": "Assets: | Cash and cash equivalents | $ | 215,238 | $ | 27,908 | Accounts receivable, net | 69,050 | 55,215 | Contract assets | 119,561 | 79,680 | Inventories | 12,668 | 4,134 | Prepaid expenses and other current assets | 14,916 | 23,479 | Total current assets | 431,433 | 19",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+      "accession": "0002096300-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-12"
+    },
+    {
+      "key": "variable_consideration",
+      "label": "Variable consideration / rebates / returns",
+      "excerpt": "finalization of undefinitized contract actions, occur. The impact of revisions in estimate of completion and variable consideration for all types of contracts is recognized on a cumulative catch-up basis in the period in which the revisions are made. Changes in variable considerat",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+      "accession": "0002096300-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-12"
+    },
+    {
+      "key": "contract_modification",
+      "label": "Contract modifications",
+      "excerpt": "more information is obtained, even though the scope of work required under the contract may not change, or if contract modifications, including the finalization of undefinitized contract actions, occur. The impact of revisions in estimate of completion and variable consideration fo",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+      "accession": "0002096300-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-12"
+    },
+    {
+      "key": "deferred_revenue",
+      "label": "Deferred revenue / contract liabilities",
+      "excerpt": "counts payable | $ | 30,729 | $ | 23,700 | Accrued expenses and other current liabilities | 23,164 | 21,760 | Deferred revenue | 16,637 | 10,942 | Current portion of long-term debt | 2,500 | 2,720 | Operating lease liabilities | 3,146 | 3,426 | Total current liabilities | 76,",
+      "classification": "unverified_text_lead",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2096300/000209630026000022/avex-20260630.htm",
+      "accession": "0002096300-26-000022",
+      "form": "10-Q",
+      "filed": "2026-08-12"
+    }
+  ],
+  "revenue_quality_text_source": "0002096300-26-000022"
+}

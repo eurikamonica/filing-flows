@@ -1,0 +1,537 @@
+{
+  "cik": 1806931,
+  "ticker": null,
+  "name": "Rayonier, L.P.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-11-14T20:47:06+00:00",
+  "fetched_at": "2026-11-05T00:56:25+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 1855270000,
+    "current_debt": 0,
+    "cash": 411760000,
+    "finance_leases": 12397000,
+    "operating_leases": 23884000,
+    "equity": 5212152000,
+    "assets": 7463663000,
+    "assets_current": 681180000,
+    "liabilities_current": 191223000,
+    "retained_earnings": 24946000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 138750000,
+      "rest_of_year": 0,
+      "y2": 300000000,
+      "y3": 390000000,
+      "y4": 184750000
+    },
+    "shares": 297567291,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 1855270000,
+    "cash_and_investments": 411760000.0,
+    "net_debt": 1443510000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 411760000.0,
+    "due_12m": 138750000,
+    "due_24m": 438750000,
+    "liquidity_to_due12": 2.96764,
+    "liquidity_to_due24": 0.938484,
+    "floating_debt": 1409500000.0,
+    "floating_share": 0.759728,
+    "plus100bp_interest": 14095000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "hidden_leverage": {
+    "as_of": "2026-06-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 23884000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1806931/000005282726000099/ryn-20260630.htm",
+        "accession": "0000052827-26-000099",
+        "form": "10-Q",
+        "filed": "2026-08-07",
+        "as_of": "2026-06-30",
+        "evidence": [
+          {
+            "value_usd": 23884000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0000052827-26-000099",
+            "filed": "2026-08-07",
+            "form": "10-Q",
+            "as_of": "2026-06-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1806931/000005282726000099/ryn-20260630.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "guarantee_support",
+        "label": "Guarantees / keepwell support",
+        "excerpt": "ENTS (Unaudited) (Dollar amounts in thousands unless otherwise stated) 14. GUARANTEES We provide financial guarantees as required by creditors, insurance programs, and various governmental agencies. As of June 30, 2026, the following financial guarantees were outst",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1806931/000005282726000099/ryn-20260630.htm",
+        "accession": "0000052827-26-000099",
+        "form": "10-Q",
+        "filed": "2026-08-07",
+        "classification": "unverified_text_lead",
+        "review_lane": "C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0000052827-26-000099",
+      "form": "10-Q",
+      "filed": "2026-08-07",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1806931/000005282726000099/ryn-20260630.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "missing_annual_comparison",
+    "as_of": "2026-06-30",
+    "metrics": {},
+    "risk_flags": [],
+    "evidence": {},
+    "text_leads": [
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "taxes | 14,413 | 5,070 | Accrued payroll and benefits | 47,609 | 15,740 | Accrued interest | 8,201 | 4,517 | Deferred revenue | 48,523 | 19,260 | Other current liabilities | 41,625 | 13,937 | Total current liabilities | 191,223 | 271,281 | LONG-TERM DEBT, NET ( NOTE 8 ) | 1,",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1806931/000005282726000099/ryn-20260630.htm",
+        "accession": "0000052827-26-000099",
+        "form": "10-Q",
+        "filed": "2026-08-07"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts"
+  },
+  "instruments": [
+    {
+      "name": "Senior Notes due 2031 at a fixed interest rate of 2.75%",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0275,
+      "carrying": 450000000.0,
+      "maturity_year": 2031,
+      "floating": false
+    },
+    {
+      "name": "2015 Term Loan borrowings due 2028 at a variable interest rate of 5.22%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0522,
+      "carrying": 200000000.0,
+      "spread": 0.016,
+      "effective": 0.0211,
+      "maturity_year": 2028,
+      "floating": true
+    },
+    {
+      "name": "2021 Incremental Term Loan due 2029 at a variable interest rate of 5.54%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0554,
+      "carrying": 200000000.0,
+      "spread": 0.0192,
+      "effective": 0.017,
+      "maturity_year": 2029,
+      "floating": true
+    },
+    {
+      "name": "Term Loan M due 2029 at a variable interest rate of 5.32%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0532,
+      "carrying": 150000000.0,
+      "spread": 0.017,
+      "effective": 0.0108,
+      "maturity_year": 2029,
+      "floating": true
+    },
+    {
+      "name": "Term Loan Q due 2027 at a variable interest rate of 5.62%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0562,
+      "carrying": 138750000.0,
+      "spread": 0.02,
+      "effective": 0.0148,
+      "maturity_year": 2027,
+      "floating": true
+    },
+    {
+      "name": "Term Loan R due 2030 at a variable interest rate of 5.62%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0562,
+      "carrying": 138750000.0,
+      "spread": 0.02,
+      "effective": 0.0162,
+      "maturity_year": 2030,
+      "floating": true
+    },
+    {
+      "name": "Term Loan W due 2034 at a variable interest rate of 5.92%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0592,
+      "carrying": 100000000.0,
+      "spread": 0.023,
+      "effective": 0.0324,
+      "maturity_year": 2034,
+      "floating": true
+    },
+    {
+      "name": "Term Loan X due 2035 at a variable interest rate of 5.92%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0592,
+      "carrying": 100000000.0,
+      "spread": 0.023,
+      "effective": 0.0299,
+      "maturity_year": 2035,
+      "floating": true
+    },
+    {
+      "name": "Term Loan K due 2028 at a variable interest rate of 5.66%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0566,
+      "carrying": 65000000.0,
+      "spread": 0.0204,
+      "effective": 0.0376,
+      "maturity_year": 2028,
+      "floating": true
+    },
+    {
+      "name": "Term Loan O due 2030 at a variable interest rate of 5.90%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.059,
+      "carrying": 46000000.0,
+      "spread": 0.0228,
+      "effective": 0.0206,
+      "maturity_year": 2030,
+      "floating": true
+    },
+    {
+      "name": "Term Loan N due 2029 at a variable interest rate of 5.31%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0531,
+      "carrying": 40000000.0,
+      "spread": 0.0169,
+      "effective": 0.0192,
+      "maturity_year": 2029,
+      "floating": true
+    },
+    {
+      "name": "Term Loan P due 2031 at a variable interest rate of 5.82%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0582,
+      "carrying": 40000000.0,
+      "spread": 0.022,
+      "effective": 0.0205,
+      "maturity_year": 2031,
+      "floating": true
+    },
+    {
+      "name": "Term Loan S due 2032 at a variable interest rate of 5.92%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0592,
+      "carrying": 40000000.0,
+      "spread": 0.023,
+      "effective": 0.0223,
+      "maturity_year": 2032,
+      "floating": true
+    },
+    {
+      "name": "Term Loan T due 2033 at a variable interest rate of 5.92%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0592,
+      "carrying": 40000000.0,
+      "spread": 0.023,
+      "effective": 0.023,
+      "maturity_year": 2033,
+      "floating": true
+    },
+    {
+      "name": "Term Loan U due 2032 at a variable interest rate of 5.82%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0582,
+      "carrying": 38000000.0,
+      "spread": 0.022,
+      "effective": 0.0299,
+      "maturity_year": 2032,
+      "floating": true
+    },
+    {
+      "name": "Term Loan V due 2033 at a variable interest rate of 5.87%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0587,
+      "carrying": 38000000.0,
+      "spread": 0.0225,
+      "effective": 0.0323,
+      "maturity_year": 2033,
+      "floating": true
+    },
+    {
+      "name": "Term Loan L due 2028 at a variable interest rate of 5.66%",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0566,
+      "carrying": 35000000.0,
+      "spread": 0.0204,
+      "effective": 0.0376,
+      "maturity_year": 2028,
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "available": 199000000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "$450,000,000 2.750% Senior Notes due 2031",
+      "floating": false,
+      "coupon": 2.75,
+      "principal": 450000000.0,
+      "currency": "USD",
+      "maturity": "2031-05-17",
+      "yield": 2.843,
+      "benchmark": "1.125% UST due February 15, 2031",
+      "bench_yield": 1.693,
+      "spread_bps": 115.0,
+      "trade_date": "2021-05-12",
+      "convertible": false,
+      "cusip": "75508XAA4",
+      "date": "2021-05-12",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1806931/000119312521159356/d68244dfwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-02-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-01-30",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1806931/000005282726000018/a2ndarguaranteeagreementto.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-08-20",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-08-15",
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "floor_pct": 0.0,
+      "maturity": "2030-08-15",
+      "url": "https://www.sec.gov/Archives/edgar/data/1806931/000005282725000172/amendedandrestatedcreditag.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-06-07",
+      "agreement_kind": "amendment",
+      "dated": "2021-06-01",
+      "size": 200000000.0,
+      "title": "Fourth Amendment And Incremental Term Loan Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Eurodollar"
+      ],
+      "fee_pct": 0.15,
+      "url": "https://www.sec.gov/Archives/edgar/data/1806931/000005282721000137/rayonier2qdebt8-kexhibit101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-02-03",
+      "items": "1.01,2.03,5.02,9.01",
+      "acc": "0000052827-26-000018",
+      "doc": "ryn-20260130.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-14",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001193125-25-237976",
+      "doc": "d14100d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000052827-25-000172",
+      "doc": "ryn-20250815.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-10",
+      "items": "1.01,7.01,9.01",
+      "acc": "0000052827-25-000023",
+      "doc": "ryn-20250309.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-12-19",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0000052827-22-000149",
+      "doc": "ryn-20221214.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-11-04",
+      "items": "1.01,9.01",
+      "acc": "0001193125-22-278023",
+      "doc": "d419079d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-11-02",
+      "items": "1.01,7.01",
+      "acc": "0000052827-22-000131",
+      "doc": "ryn-20221102.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000052827-21-000137",
+      "doc": "ryn-20210601.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-05-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-21-163673",
+      "doc": "d158780d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-09-10",
+      "items": "1.01,9.01",
+      "acc": "0001193125-20-242749",
+      "doc": "d39905d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-05-13",
+      "items": "1.01,2.01,2.03,3.03,5.03,9.01",
+      "acc": "0000052827-20-000138",
+      "doc": "ryn-20200507.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      1855270000,
+      411760000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

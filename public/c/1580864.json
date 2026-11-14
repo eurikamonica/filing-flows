@@ -1,0 +1,1088 @@
+{
+  "cik": 1580864,
+  "ticker": "VRM",
+  "name": "Vroom, Inc.",
+  "sector": "consumer-disc",
+  "industry": "Retail-Auto Dealers & Gasoline Stations",
+  "sic": "5500",
+  "sic_description": "Retail-Auto Dealers & Gasoline Stations",
+  "generated_at": "2026-11-14T20:47:04+00:00",
+  "fetched_at": "2026-11-11T01:58:25+00:00",
+  "price": 6.97,
+  "price_date": "2026-11-13",
+  "equity_vol": 0.978397,
+  "snapshot": {
+    "total_debt": 414966000,
+    "cash": 32981000,
+    "operating_leases": 8139000,
+    "equity": 91068000,
+    "assets": 952259000,
+    "liabilities": 820487000,
+    "retained_earnings": -83285000,
+    "maturities": {
+      "as_of": "2026-09-30",
+      "next12m": 51400000,
+      "y2": 175700000,
+      "y3": 131800000,
+      "y4": 46700000,
+      "y5": 8700000
+    },
+    "shares": 5274904,
+    "balance_date": "2026-09-30",
+    "latest_period": "2026-09-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 414966000,
+    "cash_and_investments": 32981000.0,
+    "net_debt": 381985000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 4200000.0,
+    "liquidity": 37181000.0,
+    "due_12m": 51400000,
+    "due_24m": 227100000,
+    "liquidity_to_due12": 0.723366,
+    "liquidity_to_due24": 0.163721,
+    "floating_debt": 403481000.0,
+    "floating_share": 0.972323,
+    "plus100bp_interest": 4034810.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 36766080.88,
+    "debt_to_ev": 0.990961,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Five Point Zero Zero Percent Unsecured Convertible Notes Due Two Thousand Thirty",
+          "face": 10000000.0,
+          "carrying": 10000000.0,
+          "coupon": 0.05,
+          "conv_price": 35.0,
+          "maturity": "2030-10-01",
+          "moneyness": 0.199143,
+          "in_the_money": false,
+          "shares": 285714.285714
+        }
+      ],
+      "total_face": 10000000.0,
+      "in_the_money_face": 0,
+      "in_the_money_carrying": 0,
+      "shares_if_converted": 0,
+      "coupon_saved": 0
+    },
+    "implied": {
+      "dd": 0.652807,
+      "pd_1y": 0.25694,
+      "spread_5y_bps": 394.836148,
+      "asset_vol": 0.195319,
+      "calibrated_5y_bps": 177.597094,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.06686,
+    "covenants": [],
+    "cushion_score": 18
+  },
+  "hidden_leverage": {
+    "as_of": "2026-09-30",
+    "currency": "USD",
+    "categories": [
+      {
+        "key": "operating_lease",
+        "label": "Recognized operating lease liability (reference)",
+        "class": "recognized",
+        "amount_usd": 8139000.0,
+        "reported_total": true,
+        "schedule": [],
+        "schedule_labels": [],
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000119312526455473/vrm-20260930.htm",
+        "accession": "0001193125-26-455473",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "as_of": "2026-09-30",
+        "evidence": [
+          {
+            "value_usd": 8139000.0,
+            "tag": "us-gaap:OperatingLeaseLiability",
+            "accession": "0001193125-26-455473",
+            "filed": "2026-11-10",
+            "form": "10-Q",
+            "as_of": "2026-09-30",
+            "url": "https://www.sec.gov/Archives/edgar/data/1580864/000119312526455473/vrm-20260930.htm"
+          }
+        ],
+        "warning": "Do not add to recognized debt or other rows; categories may overlap."
+      }
+    ],
+    "text_signals": [
+      {
+        "key": "vie",
+        "label": "SPE / SPV / VIE financing",
+        "excerpt": "transactions are consolidated collateralized financing entities (CFEs) that are VIEs. Refer to Note 4 — Variable Interest Entities and Securitizations for further details. The Company recognized the following revenue and expenses associated with these CFEs in the condensed consol",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000119312526455473/vrm-20260930.htm",
+        "accession": "0001193125-26-455473",
+        "form": "10-Q",
+        "filed": "2026-11-10",
+        "classification": "unverified_text_lead",
+        "review_lane": "A/C",
+        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."
+      }
+    ],
+    "method": "SEC companyfacts XBRL; strict same-period USD instant facts",
+    "warnings": [
+      "Categories can overlap. Gross commitments are not debt.",
+      "Unreported and company-extension values may be missing.",
+      "Maturity buckets are contractual undiscounted dollars, not present value."
+    ],
+    "coverage": "numeric_evidence",
+    "footnote_tables": [],
+    "footnote_status": "no_high_confidence_usd_schedule_detected",
+    "text_filing": {
+      "accession": "0001193125-26-455473",
+      "form": "10-Q",
+      "filed": "2026-11-10",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000119312526455473/vrm-20260930.htm",
+      "text_status": "collected"
+    }
+  },
+  "revenue_quality": {
+    "status": "screened",
+    "as_of": "2026-09-30",
+    "metrics": {
+      "revenue_growth": -0.5417,
+      "receivables_growth": -0.3457,
+      "contract_assets_growth": null,
+      "contract_liabilities_growth": 0.3163,
+      "dsri": 1.4277,
+      "ocf_to_net_income": null
+    },
+    "risk_flags": [
+      {
+        "key": "dsri",
+        "label": "Receivables are rising faster than sales",
+        "value": 1.4277,
+        "rule": "DSRI > 1.25 (screening heuristic)"
+      }
+    ],
+    "evidence": {
+      "revenue": [
+        {
+          "value_usd": 893203000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000950170-24-030760",
+          "filed": "2024-03-13",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017024030760/"
+        },
+        {
+          "value_usd": 1948901000.0,
+          "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "accession": "0000950170-24-030760",
+          "filed": "2024-03-13",
+          "end": "2022-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017024030760/"
+        }
+      ],
+      "receivables": [
+        {
+          "value_usd": 9139000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000950170-24-030760",
+          "filed": "2024-03-13",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017024030760/"
+        },
+        {
+          "value_usd": 13967000.0,
+          "tag": "us-gaap:AccountsReceivableNetCurrent",
+          "accession": "0000950170-24-030760",
+          "filed": "2024-03-13",
+          "end": "2022-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017024030760/"
+        }
+      ],
+      "contract_assets": [
+        null,
+        null
+      ],
+      "contract_liabilities": [
+        {
+          "value_usd": 14025000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000950170-24-030760",
+          "filed": "2024-03-13",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017024030760/"
+        },
+        {
+          "value_usd": 10655000.0,
+          "tag": "us-gaap:ContractWithCustomerLiabilityCurrent",
+          "accession": "0000950170-24-030760",
+          "filed": "2024-03-13",
+          "end": "2022-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017024030760/"
+        }
+      ],
+      "operating_cash_flow": [
+        {
+          "value_usd": -533684000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000950170-25-037265",
+          "filed": "2025-03-11",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017025037265/"
+        },
+        {
+          "value_usd": -109065000.0,
+          "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+          "accession": "0000950170-24-030760",
+          "filed": "2024-03-13",
+          "end": "2022-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017024030760/"
+        }
+      ],
+      "net_income": [
+        {
+          "value_usd": -364611000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000950170-25-037265",
+          "filed": "2025-03-11",
+          "end": "2023-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017025037265/"
+        },
+        {
+          "value_usd": -451910000.0,
+          "tag": "us-gaap:NetIncomeLoss",
+          "accession": "0000950170-24-030760",
+          "filed": "2024-03-13",
+          "end": "2022-12-31",
+          "form": "10-K",
+          "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000095017024030760/"
+        }
+      ]
+    },
+    "text_leads": [
+      {
+        "key": "related_party_sales",
+        "label": "Related-party revenue",
+        "excerpt": "s of September 30, 2026, we have $ 27.0 million available under the Delayed Draw Facility. Refer to Note 19 — Related Party Transactions for further details. On May 14, 2026, the Company entered into an Exchange and Subscription Agreement (the “Exchange Agreement”) pursuant to which",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000119312526455473/vrm-20260930.htm",
+        "accession": "0001193125-26-455473",
+        "form": "10-Q",
+        "filed": "2026-11-10"
+      },
+      {
+        "key": "deferred_revenue",
+        "label": "Deferred revenue / contract liabilities",
+        "excerpt": "this results in revenues billed and recorded monthly in the month that services were performed and earned. Deferred revenue includes advances received from customers in excess of revenue recognized. The Company may collect sales taxes and other taxes and government fees",
+        "classification": "unverified_text_lead",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1580864/000119312526455473/vrm-20260930.htm",
+        "accession": "0001193125-26-455473",
+        "form": "10-Q",
+        "filed": "2026-11-10"
+      }
+    ],
+    "method": "US-GAAP annual same-period SEC filing facts",
+    "periods": [
+      "2023-12-31",
+      "2022-12-31"
+    ],
+    "warning": "Signals are diagnostic prompts, not findings of manipulation. Sector, acquisitions, factoring and recognition policy may explain changes. Financial firms need industry-specific interpretation."
+  },
+  "instruments": [
+    {
+      "name": "Total Rated Notes At Fair Value",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "face": 414260000.0,
+      "fair_value": 393171000.0,
+      "floating": false
+    },
+    {
+      "name": "Securitization Debt Of Consolidated Variable Interest Entities At Fair Value",
+      "kind": "abs",
+      "as_of": "2026-09-30",
+      "carrying": 393171000.0,
+      "floating": true
+    },
+    {
+      "name": "Facility Two",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "capacity": 200000000.0,
+      "floating": false
+    },
+    {
+      "name": "Facility One",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "capacity": 200000000.0,
+      "drawn": 104096000.0,
+      "floating": false
+    },
+    {
+      "name": "Facility Three",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "capacity": 200000000.0,
+      "drawn": 199966000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Five One D",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2030-07-10",
+      "face": 50810000.0,
+      "fair_value": 50729000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Six One A",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2028-06-12",
+      "face": 40364000.0,
+      "fair_value": 40327000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Six One B",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2029-05-10",
+      "face": 40130000.0,
+      "fair_value": 39745000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Six One D",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2031-07-10",
+      "face": 40000000.0,
+      "fair_value": 38896000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Four One E",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2030-11-12",
+      "face": 37540000.0,
+      "fair_value": 38216000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Five One A",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "maturity": "2027-06-10",
+      "face": 37290000.0,
+      "fair_value": 37324000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Five One E",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2031-10-10",
+      "face": 35560000.0,
+      "fair_value": 32637000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Five One C",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2030-06-10",
+      "face": 32660000.0,
+      "fair_value": 32631000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Four One D",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2029-11-12",
+      "face": 30658000.0,
+      "fair_value": 30995000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Delayed Draw Convertible Note Due2032",
+      "kind": "convertible",
+      "as_of": "2026-05-14",
+      "capacity": 50000000.0,
+      "face": 28500000.0,
+      "coupon": 0.05,
+      "maturity": "2032-06-30",
+      "effective": 0.05,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Two Two E",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2029-04-10",
+      "face": 28074000.0,
+      "fair_value": 11140000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Six One C",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2031-06-10",
+      "face": 25970000.0,
+      "fair_value": 25562000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Four One C",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "maturity": "2029-10-10",
+      "face": 23664000.0,
+      "fair_value": 23721000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Three One E",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2029-09-10",
+      "face": 23256000.0,
+      "fair_value": 23640000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Six One E",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2032-12-10",
+      "face": 18550000.0,
+      "fair_value": 17965000.0,
+      "floating": false
+    },
+    {
+      "name": "Financing Of Beneficial Interest In Securizations",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "carrying": 11485000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Two Two D",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "maturity": "2028-01-10",
+      "face": 11415000.0,
+      "fair_value": 11400000.0,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Five One B",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2028-02-10",
+      "face": 10660000.0,
+      "fair_value": 10660000.0,
+      "floating": false
+    },
+    {
+      "name": "Delayed Draw Notes",
+      "kind": "notes",
+      "as_of": "2025-11-25",
+      "face": 10500000.0,
+      "floating": false
+    },
+    {
+      "name": "Junior Subordinated Debt",
+      "kind": "notes",
+      "as_of": "2026-09-30",
+      "carrying": 10310000.0,
+      "spread": 0.0305,
+      "maturity": "2033-10-07",
+      "floating": true
+    },
+    {
+      "name": "Five Point Zero Zero Percent Unsecured Convertible Notes Due Two Thousand Thirty",
+      "kind": "convertible",
+      "as_of": "2025-08-29",
+      "face": 10000000.0,
+      "coupon": 0.05,
+      "maturity": "2030-10-01",
+      "conv_price": 35.0,
+      "effective": 0.05,
+      "floating": false
+    },
+    {
+      "name": "Warehouse Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-09-30",
+      "capacity": 4200000.0,
+      "rate_now": 0.055,
+      "floating": false
+    },
+    {
+      "name": "United Auto Credit Two Thousand Twenty Three One D",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "maturity": "2028-07-10",
+      "face": 28000.0,
+      "fair_value": 28000.0,
+      "floating": false
+    },
+    {
+      "name": "Securitization Debt Of Consolidated Variable Interest Entities",
+      "kind": "abs",
+      "as_of": "2026-09-30",
+      "fair_value": 393200000.0,
+      "floating": true
+    },
+    {
+      "name": "Mudrick Capital Management Limited Partners",
+      "kind": "other",
+      "as_of": "2026-09-30",
+      "available": 27000000.0,
+      "maturity": "2027-12-31",
+      "spread": 0.085,
+      "floating": true
+    },
+    {
+      "name": "Securitization Vehicles",
+      "kind": "abs",
+      "as_of": "2026-09-30",
+      "fair_value": 393171000.0,
+      "floating": false
+    },
+    {
+      "name": "First Draw Of Senior Secured Delayed Draw Convertible Note Due2032",
+      "kind": "convertible",
+      "as_of": "2026-05-14",
+      "conv_price": 13.94,
+      "maturity_year": 2032,
+      "floating": false
+    },
+    {
+      "name": "Second Draw Of Senior Secured Delayed Draw Convertible Note Due2032",
+      "kind": "convertible",
+      "as_of": "2026-05-14",
+      "conv_price": 14.1,
+      "maturity_year": 2032,
+      "floating": false
+    },
+    {
+      "name": "Third Draw Of Senior Secured Delayed Draw Convertible Note Due2032",
+      "kind": "convertible",
+      "as_of": "2026-05-14",
+      "conv_price": 11.42,
+      "maturity_year": 2032,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-09-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-08-04",
+      "agreement_kind": "amendment",
+      "dated": "2026-08-03",
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "maturity": "2027-12-31",
+      "url": "https://www.sec.gov/Archives/edgar/data/1580864/000119312526332834/vrm-ex10_6.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-10-10",
+      "agreement_kind": "amendment",
+      "dated": "2025-10-09",
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1580864/000119312525237183/vrm-ex10_1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-10-15",
+      "items": "1.01,2.03",
+      "acc": "0001193125-26-422899",
+      "doc": "vrm-20261013.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-30",
+      "items": "1.01,9.01",
+      "acc": "0001193125-26-409064",
+      "doc": "vrm-20260930.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-07-07",
+      "items": "1.01,2.03",
+      "acc": "0001193125-26-296552",
+      "doc": "vrm-20260630.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-06",
+      "items": "1.01,2.03",
+      "acc": "0001193125-26-040495",
+      "doc": "vrm-20260205.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-01-21",
+      "items": "1.01,9.01",
+      "acc": "0001193125-26-017221",
+      "doc": "vrm-20260116.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-11-26",
+      "items": "1.01,2.03",
+      "acc": "0001213900-25-115505",
+      "doc": "ea0267339-8k_vroom.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-10-10",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-237183",
+      "doc": "vrm-20251009.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-29",
+      "items": "1.01,3.02,9.01",
+      "acc": "0000950170-25-112245",
+      "doc": "vrm-20250829.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-29",
+      "items": "1.01,2.03",
+      "acc": "0000950170-25-112243",
+      "doc": "vrm-20250829.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-03",
+      "items": "1.01,2.03",
+      "acc": "0000950170-25-049821",
+      "doc": "vrm-20250328.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-14",
+      "items": "1.01,2.03",
+      "acc": "0000950170-25-039035",
+      "doc": "vrm-20250313.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-01-15",
+      "items": "1.01,1.02,1.03,3.02,3.03,5.01,5.02,5.03,7.01,9.01",
+      "acc": "0000950170-25-005647",
+      "doc": "vrm-20250108.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-13",
+      "items": "1.03,2.04,7.01,9.01",
+      "acc": "0001193125-24-256669",
+      "doc": "d902566d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-06",
+      "items": "1.01,2.03",
+      "acc": "0000950170-24-053606",
+      "doc": "vrm-20240430.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-22",
+      "items": "1.01,2.05,7.01,9.01",
+      "acc": "0001193125-24-012173",
+      "doc": "d152784d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-01",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-23-287564",
+      "doc": "d924405d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-09-21",
+      "items": "1.01",
+      "acc": "0000950170-22-018736",
+      "doc": "vrm-20220901.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-12-20",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0000950170-21-005287",
+      "doc": "vrm-20211216.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-12",
+      "items": "1.01,7.01,9.01",
+      "acc": "0000950170-21-002077",
+      "doc": "vrm-20211011.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-21",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001193125-21-195245",
+      "doc": "d93781d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-10-06",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001564590-20-045856",
+      "doc": "vrm-8k_20201001.htm",
+      "desc": "8-K RE ALLY AGREEMENT AMENDMENT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2022-03-31",
+      826361000,
+      600721000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      789656000,
+      532642000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      662442000,
+      509660000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      816401000,
+      316714000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      776402000,
+      237925000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      718398000,
+      208562000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-12-31",
+      626583000,
+      null,
+      45445000,
+      null,
+      null,
+      0.07253
+    ],
+    [
+      "2024-03-31",
+      548142000,
+      90990000,
+      52341000,
+      null,
+      null,
+      0.09549
+    ],
+    [
+      "2024-06-30",
+      794734000,
+      63393000,
+      57683000,
+      null,
+      null,
+      0.07258
+    ],
+    [
+      "2024-09-30",
+      729372000,
+      51093000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      655430000,
+      14565000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      563702000,
+      14262000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      492144000,
+      12412000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      577968000,
+      14478000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      489370000,
+      16359000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-09-30",
+      414966000,
+      32981000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      344.21,
+      1.218,
+      0.7868,
+      171.0
+    ],
+    [
+      "2025-06",
+      393.83,
+      1.186,
+      0.8132,
+      171.4
+    ],
+    [
+      "2025-07",
+      314.45,
+      1.381,
+      0.7395,
+      169.2
+    ],
+    [
+      "2025-08",
+      304.0,
+      1.54,
+      0.7028,
+      167.4
+    ],
+    [
+      "2025-09",
+      270.57,
+      1.67,
+      0.6632,
+      165.9
+    ],
+    [
+      "2025-10",
+      241.9,
+      1.671,
+      0.6483,
+      165.9
+    ],
+    [
+      "2025-11",
+      235.12,
+      1.71,
+      0.6373,
+      165.5
+    ],
+    [
+      "2025-12",
+      289.39,
+      1.569,
+      0.685,
+      167.0
+    ],
+    [
+      "2026-01",
+      262.58,
+      1.582,
+      0.6694,
+      166.9
+    ],
+    [
+      "2026-02",
+      244.48,
+      1.509,
+      0.6755,
+      167.7
+    ],
+    [
+      "2026-03",
+      324.66,
+      1.074,
+      0.8128,
+      172.7
+    ],
+    [
+      "2026-04",
+      390.6,
+      1.094,
+      0.8284,
+      172.4
+    ],
+    [
+      "2026-05",
+      299.76,
+      1.059,
+      0.8107,
+      172.8
+    ],
+    [
+      "2026-06",
+      337.2,
+      0.758,
+      0.922,
+      176.4
+    ],
+    [
+      "2026-07",
+      311.26,
+      0.731,
+      0.9291,
+      176.7
+    ],
+    [
+      "2026-08",
+      415.24,
+      0.692,
+      0.9648,
+      177.1
+    ],
+    [
+      "2026-09",
+      425.92,
+      0.665,
+      0.9809,
+      177.5
+    ],
+    [
+      "2026-10",
+      370.56,
+      0.645,
+      0.9766,
+      177.7
+    ],
+    [
+      "2026-11",
+      394.84,
+      0.653,
+      0.9784,
+      177.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}
