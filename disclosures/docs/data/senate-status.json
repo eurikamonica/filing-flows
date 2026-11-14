@@ -1,16 +1,20 @@
 {
-  "status": "ok",
-  "failed_queue": 0,
-  "next_retry_at": null,
-  "error_samples": [],
-  "found": 14,
-  "read": 12,
-  "waiting": 0,
-  "paper": 291,
+  "status": "blocked",
+  "blocked": true,
+  "error": "HTTP 403 from efdsearch.senate.gov",
   "trades": 14122,
-  "cursor": "2016-06-19",
-  "errors": [],
-  "last_attempt": "2026-11-14T15:58:55+00:00",
+  "failed_queue": 1,
+  "next_retry_at": "2026-11-14T17:20:32.871361+00:00",
+  "error_samples": [
+    {
+      "key": "session",
+      "attempts": 1,
+      "last_attempt": "2026-11-14T16:20:32+00:00",
+      "error": "HTTP 403 from efdsearch.senate.gov",
+      "next_retry_at": "2026-11-14T17:20:32.871361+00:00"
+    }
+  ],
+  "last_attempt": "2026-11-14T16:20:32+00:00",
   "last_success": "2026-11-14T15:59:13+00:00",
   "last_partial_success": "2026-11-14T08:43:41+00:00",
   "updated_at": "2026-11-14T15:59:13+00:00",
